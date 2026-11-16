@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { texts } from "@/shared/lib/text-rules/texts";
-import table from "../../today.de.json";
+import { todayTexts as table } from "@/today";
 
 const t = texts(table);
 

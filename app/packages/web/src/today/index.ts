@@ -10,8 +10,5 @@ export { default as todayTexts } from "./today.de.json";
 export { TodaySkeleton } from "./today-page/today-skeleton/today-skeleton";
 // The body of that skeleton alone: the start frame draws it while the shell loads (issue 2230).
 export { TodaySkeletonBody } from "./today-page/today-skeleton/today-skeleton-body/today-skeleton-body";
-// "Heute" narrowed to the watering tasks by its address `?tasks=watering` (US-QS-26): the page and the address rule.
-export { TodayFilter } from "./today-page/today-filter/today-filter";
-export { taskFilterOf, WATERING_TASKS } from "./today-page/today-filter/task-filter";
 // The query key of the central list: the area reloads it when a write changes what it derives from (SG-FEED-01).
 export { TODAY_LIST_KEY } from "./today-api";

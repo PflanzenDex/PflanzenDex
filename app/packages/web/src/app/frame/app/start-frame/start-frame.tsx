@@ -1,22 +1,12 @@
-import { createPortal } from "react-dom";
 import { useLocation } from "react-router";
-import { cn } from "@/shared/lib/utils";
-import {
-  useAppBarSlot,
-  useBarClaim,
-} from "@/shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot";
 import {
   BAR_SLOTS,
   BRAND_HREF,
   DISPLAY_NAME,
   OPERATOR_ADDRESS,
-  barRow,
-  barTitle,
   barWords,
   bottomBar,
   brandLink,
-  contentRow,
-  contentTitle,
   stackedItem,
   stackedLabel,
   stackedPill,
@@ -26,38 +16,14 @@ import {
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skeleton";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import {
+  PageTitle,
+  TitleRow,
+} from "@/shared/patterns/navigation/page-header/page-title/page-title";
+import { cn } from "@/shared/lib/utils";
 import { TodaySkeletonBody } from "@/today";
 import { OperatorRouteBody } from "@/account";
 import { startBarLabels } from "./bar-labels";
-
-/**
- * The title of the page as its header draws it (issue 2230): the row of the top bar below `md` (`inBar`, the bar's own
- * classes) or the row of the content from `md` (the page's content classes). It is the one h1 of the start.
- */
-function TitleRow(props: { title: string; inBar: boolean }) {
-  return (
-    <div data-page-header="" className={props.inBar ? barRow : contentRow}>
-      <h1
-        data-route-fallback=""
-        className={props.inBar ? barTitle : cn(contentTitle, "font-semibold text-2xl")}
-      >
-        {props.title}
-      </h1>
-    </div>
-  );
-}
-
-/**
- * The title in the shell's top bar while the routes load (issue 2230): it claims the bar like a page header, so the brand does
- * not show between the start and the page. It renders nothing unless the bar has mounted and holds no other claim.
- */
-function BarTitle(props: { title: string }) {
-  const bar = useAppBarSlot();
-  const owned = useBarClaim(true);
-  return owned && bar?.element
-    ? createPortal(<TitleRow title={props.title} inBar />, bar.element)
-    : null;
-}
 
 /**
  * The skeleton body of the address, the body its route shows while it loads (issue 2230): "Heute" for the root and for
@@ -110,12 +76,10 @@ function StartBar() {
 export function StartPageSkeleton() {
   const { pathname } = useLocation();
   const title = startTitleOf(pathname);
-  const md = useIsMd();
   return (
     <>
-      {title !== null && !md ? <BarTitle title={title} /> : null}
       <div className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-2">
-        {title !== null && md ? <TitleRow title={title} inBar={false} /> : null}
+        {title !== null ? <PageTitle title={title} /> : null}
         <StartBody pathname={pathname} />
       </div>
     </>

@@ -8,7 +8,7 @@ import { ADD_PLANT_PATH, PATHS } from "../../shared/patterns/navigation/navigati
 import {
   taskFilterOf,
   WATERING_TASKS_ADDRESS,
-} from "../../today/today-page/today-filter/task-filter";
+} from "../../app/destinations/today-area/watering-view/today-filter/task-filter";
 
 const here = (path: string) => new URL(path, import.meta.url);
 const publicFile = (path: string) => readFileSync(here(`./public${path}`));

@@ -1,4 +1,4 @@
-import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
+import { PageTitle } from "@/shared/patterns/navigation/page-header/page-title/page-title";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
@@ -16,7 +16,7 @@ const t = texts(table);
 export function TodaySkeleton() {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-      <PageHeader fallback title={t("page.title")} />
+      <PageTitle title={t("page.title")} />
       <TodaySkeletonBody />
     </div>
   );

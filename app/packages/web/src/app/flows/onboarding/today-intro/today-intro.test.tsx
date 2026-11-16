@@ -583,6 +583,19 @@ describe("US-QS-16 · US-ACC-03 the onboarding parts of Heute", () => {
     expect(paths()).not.toContain("/specimens/cards");
   });
 
+  it("US-QS-32 · issue 2230 a keeper with plants waits for the hints before the tasks show, so a notice never lands above them later", async () => {
+    fakeServer(
+      world({ zones: [], cards: [{ id: "e1" }], hint: "function_unlocked", guideEnded: true }),
+    );
+    const release = holdPath("/onboarding/hints");
+    view();
+    await vi.waitFor(() => expect(paths()).toContain("/onboarding/hints"));
+    expect(tasksHidden()).toBe(true);
+    release();
+    expect(await tasksShown()).toBeTruthy();
+    expect(screen.getByText(HINT_TEXTS.function_unlocked)).toBeTruthy();
+  });
+
   it("US-QS-16 when the count is not there the tasks still show, Heute is never blank", async () => {
     vi.stubGlobal(
       "fetch",

@@ -63,8 +63,10 @@ function stageOf(
   const copyNew = counts !== undefined && isNewAccount(counts);
   const waiting = copyNew && !answered && count.refreshing;
   const newAccount = copyNew && answered;
-  // Undecided: the count, or the hints a new account is judged by, are still loading.
-  const undecided = count.status === "pending" || waiting || (newAccount && hints === null);
+  // Undecided: the count, or the hints of an account with a count, are still loading. The hints wait for every account with a
+  // count (issue 2230): a notice that arrives later would land above the tasks and move them. Without a count the tasks show.
+  const undecided =
+    count.status === "pending" || waiting || (counts !== undefined && hints === null);
   const guide = newAccount && hints !== null && !ended;
   return {
     undecided,
