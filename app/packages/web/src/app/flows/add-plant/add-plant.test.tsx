@@ -303,6 +303,10 @@ const noMarkerWhenOwned: Refuse = (body) =>
   body["marker"] === undefined ? { code: "specimen.marker_required" } : null;
 const REFUSED_MARKER_TEXT =
   "Du hast schon eine Pflanze dieser Art. Gib der neuen ein Kennzeichen, damit du die Töpfe unterscheiden kannst.";
+/** The client's own texts of the marker rule (collection's MARKER_MISSING and MARKERS_MISSING, F-0093). */
+const CLIENT_MARKER_TEXT =
+  "Gib ein Kennzeichen an, damit du die Töpfe dieser Art unterscheiden kannst.";
+const MISSING_ANSWERS_TEXT = "Vergib zuerst alle fehlenden Kennzeichen, bevor du speicherst.";
 
 describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form (issue 1638)", () => {
   it("US-BES-03 · US-ONB-01 an owned species waits for the lazily loaded marker field, preset as in the long form, and saves with it (issue 1638)", async () => {
@@ -326,7 +330,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     expect(screen.queryByLabelText(/Kennzeichen/)).toBeNull();
   });
 
-  it("US-QS-15 · US-BES-03 a cleared marker is refused: the field takes the focus and the text says what to do", async () => {
+  it("US-QS-32 · US-BES-03 a cleared marker is checked on send: the field shows its message and takes the focus, nothing is sent", async () => {
     server(OWNED, ZONES, LOCATIONS, noMarkerWhenOwned);
     view();
     await toSave();
@@ -334,9 +338,40 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     await userEvent.clear(marker);
     await untilSaveEnabled();
     await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
-    expect(await screen.findByText(REFUSED_MARKER_TEXT)).toBeTruthy();
+    expect(await screen.findByText(CLIENT_MARKER_TEXT)).toBeTruthy();
+    expect(marker.getAttribute("aria-invalid")).toBe("true");
     expect(document.activeElement).toBe(marker);
+    expect(writes).toEqual([]);
     expect(screen.queryByRole("heading", { name: /ist angelegt/ })).toBeNull();
+  });
+
+  it("US-QS-32 · US-BES-03 the third plant checks its missing markers on send: the empty one takes the message and the focus", async () => {
+    server([
+      {
+        id: "e5",
+        name: "Alt",
+        speciesId: "sp1",
+        location: "Zuhause",
+        caughtAt: "2026-02-01",
+        marker: null,
+      },
+      {
+        id: "e6",
+        name: "Neu",
+        speciesId: "sp1",
+        location: "Balkon",
+        caughtAt: "2026-03-01",
+        marker: "Rot",
+      },
+    ]);
+    view();
+    await toSave();
+    const answer = await screen.findByLabelText("Kennzeichen für „Alt“");
+    await untilSaveEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    expect(await screen.findByText(MISSING_ANSWERS_TEXT)).toBeTruthy();
+    expect(document.activeElement).toBe(answer);
+    expect(writes).toEqual([]);
   });
 
   it("US-QS-15 · US-BES-03 a refused marker the form did not show appears, takes the focus, and the next save with it goes through", async () => {
