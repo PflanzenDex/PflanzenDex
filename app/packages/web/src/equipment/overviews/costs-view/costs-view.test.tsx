@@ -14,13 +14,22 @@ afterEach(cleanup);
 
 const render = (ui: ReactElement) => plainRender(<MemoryRouter>{ui}</MemoryRouter>);
 
+describe("US-QS-32 the cost view says one line about the missing prices (SG-FMT-03)", () => {
+  it("US-QS-32 two devices without a price agree in number: 'Bei 2 Geräten ist der Preis unbekannt.'", () => {
+    render(<CostsView items={[item("Lamp", 10), item("Pump", null), item("Pot", null)]} />);
+    expect(screen.getByRole("region", { name: "Kosten" }).textContent).toContain(
+      "Bei 2 Geräten ist der Preis unbekannt.",
+    );
+  });
+});
+
 describe("US-EQU-09 cost view", () => {
   it("US-EQU-09 shows the sum per type and in total and for how many records the price is missing", () => {
     render(<CostsView items={[item("Lamp", 49.9), item("Lamp", null), item("Timer", 12.5)]} />);
     const section = screen.getByRole("region", { name: "Kosten" });
     expect(section.textContent).toContain("62,40 €");
     expect(section.textContent).toContain("Summe über 2 von 3 Geräten");
-    expect(section.textContent).toContain("Bei 1 Gerät fehlt der Preis");
+    expect(section.textContent).toContain("Bei 1 Gerät ist der Preis unbekannt.");
     const lamp = within(screen.getByRole("list", { name: "Kosten je Art" })).getAllByRole(
       "listitem",
     )[0] as HTMLElement;
@@ -40,7 +49,7 @@ describe("US-EQU-09 cost view", () => {
     const section = screen.getByRole("region", { name: "Kosten" });
     expect(section.textContent).toContain("unbekannt");
     expect(section.textContent).not.toContain("0,00");
-    expect(section.textContent).toContain("Stromkosten und Ersatzkosten");
+    expect(section.textContent).toContain("Ohne Strom- und Ersatzkosten.");
   });
 
   it("US-EQU-09 shows nothing without equipment", () => {

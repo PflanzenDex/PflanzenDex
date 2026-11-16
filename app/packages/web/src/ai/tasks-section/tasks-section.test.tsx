@@ -196,3 +196,17 @@ describe("US-QS-14 issue 1697 · the tasks show their shaped skeleton once", () 
       table["tasks.loading"],
     ));
 });
+
+describe("US-QS-32 the tasks: one line of hint, the rest behind Mehr erfahren (SG-COPY-05, F-0302)", () => {
+  it("US-QS-32 F-0302 'Aufträge' says one line; the example, the draft and the 14 days sit behind Mehr erfahren", async () => {
+    fakeServer([row()]);
+    show();
+    const line = await screen.findByText("Ein Auftrag bittet deinen KI-Client um etwas.");
+    expect(line.closest("details")).toBeNull();
+    const more = line.parentElement?.querySelector("details");
+    expect(more?.textContent).toContain("Zum Beispiel ein Artprofil.");
+    expect(more?.textContent).toContain("Das Ergebnis kommt als Entwurf");
+    expect(more?.textContent).toContain("nach 14 Tagen");
+    expect(more?.textContent).not.toContain("Ein Auftrag bittet deinen KI-Client um etwas.");
+  });
+});

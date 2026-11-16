@@ -67,5 +67,7 @@
   "match.empty.allAnswered.action": "Später ansehen",
   "match.entry.requests": "Anfrage ansehen",
   "match.entry.requests.aria": "Anfrage ansehen: {name}",
-  "match.alreadyRequested": "Schon angefragt: {title}."
+  "match.alreadyRequested": "Schon angefragt: {title}.",
+  "deck.askMore": "„Ja“ fragt das Angebot an, „Nein“ und „Später“ bleiben bei dir gespeichert. Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen.",
+  "deck.friendFallback": "Ein Freund"
 }

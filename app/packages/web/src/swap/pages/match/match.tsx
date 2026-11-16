@@ -62,9 +62,6 @@ export function MatchPage(props: { api: string; token: Token; calm?: boolean }) 
         title="Passende Angebote"
         back={{ label: "Zurück zur Tauschbörse", to: EXCHANGE_PATH }}
       >
-        <p className="text-muted-foreground [@media(max-height:700px)]:hidden">
-          Angebote deiner Freunde, deren Art auf deiner Wunschliste steht, eins nach dem anderen.
-        </p>
         <LoadFrame
           queryKey={KEY}
           token={token}

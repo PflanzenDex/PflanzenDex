@@ -135,7 +135,6 @@ function RepotFormBody(props: FormState & { plan: RepotPlanView | null; reload: 
             hint={planted ? t("form.dateHintPlant") : t("form.dateHintCutting")}
           />
           {potChoice && plan !== null ? <PotField control={form.control} plan={plan} /> : null}
-          {planted && !potChoice ? <Quiet>{t("pot.leaveNotice")}</Quiet> : null}
           {alertText !== null && (
             <ErrorNotice>
               <p>{alertText}</p>

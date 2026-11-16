@@ -3,7 +3,25 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { SharedSpecimen } from "@pflanzendex/core";
 import { collectionTitle, FriendCollectionPage } from "./friend-collection";
+import table from "../../social.de.json";
+
+/**
+ * The word of each whitelisted field the friend's collection cards show (QG-D2, P-05). A new field in `SharedSpecimen`
+ * fails the type check here until it is decided: the repot day stays out, the cards do not show it (it reaches friends as
+ * the feed event "Eingetopft", US-SOZ-05).
+ */
+const COLLECTION_WORDS: Record<
+  Exclude<keyof SharedSpecimen, "id" | "photoShared" | "repottedAt">,
+  string
+> = {
+  speciesLatin: "Art",
+  speciesGerman: "Art",
+  name: "Name",
+  caughtAt: "Fangdatum",
+  isCutting: "Stecklinge",
+};
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -48,6 +66,14 @@ function show(body: unknown, status = 200, devices: unknown = NO_DEVICES, path =
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+describe("US-QS-32 F-0265 the line names only whitelisted fields, each by its word (QG-D2, P-05)", () => {
+  it("US-QS-32 F-0265 every word of the line is one of the fields the friend shares, and no field outside the whitelist", () => {
+    const line = table["collection.shares"];
+    for (const word of Object.values(COLLECTION_WORDS)) expect(line).toContain(word);
+    expect(line).not.toMatch(/Anzahl|Standort|Messwert|Behandlung|Preis|Wertung|Vergleich/);
+  });
 });
 
 describe("US-SOZ-07 a friend's shared collection", () => {
@@ -122,15 +148,23 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     show({ friend: { name: "Anna" }, cards: [] });
     expect(await screen.findByText(/Anna hat noch nichts freigegeben/)).toBeTruthy();
     expect(screen.queryByRole("list", { name: /Sammlung von/ })).toBeNull();
+    // A friend who shares nothing gets no line about what is shared (US-QS-32, F-0265).
+    expect(document.body.textContent).not.toContain("teilt Art");
+  });
+
+  it("US-QS-32 F-0265 the line names the friend and the shared fields, and nothing more", async () => {
+    show({ friend: { name: "Anna" }, cards: [card()] });
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    expect(screen.getByText("Anna teilt Art, Name, Fangdatum und Stecklinge.")).toBeTruthy();
+    expect(document.body.textContent).not.toContain("ohne Wertung");
   });
 
   it("US-SOZ-07 facts only: no rank, no score, no comparison between friends; the way back is offered", async () => {
     show({ friend: { name: null }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Name unbekannt" });
+    // One line naming only what the friend shares (US-QS-32, F-0265); no rank, no comparison.
     expect(
-      screen.getByText(
-        "Freigegeben von Name unbekannt, ohne Wertung und Vergleich: nur Art, Name, Fangdatum, ob es ein Steckling ist und wann er eingetopft wurde.",
-      ),
+      screen.getByText("Name unbekannt teilt Art, Name, Fangdatum und Stecklinge."),
     ).toBeTruthy();
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
       "/friends",

@@ -20,7 +20,6 @@
   "pot.item": "{name} · {size}",
   "pot.itemCurrent": "{name} · {size} (bisheriger Topf)",
   "pot.sizeUnknown": "Größe unbekannt",
-  "pot.leaveNotice": "Ohne Topfauswahl kommt die Pflanze aus einem eingetragenen Topf heraus; der Topf selbst bleibt erhalten.",
   "done.cutting": "„{name}“ ist eingetopft und eine Pflanze. Ab jetzt gilt die Lichtzone ihres Standorts oder der Art.",
   "done.plant": "„{name}“ ist umgetopft. Der Zeitraum bis zum nächsten Umtopfen beginnt neu.",
   "plan.title": "Umtopfen",

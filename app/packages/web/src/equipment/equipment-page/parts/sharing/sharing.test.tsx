@@ -8,15 +8,32 @@ import { Sharing } from "./sharing";
 const item = { id: "e1", type: "Lamp", name: "Lampe Alpha" } as unknown as EquipmentRow;
 afterEach(cleanup);
 
+describe("US-QS-32 the privacy line of a shared device (SG-COPY-05, SG-TYPE-03)", () => {
+  it("US-QS-32 one line at 14 px says what friends never see; the disclosure names what they see and the other hidden fields", () => {
+    render(<Sharing item={item} actions={{ busy: false, shared: new Map(), onShare: vi.fn() }} />);
+    const line = screen.getByText("Freunde sehen nie den Preis.");
+    expect(line.closest("details")).toBeNull();
+    expect(line.parentElement?.className).toContain("text-sm");
+    expect(line.parentElement?.className).not.toContain("text-xs");
+    const more = line.parentElement?.querySelector("details");
+    // What friends do see is named behind Mehr erfahren (P-05), with the other hidden fields and the withdrawal.
+    expect(more?.textContent).toContain(
+      "Sie sehen Art, Name, Modell, Lichtstufe und deine Erfahrung",
+    );
+    expect(more?.textContent).toContain("Kaufort, Seriennummer, Standort oder Kaufdatum");
+    expect(more?.textContent).toContain("Zurückziehen wirkt beim nächsten Abruf");
+    // The price is said once, in the visible line, and not repeated in the disclosure (US-QS-32).
+    expect(more?.textContent).not.toContain("Preis");
+  });
+});
+
 describe("US-EQU-12 sharing control", () => {
   it("US-EQU-12 is private by default, names what friends never see and sends the choice with the note", async () => {
     const onShare = vi.fn();
     render(<Sharing item={item} actions={{ busy: false, shared: new Map(), onShare }} />);
     expect(screen.getByLabelText("Freigabe für Freunde")).toHaveProperty("value", "private");
     expect(screen.queryByLabelText(/Erfahrung für Freunde/)).toBeNull();
-    expect(
-      screen.getByText(/nie Preis, Kaufort, Seriennummer, Standort oder Kaufdatum/),
-    ).toBeTruthy();
+    expect(screen.getByText(/Kaufort, Seriennummer, Standort oder Kaufdatum/)).toBeTruthy();
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Freigabe für Freunde"), "friends");
     await user.type(screen.getByLabelText(/Erfahrung für Freunde/), "  sehr hell ");
