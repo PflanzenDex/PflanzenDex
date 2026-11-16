@@ -734,6 +734,59 @@ describe("US-QS-32 Konto wechseln only with a live session at the sign-in servic
     const back = renderHook(() => useSession());
     await waitFor(() => expect(back.result.current.state).toEqual({ kind: "signedOut" }));
   });
+
+  it("US-QS-32 signing out on all devices clears the photo cache: a picture of the keeper is revoked and the next view fetches it anew (P-05)", async () => {
+    // The session and the photo hook come from one module registry, so the sign-out clears the cache the test fills.
+    const useFreshSession = await freshUseSession();
+    const { useStoredPhoto } = await import("../../shared/platform/browser/use-stored-photo");
+    const photoAccess = { api: "http://localhost:3000", token: async () => "tok" };
+    const photoPath = "/specimens/s1/photo";
+    const photoFetches: string[] = [];
+    const revoked: string[] = [];
+    const createUrl = URL.createObjectURL;
+    const revokeUrl = URL.revokeObjectURL;
+    let created = 0;
+    URL.createObjectURL = vi.fn(() => `blob:photo-${++created}`);
+    URL.revokeObjectURL = vi.fn((url: string) => {
+      revoked.push(url);
+    });
+    try {
+      mgr.getUser.mockResolvedValue(user);
+      const { result } = renderHook(() => useFreshSession());
+      await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn<typeof fetch>(async (input) => {
+          const url = String(input);
+          if (url.endsWith("/account/sessions/end")) return response(200, { ended: true });
+          if (url.includes(photoPath)) {
+            photoFetches.push(url);
+            return {
+              ok: true,
+              status: 200,
+              blob: async () => new Blob(["picture"]),
+            } as unknown as Response;
+          }
+          return response(200, account);
+        }),
+      );
+      const photo = renderHook(() => useStoredPhoto(photoAccess, photoPath, { size: "thumb" }));
+      await waitFor(() => expect(typeof photo.result.current).toBe("string"));
+      const shown = photo.result.current as string;
+      photo.unmount();
+      expect(photoFetches).toHaveLength(1);
+      await act(() => result.current.everywhereSignOut());
+      // The picture leaves memory with the sign-out; the photo module loads at the sign-out, so the revoke may follow it.
+      await waitFor(() => expect(revoked).toContain(shown));
+      const again = renderHook(() => useStoredPhoto(photoAccess, photoPath, { size: "thumb" }));
+      await waitFor(() => expect(typeof again.result.current).toBe("string"));
+      expect(photoFetches).toHaveLength(2);
+      expect(again.result.current).not.toBe(shown);
+    } finally {
+      URL.createObjectURL = createUrl;
+      URL.revokeObjectURL = revokeUrl;
+    }
+  });
 });
 
 describe("US-ACC-01 Abmelden and Konto wechseln on a failure", () => {

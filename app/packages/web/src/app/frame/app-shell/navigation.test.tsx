@@ -7,6 +7,7 @@ import {
   BRAND_HREF,
   BRAND_LINK_LABEL,
   DISPLAY_NAME,
+  pageTitle,
 } from "../../../shared/patterns/navigation/nav-item";
 import {
   CATALOG_ADDRESS,
@@ -17,7 +18,6 @@ import {
   accountAddress,
   destinationHeading,
   navItems,
-  pageTitle,
   PATHS,
   profileAddress,
   todayAddress,
