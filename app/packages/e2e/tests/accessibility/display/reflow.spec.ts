@@ -177,18 +177,23 @@ async function brokenTitleWords(page: Page): Promise<string[]> {
 // hyphenation (issue 1315) once lowered the title's minimum to a syllable: "Samm-lung" with "Ansicht" beside it.
 test.describe("US-QS-32 bar titles at 200 % text", () => {
   for (const view of ["/collection", "/friends/exchange", "/friends/match"]) {
-    test(`US-QS-32 the bar title of ${view} keeps every word whole at 360 px and 200 % text (issue 2231)`, async ({
+    test(`US-QS-32 the bar title of ${view} keeps every word whole at 360 to 412 px and 200 % text (issue 2231)`, async ({
       page,
       account,
     }, info) => {
       test.skip(info.project.name !== "mobil", "the top bar shows below md, a phone width");
-      await page.setViewportSize({ width: 360, height: 640 });
       await signInToApp(page, account);
       await openView(page, view);
+      // A fresh account has the exchange locked (US-ONB-05): unlock it, so the page and its bar title show.
+      const unlock = page.getByRole("button", { name: "Jetzt freischalten" });
+      if (await unlock.isVisible()) await unlock.click();
       await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
-      const title = page.locator("[data-app-bar-slot] h1");
-      await expect(title).toBeVisible();
-      expect(await brokenTitleWords(page)).toEqual([]);
+      await expect(page.locator("[data-app-bar-slot] h1")).toBeVisible();
+      // The break showed from 393 px (iPhone 16), where a syllable and the action fit one row and the word did not.
+      for (const width of [360, 393, 412]) {
+        await page.setViewportSize({ width, height: 800 });
+        expect(await brokenTitleWords(page), `${view} at ${width} px`).toEqual([]);
+      }
     });
   }
 });
