@@ -829,13 +829,19 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     expect(open).toHaveBeenCalledWith("collection");
   });
 
-  it("US-QS-18 · US-BEH-02 no open treatment offers planning one", async () => {
+  it("US-QS-18 · US-BEH-02 · issue 2233 no open treatment offers planning one, once: the empty line does not repeat it", async () => {
     fakeServer({ treatments: [] });
     show("/today?sheet=treatments");
-    const empty = await screen.findByText(/^Keine offenen Behandlungen\.$/);
+    const layer = await dialog("Behandlungen");
+    const empty = await within(layer).findByText(/^Keine offenen Behandlungen\.$/);
+    expect(await within(layer).findAllByRole("button", { name: "Behandlung planen" })).toHaveLength(
+      1,
+    );
     expect(
-      within(empty.parentElement as HTMLElement).getByRole("button", { name: "Behandlung planen" }),
-    ).toBeTruthy();
+      within(empty.parentElement as HTMLElement).queryByRole("button", {
+        name: "Behandlung planen",
+      }),
+    ).toBeNull();
   });
 
   it("US-QS-18 · US-BEH-01 without a plant the treatments offer Pflanze anlegen", async () => {
@@ -967,11 +973,9 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     show("/today?sheet=treatments");
     const layer = await dialog("Behandlungen");
     const empty = await within(layer).findByText(/^Keine offenen Behandlungen\.$/);
-    await user.click(
-      within(empty.parentElement as HTMLElement).getByRole("button", {
-        name: "Behandlung planen",
-      }),
-    );
+    expect(empty).toBeTruthy();
+    // The one "Behandlung planen" of the layer; the empty line does not repeat it (SG-STATE-01, issue 2233).
+    await user.click(await within(layer).findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
     await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
     await user.click(within(form).getByRole("button", { name: "Termin" }));
@@ -995,11 +999,9 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     await user.click(await screen.findByRole("button", { name: /^0 Behandlungen$/ }));
     const layer = await dialog("Behandlungen");
     const empty = await within(layer).findByText(/^Keine offenen Behandlungen\.$/);
-    await user.click(
-      within(empty.parentElement as HTMLElement).getByRole("button", {
-        name: "Behandlung planen",
-      }),
-    );
+    expect(empty).toBeTruthy();
+    // The one "Behandlung planen" of the layer; the empty line does not repeat it (SG-STATE-01, issue 2233).
+    await user.click(await within(layer).findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
     await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
     await user.click(within(form).getByRole("button", { name: "Termin" }));
@@ -1036,11 +1038,9 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     show("/today?sheet=treatments");
     const layer = await dialog("Behandlungen");
     const empty = await within(layer).findByText(/^Keine offenen Behandlungen\.$/);
-    await user.click(
-      within(empty.parentElement as HTMLElement).getByRole("button", {
-        name: "Behandlung planen",
-      }),
-    );
+    expect(empty).toBeTruthy();
+    // The one "Behandlung planen" of the layer; the empty line does not repeat it (SG-STATE-01, issue 2233).
+    await user.click(await within(layer).findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
     await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
     await user.click(within(form).getByRole("button", { name: "Termin" }));

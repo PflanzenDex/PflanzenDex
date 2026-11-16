@@ -91,11 +91,13 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     expect(posts[0]?.body).toHaveProperty("timeZone");
   });
 
-  it("US-QS-32 · SG-STATE-01 an empty log offers Blatt erfassen, and the action opens the leaf form", async () => {
+  it("US-QS-32 · SG-STATE-01 · issue 2233 an empty log is one line: Neues Blatt and Mit Details above are its steps", async () => {
     server({ "GET /specimens/e1/leaves": () => json(200, view([])) });
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Blatt erfassen" }));
+    expect(await screen.findByText("Noch kein Blatt erfasst.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Blatt erfassen" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Mit Details" }));
     expect(await screen.findByText("Neues Blatt festhalten")).toBeTruthy();
   });
 

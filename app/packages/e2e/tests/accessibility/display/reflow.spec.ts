@@ -150,3 +150,50 @@ test.describe("FR-BES-23 Sammlung tiles at 200 % text", () => {
     expect(await state.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   });
 });
+
+/**
+ * The words of the page title in the top bar whose text runs over more than one line, i.e. that break inside the word.
+ * Each word is a range of the title's text; a word on one line has all its boxes at the same top.
+ */
+async function brokenTitleWords(page: Page): Promise<string[]> {
+  return page.locator("[data-app-bar-slot] h1").evaluate((h1) => {
+    const broken: string[] = [];
+    const walker = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const text = node.textContent ?? "";
+      for (const match of text.matchAll(/\S+/g)) {
+        const range = document.createRange();
+        range.setStart(node, match.index);
+        range.setEnd(node, match.index + match[0].length);
+        const tops = new Set([...range.getClientRects()].map((r) => Math.round(r.top)));
+        if (tops.size > 1) broken.push(match[0]);
+      }
+    }
+    return broken;
+  });
+}
+
+// US-QS-32 (issue 2231): at 200 % text a bar title never breaks inside a word, an action wraps under it instead. The h1
+// hyphenation (issue 1315) once lowered the title's minimum to a syllable: "Samm-lung" with "Ansicht" beside it.
+test.describe("US-QS-32 bar titles at 200 % text", () => {
+  for (const view of ["/collection", "/friends/exchange", "/friends/match"]) {
+    test(`US-QS-32 the bar title of ${view} keeps every word whole at 360 to 412 px and 200 % text (issue 2231)`, async ({
+      page,
+      account,
+    }, info) => {
+      test.skip(info.project.name !== "mobil", "the top bar shows below md, a phone width");
+      await signInToApp(page, account);
+      await openView(page, view);
+      // A fresh account has the exchange locked (US-ONB-05): unlock it, so the page and its bar title show.
+      const unlock = page.getByRole("button", { name: "Jetzt freischalten" });
+      if (await unlock.isVisible()) await unlock.click();
+      await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+      await expect(page.locator("[data-app-bar-slot] h1")).toBeVisible();
+      // The break showed from 393 px (iPhone 16), where a syllable and the action fit one row and the word did not.
+      for (const width of [360, 393, 412]) {
+        await page.setViewportSize({ width, height: 800 });
+        expect(await brokenTitleWords(page), `${view} at ${width} px`).toEqual([]);
+      }
+    });
+  }
+});

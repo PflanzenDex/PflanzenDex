@@ -117,7 +117,7 @@ function Rows(props: {
 /**
  * The plants that are due to be watered today (US-MON-05): last watering plus the interval of the current phase. The
  * intervals are the keeper's own entries in the care profile; without one a plant is not listed (nothing is invented,
- * P-08), and the empty state says where to set it (P-09). "Gegossen" writes today's entry; several can be marked and
+ * P-08), and the empty state is one line. "Gegossen" writes today's entry; several can be marked and
  * entered in one step.
  */
 export function WateringList(props: {
@@ -175,6 +175,7 @@ function DueList(props: { api: string; token: Token; param?: PagerPart }) {
       >
         {(rows) =>
           rows.length === 0 ? (
+            // The line only: a link to the collection was no real next step (owner decision 2026-11-16, issue 2240).
             <EmptySection text={ui("none.line")} />
           ) : (
             <Rows

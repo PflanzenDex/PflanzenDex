@@ -91,8 +91,9 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     server();
     view();
     expect(await screen.findByText(/Noch kein Angebot\./)).toBeTruthy();
-    // The one step opens the same layer as "Zum Tausch anbieten" (US-QS-32, SG-STATE-01).
-    expect(screen.getByRole("button", { name: "Pflanze anbieten" })).toBeTruthy();
+    // The step is "Zum Tausch anbieten" in the title bar; the empty line does not repeat it (SG-STATE-01, issue 2233).
+    expect(screen.getAllByRole("button", { name: "Zum Tausch anbieten" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Pflanze anbieten" })).toBeNull();
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
       "/friends",
     );

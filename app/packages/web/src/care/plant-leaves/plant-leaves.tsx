@@ -79,21 +79,10 @@ function useLeafWrites(api: string, token: Token, specimenId: string, onDone: ()
   };
 }
 
-function LeafList(props: {
-  view: LeafLogView;
-  busy: boolean;
-  onRemove: (row: Leaf) => void;
-  onAdd: () => void;
-}) {
+function LeafList(props: { view: LeafLogView; busy: boolean; onRemove: (row: Leaf) => void }) {
   const { view } = props;
-  // One line and one tinted action, as every empty part of the history (US-QS-32, SG-STATE-01): the action opens the form.
-  if (view.count === 0)
-    return (
-      <EmptySection
-        text={t("empty.line")}
-        action={{ label: t("empty.action"), onClick: props.onAdd }}
-      />
-    );
+  // One line only: "Neues Blatt" and "Mit Details" stand right above, so the line repeats neither (SG-STATE-01, issue 2233).
+  if (view.count === 0) return <EmptySection text={t("empty.line")} />;
   return (
     <div className="grid gap-3">
       <p className="font-semibold">{countText(view.count)}</p>
@@ -138,7 +127,6 @@ function LeafLog({ api, token, specimenId }: Props) {
   const quick = async () => setRefusal(await writes.send({}));
   const remove = async (row: Leaf) => setRefusal(await writes.remove(row.id));
   const drop = (row: Leaf) => void remove(row);
-  const openForm = () => setFormOpen(true);
   return (
     <section aria-labelledby="leaf-heading" className="grid gap-3">
       <h3 id="leaf-heading" className="sr-only">
@@ -169,7 +157,7 @@ function LeafLog({ api, token, specimenId }: Props) {
         loadingText={t("loading")}
         loadingFallback={<LeafLogSkeleton label={t("loading")} />}
       >
-        {(view) => <LeafList view={view} busy={writes.busy} onRemove={drop} onAdd={openForm} />}
+        {(view) => <LeafList view={view} busy={writes.busy} onRemove={drop} />}
       </LoadFrame>
       <ResponsiveModal
         title={t("form.title")}

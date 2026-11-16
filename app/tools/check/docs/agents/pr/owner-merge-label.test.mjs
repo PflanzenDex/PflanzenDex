@@ -41,11 +41,21 @@ test("US-DEV-13: a pull request without a gate file has no gate file, so it gets
   assert.deepEqual(gateFilesOf([]), []);
 });
 
-test("US-DEV-13: a test file that isGateFile excludes does not count; a gate test the list names does", () => {
-  assert.deepEqual(gateFilesOf(["app/tools/check/docs/agents/pr/pr-lessons.test.mjs"]), []);
-  assert.deepEqual(gateFilesOf(["app/tools/workflow/merge-pr.test.mjs"]), [
-    "app/tools/workflow/merge-pr.test.mjs",
-  ]);
+test("US-DEV-13: an app test or a product tooling test does not count; a test of gate or check code does (issue 2222)", () => {
+  assert.deepEqual(
+    gateFilesOf([
+      "app/packages/api/src/ai/reads/areas.test.ts",
+      "app/tools/keycloak/theme.test.mjs",
+    ]),
+    [],
+  );
+  assert.deepEqual(
+    gateFilesOf([
+      "app/tools/check/docs/agents/pr/pr-lessons.test.mjs",
+      "app/tools/workflow/merge-pr.test.mjs",
+    ]),
+    ["app/tools/check/docs/agents/pr/pr-lessons.test.mjs", "app/tools/workflow/merge-pr.test.mjs"],
+  );
 });
 
 // A fake gh: it logs every call as a JSON array of its arguments and answers by the route of the call. The answers come from

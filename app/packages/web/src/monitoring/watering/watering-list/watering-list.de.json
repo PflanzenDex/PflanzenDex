@@ -1,6 +1,6 @@
 {
   "loading": "Gießliste wird geladen …",
-  "none.line": "Heute nichts zu gießen. Das Gießintervall trägst du im Pflegeprofil einer Art ein.",
+  "none.line": "Heute nichts zu gießen.",
   "since.never": "noch nie als gegossen eingetragen",
   "since.days": "zuletzt vor {days} Tagen gegossen",
   "interval": "Intervall alle {days}",
