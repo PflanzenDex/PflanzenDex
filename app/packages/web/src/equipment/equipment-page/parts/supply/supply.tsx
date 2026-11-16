@@ -6,12 +6,20 @@ import type { EquipmentRow, SupplyLevel } from "../../../equipment-api";
 import { SUPPLY_LABELS } from "../../../labels";
 import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import {
+  SegmentedControl,
+  type SegmentedOption,
+} from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../equipment.de.json";
 
 const t = texts(table);
 
 const LEVELS = ["available", "low", "empty"] as const satisfies readonly SupplyLevel[];
+const LEVEL_OPTIONS: readonly SegmentedOption<SupplyLevel>[] = LEVELS.map((level) => ({
+  value: level,
+  label: SUPPLY_LABELS[level],
+}));
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";
 
 export interface SupplyActions {
@@ -30,17 +38,17 @@ function LinkForm(props: { item: EquipmentRow; actions: SupplyActions }) {
   return (
     <FormRoot
       onSubmit={submit}
-      aria-label={`Verknüpfung für ${item.name}`}
+      aria-label={t("link.form", { name: item.name })}
       className="mt-2 flex flex-col gap-2"
     >
       <label className={LABEL}>
-        Text in der Behandlung (optional)
+        {t("link.field")}
         <Input value={text} onChange={(e) => setText(e.target.value)} />
       </label>
       {/* One line at 14 px (SG-COPY-05, SG-TYPE-03; the sentence was 12 px); the rest sits behind Mehr erfahren. */}
-      <MoreHelp more={t("link.more")}>Dein Behandlungstext bleibt, wie er ist.</MoreHelp>
+      <MoreHelp more={t("link.more")}>{t("link.note")}</MoreHelp>
       <Button type="submit" size="touch" variant="secondary" disabled={actions.busy}>
-        Verknüpfung speichern
+        {t("link.save")}
       </Button>
     </FormRoot>
   );
@@ -49,33 +57,30 @@ function LinkForm(props: { item: EquipmentRow; actions: SupplyActions }) {
 /**
  * The supply of a consumable (US-EQU-05): one tap sets it to available, low or empty. A consumable that is low or empty
  * is a need that "Was fehlt?" derives (US-EQU-07). A plant agent can be linked to the text of a treatment. A device has
- * no supply.
+ * no supply. The three levels are the shared segmented control under the visible label "Vorrat" (US-QS-32, SG-CTRL-01):
+ * the chosen one is pressed, nothing is filled as a primary button, and a tap writes at once.
  */
 export function Supply(props: { item: EquipmentRow; actions: SupplyActions }) {
   const { item, actions } = props;
   if (item.supply === null) return null;
   return (
     <div className="mt-2 flex flex-col gap-2 text-sm">
-      <div role="group" aria-label={`Vorrat von ${item.name}`} className="flex flex-wrap gap-2">
-        {LEVELS.map((level) => (
-          <Button
-            key={level}
-            type="button"
-            size="touch"
-            variant={item.supply === level ? "default" : "secondary"}
-            className="w-auto flex-1 px-2"
-            aria-pressed={item.supply === level}
-            disabled={actions.busy}
-            onClick={() => item.supply !== level && actions.onSupply(item, level)}
-          >
-            {SUPPLY_LABELS[level]}
-          </Button>
-        ))}
+      <div className="flex flex-col gap-1">
+        <p className="font-semibold">{t("supply.label")}</p>
+        <SegmentedControl
+          label={t("supply.group", { name: item.name })}
+          options={LEVEL_OPTIONS}
+          value={item.supply}
+          disabled={actions.busy}
+          onChange={(level) => {
+            if (level !== item.supply) actions.onSupply(item, level);
+          }}
+        />
       </div>
       {item.type === "Plant agent" ? (
         <details>
           <DisclosureSummary>
-            Verknüpfung mit Behandlungen{item.agentLink ? `: ${item.agentLink}` : " (keine)"}
+            {item.agentLink ? t("link.summary", { link: item.agentLink }) : t("link.summaryNone")}
           </DisclosureSummary>
           <LinkForm key={`${item.id}:${item.agentLink}`} item={item} actions={actions} />
         </details>

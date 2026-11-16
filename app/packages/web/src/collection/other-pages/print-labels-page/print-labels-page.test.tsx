@@ -86,8 +86,9 @@ const printRegion = () => screen.getByRole("region", { name: "Etiketten zum Druc
 const labelsOf = () => within(printRegion()).getAllByRole("article");
 const pick = async (user: ReturnType<typeof userEvent.setup>, name: RegExp) =>
   user.click(await screen.findByRole("checkbox", { name }));
+// The format is a segmented control (US-QS-32): "A4-Bogen" or "Einzeletikett", preselected, never empty.
 const chooseFormat = (user: ReturnType<typeof userEvent.setup>, format: string) =>
-  user.selectOptions(screen.getByRole("combobox", { name: "Format" }), format);
+  user.click(screen.getByRole("button", { name: format }));
 // The print button names its count: "Etiketten drucken", "1 Etikett drucken" or "3 Etiketten drucken" (US-QS-32).
 const printButton = () =>
   screen.getByRole("button", {
@@ -97,6 +98,8 @@ const printButton = () =>
 beforeEach(() => {
   vi.mocked(encode).mockClear();
   vi.spyOn(window, "print").mockImplementation(() => undefined);
+  // The last used format is kept on this device (US-QS-32): every test starts without it.
+  window.localStorage.clear();
 });
 
 afterEach(() => {
@@ -182,18 +185,21 @@ describe("US-BES-17 printing QR pot labels", () => {
 
   it("US-BES-17 with nothing chosen the button Etiketten drucken is disabled and says what to do next (P-09)", async () => {
     server([card()], { s1: species(null) });
-    const user = userEvent.setup();
     show();
     await screen.findByRole("checkbox", { name: /Aloe vera/ });
     expect(printButton().disabled).toBe(true);
     expect(screen.getByText("Wähle mindestens eine Pflanze aus.")).toBeTruthy();
+  });
+
+  it("US-QS-32 with only a plant chosen the print button is enabled: the format is preselected and the hint asks for nothing else", async () => {
+    server([card()], { s1: species(null) });
+    const user = userEvent.setup();
+    show();
     await pick(user, /Aloe vera/);
-    expect(printButton().disabled).toBe(true);
-    expect(screen.getByText("Wähle das Format: A4-Bogen oder Einzeletikett.")).toBeTruthy();
-    await chooseFormat(user, "Einzeletikett");
     await waitFor(() => expect(printButton().disabled).toBe(false));
     await user.click(printButton());
     expect(window.print).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Das Drucken öffnet das Druckfenster.")).toBeTruthy();
   });
 
   it("US-QS-32 the print button counts the chosen plants across the pages: 2, then 3 Etiketten drucken, 1 Etikett drucken", async () => {
@@ -253,6 +259,43 @@ describe("US-BES-17 printing QR pot labels", () => {
     show({ pot_labels: false });
     expect((await screen.findByTestId("address")).textContent).toBe("/collection");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("US-QS-32 the print format is a segmented control with a preselected choice", () => {
+  const pressed = (name: string) =>
+    screen.getByRole("button", { name }).getAttribute("aria-pressed");
+
+  it("US-QS-32 the format is a visible choice of A4-Bogen and Einzeletikett, and A4-Bogen is preselected on the first visit", async () => {
+    server([card()], { s1: species(null) });
+    show();
+    expect(await screen.findByRole("group", { name: "Format" })).toBeTruthy();
+    expect(screen.queryByRole("combobox", { name: "Format" })).toBeNull();
+    expect(pressed("A4-Bogen")).toBe("true");
+    expect(pressed("Einzeletikett")).toBe("false");
+    expect(screen.queryByRole("option", { name: "Format wählen" })).toBeNull();
+  });
+
+  it("US-QS-32 the last used format is preselected on the next visit", async () => {
+    server([card()], { s1: species(null) });
+    const user = userEvent.setup();
+    const first = show();
+    await screen.findByRole("group", { name: "Format" });
+    await chooseFormat(user, "Einzeletikett");
+    expect(pressed("Einzeletikett")).toBe("true");
+    first.unmount();
+    show();
+    expect(await screen.findByRole("group", { name: "Format" })).toBeTruthy();
+    expect(pressed("Einzeletikett")).toBe("true");
+    expect(pressed("A4-Bogen")).toBe("false");
+  });
+
+  it("US-QS-32 a stored format that is not one of the two falls back to A4-Bogen", async () => {
+    server([card()], { s1: species(null) });
+    window.localStorage.setItem("pflanzendex.print-labels-format", "pdf-tiny");
+    show();
+    expect(await screen.findByRole("group", { name: "Format" })).toBeTruthy();
+    expect(pressed("A4-Bogen")).toBe("true");
   });
 });
 

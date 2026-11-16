@@ -51,17 +51,63 @@ describe("US-QS-14 segmented control", () => {
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Pflanzen" }));
   });
 
-  it("US-QS-14 every segment is a 44 px target and the selected one carries a check mark besides the colour", () => {
+  it("US-QS-14 every segment is a 44 px target", () => {
     const { container } = render(<Host />);
     const labels = container.querySelectorAll("button");
     for (const l of labels) expect(l.className).toContain("min-h-[44px]");
-    expect(labels[0]?.querySelector("svg")).not.toBeNull();
+  });
+
+  it("US-QS-32 the selected segment has no check mark: the raised fill, the weight and the boundary tell it apart", () => {
+    const { container } = render(<Host />);
+    const labels = container.querySelectorAll("button");
+    expect(labels[0]?.querySelector("svg")).toBeNull();
     expect(labels[1]?.querySelector("svg")).toBeNull();
   });
 });
 
-describe("US-QS-14 segmented control on phones and in dark mode (issue 1045)", () => {
-  it("US-QS-14 the selected segment is green intent, readable in both modes", () => {
+describe("US-QS-32 segmented control: the selected segment (SG-CTRL-01)", () => {
+  const choice = (name: string) => screen.getByRole("button", { name });
+
+  it("US-QS-32 the selected segment has a semibold label in the text colour, the others a normal label in the muted colour", () => {
+    render(<Host />);
+    expect(choice("Pflanzen").className.split(" ")).toEqual(
+      expect.arrayContaining(["font-semibold", "text-foreground"]),
+    );
+    expect(choice("Arten").className.split(" ")).toEqual(
+      expect.arrayContaining(["font-normal", "text-muted-foreground"]),
+    );
+    expect(choice("Arten").className.split(" ")).not.toContain("font-semibold");
+  });
+
+  it("US-QS-32 the selected segment is a raised card fill with a 1 px boundary in the field colour, not a green fill", () => {
+    render(<Host />);
+    const selected = choice("Pflanzen").className.split(" ");
+    expect(selected).toEqual(
+      expect.arrayContaining(["bg-card", "shadow-elevation-1", "border", "border-input"]),
+    );
+    expect(selected).not.toContain("bg-accent");
+  });
+
+  it("US-QS-32 the other segments carry a transparent boundary of the same width, so nothing jumps when the selection moves", () => {
+    render(<Host />);
+    const other = choice("Arten").className.split(" ");
+    expect(other).toEqual(expect.arrayContaining(["border", "border-transparent"]));
+    expect(other).not.toContain("border-input");
+    expect(other).not.toContain("bg-card");
+  });
+
+  it("US-QS-32 the segments share the full width in equal columns, not a pill that fits its text", () => {
+    const { container } = render(<Host />);
+    const group = container.querySelector('[role="group"]');
+    expect(group?.className).toContain("w-full");
+    expect(group?.className).toContain("auto-cols-fr");
+    expect(group?.className).not.toContain("w-fit");
+    expect(group?.className).not.toContain("inline-flex");
+  });
+});
+
+describe("US-QS-32 segmented control on phones and in dark mode (issue 1045)", () => {
+  it("US-QS-32 the selected segment is a raised card fill in both modes, readable beside the track", () => {
     render(
       <SegmentedControl
         label="Ansicht der Sammlung"
@@ -73,8 +119,44 @@ describe("US-QS-14 segmented control on phones and in dark mode (issue 1045)", (
         onChange={() => {}}
       />,
     );
-    expect(screen.getByRole("button", { name: "Arten" }).className).toContain("bg-accent");
-    expect(screen.getByRole("button", { name: "Pflanzen" }).className).not.toContain("bg-accent");
+    expect(screen.getByRole("button", { name: "Arten" }).className).toContain("bg-card");
+    expect(screen.getByRole("button", { name: "Pflanzen" }).className).not.toContain("bg-card");
+  });
+});
+
+describe("US-QS-32 segmented control with four choices (the Sammlung switch)", () => {
+  const FOUR = [
+    { value: "plants", label: "Pflanzen" },
+    { value: "species", label: "Arten" },
+    { value: "wishlist", label: "Wünsche" },
+    { value: "equipment", label: "Geräte" },
+  ];
+
+  it("US-QS-32 four choices sit in a container: two columns, and four from a container width given in rem", () => {
+    const { container } = render(
+      <SegmentedControl label="Ansicht" options={FOUR} value="plants" onChange={() => undefined} />,
+    );
+    const wrapper = container.firstElementChild;
+    expect(wrapper?.className).toContain("@container");
+    const group = container.querySelector('[role="group"]');
+    expect(group?.parentElement).toBe(wrapper);
+    expect(group?.className).toContain("grid-cols-2");
+    expect(group?.className).toMatch(/@min-\[[\d.]+rem\]:grid-cols-4/);
+  });
+
+  it("US-QS-32 four choices carry no sideways marker: at a larger text size they wrap to two rows instead of scrolling", () => {
+    const { container } = render(
+      <SegmentedControl label="Ansicht" options={FOUR} value="plants" onChange={() => undefined} />,
+    );
+    expect(container.querySelector('[role="group"]')?.getAttribute("data-scroll-x")).toBeNull();
+  });
+
+  it("US-QS-32 two or three choices keep one row that scrolls sideways at a larger text size, and no grid of two", () => {
+    const { container } = render(<Host />);
+    const group = container.querySelector('[role="group"]');
+    expect(group?.getAttribute("data-scroll-x")).toBe("row");
+    expect(group?.className).not.toContain("grid-cols-2");
+    expect(group?.className).not.toContain("@min-");
   });
 });
 

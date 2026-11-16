@@ -1,4 +1,4 @@
-import { Check, OctagonAlert } from "lucide-react";
+import { OctagonAlert } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "../../../ui/button/button";
 
@@ -20,26 +20,40 @@ export type SegmentedControlProps<V extends string> = {
    * accessible name carries after the label, e.g. "1 Angabe fehlt". The component reads no German text itself.
    */
   alerts?: Readonly<Partial<Record<V, string | undefined>>>;
+  /** Locks every segment while an action runs (the busy state of a write); a locked segment is not pressed. */
+  disabled?: boolean;
   className?: string;
 };
 
+// Two or three choices: one row of equal columns, the segments share the full width (SG-CTRL-01).
+const ROW_LAYOUT = "grid-flow-col auto-cols-fr";
+// Four choices (the Sammlung switch, issue 1858): two columns, and one row of four from a container width given in rem.
+// A rem threshold grows with the text size, so at a larger text size the four stay visible as a 2 x 2 grid.
+const FOUR_LAYOUT = "grid-cols-2 @min-[20rem]:grid-cols-4";
+
 /**
- * A pill group of two or three exclusive choices (US-QS-14, DS-15): toggle buttons in a named group, so Tab reaches
- * every segment, Enter and Space choose, and screen readers say which one is pressed. Every segment is a 44 px target;
- * the selected one is a raised pill with a check mark and a visible focus ring, so colour is never the only sign.
- * The choices stay in one row: at a larger text size the row scrolls sideways inside its own box instead of running past
- * the right edge or taking the height of the screen (issue 1019). Every choice keeps its width. `data-scroll-x="row"` tells
- * the one-screen gate that this row may scroll sideways at 200 % text (issue 1183); at normal text size it must fit.
+ * A segmented control of two to four exclusive choices (US-QS-14, DS-15, US-QS-32, SG-CTRL-01): toggle buttons in a named
+ * group, so Tab reaches every segment, Enter and Space choose, and screen readers say which one is pressed. Every segment
+ * is a 44 px target that shares the full width. The selected one is a raised card fill with a semibold label and a 1 px
+ * boundary in the field colour; the others carry the same boundary, transparent, so nothing jumps. The selection is never
+ * shown by colour alone.
+ * Two or three choices stay in one row: at a larger text size the row scrolls sideways inside its own box instead of
+ * running past the right edge or taking the height of the screen (issue 1019). `data-scroll-x="row"` tells the one-screen
+ * gate that this row may scroll sideways at 200 % text (issue 1183); at normal text size it must fit.
+ * Four choices are one row at normal text on a phone and a 2 x 2 grid at a larger text size, so every view stays visible
+ * (issue 1858). The grid is judged by the width of its container (a container query in rem), not by the viewport.
  */
 export function SegmentedControl<V extends string>(props: SegmentedControlProps<V>) {
-  const { options, value, onChange, alerts } = props;
-  return (
+  const { options, value, onChange, alerts, disabled } = props;
+  const four = options.length === 4;
+  const group = (
     <div
       role="group"
       aria-label={props.label}
-      data-scroll-x="row"
+      data-scroll-x={four ? undefined : "row"}
       className={cn(
-        "inline-flex w-fit max-w-full gap-1 overflow-x-auto overscroll-x-contain rounded-full bg-muted p-1 [scrollbar-width:none]",
+        "grid w-full gap-1 overflow-x-auto overscroll-x-contain rounded-full bg-muted p-1 [scrollbar-width:none]",
+        four ? FOUR_LAYOUT : ROW_LAYOUT,
         props.className,
       )}
     >
@@ -50,17 +64,17 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
             key={o.value}
             type="button"
             variant="ghost"
+            disabled={disabled}
             aria-pressed={selected}
             aria-keyshortcuts={o.keyHint?.aria}
             onClick={() => onChange(o.value)}
             className={cn(
-              "min-w-[44px] shrink-0 gap-1 rounded-full px-2 font-semibold",
+              "min-w-[44px] shrink-0 gap-1 rounded-full border px-2",
               selected
-                ? "bg-accent text-accent-foreground shadow-elevation-1 hover:bg-accent forced-colors:border-[color:Highlight]"
-                : "text-muted-foreground hover:bg-transparent hover:text-foreground",
+                ? "border-input bg-card font-semibold text-foreground shadow-elevation-1 hover:bg-card hover:text-foreground forced-colors:border-[color:Highlight]"
+                : "border-transparent font-normal text-muted-foreground hover:bg-transparent hover:text-foreground",
             )}
           >
-            {selected ? <Check aria-hidden="true" className="size-4 shrink-0" /> : null}
             {o.label}
             {alerts?.[o.value] ? (
               <>
@@ -78,4 +92,6 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
       })}
     </div>
   );
+  // The container of the four-choice grid: its width, not the viewport's, decides the columns (the container query).
+  return four ? <div className="@container w-full">{group}</div> : group;
 }
