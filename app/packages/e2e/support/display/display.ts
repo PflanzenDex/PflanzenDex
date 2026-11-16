@@ -30,7 +30,9 @@ export async function signInToApp(page: Page, account: TestAccount): Promise<voi
   await page.locator("#username").fill(account.email);
   await page.locator("#password").fill(account.password);
   await page.locator("#kc-login").click();
-  await expect(page.getByRole("link", { name: "PflanzenDéx, zu Heute" })).toBeVisible();
+  // The brand leaves the top bar while a page claims it (US-QS-32): the main region and the page's heading stand on every width.
+  await expect(page.locator("#inhalt")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
 }
 
 /** Opens a view and waits until it has loaded: a main heading and no running request. */

@@ -391,3 +391,16 @@ describe("US-BES-19 the keeper ticks what they see in the layer and the hint fol
     ]);
   });
 });
+
+describe("US-QS-32 the layer Beobachtungen names its plant on the first line under the title (#1971)", () => {
+  it("US-QS-32 the plant's name is the first line under the sheet title, in the content, not a second heading", async () => {
+    fakeRepotServer();
+    renderCollection();
+    const dialog = await openSigns((await openPlan()) as HTMLElement);
+    expect(within(dialog).getByRole("heading", { name: "Beobachtungen" })).toBeTruthy();
+    const subject = within(dialog).getByText("Bogenhanf", { selector: "p" });
+    expect(subject.className).toContain("text-base");
+    expect(subject.className).toContain("line-clamp-2");
+    expect(within(dialog).queryAllByRole("heading")).toHaveLength(1);
+  });
+});

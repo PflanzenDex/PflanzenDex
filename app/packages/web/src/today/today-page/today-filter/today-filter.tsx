@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "@/shared/ui/button/button";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../today.de.json";
 
@@ -13,9 +14,7 @@ const t = texts(table);
 export function TodayFilter(props: { onClear: () => void; children: ReactNode }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-2">
-      <h1 id="today-title" className="text-2xl font-semibold">
-        {t("page.title")}
-      </h1>
+      <PageHeader headingId="today-title" title={t("page.title")} />
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3">
         <p className="min-w-0 text-sm">
           <span className="font-medium">{t("filter.shown")}</span> {t("filter.hidden")}

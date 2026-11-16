@@ -45,7 +45,8 @@ test.describe("US-ACC-01 sign-in", () => {
     await expect(card.getByText(account.email, { exact: true })).toBeVisible();
     await page.reload();
     // After reloading the app is back on Heute, without signing in again at the sign-in service.
-    await expect(page.getByRole("link", { name: "PflanzenDéx, zu Heute" })).toBeVisible();
+    await expect(page.locator("#inhalt")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toHaveCount(0);
   });
 
@@ -95,7 +96,8 @@ test.describe("US-ACC-01 another account", () => {
     await page.locator("#username").fill(other.email);
     await page.locator("#password").fill(other.password);
     await page.locator("#kc-login").click();
-    await expect(page.getByRole("link", { name: "PflanzenDéx, zu Heute" })).toBeVisible();
+    await expect(page.locator("#inhalt")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
     await page.getByRole("link", { name: "Konto", exact: true }).click();
     const index = page.getByRole("navigation", { name: "Abschnitte von Konto" });
     await expect(index.getByText(other.email, { exact: true })).toBeVisible();

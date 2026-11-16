@@ -14,7 +14,7 @@ import {
 } from "@/shared/ui/fields/form/form";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
 import type { ApiError } from "../../../../shared/data";
-import { FormButtons, Quiet, TITLE, ErrorNotice } from "../../../specimens/cards/parts/parts";
+import { FormButtons, Quiet, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import {
   catchDateSchema,
@@ -25,6 +25,7 @@ import { correctCatchDate } from "../../../specimens/model/specimens-api";
 import { UNKNOWN, dateText } from "../../../specimens/model/text";
 import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { useToday } from "../use-today";
 import table from "./catch-date-field.de.json";
@@ -133,11 +134,13 @@ export function CatchDateForm(props: {
   );
   const submit = form.handleSubmit(async (values) => setError(await send(values.catchDate)));
   return (
-    <section aria-labelledby="catch-date-title">
-      <h1 id="catch-date-title" className={TITLE}>
-        Fangdatum korrigieren
-      </h1>
-      <p className="mb-2 text-muted-foreground">„{open.name}“</p>
+    <section aria-labelledby="catch-date-title" className="flex min-w-0 flex-col gap-2">
+      <PageHeader
+        headingId="catch-date-title"
+        title={tx("title")}
+        subject={open.name}
+        back={{ label: tx("back"), onBack: () => setOpen(null) }}
+      />
       <Quiet className="mb-5">
         Bisher: {open.caughtAt ? dateText(open.caughtAt) : UNKNOWN}. Nur das Fangdatum ändert sich;
         die Ansicht „Arten“ rechnet mit dem neuen Datum.

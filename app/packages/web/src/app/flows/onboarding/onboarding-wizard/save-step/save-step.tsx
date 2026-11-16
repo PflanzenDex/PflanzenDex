@@ -120,7 +120,7 @@ export function SaveStep(props: {
   };
   return (
     <section className="flex flex-col gap-3">
-      <h2 ref={heading} tabIndex={-1} className="text-xl font-semibold">
+      <h2 ref={heading} tabIndex={-1} className="text-base font-semibold">
         {props.stepLabel && <span className="sr-only">{`${props.stepLabel}:`}</span>}
         {props.stepLabel && " "}
         {ui("title")}

@@ -138,7 +138,7 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
     const user = userEvent.setup();
     show();
     await user.click(await screen.findByRole("button", { name: "Messen" }));
-    expect(await screen.findByRole("heading", { name: "Messen: Aloe vera" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Messen" })).toBeTruthy();
     // The form waits for the measurement view (its skeleton shows until then).
     expect(await screen.findByLabelText(/Messwert/)).toBeTruthy();
     expect(await screen.findByRole("button", { name: "Messung speichern" })).toBeTruthy();

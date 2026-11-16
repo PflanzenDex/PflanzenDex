@@ -14,7 +14,7 @@ import {
 import { Select } from "@/shared/ui/fields/select/select";
 import type { ApiError } from "../../../../shared/data";
 import { loadCard } from "../../../specimens/cards/cards-api";
-import { FormButtons, Quiet, TITLE, ErrorNotice } from "../../../specimens/cards/parts/parts";
+import { FormButtons, Quiet, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { useZones } from "../../../specimens/create/use-create";
 import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
 import { refusalText } from "@/shared/lib/error-text";
@@ -22,6 +22,7 @@ import { setLightZone } from "../../../specimens/model/specimens-api";
 import { zoneText } from "../../../specimens/model/text";
 import { zoneLabel } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import table from "./light-zone-form.de.json";
 
@@ -125,11 +126,13 @@ export function LightZoneForm(props: {
     setError(await send(lightZoneId === "" ? null : lightZoneId)),
   );
   return (
-    <section aria-labelledby="light-zone-title">
-      <h1 id="light-zone-title" className={TITLE}>
-        Lichtzone ändern
-      </h1>
-      <p className="mb-2 text-muted-foreground">„{card.name}“</p>
+    <section aria-labelledby="light-zone-title" className="flex min-w-0 flex-col gap-2">
+      <PageHeader
+        headingId="light-zone-title"
+        title={tx("title")}
+        subject={card.name}
+        back={{ label: tx("back"), onBack: () => setOpen(null) }}
+      />
       <Quiet className="mb-5">
         Jetzt: {zoneText(card)}.{" "}
         {card.status === "cutting"

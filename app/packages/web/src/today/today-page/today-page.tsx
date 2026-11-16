@@ -1,5 +1,6 @@
 import { useCallback, type ReactNode } from "react";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { useRequest } from "../../shared/data";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
@@ -53,9 +54,7 @@ export function TodayPage(props: {
     // No min-h-0 here either (issue 1662): the page never shrinks below its content. With min-h-0 the page took the free
     // height and the content past it lay under whatever followed it (the anniversary card then, a tile now).
     <div className="flex min-w-0 flex-1 flex-col gap-2">
-      <h1 id="today-title" className="text-2xl font-semibold">
-        {t("page.title")}
-      </h1>
+      <PageHeader headingId="today-title" title={t("page.title")} />
       {props.summary?.(treatmentFirst)}
       <section aria-labelledby="now-title" className="flex min-w-0 flex-col gap-2">
         <h2 id="now-title" className="sr-only">

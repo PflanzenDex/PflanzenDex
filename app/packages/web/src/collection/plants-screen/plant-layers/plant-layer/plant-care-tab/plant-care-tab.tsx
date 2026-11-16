@@ -7,6 +7,7 @@ import {
   type SegmentedOption,
 } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { PageSubject } from "@/shared/patterns/navigation/page-header/page-header";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { refusalText } from "@/shared/lib/error-text";
 import { Button } from "@/shared/ui/button/button";
@@ -122,6 +123,8 @@ export function RepotSignsLayer(props: { card: SpecimenCard; access: PhotoAccess
   const loading = useHeldLoader(plan.status === "pending");
   return (
     <LayerSheet id={signsLayerId(props.card.id)} title={t("signs.layerTitle")}>
+      {/* The plant's name is the first line under the sheet title (SG-HEAD-01, US-QS-32). */}
+      <PageSubject>{props.card.name}</PageSubject>
       {loading ? (
         <DelayedSkeleton>
           <p role="status" className="text-sm text-muted-foreground">

@@ -800,7 +800,9 @@ describe("US-QS-14 · US-QS-15 the measure page is a sub-page with one page head
   it("US-QS-14 has one h1, and its back control sits in that page header", async () => {
     fakeServer();
     show();
-    const title = await screen.findByRole("heading", { level: 1, name: /^Messen: / });
+    const title = await screen.findByRole("heading", { level: 1, name: "Messen" });
+    // The plant name is the subject under the title, in the content (US-QS-32).
+    expect(screen.getByText("Bogenhanf")).toBeTruthy();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     const header = title.closest("[data-page-header]") as HTMLElement | null;
     expect(header).not.toBeNull();

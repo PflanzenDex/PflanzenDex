@@ -113,7 +113,8 @@ export function MeasurePage(props: MeasurePageProps) {
     <section aria-labelledby="measure-title" className="flex min-w-0 flex-col gap-3">
       <PageHeader
         headingId="measure-title"
-        title={`Messen: ${specimen.name}`}
+        title="Messen"
+        subject={specimen.name}
         back={{ label: "Zurück zur Sammlung", onBack: props.onBack }}
       />
       <LoadFrame

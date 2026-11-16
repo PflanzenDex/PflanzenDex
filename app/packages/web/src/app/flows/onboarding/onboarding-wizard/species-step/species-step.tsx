@@ -111,7 +111,7 @@ export function SpeciesStep(props: {
   };
   return (
     <section className="flex flex-col gap-3">
-      <h2 tabIndex={-1} className="text-xl font-semibold">
+      <h2 tabIndex={-1} className="text-base font-semibold">
         {props.stepLabel && <span className="sr-only">{`${props.stepLabel}:`}</span>}
         {props.stepLabel && " "}
         {props.title ?? "Deine erste Pflanze"}

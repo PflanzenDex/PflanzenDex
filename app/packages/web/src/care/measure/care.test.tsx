@@ -330,7 +330,9 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     );
     expect(await screen.findByRole("status")).toBeTruthy();
     const html = container.innerHTML;
-    expect(html).toContain("Messen: Bogenhanf");
+    // The title is "Messen" and the plant name is the line under it (US-QS-32).
+    expect(html).toContain(">Messen<");
+    expect(html).toContain("Bogenhanf");
     expect(html).toContain("Messungen werden geladen");
     expect(html).toContain("Zurück zur Sammlung");
   });

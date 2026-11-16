@@ -1,15 +1,43 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { PageHeader } from "./page-header";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { composeStories } from "@storybook/react-vite";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { AppBarSlotProvider, useAppBarSlot } from "./app-bar-slot/app-bar-slot";
+import { PageHeader, type PageActions } from "./page-header";
+import * as stories from "./page-header.stories";
 
 /** Renders inside a router, because the back control of a page is a link to its address. */
 const inRouter = (ui: ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
+/** The top bar of the shell in miniature: the slot element a page header goes into (the real one is GlobalHeader). */
+function TestBar() {
+  const bar = useAppBarSlot();
+  return (
+    <header>
+      {bar?.claimed ? null : <span>Marke</span>}
+      <div data-app-bar-slot="" ref={bar?.setElement} />
+    </header>
+  );
+}
+
+/** A shell with a bar and a content region, as AppShell lays them out: the bar first, the page in `main`. */
+function InShell(props: { children: ReactElement }) {
+  return (
+    <MemoryRouter>
+      <AppBarSlotProvider>
+        <TestBar />
+        <main>{props.children}</main>
+      </AppBarSlotProvider>
+    </MemoryRouter>
+  );
+}
+
 afterEach(cleanup);
+beforeEach(() => setViewportWidth(360));
 
 describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => {
   it("US-QS-14 renders the title as the one h1 of the page", () => {
@@ -168,5 +196,184 @@ describe("US-QS-14 · US-QS-15 PageHeader, the one header of a sub-page", () => 
     expect(title.className).toContain("min-w-20");
     expect(title.className).toContain("[overflow-wrap:anywhere]");
     expect(title.className).not.toContain("min-w-min");
+  });
+});
+
+describe("US-QS-32 PageHeader in the top bar below md (SG-HEAD-01, SG-HEAD-04, SG-HEAD-05)", () => {
+  const back = { label: "Zurück zu Freunde", to: "/friends" };
+
+  it("US-QS-32 below md the h1, the way back and the actions go into the bar, and the content keeps none of them", () => {
+    const { container } = render(
+      <InShell>
+        <PageHeader
+          title="Tauschbörse"
+          back={back}
+          actions={[
+            <button key="a" type="button">
+              Zum Tausch anbieten
+            </button>,
+            <button key="b" type="button">
+              Mehr
+            </button>,
+          ]}
+        />
+      </InShell>,
+    );
+    const bar = container.querySelector("[data-app-bar-slot]") as HTMLElement;
+    const content = container.querySelector("main") as HTMLElement;
+    expect(within(bar).getByRole("heading", { level: 1 }).textContent).toBe("Tauschbörse");
+    expect(within(bar).getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
+      "/friends",
+    );
+    expect(
+      within(bar)
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["Zum Tausch anbieten", "Mehr"]);
+    expect(content.querySelector("h1")).toBeNull();
+    expect(content.querySelector("[data-page-header]")).toBeNull();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
+
+  it("US-QS-32 below md the bar title is 18 px semibold and wraps instead of being cut, the row is at least 44 px high", () => {
+    render(
+      <InShell>
+        <PageHeader title="Tauschbörse" back={back} />
+      </InShell>,
+    );
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(title.className).toContain("text-lg");
+    expect(title.className).toContain("font-semibold");
+    expect(title.className).toContain("break-words");
+    expect(title.className).not.toContain("truncate");
+    expect(document.querySelector("[data-page-header]")?.className).toContain("min-h-[44px]");
+  });
+
+  it("US-QS-32 in the bar an action wraps below the title and the title keeps its longest word, so no bar row squeezes the title to nothing at 200 % text (FX-44)", () => {
+    render(
+      <InShell>
+        <PageHeader
+          title="Tauschbörse"
+          back={back}
+          action={<button type="button">Zum Tausch anbieten</button>}
+        />
+      </InShell>,
+    );
+    const row = document.querySelector("[data-app-bar-slot] [data-page-header]") as HTMLElement;
+    expect(row.className.split(" ")).toContain("flex-wrap");
+    const title = within(row).getByRole("heading", { level: 1 });
+    expect(title.className.split(" ")).toContain("min-w-min");
+    expect(title.className.split(" ")).not.toContain("min-w-0");
+    expect(title.className).toContain("text-lg");
+  });
+
+  it("US-QS-32 the bar's back control keeps its 44 px target and stays at the leading edge", () => {
+    render(
+      <InShell>
+        <PageHeader title="Tauschbörse" back={back} />
+      </InShell>,
+    );
+    const link = screen.getByRole("link", { name: "Zurück zu Freunde" });
+    expect(link.className).toContain("min-h-[44px]");
+    expect(link.className).toContain("min-w-[44px]");
+    expect(link.className).toContain("shrink-0");
+    expect(link.parentElement?.closest("[data-app-bar-slot]")).not.toBeNull();
+    expect(link.parentElement?.firstElementChild).toBe(link);
+  });
+
+  it("US-QS-32 wide (md and up) the header stays in the content, as before, even with a bar", () => {
+    setViewportWidth(1024);
+    const { container } = render(
+      <InShell>
+        <PageHeader title="Tauschbörse" back={back} />
+      </InShell>,
+    );
+    expect((container.querySelector("[data-app-bar-slot]") as HTMLElement).children).toHaveLength(
+      0,
+    );
+    expect(container.querySelector("main h1")?.textContent).toBe("Tauschbörse");
+    expect(screen.getByRole("heading", { level: 1 }).className).toContain("text-2xl");
+  });
+
+  it("US-QS-32 without a bar (no shell) the header stays in the content on a phone", () => {
+    const { container } = inRouter(<PageHeader title="Freunde" />);
+    expect(container.querySelector("h1")?.textContent).toBe("Freunde");
+  });
+
+  it("US-QS-32 a section header (h2) never goes into the bar", () => {
+    const { container } = render(
+      <InShell>
+        <PageHeader title="Profil" heading="h2" />
+      </InShell>,
+    );
+    expect((container.querySelector("[data-app-bar-slot]") as HTMLElement).children).toHaveLength(
+      0,
+    );
+    expect(container.querySelector("main h2")?.textContent).toBe("Profil");
+  });
+
+  it("US-QS-32 the subject (the object's name) stays inline in the content, never in the bar", () => {
+    const { container } = render(
+      <InShell>
+        <PageHeader title="Messen" back={back} subject="Aloe vera" />
+      </InShell>,
+    );
+    const bar = container.querySelector("[data-app-bar-slot]") as HTMLElement;
+    const content = container.querySelector("main") as HTMLElement;
+    expect(within(bar).queryByText("Aloe vera")).toBeNull();
+    const subject = within(content).getByText("Aloe vera");
+    expect(subject.tagName).toBe("P");
+    expect(subject.className).toContain("text-base");
+    expect(subject.className).toContain("font-semibold");
+    expect(subject.className).toContain("line-clamp-2");
+    expect(subject.className).toContain("break-words");
+  });
+
+  it("US-QS-32 at most two actions: two render in the bar, the type allows no third", () => {
+    const pair: PageActions = [<span key="a" />, <span key="b" />];
+    // @ts-expect-error SG-HEAD-04, SG-HEAD-05: a third action is refused by the type
+    const three: PageActions = [<span key="a" />, <span key="b" />, <span key="c" />];
+    expect(pair.length + three.length).toBe(5);
+    const { container } = render(
+      <InShell>
+        <PageHeader title="Sammlung" actions={pair} />
+      </InShell>,
+    );
+    expect(
+      (container.querySelector("[data-app-bar-slot]") as HTMLElement).children[0]?.querySelectorAll(
+        "span",
+      ),
+    ).toHaveLength(2);
+  });
+
+  it("US-QS-32 the claim is released when the header unmounts: the brand comes back", () => {
+    const { rerender, container } = render(
+      <InShell>
+        <PageHeader title="Heute" />
+      </InShell>,
+    );
+    expect(container.querySelector("[data-app-bar-slot] h1")).not.toBeNull();
+    rerender(
+      <InShell>
+        <p>Keine Kopfzeile</p>
+      </InShell>,
+    );
+    expect(container.querySelector("[data-app-bar-slot] h1")).toBeNull();
+  });
+});
+
+describe("US-QS-32 the catalog stories of PageHeader render (TE-18, DS-64)", () => {
+  const { Default, WithAction, WithoutBack, SectionHeading, WithSubject, InTopBar } =
+    composeStories(stories);
+
+  it("US-QS-32 every story renders its heading, and InTopBar puts the h1 into the bar", () => {
+    for (const Story of [Default, WithAction, WithoutBack, SectionHeading, WithSubject]) {
+      const { unmount } = render(<Story />);
+      expect(screen.getAllByRole("heading").length).toBeGreaterThan(0);
+      unmount();
+    }
+    render(<InTopBar />);
+    const bar = document.querySelector("[data-app-bar-slot]") as HTMLElement;
+    expect(within(bar).getByRole("heading", { level: 1, name: "Tauschbörse" })).toBeTruthy();
   });
 });

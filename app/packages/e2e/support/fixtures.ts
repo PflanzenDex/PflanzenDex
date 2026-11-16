@@ -10,8 +10,9 @@ export async function signIn(page: Page, account: TestAccount): Promise<void> {
   await page.locator("#username").fill(account.email);
   await page.locator("#password").fill(account.password);
   await page.locator("#kc-login").click();
-  // The brand link stands on every width: in the top bar on the phone, in the side navigation on desktop.
-  await expect(page.getByRole("link", { name: "PflanzenDéx, zu Heute" })).toBeVisible();
+  // The brand leaves the top bar while a page claims it (US-QS-32): the main region and the page's heading stand on every width.
+  await expect(page.locator("#inhalt")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
 }
 
 /** Login, then open the management of locations and light zones (below the plants of the Sammlung, US-QS-14). */

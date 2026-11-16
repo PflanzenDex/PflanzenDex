@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router";
 import { findCardButton, openArchive } from "../specimens/tests/plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { archiveSpecimen, loadArchived, restoreSpecimen } from "./archived-api";
+import { ArchiveForm } from "./archived-form/archived-form";
 import { CollectionPage } from "../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
 import { answerCardRead } from "../specimens/tests/cards-fake";
@@ -289,5 +290,17 @@ describe("US-BES-07 archive and restore", () => {
     expect(refusal.closest('[aria-live="assertive"]')).not.toBeNull();
     await openArchive();
     expect(await screen.findByRole("region", { name: "Archiv" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 the archive form is a full view: the task in the header, the plant's name as the subject", () => {
+  it("US-QS-32 one h1 with the task, the name on the line under it, and a back control to the Sammlung that cancels", async () => {
+    const onCancel = vi.fn();
+    render(<ArchiveForm name="Bogenhanf" onSend={vi.fn(async () => null)} onCancel={onCancel} />);
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("heading", { level: 1, name: "Pflanze archivieren" })).toBeTruthy();
+    expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    expect(onCancel).toHaveBeenCalledOnce();
   });
 });

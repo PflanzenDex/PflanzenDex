@@ -66,11 +66,11 @@ function SectionView(props: Props & { section: AccountSection; byDefault?: boole
         title={info.title}
         skeleton={<AccountSectionSkeleton section={rest.section} label={info.loading} />}
         heading={
-          // The section's name is the one h1; the way back "Zurück zu Konto" is the page header's (issue 1031). From
-          // 1280 px the index stands beside the section, so the way back is hidden there.
+          // The section's name is the one h1 and "Zurück zu Konto" its way back (issue 1031); from 1280 px the index is beside it.
           <PageHeader
             headingId={id}
             title={info.title}
+            inContent
             // The help entry of the keyboard shortcuts sits beside the title, in the row the way back already takes (US-QS-11).
             {...(rest.section === "functions" ? { action: <ShortcutHelpButton /> } : {})}
             {...(byDefault

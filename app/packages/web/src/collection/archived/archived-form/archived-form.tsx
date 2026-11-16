@@ -15,8 +15,10 @@ import {
 import { Input } from "@/shared/ui/fields/input/input";
 import { Select } from "@/shared/ui/fields/select/select";
 import type { ApiError } from "../../../shared/data";
-import { FormButtons, Quiet, TITLE, ErrorNotice } from "../../specimens/cards/parts/parts";
+import { FormButtons, Quiet, ErrorNotice } from "../../specimens/cards/parts/parts";
 import { refusalText } from "@/shared/lib/error-text";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { useEdited } from "../../specimens/model/refusal";
 import {
   archiveSchema,
@@ -24,6 +26,9 @@ import {
   reasonOf,
   type ArchiveFields,
 } from "../../specimens/model/schemas";
+
+import table from "./archived-form.de.json";
+const tx = texts(table);
 
 /** The own reason is only asked for after "anderer Grund …" is chosen; it keeps its place in the focus order. */
 function OwnReason({ control }: { control: Control<ArchiveFields> }) {
@@ -93,10 +98,13 @@ export function ArchiveForm(props: {
     setError(await props.onSend(reasonOf(values))),
   );
   return (
-    <section aria-labelledby="archive-title">
-      <h1 id="archive-title" className={TITLE}>
-        Pflanze archivieren
-      </h1>
+    <section aria-labelledby="archive-title" className="flex min-w-0 flex-col gap-2">
+      <PageHeader
+        headingId="archive-title"
+        title={tx("title")}
+        subject={props.name}
+        back={{ label: tx("back"), onBack: props.onCancel }}
+      />
       <p className="mb-2 text-muted-foreground">
         „{props.name}“ verschwindet aus der Liste und aus den Auswertungen.
       </p>
