@@ -6,6 +6,7 @@ import {
   DelayedSkeleton,
   SKELETON_DELAY_MS,
   beginAppStart,
+  runWithoutEndingStart,
   STATUS_HOLD_MS,
   useHeldLoader,
 } from "./delayed-skeleton";
@@ -295,6 +296,29 @@ describe("US-QS-32 the app start shows its skeletons without the delay (SG-STATE
   it("US-QS-32 · Q-27 going back in the history ends the start too", () => {
     const end = beginAppStart();
     try {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      render(loading);
+      expect(screen.queryByRole("status")).toBeNull();
+    } finally {
+      end();
+    }
+  });
+
+  it("US-QS-32 · the sign-in return puts its address back without an act of the keeper: the popstate of that keeps the start (issue 2244)", () => {
+    const end = beginAppStart();
+    try {
+      runWithoutEndingStart(() => window.dispatchEvent(new PopStateEvent("popstate")));
+      render(loading);
+      expect(screen.getAllByRole("status")).toHaveLength(1);
+    } finally {
+      end();
+    }
+  });
+
+  it("US-QS-32 · the start ends with a back or forward after the address was put back (issue 2244)", () => {
+    const end = beginAppStart();
+    try {
+      runWithoutEndingStart(() => window.dispatchEvent(new PopStateEvent("popstate")));
       window.dispatchEvent(new PopStateEvent("popstate"));
       render(loading);
       expect(screen.queryByRole("status")).toBeNull();
