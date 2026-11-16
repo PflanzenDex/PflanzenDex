@@ -311,5 +311,10 @@ describe("US-QS-32 the catch-date form is a full view: the task in the header, t
     expect(screen.getByRole("heading", { level: 1, name: "Fangdatum korrigieren" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
     expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
+    // The chevron closes the form (US-QS-32, SG-HEAD-04).
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { level: 1, name: "Fangdatum korrigieren" })).toBeNull(),
+    );
   });
 });

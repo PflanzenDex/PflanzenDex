@@ -194,5 +194,10 @@ describe("US-QS-32 the repot form is a full view: the task in the header, one h1
     expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
     // The subject line sits in the section, beside the form (PageHeader), not inside it.
     expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
+    // The chevron closes the form (US-QS-32, SG-HEAD-04).
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { level: 1, name: "Pflanze umtopfen" })).toBeNull(),
+    );
   });
 });

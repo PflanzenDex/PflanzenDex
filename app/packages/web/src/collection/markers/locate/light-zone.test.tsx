@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
@@ -239,5 +239,10 @@ describe("US-QS-32 the light-zone form is a full view: the task in the header, t
     expect(screen.getByRole("heading", { level: 1, name: "Lichtzone ändern" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
     expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
+    // The chevron closes the form (US-QS-32, SG-HEAD-04).
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { level: 1, name: "Lichtzone ändern" })).toBeNull(),
+    );
   });
 });

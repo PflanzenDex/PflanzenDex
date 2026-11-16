@@ -4,9 +4,11 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { composeStories } from "@storybook/react-vite";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { AppBarSlotProvider, useAppBarSlot } from "./app-bar-slot/app-bar-slot";
 import { PageHeader, type PageActions } from "./page-header";
+import * as stories from "./page-header.stories";
 
 /** Renders inside a router, because the back control of a page is a link to its address. */
 const inRouter = (ui: ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
@@ -357,5 +359,21 @@ describe("US-QS-32 PageHeader in the top bar below md (SG-HEAD-01, SG-HEAD-04, S
       </InShell>,
     );
     expect(container.querySelector("[data-app-bar-slot] h1")).toBeNull();
+  });
+});
+
+describe("US-QS-32 the catalog stories of PageHeader render (TE-18, DS-64)", () => {
+  const { Default, WithAction, WithoutBack, SectionHeading, WithSubject, InTopBar } =
+    composeStories(stories);
+
+  it("US-QS-32 every story renders its heading, and InTopBar puts the h1 into the bar", () => {
+    for (const Story of [Default, WithAction, WithoutBack, SectionHeading, WithSubject]) {
+      const { unmount } = render(<Story />);
+      expect(screen.getAllByRole("heading").length).toBeGreaterThan(0);
+      unmount();
+    }
+    render(<InTopBar />);
+    const bar = document.querySelector("[data-app-bar-slot]") as HTMLElement;
+    expect(within(bar).getByRole("heading", { level: 1, name: "Tauschbörse" })).toBeTruthy();
   });
 });
