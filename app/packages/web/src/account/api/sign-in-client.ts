@@ -16,6 +16,38 @@ export async function newManager(): Promise<UserManager> {
   });
 }
 
+/** The key prefix under which the sign-in library keeps a signed-in user in `localStorage` (oidc-client-ts). */
+const USER_KEY_PREFIX = "oidc.user:";
+
+/** A kept user whose token has not run out (the library's own test: `expires_at` in seconds); unreadable counts as no. */
+function liveUser(raw: string | null): boolean {
+  try {
+    const user = JSON.parse(raw ?? "null") as { expires_at?: unknown } | null;
+    return typeof user?.expires_at === "number" && user.expires_at * 1000 > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Whether this device likely opens signed in (SG-STATE-02, issue 1876): a kept user whose token has not run out, or the
+ * address is the return of a sign-in (`code` and `state`, as `processReturn` reads it). Read before the library has
+ * loaded, so the start shows the signed-in frame from its first paint; it is a guess for the loading picture only, the
+ * session check decides. Unreadable storage counts as no.
+ */
+export function likelySignedIn(): boolean {
+  try {
+    const q = new URLSearchParams(window.location.search);
+    if (q.has("code") && q.has("state")) return true;
+    const store = window.localStorage;
+    return Object.keys(store).some(
+      (key) => key.startsWith(USER_KEY_PREFIX) && liveUser(store.getItem(key)),
+    );
+  } catch {
+    return false;
+  }
+}
+
 // The address this page is at, as the sign-in returns to it (US-BES-17, #1619): the bare path, which is the redirect URI.
 export const here = (): string => returnAddress(window.location.origin, window.location.pathname);
 

@@ -7,6 +7,7 @@ import {
   BRAND_HREF,
   BRAND_LINK_LABEL,
   DISPLAY_NAME,
+  destinationHeading,
   pageTitle,
 } from "../../../shared/patterns/navigation/nav-item";
 import {
@@ -16,7 +17,6 @@ import {
   PHASES_ADDRESS,
   WISHLIST_MODE_ADDRESS,
   accountAddress,
-  destinationHeading,
   navItems,
   PATHS,
   profileAddress,
@@ -310,6 +310,13 @@ describe("US-QS-14 · issue 1097 the heading of a destination while it loads", (
       "/unlock/equipment",
     ])
       expect(destinationHeading(other)).toBeNull();
+  });
+
+  it("US-QS-14 · issue 1097 the heading equals the label of the entry, so the start frame and the page agree", () => {
+    for (const href of ["/today", "/collection", "/discover", "/friends"]) {
+      const entry = navItems({}).find((item) => item.href === href);
+      expect(destinationHeading(href)).toBe(entry?.label);
+    }
   });
 });
 

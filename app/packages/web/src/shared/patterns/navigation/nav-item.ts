@@ -74,6 +74,23 @@ const PRODUCT = DISPLAY_NAME;
 /** "Name – PflanzenDéx", or the product alone without a name (US-QS-09, WCAG 2.4.2). Lives here so the start does not load the navigation chunk (DS-08). */
 export const pageTitle = (view?: string) => (view ? `${view} – ${PRODUCT}` : PRODUCT);
 
+/**
+ * The destinations whose page heading is the name of their entry at every width (measured 2026-11-02, issue 1097); "Konto"
+ * is not one: from 1024 px it opens "Einstellungen" with its own heading. The names equal the entries' labels in
+ * navigation.tsx (a test keeps them equal). Lives here, not in navigation.tsx, so the start does not load the navigation
+ * chunk (DS-08).
+ */
+const HEADINGS = new Map<string, string>([
+  ["/today", "Heute"],
+  ["/collection", "Sammlung"],
+  ["/discover", "Entdecken"],
+  ["/friends", "Freunde"],
+]);
+
+/** The heading of a destination while its page loads; `null` for any other address, whose page names itself. */
+export const destinationHeading = (pathname: string): string | null =>
+  HEADINGS.get(pathname) ?? null;
+
 /** Where every brand link leads: "Heute", the home screen (US-QS-16); equals `PATHS.today`. */
 export const BRAND_HREF = "/today";
 
