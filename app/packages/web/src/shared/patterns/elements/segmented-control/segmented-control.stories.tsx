@@ -32,6 +32,19 @@ export const ThreeChoices: Story = {
   render: () => <Demo options={[...TWO, { value: "wishes", label: "Wunschliste" }]} />,
 };
 
+// The four views of the Sammlung switch (US-QS-32, issue 1858): one row at normal text on a phone, a 2 x 2 grid at 200 %.
+export const FourChoices: Story = {
+  render: () => (
+    <Demo
+      options={[
+        ...TWO,
+        { value: "wishes", label: "Wünsche" },
+        { value: "equipment", label: "Geräte" },
+      ]}
+    />
+  ),
+};
+
 export const Focus: Story = {
   render: () => (
     <div className="p-4">

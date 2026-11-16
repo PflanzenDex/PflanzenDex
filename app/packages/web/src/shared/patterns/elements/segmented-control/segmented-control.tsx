@@ -28,7 +28,10 @@ export type SegmentedControlProps<V extends string> = {
 // Two or three choices: one row of equal columns, the segments share the full width (SG-CTRL-01).
 const ROW_LAYOUT = "grid-flow-col auto-cols-fr";
 // Four choices (the Sammlung switch, issue 1858): two columns, and one row of four from a container width given in rem.
-// A rem threshold grows with the text size, so at a larger text size the four stay visible as a 2 x 2 grid.
+// Measured in a browser at 100 % text: the widest label in its selected (semibold) state, "Wünsche", needs 73.3 px with
+// its padding and border, so one row of four needs 313 px (19.6 rem) with the gaps and the track. The phone container
+// is 328 px at 360 px wide (the page gutter is 16 px each side), so 20 rem keeps one row at normal text. At 200 % text
+// the rem threshold doubles to 640 px and the container is 296 px, so the four become a 2 x 2 grid.
 const FOUR_LAYOUT = "grid-cols-2 @min-[20rem]:grid-cols-4";
 
 /**
@@ -69,7 +72,7 @@ export function SegmentedControl<V extends string>(props: SegmentedControlProps<
             aria-keyshortcuts={o.keyHint?.aria}
             onClick={() => onChange(o.value)}
             className={cn(
-              "min-w-[44px] shrink-0 gap-1 rounded-full border px-2",
+              "min-w-[44px] shrink-0 gap-1 rounded-full border px-1",
               selected
                 ? "border-input bg-card font-semibold text-foreground shadow-elevation-1 hover:bg-card hover:text-foreground forced-colors:border-[color:Highlight]"
                 : "border-transparent font-normal text-muted-foreground hover:bg-transparent hover:text-foreground",
