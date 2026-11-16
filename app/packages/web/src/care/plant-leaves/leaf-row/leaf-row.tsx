@@ -14,6 +14,8 @@ const mm = (value: number | null): string => (value === null ? t("unknown") : t(
 /**
  * One leaf of the list (US-WAC-07): its date and sizes, with "Blatt entfernen" on the same line, and the note below. "Blatt entfernen"
  * asks first (P-10); the question then takes the room below the note, so the row keeps its compact line otherwise.
+ * At 360 px the sizes line fits beside the label only with the tighter `px-2` and `gap-1` (issue 1853); a wrapped sizes line
+ * overflowed the one-screen gate.
  */
 export function LeafRow(props: { row: Leaf; busy: boolean; onRemove: (row: Leaf) => void }) {
   const { row } = props;
@@ -21,7 +23,7 @@ export function LeafRow(props: { row: Leaf; busy: boolean; onRemove: (row: Leaf)
   const date = dateText(row.date);
   return (
     <div className={cn(CARD_CLASSES, "grid gap-2 text-sm")}>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-1">
         <div className="grid min-w-0 gap-0.5">
           <p className="font-semibold">{date}</p>
           <p>{t("sizes", { length: mm(row.lengthMm), width: mm(row.widthMm) })}</p>
@@ -30,8 +32,8 @@ export function LeafRow(props: { row: Leaf; busy: boolean; onRemove: (row: Leaf)
           <Button
             type="button"
             variant="destructive-plain"
-            size="touch"
-            className="w-auto shrink-0"
+            size="sm"
+            className="w-auto shrink-0 px-2"
             disabled={props.busy}
             aria-label={t("removeLabel", { date })}
             onClick={() => setAsking(true)}
