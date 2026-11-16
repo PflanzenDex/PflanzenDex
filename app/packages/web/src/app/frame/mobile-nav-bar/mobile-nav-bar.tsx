@@ -10,14 +10,16 @@ import {
   barWords,
   barWordsStyle,
   bottomBar,
-  isActivePath,
   stackedItem,
   stackedLabel,
   stackedPill,
   type NavItem,
 } from "../../../shared/patterns/navigation/nav-item";
 import { NavNote } from "../../../shared/patterns/navigation/nav-note/nav-note";
-import { ReselectLink } from "../../../shared/patterns/navigation/navigation/reselect-link/reselect-link";
+import {
+  ReselectLink,
+  isActivePath,
+} from "../../../shared/patterns/navigation/navigation/reselect-link/reselect-link";
 
 /**
  * The label of a slot. With a text mark the accessible name reads "Freunde, Noch gesperrt" with no blank before the comma

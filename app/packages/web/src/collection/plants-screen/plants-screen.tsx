@@ -14,7 +14,8 @@ import {
   locationChoices,
   UNPLACED_KEY,
 } from "./rows/location-groups/group-by-location";
-import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { TITLE } from "../specimens/cards/parts/parts";
 import { useCardPages, type CardPages } from "../specimens/cards/use-card-pages";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
@@ -25,7 +26,6 @@ import { ZoneInsightRow } from "./rows/zone-insight/zone-insight";
 import table from "./plant-layers/plant-layers.de.json";
 
 const t = texts(table);
-
 /**
  * Tiles per page without a layout (starting values, assumption): 2 columns below 768 px, 3 from 768 px, 4 from 1024 px.
  * With a layout the page takes the free height of the region instead (US-QS-19, issue 1029).

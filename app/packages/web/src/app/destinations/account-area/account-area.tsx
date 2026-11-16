@@ -2,7 +2,7 @@ import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet"
 import { useEffect, useRef, type ReactNode } from "react";
 import { Navigate, useLocation, useSearchParams } from "react-router";
 import { useFeature } from "@/shared/data";
-import { useIsLg } from "@/shared/platform/browser/use-breakpoint";
+import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { AreaSection } from "@/app/destinations/area-parts/area-section/area-section";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";

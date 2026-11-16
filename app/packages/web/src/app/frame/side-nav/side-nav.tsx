@@ -4,13 +4,13 @@ import { Link } from "react-router";
 import { cn } from "@/shared/lib/utils";
 import {
   BRAND_HREF,
-  BRAND_LINK_LABEL,
   DISPLAY_NAME,
   stackedItem,
   stackedLabel,
   stackedPill,
   type NavItem,
 } from "../../../shared/patterns/navigation/nav-item";
+import { BRAND_LINK_LABEL } from "../../../shared/patterns/navigation/navigation/navigation";
 import { NavNote, ShortcutKeyNote } from "../../../shared/patterns/navigation/nav-note/nav-note";
 import { ReselectLink } from "../../../shared/patterns/navigation/navigation/reselect-link/reselect-link";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";

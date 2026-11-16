@@ -6,7 +6,7 @@ import {
   ResponsiveModal,
   focusModalTitle,
 } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
-import { useIsLg } from "@/shared/platform/browser/use-breakpoint";
+import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { UnsavedQuestion } from "@/shared/ui/overlays/unsaved-input-dialog/unsaved-question/unsaved-question";
 import { LayerGuardContext, keptOpener, layerOpenerId, restoreFocus, useLayer } from "./use-layer";
 import { useLayerGuard, type LayerGuard } from "./layer-sheet.guard";

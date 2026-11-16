@@ -1,11 +1,11 @@
 import { Link } from "react-router";
 import {
   BRAND_HREF,
-  BRAND_LINK_LABEL,
   DISPLAY_NAME,
   brandLink,
   topBar,
 } from "../../../shared/patterns/navigation/nav-item";
+import { BRAND_LINK_LABEL } from "../../../shared/patterns/navigation/navigation/navigation";
 import { useAppBarSlot } from "../../../shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot";
 
 /**

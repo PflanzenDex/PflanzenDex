@@ -1,15 +1,15 @@
 import { Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { WateringList, WateringListSkeleton } from "@/monitoring";
-import { todayTexts } from "@/today";
 import { TodayFilter } from "./today-filter/today-filter";
 import { WATERING_TASKS, taskFilterOf } from "./today-filter/task-filter";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
+import table from "./watering-view.de.json";
 
 type Token = () => Promise<string | undefined>;
 
-const t = texts(todayTexts);
+const t = texts(table);
 
 /** Whether the address narrows "Heute" to the watering tasks (`?tasks=watering`, US-QS-26). */
 export function useWateringFilter(): boolean {

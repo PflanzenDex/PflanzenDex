@@ -2,7 +2,7 @@ import { useSearchParams } from "react-router";
 import { readStored, writeStored } from "@/shared/platform/browser/storage";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { useFeature } from "@/shared/data";
-import { DISCOVER_VIEW_KEY } from "@/shared/patterns/navigation/nav-item";
+import { DISCOVER_VIEW_KEY } from "@/shared/patterns/navigation/navigation/reselect-link/reselect-link";
 
 export type DiscoverView = "suggestions" | "catalog";
 

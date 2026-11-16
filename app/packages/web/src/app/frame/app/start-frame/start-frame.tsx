@@ -80,12 +80,10 @@ export function StartPageSkeleton() {
   const { pathname } = useLocation();
   const title = startTitleOf(pathname);
   return (
-    <>
-      <div className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-2">
-        {title !== null ? <PageTitle title={title} /> : null}
-        <StartBody pathname={pathname} />
-      </div>
-    </>
+    <div className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-2">
+      {title !== null ? <PageTitle title={title} /> : null}
+      <StartBody pathname={pathname} />
+    </div>
   );
 }
 

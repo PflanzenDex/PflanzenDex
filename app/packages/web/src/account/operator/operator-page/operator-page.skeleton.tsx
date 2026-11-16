@@ -1,7 +1,7 @@
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
-import table from "../../views/views.de.json";
+import table from "./operator-page.de.json";
 
 const t = texts(table);
 
