@@ -31,6 +31,42 @@ describe("US-QS-23 Gießen of a plant", () => {
     expect(JSON.parse(String(init?.body))).toMatchObject({ specimenIds: ["e1"] });
   });
 
+  it("US-QS-32 · F-0094 while 'Gießen' runs the button is aria-disabled, not disabled, so it keeps the focus", async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => {
+        await gate;
+        return Response.json({ watered: [] });
+      }),
+    );
+    show();
+    const button = screen.getByRole("button", { name: "Gießen: Aloe" });
+    button.focus();
+    await userEvent.click(button);
+    await vi.waitFor(() => expect(button.getAttribute("aria-disabled")).toBe("true"));
+    expect(button.hasAttribute("disabled")).toBe(false);
+    expect(document.activeElement).toBe(button);
+    release();
+    await screen.findByRole("status");
+  });
+
+  it("US-QS-32 · F-0094 after a successful 'Gießen' the focus stays on the button", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => Response.json({ watered: [] })),
+    );
+    show();
+    const button = screen.getByRole("button", { name: "Gießen: Aloe" });
+    await userEvent.click(button);
+    await screen.findByRole("status");
+    expect(document.activeElement).toBe(button);
+    expect(button.hasAttribute("disabled")).toBe(false);
+  });
+
   it("US-QS-23 · P-10 a refusal stays visible with the German text of its code (issue 1644, F8)", async () => {
     vi.stubGlobal(
       "fetch",
