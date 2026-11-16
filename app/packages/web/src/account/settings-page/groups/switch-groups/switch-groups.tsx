@@ -8,8 +8,6 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 import { applyMotion } from "@/shared/platform/device/motion/motion-setting";
 import table from "./switch-groups.de.json";
-
-const t = texts(table);
 import { useFeature, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
 import { refusalText } from "@/shared/lib/error-text";
@@ -17,6 +15,8 @@ import { Banner } from "@/shared/patterns/states/banner/banner";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { OCCASION_TEXT, visibleOccasions } from "../../../settings-fields/settings-fields";
 import type { ProfileSaver } from "../profile-saver";
+
+const t = texts(table);
 
 type Flag = "everythingPrivate" | "noRecommendations" | "rarityConsent";
 
