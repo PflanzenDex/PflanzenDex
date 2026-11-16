@@ -17,15 +17,18 @@ export const SKELETON_DELAY_MS = 200;
 export const STATUS_HOLD_MS = 300;
 
 /**
- * Renders its children, the skeleton of a part, only once the wait has lasted `delayMs` (US-QS-14, DS-57). Used as a
+ * Renders its children, the skeleton of a part, only once the wait has lasted `delayMs` (US-QS-14, DS-57); until then it
+ * renders `before`, nothing by default: a box that keeps the part's place without drawing it (SG-STATE-02). Used as a
  * Suspense fallback it mounts while the part waits and unmounts with it, so the timer ends with the wait. It never holds
  * the skeleton once shown: the skeleton goes as soon as the part arrives.
  */
 export function DelayedSkeleton({
   delayMs = SKELETON_DELAY_MS,
+  before = null,
   children,
 }: {
   delayMs?: number;
+  before?: ReactNode;
   children: ReactNode;
 }) {
   const outerDue = useContext(DueContext);
@@ -35,7 +38,7 @@ export function DelayedSkeleton({
     const id = window.setTimeout(() => setDue(true), delayMs);
     return () => window.clearTimeout(id);
   }, [delayMs, due]);
-  return due ? <DueContext.Provider value>{children}</DueContext.Provider> : null;
+  return due ? <DueContext.Provider value>{children}</DueContext.Provider> : before;
 }
 
 type LoaderPhase = "idle" | "waiting" | "shown" | "over";

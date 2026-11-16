@@ -6,12 +6,20 @@ import type { EquipmentRow, SupplyLevel } from "../../../equipment-api";
 import { SUPPLY_LABELS } from "../../../labels";
 import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import {
+  SegmentedControl,
+  type SegmentedOption,
+} from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../equipment.de.json";
 
 const t = texts(table);
 
 const LEVELS = ["available", "low", "empty"] as const satisfies readonly SupplyLevel[];
+const LEVEL_OPTIONS: readonly SegmentedOption<SupplyLevel>[] = LEVELS.map((level) => ({
+  value: level,
+  label: SUPPLY_LABELS[level],
+}));
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";
 
 export interface SupplyActions {
@@ -56,21 +64,17 @@ export function Supply(props: { item: EquipmentRow; actions: SupplyActions }) {
   if (item.supply === null) return null;
   return (
     <div className="mt-2 flex flex-col gap-2 text-sm">
-      <div role="group" aria-label={`Vorrat von ${item.name}`} className="flex flex-wrap gap-2">
-        {LEVELS.map((level) => (
-          <Button
-            key={level}
-            type="button"
-            size="touch"
-            variant={item.supply === level ? "default" : "secondary"}
-            className="w-auto flex-1 px-2"
-            aria-pressed={item.supply === level}
-            disabled={actions.busy}
-            onClick={() => item.supply !== level && actions.onSupply(item, level)}
-          >
-            {SUPPLY_LABELS[level]}
-          </Button>
-        ))}
+      <div className="flex flex-col gap-1">
+        <p className="font-semibold">{t("supply.label")}</p>
+        <SegmentedControl
+          label={`Vorrat von ${item.name}`}
+          options={LEVEL_OPTIONS}
+          value={item.supply}
+          disabled={actions.busy}
+          onChange={(level) => {
+            if (level !== item.supply) actions.onSupply(item, level);
+          }}
+        />
       </div>
       {item.type === "Plant agent" ? (
         <details>

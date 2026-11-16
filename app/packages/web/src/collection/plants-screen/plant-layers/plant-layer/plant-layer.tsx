@@ -1,6 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
+import { Button } from "@/shared/ui/button/button";
 import { Menu, type MenuItem } from "@/shared/patterns/display/panels/menu/menu";
 import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
@@ -61,8 +62,21 @@ function moreItems(card: SpecimenCard, h: Handlers): MenuItem[] {
 }
 
 /**
+ * "Gießen" while its part loads (SG-STATE-02, F-0082, issue 1889): the same outline button in its place, disabled and
+ * busy, from the first frame, so the action row has all its buttons at once and nothing moves when the part arrives.
+ */
+function WaterPlaceholder() {
+  return (
+    <Button type="button" variant="outline" disabled aria-busy="true">
+      {t("slot.water")}
+    </Button>
+  );
+}
+
+/**
  * A part from another module, loaded when its tab opens. While its chunk loads it shows the part's shape (US-QS-14), after
- * the delay, so the layer does not move when the part arrives; a shaped skeleton is never held (DS-57).
+ * the delay, so the layer does not move when the part arrives; a shaped skeleton is never held (DS-57). "Gießen" stands
+ * as its disabled button at once.
  */
 function Slot(props: {
   render?: SlotRender | undefined;
@@ -72,7 +86,15 @@ function Slot(props: {
 }) {
   if (!props.render) return null;
   return (
-    <Suspense fallback={<PlantSlotSkeleton part={props.part} label={t("slot.loading")} />}>
+    <Suspense
+      fallback={
+        props.part === "water" ? (
+          <WaterPlaceholder />
+        ) : (
+          <PlantSlotSkeleton part={props.part} label={t("slot.loading")} />
+        )
+      }
+    >
       {props.render(props.card, { measure: props.measure })}
     </Suspense>
   );

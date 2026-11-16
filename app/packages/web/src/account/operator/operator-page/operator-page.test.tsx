@@ -780,7 +780,7 @@ describe("US-ACC-04 operator page: the topic Löschfristen", () => {
       answer = resolve;
     });
     await open();
-    // The row shows its loading text while the counts are on their way (DS-57: after the short delay).
+    // The row names its loading for assistive technology while the counts are on their way (SG-STATE-02).
     const row = await screen.findByRole("button", { name: /Löschfristen werden geladen/ });
     await userEvent.click(row);
     const dialog = await screen.findByRole("dialog");
@@ -788,6 +788,21 @@ describe("US-ACC-04 operator page: the topic Löschfristen", () => {
     answer();
     expect(await within(dialog).findByText("Nichts zu tun.")).toBeTruthy();
     expect(screen.getByRole("dialog")).toBe(dialog);
+  });
+
+  it("US-QS-32 · SG-STATE-02 while its counts load the row Löschfristen keeps the line of its common answer, no number (F-0338, issue 2038)", async () => {
+    let answer: () => void = () => undefined;
+    deletionsGate = new Promise<void>((resolve) => {
+      answer = resolve;
+    });
+    await open();
+    const row = await screen.findByRole("button", { name: /Löschfristen werden geladen/ });
+    const shape = row.querySelector("[data-deadline-skeleton] [aria-hidden='true']");
+    expect(shape?.textContent).toBe("Keine Frist offen");
+    expect(shape?.textContent).not.toMatch(/\d/);
+    expect(shape?.className).toContain("text-transparent");
+    answer();
+    expect(await screen.findByRole("button", { name: /Keine Frist offen/ })).toBe(row);
   });
 
   it("US-ACC-04 a press on the row Löschfristen that starts while its counts load and ends after they arrive still opens the layer (issue 1722)", async () => {
