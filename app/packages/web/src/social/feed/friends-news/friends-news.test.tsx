@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { createQueryClient, SCREEN_STALE_TIME } from "../../../shared/data";
+import { createQueryClient, setProfileTimeZone, SCREEN_STALE_TIME } from "../../../shared/data";
 import { FriendsBanner } from "../friends-banner/friends-banner";
 import { FriendsNewsLayer, FriendsNewsTile } from "./friends-news";
 
@@ -113,6 +113,41 @@ describe("US-QS-18 · US-SOZ-06 the new plants of friends are a tile on Heute (i
     render(<FriendsBanner api="http://api" token={token} quiet news={false} />);
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.queryByRole("region", { name: /Neu bei Freunden/ })).toBeNull();
+  });
+});
+
+describe("US-QS-32 FR-SOZ-03 'Stand' in the layer on Heute: only an older copy says so", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    setProfileTimeZone(null);
+  });
+
+  /** Freezes the clock (Date only) at the given instant, as the banner tests do. */
+  const clockAt = (iso: string) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(iso));
+  };
+
+  it("US-QS-32 FR-SOZ-03 the layer on Heute shows no 'Stand' for a copy read today, and keeps 'Als gelesen markieren'", async () => {
+    setProfileTimeZone("Europe/Berlin");
+    clockAt("2026-10-06T10:05:00Z");
+    server(banner(1));
+    render(<Today />);
+    await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
+    const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    expect(layer.textContent).toContain("Freunde haben 1 neue Pflanze: Clara: 1 × Glücksfeder");
+    expect(layer.textContent).not.toContain("Stand");
+    expect(within(layer).getByRole("button", { name: "Als gelesen markieren" })).toBeTruthy();
+  });
+
+  it("US-QS-32 FR-SOZ-03 the layer on Heute says 'Stand: gestern' for a copy of yesterday", async () => {
+    setProfileTimeZone("Europe/Berlin");
+    clockAt("2026-10-07T12:00:00Z");
+    server(banner(1));
+    render(<Today />);
+    await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
+    const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    expect(layer.textContent).toContain("Stand: gestern");
   });
 });
 
