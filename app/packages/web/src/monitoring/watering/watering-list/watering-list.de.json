@@ -1,7 +1,6 @@
 {
   "loading": "Gießliste wird geladen …",
   "none.line": "Heute nichts zu gießen.",
-  "none.action": "Gießintervall eintragen",
   "since.never": "noch nie als gegossen eingetragen",
   "since.days": "zuletzt vor {days} Tagen gegossen",
   "interval": "Intervall alle {days}",

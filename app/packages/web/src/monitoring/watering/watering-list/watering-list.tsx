@@ -3,7 +3,6 @@ import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-secti
 import { Button } from "@/shared/ui/button/button";
 import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { keepTogether } from "@/shared/lib/format";
-import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useAnnounce } from "@/shared/platform/announcer/context";
@@ -17,8 +16,6 @@ const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 const KEY = WATERING_KEY;
-
-const EMPTY_STEP = { label: ui("none.action"), href: PATHS.collection };
 
 /** Rows per page (starting value, assumption; US-QS-18). */
 const PAGE_SIZE = 3;
@@ -120,7 +117,7 @@ function Rows(props: {
 /**
  * The plants that are due to be watered today (US-MON-05): last watering plus the interval of the current phase. The
  * intervals are the keeper's own entries in the care profile; without one a plant is not listed (nothing is invented,
- * P-08), and the empty state leads to where it is set (P-09). "Gegossen" writes today's entry; several can be marked and
+ * P-08), and the empty state is one line. "Gegossen" writes today's entry; several can be marked and
  * entered in one step.
  */
 export function WateringList(props: {
@@ -178,8 +175,8 @@ function DueList(props: { api: string; token: Token; param?: PagerPart }) {
       >
         {(rows) =>
           rows.length === 0 ? (
-            // The step that fills the list: a plant's care profile in the collection (P-09, issue 2233).
-            <EmptySection text={ui("none.line")} action={EMPTY_STEP} />
+            // The line only: a link to the collection was no real next step (owner decision 2026-11-16, issue 2240).
+            <EmptySection text={ui("none.line")} />
           ) : (
             <Rows
               rows={rows}
