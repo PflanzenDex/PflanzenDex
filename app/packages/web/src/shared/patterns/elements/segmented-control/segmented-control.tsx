@@ -1,7 +1,7 @@
 import { OctagonAlert } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "../../../ui/button/button";
-import { LabelProbe, useStacked } from "./use-stacked";
+import { LabelProbe, useStacked } from "./label-probe/label-probe";
 
 export type SegmentedOption<V extends string> = {
   value: V;

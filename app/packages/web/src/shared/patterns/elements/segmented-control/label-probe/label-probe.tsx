@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from "react";
-import type { SegmentedOption } from "./segmented-control";
+import type { SegmentedOption } from "../segmented-control";
 
 // When two or three segments stack (issue 2232): the measurement and its hidden one-line copy of the labels.
 

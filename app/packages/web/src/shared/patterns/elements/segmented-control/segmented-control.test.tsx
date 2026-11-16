@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SegmentedControl } from "./segmented-control";
-import { rowFits } from "./use-stacked";
+import { rowFits } from "./label-probe/label-probe";
 
 afterEach(cleanup);
 
