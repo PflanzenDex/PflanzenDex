@@ -291,7 +291,7 @@
     },
     {
       "file": "packages/web/src/collection/archived/archived-form/archived-form.tsx",
-      "count": 7
+      "count": 6
     },
     {
       "file": "packages/web/src/collection/archived/archived-list/archived-list.tsx",
@@ -327,11 +327,11 @@
     },
     {
       "file": "packages/web/src/collection/markers/catch-date/catch-date-field/catch-date-field.tsx",
-      "count": 8
+      "count": 7
     },
     {
       "file": "packages/web/src/collection/markers/locate/light-zone-form/light-zone-form.tsx",
-      "count": 9
+      "count": 8
     },
     {
       "file": "packages/web/src/collection/markers/locate/locate-control/locate-control.tsx",
@@ -343,7 +343,7 @@
     },
     {
       "file": "packages/web/src/collection/markers/marker/marker-form/marker-form.tsx",
-      "count": 5
+      "count": 4
     },
     {
       "file": "packages/web/src/collection/other-pages/difficulty-page/difficulty-page.tsx",
