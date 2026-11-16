@@ -193,7 +193,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   it("US-SOZ-02 shows the open requests with the display name only, and next steps when there are none (P-09)", async () => {
     fakeServer();
     show("requests");
-    expect(await screen.findByText(/Keine offenen Anfragen/)).toBeTruthy();
+    expect(await screen.findByText(/Keine offene Anfrage\./)).toBeTruthy();
     expect(screen.getByText(/Noch keine Freunde/)).toBeTruthy();
   });
 
@@ -445,7 +445,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   it("US-QS-14 the title sits on the page background like the other destinations, not inside a card", async () => {
     fakeServer();
     const { container } = show();
-    await screen.findByText(/Noch keine Freunde/);
+    await screen.findByText(/Noch keine Freunde\./);
     expect((container.firstElementChild as HTMLElement).className).not.toContain("bg-card");
   });
 
@@ -546,9 +546,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   it("US-QS-20 without a friend the screen says so and 'Freund hinzufügen' is the next step (P-09)", async () => {
     fakeServer();
     show();
-    expect(
-      await screen.findByText(/Noch keine Freunde\. „Freund hinzufügen“ ist der nächste Schritt/),
-    ).toBeTruthy();
+    expect(await screen.findByText(/^Noch keine Freunde\.$/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Freund hinzufügen" })).toBeTruthy();
   });
 

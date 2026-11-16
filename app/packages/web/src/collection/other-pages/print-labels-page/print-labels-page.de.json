@@ -12,7 +12,7 @@
   "retry": "Erneut versuchen",
   "emptyTitle": "Du hast noch keine Pflanze",
   "emptyText": "Lege zuerst eine Pflanze an, dann kannst du ihr Etikett drucken.",
-  "toCollection": "Zur Sammlung",
+  "addPlant": "Pflanze anlegen",
   "noPlant": "Wähle mindestens eine Pflanze aus.",
   "preparing": "Etiketten werden vorbereitet …",
   "ready": "Das Drucken öffnet das Druckfenster.",

@@ -61,8 +61,8 @@ describe("US-PHA-01 list of the care phases", () => {
 
   it("US-PHA-01 empty list says what to do (P-09)", () => {
     const h = renderToString(<PhasesList rows={[]} locations={[]} />);
-    expect(h).toContain("Ruhephasen-Zeitraum");
-    expect(h).toContain("Lege in der Sammlung eine Pflanze");
+    expect(h).toContain("Noch keine Pflanze hat eine Phase.");
+    expect(h).toContain("Pflanze anlegen");
   });
 });
 

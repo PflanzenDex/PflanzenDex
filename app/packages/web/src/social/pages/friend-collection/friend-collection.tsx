@@ -11,6 +11,8 @@ import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { Button } from "@/shared/ui/button/button";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { LoadFrame, useRequest, useWriteAction } from "../../../shared/data";
 import { errorText } from "@/shared/lib/error-text";
 import { addToWishlist, loadFriendCollection } from "../../api/friends-api";
@@ -69,19 +71,20 @@ const visible = (cards: readonly Card[], filter: Filter) =>
 function Next(props: { total: number; shown: number; filter: Filter; name: string }) {
   if (props.total === 0)
     return (
-      <p className="rounded-lg border border-dashed border-border p-3">
-        {props.name} hat noch nichts freigegeben. Frag nach, ob {props.name} Pflanzen unter „Was
-        Freunde sehen“ freigibt, und gib selbst etwas frei.
-      </p>
+      <EmptySection
+        text={tx("friendCollection.none", { name: props.name })}
+        action={{ label: tx("friendCollection.share"), href: `${PATHS.friends}?sheet=sharing` }}
+      />
     );
   if (props.shown === 0)
     return (
-      <p className="rounded-lg border border-dashed border-border p-3">
-        {props.filter === "lack"
-          ? "Du hast schon alle Arten, die dieser Freund teilt."
-          : "Ihr habt keine gemeinsame Art."}{" "}
-        Wähle „Alle“, um die ganze freigegebene Sammlung zu sehen.
-      </p>
+      <EmptySection
+        text={
+          props.filter === "lack"
+            ? tx("friendCollection.allShared")
+            : tx("friendCollection.noCommon")
+        }
+      />
     );
   return null;
 }

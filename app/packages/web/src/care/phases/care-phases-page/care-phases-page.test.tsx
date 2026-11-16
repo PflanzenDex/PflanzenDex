@@ -62,14 +62,14 @@ describe("US-PHA-01 page of the care phases", () => {
     );
   });
 
-  it("US-PHA-01 · DS-26 without any phase the empty state links to the collection", async () => {
+  it("US-PHA-01 · DS-26 without any phase the empty state offers Pflanze anlegen", async () => {
     fakeServer({
       "/care-phases": () => response(200, { phases: [] }),
       "/locations": () => response(200, { locations: [] }),
     });
     render(<CarePhasesPage api="http://api" token={token} />);
-    const link = await screen.findByRole("link", { name: "Zur Sammlung" });
-    expect(link.getAttribute("href")).toBe("/collection");
+    const link = await screen.findByRole("link", { name: "Pflanze anlegen" });
+    expect(link.getAttribute("href")).toBe("/collection/new");
   });
 
   it("US-PHA-01 without sign-in the request to sign in comes and nothing is queried", async () => {

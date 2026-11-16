@@ -6,8 +6,14 @@ import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { Avatar } from "@/shared/patterns/display/avatar/avatar";
 import { Card } from "@/shared/patterns/display/card/card";
 import { Button } from "@/shared/ui/button/button";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { dateText } from "../invite-card/invite-card";
 import { nameOf } from "../request-list/request-list";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../social.de.json";
+
+const tx = texts(table);
 
 /** Friends per page in the layer (starting value, assumption; US-QS-20). */
 const PAGE_SIZE = 3;
@@ -107,12 +113,15 @@ export function FriendList(props: {
   onEnd: (friend: Friend) => void;
 }) {
   const short = useIsShort();
+  // The empty list names its one step: the add-friend layer (US-QS-32, SG-STATE-01); the layer opens from here like FeedHint's.
+  const add = useLayer("add");
   return (
     <section aria-label="Meine Freunde" className="flex min-w-0 flex-col gap-3">
       {props.friends.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-3">
-          Noch keine Freunde. Mit „Freund hinzufügen“ lädst du jemanden ein.
-        </p>
+        <EmptySection
+          text={tx("friendList.none")}
+          action={{ label: tx("friendList.add"), onClick: () => add.openLayer() }}
+        />
       ) : (
         <Pager
           items={props.friends}

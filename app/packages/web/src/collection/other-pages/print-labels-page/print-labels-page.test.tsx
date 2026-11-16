@@ -255,8 +255,8 @@ describe("US-BES-17 printing QR pot labels", () => {
     server([]);
     show();
     expect(await screen.findByText("Du hast noch keine Pflanze")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Zur Sammlung" }).getAttribute("href")).toBe(
-      "/collection",
+    expect(screen.getByRole("link", { name: "Pflanze anlegen" }).getAttribute("href")).toBe(
+      "/collection/new",
     );
   });
 

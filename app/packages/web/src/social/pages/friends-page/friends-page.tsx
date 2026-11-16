@@ -16,8 +16,12 @@ import {
   type TileCount,
 } from "./friend-tiles/friend-tiles";
 import { FriendsPageSkeleton } from "./friends-page.skeleton";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../social.de.json";
 
 const KEY = ["social", "friends"] as const;
+const tx = texts(table);
 type Token = () => Promise<string | undefined>;
 
 /** Calm mode shows no counts (US-ACH-08, US-TAU-07); otherwise the count of the news banner while it loads or fails (P-10). */
@@ -114,11 +118,8 @@ function Body(props: {
   const open = data.requests.incoming.length;
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      {data.friends.length === 0 && (
-        <p className="rounded-lg border border-dashed border-border p-3">
-          Noch keine Freunde. „Freund hinzufügen“ ist der nächste Schritt.
-        </p>
-      )}
+      {/* The filled "Freund hinzufügen" stands right below: the line has no second action (SG-STATE-01). */}
+      {data.friends.length === 0 && <EmptySection text={tx("friendsPage.none")} />}
       <Button
         type="button"
         size="touch"

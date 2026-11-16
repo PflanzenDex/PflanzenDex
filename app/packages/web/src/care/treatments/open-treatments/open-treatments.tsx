@@ -1,9 +1,8 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
 import { useCallback, useRef, useState } from "react";
-import {
-  EmptyState,
-  type EmptyStateAction,
-} from "@/shared/patterns/elements/empty-state/empty-state";
+import type { EmptyStateAction } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useAnnounce } from "@/shared/platform/announcer/context";
@@ -14,6 +13,10 @@ import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
 import { completeTreatment, loadOpenTreatments } from "../../shared/api/treatments-api";
 import { OPEN_KEY, TREATMENTS } from "../../shared/api/query-keys";
 import { dateText } from "../../shared/text";
+import table from "./open-treatments.de.json";
+
+// `t` names the token in the callbacks of this file, so the texts are `ui`.
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 /** One sentence that says what to do next (P-09): the overdue and the due-today dates first. */
@@ -86,19 +89,8 @@ function OpenList(props: {
   const { completion } = props;
   const rows = props.all.filter((r) => !completion.doneIds.includes(r.id));
   const next = nextStepText(rows);
-  if (rows.length === 0)
-    return (
-      <EmptyState
-        title="Keine offenen Behandlungen"
-        level={props.host ? 3 : 2}
-        description={
-          props.host
-            ? "Plane einen Termin, dann erscheint er hier."
-            : "Plane unten einen Termin, dann erscheint er hier."
-        }
-        action={props.next}
-      />
-    );
+  // One line and the next step, as every empty section of a page or sheet (US-QS-32, SG-STATE-01).
+  if (rows.length === 0) return <EmptySection text={ui("empty.line")} action={props.next} />;
   return (
     <>
       {next && !props.host && <p className="font-semibold">{next}</p>}

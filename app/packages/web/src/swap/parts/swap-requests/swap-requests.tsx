@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import type { SwapOverview, SwapSide } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { errorText } from "@/shared/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { answerSwap, confirmHandover, loadSwaps, type AnswerInput } from "../../api/swaps-api";
@@ -92,9 +93,7 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
     }, "");
   };
   if (data.received.length === 0 && data.sent.length === 0)
-    return (
-      <p className="rounded-lg border border-dashed border-border p-3">{t("requests.none")}</p>
-    );
+    return <EmptySection text={t("requests.none")} />;
   return (
     <>
       {(write.message || handed) && (

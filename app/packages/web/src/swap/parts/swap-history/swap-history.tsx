@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import type { HistoryEntry } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { currentTimeZone, LoadFrame } from "../../../shared/data";
 import { loadHistory } from "../../api/swaps-api";
 import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
@@ -93,7 +94,7 @@ export function SwapHistory(props: { api: string; token: Token }) {
       >
         {(data: { entries: readonly HistoryEntry[] }) =>
           data.entries.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border p-3">{t("history.none")}</p>
+            <EmptySection text={t("history.none")} />
           ) : (
             <Pager
               items={data.entries}

@@ -2,6 +2,7 @@ import type { OfferView } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { Button } from "@/shared/ui/button/button";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -25,6 +26,8 @@ export function OfferList(props: {
   offers: readonly OfferView[];
   busy: boolean;
   onWithdraw: (o: OfferView) => void;
+  /** Opens the layer "Zum Tausch anbieten" from the empty list (US-QS-32); without it the line has no action. */
+  onOffer?: (() => void) | undefined;
 }) {
   const size = useCardPageSize();
   return (
@@ -36,7 +39,10 @@ export function OfferList(props: {
         {t("offers.title")}
       </h2>
       {props.offers.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-3">{t("offers.none")}</p>
+        <EmptySection
+          text={t("offers.none")}
+          {...(props.onOffer ? { action: { label: t("offers.add"), onClick: props.onOffer } } : {})}
+        />
       ) : (
         <Pager
           items={props.offers}

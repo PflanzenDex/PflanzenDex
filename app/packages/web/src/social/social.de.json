@@ -47,5 +47,16 @@
   "collection.shares": "Art, Name, Fangdatum und Stecklinge",
   "feed.asOf": "Stand: {date}",
   "feed.addFriend": "Freund hinzufügen",
-  "feed.shareOwn": "Selbst etwas teilen"
+  "feed.shareOwn": "Selbst etwas teilen",
+  "friendList.none": "Noch keine Freunde.",
+  "friendList.add": "Freund hinzufügen",
+  "requests.none": "Keine offene Anfrage.",
+  "sharing.none": "Noch keine Pflanze zum Teilen.",
+  "sharing.addPlant": "Pflanze anlegen",
+  "friendCollection.none": "{name} teilt noch nichts.",
+  "friendCollection.share": "Selbst etwas teilen",
+  "friendCollection.allShared": "Du hast schon alle Arten, die dieser Freund teilt. Wähle „Alle“ für die ganze Sammlung.",
+  "friendCollection.noCommon": "Ihr habt keine gemeinsame Art. Wähle „Alle“ für die ganze Sammlung.",
+  "friendEquipment.none": "{name} teilt keine Geräte.",
+  "friendsPage.none": "Noch keine Freunde."
 }

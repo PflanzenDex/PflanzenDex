@@ -82,13 +82,21 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     });
     const user = userEvent.setup();
     show();
-    expect(await screen.findByText("Noch kein neues Blatt")).toBeTruthy();
+    expect(await screen.findByText("Noch kein Blatt erfasst.")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Neues Blatt" }));
     expect(await screen.findByText("1 Blatt")).toBeTruthy();
     expect(posts).toHaveLength(1);
     expect(posts[0]).toMatchObject({ method: "POST", path: "/specimens/e1/leaves" });
     expect(posts[0]?.body).not.toHaveProperty("lengthMm");
     expect(posts[0]?.body).toHaveProperty("timeZone");
+  });
+
+  it("US-QS-32 · SG-STATE-01 an empty log offers Blatt erfassen, and the action opens the leaf form", async () => {
+    server({ "GET /specimens/e1/leaves": () => json(200, view([])) });
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: "Blatt erfassen" }));
+    expect(await screen.findByText("Neues Blatt festhalten")).toBeTruthy();
   });
 
   it("US-WAC-07 the count and the leaves are listed newest first, one leaf per page, with unknown sizes shown as unbekannt (P-08)", async () => {
@@ -204,7 +212,7 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     expect(posts).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Blatt entfernen: 09.10.2026" }));
     await user.click(screen.getByRole("button", { name: "Ja, Blatt vom 09.10.2026 entfernen" }));
-    expect(await screen.findByText("Noch kein neues Blatt")).toBeTruthy();
+    expect(await screen.findByText("Noch kein Blatt erfasst.")).toBeTruthy();
     expect(posts).toEqual([
       {
         method: "DELETE",

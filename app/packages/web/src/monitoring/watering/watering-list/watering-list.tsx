@@ -1,5 +1,5 @@
 import { useCallback, useState, type ReactNode } from "react";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { Button } from "@/shared/ui/button/button";
 import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { keepTogether } from "@/shared/lib/format";
@@ -175,7 +175,7 @@ function DueList(props: { api: string; token: Token; param?: PagerPart }) {
       >
         {(rows) =>
           rows.length === 0 ? (
-            <EmptyState level={3} title={ui("none.title")} description={ui("none.description")} />
+            <EmptySection text={ui("none.line")} />
           ) : (
             <Rows
               rows={rows}

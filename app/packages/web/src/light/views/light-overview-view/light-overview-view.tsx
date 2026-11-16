@@ -1,4 +1,5 @@
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
 import { zoneLabel } from "@pflanzendex/core";
 import { Pager, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
@@ -42,18 +43,18 @@ function Row({ r }: { r: LightOverviewRow }) {
  * its free height instead of a table that scrolls the layer (US-QS-15, issue 1155); a species with an unknown lux need
  * has no position and stays last, with its next step on the row (P-09, P-10).
  */
-export function LightOverviewView(props: { data: LightOverview; onOpenCollection: () => void }) {
-  const { data, onOpenCollection } = props;
+export function LightOverviewView(props: { data: LightOverview }) {
+  const { data } = props;
   return (
     <section aria-labelledby="overview" className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
       <h2 id="overview" className="text-xl font-semibold">
         {t("overview.title")}
       </h2>
       {data.rows.length === 0 ? (
-        <EmptyState
-          title={t("overview.none.title")}
-          description={t("overview.none.description")}
-          action={{ label: t("overview.none.action"), onClick: onOpenCollection }}
+        // One line and the step that fills it: the add-plant form, not the collection (F-0189, SG-COPY-02)
+        <EmptySection
+          text={t("overview.none.line")}
+          action={{ label: t("overview.none.action"), href: ADD_PLANT_PATH }}
         />
       ) : (
         <>

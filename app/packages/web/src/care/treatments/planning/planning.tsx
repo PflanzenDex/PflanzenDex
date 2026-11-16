@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from "react";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { SIGN_IN, type ApiError, type Request } from "../../../shared/data";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
@@ -11,6 +13,9 @@ import {
   type TreatableSpecimen,
   type TreatmentInput,
 } from "../../shared/api/treatments-api";
+import table from "./planning.de.json";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 /**
@@ -64,10 +69,9 @@ export function Planning(props: {
       onRetry={request.retry}
       skeleton={<TreatmentFormSkeleton label={LOADING} />}
       empty={
-        <EmptyState
-          title="Du hast noch keine Pflanze"
-          description="Lege zuerst eine Pflanze in der Sammlung an."
-          action={{ label: "Zur Sammlung", href: "/collection" }}
+        <EmptySection
+          text={ui("empty.line")}
+          action={{ label: ui("empty.action"), href: ADD_PLANT_PATH }}
         />
       }
       offline={request.offline}

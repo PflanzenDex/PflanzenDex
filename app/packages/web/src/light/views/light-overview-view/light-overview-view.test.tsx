@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LightOverviewView } from "./light-overview-view";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
@@ -23,27 +22,26 @@ const row = (extra: Partial<LightOverviewRow> = {}): LightOverviewRow => ({
   lightNeedUnknown: false,
   ...extra,
 });
-const noop = () => undefined;
 const show = (rows: LightOverviewRow[]) => {
   const data: LightOverview = { rows };
   render(
     <MemoryRouter>
-      <LightOverviewView data={data} onOpenCollection={noop} />
+      <LightOverviewView data={data} />
     </MemoryRouter>,
   );
 };
 
 describe("US-LIC-03: light overview view", () => {
-  it("shows the next step in the empty state and the button opens the collection (P-09)", async () => {
-    const open = vi.fn();
+  it("US-QS-32 shows one line and the next step in the empty state: Pflanze anlegen links to the add-plant form (P-09)", () => {
     render(
       <MemoryRouter>
-        <LightOverviewView data={{ rows: [] }} onOpenCollection={open} />
+        <LightOverviewView data={{ rows: [] }} />
       </MemoryRouter>,
     );
-    expect(screen.getByText(/noch keine arten/i)).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
-    expect(open).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Noch keine Art: lege zuerst eine Pflanze an.")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Pflanze anlegen" }).getAttribute("href")).toBe(
+      "/collection/new",
+    );
   });
 
   it("US-LIC-03 · issue 1155 shows plant, zone, lux demand (de-DE) and position on one row", () => {
