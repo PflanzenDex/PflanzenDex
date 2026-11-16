@@ -158,7 +158,8 @@ function DueList(props: { api: string; token: Token; param?: PagerPart }) {
     void write.run((t) => markWatered(props.api, t, ids), ui("done"));
   };
   return (
-    <div className="flex flex-col gap-3">
+    // No gap around the reserved line: it costs one text line and nothing more, so the sheet still fits (QG-U8).
+    <div className="flex flex-col">
       <p className="min-h-[1lh] text-sm">{result}</p>
       <LoadFrame
         queryKey={KEY}
@@ -181,7 +182,7 @@ function DueList(props: { api: string; token: Token; param?: PagerPart }) {
         }
       </LoadFrame>
       {write.error && (
-        <p role="alert" className="rounded-lg border border-destructive p-3">
+        <p role="alert" className="mt-3 rounded-lg border border-destructive p-3">
           {write.error.text}
         </p>
       )}
