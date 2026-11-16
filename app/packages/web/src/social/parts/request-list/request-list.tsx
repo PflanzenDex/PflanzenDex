@@ -2,6 +2,11 @@ import type { FriendRequest, OpenRequests } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { Button } from "@/shared/ui/button/button";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../social.de.json";
+
+const tx = texts(table);
 
 /** A person without a stored display name stays unknown instead of being named by guess (P-08). */
 export const nameOf = (name: string | null) => name ?? "Name unbekannt";
@@ -77,9 +82,7 @@ export function RequestList(props: {
   return (
     <section aria-label="Anfragen" className="flex min-w-0 flex-col gap-3">
       {entries.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-3">
-          Keine offenen Anfragen. Mit „Freund hinzufügen“ lädst du jemanden ein.
-        </p>
+        <EmptySection text={tx("requests.none")} />
       ) : (
         <Pager
           items={entries}

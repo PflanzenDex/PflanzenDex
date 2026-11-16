@@ -82,7 +82,7 @@ describe("US-MON-05 watering list", () => {
   it("US-MON-05 says why the list is empty and where the interval is set (P-08, P-09)", async () => {
     fakeServer([]);
     show();
-    expect(await screen.findByText("Heute nichts zu gießen")).toBeTruthy();
+    expect(await screen.findByText(/^Heute nichts zu gießen\./)).toBeTruthy();
     expect(screen.getByText(/Pflegeprofil/)).toBeTruthy();
   });
 
@@ -105,7 +105,7 @@ describe("US-MON-05 watering list", () => {
     await user.click(await screen.findByRole("checkbox", { name: /Ficus/ }));
     await user.click(screen.getByRole("checkbox", { name: /Aloe/ }));
     await user.click(screen.getByRole("button", { name: "2 eintragen" }));
-    await screen.findByText("Heute nichts zu gießen");
+    await screen.findByText(/^Heute nichts zu gießen\./);
     expect(posts).toHaveLength(1);
     expect(posts[0]?.specimenIds).toEqual(["s1", "s2"]);
   });
@@ -134,7 +134,7 @@ describe("US-MON-05 watering list", () => {
     const user = userEvent.setup();
     show();
     await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
-    const empty = await screen.findByText("Heute nichts zu gießen");
+    const empty = await screen.findByText(/^Heute nichts zu gießen\./);
     const result = resultLine("Als gegossen eingetragen.");
     expect(result.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(result.closest('[role="status"],[role="alert"],[aria-live]')).toBeNull();
@@ -148,7 +148,7 @@ describe("US-MON-05 watering list", () => {
     await user.click(await screen.findByRole("checkbox", { name: /Ficus/ }));
     await user.click(screen.getByRole("checkbox", { name: /Aloe/ }));
     await user.click(screen.getByRole("button", { name: "2 eintragen" }));
-    const empty = await screen.findByText("Heute nichts zu gießen");
+    const empty = await screen.findByText(/^Heute nichts zu gießen\./);
     const result = resultLine("Als gegossen eingetragen.");
     expect(result.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(announced()).toBe("Als gegossen eingetragen.");

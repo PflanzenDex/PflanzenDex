@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DelayedSkeleton,
   SKELETON_DELAY_MS,
+  beginAppStart,
   STATUS_HOLD_MS,
   useHeldLoader,
 } from "./delayed-skeleton";
@@ -242,5 +243,63 @@ describe("useHeldLoader (US-QS-14, D5, issue 1772)", () => {
       vi.advanceTimersByTime(1);
     });
     expect(screen.getByRole("status")).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 the app start shows its skeletons without the delay (SG-STATE-02, Q-27, issue 1876)", () => {
+  it("US-QS-32 · SG-STATE-02 during the app start a skeleton shows in the first frame", () => {
+    const end = beginAppStart();
+    try {
+      render(loading);
+      expect(screen.getAllByRole("status")).toHaveLength(1);
+    } finally {
+      end();
+    }
+  });
+
+  it("US-QS-32 · Q-27 a tap on the drawn start frame or on the focus target main acts on nothing and keeps the start", () => {
+    const end = beginAppStart();
+    const main = document.createElement("main");
+    main.tabIndex = -1;
+    document.body.append(main);
+    try {
+      document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+      main.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+      render(loading);
+      expect(screen.getAllByRole("status")).toHaveLength(1);
+    } finally {
+      main.remove();
+      end();
+    }
+  });
+
+  it("US-QS-32 · Q-27 the first act on a control ends the start: a later page change waits for the delay again", () => {
+    const end = beginAppStart();
+    const link = document.createElement("a");
+    link.href = "/collection";
+    document.body.append(link);
+    try {
+      link.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+      render(loading);
+      expect(screen.queryByRole("status")).toBeNull();
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
+      });
+      expect(screen.getAllByRole("status")).toHaveLength(1);
+    } finally {
+      link.remove();
+      end();
+    }
+  });
+
+  it("US-QS-32 · Q-27 going back in the history ends the start too", () => {
+    const end = beginAppStart();
+    try {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      render(loading);
+      expect(screen.queryByRole("status")).toBeNull();
+    } finally {
+      end();
+    }
   });
 });

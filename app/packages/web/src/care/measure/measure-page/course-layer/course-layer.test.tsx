@@ -147,12 +147,12 @@ describe("US-QS-15 · US-WAC-01 the Verlauf layer in three parts", () => {
     expect(document.querySelector('[role="status"] .h-40')).toBeNull();
   });
 
-  it("US-QS-15 · US-WAC-01 an empty course shows the facts and one empty state, no parts", async () => {
+  it("US-QS-15 · US-WAC-01 an empty course shows the facts and one line with the next step, no parts", async () => {
     await showReady([]);
     expect(screen.getByText("Was messen?")).toBeTruthy();
-    expect(screen.getAllByText("Noch keine Messung")).toHaveLength(1);
+    expect(screen.getAllByText("Noch keine Messung.")).toHaveLength(1);
     expect(screen.queryByRole("group", { name: "Teile des Verlaufs" })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Messwert eintragen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung erfassen" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 });

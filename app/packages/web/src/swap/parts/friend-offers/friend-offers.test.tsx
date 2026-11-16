@@ -107,8 +107,10 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
   it("without offers it says what to do next (P-09)", async () => {
     server({ offers: [] });
     show();
-    expect(await screen.findByText(/Zurzeit bietet kein Freund etwas an/)).toBeTruthy();
-    expect(screen.getByText(/Lade Freunde ein/)).toBeTruthy();
+    expect(await screen.findByText(/Deine Freunde bieten gerade nichts an\./)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Freund hinzufügen" }).getAttribute("href")).toBe(
+      "/friends?sheet=add",
+    );
   });
 
   it("the filters ask the server: type and 'you lack it'", async () => {

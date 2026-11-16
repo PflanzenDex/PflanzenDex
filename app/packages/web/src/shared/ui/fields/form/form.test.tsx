@@ -395,4 +395,37 @@ describe("useFieldForm (US-QS-32 · SG-FORM-05)", () => {
     expect(note.getAttribute("aria-invalid")).toBe("true");
     expect((await screen.findByRole("alert")).textContent).toBe("Gib eine Notiz ein.");
   });
+
+  it("US-QS-32 · SG-FORM-05 a tap on send while a field is focused does not leave the field before the press ends, then moves the focus to the first wrong one (issue 2216)", async () => {
+    const onValid = vi.fn();
+    render(<Pair onValid={onValid} />);
+    const name = screen.getByRole("textbox", { name: "Name" });
+    const note = screen.getByRole("textbox", { name: "Notiz" });
+    const send = screen.getByRole("button", { name: "Speichern" });
+    const user = userEvent.setup();
+    await user.click(note);
+    // The press starts: the field keeps the focus, so no message appears and nothing moves under the finger.
+    await user.pointer({ keys: "[MouseLeft>]", target: send });
+    await act(async () => {});
+    expect(document.activeElement).toBe(note);
+    expect(screen.queryByRole("alert")).toBeNull();
+    // The press ends on the same button: the send runs and the first wrong field takes the focus, not the button.
+    await user.pointer({ keys: "[/MouseLeft]", target: send });
+    await waitFor(() => expect(document.activeElement).toBe(name));
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(note.getAttribute("aria-invalid")).toBe("true");
+    expect(onValid).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 · US-QS-14 a press on a valid send goes through and leaves the focus on the send button (issue 2216)", async () => {
+    const onValid = vi.fn();
+    render(<Pair onValid={onValid} />);
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "Monstera");
+    const note = screen.getByRole("textbox", { name: "Notiz" });
+    await userEvent.type(note, "Fenster");
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(onValid).toHaveBeenCalled());
+    expect(onValid.mock.calls[0]?.[0]).toEqual({ name: "Monstera", note: "Fenster" });
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Speichern" }));
+  });
 });

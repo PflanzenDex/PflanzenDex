@@ -10,11 +10,14 @@ import { SharingPanel, sharingChoice } from "./sharing-panel";
 afterEach(cleanup);
 
 describe("US-QS-32 sharing panel copy", () => {
-  it("US-QS-32 with no plant it asks for 'eine Pflanze' in the feminine form", () => {
+  it("US-QS-32 with no plant it says so in one line and offers Pflanze anlegen", () => {
     render(
       <SharingPanel specimens={[]} shared={[]} busy={false} onSet={vi.fn()} onSetAll={vi.fn()} />,
     );
-    expect(screen.getByText(/Lege zuerst unter „Sammlung“ eine Pflanze an\./)).toBeTruthy();
+    expect(screen.getByText("Noch keine Pflanze zum Teilen.")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Pflanze anlegen" }).getAttribute("href")).toBe(
+      "/collection/new",
+    );
   });
 });
 

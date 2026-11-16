@@ -146,26 +146,40 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     expect(screen.getByText(/Wähle „Alle“/)).toBeTruthy();
     cleanup();
     show({ friend: { name: "Anna" }, cards: [] });
-    expect(await screen.findByText(/Anna hat noch nichts freigegeben/)).toBeTruthy();
+    expect(await screen.findByText(/Anna teilt noch nichts\./)).toBeTruthy();
+    // The one step: the sharing layer of the friends page (US-QS-32, SG-STATE-01).
+    expect(screen.getByRole("link", { name: "Selbst etwas teilen" }).getAttribute("href")).toBe(
+      "/friends?sheet=sharing",
+    );
     expect(screen.queryByRole("list", { name: /Sammlung von/ })).toBeNull();
-    // A friend who shares nothing gets no line about what is shared (US-QS-32, F-0265).
-    expect(document.body.textContent).not.toContain("teilt Art");
+    // A friend who shares nothing gets no line about what is shared (US-QS-32, F-0265). The line starts with "Geteilt:".
+    expect(document.body.textContent).not.toContain("Geteilt:");
   });
 
-  it("US-QS-32 F-0265 the line names the friend and the shared fields, and nothing more", async () => {
+  it("US-QS-32 F-0265 the line names only the shared fields; the title already names the friend", async () => {
     show({ friend: { name: "Anna" }, cards: [card()] });
     await screen.findByRole("list", { name: "Sammlung von Anna" });
-    expect(screen.getByText("Anna teilt Art, Name, Fangdatum und Stecklinge.")).toBeTruthy();
+    expect(screen.getByText("Geteilt: Art, Name, Fangdatum und Stecklinge.")).toBeTruthy();
+    expect(screen.queryByText(/Anna teilt/)).toBeNull();
     expect(document.body.textContent).not.toContain("ohne Wertung");
+  });
+
+  it("US-QS-32 F-0265 a long display name stays out of the line, so the line does not wrap at 360 px", async () => {
+    const name = "Maximiliane-Friederike von Hohenzollern";
+    show({ friend: { name }, cards: [card()] });
+    await screen.findByRole("list", { name: `Sammlung von ${name}` });
+    const line = screen.getByText("Geteilt: Art, Name, Fangdatum und Stecklinge.");
+    expect(line.textContent).not.toContain(name);
+    expect(line.textContent).not.toContain("Maximiliane");
+    // The name is in the title once, the line names only the shared fields.
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(collectionTitle(name));
   });
 
   it("US-SOZ-07 facts only: no rank, no score, no comparison between friends; the way back is offered", async () => {
     show({ friend: { name: null }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Name unbekannt" });
     // One line naming only what the friend shares (US-QS-32, F-0265); no rank, no comparison.
-    expect(
-      screen.getByText("Name unbekannt teilt Art, Name, Fangdatum und Stecklinge."),
-    ).toBeTruthy();
+    expect(screen.getByText("Geteilt: Art, Name, Fangdatum und Stecklinge.")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
       "/friends",
     );
@@ -275,21 +289,21 @@ describe("US-SOZ-07 a friend's shared collection", () => {
 
   it("US-EQU-12 a friend who shares no device says what to do next (P-09)", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS }, 200, NO_DEVICES, "/?sheet=equipment");
-    expect(await screen.findByText(/Anna hat noch kein Gerät freigegeben/)).toBeTruthy();
+    expect(await screen.findByText(/Anna teilt keine Geräte\./)).toBeTruthy();
   });
 
   it("US-QS-32 the devices of a friend name the layer once: its title is the only heading 'Geräte von …' (issue 1981)", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS }, 200, NO_DEVICES, "/?sheet=equipment");
-    await screen.findByText(/Anna hat noch kein Gerät freigegeben/);
+    await screen.findByText(/Anna teilt keine Geräte\./);
     expect(screen.getAllByRole("heading", { name: "Geräte von Anna" })).toHaveLength(1);
   });
 
   it("US-QS-20 the devices open from 'Geräte', not stacked below the cards", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Anna" });
-    expect(screen.queryByText(/Anna hat noch kein Gerät freigegeben/)).toBeNull();
+    expect(screen.queryByText(/Anna teilt keine Geräte\./)).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Geräte" }));
-    expect(await screen.findByText(/Anna hat noch kein Gerät freigegeben/)).toBeTruthy();
+    expect(await screen.findByText(/Anna teilt keine Geräte\./)).toBeTruthy();
   });
 });
 

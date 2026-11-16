@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { useRef, type ReactNode } from "react";
 import { layerOpenerId, useLayer } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { Button } from "@/shared/ui/button/button";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { BUSY_LOOK } from "@/shared/lib/utils";
@@ -120,10 +120,7 @@ export function InvitationsArea(props: {
 
 /** The invitations in pages of whole entries (`?lfrom=n` in the layer, US-QS-15); the newest first, as the server sends them. */
 export function InvitationList(props: { invitations: readonly InvitationRecord[] }) {
-  if (props.invitations.length === 0)
-    return (
-      <EmptyState title="Noch keine Einladung erstellt" description="Erstelle oben einen Code." />
-    );
+  if (props.invitations.length === 0) return <EmptySection text={t("invitations.none")} />;
   return (
     <Pager
       items={props.invitations}

@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1108,
+  "maxTotal": 1086,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -19,7 +19,7 @@
     },
     {
       "file": "packages/web/src/account/operator/operator-parts/operator-parts.tsx",
-      "count": 12
+      "count": 10
     },
     {
       "file": "packages/web/src/account/settings-fields/settings-fields.tsx",
@@ -175,7 +175,7 @@
     },
     {
       "file": "packages/web/src/care/phases/phases-list/phases-list.tsx",
-      "count": 4
+      "count": 2
     },
     {
       "file": "packages/web/src/care/phases/phases-paged/phases-paged.tsx",
@@ -194,12 +194,8 @@
       "count": 3
     },
     {
-      "file": "packages/web/src/care/plant-detail/plant-history/plant-history.tsx",
-      "count": 1
-    },
-    {
       "file": "packages/web/src/care/treatments/open-treatments/open-treatments.tsx",
-      "count": 7
+      "count": 4
     },
     {
       "file": "packages/web/src/care/treatments/open-treatments/treatment-row/treatment-row.tsx",
@@ -211,15 +207,11 @@
     },
     {
       "file": "packages/web/src/care/treatments/planning/plan-layer/plan-layer.tsx",
-      "count": 4
+      "count": 2
     },
     {
       "file": "packages/web/src/care/treatments/planning/plan-layer/specimen-picker/specimen-picker.tsx",
       "count": 8
-    },
-    {
-      "file": "packages/web/src/care/treatments/planning/planning.tsx",
-      "count": 2
     },
     {
       "file": "packages/web/src/care/treatments/treatment-form/treatment-form.tsx",
@@ -583,11 +575,11 @@
     },
     {
       "file": "packages/web/src/social/pages/friend-collection/friend-collection.tsx",
-      "count": 12
+      "count": 7
     },
     {
       "file": "packages/web/src/social/pages/friend-collection/friend-equipment/friend-equipment.tsx",
-      "count": 7
+      "count": 6
     },
     {
       "file": "packages/web/src/social/pages/friends-page/friend-layers/add-friend-layer/add-friend-layer.tsx",
@@ -599,7 +591,7 @@
     },
     {
       "file": "packages/web/src/social/pages/friends-page/friends-page.tsx",
-      "count": 6
+      "count": 5
     },
     {
       "file": "packages/web/src/social/parts/code-form/code-form.tsx",
@@ -607,7 +599,7 @@
     },
     {
       "file": "packages/web/src/social/parts/friend-list/friend-list.tsx",
-      "count": 15
+      "count": 14
     },
     {
       "file": "packages/web/src/social/parts/invite-card/invite-card.tsx",
@@ -615,11 +607,11 @@
     },
     {
       "file": "packages/web/src/social/parts/request-list/request-list.tsx",
-      "count": 11
+      "count": 10
     },
     {
       "file": "packages/web/src/social/parts/sharing-panel/sharing-panel.tsx",
-      "count": 13
+      "count": 12
     },
     {
       "file": "packages/web/src/swap/pages/match/match-card/match-card.tsx",

@@ -95,7 +95,6 @@ function buildActions(
 export function LightPage(props: {
   api: string;
   token: () => Promise<string | undefined>;
-  onOpenCollection: () => void;
   /** Inside the Sammlung the frame above names the page (`FullView`, issue 1031): no second h1 from here. */
   hosted?: boolean;
 }) {
@@ -147,7 +146,6 @@ export function LightPage(props: {
           data={z.data}
           actions={actions}
           overview={z.overview}
-          onOpenCollection={props.onOpenCollection}
           onRetry={() => void load()}
           {...(props.hosted ? { hosted: true } : {})}
           {...(lastError ? { error: lastError } : {})}

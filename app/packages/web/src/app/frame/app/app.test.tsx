@@ -444,7 +444,7 @@ describe("US-ACC-01 App", () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/care-phases");
-    expect(await screen.findByText("Noch keine Pflanze hat eine Phase")).toBeTruthy();
+    expect(await screen.findByText("Noch keine Pflanze hat eine Phase.")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
     expect(
@@ -505,7 +505,7 @@ describe("US-ACC-01 App", () => {
     expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
   });
 
-  it("US-LIC-03 the empty light overview offers the way to the collection by switching the tab", async () => {
+  it("US-LIC-03 · US-QS-32 the empty light overview offers Pflanze anlegen, a link to the add-plant form", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/light");
@@ -513,10 +513,8 @@ describe("US-ACC-01 App", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Lichtbedarf und Einstufung" }),
     );
-    await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
-    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
-    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
-    expect(screen.queryByRole("heading", { name: "Standorte" })).toBeNull();
+    const add = await screen.findByRole("link", { name: "Pflanze anlegen" });
+    expect(add.getAttribute("href")).toBe("/collection/new");
   });
 
   it('choosing a species in the catalog leads to the form "Pflanze anlegen"; back leads to the catalog (US-BES-02)', async () => {

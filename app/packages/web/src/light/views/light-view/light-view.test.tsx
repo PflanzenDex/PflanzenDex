@@ -31,13 +31,7 @@ const overview = { ok: true as const, value: { rows: [] } };
 const html = (data: LightData) => {
   const { container } = plainRender(
     <MemoryRouter>
-      <LightView
-        data={data}
-        actions={actions}
-        overview={overview}
-        onOpenCollection={() => undefined}
-        onRetry={() => undefined}
-      />
+      <LightView data={data} actions={actions} overview={overview} onRetry={() => undefined} />
     </MemoryRouter>,
   );
   // Non-breaking spaces come out as entities; the text checks compare the characters.

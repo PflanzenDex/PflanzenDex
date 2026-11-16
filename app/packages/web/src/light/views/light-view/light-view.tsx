@@ -39,7 +39,6 @@ export function LightView(props: {
   actions: LightActions;
   error?: ApiError;
   overview: Response<LightOverview>;
-  onOpenCollection: () => void;
   onRetry: () => void;
   /** Inside the Sammlung the page header above is the one h1 (issue 1031). */
   hosted?: boolean;
@@ -75,7 +74,6 @@ export function LightView(props: {
         data={data}
         actions={actions}
         overview={props.overview}
-        onOpenCollection={props.onOpenCollection}
         onRetry={props.onRetry}
       />
     </div>
