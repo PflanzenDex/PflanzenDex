@@ -276,14 +276,14 @@ describe("US-QS-18 the most urgent item of Heute", () => {
 });
 
 describe("US-QS-14 Heute mixes no two secondary styles", () => {
-  it("US-QS-14 the row actions are outline buttons, so no filled grey button stands on the screen", async () => {
+  it("US-QS-14 · US-QS-32 the row actions are tinted buttons, so no filled grey button stands on the screen", async () => {
     fakeServer(() =>
       response(200, { date: "2026-10-03", upcoming: 2, items: [OVERDUE, PHASE, INCOMPLETE] }),
     );
     render(<TodayPage api="http://api" token={token} onOpen={vi.fn()} />);
     expect(await screen.findByRole("heading", { level: 1, name: "Heute" })).toBeTruthy();
     const action = await screen.findByRole("button", { name: "Zu Behandlung: Aloe" });
-    expect(action.className).toContain("border-primary");
+    expect(action.className).toContain("bg-accent");
     const grey = screen
       .queryAllByRole("button")
       .filter((b) => b.className.includes("bg-secondary"));

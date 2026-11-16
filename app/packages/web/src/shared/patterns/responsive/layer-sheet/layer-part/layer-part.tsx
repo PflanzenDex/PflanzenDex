@@ -54,24 +54,28 @@ export function LayerOpenRow({
 
 /**
  * A row and its layer (US-QS-17): the row sits in the list; the layer opens in the pane of the surrounding `LayerHost`
- * from 1024 px and above the screen below that. A closed layer renders nothing and loads nothing.
+ * from 1024 px and above the screen below that. A closed layer renders nothing and loads nothing. `opener` replaces the
+ * row with the caller's own control that opens the layer (it calls `openLayer` of `useLayer(id)`), for a control whose
+ * look is not a row (SG-BTN-03).
  */
 export function LayerPart({
   id,
   title,
   value,
+  opener,
   primaryAction,
   children,
 }: {
   id: string;
   title: string;
   value?: React.ReactNode;
+  opener?: React.ReactNode;
   primaryAction?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <>
-      <LayerOpenRow id={id} title={title} value={value} />
+      {opener ?? <LayerOpenRow id={id} title={title} value={value} />}
       <LayerSheet id={id} title={title} primaryAction={primaryAction}>
         {children}
       </LayerSheet>

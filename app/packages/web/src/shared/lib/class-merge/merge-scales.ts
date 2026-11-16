@@ -76,6 +76,14 @@ export const scaleGridTemplateColsRows = () => [
   isArbitraryVariable,
   isArbitraryValue,
 ];
+export const scaleGridAutoColsRows = () => [
+  "auto",
+  "min",
+  "max",
+  "fr",
+  isArbitraryVariable,
+  isArbitraryValue,
+];
 export const scaleOverscroll = () => ["auto", "contain", "none"];
 export const scaleGridColRowStartOrEnd = () => [
   isInteger,

@@ -49,7 +49,7 @@ function ChipRow({
           <Button
             key={c.key}
             type="button"
-            variant={selected ? "secondary" : "outline"}
+            variant={selected ? "secondary" : "plain"}
             size="sm"
             aria-pressed={selected}
             onClick={() => onChoose(c.key)}
@@ -65,8 +65,8 @@ function ChipRow({
 }
 
 /**
- * The width of every chip as the widest form (outline with the check mark, at least as wide as the chosen and the other
- * chip), for the decision of `useChipsFit`. Invisible, inert and out of the accessibility tree.
+ * The width of every chip as the widest form (a secondary chip with the check mark, at least as wide as the chosen and the
+ * other chip), for the decision of `useChipsFit`. Invisible, inert and out of the accessibility tree.
  */
 function MeasureRow({
   choices,
@@ -87,7 +87,7 @@ function MeasureRow({
             key={c.key}
             type="button"
             tabIndex={-1}
-            variant="outline"
+            variant="secondary"
             size="sm"
             className="shrink-0 whitespace-nowrap"
           >

@@ -166,3 +166,35 @@ describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
 });
+
+describe("US-QS-32 the sheet Fehlt noch: one line of help, the rest behind Mehr erfahren (SG-COPY-05, SG-FMT-03)", () => {
+  it("US-QS-32 the line counts plants, not hints: two hints of one plant agree in the singular, and the example sits behind Mehr erfahren", async () => {
+    const second = {
+      ...noZone,
+      kind: "location_missing",
+      text: "„Aloe“ hat noch keinen Standort.",
+    };
+    fakeServer(() => response(200, { hints: [noZone, second] }));
+    render(
+      <MemoryRouter>
+        <HintsPage api="http://api" token={token} onOpen={noop} host />
+      </MemoryRouter>,
+    );
+    const line = await screen.findByText("Ohne diese Angaben fehlt sie in Auswertungen.");
+    expect(line.closest("details")).toBeNull();
+    const more = line.parentElement?.querySelector("details");
+    expect(more?.textContent).toContain("Die Verteilung auf die Lichtzonen zum Beispiel");
+    expect(more?.textContent).not.toContain("Ohne diese Angaben");
+  });
+
+  it("US-QS-32 SG-FMT-03 hints of two plants agree in number: 'Ohne diese Angaben fehlen sie'", async () => {
+    fakeServer(() => response(200, { hints: [noZone, noSpecies] }));
+    render(
+      <MemoryRouter>
+        <HintsPage api="http://api" token={token} onOpen={noop} host />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("Ohne diese Angaben fehlen sie in Auswertungen.")).toBeTruthy();
+    expect(screen.queryByText(/Diese Pflanzen sind unvollständig/)).toBeNull();
+  });
+});

@@ -1,4 +1,5 @@
 import { zoneLabel } from "@pflanzendex/core";
+import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { cva } from "class-variance-authority";
 import { Button } from "@/shared/ui/button/button";
@@ -111,4 +112,12 @@ export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoA
       </span>
     </Button>
   );
+}
+
+/**
+ * A plant tile while its page loads (SG-STATE-02, F-0124): the tile's box with the height of its 56 px photo and padding,
+ * so a list or a group that loads shows its tiles' shape instead of an empty frame. Never a number in it (P-08).
+ */
+export function PlantTileSkeleton() {
+  return <Skeleton className="h-[4.25rem] w-full rounded-card" />;
 }

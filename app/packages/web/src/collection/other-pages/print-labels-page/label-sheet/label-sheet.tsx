@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { labelAddress, qrModules } from "../label-code";
 import { cn } from "@/shared/lib/utils";
@@ -77,4 +77,22 @@ export function PrintRegion(props: {
     </section>,
     document.body,
   );
+}
+
+/**
+ * The format a print page starts with, and the callback that is told each choice (US-QS-32). The route gives both: it
+ * reads and remembers the format on this device, so this module stays free of the storage helper (the page's chunk).
+ */
+export type LabelFormatProps = { format: LabelFormat; onFormat?: (format: LabelFormat) => void };
+
+/** The chosen format, starting with the one given; a choice is passed on at once. */
+export function useLabelFormatChoice(
+  props: LabelFormatProps,
+): [LabelFormat, (format: LabelFormat) => void] {
+  const [format, setFormat] = useState<LabelFormat>(props.format);
+  const choose = (next: LabelFormat) => {
+    setFormat(next);
+    props.onFormat?.(next);
+  };
+  return [format, choose];
 }

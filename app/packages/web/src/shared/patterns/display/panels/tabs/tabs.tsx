@@ -55,7 +55,7 @@ function TabButton(props: TabButtonProps) {
       tabIndex={active ? 0 : -1}
       onClick={() => props.onSelect(tab.value)}
       className={cn(
-        "flex-1 rounded-full font-semibold",
+        "flex-1 rounded-full border",
         // Wrap: a tab is never narrower than its label, so the label breaks inside the tab or the strip breaks onto
         // another line (NFR-13, text at 200 %). The narrower padding (8 px a side) keeps the widest label of the layers
         // at normal size within the equal share of a 360 px phone, so the tabs stay equally wide there. Otherwise the
@@ -63,9 +63,11 @@ function TabButton(props: TabButtonProps) {
         wrap
           ? "min-w-fit max-w-full whitespace-normal px-2"
           : "min-w-[44px] whitespace-nowrap px-4",
+        // The selected tab has three cues besides colour (SG-CTRL-01, SG-COLOR-05): a raised card fill, a semibold label
+        // and a 1 px boundary in the field colour. The others keep the same boundary, transparent, so nothing jumps.
         active
-          ? "bg-accent text-accent-foreground shadow-elevation-1 hover:bg-accent forced-colors:border-[color:Highlight]"
-          : "text-muted-foreground hover:bg-transparent hover:text-foreground",
+          ? "border-input bg-card font-semibold text-foreground shadow-elevation-1 hover:bg-card hover:text-foreground forced-colors:border-[color:Highlight]"
+          : "border-transparent font-normal text-muted-foreground hover:bg-transparent hover:text-foreground",
       )}
     >
       {tab.label}

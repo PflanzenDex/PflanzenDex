@@ -2,6 +2,9 @@
 // comparison the steps use to stay idempotent. Used by steps.mjs; no dependencies.
 
 export const RESOURCE_CLIENT_ID = "pflanzendex-mcp";
+// The e-mail theme of the realm (US-QS-32, F-0376): the mails speak "du" and name PflanzenDéx. The theme folder is
+// app/config/dev/keycloak-theme/pflanzendex/email; the realm import sets it on a new realm, the setup step on a running one.
+export const EMAIL_THEME = "pflanzendex";
 export const DCR_POLICY_TYPE =
   "org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy";
 

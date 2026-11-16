@@ -20,7 +20,7 @@ function largeText(): boolean {
   return parseFloat(getComputedStyle(document.documentElement).fontSize) >= 24;
 }
 
-/** "Nein · Später · Ja" as buttons; they are the way without a swipe gesture (NFR-13). */
+/** "Kein Interesse · Später · Wünschen" as buttons; they are the way without a swipe gesture (NFR-13). */
 export function Actions(props: { onDecide: (d: Decision) => void }) {
   const [large] = useState(largeText);
   return (

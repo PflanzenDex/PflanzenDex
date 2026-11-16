@@ -20,7 +20,6 @@
   "pot.item": "{name} · {size}",
   "pot.itemCurrent": "{name} · {size} (bisheriger Topf)",
   "pot.sizeUnknown": "Größe unbekannt",
-  "pot.leaveNotice": "Ohne Topfauswahl kommt die Pflanze aus einem eingetragenen Topf heraus; der Topf selbst bleibt erhalten.",
   "done.cutting": "„{name}“ ist eingetopft und eine Pflanze. Ab jetzt gilt die Lichtzone ihres Standorts oder der Art.",
   "done.plant": "„{name}“ ist umgetopft. Der Zeitraum bis zum nächsten Umtopfen beginnt neu.",
   "plan.title": "Umtopfen",
@@ -51,7 +50,7 @@
   "observe.hint": "Hake an, was du siehst. Nach dem Umtopfen sind die Haken wieder leer.",
   "observe.failed": "Der Haken bei „{sign}“ ist nicht gespeichert.",
   "observe.retry": "Erneut versuchen",
-  "plan.repot": "Umgetopft",
+  "plan.repot": "Umtopfen eintragen",
   "plan.signsNone": "Beobachtungen: keine",
   "plan.signsList": "Beobachtungen: {list}",
   "plan.signsOpen": "Beobachtungen notieren"

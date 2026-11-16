@@ -43,6 +43,11 @@
 </#macro>
 
 <#macro input name label value="" required=false autocomplete="off" fieldName=name error=messagesPerField.get(fieldName) autofocus=false>
+  <#-- The reset page names its empty field as the field's label does (US-QS-32, F-0322); the sign-up keeps the user name text.
+       pageId is the template name without ".ftl" (FreeMarkerLoginFormsProvider: "login-reset-password"). -->
+  <#if pageId == "login-reset-password" && name == "username" && error == msg("missingUsernameMessage")>
+    <#local error = msg("pdxResetMissingUsername")>
+  </#if>
   <@group name=name label=label error=error required=required>
     <span class="${properties.kcInputClass} <#if error?has_content>${properties.kcError}</#if>">
         <input id="${name}" name="${name}" value="${value}" type="text" autocomplete="${autocomplete}" <#if autofocus>autofocus</#if>

@@ -259,6 +259,13 @@
             </div>
         </#if>
 
+        <#-- The reset page explains its button above its field, in one line (US-QS-32, F-0321); the other pages keep their info in the footer. -->
+        <#if displayInfo && pageId == "login-reset-password">
+            <div id="kc-info" class="pdx-info-above">
+                <#nested "info">
+            </div>
+        </#if>
+
         <#nested "form">
 
         <#if auth?has_content && auth.showTryAnotherWayLink()>
@@ -284,7 +291,7 @@
           <div class="pdx-footer">
               <#nested "socialProviders">
 
-              <#if displayInfo>
+              <#if displayInfo && pageId != "login-reset-password">
                   <div id="kc-info" class="pdx-info">
                       <#nested "info">
                   </div>

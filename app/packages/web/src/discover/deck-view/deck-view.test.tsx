@@ -46,18 +46,18 @@ describe("US-QS-21 the card takes the remaining height", () => {
     const card = screen.getByRole("article");
     expect(card.className).toContain("flex-1");
     expect(card.className).toContain("overflow-y-auto");
-    const row = screen.getByRole("button", { name: "Nein" }).parentElement?.parentElement;
+    const row = screen.getByRole("button", { name: "Kein Interesse" }).parentElement?.parentElement;
     expect(row?.className).toContain("shrink-0");
     expect(row?.parentElement?.lastElementChild).toBe(row);
   });
 });
 
 describe("US-QS-21 large text scrolls instead of clipping (WCAG 1.4.4, 1.4.10)", () => {
-  const rowOf = () => screen.getByRole("button", { name: "Ja" }).parentElement;
+  const rowOf = () => screen.getByRole("button", { name: "Wünschen" }).parentElement;
   it("US-QS-21 wraps the buttons, keeps their 44 px size and gives the card and the stack a minimum height", () => {
     render(<DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
     expect(rowOf()?.className).toContain("flex-wrap");
-    for (const name of ["Nein", "Später", "Ja"]) {
+    for (const name of ["Kein Interesse", "Später", "Wünschen"]) {
       const button = screen.getByRole("button", { name });
       expect(button.className).toContain("min-w-24");
       expect(button.className).toContain("min-h-[48px]");
@@ -81,10 +81,10 @@ describe("US-QS-21 large text scrolls instead of clipping (WCAG 1.4.4, 1.4.10)",
 });
 
 describe("US-QS-14 decision buttons stay with the card", () => {
-  it("US-QS-14 keeps Nein, Später and Ja in a sticky row above the bar, at the bottom from md", () => {
+  it("US-QS-14 keeps Kein Interesse, Später and Wünschen in a sticky row above the bar, at the bottom from md", () => {
     render(<DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
-    const row = screen.getByRole("button", { name: "Nein" }).parentElement?.parentElement;
-    for (const name of ["Nein", "Später", "Ja"])
+    const row = screen.getByRole("button", { name: "Kein Interesse" }).parentElement?.parentElement;
+    for (const name of ["Kein Interesse", "Später", "Wünschen"])
       expect(screen.getByRole("button", { name }).parentElement?.parentElement).toBe(row);
     expect(row?.className).toContain("sticky");
     expect(row?.className).toContain("bottom-[calc(3.5rem+env(safe-area-inset-bottom))]");
@@ -94,7 +94,7 @@ describe("US-QS-14 decision buttons stay with the card", () => {
 
   it("US-QS-14 puts the row after the card and the honesty line, so no content sits behind it at the end", () => {
     render(<DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
-    const row = screen.getByRole("button", { name: "Nein" }).parentElement?.parentElement;
+    const row = screen.getByRole("button", { name: "Kein Interesse" }).parentElement?.parentElement;
     const grid = row?.parentElement;
     expect(grid?.lastElementChild).toBe(row);
     expect(screen.getByRole("article").compareDocumentPosition(row as Node)).toBe(
@@ -104,7 +104,7 @@ describe("US-QS-14 decision buttons stay with the card", () => {
 
   it("US-QS-14 keeps the row in the flow in a window lower than 30 rem (400 % zoom) and sticky from 30 rem of height", () => {
     render(<DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
-    const row = screen.getByRole("button", { name: "Ja" }).parentElement?.parentElement;
+    const row = screen.getByRole("button", { name: "Wünschen" }).parentElement?.parentElement;
     // Base style: no sticky class; the tall-window variant (from 30 rem of height) makes it sticky with the bar's offset.
     expect(row?.classList).toContain("tall-window:sticky");
     expect(row?.classList).not.toContain("sticky");
@@ -223,15 +223,17 @@ describe("US-ENT-04 Rückgängig is offered only after a Yes or No", () => {
 describe("US-QS-30 the deck's network decisions wait offline (US-ENT-04)", () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it("US-QS-30 offline Ja and Nein do not write and the card stays; Später still moves on", async () => {
+  it("US-QS-30 offline Wünschen and Kein Interesse do not write and the card stays; Später still moves on", async () => {
     const state = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
     const onDecide = vi.fn(saveOk);
     render(
       <DeckView deck={deck} onDecide={onDecide} onUndo={undoOk} onNewDeck={() => undefined} />,
     );
-    await userEvent.click(screen.getByRole("button", { name: "Ja" }));
+    await userEvent.click(screen.getByRole("button", { name: "Wünschen" }));
     expect(onDecide).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Ja" }).getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByRole("button", { name: "Wünschen" }).getAttribute("aria-disabled")).toBe(
+      "true",
+    );
     const later = screen.getByRole("button", { name: "Später" });
     expect(later.hasAttribute("aria-disabled")).toBe(false);
     await userEvent.click(later);
@@ -239,7 +241,9 @@ describe("US-QS-30 the deck's network decisions wait offline (US-ENT-04)", () =>
     expect(screen.getByText("Aloe vera")).toBeTruthy();
     state.mockReturnValue(true);
     act(() => window.dispatchEvent(new Event("online")));
-    expect(screen.getByRole("button", { name: "Ja" }).hasAttribute("aria-disabled")).toBe(false);
+    expect(screen.getByRole("button", { name: "Wünschen" }).hasAttribute("aria-disabled")).toBe(
+      false,
+    );
   });
 });
 
@@ -255,7 +259,7 @@ describe("US-QS-32 a decision without an answer shows the text of its request (i
     render(
       <DeckView deck={deck} onDecide={noAnswer} onUndo={undoOk} onNewDeck={() => undefined} />,
     );
-    await userEvent.click(screen.getByRole("button", { name: "Ja" }));
+    await userEvent.click(screen.getByRole("button", { name: "Wünschen" }));
     expect(await screen.findByText(NO_ANSWER)).toBeTruthy();
     expect(screen.queryByText(GENERIC_ERROR_TEXT)).toBeNull();
     expect(screen.getByText("Ficus lyrata")).toBeTruthy();
@@ -265,7 +269,7 @@ describe("US-QS-32 a decision without an answer shows the text of its request (i
     render(
       <DeckView deck={deck} onDecide={saveOk} onUndo={noAnswer} onNewDeck={() => undefined} />,
     );
-    await userEvent.click(screen.getByRole("button", { name: "Ja" }));
+    await userEvent.click(screen.getByRole("button", { name: "Wünschen" }));
     await userEvent.click(await screen.findByRole("button", { name: "Rückgängig" }));
     expect(await screen.findByText(NO_ANSWER)).toBeTruthy();
     expect(screen.queryByText(GENERIC_ERROR_TEXT)).toBeNull();

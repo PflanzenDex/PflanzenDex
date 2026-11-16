@@ -41,6 +41,7 @@ export function AreaHeader(props: {
       options={options}
       onChoose={props.onChoose}
       caption={props.caption}
+      reserveCaption
       {...(arranged ? { action: <LayerOpener id={VIEW_LAYER}>{ui("view")}</LayerOpener> } : {})}
     />
   );

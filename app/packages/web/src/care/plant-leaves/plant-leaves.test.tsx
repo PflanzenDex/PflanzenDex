@@ -128,7 +128,24 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     expect(quick.parentElement?.className).toContain("grid-cols-2");
   });
 
-  it("US-WAC-07 a leaf row keeps its date and sizes with Entfernen on one line, and the note below them", async () => {
+  it("US-QS-32 · SG-BTN-03 the removal of a leaf is a red plain button named 'Blatt entfernen'", async () => {
+    server({
+      "GET /specimens/e1/leaves": () =>
+        json(200, view([leaf(9, { lengthMm: 40, widthMm: 12, note: null })])),
+    });
+    show();
+    const row = within(await screen.findByRole("list", { name: "Neue Blätter" })).getByRole(
+      "listitem",
+    );
+    const remove = within(row).getByRole("button", { name: "Blatt entfernen: 09.10.2026" });
+    expect(remove.textContent).toBe("Blatt entfernen");
+    // The accessible name starts with the visible label (WCAG 2.5.3, axe label-content-name-mismatch, issue 1853).
+    expect(remove.getAttribute("aria-label")?.startsWith("Blatt entfernen")).toBe(true);
+    expect(remove.className.split(/\s+/)).toContain("text-destructive");
+    expect(remove.className.split(/\s+/).some((c) => /^bg-/.test(c))).toBe(false);
+  });
+
+  it("US-WAC-07 a leaf row keeps its date and sizes with Blatt entfernen on one line, and the note below them", async () => {
     server({
       "GET /specimens/e1/leaves": () =>
         json(200, view([leaf(9, { lengthMm: 40, widthMm: 12, note: "Fensterung" })])),
@@ -137,7 +154,7 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     const row = within(await screen.findByRole("list", { name: "Neue Blätter" })).getByRole(
       "listitem",
     );
-    const remove = within(row).getByRole("button", { name: "Blatt vom 09.10.2026 entfernen" });
+    const remove = within(row).getByRole("button", { name: "Blatt entfernen: 09.10.2026" });
     // The button sits in the top line with the date and the sizes; the note is a line of its own below it.
     const line = remove.parentElement;
     expect(line?.textContent).toContain("09.10.2026");
@@ -180,12 +197,12 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     });
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Blatt vom 09.10.2026 entfernen" }));
+    await user.click(await screen.findByRole("button", { name: "Blatt entfernen: 09.10.2026" }));
     expect(screen.getByText("Wirklich entfernen? Das Blatt ist danach weg.")).toBeTruthy();
     expect(posts).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(posts).toHaveLength(0);
-    await user.click(screen.getByRole("button", { name: "Blatt vom 09.10.2026 entfernen" }));
+    await user.click(screen.getByRole("button", { name: "Blatt entfernen: 09.10.2026" }));
     await user.click(screen.getByRole("button", { name: "Ja, Blatt vom 09.10.2026 entfernen" }));
     expect(await screen.findByText("Noch kein neues Blatt")).toBeTruthy();
     expect(posts).toEqual([

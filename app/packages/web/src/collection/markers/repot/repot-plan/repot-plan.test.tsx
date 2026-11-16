@@ -79,7 +79,7 @@ describe("US-BES-19 the plant layer shows the repot plan as the part Umtopfen of
     const section = within((await openPlan()) as HTMLElement);
     expect(section.getByText("Gerade kein Grund zum Umtopfen.")).toBeTruthy();
     expect(section.getByText("Zuletzt umgetopft: 05.03.2026")).toBeTruthy();
-    expect(section.getByRole("button", { name: "Umgetopft" })).toBeTruthy();
+    expect(section.getByRole("button", { name: "Umtopfen eintragen" })).toBeTruthy();
   });
 
   it("US-BES-19 an interval hint names the months since the last repot and the general starting value (P-08)", async () => {
@@ -262,7 +262,7 @@ describe("US-BES-19 the part stays short: the observations are one line and thei
     renderCollection();
     const section = within((await openPlan()) as HTMLElement);
     expect(section.getByText("Beobachtungen: keine")).toBeTruthy();
-    const umgetopft = section.getByRole("button", { name: "Umgetopft" });
+    const umgetopft = section.getByRole("button", { name: "Umtopfen eintragen" });
     const notieren = section.getByRole("button", { name: "Beobachtungen notieren" });
     expect(umgetopft.parentElement).toBe(notieren.parentElement);
     expect(umgetopft.parentElement?.className).toContain("flex-wrap");

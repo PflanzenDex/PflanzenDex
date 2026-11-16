@@ -59,8 +59,8 @@ export function useNewPlants(api: string, token: Token) {
 }
 
 /**
- * What is new, when it was read, and "Okay" (US-SOZ-06, FR-SOZ-03). `onSeen` follows a successful "Okay". `compact` is
- * one row with "Okay" at its end and no "Stand" line, for a place that says "Stand" itself (the layer "Neu bei Freunden",
+ * What is new, when it was read, and "Als gelesen markieren" (US-SOZ-06, FR-SOZ-03). `onSeen` follows a successful "Als gelesen markieren". `compact` is
+ * one row with "Als gelesen markieren" at its end and no "Stand" line, for a place that says "Stand" itself (the layer "Neu bei Freunden",
  * owner decision 2026-11-02, issue 1157); without a network the "Stand" stays, so an old copy is still recognizable.
  */
 export function NewPlantsBody(props: {
@@ -97,7 +97,7 @@ export function NewPlantsBody(props: {
           {props.offline ? t("news.offline") : ""}
         </p>
       )}
-      <div className={compact ? "shrink-0" : undefined}>
+      <div>
         <Button
           type="button"
           size={compact ? "default" : "touch"}
@@ -117,8 +117,8 @@ export function NewPlantsBody(props: {
 }
 
 /**
- * "Friends have N new plants: …" (US-SOZ-06): stays until "Okay". What is new is what became visible to me since the last
- * "Okay" (shared, or the friendship started), read through what friends share (P-05); the banner names friend and species only.
+ * "Friends have N new plants: …" (US-SOZ-06): stays until "Als gelesen markieren". What is new is what became visible to me since the last
+ * "Als gelesen markieren" (shared, or the friendship started), read through what friends share (P-05); the banner names friend and species only.
  * "Stand: heute" (or "vor 3 Tagen", else the date) tells when the data is from, so an older copy shown without a network
  * is recognizable (FR-SOZ-03, US-QS-32).
  * Without news (and on the very first visit) nothing is shown. `quiet` keeps a failed load from adding a second error.
@@ -163,7 +163,7 @@ export function FriendsBanner(props: {
   requests?: boolean;
   /** `false` leaves the banner about new plants out (issue 1156). */
   news?: boolean;
-  /** One row with "Okay" at its end, for the layer "Neu bei Freunden" (issue 1157). */
+  /** One row with "Als gelesen markieren" at its end, for the layer "Neu bei Freunden" (issue 1157). */
   compact?: boolean;
 }) {
   return (

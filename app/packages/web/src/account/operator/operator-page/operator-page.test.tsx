@@ -666,11 +666,14 @@ describe("US-ACC-05 · DS-52 to DS-49 states and primitives", () => {
     expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
   });
 
-  it("US-ACC-05 · DS-26 the empty invitation list offers the next action: it takes the operator to the validity field", async () => {
+  it("US-QS-32 · SG-BTN-02 the codes layer has one filled button, and an empty list names its next step in words (P-09)", async () => {
     await open();
-    await topic(/^Einladungscodes/);
-    await userEvent.setup().click(screen.getByRole("button", { name: "Gültigkeit wählen" }));
-    expect(document.activeElement).toBe(screen.getByLabelText("Gültig für (Tage)"));
+    const layer = await topic(/^Einladungscodes/);
+    const filled = within(layer)
+      .getAllByRole("button")
+      .filter((b) => b.className.split(/\s+/).includes("bg-primary"));
+    expect(filled.map((b) => b.textContent)).toEqual(["Code erstellen"]);
+    expect(within(layer).getByText("Erstelle oben einen Code.")).toBeTruthy();
   });
 
   it("US-ACC-05 · DS-49 a refusal shows the German text of its error code, never the raw server text", async () => {
@@ -777,7 +780,7 @@ describe("US-ACC-04 operator page: the topic Löschfristen", () => {
       answer = resolve;
     });
     await open();
-    // The row shows its loading text while the counts are on their way (DS-57: after the short delay).
+    // The row names its loading for assistive technology while the counts are on their way (SG-STATE-02).
     const row = await screen.findByRole("button", { name: /Löschfristen werden geladen/ });
     await userEvent.click(row);
     const dialog = await screen.findByRole("dialog");
@@ -785,6 +788,21 @@ describe("US-ACC-04 operator page: the topic Löschfristen", () => {
     answer();
     expect(await within(dialog).findByText("Nichts zu tun.")).toBeTruthy();
     expect(screen.getByRole("dialog")).toBe(dialog);
+  });
+
+  it("US-QS-32 · SG-STATE-02 while its counts load the row Löschfristen keeps the line of its common answer, no number (F-0338, issue 2038)", async () => {
+    let answer: () => void = () => undefined;
+    deletionsGate = new Promise<void>((resolve) => {
+      answer = resolve;
+    });
+    await open();
+    const row = await screen.findByRole("button", { name: /Löschfristen werden geladen/ });
+    const shape = row.querySelector("[data-deadline-skeleton] [aria-hidden='true']");
+    expect(shape?.textContent).toBe("Keine Frist offen");
+    expect(shape?.textContent).not.toMatch(/\d/);
+    expect(shape?.className).toContain("text-transparent");
+    answer();
+    expect(await screen.findByRole("button", { name: /Keine Frist offen/ })).toBe(row);
   });
 
   it("US-ACC-04 a press on the row Löschfristen that starts while its counts load and ends after they arrive still opens the layer (issue 1722)", async () => {
@@ -854,7 +872,9 @@ describe("US-ACC-05 US-QS-32 the cost and codes layers ask before they discard t
     await open();
     await typeAmount("12,50");
     await userEvent.keyboard("{Escape}");
-    await userEvent.click(within(await askedQuestion()).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(
+      within(await askedQuestion()).getByRole("button", { name: "Eingabe verwerfen" }),
+    );
     await waitFor(() => expect(screen.queryByRole("dialog", costLayer)).toBeNull());
     expect(screen.queryByRole("dialog", question)).toBeNull();
   });
@@ -893,7 +913,7 @@ describe("US-ACC-05 US-QS-32 the cost and codes layers ask before they discard t
     window.history.back();
     const ask = await askedQuestion();
     expect(window.location.search).toContain("sheet=kosten");
-    await userEvent.click(within(ask).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(ask).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(window.location.search).toBe(""));
     expect(screen.queryByRole("dialog", costLayer)).toBeNull();
   });
@@ -959,7 +979,9 @@ describe("US-ACC-05 US-QS-32 the cost and codes layers ask before they discard t
     await userEvent.clear(days);
     await userEvent.type(days, "3");
     await userEvent.keyboard("{Escape}");
-    await userEvent.click(within(await askedQuestion()).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(
+      within(await askedQuestion()).getByRole("button", { name: "Eingabe verwerfen" }),
+    );
     await waitFor(() => expect(screen.queryByRole("dialog", codesLayer)).toBeNull());
   });
 

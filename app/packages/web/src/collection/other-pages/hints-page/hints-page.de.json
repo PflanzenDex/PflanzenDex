@@ -4,6 +4,8 @@
   "emptyTitle": "Nichts fehlt",
   "emptyDescription": "Jede Pflanze hat eine Art, einen Standort und eine Lichtzone.",
   "toCollection": "Zur Sammlung",
-  "quiet": "Diese Pflanzen sind unvollständig und fallen sonst aus Auswertungen wie der Verteilung auf die Lichtzonen.",
+  "quiet.one": "Ohne diese Angaben fehlt sie in Auswertungen.",
+  "quiet.other": "Ohne diese Angaben fehlen sie in Auswertungen.",
+  "quietMore": "Die Verteilung auf die Lichtzonen zum Beispiel lässt unvollständige Pflanzen aus. Jede Karte sagt, was fehlt.",
   "pager": "Fehlende Angaben"
 }

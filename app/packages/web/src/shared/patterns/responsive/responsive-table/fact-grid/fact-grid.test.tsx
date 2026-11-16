@@ -98,7 +98,7 @@ describe("US-QS-24 FactGrid", () => {
       <FactGrid
         facts={facts}
         next={
-          <Button type="button" variant="outline" onClick={onNext}>
+          <Button type="button" variant="tinted" onClick={onNext}>
             Ergänzen
           </Button>
         }

@@ -208,7 +208,7 @@ test("US-QS-14: the German texts use the du form in the overridden messages and 
         return [line.slice(0, at), line.slice(at + 1)];
       }),
   );
-  assert.equal(values.doLogIn, "Melde dich an");
+  assert.equal(values.doLogIn, "Anmelden");
   assert.equal(values.usernameOrEmail, "E-Mail oder Benutzername");
   assert.equal(values.doRegister, "Konto anlegen");
   assert.equal(values.loginTitleHtml, "PflanzenDéx");
@@ -286,4 +286,267 @@ test("US-DEV-06 #2161: the stylesheet link carries the content version of css/pf
     styles.includes(expected),
     `theme.properties must name styles=css/styles.css ${expected} (the content version of css/pflanzendex.css); it names: ${styles.join(" ") || "nothing"}`,
   );
+});
+
+// US-QS-32 (design review FX-50, issues 2030 to 2033): the sign-in pages and the Keycloak e-mails speak "du", name the product
+// PflanzenDéx, and every refusal says how to go on. The base theme (Keycloak 26.8) is not in the repo: the keys below are the
+// ones a sign-up, sign-in, reset, password or verify page can show in this realm (password policy, user profile, e-mail).
+const FORMAL = /\b(Sie|Ihr|Ihre|Ihrem|Ihren|Ihrer|Ihres|Ihnen)\b/;
+const EMAIL_THEME = join(app, "config", "dev", "keycloak-theme", "pflanzendex", "email");
+const valuesOf = (text) =>
+  Object.fromEntries(
+    text
+      .split("\n")
+      .filter((line) => line && !line.startsWith("#"))
+      .map((line) => {
+        const at = line.indexOf("=");
+        return [line.slice(0, at), line.slice(at + 1)];
+      }),
+  );
+const de = valuesOf(messages);
+// Read per test: a missing e-mail file fails the e-mail tests only, not the file.
+const emailDe = () =>
+  valuesOf(readFileSync(join(EMAIL_THEME, "messages", "messages_de.properties"), "utf8"));
+/** A du imperative or the page's own link name: the way on that a refusal must name (SG-COPY-06, SG-FORM-05). */
+const WAY_ON =
+  /\b(Prüfe|Gib|Wähle|Melde|Setz|Kürze|Warte|Entferne|Fang|Lege|Versuch|Kehr|Führe|Bestätige|Ändere|Geh)\b|Passwort vergessen/;
+
+test("US-QS-32 · F-0317: the sign-in button and the sign-in title carry one name, Anmelden", () => {
+  assert.equal(de.doLogIn, "Anmelden");
+  assert.equal(de.loginTitle, "Anmelden");
+});
+
+test("US-QS-32 · F-0318: a refused sign-in names both fields and the reset link, the way on (above the fields, the alert is rendered before the form)", () => {
+  assert.equal(
+    de.invalidUserMessage,
+    "E-Mail, Benutzername oder Passwort stimmen nicht. Prüfe beides oder setz dein Passwort über „Passwort vergessen?“ zurück.",
+  );
+  assert.equal(
+    de.doForgotPassword,
+    "Passwort vergessen?",
+    "the link the message names is the link of the form",
+  );
+  assert.ok(
+    template.indexOf('<div class="${properties.kcAlertClass!} pf-m-${') <
+      template.indexOf('<#nested "form">'),
+    "the alert stands before the form",
+  );
+});
+
+test("US-QS-32 · F-0318 · F-0375: a locked-out sign-in says how to go on (waiting, the reset link)", () => {
+  assert.match(de.accountTemporarilyDisabledMessage, /Warte/);
+  assert.match(de.accountTemporarilyDisabledMessage, /Passwort vergessen\?/);
+});
+
+test("US-QS-32 · F-0321: the reset page explains its button above its field in one line, the other pages keep the info in the footer", () => {
+  // pageId is the template name without ".ftl" (FreeMarkerLoginFormsProvider.processTemplate, Keycloak 26.8.1).
+  const block = '<#if displayInfo && pageId == "login-reset-password">';
+  const start = template.indexOf(block);
+  const form = template.indexOf('<#nested "form">');
+  assert.ok(start >= 0, "the reset page has its own block");
+  assert.ok(start < form, "the block stands before the form");
+  assert.ok(template.slice(start, form).includes('<#nested "info">'), "the info is rendered there");
+  assert.match(template, /<#if displayInfo && pageId != "login-reset-password">/);
+  assert.ok(template.indexOf('<#nested "info">', form) > form, "the other pages keep the footer");
+  assert.equal(de.emailInstruction, "Wir schicken dir einen Link zum Zurücksetzen.");
+  assert.equal(de.emailInstructionUsername, "Wir schicken dir einen Link zum Zurücksetzen.");
+});
+
+test("US-QS-32 · F-0322: the reset page names an empty field as its label does, the sign-up keeps the user name text", () => {
+  const field = read("field.ftl");
+  assert.match(field, /pageId == "login-reset-password"/);
+  assert.match(field, /msg\("missingUsernameMessage"\)/);
+  assert.match(field, /msg\("pdxResetMissingUsername"\)/);
+  assert.equal(
+    de.pdxResetMissingUsername,
+    "Gib deine E-Mail-Adresse oder deinen Benutzernamen ein.",
+  );
+  assert.equal(de.missingUsernameMessage, "Bitte gib einen Benutzernamen ein.");
+});
+
+test("US-QS-32 · F-0321 · F-0322: no page id in the theme carries .ftl (Keycloak's pageId is the template name without it)", () => {
+  for (const file of [template, read("field.ftl")]) {
+    assert.doesNotMatch(file, /pageId\s*[=!]=\s*"[^"]*\.ftl"/);
+  }
+});
+
+test("US-QS-32 · F-0326: doClickHere is shared by the verify-email and the page-expired pages, so it names no page result; the verify sentence continues the link with ', um'", () => {
+  // The base page-expired template uses doClickHere for its restart and continue links (pageExpiredMsg1/2), so a result such
+  // as "E-Mail erneut senden" would label the wrong action there.
+  assert.notEqual(
+    de.doClickHere,
+    "Hier klicken",
+    "the base default names no result either, but is replaced",
+  );
+  assert.doesNotMatch(
+    de.doClickHere,
+    /E-Mail|Anmeldung|Passwort|senden|erneut/,
+    "no page result in the shared text",
+  );
+  assert.equal(de.emailVerifyInstruction2, "Keine E-Mail bekommen?");
+  assert.match(
+    de.emailVerifyInstruction3,
+    /^, um dir eine neue E-Mail schicken zu lassen\.$/,
+    "the sentence continues the link",
+  );
+  assert.equal(de.backToLogin, "Zurück zur Anmeldung");
+  assert.equal(de.backToApplication, "Zurück zur App");
+  assert.equal(de.updatePasswordMessage, "Lege ein Passwort fest, um dein Konto zu aktivieren.");
+});
+
+test("US-QS-32 · F-0330: page text blocks wrap an unbroken e-mail address at 200 % text", () => {
+  assert.match(
+    css,
+    /\.instruction[^{]*\.pf-v5-c-alert__title[^{]*\{[^}]*overflow-wrap:\s*anywhere/,
+    "the instruction and the alert title wrap anywhere",
+  );
+});
+
+test("US-QS-32 · F-0324: every sign-up validation message is in the du form and says how to fix the field", () => {
+  for (const key of [
+    "error-user-attribute-required",
+    "error-invalid-blank",
+    "error-empty",
+    "error-invalid-email",
+    "error-invalid-length",
+    "error-invalid-length-too-short",
+    "error-invalid-length-too-long",
+    "error-pattern-no-match",
+    "error-username-invalid-character",
+    "error-person-name-invalid-character",
+    "error-invalid-value",
+  ]) {
+    assert.ok(key in de, `${key} is overridden by the theme`);
+    assert.doesNotMatch(de[key], FORMAL, `${key} does not use the formal address`);
+    assert.doesNotMatch(de[key], /\{0\}/, `${key} names no attribute placeholder`);
+  }
+  assert.equal(de["error-user-attribute-required"], "Bitte fülle dieses Feld aus.");
+  assert.match(de["error-invalid-length"], /\{1\}.*\{2\}/, "the length keeps both bounds");
+  assert.match(de["error-invalid-length-too-short"], /\{1\}/);
+  assert.match(de["error-invalid-length-too-long"], /\{2\}/);
+});
+
+test("US-QS-32 · F-0375: every refusal of the sign-up and the password says how to go on, and keeps its placeholder", () => {
+  for (const key of [
+    "emailExistsMessage",
+    "usernameExistsMessage",
+    "invalidEmailMessage",
+    "notMatchPasswordMessage",
+    "invalidPasswordConfirmMessage",
+    "invalidPasswordMinLengthMessage",
+    "invalidPasswordMaxLengthMessage",
+    "invalidPasswordNotUsernameMessage",
+    "invalidPasswordNotEmailMessage",
+    "invalidPasswordNotContainsUsernameMessage",
+    "invalidPasswordGenericMessage",
+  ]) {
+    assert.ok(key in de, `${key} is overridden by the theme`);
+    assert.doesNotMatch(de[key], FORMAL, `${key} does not use the formal address`);
+    assert.match(de[key], WAY_ON, `${key} names the way on`);
+  }
+  assert.match(
+    de.emailExistsMessage,
+    /Melde dich damit an/,
+    "the e-mail refusal offers the sign-in",
+  );
+  assert.match(de.emailExistsMessage, /Passwort vergessen\?/, "and the reset");
+  assert.match(de.invalidPasswordMinLengthMessage, /\{0\}/);
+  assert.match(de.invalidPasswordMaxLengthMessage, /\{0\}/);
+});
+
+test("US-QS-32 · F-0324 · F-0375: the messages of the sign-in and the sign-up keep the du form (the whole overridden file, no formal address)", () => {
+  for (const [key, value] of Object.entries(de)) {
+    assert.doesNotMatch(value, FORMAL, `${key} does not use the formal address`);
+  }
+});
+
+test("US-QS-32 · F-0376: the e-mail theme is the du theme of the product, parent base, German only", () => {
+  const properties = readFileSync(join(EMAIL_THEME, "theme.properties"), "utf8");
+  assert.match(properties, /^parent=base$/m);
+  assert.match(properties, /^locales=de$/m);
+  assert.ok(existsSync(join(EMAIL_THEME, "messages", "messages_de.properties")));
+});
+
+test("US-QS-32 · F-0376: every e-mail text is in the du form", () => {
+  for (const [key, value] of Object.entries(emailDe())) {
+    assert.doesNotMatch(value, FORMAL, `${key} does not use the formal address`);
+  }
+});
+
+test("US-QS-32 · F-0376: the e-mails name the product PflanzenDéx, never the realm placeholder {2} and never the old spelling", () => {
+  for (const value of Object.values(emailDe())) {
+    assert.doesNotMatch(value, /PflanzenDex/, "the old spelling is not used");
+  }
+  // The mails whose base text names the realm with {2}: the product stands there as text. (In the credential mails {2} is the
+  // IP address, in the identity link mail the user; those keep their placeholders.)
+  for (const key of [
+    "emailVerificationBody",
+    "emailVerificationBodyHtml",
+    "emailUpdateConfirmationBody",
+    "emailUpdateConfirmationBodyHtml",
+    "passwordResetBody",
+    "passwordResetBodyHtml",
+    "executeActionsBody",
+    "executeActionsBodyHtml",
+    "verifiableCredentialOfferBody",
+    "verifiableCredentialOfferBodyHtml",
+  ]) {
+    assert.doesNotMatch(emailDe()[key], /\{2\}/, `${key} does not use the realm placeholder {2}`);
+  }
+  assert.match(
+    emailDe().eventRemoveCredentialBody,
+    /\{2\}/,
+    "the credential mail keeps its IP address {2}",
+  );
+  assert.match(
+    emailDe().identityProviderLinkBody,
+    /\{2\}/,
+    "the identity link mail keeps the user {2}",
+  );
+  for (const key of [
+    "emailVerificationBody",
+    "emailVerificationBodyHtml",
+    "emailUpdateConfirmationBody",
+    "emailUpdateConfirmationBodyHtml",
+    "passwordResetBody",
+    "passwordResetBodyHtml",
+    "executeActionsBody",
+    "executeActionsBodyHtml",
+  ]) {
+    assert.match(emailDe()[key], /PflanzenDéx/, `${key} names the product`);
+  }
+});
+
+test("US-QS-32 · F-0376: every mail with a link keeps its link placeholder {0}, and the link text names its result", () => {
+  for (const key of [
+    "emailVerificationBody",
+    "emailVerificationBodyHtml",
+    "emailUpdateConfirmationBody",
+    "emailUpdateConfirmationBodyHtml",
+    "passwordResetBody",
+    "passwordResetBodyHtml",
+    "executeActionsBody",
+    "executeActionsBodyHtml",
+    "verifiableCredentialOfferBody",
+    "verifiableCredentialOfferBodyHtml",
+    "orgInviteBody",
+    "orgInviteBodyHtml",
+    "orgInviteBodyPersonalized",
+    "orgInviteBodyPersonalizedHtml",
+  ]) {
+    assert.match(emailDe()[key], /\{0\}/, `${key} keeps the link {0}`);
+  }
+  assert.match(emailDe().identityProviderLinkBodyHtml, /\{3\}/, "the identity link keeps its {3}");
+  assert.match(emailDe().emailVerificationBodyHtml, />E-Mail-Adresse bestätigen</);
+  assert.match(emailDe().passwordResetBodyHtml, />Passwort zurücksetzen</);
+  assert.match(emailDe().executeActionsBodyHtml, />Konto aktualisieren</);
+});
+
+test("US-QS-32 · F-0376: the e-mail theme ships no external request and names its required actions as the pages do", () => {
+  for (const file of themeFiles(EMAIL_THEME)) {
+    const text = readFileSync(file, "utf8");
+    assert.doesNotMatch(text, /https?:\/\//, `${relative(EMAIL_THEME, file)} links outside`);
+  }
+  assert.equal(emailDe()["requiredAction.VERIFY_EMAIL"], "E-Mail-Adresse bestätigen");
+  assert.equal(emailDe()["requiredAction.UPDATE_PASSWORD"], "Passwort festlegen");
 });

@@ -144,9 +144,18 @@ describe("US-ONB-06 function overview", () => {
       within(dialog).getByText(/Öffnet sich von selbst: lege noch 3 Pflanzen an/),
     ).toBeTruthy();
     expect(within(dialog).getByText(FUNCTION_PURPOSES["swapping"] ?? "")).toBeTruthy();
-    expect(
-      within(dialog).getByRole("link", { name: "Tauschbörse: Seite ansehen" }).getAttribute("href"),
-    ).toBe("/unlock/swapping");
+    const look = within(dialog).getByRole("link", { name: "Tauschbörse ansehen" });
+    expect(look.textContent).toBe("Tauschbörse ansehen");
+    expect(look.getAttribute("href")).toBe("/unlock/swapping");
+  });
+
+  it("US-QS-32 · F-0298 the link of an open function names the function: Heute öffnen", async () => {
+    show(few);
+    await openFunction("Heute");
+    const dialog = await screen.findByRole("dialog");
+    const open = within(dialog).getByRole("link", { name: "Heute öffnen" });
+    expect(open.textContent).toBe("Heute öffnen");
+    expect(within(dialog).queryByRole("link", { name: "Öffnen" })).toBeNull();
   });
 
   it("US-ONB-06 shows the same list for style many, all aktiv, and says Alles ist offen with the next step", async () => {

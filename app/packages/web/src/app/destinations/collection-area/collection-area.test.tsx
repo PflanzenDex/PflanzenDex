@@ -253,7 +253,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     // into the bug "Verwerfen can leave a plant form open when the guard entry commits late", so the test waits for the
     // commit, as the next tap of a person would.
     await waitFor(() => expect(route.guarded).toBe(true));
-    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
       timeout: 5_000,
     });
@@ -277,7 +277,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     // into the bug "Verwerfen can leave a plant form open when the guard entry commits late", so the test waits for the
     // commit, as the next tap of a person would.
     await waitFor(() => expect(route.guarded).toBe(true));
-    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(document.getElementById("marker-title")).toBeNull(), {
       timeout: 5_000,
     });
@@ -328,7 +328,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     expect(document.getElementById("measure-title")).not.toBeNull();
     expect(route.search).toContain("form=measure");
     expect((screen.getByLabelText(/^Messwert/) as HTMLInputElement).value).toBe("44");
-    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
       timeout: 5_000,
     });
@@ -369,7 +369,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     expect(route.guarded).toBe(false);
-    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Eingabe verwerfen" }));
     await releaseHold();
     await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
       timeout: 5_000,
@@ -411,7 +411,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     });
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     expect(route.guarded).toBe(false);
-    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Eingabe verwerfen" }));
     await releaseHold();
     await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
       timeout: 5_000,
@@ -447,7 +447,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     await waitFor(() => expect(route.guarded).toBe(true));
-    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
       timeout: 5_000,
     });
@@ -463,7 +463,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     back();
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     await waitFor(() => expect(route.guarded).toBe(true));
-    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
       timeout: 5_000,
     });
@@ -482,7 +482,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     await waitFor(() => expect(route.guarded).toBe(true));
-    await userEvent.click(within(dialog).getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Eingabe verwerfen" }));
     await waitFor(() => expect(document.getElementById("measure-title")).toBeNull(), {
       timeout: 5_000,
     });

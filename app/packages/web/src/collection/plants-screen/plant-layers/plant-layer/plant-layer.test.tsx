@@ -408,21 +408,30 @@ describe("US-QS-23 Mehr", () => {
     await open();
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
     expect(screen.getAllByRole("menuitem").map((i) => i.textContent)).toEqual([
-      "Kennzeichen",
-      "Fangdatum",
-      "Archivieren",
+      "Kennzeichen ändern",
+      "Fangdatum ändern",
+      "Pflanze archivieren",
     ]);
-    await userEvent.click(screen.getByRole("menuitem", { name: "Archivieren" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Pflanze archivieren" }));
     expect(handlers.onArchive).toHaveBeenCalledOnce();
     expect(handlers.onArchive.mock.calls[0]?.[0]).toMatchObject({ id: "e1" });
   });
 
-  it("US-QS-23 Eingetopft is offered for a cutting only", async () => {
+  it("US-QS-32 the menu items name object and verb: Umtopfen eintragen for a plant, Eintopfen eintragen for a cutting", async () => {
+    setViewportWidth(360);
+    show([card()], { onRepot: vi.fn() });
+    await open();
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    expect(screen.getByRole("menuitem", { name: "Umtopfen eintragen" })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Umgetopft" })).toBeNull();
+  });
+
+  it("US-QS-23 Eintopfen eintragen is offered for a cutting only", async () => {
     setViewportWidth(360);
     show([card({ status: "cutting" })], { onRepot: vi.fn() });
     await open();
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
-    expect(screen.getByRole("menuitem", { name: "Eingetopft" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Eintopfen eintragen" })).toBeTruthy();
   });
 
   it("US-QS-23 without any rarer action there is no menu", async () => {
@@ -491,5 +500,23 @@ describe("US-QS-14 issue 1784 · the plant layer slot shows the shape of its par
     expect(status.querySelectorAll(".animate-pulse").length).toBeGreaterThan(1);
     await act(async () => release());
     expect(await screen.findByText("Behandlungen der Pflanze")).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 the action row of a plant has all its buttons from the first frame (SG-STATE-02, F-0082, issue 1889)", () => {
+  it("US-QS-32 · SG-STATE-02 while 'Gießen' loads, its disabled button stands in its place before 'Behandeln'", async () => {
+    setViewportWidth(360);
+    const never = new Promise<never>(() => undefined);
+    function Pending(): ReactNode {
+      // A part that suspends for good, as a chunk on its way.
+      throw never;
+    }
+    show([card()], { slots: { ...SLOTS, water: () => <Pending /> } });
+    const layer = await open();
+    const water = within(layer).getByRole("button", { name: "Gießen" });
+    expect((water as HTMLButtonElement).disabled).toBe(true);
+    expect(water.getAttribute("aria-busy")).toBe("true");
+    const treat = within(layer).getByRole("button", { name: /Behandeln/ });
+    expect(water.nextElementSibling).toBe(treat);
   });
 });

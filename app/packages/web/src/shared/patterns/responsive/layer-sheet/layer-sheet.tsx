@@ -36,7 +36,7 @@ export function LayerOpener({
     <Button
       id={layerOpenerId(id)}
       type="button"
-      variant="outline"
+      variant="tinted"
       {...(size ? { size } : {})}
       className={className}
       aria-haspopup="dialog"

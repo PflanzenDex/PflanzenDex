@@ -47,7 +47,7 @@ export function Row(props: {
         aria-label={`${row.reason} bei ${row.specimenName} als erledigt abhaken`}
         onClick={props.onDone}
       >
-        Erledigt
+        Abhaken
       </Button>
     </div>
   );

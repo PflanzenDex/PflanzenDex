@@ -62,5 +62,8 @@
   "pot.diameter": "Durchmesser",
   "pot.height": "Höhe",
   "pot.material": "Material",
-  "pot.drainage": "Abfluss"
+  "pot.drainage": "Abfluss",
+  "share.more": "Sie sehen Art, Name, Modell, Lichtstufe und deine Erfahrung, aber nie Kaufort, Seriennummer, Standort oder Kaufdatum. Zurückziehen wirkt beim nächsten Abruf; was schon angezeigt wurde, lässt sich nicht zurückholen.",
+  "supply.label": "Vorrat",
+  "link.more": "Die Verknüpfung findet nur den Vorrat dazu."
 }

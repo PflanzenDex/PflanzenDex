@@ -18,7 +18,7 @@ export function loadSuggestions(
   );
 }
 
-/** "Ja" or "Nein" on a card (US-ENT-04): written at once as a wish; the server derives the wish from the species itself. */
+/** "Wünschen" or "Kein Interesse" on a card (US-ENT-04): written at once as a wish; the server derives the wish from the species itself. */
 export async function decideSuggestion(
   api: string,
   token: string,

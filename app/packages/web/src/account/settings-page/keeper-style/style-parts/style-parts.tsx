@@ -63,29 +63,25 @@ export function Refusal(props: { error: ApiError | null }) {
   );
 }
 
-/** The profile choice: a select with the two answers; the hint under it names what the current answer means. */
+/** The profile choice: a select with the two answers. The hint of the current answer sits behind the parent's "Mehr erfahren". */
 export function StyleSelect(props: {
   value: KeeperStyle;
   disabled: boolean;
   onPick: (s: KeeperStyle) => void;
 }) {
-  const current = KEEPER_STYLE_CHOICES.find((c) => c.style === props.value);
   return (
-    <>
-      <Select
-        aria-label="Wie nutzt du die App?"
-        value={props.value}
-        disabled={props.disabled}
-        onChange={(e) => props.onPick(e.target.value === "many" ? "many" : "few")}
-      >
-        {KEEPER_STYLE_CHOICES.map((c) => (
-          <option key={c.style} value={c.style}>
-            {c.label}
-          </option>
-        ))}
-      </Select>
-      <p className="mt-1 text-sm text-muted-foreground">{current?.hint}</p>
-    </>
+    <Select
+      aria-label="Wie nutzt du die App?"
+      value={props.value}
+      disabled={props.disabled}
+      onChange={(e) => props.onPick(e.target.value === "many" ? "many" : "few")}
+    >
+      {KEEPER_STYLE_CHOICES.map((c) => (
+        <option key={c.style} value={c.style}>
+          {c.label}
+        </option>
+      ))}
+    </Select>
   );
 }
 

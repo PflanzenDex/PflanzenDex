@@ -21,7 +21,7 @@ export const WithAction: Story = {
   args: {
     back: { label: "Zurück zu Freunde", to: "/friends" },
     action: (
-      <Button type="button" variant="outline">
+      <Button type="button" variant="tinted">
         Geräte
       </Button>
     ),

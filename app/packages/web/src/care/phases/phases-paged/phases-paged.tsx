@@ -16,7 +16,7 @@ function usePageSize(): number {
 
 /**
  * The plants with a care phase as the grouping "Nach Pflegephase" (US-QS-19): the phase is chosen from a row with its
- * count and the plants of that phase page. "Jetzt umgestellt" and the group buttons work as in the list (US-PHA-03).
+ * count and the plants of that phase page. "Umstellen" and the group buttons work as in the list (US-PHA-03).
  * The paging is the shared `PagedGroups`, which the plants use too.
  */
 export function PhasesPaged(props: {

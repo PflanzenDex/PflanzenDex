@@ -42,7 +42,7 @@ const PARTS = [
 const REPOT_PART = { value: "umtopfen", label: t("parts.repot") } as const;
 type Part = "behandlungen" | "profil" | "umtopfen";
 
-/** What the repot part needs: the access to the plan and the action of "Umgetopft" (US-BES-19). */
+/** What the repot part needs: the access to the plan and the action of "Umtopfen eintragen" (US-BES-19). */
 export type RepotPart = { access: PhotoAccess; onRepot: () => void };
 
 /** The layer of the own care profile of one plant's species (US-QS-23, US-BES-09). */

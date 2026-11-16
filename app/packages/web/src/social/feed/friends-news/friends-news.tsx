@@ -24,7 +24,7 @@ export function FriendsNewsTile(props: {
 }
 
 /**
- * The layer behind the tile (`?sheet=news`): what is new, when it was read and "Okay". "Okay" closes it; an address
+ * The layer behind the tile (`?sheet=news`): what is new, when it was read and "Als gelesen markieren". "Als gelesen markieren" closes it; an address
  * `?sheet=news` with nothing new (an old link, or seen meanwhile) is closed the same way instead of showing an empty
  * layer (US-QS-18).
  */

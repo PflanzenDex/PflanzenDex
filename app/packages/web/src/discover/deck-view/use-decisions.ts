@@ -11,17 +11,17 @@ import table from "../discover.de.json";
 
 const t = texts(table);
 
-/** What the keeper decided on a card (US-ENT-04): "Ja" and "Nein" are written at once, "Später" writes nothing. */
+/** What the keeper decided on a card (US-ENT-04): "Wünschen" and "Kein Interesse" are written at once, "Später" writes nothing. */
 export type Decision = "no" | "later" | "yes";
 
 export type OnDecide = (species: string, decision: "yes" | "no") => Promise<Response<DecideResult>>;
 export type OnUndo = (species: string) => Promise<Response<UndoDecisionResult>>;
 
-/** The card the keeper decided last with "Ja" or "Nein" and that "Rückgängig" can still take back (US-ENT-04). */
+/** The card the keeper decided last with "Wünschen" or "Kein Interesse" and that "Rückgängig" can still take back (US-ENT-04). */
 export interface Taken {
   readonly species: string;
   readonly decision: "yes" | "no";
-  /** A saved "Ja" that the count of this deck includes; taking it back takes it out again. */
+  /** A saved "Wünschen" that the count of this deck includes; taking it back takes it out again. */
   readonly counted: boolean;
 }
 
@@ -53,9 +53,9 @@ const WRITES_NOTHING: ReadonlySet<SwipeDirection> = new Set<SwipeDirection>(["up
 const SIDE = { yes: "right", no: "left" } as const satisfies Record<"yes" | "no", SwipeDirection>;
 
 /**
- * Writes "Ja" and "Nein" (US-ENT-04) and moves on only after the write succeeded; a refusal stays visible and the card
+ * Writes "Wünschen" and "Kein Interesse" (US-ENT-04) and moves on only after the write succeeded; a refusal stays visible and the card
  * stays (P-10). `exit` is the flight of the card while its decision is written: it ends with the write, so a refusal
- * brings the card back and a success lets the next card take its place. Counts the saved "Ja" of this deck, not the
+ * brings the card back and a success lets the next card take its place. Counts the saved "Wünschen" of this deck, not the
  * taps. "Rückgängig" (`undo`) takes back the last decision that wrote something and moves back to its card; any other
  * decision ends that possibility, because only the last Yes or No is taken back. One write at a time. `returned` is the
  * side the card taken back comes in from; each result is told to a screen reader.
@@ -119,7 +119,7 @@ export function useDecisions(onDecide: OnDecide, onUndo: OnUndo, moves: Moves) {
 }
 
 /**
- * The network gate of the deck (US-ENT-04, US-QS-30): "Ja" and "Nein" write at once, so offline a swipe, a key or a button
+ * The network gate of the deck (US-ENT-04, US-QS-30): "Wünschen" and "Kein Interesse" write at once, so offline a swipe, a key or a button
  * does nothing and the reason is said; "Später" writes nothing (DECISION in deck-view: up and down) and stays open offline.
  * "Rückgängig" writes the take-back, so it needs the network too.
  */

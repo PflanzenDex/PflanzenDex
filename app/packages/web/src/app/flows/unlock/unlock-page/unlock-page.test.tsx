@@ -318,7 +318,7 @@ describe("US-QS-14 · US-ONB-05 the unlock pages are one card with buttons", () 
     const all = within(card).getByRole("link", { name: "Alle Funktionen ansehen" });
     expect(start.className).not.toContain("underline");
     expect(all.className).not.toContain("underline");
-    expect(all.className).toContain("border-primary");
+    expect(all.className).toContain("bg-accent");
   });
 
   it("US-QS-14 a failed unlock page is a card too: one h1, the alert and the retry button (P-10)", async () => {

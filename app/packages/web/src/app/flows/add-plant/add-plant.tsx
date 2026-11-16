@@ -41,7 +41,7 @@ function Done(props: { name: string; onAnother: () => void }) {
         <Button type="button" onClick={() => void navigate(PATHS.collection)}>
           {ui("toCollection")}
         </Button>
-        <Button type="button" variant="outline" onClick={props.onAnother}>
+        <Button type="button" variant="tinted" onClick={props.onAnother}>
           {ui("another")}
         </Button>
       </div>
@@ -70,7 +70,7 @@ function Buttons(props: { f: Plant; species: Species | null; onMore: (s: Species
       >
         {FIRST_PLANT_STEPS[1]?.actionLabel}
       </Button>
-      <Button type="button" variant="outline" onClick={() => f.setIndex(0)}>
+      <Button type="button" variant="plain" onClick={() => f.setIndex(0)}>
         {ui("back")}
       </Button>
       <Button type="button" variant="ghost" onClick={() => props.onMore(species)}>

@@ -24,7 +24,7 @@ describe("US-QS-32 · SG-SHEET-05 the question for unsaved input", () => {
     renderDialog();
     // The close control of the dialog is an icon with its own name; the two verbs are the buttons with text.
     const buttons = screen.getAllByRole("button").filter((b) => b.textContent?.trim() !== "");
-    expect(buttons.map((b) => b.textContent)).toEqual(["Weiter bearbeiten", "Verwerfen"]);
+    expect(buttons.map((b) => b.textContent)).toEqual(["Weiter bearbeiten", "Eingabe verwerfen"]);
     await waitFor(() => expect(document.activeElement).toBe(buttons[0]));
   });
 
@@ -36,10 +36,23 @@ describe("US-QS-32 · SG-SHEET-05 the question for unsaved input", () => {
     expect(onDiscard).not.toHaveBeenCalled();
   });
 
-  it("US-QS-32 · SG-SHEET-05 Verwerfen leaves the input", async () => {
+  it("US-QS-32 · SG-SHEET-05 Eingabe verwerfen leaves the input", async () => {
     const { onKeep, onDiscard } = renderDialog();
-    await userEvent.click(screen.getByRole("button", { name: "Verwerfen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Eingabe verwerfen" }));
     expect(onDiscard).toHaveBeenCalledTimes(1);
     expect(onKeep).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 · SG-BTN-03 the discard is a red plain button, and the dialog keeps one filled button (SG-BTN-02)", () => {
+    renderDialog();
+    const discard = screen.getByRole("button", { name: "Eingabe verwerfen" }).className;
+    expect(discard.split(/\s+/)).toContain("text-destructive");
+    expect(discard.split(/\s+/).some((c) => c === "bg-destructive" || c === "bg-primary")).toBe(
+      false,
+    );
+    const filled = screen
+      .getAllByRole("button")
+      .filter((b) => b.className.split(/\s+/).includes("bg-primary"));
+    expect(filled.map((b) => b.textContent)).toEqual(["Weiter bearbeiten"]);
   });
 });

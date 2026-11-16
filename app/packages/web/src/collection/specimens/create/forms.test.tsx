@@ -117,7 +117,7 @@ describe("US-BES-07 DS-48 invalid submission of the archive reason", () => {
   it("US-BES-07 an own reason left empty focuses its field and links the German message", async () => {
     const posts = fakeServer([card("e1", null)]);
     render(page());
-    await userEvent.click(await findCardButton("Archivieren: Bogenhanf"));
+    await userEvent.click(await findCardButton("Pflanze archivieren: Bogenhanf"));
     await userEvent.selectOptions(await screen.findByLabelText("Grund"), "other");
     await userEvent.click(screen.getByRole("button", { name: "Archivieren" }));
     const own = screen.getByLabelText("Eigener Grund");

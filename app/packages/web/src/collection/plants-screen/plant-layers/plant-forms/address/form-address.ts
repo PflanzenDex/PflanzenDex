@@ -79,7 +79,7 @@ export type FormAddress = {
   asking: boolean;
   /** "Weiter bearbeiten": keeps the form and its input. */
   keepEditing: () => void;
-  /** "Verwerfen": leaves the form and its input, the way the question was asked. */
+  /** "Eingabe verwerfen": leaves the form and its input, the way the question was asked. */
   discard: () => void;
   /** A notice of the last close, e.g. that the plant is not there (P-10). */
   notice: string | null;

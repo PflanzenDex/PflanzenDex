@@ -20,7 +20,7 @@ export type Answer = "no" | "later" | "yes";
 const LATER = MATCH_ANSWERS[1];
 export const SIGN = (c: Card) => `${title(c)} von ${c.ownerName ?? "einem Freund"}`;
 
-/** "Nein · Später · Ja" as buttons with text; the buttons are the way without a swipe (NFR-13, FR-TAU-08). */
+/** "Ablehnen · Später · Anfragen" as buttons with text; the buttons are the way without a swipe (NFR-13, FR-TAU-08). */
 export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy: boolean }) {
   const { card: c, busy } = props;
   const who = SIGN(c);
@@ -34,10 +34,10 @@ export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy
             className="flex-1"
             disabled={busy}
             needsNetwork
-            aria-label={`Nein: ${who}`}
+            aria-label={`Ablehnen: ${who}`}
             onClick={() => props.onAnswer("no")}
           >
-            Nein
+            Ablehnen
           </Button>
           <Button
             variant="secondary"
@@ -55,10 +55,10 @@ export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy
             className="flex-1"
             disabled={busy}
             needsNetwork
-            aria-label={`Ja, anfragen: ${who}`}
+            aria-label={`Anfragen: ${who}`}
             onClick={() => props.onAnswer("yes")}
           >
-            Ja
+            Anfragen
           </Button>
         </NetworkSlot>
       </div>
@@ -179,7 +179,7 @@ export function Confirm(props: {
           disabled={props.busy}
           onClick={() => props.onYes(both ? both.specimenId : null)}
         >
-          {both ? `Ja, mit ${mine} anfragen` : "Ja, anfragen"}
+          {both ? `Mit ${mine} anfragen` : "Anfragen"}
         </Button>
         {both && (
           <Button

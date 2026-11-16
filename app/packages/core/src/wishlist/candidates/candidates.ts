@@ -114,12 +114,14 @@ function byStock(zones: readonly ZoneStock[]) {
     a.id.localeCompare(b.id);
 }
 
-function nextActionFor(first: Candidate, zoneName: string): string {
-  if (first.priority.kind === "thinnest")
-    return `Besorge diese Pflanze zuerst: ${zoneName} hat am meisten Platz.`;
-  if (first.priority.kind === "tie")
-    return "Die Zonen sind gleich belegt: Beginne mit dem Wunsch ganz oben.";
-  return "Beginne mit dem Wunsch ganz oben: seine Zone ist unter deinen Wünschen am wenigsten belegt.";
+/**
+ * The line above the list. None for the thinnest zone: its first card already says "hier ist am meisten Platz" in the
+ * priority text (F-0162), so the page does not repeat it.
+ */
+function nextActionFor(first: Candidate): string | null {
+  if (first.priority.kind === "thinnest") return null;
+  if (first.priority.kind === "tie") return "Die Zonen sind gleich belegt: Beginne oben.";
+  return "Beginne oben: seine Zone ist am wenigsten belegt.";
 }
 
 function hintFor(list: readonly Candidate[]): CandidateList["hint"] {
@@ -132,11 +134,11 @@ function hintFor(list: readonly Candidate[]): CandidateList["hint"] {
   if (!first.zone)
     return {
       text: "Kein offener Wunsch hat eine Ziel-Lichtzone 2 bis 4.",
-      nextAction: "Lege einen Wunsch mit Ziel-Zone an, damit die Liste zeigt, wo Platz ist.",
+      nextAction: "Lege einen Wunsch mit Ziel-Zone an.",
     };
   return {
     text: `Als Nächstes dran: ${first.title} (${first.zoneText}).`,
-    nextAction: nextActionFor(first, zoneLabel(first.zone.name)),
+    nextAction: nextActionFor(first),
   };
 }
 
