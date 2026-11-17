@@ -6,7 +6,6 @@ import type { Banner, BannerItem, FeedSeenStore } from "./types";
 export interface BannerDependencies extends FriendViewDependencies {
   readonly friends: FriendStore;
   readonly seen: FeedSeenStore;
-  readonly now: () => Date;
 }
 
 /** Summarizes new specimens per friend and species. */
@@ -37,7 +36,8 @@ function summarize(
  * new: `firstVisit` tells the screen to mark the feed as seen silently, so there is no banner for what was shared before.
  */
 export async function friendBanner(deps: BannerDependencies, userId: string): Promise<Banner> {
-  const asOf = deps.now().toISOString();
+  // One clock for the banner: the store's (the database's), the one that stamps visible_since and clamps "Okay".
+  const asOf = await deps.seen.now();
   const seen = await deps.seen.seenAt(userId);
   if (seen === null) return { firstVisit: true, count: 0, items: [], asOf };
   const friends = await deps.friends.friends(userId);

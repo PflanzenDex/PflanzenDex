@@ -18,12 +18,17 @@ const spec = (id: string, latin: string | null) => ({
 class Seen implements FeedSeenStore {
   value: string | null = null;
   writes = 0;
+  /** The store's clock: what `now()` answers and where `markSeen` caps (the database's `now()` in `db`). */
+  clock = NOW.toISOString();
+  async now() {
+    return this.clock;
+  }
   async seenAt() {
     return this.value;
   }
   async markSeen(_u: string, upTo: string) {
     this.writes += 1;
-    const capped = upTo > NOW.toISOString() ? NOW.toISOString() : upTo;
+    const capped = upTo > this.clock ? this.clock : upTo;
     if (this.value === null || capped > this.value) this.value = capped;
     return this.value;
   }
@@ -43,7 +48,7 @@ const facts = new InMemoryFacts({
   s2: spec("s2", "Aloe vera"),
   s3: spec("s3", null),
 });
-const banner = () => friendBanner({ friends, sharing, privacy, facts, seen, now: () => NOW }, "me");
+const banner = () => friendBanner({ friends, sharing, privacy, facts, seen }, "me");
 
 beforeEach(() => {
   sharing = new InMemorySharing();
@@ -117,6 +122,18 @@ describe("US-SOZ-06 banner since my last visit", () => {
     });
     expect(await run("yesterday")).toMatchObject({ ok: false, error: { code: "input.invalid" } });
     expect(await run(5)).toMatchObject({ ok: false, error: { code: "input.invalid" } });
+  });
+
+  it("US-SOZ-06 asOf comes from the store's clock, so 'Okay' clears a share made just before the read even when the app clock lags the database (clock skew)", async () => {
+    // The database runs 30 ms ahead of the API host (measured): the share and the read come after the app's NOW.
+    seen.clock = "2026-10-06T10:00:00.030000Z";
+    seen.value = "2026-10-02T00:00:00.000000Z";
+    sharing.now = "2026-10-06T10:00:00.020000Z";
+    await sharing.setMany("anna", ["s1"], true, false);
+    const b = await banner();
+    expect(b).toMatchObject({ firstVisit: false, count: 1, asOf: "2026-10-06T10:00:00.030000Z" });
+    await seen.markSeen("me", b.asOf);
+    expect((await banner()).count).toBe(0);
   });
 
   it("US-SOZ-06 what became visible after the read instant is still new after 'Okay'", async () => {
