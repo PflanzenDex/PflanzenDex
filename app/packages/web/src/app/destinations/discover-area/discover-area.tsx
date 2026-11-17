@@ -6,7 +6,7 @@ import { SpeciesPage } from "@/catalog";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { SammlungHeader } from "@/app/destinations/collection-area/sammlung-header/sammlung-header";
 import { DISCOVER_VIEWS, useDiscoverView, useSuggestionsOn } from "./discover-view";
-import { DiscoverModeSkeleton } from "./discover-area.skeleton";
+import { DiscoverModeSkeleton } from "./discover-body/discover-body";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./discover-area.de.json";
 

@@ -11,12 +11,12 @@ import {
   stackedItem,
   stackedLabel,
   stackedPill,
+  DISCOVER_VIEW_KEY,
   type NavItem,
 } from "../../../shared/patterns/navigation/nav-item";
 import {
-  DISCOVER_VIEW_KEY,
-  SAMMLUNG_VIEW_KEY,
   isActivePath,
+  SAMMLUNG_VIEW_KEY,
 } from "../../../shared/patterns/navigation/navigation/reselect-link/reselect-link";
 import { navItems } from "../../../shared/patterns/navigation/navigation/navigation";
 import { MobileNavBar } from "./mobile-nav-bar";

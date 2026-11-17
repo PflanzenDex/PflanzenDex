@@ -2,7 +2,10 @@ import { useLocation } from "react-router";
 import {
   BAR_SHOW_CLASS,
   BRAND_HREF,
+  DISCOVER_ADDRESS,
+  DISCOVER_VIEW_KEY,
   DISPLAY_NAME,
+  FRIENDS_ADDRESS,
   OPERATOR_ADDRESS,
   barSlot,
   barWords,
@@ -25,16 +28,32 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { TodaySkeletonBody } from "@/today";
 import { OperatorRouteBody } from "@/account";
+import { FriendsPageBody } from "@/social";
+import { DiscoverBody } from "@/app/destinations/discover-area/discover-body/discover-body";
+import { discoverViewOf, useSuggestionsOn } from "@/app/destinations/discover-area/discover-mode";
+import { readStored } from "@/shared/platform/browser/storage";
 import { startBarSlots } from "./bar-labels";
 
 /**
  * The skeleton body of the address, the body its route shows while it loads (issue 2230): "Heute" for the root and for
- * "Heute" (the root redirects there), "Betreiber" for its page; every other address keeps the generic page skeleton.
+ * "Heute" (the root redirects there), "Betreiber" for its page, and since issue 2243 "Freunde" and "Entdecken" (the mode of
+ * "Entdecken" from the address, the device and the switches, as the route's fallback reads it). Every other address keeps
+ * the generic page skeleton; "Sammlung" among them, its bodies are not in the start chunk (issue 2243, measured).
  */
-function StartBody(props: { pathname: string }) {
+function StartBody(props: { pathname: string; search: string }) {
+  // No account and no feature state before the shell loads: every function counts as on (`useFeature`), as the route's
+  // fallback reads it then, so the start and the route pick the same mode (issue 2243).
+  const suggestionsOn = useSuggestionsOn();
   const address = props.pathname === "/" ? BRAND_HREF : props.pathname;
   if (address === BRAND_HREF) return <TodaySkeletonBody />;
   if (address === OPERATOR_ADDRESS) return <OperatorRouteBody />;
+  if (address === FRIENDS_ADDRESS) return <FriendsPageBody />;
+  if (address === DISCOVER_ADDRESS)
+    return (
+      <DiscoverBody
+        view={discoverViewOf(props.search, readStored(DISCOVER_VIEW_KEY) ?? null, suggestionsOn)}
+      />
+    );
   return <PageSkeleton />;
 }
 
@@ -82,12 +101,12 @@ function StartBar() {
  * own skeleton is there, so the start is one picture.
  */
 export function StartPageSkeleton() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const title = startTitleOf(pathname);
   return (
     <div className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-2">
       {title !== null ? <PageTitle title={title} /> : null}
-      <StartBody pathname={pathname} />
+      <StartBody pathname={pathname} search={search} />
     </div>
   );
 }
@@ -101,7 +120,7 @@ export function StartPageSkeleton() {
  * page has one, as the page does (issue 2230); the root shows "Heute", where it redirects.
  */
 export function StartFrame() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const title = startTitleOf(pathname);
   const md = useIsMd();
   const inBar = title !== null && !md;
@@ -132,7 +151,7 @@ export function StartFrame() {
         <main className="flex-1 px-4 pb-4 md:pb-6 tall-window:pb-[calc(4rem+env(safe-area-inset-bottom))] tall-window:md:pb-6 pt-4 md:px-6 md:pt-6 xl:px-10">
           <div className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-2">
             {title !== null && !inBar ? <TitleRow title={title} inBar={false} /> : null}
-            <StartBody pathname={pathname} />
+            <StartBody pathname={pathname} search={search} />
           </div>
         </main>
       </div>

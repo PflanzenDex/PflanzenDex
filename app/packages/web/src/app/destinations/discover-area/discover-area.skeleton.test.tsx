@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { DiscoverModeSkeleton, DiscoverRouteSkeleton } from "./discover-area.skeleton";
+import { DiscoverRouteSkeleton } from "./discover-area.skeleton";
+import { DiscoverModeSkeleton } from "./discover-body/discover-body";
 
 afterEach(cleanup);
 

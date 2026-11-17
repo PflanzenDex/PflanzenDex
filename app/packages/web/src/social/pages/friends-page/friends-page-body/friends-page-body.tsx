@@ -1,9 +1,7 @@
-import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
-import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
-import table from "../../social.de.json";
+import table from "./friends-page-body.de.json";
 
 const t = texts(table);
 
@@ -30,20 +28,14 @@ export function FriendsPageSkeleton({ label }: { label: string }) {
 }
 
 /**
- * The route's fallback of "Freunde" until its chunk is there (issue 1727): the heading stands at once as the one h1 (its
- * focus waits for the page's own heading), and the page's skeleton waits for the delay (DS-57). The frame and the section
- * are those of the page, so the heading and the blocks sit where they do on the page.
+ * The body of "Freunde" while its page loads (US-QS-14, DS-57, issue 2243): the placeholder of the screen after the delay.
+ * The route's fallback draws it under the page's heading, and the start frame draws the same body under the title in the
+ * top bar, so the start and the route show one shape. It imports no header and no link, so the start chunk can carry it.
  */
-export function FriendsRouteSkeleton() {
+export function FriendsPageBody() {
   return (
-    <LayerHost data-fit-screen="">
-      <section className="flex min-w-0 flex-col gap-3">
-        {/* The title is the page's header: in the top bar below md, where the page puts it (issue 2230). */}
-        <PageHeader fallback title={t("page.title")} />
-        <DelayedSkeleton>
-          <FriendsPageSkeleton label={t("page.loading")} />
-        </DelayedSkeleton>
-      </section>
-    </LayerHost>
+    <DelayedSkeleton>
+      <FriendsPageSkeleton label={t("page.loading")} />
+    </DelayedSkeleton>
   );
 }

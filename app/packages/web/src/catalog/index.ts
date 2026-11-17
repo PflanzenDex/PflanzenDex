@@ -14,8 +14,10 @@ export const loadSpecies = async (
   ...args: Parameters<typeof import("./species-api").loadSpecies>
 ) => (await import("./species-api")).loadSpecies(...args);
 // The difficulty words of the catalog, the same as the comparison and the search read them (US-QS-32).
-export { DIFFICULTY } from "./shared/text";
+export { DIFFICULTY } from "./shared/difficulty";
 // The skeleton of the species catalog, the mode's skeleton on "Entdecken" (US-QS-14, issue 1697).
 export { SpeciesPageSkeleton } from "./species-page/species-page.skeleton";
-// The route fallback of the species profile (US-QS-14, issue 1727): the card of the profile with its skeleton.
-export { ProfileRouteSkeleton } from "./profile-view/profile-view.skeleton";
+// The species profile's skeleton and the card around it: the route's fallback of the profile is in the app's route fallbacks,
+// which compose the page header with them (US-QS-14, issue 1727, issue 2243). The barrel loads no layer frame (DS-42).
+export { ProfileSkeleton } from "./profile-view/profile-view.skeleton";
+export { PROFILE_CARD } from "./profile-view/profile-card";
