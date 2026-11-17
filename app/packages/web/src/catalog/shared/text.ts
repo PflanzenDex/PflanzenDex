@@ -1,13 +1,13 @@
 import type { Species, GrowthMeasure } from "@pflanzendex/core";
 import { UNKNOWN } from "@/shared/lib/format";
+import { DIFFICULTY } from "./difficulty";
 
-export { UNKNOWN };
+export { DIFFICULTY, UNKNOWN };
 
 const numberFormat = new Intl.NumberFormat("de-DE");
 
 export const orUnknown = (value: string | null) => value ?? UNKNOWN;
 
-export const DIFFICULTY: Record<number, string> = { 1: "Leicht", 2: "Mittel", 3: "Schwer" };
 export const GROWTH: Record<GrowthMeasure, string> = {
   height: "Höhe",
   rosette_diameter: "Rosettendurchmesser",

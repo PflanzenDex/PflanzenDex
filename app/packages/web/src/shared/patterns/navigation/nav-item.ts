@@ -153,6 +153,14 @@ export const DEFAULT_BAR_SLOTS: BarSlotLabel[] = [
 /** The Betreiber page: its name in the top bar and its address (equals `PATHS.operator`, as `BRAND_HREF` equals `PATHS.today`). */
 export const OPERATOR_HEADING = "Betreiber";
 export const OPERATOR_ADDRESS = "/operator";
+/** The addresses of "Entdecken" and "Freunde" (equal `PATHS.discover` and `PATHS.friends`): the start frame keys its body on them (issue 2243). */
+export const DISCOVER_ADDRESS = "/discover";
+export const FRIENDS_ADDRESS = "/friends";
+/**
+ * The per-device copy of the mode of "Entdecken" (DS-10, SG-NAV-03): the address always wins. The key lives here, in the light
+ * module the start frame reads, so the start does not load the link of the navigation (issue 2243).
+ */
+export const DISCOVER_VIEW_KEY = "pflanzendex.discover-view";
 
 /**
  * The title the start frame and the page's skeleton show in the top bar for an address, where its page has one (issue 2230):

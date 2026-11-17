@@ -7,8 +7,11 @@ import {
 } from "@/shared/patterns/navigation/navigation/navigation";
 import { readStored } from "@/shared/platform/browser/storage";
 import { TodaySkeleton } from "@/today";
-import { ProfileRouteSkeleton } from "@/catalog";
-import { FriendCollectionRouteSkeleton, FriendsRouteSkeleton } from "@/social";
+import {
+  FriendCollectionRouteSkeleton,
+  FriendsRouteSkeleton,
+  ProfileRouteSkeleton,
+} from "./route-skeletons/route-skeletons";
 import { ExchangeRouteSkeleton, MatchRouteSkeleton } from "@/swap";
 import { AccountRouteSkeleton } from "@/app/destinations/account-area/account-area.skeleton";
 import { sectionOf } from "@/app/destinations/account-area/account-model/account-model";

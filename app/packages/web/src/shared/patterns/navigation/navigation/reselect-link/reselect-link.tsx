@@ -3,14 +3,14 @@ import { NavLink, useLocation, useNavigate, type NavLinkProps } from "react-rout
 import { writeStored } from "@/shared/platform/browser/storage";
 import { motionReduced } from "@/shared/platform/device/motion/motion-setting";
 import { mainRegion } from "@/shared/platform/routing/route-focus/view-start";
-import type { NavItem } from "../../nav-item";
+import { DISCOVER_VIEW_KEY, type NavItem } from "../../nav-item";
 
 /**
  * The per-device copy of the mode of "Sammlung" and "Entdecken" (DS-10; the address always wins). The view modules read the
- * keys from here, beside the link that writes them (issue 2242).
+ * keys from here, beside the link that writes them (issue 2242). The key of "Entdecken" lives in the light navigation module,
+ * which the start frame reads (issue 2243).
  */
 export const SAMMLUNG_VIEW_KEY = "pflanzendex.collection-view";
-export const DISCOVER_VIEW_KEY = "pflanzendex.discover-view";
 
 /**
  * What a tap on the current destination does besides going to its start (SG-NAV-03, US-QS-32): "Sammlung" opens its plants

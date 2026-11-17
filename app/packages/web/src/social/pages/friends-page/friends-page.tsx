@@ -15,7 +15,7 @@ import {
   LinkTile,
   type TileCount,
 } from "./friend-tiles/friend-tiles";
-import { FriendsPageSkeleton } from "./friends-page.skeleton";
+import { FriendsPageSkeleton } from "./friends-page-body/friends-page-body";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../social.de.json";

@@ -21,6 +21,8 @@ const gates = vi.hoisted(() => {
     routes: gate(),
     today: gate(),
     callback: gate(),
+    friends: gate(),
+    discover: gate(),
   });
   return { ...fresh(), fresh };
 });
@@ -54,6 +56,15 @@ vi.mock("@/app/routes", async (importOriginal) => {
 vi.mock("@/app/destinations/today-area/today-area", async (importOriginal) => {
   await gates.today.promise;
   return importOriginal<typeof import("@/app/destinations/today-area/today-area")>();
+});
+// The pages of "Freunde" and "Entdecken" load last in their picture (issue 2243): their code is held, the route's skeleton shows.
+vi.mock("@/social/pages/friends-page/friends-page", async (importOriginal) => {
+  await gates.friends.promise;
+  return importOriginal<typeof import("@/social/pages/friends-page/friends-page")>();
+});
+vi.mock("@/app/destinations/discover-area/discover-area", async (importOriginal) => {
+  await gates.discover.promise;
+  return importOriginal<typeof import("@/app/destinations/discover-area/discover-area")>();
 });
 
 /**
@@ -112,6 +123,15 @@ function answerApi() {
 const barTitles = () =>
   Array.from(document.querySelectorAll("[data-app-bar-slot] h1"), (h) => h.textContent);
 
+/** The page's own body holds the main column: its status carries the page's loading text (issue 2243, not the generic skeleton). */
+function expectPageBody(stage: string, label: string) {
+  const main = document.querySelector("main") as HTMLElement;
+  const statuses = within(main)
+    .queryAllByRole("status")
+    .map((s) => s.textContent ?? "");
+  expect(statuses.join("|"), stage).toContain(label);
+}
+
 /** The main column: it holds the skeleton of "Heute" (its status) or the content, never nothing (issue 2230). */
 function expectMainHoldsSomething(stage: string) {
   const main = document.querySelector("main");
@@ -140,6 +160,50 @@ afterEach(() => {
   vi.unstubAllGlobals();
   window.localStorage.clear();
   window.history.replaceState(null, "", "/");
+});
+
+describe("US-QS-32 the start hands over to Freunde and Entdecken in one picture (SG-STATE-02, issue 2243)", () => {
+  it.each([
+    ["/friends", "Freunde", "Freunde werden geladen"],
+    ["/discover", "Entdecken", "Vorschläge werden geladen"],
+  ])(
+    "US-QS-32 · issue 2243 %s: the start and the route's skeleton hold one title in the bar and the page's body until its code arrives",
+    async (path, title, label) => {
+      const end = beginAppStart();
+      try {
+        render(
+          <MemoryRouter initialEntries={[path]}>
+            <App />
+          </MemoryRouter>,
+        );
+
+        // 1. The sign-in check is open: the start frame shows the body of the address.
+        expect(barTitles()).toEqual([title]);
+        expectPageBody("session loading", label);
+
+        // 2. The check answered and the account loads; the shell's code is still on its way.
+        gates.session.open();
+        await waitFor(() => expect(accountAsked).toBe(true));
+        await new Promise((done) => setTimeout(done, 20));
+        expect(barTitles()).toEqual([title]);
+        expectPageBody("shell code loading", label);
+
+        // 3. The shell is mounted; its route table is still on its way.
+        gates.shell.open();
+        await screen.findByRole("navigation", { name: "Navigation unten" });
+        expect(barTitles()).toEqual([title]);
+        expectPageBody("routes loading", label);
+
+        // 4. The routes are in; the page's code is still held, so the route's own skeleton holds the title and the body.
+        gates.routes.open();
+        await new Promise((done) => setTimeout(done, 50));
+        expect(barTitles()).toEqual([title]);
+        expectPageBody("route skeleton", label);
+      } finally {
+        end();
+      }
+    },
+  );
 });
 
 describe("US-QS-32 the start hands over to Heute in one picture (SG-STATE-02, issue 2230)", () => {
