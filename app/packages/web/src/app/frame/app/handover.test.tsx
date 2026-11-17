@@ -208,11 +208,18 @@ describe("US-QS-32 the start hands over to Freunde and Entdecken in one picture 
 
 describe("US-QS-32 the start hands over to Heute in one picture (SG-STATE-02, issue 2230)", () => {
   it("US-QS-32 · the title and the skeleton of Heute hold through every stage of the start: one title in the bar, never an empty main", async () => {
-    const end = beginAppStart();
+    // A fresh module graph: an earlier test may have started the idle preload of "Heute", whose mock then still waits on that
+    // test's closed gate, and a later import would get that pending module (seen with vitest 5.1).
+    vi.resetModules();
+    holdChunks();
+    const { beginAppStart: startApp } =
+      await import("@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton");
+    const { App: FreshApp } = await import("./app");
+    const end = startApp();
     try {
       render(
         <MemoryRouter initialEntries={["/today"]}>
-          <App />
+          <FreshApp />
         </MemoryRouter>,
       );
 

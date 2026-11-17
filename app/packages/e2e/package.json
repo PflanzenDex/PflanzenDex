@@ -4,7 +4,7 @@
   "type": "module",
   "description": "End-to-end tests (QG-T3): Playwright against the real stack (Keycloak, PostgreSQL, API, Vite), mobile and desktop",
   "scripts": {
-    "typecheck": "tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/e2e.tsbuildinfo",
+    "typecheck": "node ../../node_modules/@typescript/native/bin/tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/e2e.tsbuildinfo",
     "e2e": "playwright test --project=mobil --project=desktop",
     "one-screen": "E2E_WEB_BUILD=1 playwright test --project=one-screen --workers=${ONE_SCREEN_WORKERS:-4}",
     "one-screen:write": "ONE_SCREEN_WRITE=1 npm run one-screen",
@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
-    "@playwright/test": "1.64.1",
+    "@playwright/test": "1.65.1",
     "tsx": "4.23.15"
   }
 }
