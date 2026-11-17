@@ -4,7 +4,7 @@ import type { AddressInfo } from "node:net";
 import type { Occasion, PushSubscription, ReminderMessage } from "@pflanzendex/core";
 import { ChannelsPostgres, migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import type { Pool } from "pg";
-import webpush from "web-push";
+import * as webpush from "web-push";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../../app";
 import { reminderChannelFromEnv, StubReminderChannel } from "../runtime";

@@ -1,5 +1,5 @@
 import type { PushSubscription } from "@pflanzendex/core";
-import webpush from "web-push";
+import * as webpush from "web-push";
 import type { PushSend } from "./web-push-channel";
 
 export interface WebPushConfig {
