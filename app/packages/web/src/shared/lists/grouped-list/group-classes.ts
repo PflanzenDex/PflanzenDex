@@ -19,5 +19,9 @@ export const HAIRLINE =
 const OBJECT_HAIRLINE_ON_ROWS =
   "[&>li]:relative [&>li+li]:before:absolute [&>li+li]:before:left-[72px] [&>li+li]:before:right-2 [&>li+li]:before:top-0 [&>li+li]:before:h-px [&>li+li]:before:bg-border [&>li+li]:before:content-['']";
 
-/** One group of object rows: a flat list with a hairline between its rows and none above the first. */
-export const OBJECT_GROUP = `${GROUP_LIST} ${OBJECT_HAIRLINE_ON_ROWS}`;
+/**
+ * One group of object rows: a flat list with a hairline between its rows and none above the first. `flex-none` wins over
+ * the `flex-1` of a fitting pager list, so a short list ends after its last row instead of stretching the group into an
+ * empty card down to the pager.
+ */
+export const OBJECT_GROUP = `${GROUP_LIST} ${OBJECT_HAIRLINE_ON_ROWS} flex-none`;
