@@ -71,6 +71,12 @@ function stubServer(list: readonly ReturnType<typeof card>[] = cards, record?: (
       if (path === "/care-phases") return response(200, { phases: [phase] });
       if (path === "/light-zones") return response(200, { zones: [] });
       if (path === "/hints") return response(200, { hints: [] });
+      // The wishlist reads are answered with a failure, so the page shows its state rather than an empty object (the
+      // fit check looks at the frame only): the fallback `{}` made the wishlist page read a missing list (flaky, #1915).
+      if (path.startsWith("/wishes"))
+        return response(503, {
+          error: { code: "network.not_reachable", text: "Nicht erreichbar." },
+        });
       if (path === "/specimens/light-overview") return response(200, { rows: [] });
       // The reads of the Pokédex (no caught species in these tests) and the lock states, nothing announced (issue 1625).
       const pokedex = pokedexReadAnswer(path, []);
@@ -221,7 +227,7 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
     expect(screen.getByRole("button", { name: "Ruhephase (1)" })).toBeTruthy();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     // US-QS-32: the plant row of the grouping: its one meta line names the next change, and a plant in place shows no place.
-    expect(screen.getByText("Wechsel zur Wachstumsphase am 16.03.2027")).toBeTruthy();
+    expect(screen.getByText("Nächster Wechsel zur Wachstumsphase: 16.03.2027")).toBeTruthy();
     expect(screen.queryByText(/Soll-Phase/)).toBeNull();
     expect(screen.queryByText(/Soll-Standort: /)).toBeNull();
     await openView();

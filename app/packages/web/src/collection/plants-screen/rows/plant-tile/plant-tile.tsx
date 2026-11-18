@@ -1,5 +1,4 @@
 import { zoneLabel, type SpecimenCard } from "@pflanzendex/core";
-import { Badge } from "@/shared/ui/display/badge/badge";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { useObjectPhoto } from "@/shared/lists/object-row/use-object-photo";
@@ -24,8 +23,8 @@ export function tileState(card: SpecimenCard): { text: string; attention: boolea
 }
 
 /**
- * The two parts of a name `Species – marker` (DM-BES-03), for a plant whose species name the card does not carry. The
- * split is by the marker the card names; a name that does not end in it stays whole, so nothing disappears (P-10).
+ * The species of a plant, for a card that does not carry the species name: the name without the marker it ends in (DM-BES-03).
+ * A name that does not end in its marker stays whole, so nothing disappears (P-10).
  */
 function speciesOf(card: SpecimenCard): string {
   if (card.speciesName !== null) return card.speciesName;
@@ -48,10 +47,17 @@ export function tileLines(card: SpecimenCard): { title: string; meta: string } {
 }
 
 /**
- * A plant in the list "Alle" (US-QS-19, US-QS-32): one `ObjectRow` with the photo's thumbnail (the drawn placeholder while
- * there is none), the title and the meta line of `tileLines`, and the one state that needs attention as its trailing
- * badge (SG-COLOR-04). Choosing the row opens the plant in its layer (`?sheet=plant-<id>`); the photo is asked once the
- * row is near the viewport (NFR-12).
+ * The attention word leads the meta line (US-QS-32): a trailing badge would take the width the name needs at a large text
+ * size, so the word stands first, in the warning tokens with its word (SG-COLOR-04, DS-38).
+ */
+const ATTENTION =
+  "rounded-sm border-b-2 border-warning-border bg-warning px-1 font-semibold text-warning-foreground";
+
+/**
+ * A plant in the list "Alle" (US-PHA-01, US-QS-19, US-QS-32): one `ObjectRow` with the photo's thumbnail (the drawn
+ * placeholder while there is none), the title of `tileLines`, and the meta line led by the state that needs attention
+ * (an open treatment, etiolated growth). Choosing the row opens the plant in its layer (`?sheet=plant-<id>`); the photo
+ * is asked once the row is near the viewport (NFR-12).
  */
 export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
   const { openLayer, open } = useLayer(plantLayerId(card.id));
@@ -63,10 +69,20 @@ export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoA
       rootRef={ref}
       src={src}
       title={title}
-      meta={meta}
-      trailing={state.attention ? <Badge variant="warning">{state.text}</Badge> : undefined}
+      meta={
+        state.attention ? (
+          <>
+            <span className={ATTENTION}>{state.text}</span>
+            {" · "}
+            {meta}
+          </>
+        ) : (
+          meta
+        )
+      }
       haspopup="dialog"
       expanded={open}
+      chevron={false}
       onClick={(event) => openLayer(event.currentTarget)}
     />
   );

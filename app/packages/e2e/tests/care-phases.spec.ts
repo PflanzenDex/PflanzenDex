@@ -114,12 +114,12 @@ async function expectPhases(
   await expect(page.getByRole("button", { name: /^Ruhephase \(2\)$/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Wachstumsphase \(1\)$/ })).toBeVisible();
   // Dormancy today: the plant at Fensterbank stands off its target Keller, so the row carries the one action that moves it
-  // (US-QS-32, SG-LIST-03). The row is named by the plant's title and says when the phase changes next.
-  await expect(row(ruhe)).toContainText("Wechsel zur Wachstumsphase am");
+  // (US-QS-32, SG-LIST-03). The row is named by the plant's title and names the target it has to move to.
+  await expect(row(ruhe)).toContainText("Soll-Standort: Keller");
   await expect(row(ruhe)).not.toContainText("Soll-Phase");
   await expect(page.getByRole("button", { name: `Umstellen: ${ruhe}` })).toBeVisible();
   // The plant at its target shows no place (owner answer Q-82).
-  await expect(row(profil)).toContainText("Wechsel zur Wachstumsphase am");
+  await expect(row(profil)).toContainText("Nächster Wechsel zur Wachstumsphase:");
   await expect(row(profil)).not.toContainText("Standort");
   await expect(list.getByRole("listitem")).toHaveCount(2);
   await axeReport(page, info, "carePhases-list", { blocking: true });
@@ -127,7 +127,7 @@ async function expectPhases(
   // Growth today: no target location in the profile, so it is unknown and the view says what to do (P-08, P-09).
   await page.getByRole("button", { name: /^Wachstumsphase \(1\)$/ }).click();
   await expect(list.getByRole("listitem")).toHaveCount(1);
-  await expect(row(wachs)).toContainText("Wechsel zur Ruhephase am");
+  await expect(row(wachs)).toContainText("Nächster Wechsel zur Ruhephase:");
   await expect(
     page.getByText("Wähle im Pflegeprofil der Art einen Soll-Standort für die Wachstumsphase."),
   ).toBeVisible();

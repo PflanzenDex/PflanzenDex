@@ -9,6 +9,7 @@ import {
 } from "../index";
 import { InMemoryCareProfiles } from "../../collection/care-profile/care-profile-test-helpers";
 import { PhaseLocationStub } from "../shared/test-helpers";
+import { phaseRows } from "./phases";
 import type { CardMeasurementView, MeasurementSource } from "../../collection";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // Dormancy 11-01 to 03-15, across the turn of the year
@@ -388,6 +389,59 @@ describe("US-QS-32 the phase row carries the plant's own name, its species and i
       "UTC",
     );
     expect([...phases.keys()]).toEqual([winter]);
+    expect(asked).toBe(0);
+  });
+
+  it("US-QS-32 NFR-12 carePhasesList asks the photos only for the rows it keeps: a species without dormancy period is not asked", async () => {
+    const store = new InMemorySpecimens({ [OWNER]: [LOCATION] });
+    await store.create(OWNER, {
+      speciesId: WINTER,
+      name: "Bogenhanf",
+      marker: null,
+      locationId: LOCATION,
+      caughtAt: "2026-01-01",
+    });
+    await store.create(OWNER, {
+      speciesId: WITHOUT,
+      name: "Efeutute",
+      marker: null,
+      locationId: LOCATION,
+      caughtAt: "2026-01-01",
+    });
+    const asked: (readonly string[])[] = [];
+    const photos = {
+      forSpecimens: async (_userId: string, ids: readonly string[]) => {
+        asked.push([...ids]);
+        return new Map<string, CardMeasurementView>();
+      },
+    };
+    const r = await phasesOf(store, photos);
+    const kept = store.rows.find((row) => row.name === "Bogenhanf")?.id;
+    expect(r.ok && r.value.map((row) => row.name)).toEqual(["Bogenhanf"]);
+    expect(asked).toEqual([[kept]]);
+  });
+
+  it("US-QS-32 NFR-12 phaseRows reads no photo at all: only the list adds them", async () => {
+    const e = await collection(OWNER, [{ speciesId: WINTER, name: "Bogenhanf" }]);
+    let asked = 0;
+    const rows = await phaseRows(
+      {
+        specimens: e,
+        species,
+        targets: NO_PHASE_LOCATION,
+        profiles: new InMemoryCareProfiles(),
+        clock: AT,
+        photos: {
+          forSpecimens: async () => {
+            asked += 1;
+            return new Map<string, CardMeasurementView>();
+          },
+        },
+      },
+      OWNER,
+      "2026-10-01",
+    );
+    expect(rows).toHaveLength(1);
     expect(asked).toBe(0);
   });
 });

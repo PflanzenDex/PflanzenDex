@@ -13,8 +13,11 @@ const FOOTER = "text-sm text-muted-foreground";
 /** A row's own box: at least 44 px high, 12 px above and below, 16 px at the sides (SG-SHAPE-07, SG-TOUCH-01). */
 const ROW =
   "flex min-h-11 w-full min-w-0 items-center gap-3 px-4 py-3 text-left text-base text-foreground";
-/** An object row (a plant, a species, a wish; SG-LIST-03): its box is 3 px narrower at the sides, so the text keeps its width. */
-const OBJECT_ROW = "px-3 py-2.5";
+/**
+ * An object row (a plant, a species, a wish; SG-LIST-03): its sides and gaps are 8 px (rem steps, so they grow with the text),
+ * which leaves the title the width it needs at 200 % text (US-QS-32).
+ */
+const OBJECT_ROW = "gap-2 px-2 py-2.5";
 const INTERACTIVE =
   "hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
 /** The hairline between two rows: from the text's left edge to the right edge, never above the first row. */
@@ -79,7 +82,10 @@ export type GroupedRowProps = {
    * is an `li` of its `GroupedList`.
    */
   bare?: boolean | undefined;
-  /** Shows or hides the chevron. By default a navigation or action row shows it, unless it has a trailing element too. */
+  /**
+   * Suppresses the chevron of a link or button row (a row that has a trailing element of its own gets none either). It
+   * cannot draw one: a row without a link or a button never shows a chevron.
+   */
   chevron?: boolean | undefined;
   /** A picture or an icon at the leading edge. */
   leading?: ReactNode;
@@ -103,7 +109,7 @@ function describedIds(ids: RowIds, meta: ReactNode, trailing: ReactNode): string
 /**
  * One row of a `GroupedList`: a link, a button or plain content. A navigation or action row shows the neutral chevron
  * at the trailing edge, after its value, unless it is destructive or has a trailing element of its own (object rows,
- * SG-LIST-03: at most one trailing element).
+ * SG-LIST-03: at most one trailing element). Plain content never shows one.
  */
 export function GroupedRow(props: GroupedRowProps) {
   const destructive = props.tone === "destructive";
@@ -115,8 +121,8 @@ export function GroupedRow(props: GroupedRowProps) {
     meta: `${base}-meta`,
     trailing: `${base}-trailing`,
   };
-  const chevron =
-    props.chevron ?? (interactive && !destructive && !(object && props.trailing !== undefined));
+  const hasOwnTrailing = object && props.trailing !== undefined;
+  const chevron = interactive && !destructive && !hasOwnTrailing && props.chevron !== false;
   const look = cn(
     ROW,
     object && OBJECT_ROW,

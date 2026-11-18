@@ -12,7 +12,7 @@ import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { plantLayerId } from "@/collection";
-import { PHASE_TEXT, dateText } from "../../../shared/text";
+import { PHASE_TEXT, locationText, nextChangeText } from "../../../shared/text";
 import { needsSwitch, switchedText } from "../../phase-groups";
 import table from "../phases-list.de.json";
 import { CardEntry } from "./card-entry/card-entry";
@@ -46,21 +46,38 @@ function HintChip({ hints }: { hints: readonly string[] }) {
 }
 
 /**
- * The one trailing element of a phase row (SG-LIST-03): the button where the plant has to move, otherwise the place only
- * when it deviates (amber, "Weicht ab") or is missing (neutral). A plant in place shows no place (owner answer Q-82).
+ * The one trailing badge of a phase row when there is no action (SG-LIST-03): the place only when it deviates (amber,
+ * "Weicht ab") or is missing (neutral). A plant in place shows no place (owner answer Q-82).
  */
-function placeBadge(status: PhaseStatus, canSwitch: boolean) {
-  if (canSwitch) return undefined;
+function placeBadge(status: PhaseStatus) {
   if (status === "deviation") return <Badge variant="warning">{ui("deviates")}</Badge>;
   if (status === "location_missing") return <Badge>{ui("locationMissing")}</Badge>;
   return undefined;
 }
 
-/** The hints under a phase row: the next step of an entry that is missing (P-09, P-10). */
+/**
+ * The meta line of a phase row (US-QS-32): the species first where the plant has its own name (owner answer Q-68), then
+ * the target where the plant has to move (`Soll-Standort` only where it differs, owner rule of issue 1915), otherwise the next
+ * change of US-PHA-04 ("heute", "in 5 Tagen (date)", or the date).
+ */
+function metaOf(z: PhasesRow, locations: readonly LightLocation[], moves: boolean): string {
+  const second = moves
+    ? ui("targetPlace", { place: locationText(locations, z.targetLocationId) })
+    : nextChangeText(z.nextChange);
+  return z.marker ? `${z.speciesName} · ${second}` : second;
+}
+
+/**
+ * The hints under a phase row, the next step of an entry that is missing (P-09, P-10): a missing location with a target
+ * keeps the switch hint (the place fact moves into the action), a missing location without one keeps its hint, and a
+ * plant without a target names what to choose.
+ */
 function rowHints(z: PhasesRow, status: PhaseStatus, canSwitch: boolean): string[] {
+  const location =
+    status === "location_missing" ? (canSwitch ? ui("switchHint") : ui("hintLocation")) : null;
   return [
     z.nextChange === null ? ui("hintReview") : null,
-    status === "location_missing" && !canSwitch ? ui("hintLocation") : null,
+    location,
     status === "in_place" && z.targetLocationId === null
       ? ui("hintTarget", { phase: PHASE_TEXT[z.phase] })
       : null,
@@ -69,8 +86,8 @@ function rowHints(z: PhasesRow, status: PhaseStatus, canSwitch: boolean): string
 
 /**
  * The row of the paged grouping "Nach Pflegephase" (US-QS-19, US-QS-32): the plant row of the list "Alle", so the row opens
- * the plant in its layer the same way, with its thumbnail, its own name as the title (owner answer Q-68), one meta line with
- * the next change, and the one trailing element. The hint of a missing entry stays under the row (P-09, P-10).
+ * the plant in its layer the same way, with its thumbnail, its own name as the title (owner answer Q-68), the meta line of
+ * `metaOf`, and one trailing element or the action where the plant has to move. The hints stay under the row (P-09, P-10).
  */
 function CompactEntry(props: {
   row: PhasesRow;
@@ -85,16 +102,8 @@ function CompactEntry(props: {
   const { openLayer, open } = useLayer(plantLayerId(z.specimenId));
   const [ref, src] = useObjectPhoto(props.access, z.photo?.url);
   const status = phaseStatus(z);
-  const canSwitch = props.onConfirm !== undefined && needsSwitch(z);
-  const change =
-    z.nextChange === null
-      ? ui("noChange")
-      : ui("changeTo", {
-          phase: PHASE_TEXT[z.nextChange.phase],
-          date: dateText(z.nextChange.date),
-        });
-  // The species joins the change only where the plant has its own name (SG-LIST-07): the title is then that name.
-  const meta = z.marker ? `${change} · ${z.speciesName}` : change;
+  const moves = needsSwitch(z);
+  const canSwitch = props.onConfirm !== undefined && moves;
   const action = canSwitch ? (
     <Button
       type="button"
@@ -113,9 +122,10 @@ function CompactEntry(props: {
         rootRef={ref}
         src={src}
         title={z.marker || z.name}
-        meta={meta}
-        trailing={placeBadge(status, canSwitch)}
+        meta={metaOf(z, locations, moves)}
+        trailing={canSwitch ? undefined : placeBadge(status)}
         action={action}
+        chevron={props.opens ? false : undefined}
         haspopup={props.opens ? "dialog" : undefined}
         expanded={props.opens ? open : undefined}
         onClick={props.opens ? (event) => openLayer(event.currentTarget) : undefined}

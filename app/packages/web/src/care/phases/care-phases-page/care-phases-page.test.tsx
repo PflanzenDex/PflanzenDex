@@ -45,7 +45,7 @@ describe("US-PHA-01 page of the care phases", () => {
     render(<CarePhasesPage api="http://api" token={token} />);
     expect((await screen.findByRole("status")).textContent).toContain("geladen");
     expect(await screen.findByText("Bogenhanf")).toBeTruthy();
-    expect(screen.getByText("Soll-Phase heute: Ruhephase")).toBeTruthy();
+    expect(screen.getByText("Pflegephase heute: Ruhephase")).toBeTruthy();
     expect(screen.getByText("Standort: Regal Süd")).toBeTruthy();
   });
 

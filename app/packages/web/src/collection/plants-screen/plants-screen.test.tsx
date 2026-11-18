@@ -85,13 +85,13 @@ describe("US-QS-19 tiles of the plants", () => {
     const tile = screen.getByRole("button", { name: "Aloe" });
     expect(tile.hasAttribute("aria-label")).toBe(false);
     expect(tile.querySelector("[data-initial]")).toBeNull();
-    expect(tile.querySelector(".size-14 svg")).not.toBeNull();
+    expect(tile.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
   });
 
   it("US-QS-32 a plant row shows the drawn placeholder, its name, its zone as text and no state that needs no attention", () => {
     screenWith([card(1, { name: "Aloe" })]);
     const tile = screen.getByRole("button", { name: "Aloe" });
-    expect(tile.querySelector(".size-14 svg")).not.toBeNull();
+    expect(tile.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
     expect(within(tile).getByText("Aloe")).toBeTruthy();
     expect(within(tile).getByText("Zone 3")).toBeTruthy();
     expect(within(tile).queryByText("unbekannt")).toBeNull();

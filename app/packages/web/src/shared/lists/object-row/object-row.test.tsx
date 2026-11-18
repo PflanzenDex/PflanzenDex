@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { Button } from "@/shared/ui/button/button";
+import { GroupedRow } from "../grouped-list/grouped-list";
 import { ObjectRow } from "./object-row";
 
 afterEach(cleanup);
@@ -51,7 +52,7 @@ describe("US-QS-32 ObjectRow: the name wraps to two lines, the meta is one line 
 
   it("US-QS-32 the thumbnail box is 56 px square and is reserved even while no picture is there (SG-PHOTO-01)", () => {
     const { container } = render(wrap(<ObjectRow to="/plant/s1" title="Clip" />));
-    const box = container.querySelector(".size-14");
+    const box = container.querySelector('[class~="size-[56px]"]');
     expect(box).not.toBeNull();
     expect(box?.className).toContain("rounded-lg");
     expect(box?.className).toContain("shrink-0");
@@ -133,7 +134,7 @@ describe("US-QS-32 ObjectRow: a missing or failed picture shows the drawn placeh
   it("US-QS-32 without a picture the thumbnail is the drawn placeholder, never an empty box", () => {
     const { container } = render(wrap(<ObjectRow to="/a" title="Clip" />));
     expect(container.querySelector("img")).toBeNull();
-    const box = container.querySelector(".size-14");
+    const box = container.querySelector('[class~="size-[56px]"]');
     expect(box?.querySelector("svg")).not.toBeNull();
     expect(box?.querySelector("svg")?.parentElement?.getAttribute("aria-hidden")).toBe("true");
   });
@@ -144,12 +145,57 @@ describe("US-QS-32 ObjectRow: a missing or failed picture shows the drawn placeh
     expect(img).not.toBeNull();
     fireEvent.error(img as HTMLImageElement);
     expect(container.querySelector("img")).toBeNull();
-    expect(container.querySelector(".size-14 svg")).not.toBeNull();
+    expect(container.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
   });
 
   it("US-QS-32 a picture is decorative by default: its alternative text is empty and the name is the label", () => {
     const { container } = render(wrap(<ObjectRow to="/a" title="Clip" src="blob:picture" />));
     expect(container.querySelector("img")?.getAttribute("alt")).toBe("");
     expect(screen.getByRole("link", { name: "Clip" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 ObjectRow: a chevron only on a link or button, and a row can only suppress it (SG-TOUCH-02, SG-LIST-03)", () => {
+  const chevron = (el: Element | null) => el?.querySelector("svg.size-4") ?? null;
+
+  it("US-QS-32 a static object row never draws a chevron", () => {
+    const { container } = render(wrap(<ObjectRow title="Clip" meta="Efeutute" />));
+    expect(chevron(container)).toBeNull();
+  });
+
+  it("US-QS-32 a link row draws the chevron when it has no trailing element or action", () => {
+    render(wrap(<ObjectRow to="/a" title="Clip" />));
+    expect(chevron(screen.getByRole("link", { name: "Clip" }))).not.toBeNull();
+  });
+
+  it("US-QS-32 a plain GroupedRow never draws a chevron, even when one is asked for", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <ul>
+          <GroupedRow title="Was die App kann" chevron />
+        </ul>
+      </MemoryRouter>,
+    );
+    expect(chevron(container)).toBeNull();
+  });
+
+  it("US-QS-32 a link row can suppress its chevron, and a chevron never comes back as a trailing element", () => {
+    render(
+      wrap(
+        <ul>
+          <GroupedRow to="/a" title="Clip" chevron={false} />
+        </ul>,
+      ),
+    );
+    expect(chevron(screen.getByRole("link", { name: "Clip" }))).toBeNull();
+  });
+});
+
+describe("US-QS-32 the thumbnail of an object row is a fixed 56 px box at any text size (SG-PHOTO-01)", () => {
+  it("US-QS-32 the box is sized in pixels, so a larger text size does not grow the picture beside the name", () => {
+    const { container } = render(wrap(<ObjectRow to="/a" title="Clip" />));
+    const box = container.querySelector('[class~="size-[56px]"]');
+    expect(box?.className).toContain("shrink-0");
+    expect(box?.className).not.toMatch(/\bsize-14\b/);
   });
 });

@@ -36,7 +36,7 @@ describe("US-QS-32 a plant row without a photo shows the drawn placeholder (SG-P
       </MemoryRouter>,
     );
     expect(container.querySelector("[data-initial]")).toBeNull();
-    expect(container.querySelector(".size-14 svg")).not.toBeNull();
+    expect(container.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
     expect(screen.getByRole("button", { name: "Aloe" })).toBeTruthy();
   });
 });

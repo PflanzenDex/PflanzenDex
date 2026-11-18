@@ -7,8 +7,8 @@ import { ObjectPlaceholder } from "../object-placeholder/object-placeholder";
 // own, so a list of rows reads as objects, not as settings.
 const SURFACE =
   "flex min-w-0 items-stretch overflow-hidden rounded-lg border border-border bg-card text-card-foreground";
-/** The thumbnail's box is reserved before the picture comes (SG-PHOTO-01): 56 px square, the control radius. */
-const THUMB = "flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg";
+/** The thumbnail box is reserved before the picture comes (SG-PHOTO-01): 56 px square in px, so it keeps its size at a large text size; the control radius. */
+const THUMB = "flex size-[56px] shrink-0 items-center justify-center overflow-hidden rounded-lg";
 
 export type ObjectRowProps = {
   id?: string | undefined;
@@ -36,6 +36,11 @@ export type ObjectRowProps = {
   action?: ReactNode;
   /** The row's own box: a lazy picture watches it (`useObjectPhoto`). */
   rootRef?: Ref<HTMLDivElement> | undefined;
+  /**
+   * The chevron of a link or button row: shown by default unless a trailing element or an action takes its place; set `false`
+   * where the row opens a layer and no other view (SG-TOUCH-02). It cannot be drawn on a row without a link or a button.
+   */
+  chevron?: boolean | undefined;
 };
 
 /** The thumbnail: the picture, or the drawn placeholder while there is none and when it failed (P-10: no empty box). */
@@ -78,7 +83,7 @@ export function ObjectRow(props: ObjectRowProps) {
           onClick={props.onClick}
           haspopup={props.haspopup}
           expanded={props.expanded}
-          chevron={props.trailing === undefined && !hasAction}
+          chevron={props.chevron ?? (props.trailing === undefined && !hasAction)}
           leading={<Thumbnail src={props.src} alt={props.alt ?? ""} />}
           title={props.title}
           meta={props.meta}

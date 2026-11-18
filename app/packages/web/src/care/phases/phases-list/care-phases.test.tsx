@@ -55,14 +55,14 @@ describe("US-PHA-01 list of the care phases", () => {
   it("US-PHA-01 shows phase, location and unknown target location per specimen (P-08)", () => {
     const h = renderToString(<PhasesList rows={[row()]} locations={locations} />);
     expect(h).toContain("Bogenhanf");
-    expect(h).toContain("Soll-Phase heute: Ruhephase");
+    expect(h).toContain("Pflegephase heute: Ruhephase");
     expect(h).toContain("Standort: Regal Süd");
     expect(h).toContain("Soll-Standort: unbekannt");
   });
 
   it("US-PHA-01 growth phase is named as such", () => {
     const h = renderToString(<PhasesList rows={[row({ phase: "growth" })]} locations={[]} />);
-    expect(h).toContain("Soll-Phase heute: Wachstumsphase");
+    expect(h).toContain("Pflegephase heute: Wachstumsphase");
     expect(h).toContain("Standort: unbekannt");
   });
 
@@ -149,13 +149,13 @@ describe("US-QS-32 the phase row is the plant row: its own name, its species, on
   it("US-QS-32 a plant with its own name shows that name as the title and its species in the one meta line", () => {
     const h = onlyRow({ name: "Bogenhanf – Ableger", marker: "Ableger", speciesName: "Bogenhanf" });
     expect(h).toContain(">Ableger<");
-    expect(h).toContain("Wechsel zur Wachstumsphase am 16.03.2027 · Bogenhanf");
+    expect(h).toContain("Bogenhanf · Nächster Wechsel zur Wachstumsphase: 16.03.2027");
   });
 
   it("US-QS-32 a plant without its own name shows its name as the title and no species again (SG-LIST-07)", () => {
     const h = onlyRow({});
     expect(h).toContain(">Bogenhanf<");
-    expect(h).toContain("Wechsel zur Wachstumsphase am 16.03.2027");
+    expect(h).toContain("Nächster Wechsel zur Wachstumsphase: 16.03.2027");
     expect(h).not.toContain("· Bogenhanf");
   });
 
@@ -197,7 +197,7 @@ describe("US-QS-32 the phase row is the plant row: its own name, its species, on
         onConfirm={undefined}
       />,
     );
-    expect(h).toContain("Soll-Phase heute: Ruhephase");
+    expect(h).toContain("Pflegephase heute: Ruhephase");
     expect(h).toContain("Weicht ab: steht am Standort");
   });
 
@@ -209,6 +209,76 @@ describe("US-QS-32 the phase row is the plant row: its own name, its species, on
     expect(chip).not.toContain("bg-warning");
     expect(chip).not.toContain("text-warning-foreground");
     expect(chip).not.toContain("border-warning-border");
+  });
+});
+
+describe("US-QS-32 the meta line of a phase row: species first, then the forecast or the target (Q-68, Q-82)", () => {
+  const home: LightLocation[] = [
+    ...locations,
+    { id: "s2", name: "Keller", lightZoneId: null, kind: "indoor" },
+  ];
+  /** A compact row; `switchable` gives it the action of a move (the list with a confirmation). */
+  const rowWith = (extra: Partial<PhasesRow>, switchable = false) =>
+    inRouter(
+      <Entry
+        bare
+        row={row(extra)}
+        locations={home}
+        busy={false}
+        onConfirm={switchable ? () => undefined : undefined}
+      />,
+    );
+
+  it("US-QS-32 the forecast is the US-PHA-04 text: 'heute' on the day of the change", () => {
+    expect(rowWith({ nextChange: { date: "2026-11-01", phase: "dormancy", days: 0 } })).toContain(
+      "Nächster Wechsel zur Ruhephase: heute",
+    );
+  });
+
+  it("US-QS-32 without a change in this and the next year the row says so with the list's own text (P-08)", () => {
+    expect(rowWith({ nextChange: null })).toContain(
+      "Nächster Phasenwechsel: keiner in diesem und im nächsten Jahr.",
+    );
+  });
+
+  it("US-QS-32 a plant with its own name: its species comes first, then the forecast", () => {
+    expect(rowWith({ name: "Bogenhanf – Ableger", marker: "Ableger" })).toContain(
+      "Bogenhanf · Nächster Wechsel zur Wachstumsphase: 16.03.2027",
+    );
+  });
+
+  it("US-QS-32 a plant that has to move names its target in the meta line, not the forecast, and keeps 'Umstellen'", () => {
+    const h = rowWith({ locationId: "s1", targetLocationId: "s2" }, true);
+    expect(h).toContain("Soll-Standort: Keller");
+    expect(h).not.toContain("Nächster Wechsel");
+    expect(h).toContain("Umstellen");
+  });
+
+  it("US-QS-32 a moving plant with its own name reads 'species · Soll-Standort: target'", () => {
+    expect(
+      rowWith(
+        {
+          name: "Bogenhanf – Ableger",
+          marker: "Ableger",
+          locationId: "s1",
+          targetLocationId: "s2",
+        },
+        true,
+      ),
+    ).toContain("Bogenhanf · Soll-Standort: Keller");
+  });
+
+  it("US-QS-32 a missing location with a target keeps the switch hint: the place fact moves into the action (P-10)", () => {
+    const h = rowWith({ locationId: null, targetLocationId: "s2" }, true);
+    expect(h).toContain("Stelle die Pflanze an den Soll-Standort und tippe dann „Umstellen“.");
+    expect(h).toContain("Soll-Standort: Keller");
+    expect(h).not.toContain("Standort fehlt");
+  });
+
+  it("US-QS-32 a missing location without a switch keeps its badge and the hint for the next step (P-09, P-10)", () => {
+    const h = rowWith({ locationId: null, targetLocationId: "s2" });
+    expect(h).toContain("Standort fehlt");
+    expect(h).toContain("Weise der Pflanze unter „Hinweise“ einen Standort zu.");
   });
 });
 

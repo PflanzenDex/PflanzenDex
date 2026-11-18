@@ -93,6 +93,30 @@ beforeEach(() => {
 });
 
 describe("US-PHA-03 confirm the move with a tap", () => {
+  it("US-QS-32 NFR-12 the move reads no photo: confirming asks the photo source for nothing", async () => {
+    const z = await create("anna", "Bogenhanf", WINTER, { locationId: LIVING });
+    let asked = 0;
+    const photos = {
+      forSpecimens: async () => {
+        asked += 1;
+        return new Map();
+      },
+    };
+    const r = await execute(
+      phaseSwitchConfirm({ ...deps(DECEMBER), photos }),
+      { idempotency: idem },
+      {
+        context: { userId: "anna" },
+        input: { specimenIds: [z.id], timeZone: "UTC" },
+        idempotencyKey: `photo-${++counter}`,
+      },
+    );
+    expect(r.ok && r.value).toEqual({
+      specimens: [{ specimenId: z.id, locationId: COLD, changed: true }],
+    });
+    expect(asked).toBe(0);
+  });
+
   it("US-PHA-03: 'moved now' sets the location to the target of today's phase and returns the new state", async () => {
     const z = await create("anna", "Bogenhanf", WINTER, { locationId: LIVING });
     const r = await confirm([z.id]);

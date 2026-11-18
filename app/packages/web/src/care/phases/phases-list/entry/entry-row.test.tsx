@@ -89,7 +89,7 @@ describe("US-QS-32 a phase row opens its plant the way the list 'Alle' does (SG-
     );
     const opener = screen.getByRole("button", { name: "Ableger" });
     expect(
-      within(opener).getByText("Wechsel zur Wachstumsphase am 16.03.2027 · Bogenhanf"),
+      within(opener).getByText("Bogenhanf · Nächster Wechsel zur Wachstumsphase: 16.03.2027"),
     ).toBeTruthy();
   });
 });
@@ -108,7 +108,7 @@ describe("US-QS-32 a phase row's thumbnail: the drawn placeholder without a phot
         />
       </MemoryRouter>,
     );
-    expect(container.querySelector(".size-14 svg")).not.toBeNull();
+    expect(container.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
     expect(container.querySelector("img")).toBeNull();
   });
 
