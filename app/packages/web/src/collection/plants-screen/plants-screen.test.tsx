@@ -80,29 +80,31 @@ afterEach(cleanup);
 afterEach(releaseSheetExits);
 
 describe("US-QS-19 tiles of the plants", () => {
-  it("US-QS-08 · WCAG 2.5.3 the plant tile's accessible name is its visible text (no aria-label, no decorative glyph in the text)", () => {
+  it("US-QS-08 · WCAG 2.5.3 the plant row's accessible name is its visible title (no aria-label, no decorative glyph in the text)", () => {
     screenWith([card(1, { name: "Aloe" })]);
-    const tile = screen.getByRole("button", { name: /^Aloe/ });
+    const tile = screen.getByRole("button", { name: "Aloe" });
     expect(tile.hasAttribute("aria-label")).toBe(false);
-    expect(tile.querySelector("[data-initial]")?.textContent).toBe("");
+    expect(tile.querySelector("[data-initial]")).toBeNull();
+    expect(tile.querySelector(".size-14 svg")).not.toBeNull();
   });
 
-  it("US-QS-19 a tile shows the initial of the name, the name, the zone as text and one state", () => {
+  it("US-QS-32 a plant row shows the drawn placeholder, its name, its zone as text and no state that needs no attention", () => {
     screenWith([card(1, { name: "Aloe" })]);
-    const tile = screen.getByRole("button", { name: "Aloe Zone 3 unbekannt" });
-    expect(tile.querySelector("[data-initial]")?.getAttribute("data-initial")).toBe("A");
+    const tile = screen.getByRole("button", { name: "Aloe" });
+    expect(tile.querySelector(".size-14 svg")).not.toBeNull();
     expect(within(tile).getByText("Aloe")).toBeTruthy();
     expect(within(tile).getByText("Zone 3")).toBeTruthy();
-    expect(within(tile).getByText("unbekannt")).toBeTruthy();
+    expect(within(tile).queryByText("unbekannt")).toBeNull();
   });
 
-  it("US-QS-19 · P-08 an unknown zone and an unknown state read unbekannt, nothing is invented", () => {
+  it("US-QS-19 · P-08 an unknown zone reads 'Lichtzone unbekannt', so no bare unbekannt stands in the row (owner answer Q08)", () => {
     screenWith([card(1, { lightZone: null, lightZoneSource: null })]);
-    const tile = screen.getByRole("button", { name: "Pflanze 1 unbekannt unbekannt" });
-    expect(within(tile).getAllByText("unbekannt")).toHaveLength(2);
+    const tile = screen.getByRole("button", { name: "Pflanze 1" });
+    expect(within(tile).getByText("Lichtzone unbekannt")).toBeTruthy();
+    expect(within(tile).queryByText("unbekannt")).toBeNull();
   });
 
-  it("US-QS-19 the state is Behandeln for an open treatment, Vergeilt/dünn or Gesund by the last measurement", () => {
+  it("US-QS-19 the attention of a row is Behandeln for an open treatment or Vergeilt/dünn by the last measurement; a healthy plant shows none (SG-COLOR-04)", () => {
     const treatment = {
       reason: "Neem",
       dueDate: { kind: "soon" as const, days: 2, text: "in 2 Tg." },
@@ -118,9 +120,15 @@ describe("US-QS-19 tiles of the plants", () => {
       card(2, { lastMeasurement: measured("etiolated") }),
       card(3, { lastMeasurement: measured("healthy") }),
     ]);
-    expect(screen.getByRole("button", { name: "Pflanze 1 Zone 3 Behandeln" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Pflanze 2 Zone 3 Vergeilt/dünn" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Pflanze 3 Zone 3 Gesund" })).toBeTruthy();
+    expect(
+      within(screen.getByRole("button", { name: "Pflanze 1" })).getByText("Behandeln"),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByRole("button", { name: "Pflanze 2" })).getByText("Vergeilt/dünn"),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByRole("button", { name: "Pflanze 3" })).queryByText("Gesund"),
+    ).toBeNull();
   });
 
   it("US-QS-19 · FR-BES-23 the plants are paged, the first entry is in the address and an entry past the end shows the last page", async () => {
@@ -130,19 +138,19 @@ describe("US-QS-19 tiles of the plants", () => {
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByTestId("address").textContent).toBe("?from=6");
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /^Pflanze 7 / })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze 7" })).toBeTruthy();
     cleanup();
     screenWith(many(8), {}, "/?from=9");
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
   });
 
-  it("US-QS-19 at 360 x 640 two tile columns fit the 294 px list: the column minimum 8.75 rem leaves room for two and the gap, so a page holds 6 tiles in 3 rows (issue 1108)", () => {
+  it("US-QS-32 at 360 px the plant rows are one column, so a name keeps the width of the row (SG-LIST-03); from md two columns of at least 18 rem", () => {
     screenWith(many(8));
     const grid = screen.getAllByRole("listitem")[0]?.parentElement;
-    const min = /minmax\(min\(([\d.]+)rem,100%\),1fr\)/.exec(grid?.className ?? "")?.[1];
-    expect(min).toBeDefined();
-    // Two columns and the 0.5 rem gap at 16 px per rem, within the list width the page story measures at 360 px.
-    expect((2 * Number(min) + 0.5) * 16).toBeLessThanOrEqual(294);
+    expect(grid?.className).toContain("grid-cols-1");
+    expect(grid?.className).toContain(
+      "md:grid-cols-[repeat(auto-fill,minmax(min(18rem,100%),1fr))]",
+    );
     expect(grid?.className).toContain("gap-2");
   });
 

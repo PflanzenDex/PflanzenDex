@@ -1,5 +1,6 @@
 {
   "unknown": "Pflegephase: unbekannt",
   "enterDormancy": "Ruhephase eintragen",
-  "loading": "Pflegephase wird geladen …"
+  "loading": "Pflegephase wird geladen …",
+  "today": "Pflegephase heute: {phase}"
 }

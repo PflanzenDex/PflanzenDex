@@ -159,8 +159,8 @@ describe("US-BES-07 archive on the collection page", () => {
     const toast = await screen.findByRole("status");
     expect(toast.textContent).toContain("„Bogenhanf“ ist archiviert");
     expect(toast.textContent).toContain("Archiv");
-    expect(screen.queryByRole("button", { name: /^Bogenhanf (?!–)/ })).toBeNull();
-    expect(screen.getByRole("button", { name: /^Bogenhanf – rot / })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Bogenhanf" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Bogenhanf – rot" })).toBeTruthy();
   });
 
   it("a free reason is sent trimmed; an empty one is not sent", async () => {

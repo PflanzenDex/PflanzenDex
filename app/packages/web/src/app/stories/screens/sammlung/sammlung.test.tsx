@@ -18,7 +18,7 @@ describe("US-QS-14 · page story Sammlung", () => {
     expect(
       (
         await screen.findAllByRole("button", {
-          name: / (Gesund|Vergeilt\/dünn|Behandeln|unbekannt)$/,
+          name: /^(Aloe|Monstera|Bogenhanf)$/,
         })
       ).length,
     ).toBe(3);

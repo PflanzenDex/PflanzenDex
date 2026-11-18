@@ -5,6 +5,7 @@ import { careProfileLayerId } from "../../../collection";
 import { LoadFrame, useInvalidate, useQueryClient } from "../../../shared/data";
 import { sharedLocations } from "../../../light";
 import { loadCarePhases } from "../../shared/api/care-phases-api";
+import { PHASE_TEXT } from "../../shared/text";
 import { Entry } from "../../phases/phases-list/entry/entry";
 import { switchedText } from "../../phases/phase-groups";
 import { usePhaseSwitch } from "../../phases/use-phase-switch";
@@ -54,15 +55,22 @@ export function PhaseOfPlant(props: { api: string; token: Token; specimenId: str
       >
         {(data: Phase) =>
           data.row ? (
-            <Entry
-              bare
-              row={data.row}
-              locations={data.locations}
-              busy={move.running}
-              onConfirm={(ids) =>
-                void move.confirm(ids, switchedText([data.row as PhasesRow], data.locations))
-              }
-            />
+            <div className="flex flex-col gap-2">
+              {/* The phase of today is named here: the plant's own row has no section label that would say it. */}
+              <p className="m-0 text-sm font-semibold">
+                {ui("today", { phase: PHASE_TEXT[data.row.phase] })}
+              </p>
+              <Entry
+                bare
+                opens={false}
+                row={data.row}
+                locations={data.locations}
+                busy={move.running}
+                onConfirm={(ids) =>
+                  void move.confirm(ids, switchedText([data.row as PhasesRow], data.locations))
+                }
+              />
+            </div>
           ) : (
             <div className="flex flex-col items-start gap-1">
               <p className="m-0 text-sm text-muted-foreground">{ui("unknown")}</p>

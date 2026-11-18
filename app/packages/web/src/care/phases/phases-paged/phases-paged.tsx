@@ -2,6 +2,7 @@ import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-gro
 import type { CarePhase, LightLocation, PhasesRow } from "@pflanzendex/core";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { PHASE_TEXT } from "../../shared/text";
 import { Groups, type Confirm } from "../phases-list/phases-list";
 import { Entry } from "../phases-list/entry/entry";
@@ -25,6 +26,8 @@ export function PhasesPaged(props: {
   locations: readonly LightLocation[];
   busy: boolean;
   onConfirm: Confirm;
+  /** The photos of the rows' thumbnails (US-QS-32); without it the thumbnails show the drawn placeholder. */
+  access?: PhotoAccess;
 }) {
   const size = usePageSize();
   const groups = PHASES.map((phase) => ({
@@ -56,6 +59,7 @@ export function PhasesPaged(props: {
             locations={props.locations}
             busy={props.busy}
             onConfirm={props.onConfirm}
+            access={props.access}
           />
         )}
       />

@@ -1,0 +1,146 @@
+// @vitest-environment jsdom
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, useLocation } from "react-router";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { LightLocation, PhasesRow } from "@pflanzendex/core";
+import { Entry } from "./entry";
+
+afterEach(cleanup);
+afterEach(() => vi.unstubAllGlobals());
+
+const locations: LightLocation[] = [
+  { id: "s1", name: "Regal Süd", lightZoneId: null, kind: "indoor" },
+  { id: "s2", name: "Keller", lightZoneId: null, kind: "indoor" },
+];
+const row = (extra: Partial<PhasesRow> = {}): PhasesRow => ({
+  specimenId: "e1",
+  name: "Bogenhanf",
+  marker: null,
+  speciesName: "Bogenhanf",
+  speciesId: "a1",
+  phase: "dormancy",
+  locationId: "s1",
+  targetLocationId: null,
+  nextChange: { date: "2027-03-16", phase: "growth", days: 120 },
+  photo: null,
+  ...extra,
+});
+
+/** Shows the address the row leads to, so a test can see that the plant's layer opened (US-QS-19). */
+function Where() {
+  const at = useLocation();
+  return <output data-testid="where">{at.search}</output>;
+}
+
+const access = { api: "http://api", token: async () => "tok" };
+
+describe("US-QS-32 a phase row opens its plant the way the list 'Alle' does (SG-TOUCH-02)", () => {
+  it("US-QS-32 a tap on the row sets the plant's layer in the address", async () => {
+    render(
+      <MemoryRouter initialEntries={["/collection?view=plants&group=phase"]}>
+        <Entry
+          bare
+          row={row()}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+        <Where />
+      </MemoryRouter>,
+    );
+    const opener = screen.getByRole("button", { name: "Bogenhanf" });
+    expect(opener.getAttribute("aria-haspopup")).toBe("dialog");
+    await userEvent.click(opener);
+    expect(screen.getByTestId("where").textContent).toContain("sheet=plant-e1");
+  });
+
+  it("US-QS-32 the switch is a button beside the row, never inside it, and it names its plant", () => {
+    render(
+      <MemoryRouter>
+        <Entry
+          bare
+          row={row({ locationId: "s1", targetLocationId: "s2" })}
+          locations={locations}
+          busy={false}
+          onConfirm={() => undefined}
+          access={access}
+        />
+      </MemoryRouter>,
+    );
+    const opener = screen.getByRole("button", { name: "Bogenhanf" });
+    expect(within(opener).queryByRole("button")).toBeNull();
+    expect(screen.getByRole("button", { name: "Umstellen: Bogenhanf" })).toBeTruthy();
+  });
+
+  it("US-QS-32 a phase row shows the plant's own name as the title and the change in the one meta line", () => {
+    render(
+      <MemoryRouter>
+        <Entry
+          bare
+          row={row({ name: "Bogenhanf – Ableger", marker: "Ableger" })}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+      </MemoryRouter>,
+    );
+    const opener = screen.getByRole("button", { name: "Ableger" });
+    expect(
+      within(opener).getByText("Wechsel zur Wachstumsphase am 16.03.2027 · Bogenhanf"),
+    ).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 a phase row's thumbnail: the drawn placeholder without a photo, the photo once it is asked (SG-PHOTO-02, NFR-12)", () => {
+  it("US-QS-32 without a photo the thumbnail is the drawn placeholder in its 56 px box", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <Entry
+          bare
+          row={row()}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+      </MemoryRouter>,
+    );
+    expect(container.querySelector(".size-14 svg")).not.toBeNull();
+    expect(container.querySelector("img")).toBeNull();
+  });
+
+  it("US-QS-32 with a photo the row asks its thumbnail address and shows the picture it gets back", async () => {
+    const requested: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        requested.push(String(url));
+        return {
+          ok: true,
+          status: 200,
+          blob: async () => new Blob([new Uint8Array([1])]),
+        } as Response;
+      }),
+    );
+    URL.createObjectURL = vi.fn(() => "blob:phase");
+    const { container } = render(
+      <MemoryRouter>
+        <Entry
+          bare
+          row={row({ photo: { url: "/specimens/e1/measurements/m1/photo" } })}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+      </MemoryRouter>,
+    );
+    await waitFor(() =>
+      expect(container.querySelector("img")?.getAttribute("src")).toBe("blob:phase"),
+    );
+    expect(requested).toEqual(["http://api/specimens/e1/measurements/m1/photo?size=thumb"]);
+  });
+});

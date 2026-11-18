@@ -427,7 +427,7 @@ Rule: the specimen takes precedence over the care profile, this over the catalog
 
 ### DM-BES-03 Naming rule
 
-1 specimen: `Species` · 2 specimens: `Species` and `Species – marker` · from 3: each `Species – marker`. The separator is an en dash with spaces. The name is display text; the identity of the specimen is a technical id. On a plant tile of "Pflanzen" (US-QS-19) the name is split at the separator: the species on its first line, the marker on its own line below it (owner decision 2026-11-09, issue 1651); the full name stays the tile's accessible name and shows in the plant's layer.
+1 specimen: `Species` · 2 specimens: `Species` and `Species – marker` · from 3: each `Species – marker`. The separator is an en dash with spaces. The name is display text; the identity of the specimen is a technical id. On a plant row of "Pflanzen" (US-QS-19) and of the grouping "Nach Pflegephase" the plant's own name is its title: the marker where the plant has one, with the species in the meta line; a plant without a marker shows its name alone (owner answer Q-68, issue 1915, which replaces the split of owner decision 2026-11-09, issue 1651). The row's accessible name is that title; the full name shows in the plant's layer.
 
 ### DM-BES-04 Care profile (account × species)
 

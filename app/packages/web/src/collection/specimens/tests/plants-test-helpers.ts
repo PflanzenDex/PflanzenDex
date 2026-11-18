@@ -32,12 +32,15 @@ export function summaryOf(cards: readonly SpecimenCard[]): SpecimenSummary {
   };
 }
 
-/** Opens the layer of a plant by choosing its tile (US-QS-19); the card with its actions is inside the layer. */
+/**
+ * Opens the layer of a plant by choosing its row (US-QS-19). A row is named by its title (US-QS-32): the plant's own name
+ * (its marker) where it has one, else its name. A full name `Species – marker` opens the row of its marker.
+ */
 export async function openPlant(name: string): Promise<void> {
+  const title = name.includes(" – ") ? name.slice(name.indexOf(" – ") + " – ".length) : name;
   await userEvent.click(
     await screen.findByRole("button", {
-      name: (accessible) =>
-        accessible.startsWith(`${name} `) && !accessible.startsWith(`${name} – `),
+      name: (accessible) => accessible === title,
     }),
   );
 }

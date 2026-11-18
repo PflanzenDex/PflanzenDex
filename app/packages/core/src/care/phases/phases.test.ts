@@ -9,6 +9,7 @@ import {
 } from "../index";
 import { InMemoryCareProfiles } from "../../collection/care-profile/care-profile-test-helpers";
 import { PhaseLocationStub } from "../shared/test-helpers";
+import type { CardMeasurementView, MeasurementSource } from "../../collection";
 
 const WINTER = "11111111-1111-4111-8111-111111111111"; // Dormancy 11-01 to 03-15, across the turn of the year
 const SUMMER = "22222222-2222-4222-8222-222222222222"; // Dormancy 06-01 to 08-31, within the same year
@@ -290,5 +291,103 @@ describe("US-PHA-01 NFR-12 the phase of named specimens is the one of the phase 
     const phases = await carePhasesOf({ ...deps(e), species: recording }, "anna", [winter], "UTC");
     expect([...phases.keys()]).toEqual([winter]);
     expect(asked).toEqual([[WINTER]]);
+  });
+});
+
+describe("US-QS-32 the phase row carries the plant's own name, its species and its photo", () => {
+  const OWNER = "anna";
+  const AT = () => new Date("2026-10-01T10:00:00Z");
+  const picture = (url: string): CardMeasurementView => ({
+    last: { date: "2026-10-01", value: 12, quality: "healthy", note: null },
+    photo: { url, date: "2026-10-01" },
+  });
+  const phasesOf = (store: InMemorySpecimens, photos?: Pick<MeasurementSource, "forSpecimens">) =>
+    carePhasesList(
+      {
+        specimens: store,
+        species,
+        targets: NO_PHASE_LOCATION,
+        profiles: new InMemoryCareProfiles(),
+        clock: AT,
+        ...(photos ? { photos } : {}),
+      },
+      OWNER,
+      "UTC",
+    );
+
+  it("US-QS-32 a plant with a marker carries the marker as its own name and the species name as its species", async () => {
+    const store = new InMemorySpecimens({ [OWNER]: [LOCATION] });
+    await store.create(OWNER, {
+      speciesId: WINTER,
+      name: "Bogenhanf – Ableger",
+      marker: "Ableger",
+      locationId: LOCATION,
+      caughtAt: "2026-01-01",
+    });
+    const r = await phasesOf(store);
+    expect(r.ok && r.value[0]).toMatchObject({
+      name: "Bogenhanf – Ableger",
+      marker: "Ableger",
+      speciesName: "Bogenhanf",
+    });
+  });
+
+  it("US-QS-32 a plant without a marker has no own name (marker null); its species name is the German one", async () => {
+    const e = await collection(OWNER, [{ speciesId: WINTER, name: "Bogenhanf" }]);
+    const r = await phasesOf(e);
+    expect(r.ok && r.value[0]).toMatchObject({ marker: null, speciesName: "Bogenhanf" });
+  });
+
+  it("US-QS-32 the row carries the most recent photo of its plant, and none where there is no photo (P-08)", async () => {
+    const store = new InMemorySpecimens({ [OWNER]: [LOCATION] });
+    await store.create(OWNER, {
+      speciesId: WINTER,
+      name: "Bogenhanf",
+      marker: null,
+      locationId: LOCATION,
+      caughtAt: "2026-01-01",
+    });
+    await store.create(OWNER, {
+      speciesId: SUMMER,
+      name: "Aloe",
+      marker: null,
+      locationId: LOCATION,
+      caughtAt: "2026-01-01",
+    });
+    const withPhotoId = store.rows.find((row) => row.name === "Bogenhanf")?.id ?? "";
+    const photos = {
+      forSpecimens: async (_userId: string, ids: readonly string[]) =>
+        new Map(ids.filter((id) => id === withPhotoId).map((id) => [id, picture("/p/1")] as const)),
+    };
+    const r = await phasesOf(store, photos);
+    const photoOf = new Map(r.ok ? r.value.map((row) => [row.name, row.photo] as const) : []);
+    expect(photoOf.get("Bogenhanf")).toEqual({ url: "/p/1" });
+    expect(photoOf.get("Aloe")).toBeNull();
+  });
+
+  it("US-QS-32 without a photo source every row has no photo, so its thumbnail stays the placeholder", async () => {
+    const e = await collection(OWNER, [{ speciesId: WINTER, name: "Bogenhanf" }]);
+    const r = await phasesOf(e);
+    expect(r.ok && r.value[0]?.photo).toBeNull();
+  });
+
+  it("US-QS-32 NFR-12 carePhasesOf reads no photo: the statements of swap and sharing do not grow with them", async () => {
+    const e = await collection(OWNER, [{ speciesId: WINTER, name: "Bogenhanf" }]);
+    const [winter = ""] = e.rows.map((row) => row.id);
+    let asked = 0;
+    const photos = {
+      forSpecimens: async () => {
+        asked += 1;
+        return new Map<string, CardMeasurementView>();
+      },
+    };
+    const phases = await carePhasesOf(
+      { specimens: e, species, profiles: new InMemoryCareProfiles(), clock: AT, photos },
+      OWNER,
+      [winter],
+      "UTC",
+    );
+    expect([...phases.keys()]).toEqual([winter]);
+    expect(asked).toBe(0);
   });
 });

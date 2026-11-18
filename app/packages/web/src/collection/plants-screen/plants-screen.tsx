@@ -27,7 +27,7 @@ import table from "./plant-layers/plant-layers.de.json";
 
 const t = texts(table);
 /**
- * Tiles per page without a layout (starting values, assumption): 2 columns below 768 px, 3 from 768 px, 4 from 1024 px.
+ * Rows per page without a layout (starting values, assumption): 6 below 768 px (one column), 12 from 768 px (two columns), 16 from 1024 px.
  * With a layout the page takes the free height of the region instead (US-QS-19, issue 1029).
  */
 export function usePageSize(): number {
@@ -49,11 +49,10 @@ type Props = LayerProps & {
   summary: SpecimenSummary;
 };
 
-// Two tiles per row at 360 px and normal text, one at a larger text size (issue 1019): 8.75 rem fits two columns in the 294
-// px list, so a page holds 6 (owner decision 2026-11-01, issue 1108); a column is never wider than the list (issue 1113).
-// Wider windows keep 3 and 4 columns at normal text and lose columns as the text grows: the minimum is in rem (issue 1304).
-const TILES =
-  "grid grid-cols-[repeat(auto-fill,minmax(min(8.75rem,100%),1fr))] gap-2 md:grid-cols-[repeat(auto-fill,minmax(min(11rem,100%),1fr))] lg:grid-cols-[repeat(auto-fill,minmax(min(max(9.5rem,22%),100%),1fr))]";
+// One row per plant on a phone (US-QS-32, SG-LIST-03): the name, the meta line and the picture need the full width of the
+// list, so two columns at 360 px left the name a few letters (issue 1888). From md the rows fill columns of at least 18 rem,
+// so a wider window shows more of them; a column is never wider than the list (issue 1113).
+const TILES = "grid grid-cols-1 gap-2 md:grid-cols-[repeat(auto-fill,minmax(min(18rem,100%),1fr))]";
 
 /** The server paging of a list of plants for the Pager (FR-BES-23): total, loading state, failure, tile skeleton (F-0124). */
 function pagingOf(list: CardPages, fallbackTotal: number): PagerPaging {

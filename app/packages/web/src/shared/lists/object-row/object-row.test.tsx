@@ -1,0 +1,155 @@
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { Button } from "@/shared/ui/button/button";
+import { ObjectRow } from "./object-row";
+
+afterEach(cleanup);
+
+const wrap = (ui: React.ReactNode) => <MemoryRouter>{ui}</MemoryRouter>;
+
+/** The text of every element the row's `aria-describedby` names, in order. */
+const described = (el: HTMLElement) =>
+  (el.getAttribute("aria-describedby") ?? "")
+    .split(" ")
+    .map((id) => document.getElementById(id)?.textContent ?? "")
+    .join(" | ");
+
+describe("US-QS-32 ObjectRow: the name wraps to two lines, the meta is one line (SG-TYPE-05, SG-LIST-03)", () => {
+  it("US-QS-32 a name of two lines is clamped at two lines and never cut at one", () => {
+    render(
+      wrap(
+        <ObjectRow
+          to="/plant/s1"
+          title="Philodendron hederaceum Brasil – Ableger am Südfenster"
+          meta="Philodendron hederaceum"
+        />,
+      ),
+    );
+    const name = screen.getByText("Philodendron hederaceum Brasil – Ableger am Südfenster");
+    expect(name.className).toContain("line-clamp-2");
+    expect(name.className).not.toContain("truncate");
+    expect(name.className).not.toMatch(/\bline-clamp-1\b/);
+  });
+
+  it("US-QS-32 the meta line is one line that truncates, so it never adds a second line to the row", () => {
+    render(
+      wrap(
+        <ObjectRow
+          to="/plant/s1"
+          title="Clip"
+          meta="Efeutute · Lichtzone unbekannt · Schlafzimmer am Fenster"
+        />,
+      ),
+    );
+    const meta = screen.getByText("Efeutute · Lichtzone unbekannt · Schlafzimmer am Fenster");
+    expect(meta.className).toContain("truncate");
+  });
+
+  it("US-QS-32 the thumbnail box is 56 px square and is reserved even while no picture is there (SG-PHOTO-01)", () => {
+    const { container } = render(wrap(<ObjectRow to="/plant/s1" title="Clip" />));
+    const box = container.querySelector(".size-14");
+    expect(box).not.toBeNull();
+    expect(box?.className).toContain("rounded-lg");
+    expect(box?.className).toContain("shrink-0");
+  });
+});
+
+describe("US-QS-32 ObjectRow: the whole row is the target, named by its title (SG-TOUCH-02, WCAG 2.5.3)", () => {
+  it("US-QS-32 a row that navigates is one link to its address, named by its title and described by its meta and trailing element", () => {
+    render(
+      wrap(
+        <ObjectRow
+          to="/plant/s1"
+          title="Clip"
+          meta="Efeutute · Zone 2"
+          trailing={<Badge variant="warning">Behandeln</Badge>}
+        />,
+      ),
+    );
+    const link = screen.getByRole("link", { name: "Clip" });
+    expect(link.getAttribute("href")).toBe("/plant/s1");
+    expect(described(link)).toBe("Efeutute · Zone 2 | Behandeln");
+  });
+
+  it("US-QS-32 a row that acts is one button named by its title, and it runs its action", async () => {
+    const onClick = vi.fn();
+    const user = userEvent.setup();
+    render(wrap(<ObjectRow title="Clip" meta="Efeutute" onClick={onClick} />));
+    const button = screen.getByRole("button", { name: "Clip" });
+    await user.click(button);
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it("US-QS-32 a row that opens a layer says so, with whether the layer is open", () => {
+    render(
+      wrap(<ObjectRow title="Clip" onClick={() => undefined} haspopup="dialog" expanded={true} />),
+    );
+    const button = screen.getByRole("button", { name: "Clip" });
+    expect(button.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("US-QS-32 the action stands beside the row, never inside it: no button nests in the link", () => {
+    render(
+      wrap(
+        <ObjectRow
+          to="/plant/s1"
+          title="Bogenhanf"
+          meta="Wechsel zur Wachstumsphase am 16.03.2027"
+          action={
+            <Button type="button" variant="secondary">
+              Umstellen
+            </Button>
+          }
+        />,
+      ),
+    );
+    const link = screen.getByRole("link", { name: "Bogenhanf" });
+    expect(within(link).queryByRole("button")).toBeNull();
+    expect(screen.getByRole("button", { name: "Umstellen" })).toBeTruthy();
+  });
+
+  it("US-QS-32 an object row shows at most one trailing element: a badge or an action takes the place of the chevron (SG-LIST-03)", () => {
+    const { rerender } = render(wrap(<ObjectRow to="/a" title="Clip" />));
+    const plain = screen.getByRole("link", { name: "Clip" });
+    expect(plain.querySelector("svg.size-4")).not.toBeNull();
+
+    rerender(
+      wrap(
+        <ObjectRow to="/a" title="Clip" trailing={<Badge variant="warning">Weicht ab</Badge>} />,
+      ),
+    );
+    const badged = screen.getByRole("link", { name: "Clip" });
+    expect(badged.querySelector("svg.size-4")).toBeNull();
+    expect(badged.textContent).toContain("Weicht ab");
+  });
+});
+
+describe("US-QS-32 ObjectRow: a missing or failed picture shows the drawn placeholder (SG-PHOTO-02, P-10)", () => {
+  it("US-QS-32 without a picture the thumbnail is the drawn placeholder, never an empty box", () => {
+    const { container } = render(wrap(<ObjectRow to="/a" title="Clip" />));
+    expect(container.querySelector("img")).toBeNull();
+    const box = container.querySelector(".size-14");
+    expect(box?.querySelector("svg")).not.toBeNull();
+    expect(box?.querySelector("svg")?.parentElement?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("US-QS-32 a picture that fails to load turns into the drawn placeholder", () => {
+    const { container } = render(wrap(<ObjectRow to="/a" title="Clip" src="blob:broken" />));
+    const img = container.querySelector("img");
+    expect(img).not.toBeNull();
+    fireEvent.error(img as HTMLImageElement);
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector(".size-14 svg")).not.toBeNull();
+  });
+
+  it("US-QS-32 a picture is decorative by default: its alternative text is empty and the name is the label", () => {
+    const { container } = render(wrap(<ObjectRow to="/a" title="Clip" src="blob:picture" />));
+    expect(container.querySelector("img")?.getAttribute("alt")).toBe("");
+    expect(screen.getByRole("link", { name: "Clip" })).toBeTruthy();
+  });
+});
