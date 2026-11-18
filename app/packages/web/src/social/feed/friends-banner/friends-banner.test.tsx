@@ -24,6 +24,7 @@ const banner = (extra: Record<string, unknown> = {}) => ({
     },
     { friendId: "f2", friendName: null, speciesLatin: null, speciesGerman: null, count: 1 },
   ],
+  read: [],
   ...extra,
 });
 
@@ -85,6 +86,28 @@ describe("US-SOZ-06 banner 'Friends have N new plants'", () => {
     render(<FriendsBanner api="http://api" token={token} />);
     await vi.waitFor(() => expect(posts).toEqual([{ upTo: ASOF }]));
     expect(screen.queryByRole("region")).toBeNull();
+  });
+
+  it("US-SOZ-06 the banner on Freunde keeps 'Als gelesen markieren' and stays hidden with nothing new, even when plants are read (the layer on Heute keeps them)", async () => {
+    const readOnly = banner({
+      count: 0,
+      items: [],
+      read: [
+        {
+          friendId: "f1",
+          friendName: "Anna",
+          speciesLatin: "Aloe vera",
+          speciesGerman: null,
+          count: 1,
+        },
+      ],
+    });
+    const { fetchFn } = server(readOnly);
+    render(<FriendsBanner api="http://api" token={token} />);
+    await vi.waitFor(() => expect(fetchFn).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByRole("region")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Als gelesen markieren" })).toBeNull();
   });
 
   it("US-SOZ-06 without news nothing is shown", async () => {

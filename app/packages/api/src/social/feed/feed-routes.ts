@@ -31,8 +31,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * handed-over swap I took part in with a current friend; the app root fills the port from `swap`). "Today" is the local date of the requested time zone (NFR-08). Filters: `days` (1 to 365, default 30), `friend` (the
  * friendship id from `GET /friends`), `onlyNewSpecies=true`. A bad parameter answers 400 `input.invalid` naming the field.
  * The answer carries `asOf` (the instant it was read), so a screen that only has an older copy can say "Stand" (FR-SOZ-03).
- * - GET /feed/banner (US-SOZ-06): `{ firstVisit, count, items, asOf }`, what became visible to me since I last marked the feed as
- *   seen; on the first visit `firstVisit` is true, nothing is new and no banner is shown
+ * - GET /feed/banner (US-SOZ-06): `{ firstVisit, count, items, read, asOf }`, what became visible to me since I last marked the feed as
+ *   seen (`items`, `count` the number of them); `read` are the plants that became visible within the last 7 days before `asOf`
+ *   and were already seen (`READ_DAYS`, an assumption; counted from when they became visible), so "Gelesen" still shows them; on
+ *   the first visit `firstVisit` is true, nothing is new, `read` is empty and no banner is shown
  * - POST /feed/seen `{ upTo }` (with `Idempotency-Key`): "Okay" and the silent creation of the first visit; marks the feed as seen
  *   up to `upTo` (the `asOf` of the banner), never backwards and never past now
  */

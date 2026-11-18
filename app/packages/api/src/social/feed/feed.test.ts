@@ -298,7 +298,7 @@ describe("US-SOZ-06 banner since my last visit through the API", () => {
 
   it("US-SOZ-06 the first visit is silent: no banner for what was shared before; the feed carries asOf", async () => {
     const b = (await get(subE, "/feed/banner")).body;
-    expect(b).toMatchObject({ firstVisit: true, count: 0, items: [] });
+    expect(b).toMatchObject({ firstVisit: true, count: 0, items: [], read: [] });
     expect((await post(subE, "/feed/seen", { upTo: b.asOf })).status).toBe(200);
     const again = (await get(subE, "/feed/banner")).body;
     expect(again).toMatchObject({ firstVisit: false, count: 0 });
@@ -333,6 +333,34 @@ describe("US-SOZ-06 banner since my last visit through the API", () => {
     expect((await get(subE, "/feed/banner")).body.count).toBe(0);
   });
 
+  it("US-SOZ-06 after 'Okay' the plant that was new shows under read, with the same fields; count is 0", async () => {
+    const fourth = (
+      await post(subD, "/specimens", {
+        timeZone: "Europe/Berlin",
+        speciesId,
+        marker: "B4",
+        catchDate: "2019-07-07",
+      })
+    ).body.id;
+    await live.request(`/sharing/specimens/${fourth}`, {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+        "idempotency-key": randomUUID(),
+        authorization: `Bearer valid:${subD}`,
+      },
+      body: JSON.stringify({ share: "friends" }),
+    });
+    const before = (await get(subE, "/feed/banner")).body;
+    expect(before.count).toBe(1);
+    expect((await post(subE, "/feed/seen", { upTo: before.asOf })).status).toBe(200);
+    const after = (await get(subE, "/feed/banner")).body;
+    expect(after).toMatchObject({ firstVisit: false, count: 0, items: [] });
+    expect(after.read[0]).toMatchObject({ friendName: "Dora", speciesLatin: latin });
+    expect(after.read[0].count).toBeGreaterThanOrEqual(1);
+    expect(JSON.stringify(after)).not.toMatch(/accountId|B4/);
+  });
+
   it("US-QG-05 QG-D2 the banner names the friend, the species and the count, and nothing else", async () => {
     const third = (
       await post(subD, "/specimens", {
@@ -355,7 +383,7 @@ describe("US-SOZ-06 banner since my last visit through the API", () => {
     expect(b.count).toBe(1);
     expectExactKeys(
       b,
-      { firstVisit: true, count: true, items: [BANNER_ITEM], asOf: true },
+      { firstVisit: true, count: true, items: [BANNER_ITEM], read: [BANNER_ITEM], asOf: true },
       "GET /feed/banner",
     );
     await post(subE, "/feed/seen", { upTo: b.asOf });
