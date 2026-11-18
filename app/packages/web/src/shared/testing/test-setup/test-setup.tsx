@@ -49,3 +49,20 @@ if (typeof Element !== "undefined" && typeof Element.prototype.setPointerCapture
   Element.prototype.releasePointerCapture = () => undefined;
   Element.prototype.hasPointerCapture = () => false;
 }
+
+// jsdom runs no CSS animations, so `animationend` never fires. Since jsdom 31 its computed style applies the animation
+// rules of the page (Vaul's `[data-state=closed]{animation-name:slideToBottom}`, `fadeOut`), and Radix Presence keeps a
+// closing sheet or dialog mounted until that animation ends: every layer closed by Escape or Back stayed open. The
+// computed style reports no animation, as a finished one; `holdSheetExit` (shared/testing/sheet-exit) names the sheet's
+// animation on top of this for the tests that hold an exit.
+if (typeof window !== "undefined") {
+  const computed = window.getComputedStyle.bind(window);
+  window.getComputedStyle = (element: Element, pseudo?: string | null) =>
+    new Proxy(computed(element, pseudo), {
+      get(target, prop) {
+        if (prop === "animationName") return "none";
+        const value = Reflect.get(target, prop, target);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+}

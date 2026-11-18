@@ -121,7 +121,7 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
     // Vaul writes the drag into the inline transform of the sheet and of its overlay.
     sheet.style.transform = "translate3d(0, 120px, 0)";
     rerender(<Controlled refusals={1} />);
-    await waitFor(() => expect(sheet.style.transform).toBe("translate3d(0, 0, 0)"));
+    await waitFor(() => expect(sheet.style.transform).toBe("translate3d(0px, 0px, 0px)"));
     expect(sheet.style.transition).toContain("transform");
   });
 });
