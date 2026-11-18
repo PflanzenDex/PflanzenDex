@@ -2,9 +2,9 @@ import { cn } from "@/shared/lib/utils";
 
 /**
  * The drawn placeholder of a missing or failed photo (SG-PHOTO-02, US-QS-32): the sprout of the app's motif
- * (`styles/pwa/motifs/sprout.svg`) inlined as a React SVG, drawn in the text colour on the muted surface. Both are theme
- * tokens, so it holds in light and dark, and in forced colors the drawing takes the system text colour. It is decorative
- * (the name of the object is the label), and it fills its box, which the caller sizes (the 56 px thumbnail).
+ * (`styles/pwa/motifs/sprout.svg`) inlined as a React SVG, drawn at 36 px in the muted text token at full opacity on the muted
+ * surface (about 7:1 in light and dark, above the 3:1 of non-text contrast). The view box is cut to the sprout, so the
+ * drawing fills its 36 px and is centred in the box it is given. Decorative: the name of the object is the label.
  */
 export function ObjectPlaceholder({ className }: { className?: string }) {
   return (
@@ -15,7 +15,7 @@ export function ObjectPlaceholder({ className }: { className?: string }) {
         className,
       )}
     >
-      <svg viewBox="0 0 512 512" focusable="false" className="size-8 fill-current">
+      <svg viewBox="80 130 320 300" focusable="false" className="size-[36px] shrink-0 fill-current">
         <rect x="132" y="392" width="248" height="24" rx="12" />
         <rect x="248" y="262" width="16" height="136" rx="8" />
         <path

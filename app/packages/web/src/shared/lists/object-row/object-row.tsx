@@ -2,11 +2,10 @@ import { useState, type MouseEventHandler, type ReactNode, type Ref } from "reac
 import { GroupedRow } from "../grouped-list/grouped-list";
 import { ObjectPlaceholder } from "../object-placeholder/object-placeholder";
 
-// The row of one object (a plant, a species, a wish; US-QS-32, SG-LIST-03): a 56 px square thumbnail, the name on up to
-// two lines, one meta line and at most one trailing element. The whole row is the target. The surface is a card of its
-// own, so a list of rows reads as objects, not as settings.
-const SURFACE =
-  "flex min-w-0 items-stretch overflow-hidden rounded-lg border border-border bg-card text-card-foreground";
+// The row of one object (a plant, a species, a wish; US-QS-32, SG-LIST-03): a 56 px square thumbnail, the name on up to two
+// lines, one meta line and at most one trailing element. The whole row is the target. The row has no surface of its own: it
+// sits in one flat group (FX-35, SG-SHAPE-03), which draws the card and the hairline between its rows.
+const SURFACE = "flex min-w-0 items-stretch text-card-foreground";
 /** The thumbnail box is reserved before the picture comes (SG-PHOTO-01): 56 px square in px, so it keeps its size at a large text size; the control radius. */
 const THUMB = "flex size-[56px] shrink-0 items-center justify-center overflow-hidden rounded-lg";
 

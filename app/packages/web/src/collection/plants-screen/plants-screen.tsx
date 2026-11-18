@@ -20,6 +20,7 @@ import { TITLE } from "../specimens/cards/parts/parts";
 import { useCardPages, type CardPages } from "../specimens/cards/use-card-pages";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PlantTile, PlantTileSkeleton } from "./rows/plant-tile/plant-tile";
+import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { PlantLayers } from "./plant-layers/plant-layers";
 import { ARCHIVE_LAYER, type LayerProps } from "./plant-layers/layer-ids";
 import { ZoneInsightRow } from "./rows/zone-insight/zone-insight";
@@ -49,10 +50,8 @@ type Props = LayerProps & {
   summary: SpecimenSummary;
 };
 
-// One row per plant on a phone (US-QS-32, SG-LIST-03): the name, the meta line and the picture need the full width of the
-// list, so two columns at 360 px left the name a few letters (issue 1888). From md the rows fill columns of at least 18 rem,
-// so a wider window shows more of them; a column is never wider than the list (issue 1113).
-const TILES = "grid grid-cols-1 gap-2 md:grid-cols-[repeat(auto-fill,minmax(min(18rem,100%),1fr))]";
+// The plants are one flat group in one column at every width (US-QS-32, FX-35): no group inside a group.
+const TILES = OBJECT_GROUP;
 
 /** The server paging of a list of plants for the Pager (FR-BES-23): total, loading state, failure, tile skeleton (F-0124). */
 function pagingOf(list: CardPages, fallbackTotal: number): PagerPaging {

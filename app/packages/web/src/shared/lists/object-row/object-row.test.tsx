@@ -192,4 +192,23 @@ describe("US-QS-32 the thumbnail of an object row is a fixed 56 px box at any te
     expect(box?.className).toContain("shrink-0");
     expect(box?.className).not.toMatch(/\bsize-14\b/);
   });
+
+  it("US-QS-32 the drawn placeholder is 36 px in the muted text token at full opacity, centred in the box (SG-PHOTO-02)", () => {
+    const { container } = render(wrap(<ObjectRow to="/a" title="Clip" />));
+    const svg = container.querySelector('[class~="size-[56px]"] svg');
+    expect(svg?.getAttribute("class")).toContain("size-[36px]");
+    expect(svg?.getAttribute("viewBox")).toBe("80 130 320 300");
+    const drawn = svg?.parentElement;
+    expect(drawn?.className).toContain("text-muted-foreground");
+    expect(drawn?.className).toContain("items-center");
+    expect(drawn?.className).not.toMatch(/opacity|\/\d+/);
+  });
+});
+
+describe("US-QS-32 an object row is flat: the group draws the card, the row draws no box of its own (FX-35)", () => {
+  it("US-QS-32 the row's root has no border, no radius and no background of its own", () => {
+    const { container } = render(wrap(<ObjectRow to="/a" title="Clip" />));
+    const root = container.firstElementChild;
+    expect(root?.className).not.toMatch(/\bborder-border\b|\brounded-lg\b|\bbg-card\b/);
+  });
 });

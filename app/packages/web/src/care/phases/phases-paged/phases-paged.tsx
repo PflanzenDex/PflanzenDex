@@ -3,6 +3,7 @@ import type { CarePhase, LightLocation, PhasesRow } from "@pflanzendex/core";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { PHASE_TEXT } from "../../shared/text";
 import { Groups, type Confirm } from "../phases-list/phases-list";
 import { Entry } from "../phases-list/entry/entry";
@@ -42,7 +43,7 @@ export function PhasesPaged(props: {
         listLabel="Pflanzen mit Pflegephase"
         groups={groups}
         pageSize={size}
-        listClassName="lg:grid lg:grid-cols-2"
+        listClassName={OBJECT_GROUP}
         getKey={(z) => z.specimenId}
         intro={(g) => (
           <Groups

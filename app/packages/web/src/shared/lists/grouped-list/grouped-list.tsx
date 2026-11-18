@@ -1,12 +1,11 @@
 import { useId, type MouseEventHandler, type ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
 import { RowContent, RowElement } from "./row-parts/row-parts";
+import { GROUP, HAIRLINE } from "./group-classes";
 
 // The flat grouped list of the phone look (US-QS-32, SG-SHAPE-03): one rounded group on the page colour, rows separated
 // by a hairline that starts at the text, no shadow (SG-SHAPE-05) and no group inside a group (SG-SHAPE-06). The group
 // keeps its boundary in forced colors. The space between groups (24 px, SG-SHAPE-07) is the caller's.
-const GROUP =
-  "m-0 flex list-none flex-col overflow-hidden rounded-card border border-transparent bg-card p-0 text-card-foreground forced-colors:border-[CanvasText]";
 const LABEL = "text-base font-semibold text-foreground";
 const FOOTER = "text-sm text-muted-foreground";
 
@@ -20,9 +19,6 @@ const ROW =
 const OBJECT_ROW = "gap-2 px-2 py-2.5";
 const INTERACTIVE =
   "hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
-/** The hairline between two rows: from the text's left edge to the right edge, never above the first row. */
-const HAIRLINE =
-  "relative before:absolute before:inset-x-4 before:top-0 before:h-px before:bg-border before:content-[''] first:before:hidden";
 
 export type GroupedListProps = {
   /** The name of the section; the section is labelled by it. Without a label the group has no name (the sign-out row). */

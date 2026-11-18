@@ -144,14 +144,25 @@ describe("US-QS-19 tiles of the plants", () => {
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
   });
 
-  it("US-QS-32 at 360 px the plant rows are one column, so a name keeps the width of the row (SG-LIST-03); from md two columns of at least 18 rem", () => {
+  it("US-QS-32 the plant rows are one flat group in one column at every width: no grid, no gap, no box per row (SG-SHAPE-03, FX-35)", () => {
     screenWith(many(8));
-    const grid = screen.getAllByRole("listitem")[0]?.parentElement;
-    expect(grid?.className).toContain("grid-cols-1");
-    expect(grid?.className).toContain(
-      "md:grid-cols-[repeat(auto-fill,minmax(min(18rem,100%),1fr))]",
-    );
-    expect(grid?.className).toContain("gap-2");
+    const items = screen.getAllByRole("listitem");
+    const group = items[0]?.parentElement;
+    expect(group?.className).toContain("flex-col");
+    expect(group?.className).toContain("bg-card");
+    expect(group?.className).toContain("rounded-card");
+    expect(group?.className).toContain("gap-0");
+    expect(group?.className).not.toMatch(/\bgrid\b|grid-cols|shadow/);
+    // The rows of the group are separated by a hairline between two rows (never above the first one), inset to the text.
+    expect(group?.className).toContain("[&>li+li]:before:h-px");
+    expect(group?.className).toContain("[&>li+li]:before:left-[72px]");
+  });
+
+  it("US-QS-32 a plant row draws no box of its own: no border and no radius, the group is the only frame (FX-35)", () => {
+    screenWith([card(1, { name: "Aloe" })]);
+    const row = screen.getByRole("button", { name: /^Aloe(\s|$)/ });
+    const surface = row.closest("li")?.firstElementChild;
+    expect(surface?.className).not.toMatch(/\bborder-border\b|\brounded-lg\b|\bbg-card\b/);
   });
 
   it("US-QS-19 at 200 % text the insight row wraps at whole words: the row may wrap, the insight never gets narrower than its longest word, and the section grows with its content (issue 1113)", () => {
