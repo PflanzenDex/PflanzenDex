@@ -77,12 +77,7 @@ export function feedRoutes(
     return c.json(feed);
   });
   routes.get("/feed/banner", async (c) =>
-    c.json(
-      await friendBanner(
-        { friends, sharing, privacy, facts, seen, now: clock },
-        c.get("account").id,
-      ),
-    ),
+    c.json(await friendBanner({ friends, sharing, privacy, facts, seen }, c.get("account").id)),
   );
   routes.post("/feed/seen", async (c) => write(c, deps, mark, { input: await body(c) }));
   return routes;

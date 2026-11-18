@@ -229,7 +229,7 @@ describe("US-SOZ-05 feed through the API", () => {
 });
 
 describe("US-SOZ-06 banner since my last visit through the API", () => {
-  // The banner compares database instants with the clock: this app runs on the real clock.
+  // The banner reads every instant from the database clock (US-SOZ-06), so the app runs on the real clock: nothing is faked.
   let live: ReturnType<typeof createApp>;
   const get = async (sub: string | null, path: string) => {
     const res = await live.request(path, {
