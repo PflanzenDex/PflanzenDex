@@ -589,7 +589,7 @@ describe("US-QS-18 Heute stays one column, with or without an anniversary", () =
         </MemoryRouter>
       </ToastProvider>,
     );
-    const tile = await screen.findByRole("button", { name: "1 Jubiläen" });
+    const tile = await screen.findByRole("button", { name: "1 Jubiläum" });
     const { content, pane } = columns(container);
     expect(content.contains(tile)).toBe(true);
     expect(pane.contains(tile)).toBe(false);
