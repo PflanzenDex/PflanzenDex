@@ -52,7 +52,8 @@ tracked_bytes() {
 }
 
 count_files() { git ls-files -- "$@" | wc -l | tr -d ' '; }
-count_matches() { local re="$1"; shift; git grep --cached -h -E "$re" -- "$@" 2>/dev/null | wc -l | tr -d ' '; }
+# POSIX classes only: Apple's git takes \b and \s as plain letters. No match is a count of 0, not an abort (pipefail).
+count_matches() { local re="$1"; shift; { git grep --cached -h -E "$re" -- "$@" 2>/dev/null || true; } | wc -l | tr -d ' '; }
 
 # --- Specs (index) ------------------------------------------------------------------------------------
 # "STORY<TAB>epic<TAB>status<TAB>id<TAB>title" and "FR<TAB>status".
@@ -157,13 +158,13 @@ render() {
   echo
   local pkgs cases
   pkgs="$(grep '^PKG' <<<"$tree" | sort -t$'\t' -k3,3nr -k2,2 | awk -F'\t' "$AWK_ROUND"' { printf "%s%s %s", (NR > 1 ? " · " : ""), $2, fmt($3) }')"
-  cases="$(count_matches '\b(it|test)(\.[a-z]+)?\(\s*["'\''`]' '*.test.ts' '*.test.tsx' '*.test.mjs')"
+  cases="$(count_matches '(^|[^A-Za-z0-9_])(it|test)(\.[a-z]+)?\([[:space:]]*["'\''`]' '*.test.ts' '*.test.tsx' '*.test.mjs')"
   echo "| | |"
   echo "| --- | --- |"
   echo "| **Repository** | $files files · $lines lines · $(tracked_bytes) |"
   echo "| **Production code** | $prod lines · packages: $pkgs |"
   echo "| **Tests** | $(count_files '*.test.ts' '*.test.tsx' '*.test.mjs') files · $(awk "$AWK_ROUND"' {print fmt($1)}' <<<"$cases") test cases · $test lines ($ratio% of production code) |"
-  echo "| **Database** | $(count_files 'app/packages/db/migrations/*.sql') migrations · $(count_matches '^\s*"[a-z_]+\.[a-z_]+":' 'app/packages/core/src/kernel/error.ts') error codes |"
+  echo "| **Database** | $(count_files 'app/packages/db/migrations/*.sql') migrations · $(count_matches '^[[:space:]]*"[a-z_]+\.[a-z_]+":' 'app/packages/core/src/kernel/error.ts') error codes |"
   echo "| **Process docs** | $(count_files 'docs/adr/[0-9]*.md') ADRs · $(count_files '.agents/skills/*/SKILL.md') agent skills · $(count_files 'docs/guides/operations/*.md') runbooks |"
   echo
   echo "### Quality gates and development process"
