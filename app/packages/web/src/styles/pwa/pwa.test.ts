@@ -38,7 +38,6 @@ interface Manifest {
   scope: string;
   display: string;
   lang: string;
-  theme_color: string;
   background_color: string;
   icons: ManifestIcon[];
   screenshots: ManifestScreenshot[];
@@ -94,10 +93,8 @@ describe("US-QS-07 · installable web app and its icon", () => {
     expect(manifest.lang).toBe("de");
   });
 
-  it("US-QS-25 the manifest's theme colour is the light page background, not the brand green", () => {
-    expect(PAGE_LIGHT).toMatch(/^#[0-9a-f]{6}$/);
-    expect(manifest.theme_color).toBe(PAGE_LIGHT);
-    expect(manifest.theme_color).not.toBe(BRAND);
+  it("US-QS-25 the manifest has no theme colour, so the navigation area below the bottom bar follows the system scheme (issue 1894)", () => {
+    expect(manifest).not.toHaveProperty("theme_color");
   });
 
   it("US-QS-25 the splash colour (background_color) stays the brand green of the icon", () => {
