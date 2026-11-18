@@ -258,9 +258,9 @@ IDs are never renumbered.
 
 - **Symptom:** A web test that presses Back or a button right after a question or view appears times out only under load (CI, a busy machine). The step it waits for never comes; unloaded it passes in milliseconds.
 - **Cause:** The routers apply history changes in `startTransition` (`TransitionRouter`, `MemoryRouter`), while state such as an open question renders at normal priority. The question can be on screen while the history entry pushed with it is still pending. A step back taken then lands on the entry already committed, the location key does not change, and an effect keyed on it never runs again. A lazy part requested on a timer (the sheet asks for its code 1.5 s after it mounts) can also land in the middle of a test and stall it.
-- **Fix:** Wait in the test for the committed location the next step needs (a probe in the router, as `Address` records `route.guarded` in `collection-area.test.tsx`), and load the lazy parts of the path in `beforeAll` (#444). To find such a race, log every committed location with a timestamp in the test router and compare a hung run with a passing one; CPU load (24 busy loops, five parallel runs) reproduces it.
+- **Fix:** Wait in the test for the committed location the next step needs (a probe in the router, as `Address` records `route.guarded` in `collection-area.test.tsx`), and load the lazy parts of the path in `beforeAll` (#444). To find such a race, log every committed location with a timestamp in the test router and compare a hung run with a passing one; CPU load (24 busy loops, five parallel runs) reproduces it. A test that chains several waits of 4 to 5 s each cannot fit into the default test budget of 5 s: one runner stall of about 4 s fails it before any assertion does. Give its `describe` a budget above the measured stalls (`describe(name, fn, 15_000)`, with the reason in a comment) and keep the wait timeouts (issue 1839).
 - **Can it become a gate?** No: whether a step depends on a pending transition is a property of the flow, not of a code pattern.
-- **Source:** Issue #2136, PR #2142; the product side of the race is filed as its own bug.
+- **Source:** Issue #2136, PR #2142; the product side of the race is filed as its own bug. The test budget: issue #1839, PR #2260.
 
 ## PF-032 `make ds-snapshots` rewrites baselines nobody changed
 
