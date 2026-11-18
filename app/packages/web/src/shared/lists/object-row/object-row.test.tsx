@@ -12,13 +12,6 @@ afterEach(cleanup);
 
 const wrap = (ui: React.ReactNode) => <MemoryRouter>{ui}</MemoryRouter>;
 
-/** The text of every element the row's `aria-describedby` names, in order. */
-const described = (el: HTMLElement) =>
-  (el.getAttribute("aria-describedby") ?? "")
-    .split(" ")
-    .map((id) => document.getElementById(id)?.textContent ?? "")
-    .join(" | ");
-
 describe("US-QS-32 ObjectRow: the name wraps to two lines, the meta is one line (SG-TYPE-05, SG-LIST-03)", () => {
   it("US-QS-32 a name of two lines is clamped at two lines and never cut at one", () => {
     render(
@@ -60,7 +53,7 @@ describe("US-QS-32 ObjectRow: the name wraps to two lines, the meta is one line 
 });
 
 describe("US-QS-32 ObjectRow: the whole row is the target, named by its title (SG-TOUCH-02, WCAG 2.5.3)", () => {
-  it("US-QS-32 a row that navigates is one link to its address, named by its title and described by its meta and trailing element", () => {
+  it("US-QS-32 a row that navigates is one link to its address, named by its visible text in order: the title, the meta, the trailing element", () => {
     render(
       wrap(
         <ObjectRow
@@ -71,16 +64,17 @@ describe("US-QS-32 ObjectRow: the whole row is the target, named by its title (S
         />,
       ),
     );
-    const link = screen.getByRole("link", { name: "Clip" });
+    const link = screen.getByRole("link", { name: "Clip Efeutute · Zone 2 Behandeln" });
     expect(link.getAttribute("href")).toBe("/plant/s1");
-    expect(described(link)).toBe("Efeutute · Zone 2 | Behandeln");
+    expect(link.getAttribute("aria-labelledby")).toBeNull();
+    expect(link.getAttribute("aria-describedby")).toBeNull();
   });
 
   it("US-QS-32 a row that acts is one button named by its title, and it runs its action", async () => {
     const onClick = vi.fn();
     const user = userEvent.setup();
     render(wrap(<ObjectRow title="Clip" meta="Efeutute" onClick={onClick} />));
-    const button = screen.getByRole("button", { name: "Clip" });
+    const button = screen.getByRole("button", { name: /^Clip(\s|$)/ });
     await user.click(button);
     expect(onClick).toHaveBeenCalledOnce();
   });
@@ -89,7 +83,7 @@ describe("US-QS-32 ObjectRow: the whole row is the target, named by its title (S
     render(
       wrap(<ObjectRow title="Clip" onClick={() => undefined} haspopup="dialog" expanded={true} />),
     );
-    const button = screen.getByRole("button", { name: "Clip" });
+    const button = screen.getByRole("button", { name: /^Clip(\s|$)/ });
     expect(button.getAttribute("aria-haspopup")).toBe("dialog");
     expect(button.getAttribute("aria-expanded")).toBe("true");
   });
@@ -109,7 +103,7 @@ describe("US-QS-32 ObjectRow: the whole row is the target, named by its title (S
         />,
       ),
     );
-    const link = screen.getByRole("link", { name: "Bogenhanf" });
+    const link = screen.getByRole("link", { name: /^Bogenhanf/ });
     expect(within(link).queryByRole("button")).toBeNull();
     expect(screen.getByRole("button", { name: "Umstellen" })).toBeTruthy();
   });
@@ -124,7 +118,7 @@ describe("US-QS-32 ObjectRow: the whole row is the target, named by its title (S
         <ObjectRow to="/a" title="Clip" trailing={<Badge variant="warning">Weicht ab</Badge>} />,
       ),
     );
-    const badged = screen.getByRole("link", { name: "Clip" });
+    const badged = screen.getByRole("link", { name: "Clip Weicht ab" });
     expect(badged.querySelector("svg.size-4")).toBeNull();
     expect(badged.textContent).toContain("Weicht ab");
   });

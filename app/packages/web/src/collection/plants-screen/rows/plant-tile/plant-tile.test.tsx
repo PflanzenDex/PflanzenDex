@@ -37,7 +37,7 @@ describe("US-QS-32 a plant row without a photo shows the drawn placeholder (SG-P
     );
     expect(container.querySelector("[data-initial]")).toBeNull();
     expect(container.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Aloe" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Aloe(\s|$)/ })).toBeTruthy();
   });
 });
 
@@ -83,7 +83,7 @@ describe("US-QS-32 the title of a plant is its own name, the species is its meta
         <PlantTile card={marked} access={noPhoto} />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("button", { name: "Ableger" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Ableger(\s|$)/ })).toBeTruthy();
     expect(screen.getByText("Ableger")).toBeTruthy();
   });
 
@@ -111,7 +111,7 @@ describe("US-QS-32 the title of a plant is its own name, the species is its meta
     expect(tileLines(odd).title).toBe("Ableger");
   });
 
-  it("US-QS-32 the accessible name of a plant row is its title, the meta line describes it (WCAG 2.5.3)", () => {
+  it("US-QS-32 the accessible name of a plant row is its visible text in order: the title, then the meta line (WCAG 2.5.3)", () => {
     const marked = {
       ...card,
       name: "Efeutute – Ableger",
@@ -123,12 +123,9 @@ describe("US-QS-32 the title of a plant is its own name, the species is its meta
         <PlantTile card={marked} access={noPhoto} />
       </MemoryRouter>,
     );
-    const row = screen.getByRole("button", { name: "Ableger" });
-    const described = (row.getAttribute("aria-describedby") ?? "")
-      .split(" ")
-      .map((id) => document.getElementById(id)?.textContent ?? "")
-      .join(" | ");
-    expect(described).toBe("Efeutute · Lichtzone unbekannt");
+    const row = screen.getByRole("button", { name: "Ableger Efeutute · Lichtzone unbekannt" });
+    expect(row.getAttribute("aria-labelledby")).toBeNull();
+    expect(row.getAttribute("aria-describedby")).toBeNull();
   });
 });
 
@@ -158,7 +155,7 @@ describe("US-QS-32 a plant row shows at most one trailing element: the attention
       </MemoryRouter>,
     );
     expect(screen.queryByText("Gesund")).toBeNull();
-    expect(screen.getByRole("button", { name: "Aloe" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Aloe(\s|$)/ })).toBeTruthy();
   });
 });
 
@@ -171,7 +168,7 @@ describe("US-QS-32 choosing a plant row opens the plant in its layer (US-QS-19)"
         <Where />
       </MemoryRouter>,
     );
-    const row = screen.getByRole("button", { name: "Aloe" });
+    const row = screen.getByRole("button", { name: /^Aloe(\s|$)/ });
     expect(row.getAttribute("aria-haspopup")).toBe("dialog");
     expect(row.getAttribute("aria-expanded")).toBe("false");
     await user.click(row);

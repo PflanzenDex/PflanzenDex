@@ -141,7 +141,7 @@ describe("US-QS-19 the first screen of the plants", () => {
     expect(screen.getAllByRole("group", { name: "Ansicht der Sammlung" })).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Lichtzonen ansehen" })).toBeTruthy();
     expect(screen.getAllByRole("listitem")).toHaveLength(4);
-    expect(screen.getByRole("button", { name: "Pflanze 2" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Pflanze 2(\s|$)/ })).toBeTruthy();
     // No grouping control, no distribution card and no plant card on the page itself.
     expect(screen.queryByRole("group", { name: "Gruppierung der Pflanzen" })).toBeNull();
     expect(screen.queryByText("Noch kein Foto")).toBeNull();
@@ -222,7 +222,7 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
 
   it("US-QS-19 · US-PHA-01 grouped by care phase the phase of the plants shows with its count line", async () => {
     renderAt("/collection?view=plants&group=phase");
-    expect(await screen.findByRole("button", { name: "Bogenhanf" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ })).toBeTruthy();
     expect(await screen.findByText("1 Pflanze mit Pflegephase")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Ruhephase (1)" })).toBeTruthy();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);

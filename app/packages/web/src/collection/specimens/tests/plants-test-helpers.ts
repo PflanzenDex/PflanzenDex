@@ -33,14 +33,17 @@ export function summaryOf(cards: readonly SpecimenCard[]): SpecimenSummary {
 }
 
 /**
- * Opens the layer of a plant by choosing its row (US-QS-19). A row is named by its title (US-QS-32): the plant's own name
- * (its marker) where it has one, else its name. A full name `Species – marker` opens the row of its marker.
+ * Opens the layer of a plant by choosing its row (US-QS-19). A row is named by its visible content (US-QS-32): its title
+ * (the plant's own name, its marker where it has one, else its name) and then its meta line. A full name `Species – marker`
+ * opens the row of its marker, and the row name starts with that title.
  */
 export async function openPlant(name: string): Promise<void> {
   const title = name.includes(" – ") ? name.slice(name.indexOf(" – ") + " – ".length) : name;
   await userEvent.click(
     await screen.findByRole("button", {
-      name: (accessible) => accessible === title,
+      name: (accessible) =>
+        accessible === title ||
+        (accessible.startsWith(`${title} `) && !accessible.startsWith(`${title} – `)),
     }),
   );
 }

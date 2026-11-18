@@ -110,7 +110,7 @@ async function expectPhases(
 ): Promise<void> {
   const { ruhe, profil, wachs } = names;
   const list = page.getByRole("list", { name: "Pflanzen mit Pflegephase" });
-  const row = (name: string) => page.getByRole("button", { name, exact: true });
+  const row = (name: string) => page.getByRole("button", { name });
   await expect(page.getByRole("button", { name: /^Ruhephase \(2\)$/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Wachstumsphase \(1\)$/ })).toBeVisible();
   // Dormancy today: the plant at Fensterbank stands off its target Keller, so the row carries the one action that moves it

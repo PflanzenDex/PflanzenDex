@@ -50,7 +50,7 @@ describe("US-QS-32 a phase row opens its plant the way the list 'Alle' does (SG-
         <Where />
       </MemoryRouter>,
     );
-    const opener = screen.getByRole("button", { name: "Bogenhanf" });
+    const opener = screen.getByRole("button", { name: /^Bogenhanf(\s|$)/ });
     expect(opener.getAttribute("aria-haspopup")).toBe("dialog");
     await userEvent.click(opener);
     expect(screen.getByTestId("where").textContent).toContain("sheet=plant-e1");
@@ -69,7 +69,7 @@ describe("US-QS-32 a phase row opens its plant the way the list 'Alle' does (SG-
         />
       </MemoryRouter>,
     );
-    const opener = screen.getByRole("button", { name: "Bogenhanf" });
+    const opener = screen.getByRole("button", { name: /^Bogenhanf(\s|$)/ });
     expect(within(opener).queryByRole("button")).toBeNull();
     expect(screen.getByRole("button", { name: "Umstellen: Bogenhanf" })).toBeTruthy();
   });
@@ -87,7 +87,7 @@ describe("US-QS-32 a phase row opens its plant the way the list 'Alle' does (SG-
         />
       </MemoryRouter>,
     );
-    const opener = screen.getByRole("button", { name: "Ableger" });
+    const opener = screen.getByRole("button", { name: /^Ableger(\s|$)/ });
     expect(
       within(opener).getByText("Bogenhanf · Nächster Wechsel zur Wachstumsphase: 16.03.2027"),
     ).toBeTruthy();

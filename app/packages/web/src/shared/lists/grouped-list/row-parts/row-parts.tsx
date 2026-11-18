@@ -8,9 +8,6 @@ import { cn } from "@/shared/lib/utils";
 export const OBJECT_TITLE = "line-clamp-2";
 export const OBJECT_META = "truncate";
 
-/** The ids of the three parts of a row: an object row names its title and describes itself by the other two (WCAG 2.5.3). */
-export type RowIds = { title: string; meta: string; trailing: string };
-
 export type RowContentProps = {
   leading: ReactNode;
   title: ReactNode;
@@ -20,10 +17,12 @@ export type RowContentProps = {
   destructive: boolean;
   chevron: boolean;
   object: boolean;
-  ids: RowIds;
 };
 
-/** The inside of a row: the leading mark, the title and meta line, the trailing value and the chevron. */
+/**
+ * The inside of a row: the leading mark, the title and meta line, the trailing value and the chevron. The accessible name of
+ * a link or button comes from this content, so it holds every visible text in its visible order (WCAG 2.5.3, US-QS-32).
+ */
 export function RowContent(props: RowContentProps) {
   return (
     <>
@@ -32,7 +31,6 @@ export function RowContent(props: RowContentProps) {
       )}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span
-          id={props.ids.title}
           className={cn(
             "text-base [overflow-wrap:anywhere]",
             props.object && OBJECT_TITLE,
@@ -43,24 +41,26 @@ export function RowContent(props: RowContentProps) {
           {props.title}
         </span>
         {props.meta !== undefined && (
-          <span
-            id={props.ids.meta}
-            className={cn(
-              "text-sm text-muted-foreground [overflow-wrap:anywhere]",
-              props.object && OBJECT_META,
-            )}
-          >
-            {props.meta}
-          </span>
+          <>
+            {" "}
+            <span
+              className={cn(
+                "text-sm text-muted-foreground [overflow-wrap:anywhere]",
+                props.object && OBJECT_META,
+              )}
+            >
+              {props.meta}
+            </span>
+          </>
         )}
       </span>
       {props.trailing !== undefined && (
-        <span
-          id={props.ids.trailing}
-          className="max-w-[60%] shrink-0 text-right text-base tabular-nums text-foreground [overflow-wrap:anywhere]"
-        >
-          {props.trailing}
-        </span>
+        <>
+          {" "}
+          <span className="max-w-[60%] shrink-0 text-right text-base tabular-nums text-foreground [overflow-wrap:anywhere]">
+            {props.trailing}
+          </span>
+        </>
       )}
       {props.chevron && (
         <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
@@ -68,11 +68,6 @@ export function RowContent(props: RowContentProps) {
     </>
   );
 }
-
-export type AriaLabels = {
-  "aria-labelledby"?: string | undefined;
-  "aria-describedby"?: string | undefined;
-};
 
 /** The focusable element of a row: a link (`to`), a button (`onClick`) or plain content. */
 export function RowElement(props: {
@@ -83,7 +78,6 @@ export function RowElement(props: {
   expanded: boolean | undefined;
   current: boolean | undefined;
   look: string;
-  named: AriaLabels;
   children: ReactNode;
 }) {
   // The id sits on the focusable element, so a view can return the focus to the row (the Konto index does).
@@ -94,7 +88,6 @@ export function RowElement(props: {
         to={props.to}
         aria-current={props.current ? "page" : undefined}
         className={props.look}
-        {...props.named}
       >
         {props.children}
       </Link>
@@ -110,7 +103,6 @@ export function RowElement(props: {
         aria-haspopup={props.haspopup}
         aria-expanded={props.expanded}
         className={props.look}
-        {...props.named}
       >
         {props.children}
       </Button>

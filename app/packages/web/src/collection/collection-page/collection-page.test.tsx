@@ -300,7 +300,7 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
   it("US-BES-06 · FR-BES-23 a plant beyond the first server page is reachable through the Pager; the next page loads by itself", async () => {
     const { fetchFn } = fakeServer({ specimens: many(150) });
     render(page({}, "/?from=144"));
-    expect(await screen.findByRole("button", { name: "Pflanze 150" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Pflanze 150(\s|$)/ })).toBeTruthy();
     expect(screen.getByText("Seite 25 von 25")).toBeTruthy();
     expect(cardCalls(fetchFn).some((u) => u.searchParams.has("after"))).toBe(true);
   });
@@ -324,7 +324,7 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
     );
     expect(screen.getByText("Seite 25 von 25")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    expect(await screen.findByRole("button", { name: "Pflanze 150" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Pflanze 150(\s|$)/ })).toBeTruthy();
     const cursors = cardCalls(fetchFn)
       .map((u) => u.searchParams.get("after"))
       .filter((after): after is string => after !== null);

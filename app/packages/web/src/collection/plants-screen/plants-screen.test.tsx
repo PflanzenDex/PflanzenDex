@@ -82,7 +82,7 @@ afterEach(releaseSheetExits);
 describe("US-QS-19 tiles of the plants", () => {
   it("US-QS-08 · WCAG 2.5.3 the plant row's accessible name is its visible title (no aria-label, no decorative glyph in the text)", () => {
     screenWith([card(1, { name: "Aloe" })]);
-    const tile = screen.getByRole("button", { name: "Aloe" });
+    const tile = screen.getByRole("button", { name: /^Aloe(\s|$)/ });
     expect(tile.hasAttribute("aria-label")).toBe(false);
     expect(tile.querySelector("[data-initial]")).toBeNull();
     expect(tile.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
@@ -90,7 +90,7 @@ describe("US-QS-19 tiles of the plants", () => {
 
   it("US-QS-32 a plant row shows the drawn placeholder, its name, its zone as text and no state that needs no attention", () => {
     screenWith([card(1, { name: "Aloe" })]);
-    const tile = screen.getByRole("button", { name: "Aloe" });
+    const tile = screen.getByRole("button", { name: /^Aloe(\s|$)/ });
     expect(tile.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
     expect(within(tile).getByText("Aloe")).toBeTruthy();
     expect(within(tile).getByText("Zone 3")).toBeTruthy();
@@ -99,7 +99,7 @@ describe("US-QS-19 tiles of the plants", () => {
 
   it("US-QS-19 · P-08 an unknown zone reads 'Lichtzone unbekannt', so no bare unbekannt stands in the row (owner answer Q08)", () => {
     screenWith([card(1, { lightZone: null, lightZoneSource: null })]);
-    const tile = screen.getByRole("button", { name: "Pflanze 1" });
+    const tile = screen.getByRole("button", { name: /^Pflanze 1(\s|$)/ });
     expect(within(tile).getByText("Lichtzone unbekannt")).toBeTruthy();
     expect(within(tile).queryByText("unbekannt")).toBeNull();
   });
@@ -121,13 +121,13 @@ describe("US-QS-19 tiles of the plants", () => {
       card(3, { lastMeasurement: measured("healthy") }),
     ]);
     expect(
-      within(screen.getByRole("button", { name: "Pflanze 1" })).getByText("Behandeln"),
+      within(screen.getByRole("button", { name: /^Pflanze 1(\s|$)/ })).getByText("Behandeln"),
     ).toBeTruthy();
     expect(
-      within(screen.getByRole("button", { name: "Pflanze 2" })).getByText("Vergeilt/dünn"),
+      within(screen.getByRole("button", { name: /^Pflanze 2(\s|$)/ })).getByText("Vergeilt/dünn"),
     ).toBeTruthy();
     expect(
-      within(screen.getByRole("button", { name: "Pflanze 3" })).queryByText("Gesund"),
+      within(screen.getByRole("button", { name: /^Pflanze 3(\s|$)/ })).queryByText("Gesund"),
     ).toBeNull();
   });
 
@@ -138,7 +138,7 @@ describe("US-QS-19 tiles of the plants", () => {
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByTestId("address").textContent).toBe("?from=6");
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
-    expect(screen.getByRole("button", { name: "Pflanze 7" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Pflanze 7(\s|$)/ })).toBeTruthy();
     cleanup();
     screenWith(many(8), {}, "/?from=9");
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();

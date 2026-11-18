@@ -1,6 +1,6 @@
 import { useId, type MouseEventHandler, type ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
-import { RowContent, RowElement, type AriaLabels, type RowIds } from "./row-parts/row-parts";
+import { RowContent, RowElement } from "./row-parts/row-parts";
 
 // The flat grouped list of the phone look (US-QS-32, SG-SHAPE-03): one rounded group on the page colour, rows separated
 // by a hairline that starts at the text, no shadow (SG-SHAPE-05) and no group inside a group (SG-SHAPE-06). The group
@@ -72,9 +72,9 @@ export type GroupedRowProps = {
   /** `destructive` is a red action for a destructive step (SG-COLOR-04); it has no chevron. */
   tone?: "default" | "destructive" | undefined;
   /**
-   * `object` is a row of an object (a plant, a species, a wish; SG-LIST-03): the name wraps to two lines and clamps,
-   * the meta line is one line that truncates, and a link or button is named by its title with the meta and the trailing
-   * element as its description. `list` (the default) is a settings row.
+   * `object` is a row of an object (a plant, a species, a wish; SG-LIST-03): the name wraps to two lines and clamps, the
+   * meta line is one line that truncates, and a link or button is named by its visible content in its visible order (the
+   * title, then the meta and the trailing element). `list` (the default) is a settings row.
    */
   variant?: "list" | "object" | undefined;
   /**
@@ -97,15 +97,6 @@ export type GroupedRowProps = {
   trailing?: ReactNode;
 };
 
-/** The ids a row's accessible description names: its meta line and its trailing element, where it has them. */
-function describedIds(ids: RowIds, meta: ReactNode, trailing: ReactNode): string | undefined {
-  const parts = [
-    meta !== undefined ? ids.meta : null,
-    trailing !== undefined ? ids.trailing : null,
-  ];
-  return parts.filter((part): part is string => part !== null).join(" ") || undefined;
-}
-
 /**
  * One row of a `GroupedList`: a link, a button or plain content. A navigation or action row shows the neutral chevron
  * at the trailing edge, after its value, unless it is destructive or has a trailing element of its own (object rows,
@@ -115,12 +106,6 @@ export function GroupedRow(props: GroupedRowProps) {
   const destructive = props.tone === "destructive";
   const interactive = props.to !== undefined || props.onClick !== undefined;
   const object = props.variant === "object";
-  const base = useId();
-  const ids: RowIds = {
-    title: `${base}-title`,
-    meta: `${base}-meta`,
-    trailing: `${base}-trailing`,
-  };
   const hasOwnTrailing = object && props.trailing !== undefined;
   const chevron = interactive && !destructive && !hasOwnTrailing && props.chevron !== false;
   const look = cn(
@@ -130,14 +115,6 @@ export function GroupedRow(props: GroupedRowProps) {
     props.current && "bg-muted",
     destructive && "text-destructive",
   );
-  // An object row is named by its title; the meta and the trailing element describe it (WCAG 2.5.3, US-QS-32).
-  const named: AriaLabels =
-    object && interactive
-      ? {
-          "aria-labelledby": ids.title,
-          "aria-describedby": describedIds(ids, props.meta, props.trailing),
-        }
-      : {};
   const body = (
     <RowElement
       id={props.id}
@@ -147,7 +124,6 @@ export function GroupedRow(props: GroupedRowProps) {
       expanded={props.expanded}
       current={props.current}
       look={look}
-      named={named}
     >
       <RowContent
         leading={props.leading}
@@ -158,7 +134,6 @@ export function GroupedRow(props: GroupedRowProps) {
         destructive={destructive}
         chevron={chevron}
         object={object}
-        ids={ids}
       />
     </RowElement>
   );

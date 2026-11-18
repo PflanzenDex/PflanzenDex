@@ -18,7 +18,7 @@ describe("US-QS-14 · page story Sammlung", () => {
     expect(
       (
         await screen.findAllByRole("button", {
-          name: /^(Aloe|Monstera|Bogenhanf)$/,
+          name: /^(Aloe|Monstera|Bogenhanf)(\s|$)/,
         })
       ).length,
     ).toBe(3);
