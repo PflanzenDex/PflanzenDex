@@ -22,13 +22,16 @@ export interface BannerItem {
 
 /**
  * "Friends have N new plants" (US-SOZ-06). `firstVisit`: the feed was never opened, so nothing is new and no banner is
- * shown; the app then marks it as seen (silent creation). `asOf` is the instant the data was read; the screen shows it
- * as "Stand" when it can only show an older copy (FR-SOZ-03).
+ * shown; the app then marks it as seen (silent creation). `items` are the new plants, `count` their number. `read` are the
+ * plants that were new and got marked as seen within the last `READ_DAYS` days, so "Gelesen" still reaches them (P-10);
+ * `count` never includes them. `asOf` is the instant the data was read; the screen shows it as "Stand" when it can only
+ * show an older copy (FR-SOZ-03).
  */
 export interface Banner {
   readonly firstVisit: boolean;
   readonly count: number;
   readonly items: readonly BannerItem[];
+  readonly read: readonly BannerItem[];
   /** UTC instant (ISO 8601), read from the store's clock (the database), the clock of `visible_since` (US-SOZ-06). */
   readonly asOf: string;
 }

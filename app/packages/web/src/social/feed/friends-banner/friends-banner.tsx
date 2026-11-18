@@ -1,69 +1,65 @@
-import { useCallback, useEffect, useRef } from "react";
 import { localToday, type Banner, type BannerItem } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import { summaryDate } from "@/shared/lib/format";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
-import {
-  currentTimeZone,
-  SCREEN_STALE_TIME,
-  useInvalidate,
-  useRequest,
-  useWriteAction,
-} from "../../../shared/data";
-import { loadBanner, markFeedSeen } from "../../api/feed-api";
+import { currentTimeZone } from "../../../shared/data";
+import { markFeedSeen } from "../../api/feed-api";
+import { useNewPlants, type Token } from "./use-new-plants";
 import { nameOf } from "../../parts/request-list/request-list";
 import { RequestsNotice } from "../requests-notice/requests-notice";
 import table from "../../social.de.json";
 
 const t = texts(table);
-const KEY = ["social", "banner"] as const;
-type Token = () => Promise<string | undefined>;
 
 const speciesText = (i: BannerItem) =>
   i.speciesGerman ?? i.speciesLatin ?? t("news.speciesUnknown");
-const itemText = (i: BannerItem) => `${nameOf(i.friendName)}: ${i.count} × ${speciesText(i)}`;
+export const itemText = (i: BannerItem) =>
+  `${nameOf(i.friendName)}: ${i.count} × ${speciesText(i)}`;
 
 /**
- * The first visit marks the feed as seen without a word (US-SOZ-06: silent creation, no banner for what was shared before
- * the person looked). Runs once per loaded state.
+ * The headline of what is new and "Stand" (US-SOZ-06, FR-SOZ-03): "Freunde haben N neue Pflanzen: …", or that nothing is new
+ * when only read plants are left. "Stand" shows only for a copy older than today, in calendar days of the keeper's zone
+ * (US-QS-32); without a network it always shows, with the note about the missing connection, so an old copy stays
+ * recognizable. `compact` leaves "Stand" out while online, for a place that says "Stand" itself (issue 1157).
  */
-function useFirstVisit(api: string, token: Token, banner: Banner | undefined, reload: () => void) {
-  const done = useRef(false);
-  useEffect(() => {
-    if (!banner?.firstVisit || done.current) return;
-    done.current = true;
-    void (async () => {
-      const t = await token();
-      if (t) await markFeedSeen(api, t, banner.asOf);
-      reload();
-    })();
-  }, [api, token, banner, reload]);
+export function NewPlantsText(props: { news: Banner; offline: boolean; compact?: boolean }) {
+  const { news, offline, compact } = props;
+  const zone = currentTimeZone();
+  const copyDay = localToday(new Date(news.asOf), zone);
+  const today = localToday(new Date(), zone);
+  const showAsOf = offline || (!compact && copyDay < today);
+  return (
+    <>
+      <p className={compact ? "min-w-0 flex-1 basis-48" : undefined}>
+        {news.count === 0 ? (
+          t("news.none")
+        ) : (
+          <>
+            <strong>
+              {news.count === 1
+                ? t("news.headline.one")
+                : t("news.headline.other", { count: news.count })}
+            </strong>{" "}
+            {news.items.map(itemText).join(", ")}
+          </>
+        )}
+      </p>
+      {showAsOf && (
+        <p className="text-sm text-muted-foreground">
+          {t("news.asOf", { date: summaryDate(copyDay, today) })}
+          {offline ? t("news.offline") : ""}
+        </p>
+      )}
+    </>
+  );
 }
 
 /**
- * The news about new plants of friends (US-SOZ-06), shared by the banner on "Freunde" and the tile and layer on "Heute":
- * one request, one cached copy. `news` is the banner to show, or `null` when there is nothing new (also on the first
- * visit, which is marked as seen silently).
- */
-export function useNewPlants(api: string, token: Token) {
-  const reload = useInvalidate(KEY);
-  const load = useCallback((tk: string) => loadBanner(api, tk), [api]);
-  const r = useRequest({ queryKey: KEY, token, load, staleTime: SCREEN_STALE_TIME });
-  const okay = useWriteAction(token, reload);
-  useFirstVisit(api, token, r.value, reload);
-  const banner = r.value;
-  const news = !banner || banner.firstVisit || banner.count === 0 ? null : banner;
-  return { status: r.status, offline: r.offline, news, okay };
-}
-
-/**
- * What is new, when it was read, and "Als gelesen markieren" (US-SOZ-06, FR-SOZ-03). `onSeen` follows a successful "Als gelesen markieren".
- * "Stand" shows only for a copy older than today, in calendar days of the keeper's zone (US-QS-32, FR-SOZ-03); without a network it
- * always shows, with the note about the missing connection, so an old copy stays recognizable. `compact` is one row with "Als gelesen
- * markieren" at its end and no "Stand" line while online, for a place that says "Stand" itself (the layer "Neu bei Freunden",
- * owner decision 2026-11-02, issue 1157).
+ * What is new, and "Als gelesen markieren" (US-SOZ-06): the banner on "Freunde" with its button. `onSeen` follows a successful
+ * "Als gelesen markieren". `compact` is one row with the button at its end, for the layer "Neu bei Freunden" of "Freunde"
+ * (owner decision 2026-11-02, issue 1157).
  */
 export function NewPlantsBody(props: {
   api: string;
@@ -78,26 +74,9 @@ export function NewPlantsBody(props: {
     await okay.run((tk) => markFeedSeen(props.api, tk, news.asOf), t("news.okayDone"));
     props.onSeen?.();
   };
-  const zone = currentTimeZone();
-  const copyDay = localToday(new Date(news.asOf), zone);
-  const today = localToday(new Date(), zone);
-  const showAsOf = offline || (!compact && copyDay < today);
   return (
     <>
-      <p className={compact ? "min-w-0 flex-1 basis-48" : undefined}>
-        <strong>
-          {news.count === 1
-            ? t("news.headline.one")
-            : t("news.headline.other", { count: news.count })}
-        </strong>{" "}
-        {news.items.map(itemText).join(", ")}
-      </p>
-      {showAsOf && (
-        <p className="text-sm text-muted-foreground">
-          {t("news.asOf", { date: summaryDate(copyDay, today) })}
-          {offline ? t("news.offline") : ""}
-        </p>
-      )}
+      <NewPlantsText news={news} offline={offline} {...(compact ? { compact: true } : {})} />
       <div>
         <Button
           type="button"

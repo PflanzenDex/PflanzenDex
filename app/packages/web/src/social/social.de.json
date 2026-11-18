@@ -9,6 +9,8 @@
   "news.offline": " (keine Verbindung, zuletzt geladener Stand)",
   "news.okay": "Als gelesen markieren",
   "news.okayDone": "Als gelesen markiert.",
+  "news.read": "Gelesen",
+  "news.none": "Gerade nichts Neues von Freunden.",
   "feed.type.newSpecies": "Neue Art gefangen",
   "feed.type.newCutting": "Neuer Steckling",
   "feed.type.newSpecimen": "Neue Pflanze",

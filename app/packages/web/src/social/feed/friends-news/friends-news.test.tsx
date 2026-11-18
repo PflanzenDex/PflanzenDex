@@ -13,26 +13,28 @@ const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 const token = async () => "tok";
 const ASOF = "2026-10-06T10:00:00.000Z";
-const banner = (count: number) => ({
+const CLARA = {
+  friendId: "f1",
+  friendName: "Clara",
+  speciesLatin: null,
+  speciesGerman: "Glücksfeder",
+  count: 1,
+};
+/** The banner of the API: `count` new plants (`items`) and the plants read within the window (`read`, US-SOZ-06). */
+const banner = (count: number, read: unknown[] = []) => ({
   firstVisit: false,
   count,
   asOf: ASOF,
-  items:
-    count === 0
-      ? []
-      : [
-          {
-            friendId: "f1",
-            friendName: "Clara",
-            speciesLatin: null,
-            speciesGerman: "Glücksfeder",
-            count,
-          },
-        ],
+  items: count === 0 ? [] : [{ ...CLARA, count }],
+  read,
 });
 
+/**
+ * A stub of the banner endpoint and of the mark: a mark moves what was new into `read`, as the core does (US-SOZ-06).
+ * Every mark is recorded in `posts`.
+ */
 function server(initial: unknown) {
-  let current = initial;
+  let current = initial as ReturnType<typeof banner>;
   const posts: unknown[] = [];
   vi.stubGlobal(
     "fetch",
@@ -40,7 +42,12 @@ function server(initial: unknown) {
       const path = new URL(String(url)).pathname;
       if (init?.method === "POST" && path === "/feed/seen") {
         posts.push(JSON.parse(String(init.body)));
-        current = banner(0);
+        current = {
+          ...current,
+          count: 0,
+          items: [],
+          read: [...current.items, ...current.read],
+        };
         return response(200, { seenAt: ASOF });
       }
       return path === "/feed/banner" ? response(200, current) : response(404, {});
@@ -79,17 +86,92 @@ afterEach(() => {
 });
 
 describe("US-QS-18 · US-SOZ-06 the new plants of friends are a tile on Heute (issue 1156)", () => {
-  it("US-QS-18 · US-SOZ-06 the tile names the count and opens a layer with friend, species, 'Stand' and 'Als gelesen markieren'", async () => {
+  it("US-QS-18 · US-SOZ-06 the tile names the count and opens a layer with friend, species and 'Stand'; the layer has no 'Als gelesen markieren'", async () => {
     const { posts } = server(banner(1));
     render(<Today />);
     await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
     expect(layer.textContent).toContain("Freunde haben 1 neue Pflanze: Clara: 1 × Glücksfeder");
     expect(layer.textContent).toContain("Stand: 06.10.2026");
-    await userEvent.click(within(layer).getByRole("button", { name: "Als gelesen markieren" }));
+    expect(within(layer).queryByRole("button", { name: "Als gelesen markieren" })).toBeNull();
+    // Opening marks nothing: the news are marked read when the layer closes (US-SOZ-06, P4-C3).
+    expect(posts).toEqual([]);
+  });
+
+  it("US-SOZ-06 closing the layer marks what it showed as read, with the asOf of that copy", async () => {
+    const { posts } = server(banner(1));
+    render(<Today />);
+    await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
+    await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    await userEvent.keyboard("{Escape}");
+    await vi.waitFor(() => expect(posts).toEqual([{ upTo: ASOF }]));
+    expect(await screen.findByRole("button", { name: "0 Neu bei Freunden" })).toBeTruthy();
+  });
+
+  it("US-SOZ-06 the read plants stay reachable: the tile still opens the layer, which shows them under 'Gelesen'", async () => {
+    server(banner(1));
+    render(<Today />);
+    await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
+    await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    await userEvent.keyboard("{Escape}");
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(posts).toEqual([{ upTo: ASOF }]);
-    expect(screen.queryByRole("button", { name: /Neu bei Freunden/ })).toBeNull();
+    await userEvent.click(await screen.findByRole("button", { name: "0 Neu bei Freunden" }));
+    const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    expect(within(layer).getByRole("heading", { name: "Gelesen", level: 3 })).toBeTruthy();
+    expect(layer.textContent).toContain("Gerade nichts Neues von Freunden.");
+    expect(layer.textContent).toContain("Clara: 1 × Glücksfeder");
+    expect(within(layer).queryByRole("button", { name: "Als gelesen markieren" })).toBeNull();
+  });
+
+  it("US-SOZ-06 a second close with nothing new marks nothing again", async () => {
+    const { posts } = server(banner(1));
+    render(<Today />);
+    await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
+    await userEvent.keyboard("{Escape}");
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    await userEvent.click(await screen.findByRole("button", { name: "0 Neu bei Freunden" }));
+    await userEvent.keyboard("{Escape}");
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(posts).toHaveLength(1);
+  });
+
+  it("US-SOZ-06 offline (FR-SOZ-03) leaving the layer marks nothing: the mark needs a connection", async () => {
+    const client = createQueryClient();
+    client.setQueryData(["social", "banner"], banner(1), { updatedAt: 0 });
+    const posts: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (_url, init) => {
+        if (init?.method === "POST") posts.push(init.body);
+        throw new TypeError("Failed to fetch");
+      }),
+    );
+    render(
+      <QueryClientProvider client={client}>
+        <Today />
+      </QueryClientProvider>,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
+    const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    await vi.waitFor(() => expect(layer.textContent).toContain("keine Verbindung"));
+    await userEvent.keyboard("{Escape}");
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(posts).toEqual([]);
+  });
+
+  it("US-SOZ-06 with read plants only, the tile stays and counts the new ones: 0", async () => {
+    server(banner(0, [CLARA]));
+    render(<Today />);
+    expect(await screen.findByRole("button", { name: "0 Neu bei Freunden" })).toBeTruthy();
+  });
+
+  it("US-SOZ-06 ?sheet=news with only read plants stays open and shows them under 'Gelesen'", async () => {
+    server(banner(0, [CLARA]));
+    render(<Today at="/today?sheet=news" />);
+    const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    expect(await within(layer).findByRole("heading", { name: "Gelesen", level: 3 })).toBeTruthy();
+    // The open dialog hides the rest of the page from the accessibility tree, so the address is read by its label.
+    expect(screen.getByLabelText("Adresse").textContent).toBe("?sheet=news");
   });
 
   it("US-QS-18 · US-SOZ-06 without news there is no tile", async () => {
@@ -128,7 +210,7 @@ describe("US-QS-32 FR-SOZ-03 'Stand' in the layer on Heute: only an older copy s
     vi.setSystemTime(new Date(iso));
   };
 
-  it("US-QS-32 FR-SOZ-03 the layer on Heute shows no 'Stand' for a copy read today, and keeps 'Als gelesen markieren'", async () => {
+  it("US-QS-32 FR-SOZ-03 the layer on Heute shows no 'Stand' for a copy read today, and no 'Als gelesen markieren'", async () => {
     setProfileTimeZone("Europe/Berlin");
     clockAt("2026-10-06T10:05:00Z");
     server(banner(1));
@@ -137,7 +219,7 @@ describe("US-QS-32 FR-SOZ-03 'Stand' in the layer on Heute: only an older copy s
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
     expect(layer.textContent).toContain("Freunde haben 1 neue Pflanze: Clara: 1 × Glücksfeder");
     expect(layer.textContent).not.toContain("Stand");
-    expect(within(layer).getByRole("button", { name: "Als gelesen markieren" })).toBeTruthy();
+    expect(within(layer).queryByRole("button", { name: "Als gelesen markieren" })).toBeNull();
   });
 
   it("US-QS-32 FR-SOZ-03 the layer on Heute says 'Stand: gestern' for a copy of yesterday", async () => {
@@ -198,16 +280,16 @@ describe("NFR-12 Heute asks for the news of friends once on a cold start (issue 
     expect(bannerReads()).toBe(1);
   });
 
-  it("NFR-12 · US-SOZ-06 'Als gelesen markieren' still reads again at once inside the window", async () => {
+  it("NFR-12 · US-SOZ-06 closing the layer after its news reads the banner again at once, so the mark shows", async () => {
     server(banner(1));
     const client = createQueryClient();
     const view = await layerAnswered(client);
     view.rerender(<ColdStart client={client} tile />);
     await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
-    const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
-    await userEvent.click(within(layer).getByRole("button", { name: "Als gelesen markieren" }));
+    await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    await userEvent.keyboard("{Escape}");
     await vi.waitFor(() =>
-      expect(screen.queryByRole("button", { name: /Neu bei Freunden/ })).toBeNull(),
+      expect(screen.getByRole("button", { name: "0 Neu bei Freunden" })).toBeTruthy(),
     );
     expect(bannerReads()).toBe(2);
   });
