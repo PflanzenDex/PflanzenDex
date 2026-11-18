@@ -61,12 +61,18 @@ const emptyView = {
 // The pages are lazy chunks (DS-08). Loading them first makes the waits below depend on the data only, not on how long
 // the first import of a chunk takes on a busy machine (#444). The sheet's code is one of them: a layer's sheet asks for
 // it 1.5 s after it mounts (sheet.tsx), and that first transform in the middle of a test stalled it for seconds (issue 2136).
+// The collection page renders three lazy parts of its own (the plant list, the growth and the watering of a plant).
+// Their first import ran in the first test of the file (about 40 ms each on a quiet machine, issue 1839), so they load
+// here too.
 beforeAll(async () => {
   await Promise.all([
     import("../../../collection/collection-page/collection-page"),
     import("../../../care/measure/measure-page/measure-page"),
     import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"),
     import("@/shared/platform/routing/route-focus/focus-moves"),
+    import("../../../collection/plants-screen/plants-parts/plants-parts"),
+    import("../../../care/plant-detail/plant-growth/plant-growth"),
+    import("../../../monitoring/watering/water-action/water-action"),
   ]);
 }, 30_000);
 
@@ -109,6 +115,9 @@ function renderArea() {
   );
 }
 
+// Budget 15 s, not the default 5 s (issue 1839). This first test loads the collection page's lazy parts and waits up to
+// 5 s per step. Under 16 busy loops (local runs of the file before this change) it took 1.4 s at the median and, in 1 of
+// 65 runs, 5076 ms, so it timed out. Stalls of 3 to 5 s hit other tests of the file under the same load, and they passed.
 describe("US-WAC-01 collection wired with measuring", () => {
   it("US-WAC-01 measuring on the specimen opens the measure view, back leads to the collection", async () => {
     stubCollection();
@@ -120,7 +129,7 @@ describe("US-WAC-01 collection wired with measuring", () => {
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
     expect(await screen.findByRole("heading", { name: "Sammlung" })).toBeTruthy();
   });
-});
+}, 15_000);
 
 /** The address of the test render and the navigator of its router, so a test can press Back (US-QS-15). */
 const route: { navigate: NavigateFunction | null; search: string; guarded: boolean } = {
@@ -175,6 +184,12 @@ function renderAt(entry: string) {
   );
 }
 
+// The budget of this describe is 15 s, not the default 5 s (issue 1839). Each flow waits for the dialog, the guard entry
+// and the closing of the view one after the other, and the waits allow 4 to 5 s each, so their sum can exceed the 5 s of
+// the test. On the CI runner of issue 1839 the Verwerfen test took 5020 ms and timed out, while the file took 9.7 s
+// against 3.0 s in the passing run of the same commit (the other tests of that run were slower too). The test takes about
+// 80 ms idle; under 16 busy loops its median was 320 ms over 105 runs, with 2 runs above 1 s (local runs). The wait
+// timeouts stay as they are; the budget covers such stalls.
 describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-WAC-01 Messen pushes an address with the plant, and Back closes the measure view", async () => {
     stubCollection();
@@ -488,7 +503,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     });
     await forwardOpensThenLeaves();
   }, 15_000);
-});
+}, 15_000);
 
 /**
  * A save that keeps the measure view open (issue 2165): the form settles, and the history must not keep the guard entry the
