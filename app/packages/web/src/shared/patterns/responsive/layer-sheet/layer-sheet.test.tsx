@@ -698,7 +698,7 @@ describe("US-QS-32 a layer asks before it discards typed input (SG-FORM-06, SG-S
     layer.style.transform = "translate3d(0, 120px, 0)";
     await userEvent.keyboard("{Escape}");
     expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
-    await waitFor(() => expect(layer.style.transform).toBe("translate3d(0, 0, 0)"));
+    await waitFor(() => expect(layer.style.transform).toBe("translate3d(0px, 0px, 0px)"));
   });
 
   it("US-QS-32 outside a layer useUnsavedInput is a no-op: leave runs its action at once", () => {
