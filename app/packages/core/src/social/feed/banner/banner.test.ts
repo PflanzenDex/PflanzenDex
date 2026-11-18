@@ -190,6 +190,20 @@ describe("US-SOZ-06 banner since my last visit", () => {
     expect((await banner()).count).toBe(0);
   });
 
+  it("US-SOZ-06 instants are compared as instants: a share 0.5 s after the last seen instant is new, one 0.5 s before it is read", async () => {
+    // The text of "...00.500Z" sorts before "...00Z"; the comparison must still say that the share came after the seen instant.
+    seen.clock = "2026-11-18T10:05:00.000Z";
+    seen.value = "2026-11-18T10:00:00Z";
+    sharing.now = "2026-11-18T10:00:00.500Z";
+    await sharing.setMany("anna", ["s1"], true, false);
+    sharing.now = "2026-11-18T09:59:59.500Z";
+    await sharing.setMany("anna", ["s3"], true, false);
+    const b = await banner();
+    expect(b.items.map((i) => [i.speciesLatin, i.count])).toEqual([["Aloe vera", 1]]);
+    expect(b.read.map((i) => [i.speciesLatin, i.count])).toEqual([[null, 1]]);
+    expect(b.count).toBe(1);
+  });
+
   it("US-SOZ-06 what became visible after the read instant is still new after 'Okay'", async () => {
     seen.value = "2026-10-02T00:00:00.000Z";
     sharing.now = "2026-10-06T09:59:59.000Z";

@@ -1,9 +1,11 @@
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, type ReactNode } from "react";
 import type { Banner, BannerItem } from "@pflanzendex/core";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { refusalText } from "@/shared/lib/error-text";
+import { useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { markFeedSeen } from "../../api/feed-api";
-import { itemText, NewPlantsText } from "../friends-banner/friends-banner";
+import { itemText, NewPlantsAsOf, NewPlantsHeadline } from "../friends-banner/friends-banner";
 import { useNewPlants, type Token } from "../friends-banner/use-new-plants";
 import table from "../../social.de.json";
 
@@ -30,8 +32,8 @@ export function FriendsNewsTile(props: {
 }
 
 /**
- * The plants that were new and got marked as seen within the read window (US-SOZ-06): read, not new, under the heading
- * "Gelesen" (a heading of the layer, one level below its title).
+ * The plants that became visible within the read window and were already seen (US-SOZ-06): read, not new, under the
+ * heading "Gelesen" (a heading of the layer, one level below its title).
  */
 function ReadPlants({ items }: { items: readonly BannerItem[] }) {
   const id = useId();
@@ -43,30 +45,71 @@ function ReadPlants({ items }: { items: readonly BannerItem[] }) {
       </h3>
       <ul className="flex min-w-0 flex-col gap-1">
         {items.map((i, n) => (
-          <li key={n}>{itemText(i)}</li>
+          <li
+            key={i.speciesLatin === null ? `${i.friendId}:${n}` : `${i.friendId}:${i.speciesLatin}`}
+          >
+            {itemText(i)}
+          </li>
         ))}
       </ul>
     </section>
   );
 }
 
+/** The copy the layer showed, with the connection state it showed it in. */
+type Copy = { banner: Banner; offline: boolean };
+type Mark = (copy: Copy) => Promise<void>;
+
+/** The text of a failed mark: the keeper learns the plants stay new, and why when the server refused (P-10). */
+const failureText = (error?: Parameters<typeof refusalText>[0]) =>
+  error ? `${t("news.markFailed")} ${refusalText(error)}` : t("news.markFailed");
+
 /**
- * Marks what the layer showed as read when the layer closes, by Back, the close button or the backdrop (US-SOZ-06, owner
- * decision P4-C3). The mark goes up to the `asOf` of the copy on screen, so what became visible later stays new. Not on
- * open. Nothing while offline: the mark needs a connection, and the plants would still say "new" afterwards. Nothing when
- * the copy had no new plants, and a copy is sent once (a second close with nothing new sends nothing). A failed mark
- * leaves the plants new, and the tile still counts them (P-10).
+ * The mark of the copy the layer showed (US-SOZ-06, owner decision P4-C3): once per `asOf`, online, and only a copy with new
+ * plants. It goes up to that copy's `asOf`, so what became visible later stays new. A failed or refused mark resets the
+ * guard, so a later close sends again, and a toast says so (P-10). The shared banner reloads after every attempt, so the
+ * tile still counts what is new.
  */
-function useMarkReadOnClose(
-  deps: { api: string; token: Token; reload: () => void },
-  open: boolean,
-  banner: Banner | null,
-  offline: boolean,
-) {
+function useMarkRead(deps: { api: string; token: Token; reload: () => void }): Mark {
   const { api, token, reload } = deps;
-  const wasOpen = useRef(false);
-  const onScreen = useRef<{ banner: Banner; offline: boolean } | null>(null);
+  const toast = useToast();
   const sent = useRef<string | null>(null);
+  return useCallback<Mark>(
+    async (copy) => {
+      if (copy.offline || copy.banner.count === 0) return;
+      const asOf = copy.banner.asOf;
+      if (sent.current === asOf) return;
+      sent.current = asOf;
+      try {
+        const tk = await token();
+        const r = tk ? await markFeedSeen(api, tk, asOf) : null;
+        if (r?.ok) return;
+        sent.current = null;
+        toast.show({ message: failureText(r && !r.ok ? r.error : undefined), kind: "error" });
+      } catch {
+        sent.current = null;
+        toast.show({ message: failureText(), kind: "error" });
+      } finally {
+        reload();
+      }
+    },
+    [api, token, reload, toast],
+  );
+}
+
+/**
+ * Marks what the layer showed as read when it closes, by Back, the close button or the backdrop (US-SOZ-06). Not on open.
+ * An unmount while the layer is open (a tap on the bottom bar, a link out of the page) counts as a close too. StrictMode and
+ * a re-run of the effects unmount and mount back to back, so an unmount only counts when it stays: the check waits a
+ * microtask. Offline and copies without new plants are left to `mark`, which sends nothing for them.
+ */
+function useMarkReadOnClose(mark: Mark, open: boolean, banner: Banner | null, offline: boolean) {
+  const wasOpen = useRef(false);
+  const onScreen = useRef<Copy | null>(null);
+  const markRef = useRef(mark);
+  useEffect(() => {
+    markRef.current = mark;
+  }, [mark]);
   useEffect(() => {
     if (open && banner) onScreen.current = { banner, offline };
   }, [open, banner, offline]);
@@ -76,17 +119,23 @@ function useMarkReadOnClose(
     if (!was || open) return;
     const copy = onScreen.current;
     onScreen.current = null;
-    if (!copy || copy.offline || copy.banner.count === 0) return;
-    const asOf = copy.banner.asOf;
-    if (sent.current === asOf) return;
-    sent.current = asOf;
-    void (async () => {
-      const tk = await token();
-      const r = tk ? await markFeedSeen(api, tk, asOf) : null;
-      if (!r?.ok) sent.current = null;
-      reload();
-    })();
-  }, [open, api, token, reload]);
+    if (copy) void mark(copy);
+  }, [open, mark]);
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (!wasOpen.current) return;
+      queueMicrotask(() => {
+        if (mounted.current) return;
+        const copy = onScreen.current;
+        onScreen.current = null;
+        wasOpen.current = false;
+        if (copy) void markRef.current(copy);
+      });
+    };
+  }, []);
 }
 
 /**
@@ -109,13 +158,15 @@ export function FriendsNewsLayer(props: { api: string; token: Token }) {
     closing.current = true;
     closeLayer();
   }, [stale, closeLayer]);
-  useMarkReadOnClose({ api: props.api, token: props.token, reload }, open, banner, offline);
+  const mark = useMarkRead({ api: props.api, token: props.token, reload });
+  useMarkReadOnClose(mark, open, banner, offline);
   return (
     <LayerSheet id={LAYER} title={t("news.title")}>
       {hasNews(banner) ? (
         <div className="flex min-w-0 flex-col gap-3">
           <div className="flex min-w-0 flex-col gap-2">
-            <NewPlantsText news={banner} offline={offline} />
+            {banner.count === 0 ? <p>{t("news.none")}</p> : <NewPlantsHeadline news={banner} />}
+            <NewPlantsAsOf news={banner} offline={offline} />
           </div>
           <ReadPlants items={banner.read} />
         </div>

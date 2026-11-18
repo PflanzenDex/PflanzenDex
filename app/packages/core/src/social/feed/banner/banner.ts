@@ -9,9 +9,10 @@ export interface BannerDependencies extends FriendViewDependencies {
 }
 
 /**
- * Days a plant that was new and got marked as seen stays under "Gelesen" (US-SOZ-06). An assumption, a starting value
- * (P-08), not a measured number: the owner may change it. Older seen plants are not read any more; "Neu bei Freunden"
- * (US-SOZ-05) still lists them.
+ * The read window in days (US-SOZ-06): a plant that became visible within the `READ_DAYS` days before `asOf` and was
+ * already seen is read ("Gelesen"), counted from when it became visible, not from when it was marked. An assumption, a
+ * starting value (P-08), not a measured number: the owner may change it. Older plants are no longer read; "Neu bei
+ * Freunden" (US-SOZ-05) still lists them.
  */
 export const READ_DAYS = 7;
 const READ_MS = READ_DAYS * 24 * 60 * 60 * 1000;
@@ -38,7 +39,7 @@ function summarize(
   return [...groups.values()];
 }
 
-/** Whether a share became visible inside the read window before `asOf` (instants compared, the window is open at its start). */
+/** Whether a share became visible inside the read window before `asOf` (the window is open at its start). */
 const inReadWindow = (visibleSince: string, asOf: string): boolean =>
   Date.parse(visibleSince) > Date.parse(asOf) - READ_MS;
 
@@ -58,8 +59,12 @@ async function newsOf(
     userId,
     friend.accountId,
   );
-  const fresh = rows.filter((r) => r.visibleSince > seen);
-  const old = rows.filter((r) => r.visibleSince <= seen && inReadWindow(r.visibleSince, asOf));
+  // Instants are compared as instants (Date.parse), never as text: the text of ".500Z" sorts before "Z".
+  const seenMs = Date.parse(seen);
+  const fresh = rows.filter((r) => Date.parse(r.visibleSince) > seenMs);
+  const old = rows.filter(
+    (r) => Date.parse(r.visibleSince) <= seenMs && inReadWindow(r.visibleSince, asOf),
+  );
   if (
     (fresh.length === 0 && old.length === 0) ||
     (await deps.privacy.everythingPrivate(friend.accountId))

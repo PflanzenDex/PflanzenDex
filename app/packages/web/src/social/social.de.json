@@ -11,6 +11,7 @@
   "news.okayDone": "Als gelesen markiert.",
   "news.read": "Gelesen",
   "news.none": "Gerade nichts Neues von Freunden.",
+  "news.markFailed": "Die Neuigkeiten sind nicht als gelesen markiert, sie bleiben neu.",
   "feed.type.newSpecies": "Neue Art gefangen",
   "feed.type.newCutting": "Neuer Steckling",
   "feed.type.newSpecimen": "Neue Pflanze",

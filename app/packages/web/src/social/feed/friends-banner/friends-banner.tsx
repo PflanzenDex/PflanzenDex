@@ -19,40 +19,39 @@ export const itemText = (i: BannerItem) =>
   `${nameOf(i.friendName)}: ${i.count} × ${speciesText(i)}`;
 
 /**
- * The headline of what is new and "Stand" (US-SOZ-06, FR-SOZ-03): "Freunde haben N neue Pflanzen: …", or that nothing is new
- * when only read plants are left. "Stand" shows only for a copy older than today, in calendar days of the keeper's zone
- * (US-QS-32); without a network it always shows, with the note about the missing connection, so an old copy stays
- * recognizable. `compact` leaves "Stand" out while online, for a place that says "Stand" itself (issue 1157).
+ * The headline of what is new (US-SOZ-06): "Freunde haben N neue Pflanzen: …". The banner shows it only with news; the
+ * layer on "Heute" writes its own line when only read plants are left. `compact` is one row with the button (issue 1157).
  */
-export function NewPlantsText(props: { news: Banner; offline: boolean; compact?: boolean }) {
+export function NewPlantsHeadline(props: { news: Banner; compact?: boolean }) {
+  const { news, compact } = props;
+  return (
+    <p className={compact ? "min-w-0 flex-1 basis-48" : undefined}>
+      <strong>
+        {news.count === 1
+          ? t("news.headline.one")
+          : t("news.headline.other", { count: news.count })}
+      </strong>{" "}
+      {news.items.map(itemText).join(", ")}
+    </p>
+  );
+}
+
+/**
+ * "Stand" of a copy (US-QS-32, FR-SOZ-03): only for a copy older than today, in calendar days of the keeper's zone; without
+ * a network it always shows, with the note about the missing connection, so an old copy stays recognizable. `compact` leaves
+ * it out while online, for a place that says "Stand" itself (issue 1157).
+ */
+export function NewPlantsAsOf(props: { news: Banner; offline: boolean; compact?: boolean }) {
   const { news, offline, compact } = props;
   const zone = currentTimeZone();
   const copyDay = localToday(new Date(news.asOf), zone);
   const today = localToday(new Date(), zone);
-  const showAsOf = offline || (!compact && copyDay < today);
+  if (!(offline || (!compact && copyDay < today))) return null;
   return (
-    <>
-      <p className={compact ? "min-w-0 flex-1 basis-48" : undefined}>
-        {news.count === 0 ? (
-          t("news.none")
-        ) : (
-          <>
-            <strong>
-              {news.count === 1
-                ? t("news.headline.one")
-                : t("news.headline.other", { count: news.count })}
-            </strong>{" "}
-            {news.items.map(itemText).join(", ")}
-          </>
-        )}
-      </p>
-      {showAsOf && (
-        <p className="text-sm text-muted-foreground">
-          {t("news.asOf", { date: summaryDate(copyDay, today) })}
-          {offline ? t("news.offline") : ""}
-        </p>
-      )}
-    </>
+    <p className="text-sm text-muted-foreground">
+      {t("news.asOf", { date: summaryDate(copyDay, today) })}
+      {offline ? t("news.offline") : ""}
+    </p>
   );
 }
 
@@ -76,7 +75,8 @@ export function NewPlantsBody(props: {
   };
   return (
     <>
-      <NewPlantsText news={news} offline={offline} {...(compact ? { compact: true } : {})} />
+      <NewPlantsHeadline news={news} {...(compact ? { compact: true } : {})} />
+      <NewPlantsAsOf news={news} offline={offline} {...(compact ? { compact: true } : {})} />
       <div>
         <Button
           type="button"

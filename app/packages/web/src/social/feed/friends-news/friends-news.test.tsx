@@ -56,6 +56,37 @@ function server(initial: unknown) {
   return { posts };
 }
 
+/**
+ * A stub whose first mark fails: `status` is a refusal of the server, `throw` a dropped connection. Later marks work as
+ * in `server`, so a later close can send again (US-SOZ-06, P-10).
+ */
+function serverFailingFirstMark(initial: ReturnType<typeof banner>, how: "status" | "throw") {
+  let current = initial;
+  const posts: unknown[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (init?.method === "POST" && path === "/feed/seen") {
+        posts.push(JSON.parse(String(init.body)));
+        if (posts.length === 1) {
+          if (how === "throw") throw new TypeError("Failed to fetch");
+          return response(500, { error: { code: "system.unexpected", text: "raw" } });
+        }
+        current = {
+          ...current,
+          count: 0,
+          items: [],
+          read: [...current.items, ...current.read],
+        };
+        return response(200, { seenAt: ASOF });
+      }
+      return path === "/feed/banner" ? response(200, current) : response(404, {});
+    }),
+  );
+  return { posts };
+}
+
 function Address() {
   const { search } = useLocation();
   return <output aria-label="Adresse">{search}</output>;
@@ -121,6 +152,46 @@ describe("US-QS-18 · US-SOZ-06 the new plants of friends are a tile on Heute (i
     expect(layer.textContent).toContain("Gerade nichts Neues von Freunden.");
     expect(layer.textContent).toContain("Clara: 1 × Glücksfeder");
     expect(within(layer).queryByRole("button", { name: "Als gelesen markieren" })).toBeNull();
+  });
+
+  it("US-SOZ-06 leaving Heute with the layer still open (an unmount) marks what it showed as read; opening it marks nothing", async () => {
+    const { posts } = server(banner(1));
+    const view = render(<Today at="/today?sheet=news" />);
+    const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    await vi.waitFor(() => expect(layer.textContent).toContain("Freunde haben 1 neue Pflanze"));
+    expect(posts).toEqual([]);
+    view.unmount();
+    await vi.waitFor(() => expect(posts).toEqual([{ upTo: ASOF }]));
+  });
+
+  it("US-SOZ-06 a refused mark leaves the plants new, says so in a toast, and a later close sends again", async () => {
+    const { posts } = serverFailingFirstMark(banner(1), "status");
+    render(<Today />);
+    await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
+    await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    await userEvent.keyboard("{Escape}");
+    expect(await screen.findByText(/sind nicht als gelesen markiert/)).toBeTruthy();
+    expect(posts).toHaveLength(1);
+    expect(await screen.findByRole("button", { name: "1 Neu bei Freunden" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "1 Neu bei Freunden" }));
+    await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    await userEvent.keyboard("{Escape}");
+    await vi.waitFor(() => expect(posts).toHaveLength(2));
+    expect(posts[1]).toEqual({ upTo: ASOF });
+    expect(await screen.findByRole("button", { name: "0 Neu bei Freunden" })).toBeTruthy();
+  });
+
+  it("US-SOZ-06 a mark that cannot reach the server is caught: a toast, the plants stay new, and a later close sends again", async () => {
+    const { posts } = serverFailingFirstMark(banner(1), "throw");
+    render(<Today />);
+    await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
+    await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    await userEvent.keyboard("{Escape}");
+    expect(await screen.findByText(/sind nicht als gelesen markiert/)).toBeTruthy();
+    await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
+    await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    await userEvent.keyboard("{Escape}");
+    await vi.waitFor(() => expect(posts).toHaveLength(2));
   });
 
   it("US-SOZ-06 a second close with nothing new marks nothing again", async () => {
