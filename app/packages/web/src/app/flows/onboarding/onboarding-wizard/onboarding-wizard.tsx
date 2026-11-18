@@ -1,5 +1,6 @@
 import { Suspense, useRef, useState, type ReactNode } from "react";
 import { FIRST_PLANT_STEPS } from "@pflanzendex/core";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { Button } from "@/shared/ui/button/button";
 import { KeeperStyleQuestion } from "../../../../account";
 import { SaveStep } from "./save-step/save-step";
@@ -164,7 +165,7 @@ export function OnboardingWizard(props: {
   const stepLabel = ui("stepOf", { n: f.index + 1, total: FIRST_PLANT_STEPS.length });
   return (
     <div className="flex flex-col gap-3" ref={f.box}>
-      <h1 className="text-2xl font-semibold">{ui("today")}</h1>
+      <PageHeader headingId="today-title" title={ui("today")} />
       {f.created !== null ? (
         <Created
           name={f.created.name}

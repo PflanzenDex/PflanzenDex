@@ -141,9 +141,7 @@ test.describe("US-PHA-01 Pflegephasen", () => {
     await signIn(page, account);
     await openPhaseGrouping(page);
     await expect(page.getByRole("heading", { level: 2, name: "Pflegephasen" })).toBeVisible();
-    await expect(
-      page.getByText("Lege in der Sammlung eine Pflanze einer solchen Art an."),
-    ).toBeVisible();
+    await expect(page.getByText("Noch keine Pflanze hat eine Phase.")).toBeVisible();
     await axeReport(page, info, "carePhases-empty");
   });
 });

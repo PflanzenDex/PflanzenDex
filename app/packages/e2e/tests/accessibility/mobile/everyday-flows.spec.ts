@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import {
   dismissToast,
+  expectAnnounced,
   expect,
   openFirstPlant,
   proposeSpecies,
@@ -66,7 +67,7 @@ async function startWithPlant(page: Page): Promise<void> {
     .getByRole("button", { name: "Pflanze anlegen" })
     .click();
   await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
-  await dismissToast(page, "ist angelegt");
+  await expectAnnounced(page, "ist angelegt");
 }
 
 /** The partial result of a save whose photo could not be stored: the measurement is kept, the photo is not (issue 144). */
@@ -78,7 +79,10 @@ const PHOTO_NOT_STORED = /^Die Messung ist gespeichert, das Foto nicht\./;
  * either way; the photo upload is checked on the owner's phone (US-QS-07 state note). Both results are accepted.
  */
 async function settleMeasurementSave(page: Page): Promise<void> {
-  const saved = page.getByRole("status").filter({ hasText: "Gespeichert: 12,5" });
+  const saved = page
+    .locator('[aria-live="polite"]')
+    .filter({ hasText: "Gespeichert: 12,5" })
+    .first();
   const partial = page.getByText(PHOTO_NOT_STORED);
   await expect(saved.or(partial)).toBeVisible();
   if (await partial.isVisible()) {
@@ -88,7 +92,6 @@ async function settleMeasurementSave(page: Page): Promise<void> {
     await expect(partial).toBeHidden();
     return;
   }
-  await dismissToast(page, "Gespeichert: 12,5");
 }
 
 /** 1. Measure with a photo: the photo field sits behind "Mehr Angaben"; "Messung speichern" is the main action. */

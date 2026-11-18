@@ -1,4 +1,4 @@
-import { expect, showLocations, test } from "../../../support/fixtures";
+import { expect, expectAnnounced, showLocations, test } from "../../../support/fixtures";
 import {
   chooseByArrows,
   keyboardWalk,
@@ -109,7 +109,7 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     // "Messung speichern" sits in the sticky footer beside the form, outside its element (US-QS-15).
     await press(page, page.getByRole("button", { name: "Messung speichern" }));
     // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
-    await expect(page.getByText(/^Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
+    await expectAnnounced(page, /Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\./);
     // The course with the new measurement is the layer "Messverlauf" of the measure page (US-QS-15).
     await press(page, page.getByRole("button", { name: /^Messverlauf \(\d+\)$/ }));
     // The layer opens on "Überblick"; the rows are its part "Messungen" (US-QS-15).

@@ -1,7 +1,7 @@
 import { axeReport } from "../support/axe";
 import {
   addLocation,
-  dismissToast,
+  expectAnnounced,
   openLocations,
   showLocations,
   signInAtLight,
@@ -59,8 +59,8 @@ test.describe("US-LIC-05 locations and light zones", () => {
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await form.getByLabel("Name").fill("Regal");
     await form.getByRole("button", { name: "Standort anlegen" }).click();
-    // On a phone the toast lies over "Hinweise (1)" (issue 1836).
-    await dismissToast(page, "Standort angelegt");
+    // The result is only announced, no toast lies over "Hinweise (1)" (SG-FEED-01, issue 1836).
+    await expectAnnounced(page, "Standort angelegt");
     await page.getByRole("button", { name: "Hinweise (1)" }).click();
     await expect(page.getByRole("heading", { level: 2, name: "Hinweise" })).toBeVisible();
     await expect(page.getByText("Weise dem Standort eine Lichtzone zu.")).toBeVisible();
@@ -87,9 +87,8 @@ test.describe("US-LIC-01 determine the zone of a species", () => {
     await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
     await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
 
-    // The confirmation is a toast over the bottom of the phone, where the reference button stands. It leaves by itself
-    // after a few seconds; a pointer that hovers it keeps it, so the test waits for it to go (US-QS-07).
-    await expect(page.getByText("Standard-Zonen übernommen.")).toBeHidden();
+    // The confirmation is only announced (SG-FEED-01, US-QS-32); no toast covers the reference button.
+    await expectAnnounced(page, "Standard-Zonen übernommen.");
     await page.getByRole("button", { name: "Lichtbedarf und Einstufung" }).click();
     // The layer opens on the overview "Lichtbedarf"; the zone of a species is its segment "Rechner" (US-LIC-01).
     await page

@@ -46,6 +46,16 @@ export async function showLocations(page: Page): Promise<void> {
 }
 
 /**
+ * The result of a write that shows on the same screen is only announced (SG-FEED-01, US-QS-32): the shared polite live
+ * region holds its text and no toast opens. The test reads the result there.
+ */
+export async function expectAnnounced(page: Page, text: string | RegExp): Promise<void> {
+  await expect(
+    page.locator('[aria-live="polite"]').filter({ hasText: text }).first(),
+  ).toBeAttached();
+}
+
+/**
  * A confirmation toast lies over the bottom of a phone, where the main actions of a view and the bottom bar stand, and
  * stays about 6 s; under the pointer it stays for good. The keeper closes it with its button (US-QS-07) instead of the
  * test waiting for it to leave by itself.

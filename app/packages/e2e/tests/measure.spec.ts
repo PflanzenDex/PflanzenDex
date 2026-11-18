@@ -1,5 +1,5 @@
 import { axeReport } from "../support/axe";
-import { dismissToast, openFirstPlant, signIn, expect, test } from "../support/fixtures";
+import { expectAnnounced, openFirstPlant, signIn, expect, test } from "../support/fixtures";
 import type { Page } from "@playwright/test";
 
 // Core flow R1: record a measurement (US-WAC-01), signed in, against the real API and database.
@@ -26,7 +26,7 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
     .getByRole("button", { name: "Pflanze anlegen" })
     .click();
   await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
-  await dismissToast(page, "ist angelegt");
+  await expectAnnounced(page, "ist angelegt");
 }
 
 /** From any view: the Sammlung, then the measuring view of the first plant. */
@@ -96,8 +96,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     await page.getByRole("button", { name: "Messung speichern" }).click();
 
     // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
-    await expect(page.getByText(/^Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
-    await dismissToast(page, "Gespeichert: 12,5");
+    await expectAnnounced(page, /Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\./);
     await openMeasurements(page);
     await expect(page.getByRole("heading", { level: 3, name: /^12,5\scm · / })).toBeVisible();
     await expect(page.getByText("nach dem Umtopfen", { exact: true })).toBeVisible();
