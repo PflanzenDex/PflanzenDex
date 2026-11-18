@@ -1,4 +1,5 @@
 {
-  "tile.label": "Jubiläen",
+  "tile.label.one": "Jubiläum",
+  "tile.label.other": "Jubiläen",
   "layer.title": "Jubiläen"
 }

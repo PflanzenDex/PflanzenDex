@@ -80,6 +80,22 @@ describe("US-ACH-06 anniversaries as a tile on Heute (issue 1662)", () => {
     expect(document.activeElement).toBe(opener);
   });
 
+  it("US-ACH-06 names the tile by its count: 1 Jubiläum, 2 Jubiläen (US-QS-32, issue 2163)", async () => {
+    setViewportWidth(360);
+    server({ calmMode: false, items: [item()] });
+    const one = today();
+    expect(await screen.findByRole("button", { name: "1 Jubiläum" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "1 Jubiläen" })).toBeNull();
+    one.unmount();
+    cleanup();
+    server({
+      calmMode: false,
+      items: [item(), item({ specimenId: "s2", name: "Farn", months: 6 })],
+    });
+    today();
+    expect(await screen.findByRole("button", { name: "2 Jubiläen" })).toBeTruthy();
+  });
+
   it("US-ACH-06 shows no tile without anniversaries and none in calm mode (issue 1662)", async () => {
     setViewportWidth(360);
     for (const body of [{ calmMode: false, items: [] }, { calmMode: true }]) {
@@ -87,7 +103,7 @@ describe("US-ACH-06 anniversaries as a tile on Heute (issue 1662)", () => {
       const view = today();
       await waitFor(() => expect(reads).toHaveBeenCalled());
       await new Promise((r) => setTimeout(r, 100));
-      expect(screen.queryByRole("button", { name: /Jubiläen/ })).toBeNull();
+      expect(screen.queryByRole("button", { name: /Jubiläum|Jubiläen/ })).toBeNull();
       view.unmount();
       cleanup();
     }

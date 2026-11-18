@@ -1,10 +1,11 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { texts } from "@/shared/lib/text-rules/texts";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { Anniversaries, useAnniversaries } from "../anniversaries";
 import table from "../anniversaries.de.json";
 
 const t = texts(table);
+const plural = plurals(table);
 type Token = () => Promise<string | undefined>;
 /** The value of `?sheet=` of the layer behind the tile on "Heute" (US-ACH-06, issue 1662). */
 const LAYER = "anniversaries";
@@ -20,7 +21,9 @@ export function AnniversaryTile(props: {
   tile: (count: number, label: string, layer: string) => ReactNode;
 }) {
   const { items } = useEntries(props.api, props.token);
-  return items.length > 0 ? <>{props.tile(items.length, t("tile.label"), LAYER)}</> : null;
+  return items.length > 0 ? (
+    <>{props.tile(items.length, plural.word("tile.label", items.length), LAYER)}</>
+  ) : null;
 }
 
 /**
