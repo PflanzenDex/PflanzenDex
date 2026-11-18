@@ -80,29 +80,31 @@ afterEach(cleanup);
 afterEach(releaseSheetExits);
 
 describe("US-QS-19 tiles of the plants", () => {
-  it("US-QS-08 · WCAG 2.5.3 the plant tile's accessible name is its visible text (no aria-label, no decorative glyph in the text)", () => {
+  it("US-QS-08 · WCAG 2.5.3 the plant row's accessible name is its visible title (no aria-label, no decorative glyph in the text)", () => {
     screenWith([card(1, { name: "Aloe" })]);
-    const tile = screen.getByRole("button", { name: /^Aloe/ });
+    const tile = screen.getByRole("button", { name: /^Aloe(\s|$)/ });
     expect(tile.hasAttribute("aria-label")).toBe(false);
-    expect(tile.querySelector("[data-initial]")?.textContent).toBe("");
+    expect(tile.querySelector("[data-initial]")).toBeNull();
+    expect(tile.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
   });
 
-  it("US-QS-19 a tile shows the initial of the name, the name, the zone as text and one state", () => {
+  it("US-QS-32 a plant row shows the drawn placeholder, its name, its zone as text and no state that needs no attention", () => {
     screenWith([card(1, { name: "Aloe" })]);
-    const tile = screen.getByRole("button", { name: "Aloe Zone 3 unbekannt" });
-    expect(tile.querySelector("[data-initial]")?.getAttribute("data-initial")).toBe("A");
+    const tile = screen.getByRole("button", { name: /^Aloe(\s|$)/ });
+    expect(tile.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
     expect(within(tile).getByText("Aloe")).toBeTruthy();
     expect(within(tile).getByText("Zone 3")).toBeTruthy();
-    expect(within(tile).getByText("unbekannt")).toBeTruthy();
+    expect(within(tile).queryByText("unbekannt")).toBeNull();
   });
 
-  it("US-QS-19 · P-08 an unknown zone and an unknown state read unbekannt, nothing is invented", () => {
+  it("US-QS-19 · P-08 an unknown zone reads 'Lichtzone unbekannt', so no bare unbekannt stands in the row (owner answer Q08)", () => {
     screenWith([card(1, { lightZone: null, lightZoneSource: null })]);
-    const tile = screen.getByRole("button", { name: "Pflanze 1 unbekannt unbekannt" });
-    expect(within(tile).getAllByText("unbekannt")).toHaveLength(2);
+    const tile = screen.getByRole("button", { name: /^Pflanze 1(\s|$)/ });
+    expect(within(tile).getByText("Lichtzone unbekannt")).toBeTruthy();
+    expect(within(tile).queryByText("unbekannt")).toBeNull();
   });
 
-  it("US-QS-19 the state is Behandeln for an open treatment, Vergeilt/dünn or Gesund by the last measurement", () => {
+  it("US-QS-19 the attention of a row is Behandeln for an open treatment or Vergeilt/dünn by the last measurement; a healthy plant shows none (SG-COLOR-04)", () => {
     const treatment = {
       reason: "Neem",
       dueDate: { kind: "soon" as const, days: 2, text: "in 2 Tg." },
@@ -118,9 +120,15 @@ describe("US-QS-19 tiles of the plants", () => {
       card(2, { lastMeasurement: measured("etiolated") }),
       card(3, { lastMeasurement: measured("healthy") }),
     ]);
-    expect(screen.getByRole("button", { name: "Pflanze 1 Zone 3 Behandeln" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Pflanze 2 Zone 3 Vergeilt/dünn" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Pflanze 3 Zone 3 Gesund" })).toBeTruthy();
+    expect(
+      within(screen.getByRole("button", { name: /^Pflanze 1(\s|$)/ })).getByText("Behandeln"),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByRole("button", { name: /^Pflanze 2(\s|$)/ })).getByText("Vergeilt/dünn"),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByRole("button", { name: /^Pflanze 3(\s|$)/ })).queryByText("Gesund"),
+    ).toBeNull();
   });
 
   it("US-QS-19 · FR-BES-23 the plants are paged, the first entry is in the address and an entry past the end shows the last page", async () => {
@@ -130,20 +138,31 @@ describe("US-QS-19 tiles of the plants", () => {
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByTestId("address").textContent).toBe("?from=6");
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /^Pflanze 7 / })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Pflanze 7(\s|$)/ })).toBeTruthy();
     cleanup();
     screenWith(many(8), {}, "/?from=9");
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
   });
 
-  it("US-QS-19 at 360 x 640 two tile columns fit the 294 px list: the column minimum 8.75 rem leaves room for two and the gap, so a page holds 6 tiles in 3 rows (issue 1108)", () => {
+  it("US-QS-32 the plant rows are one flat group in one column at every width: no grid, no gap, no box per row (SG-SHAPE-03, FX-35)", () => {
     screenWith(many(8));
-    const grid = screen.getAllByRole("listitem")[0]?.parentElement;
-    const min = /minmax\(min\(([\d.]+)rem,100%\),1fr\)/.exec(grid?.className ?? "")?.[1];
-    expect(min).toBeDefined();
-    // Two columns and the 0.5 rem gap at 16 px per rem, within the list width the page story measures at 360 px.
-    expect((2 * Number(min) + 0.5) * 16).toBeLessThanOrEqual(294);
-    expect(grid?.className).toContain("gap-2");
+    const items = screen.getAllByRole("listitem");
+    const group = items[0]?.parentElement;
+    expect(group?.className).toContain("flex-col");
+    expect(group?.className).toContain("bg-card");
+    expect(group?.className).toContain("rounded-card");
+    expect(group?.className).toContain("gap-0");
+    expect(group?.className).not.toMatch(/\bgrid\b|grid-cols|shadow/);
+    // The rows of the group are separated by a hairline between two rows (never above the first one), inset to the text.
+    expect(group?.className).toContain("[&>li+li]:before:h-px");
+    expect(group?.className).toContain("[&>li+li]:before:left-[72px]");
+  });
+
+  it("US-QS-32 a plant row draws no box of its own: no border and no radius, the group is the only frame (FX-35)", () => {
+    screenWith([card(1, { name: "Aloe" })]);
+    const row = screen.getByRole("button", { name: /^Aloe(\s|$)/ });
+    const surface = row.closest("li")?.firstElementChild;
+    expect(surface?.className).not.toMatch(/\bborder-border\b|\brounded-lg\b|\bbg-card\b/);
   });
 
   it("US-QS-19 at 200 % text the insight row wraps at whole words: the row may wrap, the insight never gets narrower than its longest word, and the section grows with its content (issue 1113)", () => {

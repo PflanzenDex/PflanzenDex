@@ -1,25 +1,24 @@
 import { useId, type MouseEventHandler, type ReactNode } from "react";
-import { Link } from "react-router";
-import { ChevronRight } from "lucide-react";
-import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
+import { RowContent, RowElement } from "./row-parts/row-parts";
+import { GROUP, HAIRLINE } from "./group-classes";
 
 // The flat grouped list of the phone look (US-QS-32, SG-SHAPE-03): one rounded group on the page colour, rows separated
 // by a hairline that starts at the text, no shadow (SG-SHAPE-05) and no group inside a group (SG-SHAPE-06). The group
 // keeps its boundary in forced colors. The space between groups (24 px, SG-SHAPE-07) is the caller's.
-const GROUP =
-  "m-0 flex list-none flex-col overflow-hidden rounded-card border border-transparent bg-card p-0 text-card-foreground forced-colors:border-[CanvasText]";
 const LABEL = "text-base font-semibold text-foreground";
 const FOOTER = "text-sm text-muted-foreground";
 
 /** A row's own box: at least 44 px high, 12 px above and below, 16 px at the sides (SG-SHAPE-07, SG-TOUCH-01). */
 const ROW =
   "flex min-h-11 w-full min-w-0 items-center gap-3 px-4 py-3 text-left text-base text-foreground";
+/**
+ * An object row (a plant, a species, a wish; SG-LIST-03): its sides and gaps are 8 px (rem steps, so they grow with the text),
+ * which leaves the title the width it needs at 200 % text (US-QS-32).
+ */
+const OBJECT_ROW = "gap-2 px-2 py-2.5";
 const INTERACTIVE =
   "hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
-/** The hairline between two rows: from the text's left edge to the right edge, never above the first row. */
-const HAIRLINE =
-  "relative before:absolute before:inset-x-4 before:top-0 before:h-px before:bg-border before:content-[''] first:before:hidden";
 
 export type GroupedListProps = {
   /** The name of the section; the section is labelled by it. Without a label the group has no name (the sign-out row). */
@@ -56,120 +55,83 @@ export function GroupedList(props: GroupedListProps) {
 }
 
 export type GroupedRowProps = {
-  id?: string;
+  id?: string | undefined;
   /** Navigates: the row is a link to this address. Wins over `onClick` when both are given. */
-  to?: string;
+  to?: string | undefined;
   /** Acts: the row is a button. */
-  onClick?: MouseEventHandler<HTMLButtonElement>;
+  onClick?: MouseEventHandler<HTMLButtonElement> | undefined;
+  /** Opens a layer: the button says so (`aria-haspopup`) and whether the layer is open (`aria-expanded`). */
+  haspopup?: "dialog" | undefined;
+  expanded?: boolean | undefined;
   /** The row of the open section: `aria-current="page"` and a semibold title, not colour alone (SG-COLOR-05). */
-  current?: boolean;
+  current?: boolean | undefined;
   /** `destructive` is a red action for a destructive step (SG-COLOR-04); it has no chevron. */
-  tone?: "default" | "destructive";
+  tone?: "default" | "destructive" | undefined;
+  /**
+   * `object` is a row of an object (a plant, a species, a wish; SG-LIST-03): the name wraps to two lines and clamps, the
+   * meta line is one line that truncates, and a link or button is named by its visible content in its visible order (the
+   * title, then the meta and the trailing element). `list` (the default) is a settings row.
+   */
+  variant?: "list" | "object" | undefined;
+  /**
+   * The row is no list item of its own: the host already wraps it in one (the list of a pager does). Without it the row
+   * is an `li` of its `GroupedList`.
+   */
+  bare?: boolean | undefined;
+  /**
+   * Suppresses the chevron of a link or button row (a row that has a trailing element of its own gets none either). It
+   * cannot draw one: a row without a link or a button never shows a chevron.
+   */
+  chevron?: boolean | undefined;
   /** A picture or an icon at the leading edge. */
   leading?: ReactNode;
   /** The row's name: 16 px, wraps and is never cut (SG-TYPE-05). */
   title: ReactNode;
   /** One line under the title, 14 px muted (SG-TYPE-02). */
-  meta?: ReactNode;
+  meta?: ReactNode | undefined;
   /** A value (16 px, tabular) or another trailing element; neutral, never green (SG-COLOR-02). */
   trailing?: ReactNode;
 };
 
-/** The inside of a row: the leading mark, the title and meta line, the trailing value and the chevron. */
-function RowContent(props: {
-  leading: ReactNode;
-  title: ReactNode;
-  meta: ReactNode;
-  trailing: ReactNode;
-  current: boolean;
-  destructive: boolean;
-  chevron: boolean;
-}) {
-  return (
-    <>
-      {props.leading !== undefined && (
-        <span className="flex shrink-0 items-center">{props.leading}</span>
-      )}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span
-          className={cn(
-            "text-base [overflow-wrap:anywhere]",
-            props.current ? "font-semibold" : "font-normal",
-            props.destructive && "text-destructive",
-          )}
-        >
-          {props.title}
-        </span>
-        {props.meta !== undefined && (
-          <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
-            {props.meta}
-          </span>
-        )}
-      </span>
-      {props.trailing !== undefined && (
-        <span className="max-w-[60%] shrink-0 text-right text-base tabular-nums text-foreground [overflow-wrap:anywhere]">
-          {props.trailing}
-        </span>
-      )}
-      {props.chevron && (
-        <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
-      )}
-    </>
-  );
-}
-
 /**
  * One row of a `GroupedList`: a link, a button or plain content. A navigation or action row shows the neutral chevron
- * at the trailing edge, after its value, unless it is destructive.
+ * at the trailing edge, after its value, unless it is destructive or has a trailing element of its own (object rows,
+ * SG-LIST-03: at most one trailing element). Plain content never shows one.
  */
 export function GroupedRow(props: GroupedRowProps) {
   const destructive = props.tone === "destructive";
   const interactive = props.to !== undefined || props.onClick !== undefined;
-  const content = (
-    <RowContent
-      leading={props.leading}
-      title={props.title}
-      meta={props.meta}
-      trailing={props.trailing}
-      current={props.current === true}
-      destructive={destructive}
-      chevron={interactive && !destructive}
-    />
-  );
+  const object = props.variant === "object";
+  const hasOwnTrailing = object && props.trailing !== undefined;
+  const chevron = interactive && !destructive && !hasOwnTrailing && props.chevron !== false;
   const look = cn(
     ROW,
+    object && OBJECT_ROW,
     interactive && INTERACTIVE,
     props.current && "bg-muted",
     destructive && "text-destructive",
   );
-  // The id sits on the focusable element, so a view can return the focus to the row (the Konto index does).
-  return (
-    <li className={HAIRLINE}>
-      {props.to !== undefined ? (
-        <Link
-          id={props.id}
-          to={props.to}
-          aria-current={props.current ? "page" : undefined}
-          className={look}
-        >
-          {content}
-        </Link>
-      ) : props.onClick !== undefined ? (
-        <Button
-          id={props.id}
-          type="button"
-          variant="ghost"
-          size="row"
-          onClick={props.onClick}
-          className={look}
-        >
-          {content}
-        </Button>
-      ) : (
-        <div id={props.id} className={look}>
-          {content}
-        </div>
-      )}
-    </li>
+  const body = (
+    <RowElement
+      id={props.id}
+      to={props.to}
+      onClick={props.onClick}
+      haspopup={props.haspopup}
+      expanded={props.expanded}
+      current={props.current}
+      look={look}
+    >
+      <RowContent
+        leading={props.leading}
+        title={props.title}
+        meta={props.meta}
+        trailing={props.trailing}
+        current={props.current === true}
+        destructive={destructive}
+        chevron={chevron}
+        object={object}
+      />
+    </RowElement>
   );
+  return props.bare ? body : <li className={HAIRLINE}>{body}</li>;
 }

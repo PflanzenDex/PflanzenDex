@@ -1,40 +1,26 @@
-import { phaseStatus, type LightLocation, type PhasesRow } from "@pflanzendex/core";
+import {
+  phaseStatus,
+  type LightLocation,
+  type PhaseStatus,
+  type PhasesRow,
+} from "@pflanzendex/core";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { Button } from "@/shared/ui/button/button";
-import { cn } from "@/shared/lib/utils";
-import { CARD_CLASSES, WARNING_CLASSES } from "../../../shared/notices/notices";
+import { ObjectRow } from "@/shared/lists/object-row/object-row";
+import { useObjectPhoto } from "@/shared/lists/object-row/use-object-photo";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { plantLayerId } from "@/collection";
 import { PHASE_TEXT, locationText, nextChangeText } from "../../../shared/text";
 import { needsSwitch, switchedText } from "../../phase-groups";
+import table from "../phases-list.de.json";
+import { CardEntry } from "./card-entry/card-entry";
+import type { Confirm } from "./entry-types";
 
-/** Called with the specimens to switch and the text to show afterwards; without it the list only shows. */
-export type Confirm = (specimenIds: readonly string[], success: string) => void;
+export type { Confirm } from "./entry-types";
 
-/** The hint and the button "Umstellen" of an entry whose plant has to move (US-PHA-03). */
-function SwitchAction(props: {
-  row: PhasesRow;
-  locations: readonly LightLocation[];
-  busy: boolean;
-  onConfirm: Confirm;
-}) {
-  const { row: z } = props;
-  return (
-    <>
-      <p className="font-semibold">
-        Stelle die Pflanze an den Soll-Standort und tippe dann „Umstellen“.
-      </p>
-      <Button
-        type="button"
-        size="touch"
-        className="mt-2"
-        disabled={props.busy}
-        aria-label={`Umstellen: ${z.name}`}
-        onClick={() => props.onConfirm([z.specimenId], switchedText([z], props.locations))}
-      >
-        Umstellen
-      </Button>
-    </>
-  );
-}
+const ui = texts(table);
 
 /**
  * The first hint as a chip, neutral: a hint names the next step of a missing entry, it is no deviation (SG-COLOR-04). Further
@@ -51,7 +37,7 @@ function HintChip({ hints }: { hints: readonly string[] }) {
       {hints.length > 1 && (
         <>
           {" "}
-          <span>+{hints.length - 1} weitere</span>
+          <span>{ui("moreHints", { count: hints.length - 1 })}</span>
           <span className="sr-only">: {hints.slice(1).join(" ")}</span>
         </>
       )}
@@ -60,65 +46,91 @@ function HintChip({ hints }: { hints: readonly string[] }) {
 }
 
 /**
- * The compact card of the paged grouping (US-QS-19): the name, one line of facts, one line of the place, one hint and the
- * one action, so a page of cards fits the window. Every fact of the full card stays, only the boxes and repeats go.
+ * The one trailing badge of a phase row when there is no action (SG-LIST-03): the place only when it deviates (amber,
+ * "Weicht ab") or is missing (neutral). A plant in place shows no place (owner answer Q-82).
+ */
+function placeBadge(status: PhaseStatus) {
+  if (status === "deviation") return <Badge variant="warning">{ui("deviates")}</Badge>;
+  if (status === "location_missing") return <Badge>{ui("locationMissing")}</Badge>;
+  return undefined;
+}
+
+/**
+ * The meta line of a phase row (US-QS-32): the species first where the plant has its own name (owner answer Q-68), then
+ * the target where the plant has to move (`Soll-Standort` only where it differs, owner rule of issue 1915), otherwise the next
+ * change of US-PHA-04 ("heute", "in 5 Tagen (date)", or the date).
+ */
+function metaOf(z: PhasesRow, locations: readonly LightLocation[], moves: boolean): string {
+  const second = moves
+    ? ui("targetPlace", { place: locationText(locations, z.targetLocationId) })
+    : nextChangeText(z.nextChange);
+  return z.marker ? `${z.speciesName} · ${second}` : second;
+}
+
+/**
+ * The hints under a phase row, the next step of an entry that is missing (P-09, P-10): a missing location with a target
+ * keeps the switch hint (the place fact moves into the action), a missing location without one keeps its hint, and a
+ * plant without a target names what to choose.
+ */
+function rowHints(z: PhasesRow, status: PhaseStatus, canSwitch: boolean): string[] {
+  const location =
+    status === "location_missing" ? (canSwitch ? ui("switchHint") : ui("hintLocation")) : null;
+  return [
+    z.nextChange === null ? ui("hintReview") : null,
+    location,
+    status === "in_place" && z.targetLocationId === null
+      ? ui("hintTarget", { phase: PHASE_TEXT[z.phase] })
+      : null,
+  ].filter((h): h is string => h !== null);
+}
+
+/**
+ * The row of the paged grouping "Nach Pflegephase" (US-QS-19, US-QS-32): the plant row of the list "Alle", so the row opens
+ * the plant in its layer the same way, with its thumbnail, its own name as the title (owner answer Q-68), the meta line of
+ * `metaOf`, and one trailing element or the action where the plant has to move. The hints stay under the row (P-09, P-10).
  */
 function CompactEntry(props: {
   row: PhasesRow;
   locations: readonly LightLocation[];
   busy: boolean;
   onConfirm: Confirm | undefined;
+  access: PhotoAccess | undefined;
+  /** `false` where the row already shows its plant (the plant's own care part): the row then opens nothing. */
+  opens: boolean;
 }) {
   const { row: z, locations } = props;
+  const { openLayer, open } = useLayer(plantLayerId(z.specimenId));
+  const [ref, src] = useObjectPhoto(props.access, z.photo?.url);
   const status = phaseStatus(z);
-  const canSwitch = props.onConfirm !== undefined && needsSwitch(z);
-  const here = locationText(locations, z.locationId);
-  const target = locationText(locations, z.targetLocationId);
-  const hints = [
-    z.nextChange === null ? "Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art." : null,
-    status === "location_missing" && !canSwitch
-      ? "Weise der Pflanze unter „Hinweise“ einen Standort zu."
-      : null,
-    status === "in_place" && z.targetLocationId === null
-      ? `Wähle im Pflegeprofil der Art einen Soll-Standort für die ${PHASE_TEXT[z.phase]}.`
-      : null,
-  ].filter((h): h is string => h !== null);
+  const moves = needsSwitch(z);
+  const canSwitch = props.onConfirm !== undefined && moves;
+  const action = canSwitch ? (
+    <Button
+      type="button"
+      variant="secondary"
+      className="shrink-0 px-3"
+      disabled={props.busy}
+      aria-label={ui("switchLabel", { name: z.name })}
+      onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
+    >
+      {ui("switch")}
+    </Button>
+  ) : undefined;
   return (
-    <div className={cn(CARD_CLASSES, "flex flex-col gap-0 px-3 py-1 text-xs leading-tight")}>
-      <div className="flex flex-wrap items-center justify-between gap-x-2">
-        <h3 className="min-w-[8ch] flex-1 text-base font-semibold">{z.name}</h3>
-        {canSwitch && (
-          <Button
-            type="button"
-            variant="secondary"
-            className="shrink-0 px-3"
-            disabled={props.busy}
-            aria-label={`Umstellen: ${z.name}`}
-            onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
-          >
-            Umstellen
-          </Button>
-        )}
-      </div>
-      <p>
-        <span>Soll-Phase heute: {PHASE_TEXT[z.phase]}</span> ·{" "}
-        <span>{nextChangeText(z.nextChange)}</span>
-      </p>
-      {/* A missing location is a missing entry: bold, neutral (SG-COLOR-04). A deviation is amber: a small badge in the text
-          flow after the line, so the card keeps its height on a phone (US-QS-32, one-screen). */}
-      {status === "location_missing" ? (
-        <p className="font-semibold">Standort fehlt · Soll-Standort: {target}</p>
-      ) : (
-        <p className="text-muted-foreground">
-          Standort: {here} · Soll-Standort: {target}
-          {status === "deviation" && (
-            <Badge variant="warning" className="ml-1 py-0 leading-none">
-              Abweichung
-            </Badge>
-          )}
-        </p>
-      )}
-      <HintChip hints={hints} />
+    <div className="flex flex-col gap-1">
+      <ObjectRow
+        rootRef={ref}
+        src={src}
+        title={z.marker || z.name}
+        meta={metaOf(z, locations, moves)}
+        trailing={canSwitch ? undefined : placeBadge(status)}
+        action={action}
+        chevron={props.opens ? false : undefined}
+        haspopup={props.opens ? "dialog" : undefined}
+        expanded={props.opens ? open : undefined}
+        onClick={props.opens ? (event) => openLayer(event.currentTarget) : undefined}
+      />
+      <HintChip hints={rowHints(z, status, canSwitch)} />
     </div>
   );
 }
@@ -128,52 +140,30 @@ export function Entry(props: {
   locations: readonly LightLocation[];
   busy: boolean;
   onConfirm: Confirm | undefined;
-  /** A `div` instead of a list item, for a host that already wraps the entry in one (US-QS-19). */
-  bare?: boolean;
+  /** A row of the paged grouping: the plant row, which the list wraps in its own list item (US-QS-19). */
+  bare?: boolean | undefined;
+  /** The access to the photos of the rows (the paged grouping); without it the thumbnail is the placeholder. */
+  access?: PhotoAccess | undefined;
+  /** A bare row opens its plant unless the host already shows that plant (`false`, the plant's own care part). */
+  opens?: boolean | undefined;
 }) {
-  if (props.bare) return <CompactEntry {...props} />;
-  const { row: z, locations } = props;
-  const Root = props.bare ? "div" : "li";
-  const status = phaseStatus(z);
-  const canSwitch = props.onConfirm !== undefined && needsSwitch(z);
+  if (props.bare)
+    return (
+      <CompactEntry
+        row={props.row}
+        locations={props.locations}
+        busy={props.busy}
+        onConfirm={props.onConfirm}
+        access={props.access}
+        opens={props.opens !== false}
+      />
+    );
   return (
-    <Root className={cn(CARD_CLASSES, "flex flex-col gap-1")}>
-      <h3 className="font-semibold">{z.name}</h3>
-      <p>Soll-Phase heute: {PHASE_TEXT[z.phase]}</p>
-      <p>{nextChangeText(z.nextChange)}</p>
-      {z.nextChange === null && (
-        <p className="font-semibold">Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art.</p>
-      )}
-      {status === "location_missing" ? (
-        <p className="font-semibold">Standort fehlt</p>
-      ) : (
-        <p className="text-muted-foreground">Standort: {locationText(locations, z.locationId)}</p>
-      )}
-      <p className="text-muted-foreground">
-        Soll-Standort: {locationText(locations, z.targetLocationId)}
-      </p>
-      {status === "deviation" && (
-        <p className={WARNING_CLASSES}>
-          Weicht ab: steht am Standort „{locationText(locations, z.locationId)}“, Soll ist „
-          {locationText(locations, z.targetLocationId)}“.
-        </p>
-      )}
-      {status === "location_missing" && !canSwitch && (
-        <p className="font-semibold">Weise der Pflanze unter „Hinweise“ einen Standort zu.</p>
-      )}
-      {status === "in_place" && z.targetLocationId === null && (
-        <p className="font-semibold">
-          Wähle im Pflegeprofil der Art einen Soll-Standort für die {PHASE_TEXT[z.phase]}.
-        </p>
-      )}
-      {canSwitch && (
-        <SwitchAction
-          row={z}
-          locations={locations}
-          busy={props.busy}
-          onConfirm={props.onConfirm as Confirm}
-        />
-      )}
-    </Root>
+    <CardEntry
+      row={props.row}
+      locations={props.locations}
+      busy={props.busy}
+      onConfirm={props.onConfirm}
+    />
   );
 }

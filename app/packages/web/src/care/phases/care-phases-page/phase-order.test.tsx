@@ -16,11 +16,14 @@ const row = (
 ): PhasesRow => ({
   specimenId: name,
   name,
+  marker: null,
+  speciesName: name,
   speciesId: "a1",
   phase: "dormancy",
   locationId,
   targetLocationId,
   nextChange: { date: "2027-03-16", phase: "growth", days: 120 },
+  photo: null,
 });
 const rows = [
   row("Falsch", "s1", "s2"),

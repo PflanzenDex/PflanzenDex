@@ -123,7 +123,7 @@ describe("US-WAC-01 collection wired with measuring", () => {
     stubCollection();
     renderArea();
     // The collection page is a lazy part; its first import can take longer than the default second under load.
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     expect(await screen.findByRole("heading", { name: "Messen" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
@@ -194,7 +194,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-WAC-01 Messen pushes an address with the plant, and Back closes the measure view", async () => {
     stubCollection();
     renderAt("/collection?view=plants");
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     await screen.findByRole("heading", { name: "Messen" });
     expect(route.search).toContain("form=measure");
@@ -218,7 +218,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
         />
       </MemoryRouter>,
     );
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     // RouteFocus loads its focus module after the first paint (DS-08) and remembers the opener from then on.
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     await screen.findByRole("heading", { name: "Messen" });
@@ -278,7 +278,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-BES-03 the marker form asks before Back takes typed input, and closes when Verwerfen", async () => {
     stubCollection();
     renderAt("/collection?view=plants");
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf"));
     await screen.findByRole("heading", { name: "Kennzeichen ändern" });
     expect(route.search).toContain("form=marker");
@@ -454,7 +454,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-QS-15 Verwerfen after a Back with typed measurement leaves no guard entry ahead of a form opened by the app (issue 2158)", async () => {
     stubCollection();
     renderAt("/collection?view=plants");
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     await screen.findByRole("heading", { name: "Messen" });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
@@ -489,7 +489,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
   it("US-QS-15 Verwerfen after the view's own back control with typed measurement leaves no guard entry ahead (issue 2158)", async () => {
     stubCollection();
     renderAt("/collection?view=plants");
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     await screen.findByRole("heading", { name: "Messen" });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
@@ -530,7 +530,7 @@ describe("US-QS-15 a save that keeps the form open leaves no guard entry ahead (
     const saves: string[] = [];
     stubCollection(saves);
     renderAt("/collection?view=plants");
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     const heading = await screen.findByRole("heading", { name: "Messen" });
     await typeAndSave(saves);
@@ -553,7 +553,7 @@ describe("US-QS-15 a save that keeps the form open leaves no guard entry ahead (
     const saves: string[] = [];
     stubCollection(saves);
     renderAt("/collection?view=plants");
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     await screen.findByRole("heading", { name: "Messen" });
     await typeAndSave(saves);
@@ -612,7 +612,7 @@ function renderFocusedArea() {
 describe("US-QS-15 a settle keeps the focus and announces no view (issue 2165)", () => {
   /** Opens the measure view and types a measurement; the guard entry is committed before the save (PF-031). */
   async function measureAndType() {
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     await screen.findByRole("heading", { name: "Messen" });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
@@ -672,7 +672,7 @@ describe("US-QS-15 every mode of the area is one screen (DS-61)", () => {
   it("US-QS-15 the measure view sits in the frame of the area, so at a large text size its content scrolls inside it", async () => {
     stubCollection();
     renderArea();
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     const heading = await screen.findByRole("heading", { name: "Messen" });
     expect(heading.closest("[data-fit-screen]")).not.toBeNull();
@@ -681,7 +681,7 @@ describe("US-QS-15 every mode of the area is one screen (DS-61)", () => {
   it("US-QS-15 a form of a plant (the marker) sits in the frame of the area too", async () => {
     stubCollection();
     renderArea();
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf"));
     const heading = await screen.findByRole("heading", { name: "Kennzeichen ändern" });
     expect(heading.closest("[data-fit-screen]")).not.toBeNull();
@@ -712,7 +712,7 @@ describe("US-ONB-09 the keeper's switches in the Sammlung", () => {
         </FeaturesProvider>
       </MemoryRouter>,
     );
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     const switchGroup = screen.getByRole("group", { name: "Ansicht der Sammlung" });
     expect(within(switchGroup).queryByText("Wünsche")).toBeNull();
     expect(within(switchGroup).getByText("Geräte")).toBeTruthy();
@@ -734,7 +734,7 @@ describe("US-BES-17 the entry to the pot labels", () => {
     </MemoryRouter>
   );
   const openView = async () => {
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(screen.getByRole("button", { name: "Ansicht" }));
     return screen.findByRole("dialog", { name: "Ansicht" });
   };
@@ -751,7 +751,7 @@ describe("US-BES-17 the entry to the pot labels", () => {
   it("US-BES-17 the entry adds no row to the title area of the Sammlung (US-QS-15)", async () => {
     stubCollection();
     render(collection(true));
-    await screen.findByRole("button", { name: /^Bogenhanf / }, { timeout: 5_000 });
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     expect(screen.queryByRole("link", { name: "Etiketten drucken" })).toBeNull();
   });
 

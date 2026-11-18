@@ -85,6 +85,7 @@ export function CarePhasesPage(props: { api: string; token: Token; host?: Phases
                 locations={data.locations}
                 busy={move.running}
                 onConfirm={(ids, text) => void move.confirm(ids, text)}
+                access={{ api, token }}
               />
             ) : (
               <PhasesList
