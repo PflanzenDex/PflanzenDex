@@ -6,7 +6,7 @@ import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { localToday, type TodayItem, type TodayList } from "@pflanzendex/core";
+import { localToday, type TodayList } from "@pflanzendex/core";
 import type { ReactNode } from "react";
 import { currentTimeZone, type Request } from "../../../shared/data";
 import { isTreatment, TodayRow } from "../today-row/today-row";
@@ -18,17 +18,50 @@ const t = texts(table);
 const plural = plurals(table);
 
 /**
- * Rows per page of the further tasks (starting values, assumption; US-QS-18): three on a phone, so Heute still fits 360×640 px;
- * six from 768 px.
+ * Rows per page of the further tasks below the tiles and in the layer `?sheet=tasks` (starting values, assumption;
+ * US-QS-18): three on a phone, so Heute still fits 360×640 px; six from 768 px.
  */
 const PAGE_SIZE = { phone: 3, md: 6 } as const;
 /** "Ein weiterer Behandlungstermin …" for one, "{count} weitere …" otherwise, the count with a no-break space (US-QS-32). */
 const laterText = (n: number): string => plural.counted("later", n);
 
 /**
- * The further tasks of the day, treatments excluded: one fitted pager, in the page below the tiles or in the layer
- * `?sheet=tasks`. Its rows are flat `GroupedRow`s in one group (SG-SHAPE-03).
+ * The single most urgent item and, below the tiles, the further tasks as compact rows (US-QS-18). Treatment items are
+ * not listed again: they are counted in the one "Behandlungen" entry (`treatmentsEntry` on the row, or the tile).
  */
+function Content(props: {
+  list: TodayList;
+  onOpen: (d: TodayDestination) => void;
+  treatmentsEntry?: ReactNode;
+}) {
+  const { list } = props;
+  const [first] = list.items;
+  const today = localToday(new Date(), currentTimeZone());
+  // The "Stand" line is left out on the day of the list: it would only repeat "heute" (US-QS-32).
+  const stand = list.date === today ? undefined : summaryDate(list.date, today);
+  return (
+    <>
+      {first ? (
+        isTreatment(first) && props.treatmentsEntry ? (
+          <TodayRow item={first} date={stand} treatmentEntry={props.treatmentsEntry} />
+        ) : (
+          <GroupedList>
+            <TodayRow item={first} date={stand} />
+          </GroupedList>
+        )
+      ) : (
+        <EmptyState
+          title={t("empty.title")}
+          level={3}
+          description={list.upcoming > 0 ? laterText(list.upcoming) : t("empty.description")}
+          action={{ label: t("empty.action"), onClick: () => props.onOpen("collection") }}
+        />
+      )}
+    </>
+  );
+}
+
+/** The further tasks of the day, treatments excluded: one pager, in the page below the tiles or in the layer. */
 export function FurtherTasks(props: {
   list: TodayList;
   param?: PagerPart;
@@ -47,14 +80,14 @@ export function FurtherTasks(props: {
       // pager at a larger text size without growing with the page it shows, so the page size follows the free height
       // only (issue 1113).
       listClassName={props.fit ? `${ROW_GROUP} [contain:size]` : ROW_GROUP}
-      getKey={(item: TodayItem) => item.id}
+      getKey={(item) => item.id}
       {...(props.param ? { param: props.param } : {})}
       renderItem={(item) => <TodayRow item={item} bare />}
     />
   );
 }
 
-/** What stands below the most urgent item: the further tasks and the later treatments in small text (US-QS-18). */
+/** What stands below the tiles: the further tasks inline and the later treatments in small text (US-QS-18). */
 export function Below(props: { list: TodayList }) {
   const { list } = props;
   const [first] = list.items;
@@ -62,8 +95,8 @@ export function Below(props: { list: TodayList }) {
   return (
     <>
       {rest.length > 0 && (
-        // No min-h-0: when the page has no free height left (200 % text, `main` scrolls), the section keeps one row and the
-        // pager instead of collapsing to nothing below the next line.
+        // No min-h-0: when the page has no free height left (200 % text, `main` scrolls), the section keeps one row and
+        // the pager instead of collapsing to nothing below the next line.
         <section aria-labelledby="tasks-title" className="flex min-w-0 flex-1 flex-col gap-2">
           <h2 id="tasks-title" className="text-sm font-semibold">
             {t("tasks.title")}
@@ -110,38 +143,5 @@ export function ListState(props: {
         />
       ) : null}
     </RequestState>
-  );
-}
-
-/** The single most urgent item; a treatment carries the one "Behandlungen" row of its count (US-QS-18). */
-function Content(props: {
-  list: TodayList;
-  onOpen: (d: TodayDestination) => void;
-  treatmentsEntry?: ReactNode;
-}) {
-  const { list } = props;
-  const [first] = list.items;
-  const today = localToday(new Date(), currentTimeZone());
-  // The "Stand" line is left out on the day of the list: it would only repeat "heute" (US-QS-32).
-  const stand = list.date === today ? undefined : summaryDate(list.date, today);
-  return (
-    <>
-      {first ? (
-        isTreatment(first) && props.treatmentsEntry ? (
-          <TodayRow item={first} date={stand} treatmentEntry={props.treatmentsEntry} />
-        ) : (
-          <GroupedList>
-            <TodayRow item={first} date={stand} />
-          </GroupedList>
-        )
-      ) : (
-        <EmptyState
-          title={t("empty.title")}
-          level={3}
-          description={list.upcoming > 0 ? laterText(list.upcoming) : t("empty.description")}
-          action={{ label: t("empty.action"), onClick: () => props.onOpen("collection") }}
-        />
-      )}
-    </>
   );
 }
