@@ -235,7 +235,10 @@ describe("US-POK-09 · US-QS-22 the details of a species are a layer", () => {
     const entry = screen.getByRole("button", { name: /Aloe vera/ });
     expect(entry.hasAttribute("aria-label")).toBe(false);
     expect(entry.textContent).not.toContain("›");
-    expect(entry.querySelector("svg[data-chevron]")?.getAttribute("aria-hidden")).toBe("true");
+    // The placeholder is an icon too; the chevron is the icon that marks the row as opening its layer.
+    expect(entry.querySelector("svg.lucide-chevron-right")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
   });
 
   it("US-POK-09 · US-QS-22 a species opens its details in a layer and Escape returns the focus to its entry", async () => {
@@ -272,16 +275,41 @@ describe("US-QS-32 the species list names a species the SG-TYPE-08 way (F-0119)"
 describe("US-QS-32 the species sheet's title follows the rule of its body (F-0119)", () => {
   it("US-QS-32 an empty German name titles the sheet with the scientific name, never an empty title", async () => {
     await open([species("Opuntia ficus", { germanName: "" })]);
-    await userEvent.click(document.querySelector('[data-species="Opuntia ficus"]') as HTMLElement);
+    await userEvent.click(screen.getByRole("button", { name: /Opuntia ficus/ }));
     expect(await screen.findByRole("dialog", { name: "Opuntia ficus" })).toBeTruthy();
   });
 
   it("US-QS-32 a German name equal to the scientific one titles the sheet once, with the scientific name", async () => {
     await open([species("Ficus carica", { germanName: "Ficus carica" })]);
-    await userEvent.click(document.querySelector('[data-species="Ficus carica"]') as HTMLElement);
+    await userEvent.click(screen.getByRole("button", { name: /Ficus carica/ }));
     await screen.findByRole("dialog", { name: "Ficus carica" });
     // The title is the dialog's heading; the details below it do not repeat the name.
     const details = screen.getByRole("region", { name: /Details/ });
     expect(within(details).queryByText("Ficus carica")).toBeNull();
+  });
+});
+
+describe("US-QS-32 each caught species is one object row in one group (FX-35, SG-LIST-03)", () => {
+  it("US-QS-32 each caught species is one row with a 56 px placeholder thumbnail, in one group of object rows", async () => {
+    await open();
+    const group = screen.getByRole("list", { name: "Gefangene Arten" });
+    expect(within(group).getAllByRole("listitem")).toHaveLength(3);
+    // The group of object rows: the card and its corners sit on the rows (OBJECT_GROUP), not on tiles in a grid.
+    expect(group.className).toContain("[&>li:first-child]:rounded-t-card");
+    expect(group.className).not.toContain("md:grid-cols-2");
+    // CaughtSpecies has no photo: the drawn placeholder stands in the 56 px box, never an invented picture (P-08).
+    const entry = document.querySelector('[data-species="Ficus lyrata"]') as HTMLElement;
+    expect(entry.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
+    expect(entry.querySelector("img")).toBeNull();
+  });
+
+  it("US-QS-32 a species row says it opens a dialog and a tap opens the species layer", async () => {
+    await open();
+    const row = screen.getByRole("button", { name: /Aloe vera/ });
+    expect(row.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(row.getAttribute("aria-expanded")).toBe("false");
+    await userEvent.click(row);
+    expect(await screen.findByRole("dialog", { name: "Echte Aloe" })).toBeTruthy();
+    expect(row.getAttribute("aria-expanded")).toBe("true");
   });
 });

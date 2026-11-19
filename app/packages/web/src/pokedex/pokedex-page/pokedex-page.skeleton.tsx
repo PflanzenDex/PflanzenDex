@@ -1,22 +1,19 @@
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { ObjectRowsSkeleton } from "@/shared/lists/object-row-skeleton/object-row-skeleton";
 
-/** Placeholder with the layout of the page on a phone: count, search field, filter buttons, sort field and two cards (DS-52, DS-53). */
+/**
+ * Placeholder with the layout of the species page on a phone: the row of search and "Filter", then a page of object rows in
+ * one group, the shape of the loaded page (DS-52, DS-53, US-QS-32 FX-35 step 5), so the cold load does not shift.
+ */
 export function PokedexPageSkeleton({ label }: { label: string }) {
   return (
     <SkeletonGroup label={label} className="flex min-w-0 flex-col gap-3">
-      <Skeleton className="h-5 w-1/3" />
-      <Skeleton className="h-11 w-full" />
-      <div className="flex flex-wrap gap-2">
-        <Skeleton className="h-11 w-20 rounded-full" />
-        <Skeleton className="h-11 w-28 rounded-full" />
-        <Skeleton className="h-11 w-24 rounded-full" />
+      <div className="flex items-end gap-2">
+        <Skeleton className="h-11 min-w-0 flex-1" />
+        <Skeleton className="h-11 w-24 shrink-0 rounded-full" />
       </div>
-      <Skeleton className="h-11 w-full" />
-      <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
-        <Skeleton className="h-28 w-full rounded-xl" />
-        <Skeleton className="h-28 w-full rounded-xl" />
-      </ul>
+      <ObjectRowsSkeleton rows={4} />
     </SkeletonGroup>
   );
 }

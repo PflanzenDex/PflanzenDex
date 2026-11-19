@@ -1,7 +1,7 @@
-import { ChevronRight } from "lucide-react";
-import { Button } from "@/shared/ui/button/button";
-import { SpeciesName } from "@/shared/species-name/species-name";
-import { SPECIES_ENTRY_ROW } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import type { ReactNode } from "react";
+import { ObjectRow } from "@/shared/lists/object-row/object-row";
+import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
+import { germanNameOf } from "@/shared/species-name/species-name";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
@@ -28,40 +28,53 @@ export function Chips(props: { chips: readonly string[] }) {
 export { catchText };
 export const countText = (n: number) => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;
 
-export const SPECIES_LIST = "md:grid md:grid-cols-2";
-
 /** The layer of one caught species is named after the species: `?sheet=species-<name>` (US-QS-22). */
 export const speciesLayerId = (species: string): string => `species-${species}`;
 
-/** One caught species as a compact entry (US-QS-22): the name, the German name where known and the catch date. */
+/**
+ * The title and the meta line of a caught species (US-QS-22, SG-TYPE-08): the German name, upright, where the catalog has
+ * one, else the scientific name in italics. With a German name the scientific name leads the meta line, before the catch
+ * date. No name is invented where the catalog has none (P-08).
+ */
+function speciesLines(c: CaughtSpecies): { title: ReactNode; meta: ReactNode } {
+  const german = germanNameOf(c.species, c.germanName);
+  const date = catchText(c.caughtDate);
+  if (german === null) return { title: <i>{c.species}</i>, meta: date };
+  return {
+    title: german,
+    meta: (
+      <>
+        <i>{c.species}</i>
+        {` · ${date}`}
+      </>
+    ),
+  };
+}
+
+/**
+ * One caught species as an object row (US-QS-22, US-QS-32, FX-35 step 5): the drawn placeholder (CaughtSpecies has no
+ * photo, P-08), the name and the catch date. Choosing the row opens the species in its layer. The wrapper keeps the
+ * `data-species` hook of the lists and their tests.
+ */
 export function SpeciesRow({ c }: { c: CaughtSpecies }) {
   const { openLayer, open } = useLayer(speciesLayerId(c.species));
+  const { title, meta } = speciesLines(c);
   return (
-    <Button
-      type="button"
-      variant="outline"
-      data-species={c.species}
-      aria-haspopup="dialog"
-      aria-expanded={open}
-      className={SPECIES_ENTRY_ROW}
-      onClick={(event) => openLayer(event.currentTarget)}
-    >
-      <span className="grid min-w-0 gap-0 break-words">
-        <SpeciesName scientific={c.species} german={c.germanName} meta={catchText(c.caughtDate)} />
-      </span>
-      {/* An icon, not text: the button's visible text stays the name and the date (WCAG 2.5.3, US-QS-08; SG-ICON-01). */}
-      <ChevronRight
-        data-chevron
-        aria-hidden="true"
-        className="size-5 shrink-0 text-muted-foreground"
+    <div data-species={c.species}>
+      <ObjectRow
+        title={title}
+        meta={meta}
+        haspopup="dialog"
+        expanded={open}
+        onClick={(event) => openLayer(event.currentTarget)}
       />
-    </Button>
+    </div>
   );
 }
 
 /**
- * The caught species as pages of compact entries (US-POK-06, US-QS-22); a tap opens the details as a layer (US-POK-09);
- * the German name is shown where it is known, never invented (P-08).
+ * The caught species as pages of object rows in one group (US-POK-06, US-QS-22, US-QS-32); a tap opens the details as a
+ * layer (US-POK-09); the German name is shown where it is known, never invented (P-08).
  */
 export function SpeciesPager(props: {
   label: string;
@@ -77,7 +90,7 @@ export function SpeciesPager(props: {
       label={props.label}
       resetKey={props.resetKey}
       getKey={(c) => c.species}
-      listClassName={SPECIES_LIST}
+      listClassName={OBJECT_GROUP}
       renderItem={(c) => <SpeciesRow c={c} />}
     />
   );
