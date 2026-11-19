@@ -14,7 +14,10 @@ import type { User, UserManager } from "oidc-client-ts";
 export function shareSilentSignin(mgr: UserManager): UserManager["signinSilent"] {
   const renew = mgr.signinSilent.bind(mgr);
   return (args) => {
-    const once = () => renewIfDue(mgr, () => renew(args));
+    // Only the plain renewal of the timers (no arguments) may take a token another tab has renewed; a call with arguments
+    // asks for a token of its own, so it always reaches the token endpoint (issue 2274).
+    const plain = args === undefined || Object.keys(args).length === 0;
+    const once = () => renewIfDue(mgr, plain, () => renew(args));
     // Web Locks are shared by the same origin's contexts (tabs, the installed app); without them (jsdom, old browsers)
     // the renewal runs in this tab alone, and the refusal recovery below still covers a second tab.
     const locks = navigator.locks;
@@ -28,13 +31,16 @@ const lockName = (mgr: UserManager): string =>
 
 // The stored token is renewed unless another tab has renewed it already: the library renews within its expiring window
 // (accessTokenExpiringNotificationTimeInSeconds, 60 s by default), so a stored token with more left than that is new.
-// Reading the user also starts this tab's timers from the stored token again (getUser).
+// Reading the user also starts this tab's timers from the stored token again (getUser). Only a plain call may take that
+// token (`plain`); the lock and the refusal recovery apply to every call.
 async function renewIfDue(
   mgr: UserManager,
+  plain: boolean,
   renew: () => Promise<User | null>,
 ): Promise<User | null> {
   const stored = await mgr.getUser();
   if (
+    plain &&
     stored &&
     (stored.expires_in ?? 0) > mgr.settings.accessTokenExpiringNotificationTimeInSeconds
   )
@@ -42,14 +48,16 @@ async function renewIfDue(
   try {
     return await renew();
   } catch (e) {
-    // The refusal of a refresh token another tab has used since: the stored user carries the token that tab stored. Any
+    // The refusal of a refresh token another tab has used since: the stored user carries the token that tab stored. Only
+    // the same keeper counts, because the stored user may belong to another account signed in meanwhile (issue 2274). Any
     // other end stays an end, so a session that really ended still shows the sign-in hint (P-10).
     const renewed = await mgr.getUser();
     if (
       isInvalidGrant(e) &&
       renewed &&
       !renewed.expired &&
-      renewed.refresh_token !== stored?.refresh_token
+      renewed.refresh_token !== stored?.refresh_token &&
+      renewed.profile.sub === stored?.profile.sub
     )
       return renewed;
     throw e;
