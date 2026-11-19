@@ -181,15 +181,15 @@ export async function specimenStatusesOn(
   return new Map(r.rows.map((z) => [z.id, z.status] as const));
 }
 
-/** The names of the given specimens of the account the connection is set to; unknown or foreign ones are absent (P-04). */
+/** The name and the archived state of the given specimens of the account the connection is set to; unknown or foreign ones are absent (P-04). */
 export async function specimenNamesOn(
   c: PoolClient,
   ids: readonly string[],
-): Promise<ReadonlyMap<string, string>> {
+): Promise<ReadonlyMap<string, { name: string; archived: boolean }>> {
   if (ids.length === 0) return new Map();
-  const r = await c.query<{ id: string; name: string }>(
-    `select id, name from specimen where id = any($1::uuid[])`,
+  const r = await c.query<{ id: string; name: string; archived: boolean }>(
+    `select id, name, status = 'archived' as archived from specimen where id = any($1::uuid[])`,
     [ids],
   );
-  return new Map(r.rows.map((z) => [z.id, z.name] as const));
+  return new Map(r.rows.map((z) => [z.id, { name: z.name, archived: z.archived }] as const));
 }

@@ -234,7 +234,9 @@ describe("US-SOZ-11 confirming the handover", () => {
     server({ received: [accepted({ confirmedGiver: true })] });
     show();
     const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
-    expect(item.textContent).toContain("Du hast die Übergabe bestätigt. Ben muss noch bestätigen.");
+    expect(item.textContent).toContain(
+      "Deine Bestätigung ist gespeichert. Sobald Ben auch bestätigt hat, wird übergeben.",
+    );
     expect(screen.queryByRole("button", { name: /Übergabe bestätigen/ })).toBeNull();
   });
 
@@ -249,19 +251,30 @@ describe("US-SOZ-11 confirming the handover", () => {
     expect(posts[0]?.body).toMatchObject({ marker: "rot" });
   });
 
-  it("US-QS-32 US-SOZ-11 the giver of a plant is told the handover is done and that the plant is now in the archive", async () => {
-    server({ received: [accepted({ type: "plant", specimenName: "Probe Pflanze A" })] }, () =>
-      response(200, { status: "handed_over" }),
-    );
+  it("US-QS-32 US-SOZ-11 the giver of a plant is told the handover is done in one line; the archive fact is on the refreshed card, once", async () => {
+    const data = { received: [accepted({ type: "plant", specimenName: "Probe Pflanze A" })] };
+    server(data, async () => {
+      data.received = [
+        side({
+          status: "handed_over",
+          type: "plant",
+          specimenName: "Probe Pflanze A",
+          specimenArchived: true,
+          givenSpecimenId: "g1",
+          handedOverAt: "2026-10-10T10:00:00.000Z",
+        }),
+      ];
+      return response(200, { status: "handed_over" });
+    });
     show();
     await userEvent.click(
       await screen.findByRole("button", { name: "Übergabe bestätigen: Echte Aloe" }),
     );
-    expect(
-      await screen.findByText(
-        "Die Übergabe ist abgeschlossen. „Probe Pflanze A“ ist jetzt im Archiv.",
-      ),
-    ).toBeTruthy();
+    expect(await screen.findByText("Die Übergabe ist abgeschlossen.")).toBeTruthy();
+    expect(await screen.findByText("„Probe Pflanze A“ ist im Archiv.")).toBeTruthy();
+    expect(screen.queryByText(/Die Übergabe ist abgeschlossen\. „/)).toBeNull();
+    expect(screen.getAllByText(/im Archiv\./)).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "Im Archiv ansehen" })).toHaveLength(1);
   });
 
   it("US-QS-32 the recipient's marker field names his new plant without a typo", async () => {
@@ -310,26 +323,34 @@ describe("US-SOZ-11 the giver's plant goes into the archive; a cutting or offsho
     ).toBeTruthy();
   });
 
+  it("US-SOZ-11 the friend confirmed first: the card says the plant goes into the archive with this confirmation, not once the friend confirms", async () => {
+    server({
+      received: [
+        accepted({ type: "plant", specimenName: "Probe Pflanze A", confirmedRecipient: true }),
+      ],
+    });
+    show();
+    expect(
+      await screen.findByText("„Probe Pflanze A“ geht mit deiner Bestätigung ins Archiv."),
+    ).toBeTruthy();
+    expect(screen.queryByText(/sobald Ben bestätigt/)).toBeNull();
+  });
+
+  it("US-SOZ-11 the friend confirmed first and no name: the sentence still says it goes into the archive with this confirmation (P-08)", async () => {
+    server({
+      received: [accepted({ type: "plant", specimenName: null, confirmedRecipient: true })],
+    });
+    show();
+    expect(
+      await screen.findByText("Die Pflanze geht mit deiner Bestätigung ins Archiv."),
+    ).toBeTruthy();
+  });
+
   it("without a name the card still says the plant goes into the archive (P-08: no invented name)", async () => {
     server({ received: [accepted({ type: "plant", specimenName: null })] });
     show();
     expect(
       await screen.findByText("Die Pflanze geht ins Archiv, sobald Ben bestätigt."),
-    ).toBeTruthy();
-  });
-
-  it("after the giver's confirmation of a plant the text names it as archived, with a row to the archive of Sammlung", async () => {
-    server({ received: [accepted({ type: "plant", specimenName: "Probe Pflanze A" })] }, () =>
-      response(200, { status: "handed_over" }),
-    );
-    show();
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Übergabe bestätigen: Echte Aloe" }),
-    );
-    expect(
-      await screen.findByText(
-        "Die Übergabe ist abgeschlossen. „Probe Pflanze A“ ist jetzt im Archiv.",
-      ),
     ).toBeTruthy();
   });
 
@@ -340,6 +361,7 @@ describe("US-SOZ-11 the giver's plant goes into the archive; a cutting or offsho
           status: "handed_over",
           type: "plant",
           specimenName: "Probe Pflanze A",
+          specimenArchived: true,
           givenSpecimenId: "g1",
           handedOverAt: "2026-10-10T10:00:00.000Z",
         }),
@@ -350,6 +372,25 @@ describe("US-SOZ-11 the giver's plant goes into the archive; a cutting or offsho
     expect(screen.getByRole("link", { name: "Im Archiv ansehen" }).getAttribute("href")).toBe(
       ARCHIVE_HREF,
     );
+  });
+
+  it("US-SOZ-11 US-BES-07 a plant restored from the archive after the handover shows no archive line and no link", async () => {
+    server({
+      received: [
+        side({
+          status: "handed_over",
+          type: "plant",
+          specimenName: "Probe Pflanze A",
+          specimenArchived: false,
+          givenSpecimenId: "g1",
+          handedOverAt: "2026-10-10T10:00:00.000Z",
+        }),
+      ],
+    });
+    show();
+    await screen.findByRole("list", { name: "Anfragen" });
+    expect(screen.queryByText(/Archiv/)).toBeNull();
+    expect(screen.queryByRole("link", { name: "Im Archiv ansehen" })).toBeNull();
   });
 
   it("a cutting has no archive wording before or after the confirmation; the mother plant stays in the collection", async () => {

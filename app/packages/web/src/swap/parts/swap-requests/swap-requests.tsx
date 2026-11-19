@@ -36,16 +36,15 @@ function doneText(s: SwapSide, a: AnswerInput): string {
 }
 
 /**
- * What the keeper reads after confirming the handover: waiting for the other side, or done (P-09, P-10). Only a plant of
- * the giver goes into the archive, and the text names it; a cutting or offshoot stays in the collection (US-SOZ-11, Q-149).
+ * What the keeper reads after confirming the handover: waiting for the other side, or done (P-09, P-10). The archive fact of
+ * a plant is not repeated here: the giver's card names it once, while the plant is archived (US-SOZ-11, Q-149). A cutting or
+ * offshoot stays in the collection, and the text says so.
  */
 function handoverText(s: SwapSide, status: "waiting" | "handed_over"): string {
   if (status === "waiting") return t("handover.waiting", { who: s.otherName ?? "der Freund" });
   if (s.role === "recipient") return t("handover.doneRecipient");
-  if (s.type !== PLANT_TYPE) return t("handover.doneKept");
-  return s.specimenName
-    ? t("handover.doneArchived", { name: s.specimenName })
-    : t("handover.doneArchivedUnnamed");
+  if (s.type === PLANT_TYPE) return t("handover.done");
+  return t("handover.doneKept");
 }
 
 /** The requests for my offers and the ones I sent in one list, each marked, so one pager serves both (US-QS-20). */

@@ -21,11 +21,15 @@ export async function swapOverview(
     deps.swaps.list(userId),
     deps.swaps.offeredNames(userId),
   ]);
-  // The offered specimen's name on the giver's side only (P-05); the recipient's side names nothing.
-  const sides = mine.map((s) => ({
-    ...s,
-    specimenName: s.role === "giver" ? (names.get(s.swapId) ?? null) : null,
-  }));
+  // The offered specimen of the giver's side only (P-05); the recipient's side names nothing.
+  const sides = mine.map((s) => {
+    const offered = s.role === "giver" ? names.get(s.swapId) : undefined;
+    return {
+      ...s,
+      specimenName: offered?.name ?? null,
+      specimenArchived: offered?.archived ?? false,
+    };
+  });
   return {
     received: sides.filter((s) => s.role === "giver"),
     sent: sides.filter((s) => s.role === "recipient"),

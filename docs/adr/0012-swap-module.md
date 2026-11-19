@@ -40,4 +40,4 @@ The handover archives the giver's specimen **only when the offer type is `plant`
 
 Reason: a cutting or offshoot takes a shoot from a plant that stays with the keeper. Archiving it removed the mother plant from the collection, the care tasks, the distribution and the Pokédex count (finding F-0275, issue 2052, a defect of the product).
 
-The requests overview names the offered specimen on the giver's side only (`specimenName`, read by `offeredNames()` through the collection's port, P-05), so the giver's card can name the plant before and after the handover; the match path reads no names.
+The requests overview names the offered specimen on the giver's side only (`specimenName`, read by `offeredNames()` through the collection's port, P-05), for an accepted or handed-over plant, with its archived state (`specimenArchived`): the giver's card names the plant before the confirmation and, while it is archived, after the handover. The match path reads no names.

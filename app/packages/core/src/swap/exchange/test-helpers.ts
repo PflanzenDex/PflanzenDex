@@ -2,6 +2,7 @@ import type {
   SwapAnswerOutcome,
   ExchangeStore,
   FriendOffer,
+  OfferedSpecimen,
   OfferFacts,
   RequestOutcome,
   SwapSide,
@@ -67,9 +68,9 @@ export class InMemoryExchange implements ExchangeStore {
     return this.sides[userId] ?? [];
   }
 
-  /** The offered specimens' names per user and swap ID (the giver's side), as the database would answer. */
-  readonly names: Record<string, Map<string, string>> = {};
-  async offeredNames(userId: string): Promise<ReadonlyMap<string, string>> {
+  /** The offered specimens per user and swap ID (the giver's side), as the database would answer. */
+  readonly names: Record<string, Map<string, OfferedSpecimen>> = {};
+  async offeredNames(userId: string): Promise<ReadonlyMap<string, OfferedSpecimen>> {
     return this.names[userId] ?? new Map();
   }
 }

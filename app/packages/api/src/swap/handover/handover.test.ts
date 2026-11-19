@@ -17,6 +17,7 @@ const SWAP_SIDE: KeyShape = {
   offerId: true,
   // The offered specimen's own name: the giver's row only, the recipient's row has null (P-05, US-SOZ-11).
   specimenName: true,
+  specimenArchived: true,
   speciesLatin: true,
   speciesGerman: true,
   type: true,
@@ -305,6 +306,17 @@ describe("US-SOZ-11 the handover through the API", () => {
       status: string;
     }[];
     expect(mine.find((x) => x.id === done.body.receivedSpecimenId)?.status).toBe("plant");
+    // The giver's side names the plant while it is archived (the card's archive line, Q-85) ...
+    const side = (await call(subA, "GET", "/swaps")).body.received.find(
+      (s: { swapId: string }) => s.swapId === a.swapId,
+    );
+    expect(side).toMatchObject({ specimenName: expect.any(String), specimenArchived: true });
+    // ... and names it without the archive line once it is restored (US-BES-07).
+    expect((await call(subA, "POST", `/specimens/${a.specimenId}/restore`, {})).status).toBe(200);
+    const restored = (await call(subA, "GET", "/swaps")).body.received.find(
+      (s: { swapId: string }) => s.swapId === a.swapId,
+    );
+    expect(restored).toMatchObject({ specimenName: side.specimenName, specimenArchived: false });
   });
 
   it("US-SOZ-11 an offshoot handed over leaves the giver's plant active and the swap names the given specimen (history entry)", async () => {
@@ -341,8 +353,8 @@ describe("US-SOZ-11 the handover through the API", () => {
     });
   });
 
-  it("US-SOZ-11 the giver's side names the offered specimen; the recipient's side does not (P-05)", async () => {
-    const a = await accepted("H8", "swap", subF, "cutting");
+  it("US-SOZ-11 the giver's side names the offered specimen of an accepted plant; the recipient's side does not (P-05)", async () => {
+    const a = await accepted("H8", "swap", subF, "plant");
     const name = (
       (await call(subA, "GET", "/specimens")).body.specimens as { id: string; name: string }[]
     ).find((x) => x.id === a.specimenId)?.name;
@@ -350,11 +362,28 @@ describe("US-SOZ-11 the handover through the API", () => {
     const giverSide = (await call(subA, "GET", "/swaps")).body.received.find(
       (s: { swapId: string }) => s.swapId === a.swapId,
     );
-    expect(giverSide.specimenName).toBe(name);
+    expect(giverSide).toMatchObject({ specimenName: name, specimenArchived: false });
     const recipientSide = (await call(subF, "GET", "/swaps")).body.sent.find(
       (s: { swapId: string }) => s.swapId === a.swapId,
     );
-    expect(recipientSide.specimenName).toBeNull();
+    expect(recipientSide).toMatchObject({ specimenName: null, specimenArchived: false });
+  });
+
+  it("US-SOZ-11 the names are read for an accepted or handed-over plant only: a cutting and a requested plant name nothing (P-08)", async () => {
+    const cutting = await accepted("H9", "swap", subE, "cutting");
+    const requestedId = await specimen(subA, "H10");
+    await call(subA, "PUT", `/sharing/specimens/${requestedId}`, { share: "friends" });
+    const offerId = (
+      await call(subA, "POST", "/offers", { specimenId: requestedId, type: "plant", mode: "swap" })
+    ).body.id as string;
+    const requestedSwap = (await call(subE, "POST", `/offers/${offerId}/request`, {})).body
+      .swapId as string;
+    const received = (await call(subA, "GET", "/swaps")).body.received as {
+      swapId: string;
+      specimenName: string | null;
+    }[];
+    expect(received.find((s) => s.swapId === cutting.swapId)?.specimenName).toBeNull();
+    expect(received.find((s) => s.swapId === requestedSwap)?.specimenName).toBeNull();
   });
 
   it("a recipient who has the species already is asked for a marker and nothing is written until it is given", async () => {
