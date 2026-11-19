@@ -5,15 +5,14 @@ import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { useRequest } from "../../shared/data";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { loadToday, TODAY_LIST_KEY } from "../today-api";
-import { isTreatment, type TodayDestination } from "./today-row/today-row";
+import { isTreatment } from "./today-row/today-row";
+import type { TodayDestination } from "../today-destinations";
 import { NowSkeleton, TodaySkeleton } from "./today-skeleton/today-skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../today.de.json";
 import { FurtherTasks, Below, ListState } from "./today-list/today-list";
 
 const t = texts(table);
-
-export type { TodayDestination };
 
 const KEY = TODAY_LIST_KEY;
 const TASKS = "tasks";
@@ -68,7 +67,7 @@ export function TodayPage(props: {
         />
       </section>
       {props.tiles?.(treatmentFirst)}
-      {today.value && <Below list={today.value} onOpen={props.onOpen} />}
+      {today.value && <Below list={today.value} />}
       {/* The former address of the further tasks stays valid: the layer lists the same rows. */}
       <LayerSheet id={TASKS} title={t("tasks.title")}>
         {/* The same request as the page (no second observer, see above). The rows page by the free height of the layer,
@@ -80,9 +79,7 @@ export function TodayPage(props: {
           offline={today.offline}
           skeleton={<NowSkeleton label={loading} />}
         >
-          {today.value ? (
-            <FurtherTasks list={today.value} onOpen={props.onOpen} param={LAYER_PARAM} fit />
-          ) : null}
+          {today.value ? <FurtherTasks list={today.value} param={LAYER_PARAM} fit /> : null}
         </RequestState>
       </LayerSheet>
     </div>

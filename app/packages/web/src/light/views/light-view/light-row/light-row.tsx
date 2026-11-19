@@ -1,28 +1,25 @@
-import { Button } from "@/shared/ui/button/button";
+import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
+import { GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 
+/** The group of a list of these rows: one flat group with a hairline between its rows (FX-06, SG-SHAPE-03). */
+export const LIGHT_ROW_LIST = ROW_GROUP;
+
 /**
- * One compact row of a zone or a location (US-QS-19): the name, one line of facts and one "Ändern" that opens the
- * layer of the entry. Deleting is not on the row; it lives in the layer (US-LIC-05, P-10).
+ * One row of a zone or a location (US-QS-19, US-QS-32): the name and one line of facts. The whole row opens the layer of the
+ * entry and shows a chevron (SG-TOUCH-02); there is no button inside it. It is a button, not a link, because the layer
+ * needs the element that opened it, so the focus returns to the row when the layer closes (US-QS-15). Deleting is not on
+ * the row; it lives in the layer (US-LIC-05, P-10).
  */
 export function LightRow(props: { name: string; meta: string; layer: string }) {
   const { openLayer } = useLayer(props.layer);
   return (
-    <div className="flex min-w-0 items-center gap-3 rounded-lg border border-border bg-card px-3 py-1">
-      <div className="min-w-0 flex-1">
-        <h3 className="break-words text-base font-semibold">{props.name}</h3>
-        <p className="break-words text-sm text-muted-foreground">{props.meta}</p>
-      </div>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        aria-haspopup="dialog"
-        aria-label={`${props.name} ändern`}
-        onClick={(event) => openLayer(event.currentTarget)}
-      >
-        Ändern
-      </Button>
-    </div>
+    <GroupedRow
+      bare
+      haspopup="dialog"
+      title={props.name}
+      meta={props.meta}
+      onClick={(event) => openLayer(event.currentTarget)}
+    />
   );
 }

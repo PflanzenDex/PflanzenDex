@@ -8,15 +8,11 @@ const Layer = lazy(() => import("@/achievements").then((m) => ({ default: m.Anni
 type Token = () => Promise<string | undefined>;
 
 /** The anniversaries of today as a tile of "Heute" with its layer, after the category tiles (US-ACH-06, issue 1662). */
-export function anniversaryTile(props: {
-  api: string;
-  token: Token;
-  onOpen: () => void;
-}): TodayTile {
+export function anniversaryTile(props: { api: string; token: Token }): TodayTile {
   return {
     id: "anniversaries",
     tile: (draw) => <LazyAnniversaryTile api={props.api} token={props.token} tile={draw} />,
-    layer: <LazyAnniversaryLayer api={props.api} token={props.token} onOpen={props.onOpen} />,
+    layer: <LazyAnniversaryLayer api={props.api} token={props.token} />,
   };
 }
 
@@ -34,7 +30,7 @@ export function LazyAnniversaryTile(props: {
 }
 
 /** The layer behind that tile (`?sheet=anniversaries`). */
-export function LazyAnniversaryLayer(props: { api: string; token: Token; onOpen: () => void }) {
+export function LazyAnniversaryLayer(props: { api: string; token: Token }) {
   return (
     <Suspense fallback={null}>
       <Layer {...props} />

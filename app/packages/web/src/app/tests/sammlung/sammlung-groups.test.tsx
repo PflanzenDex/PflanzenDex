@@ -109,6 +109,10 @@ const renderAt = (path: string) =>
     </MemoryRouter>,
   );
 
+/** The rows of the plant list ("Pflanzen"); the light-zone row above it is a list item of its own (F-0114). */
+const plantItems = () =>
+  within(screen.getByRole("list", { name: "Pflanzen" })).getAllByRole("listitem");
+
 const pressed = (name: string | RegExp) =>
   screen.getByRole("button", { name }).getAttribute("aria-pressed") === "true";
 
@@ -139,8 +143,8 @@ describe("US-QS-19 the first screen of the plants", () => {
     expect(await screen.findByText("4 Pflanzen")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
     expect(screen.getAllByRole("group", { name: "Ansicht der Sammlung" })).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Lichtzonen ansehen" })).toBeTruthy();
-    expect(screen.getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.getByRole("button", { name: "Lichtzonen" })).toBeTruthy();
+    expect(plantItems()).toHaveLength(4);
     expect(screen.getByRole("button", { name: /^Pflanze 2(\s|$)/ })).toBeTruthy();
     // No grouping control, no distribution card and no plant card on the page itself.
     expect(screen.queryByRole("group", { name: "Gruppierung der Pflanzen" })).toBeNull();
@@ -189,10 +193,10 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
       ["Standort unbekannt (1)", false],
     ]);
     expect(screen.getByText("Flur · Zone unbekannt · 1 Pflanze")).toBeTruthy();
-    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    expect(plantItems()).toHaveLength(1);
     await userEvent.click(within(row).getByRole("button", { name: /Wohnzimmer/ }));
     expect(screen.getByText("Wohnzimmer · Zone 2 · 2 Pflanzen")).toBeTruthy();
-    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(plantItems()).toHaveLength(2);
     expect(screen.getByTestId("address").textContent).toBe(
       "/collection?view=plants&group=location&part=Wohnzimmer",
     );

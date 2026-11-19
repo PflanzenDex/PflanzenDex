@@ -17,8 +17,9 @@ const ROW =
  * which leaves the title the width it needs at 200 % text (US-QS-32).
  */
 const OBJECT_ROW = "gap-2 px-2 py-2.5";
-const INTERACTIVE =
-  "hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
+const FOCUS =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
+const INTERACTIVE = `hover:bg-muted hover:text-foreground ${FOCUS}`;
 
 export type GroupedListProps = {
   /** The name of the section; the section is labelled by it. Without a label the group has no name (the sign-out row). */
@@ -65,8 +66,11 @@ export type GroupedRowProps = {
   expanded?: boolean | undefined;
   /** The row of the open section: `aria-current="page"` and a semibold title, not colour alone (SG-COLOR-05). */
   current?: boolean | undefined;
-  /** `destructive` is a red action for a destructive step (SG-COLOR-04); it has no chevron. */
-  tone?: "default" | "destructive" | undefined;
+  /**
+   * `destructive` is a red action for a destructive step (SG-COLOR-04); it has no chevron. `warning` is the amber row of the
+   * most urgent item of "Heute" (US-QS-18): the warning tokens, and no hover fill that would hide them.
+   */
+  tone?: "default" | "destructive" | "warning" | undefined;
   /**
    * `object` is a row of an object (a plant, a species, a wish; SG-LIST-03): the name wraps to two lines and clamps, the
    * meta line is one line that truncates, and a link or button is named by its visible content in its visible order (the
@@ -100,6 +104,7 @@ export type GroupedRowProps = {
  */
 export function GroupedRow(props: GroupedRowProps) {
   const destructive = props.tone === "destructive";
+  const warning = props.tone === "warning";
   const interactive = props.to !== undefined || props.onClick !== undefined;
   const object = props.variant === "object";
   const hasOwnTrailing = object && props.trailing !== undefined;
@@ -107,9 +112,10 @@ export function GroupedRow(props: GroupedRowProps) {
   const look = cn(
     ROW,
     object && OBJECT_ROW,
-    interactive && INTERACTIVE,
+    interactive && (warning ? FOCUS : INTERACTIVE),
     props.current && "bg-muted",
     destructive && "text-destructive",
+    warning && "bg-warning text-warning-foreground",
   );
   const body = (
     <RowElement
@@ -128,6 +134,7 @@ export function GroupedRow(props: GroupedRowProps) {
         trailing={props.trailing}
         current={props.current === true}
         destructive={destructive}
+        warning={warning}
         chevron={chevron}
         object={object}
       />

@@ -114,7 +114,7 @@ describe("US-QS-32 needs are rows titled by their next action, opening where it 
     const list = screen.getByRole("list", { name: "Fehlt / Nachkaufen" });
     const rows = within(list).getAllByRole("listitem");
     expect(rows).toHaveLength(2);
-    expect(list.className).toContain("rounded-card");
+    expect(list.className).toContain("[&>li:first-child]:rounded-t-card");
     for (const row of rows) expect(row.className).not.toContain("rounded-lg");
   });
 });

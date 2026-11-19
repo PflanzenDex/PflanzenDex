@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1029,
+  "maxTotal": 1016,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -48,10 +48,6 @@
     {
       "file": "packages/web/src/account/views/account-views/account-views.tsx",
       "count": 4
-    },
-    {
-      "file": "packages/web/src/achievements/anniversaries/anniversaries.tsx",
-      "count": 10
     },
     {
       "file": "packages/web/src/achievements/calm-mode/calm-mode.tsx",
@@ -422,10 +418,6 @@
       "count": 1
     },
     {
-      "file": "packages/web/src/light/views/light-view/light-row/light-row.tsx",
-      "count": 2
-    },
-    {
       "file": "packages/web/src/light/views/rules-view/rules-view.tsx",
       "count": 7
     },
@@ -640,10 +632,6 @@
     {
       "file": "packages/web/src/swap/parts/swap-requests/swap-card/swap-card.tsx",
       "count": 17
-    },
-    {
-      "file": "packages/web/src/today/today-page/today-row/today-row.tsx",
-      "count": 1
     },
     {
       "file": "packages/web/src/wishlist/actions/actions.tsx",

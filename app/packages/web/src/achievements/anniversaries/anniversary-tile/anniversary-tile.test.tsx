@@ -37,7 +37,7 @@ function server(body: unknown) {
 }
 
 /** The area's tile (a layer opener, named by its count and label) and the layer, as "Heute" draws them. */
-function today(onOpen = () => undefined) {
+function today() {
   return render(
     <QueryClientProvider client={createQueryClient()}>
       <AnnouncerProvider>
@@ -52,7 +52,7 @@ function today(onOpen = () => undefined) {
                 <LayerOpener id={layer}>{`${count} ${label}`}</LayerOpener>
               )}
             />
-            <AnniversaryLayer api="http://api" token={token} onOpen={onOpen} />
+            <AnniversaryLayer api="http://api" token={token} />
           </main>
         </MemoryRouter>
       </AnnouncerProvider>
@@ -73,7 +73,10 @@ describe("US-ACH-06 anniversaries as a tile on Heute (issue 1662)", () => {
     expect(await screen.findByRole("dialog", { name: "Jubiläen" })).toBeTruthy();
     expect(screen.getByText("„Aloe“ ist 1 Jahr bei dir.")).toBeTruthy();
     expect(screen.getByText("„Farn“ ist ein halbes Jahr bei dir.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Zur Sammlung: Aloe" })).toBeTruthy();
+    // US-QS-32: the whole row is the plant's link, with no "Zur Sammlung" button beside it.
+    const plant = screen.getByRole("link", { name: /„Aloe“ ist 1 Jahr bei dir/ });
+    expect(plant.getAttribute("href")).toBe("/collection?view=plants&sheet=plant-s1");
+    expect(screen.queryByRole("button", { name: /Zur Sammlung/ })).toBeNull();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await new Promise((r) => setTimeout(r, 400));

@@ -421,7 +421,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
       "befreundet seit 06.10.2026 · Gemeinsame Arten: unbekannt (noch nichts freigegeben)",
     );
     // The group is one flat list: the rows touch and a hairline separates them (no card per row).
-    expect(list.className).toContain("rounded-card");
+    expect(list.className).toContain("[&>li:first-child]:rounded-t-card");
     expect(list.className).toContain("[&>li+li]:before:inset-x-4");
   });
 

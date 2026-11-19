@@ -2,7 +2,11 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { useRef } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cn } from "@/shared/lib/utils";
+import { usePageFit } from "@/shared/patterns/responsive/pager/use-page-fit";
+import { OBJECT_GROUP, ROW_GROUP } from "./group-classes";
 import { GroupedList, GroupedRow } from "./grouped-list";
 
 afterEach(cleanup);
@@ -204,5 +208,117 @@ describe("US-QS-32 GroupedRow (SG-LIST-04, SG-TYPE-02, SG-COLOR-02)", () => {
     );
     expect(document.getElementById("konto-row-settings")?.tagName).toBe("A");
     expect(document.getElementById("konto-row-news")?.tagName).toBe("BUTTON");
+  });
+});
+
+const FIT_ROW = 100;
+let frameHeight = 500;
+
+/** A fitted list in a frame, as a pager draws it: the page is the rows it shows, and the list fills the free height (issue 1413). */
+function FittedRows({ group }: { group: string }) {
+  const list = useRef<HTMLUListElement>(null);
+  const fit = usePageFit(list, true);
+  const rows = fit?.size ?? 6;
+  return (
+    <div data-fit-fill="">
+      <ul
+        ref={list}
+        aria-label="Zeilen"
+        className={cn("flex flex-col gap-2 min-h-0 flex-1 content-start", group)}
+      >
+        {Array.from({ length: rows }, (_, i) => (
+          <li key={i}>Zeile {i + 1}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+describe("US-QS-32 the groups of a pager keep the room a fitting list measures (issue 1413, FX-06)", () => {
+  it("US-QS-32 a fit pager's list keeps flex-1 with the object group and the row group, so no flex-none wins over it", () => {
+    for (const group of [OBJECT_GROUP, ROW_GROUP]) {
+      const list = cn("flex flex-col gap-2", "min-h-0 flex-1 content-start", group).split(" ");
+      expect(list).toContain("flex-1");
+      expect(list).toContain("min-h-0");
+      expect(list).not.toContain("flex-none");
+    }
+  });
+
+  it("US-QS-32 the card moves onto the rows: the list is transparent, each row is card-coloured, the first rounded at the top and the last at the bottom", () => {
+    for (const group of [OBJECT_GROUP, ROW_GROUP]) {
+      const tokens = group.split(" ");
+      expect(tokens).not.toContain("bg-card");
+      expect(tokens).not.toContain("rounded-card");
+      expect(group).toContain("[&>li]:bg-card");
+      expect(group).toContain("[&>li]:overflow-hidden");
+      expect(group).toContain("[&>li:first-child]:rounded-t-card");
+      expect(group).toContain("[&>li:last-child]:rounded-b-card");
+    }
+  });
+
+  it("US-QS-32 the forced-colors boundary runs left and right on every row, and at the top of the first and the bottom of the last", () => {
+    expect(ROW_GROUP).toContain("[&>li]:forced-colors:border-x-[CanvasText]");
+    expect(ROW_GROUP).toContain("[&>li:first-child]:forced-colors:border-t-[CanvasText]");
+    expect(ROW_GROUP).toContain("[&>li:last-child]:forced-colors:border-b-[CanvasText]");
+  });
+
+  it("US-QS-32 one hairline rule serves both groups: object rows start after the thumbnail, the other rows at the text", () => {
+    expect(OBJECT_GROUP).toContain("[&>li+li]:before:left-[72px]");
+    expect(OBJECT_GROUP).toContain("[&>li+li]:before:right-2");
+    expect(ROW_GROUP).toContain("[&>li+li]:before:inset-x-4");
+    expect(ROW_GROUP).not.toContain("left-[72px]");
+  });
+
+  describe("the measured size of a fitted list", () => {
+    beforeEach(() => {
+      frameHeight = 500;
+      // The list is as tall as its rows, each FIT_ROW px; the frame is `frameHeight` px and its content is the header and the rows.
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        const height =
+          this.tagName === "UL"
+            ? this.children.length * FIT_ROW
+            : this.tagName === "LI"
+              ? FIT_ROW
+              : 0;
+        return {
+          height,
+          width: 320,
+          top: 0,
+          left: 0,
+          right: 320,
+          bottom: height,
+          x: 0,
+          y: 0,
+        } as DOMRect;
+      });
+      vi.spyOn(Element.prototype, "clientHeight", "get").mockImplementation(function (
+        this: Element,
+      ) {
+        return this.hasAttribute("data-fit-fill") ? frameHeight : 0;
+      });
+      vi.spyOn(Element.prototype, "scrollHeight", "get").mockImplementation(function (
+        this: Element,
+      ) {
+        if (!this.hasAttribute("data-fit-fill")) return 0;
+        const rows = this.querySelector("ul")?.children.length ?? 0;
+        return Math.max(frameHeight, 200 + rows * FIT_ROW);
+      });
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("US-QS-32 a fitted list in a row group grows its page size when the frame has room (issue 1413)", () => {
+      frameHeight = 500;
+      const { unmount } = render(<FittedRows group={ROW_GROUP} />);
+      expect(screen.getAllByRole("listitem")).toHaveLength(3);
+      unmount();
+      frameHeight = 1000;
+      render(<FittedRows group={ROW_GROUP} />);
+      expect(screen.getAllByRole("listitem")).toHaveLength(6);
+    });
   });
 });

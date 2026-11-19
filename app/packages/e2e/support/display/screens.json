@@ -387,7 +387,7 @@
     "steps": [
       {
         "role": "button",
-        "name": "Zone 2 ändern"
+        "re": "^Zone 2\\b"
       }
     ],
     "layerFile": "light/zones/zone-layer/zone-layer.tsx",
@@ -582,7 +582,7 @@
     "steps": [
       {
         "role": "button",
-        "name": "Bad ändern"
+        "re": "^Bad\\b"
       }
     ],
     "layerFile": "light/zones/location-layer/location-layer.tsx",
