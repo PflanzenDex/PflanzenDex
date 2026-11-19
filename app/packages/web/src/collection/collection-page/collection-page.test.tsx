@@ -240,6 +240,42 @@ describe("US-BES-02 Seite Sammlung", () => {
   });
 });
 
+/** The classes of every padded ancestor of an element: a page frame (px-4, py-6) around it, if there is one (US-QS-32). */
+function paddedAncestors(el: HTMLElement): string[] {
+  const found: string[] = [];
+  for (let node = el.parentElement; node; node = node.parentElement) {
+    if (/(^|\s)px-4(\s|$)/.test(node.className) || /(^|\s)py-6(\s|$)/.test(node.className))
+      found.push(node.className);
+  }
+  return found;
+}
+
+describe("US-QS-32 the page hosted by Sammlung has no frame of its own", () => {
+  it("US-QS-32 with a host the list group sits without a padded frame, so it starts at the destination's gutter", async () => {
+    fakeServer({ specimens: [specimen({ locationId: "s1" })] });
+    render(page({ host: { onCaption: vi.fn(), onFullView: vi.fn() } }));
+    const list = await screen.findByRole("list", { name: "Pflanzen" });
+    expect(paddedAncestors(list)).toEqual([]);
+  });
+
+  it("US-QS-32 with a host the loading skeleton has no padded frame either, so it lines up with the list", async () => {
+    fakeServer({ specimens: [specimen({ locationId: "s1" })] });
+    delayLoads();
+    render(page({ host: { onCaption: vi.fn(), onFullView: vi.fn() } }));
+    const status = await screen.findByRole("status");
+    expect(status.textContent).toContain("Sammlung wird geladen");
+    expect(paddedAncestors(status)).toEqual([]);
+  });
+
+  it("US-QS-32 without a host the page keeps its own frame (PageFrame: px-4 and py-6 around the list)", async () => {
+    fakeServer({ specimens: [specimen({ locationId: "s1" })] });
+    render(page());
+    const list = await screen.findByRole("list", { name: "Pflanzen" });
+    const frames = paddedAncestors(list);
+    expect(frames.some((c) => /(^|\s)px-4(\s|$)/.test(c) && /(^|\s)py-6(\s|$)/.test(c))).toBe(true);
+  });
+});
+
 describe("US-BES-06 cards on the collection page", () => {
   it("shows measurement, note (collapsible), photo link and treatment from the cards API", async () => {
     const card: SpecimenCard = {
