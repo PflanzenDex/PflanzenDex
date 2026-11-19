@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1016,
+  "maxTotal": 1009,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -620,10 +620,6 @@
     {
       "file": "packages/web/src/swap/parts/offer-form/offer-notices/offer-notices.tsx",
       "count": 6
-    },
-    {
-      "file": "packages/web/src/swap/parts/swap-requests/handover-box/handover-box.tsx",
-      "count": 7
     },
     {
       "file": "packages/web/src/swap/parts/swap-requests/reason-form/reason-form.tsx",

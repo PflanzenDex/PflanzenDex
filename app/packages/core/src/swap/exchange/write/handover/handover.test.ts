@@ -84,6 +84,35 @@ describe("US-SOZ-11 the location of the new specimen comes from the recipient's 
   });
 });
 
+describe("US-SOZ-11 only a plant leaves the giver's collection; a cutting or offshoot keeps its mother plant (Q-149)", () => {
+  it.each(["cutting", "offshoot"] as const)(
+    "US-SOZ-11 a handover of type %s leaves the giver's specimen active and keeps the swap as its history entry",
+    async (type) => {
+      store = new InMemoryHandover({ giver: GIVER, recipient: RECIPIENT, mode: "swap", type });
+      await run({}, RECIPIENT);
+      const r = await run({}, GIVER);
+      expect(r.ok && r.value).toEqual({ status: "handed_over", receivedSpecimenId: "r1" });
+      expect(store.archived).toEqual([]);
+      // The swap row records the given specimen: the history entry of the giver's specimen (US-SOZ-13).
+      expect(store.finished).toEqual({ given: "g1", received: "r1" });
+      expect(store.created[0]?.values).toMatchObject({ status: "cutting" });
+    },
+  );
+
+  it("US-SOZ-11 a cutting given away as a gift is not archived either; the swap keeps the given specimen", async () => {
+    store = new InMemoryHandover({
+      giver: GIVER,
+      recipient: RECIPIENT,
+      mode: "give_away",
+      type: "cutting",
+    });
+    await run({}, RECIPIENT);
+    await run({}, GIVER);
+    expect(store.archived).toEqual([]);
+    expect(store.finished).toEqual({ given: "g1", received: "r1" });
+  });
+});
+
 describe("US-SOZ-11 the handover counts only when both sides confirmed", () => {
   it("the first confirmation is recorded and waits for the other side; the collection stays untouched", async () => {
     const r = await run({}, GIVER);
@@ -92,7 +121,13 @@ describe("US-SOZ-11 the handover counts only when both sides confirmed", () => {
     expect([store.archived, store.created, store.finished]).toEqual([[], [], null]);
   });
 
-  it("the second confirmation completes: archives the giver's specimen and creates the recipient's, in one transaction", async () => {
+  it("US-SOZ-11 a plant: the second confirmation completes: archives the giver's specimen and creates the recipient's, in one transaction", async () => {
+    store = new InMemoryHandover({
+      giver: GIVER,
+      recipient: RECIPIENT,
+      mode: "swap",
+      type: "plant",
+    });
     await run({}, RECIPIENT);
     const r = await run({}, GIVER);
     expect(r.ok && r.value).toEqual({ status: "handed_over", receivedSpecimenId: "r1" });
@@ -107,7 +142,7 @@ describe("US-SOZ-11 the handover counts only when both sides confirmed", () => {
         marker: null,
         locationId: null,
         caughtAt: "2026-10-10",
-        status: "cutting",
+        status: "plant",
       },
     });
     expect(store.finished).toEqual({ given: "g1", received: "r1" });
@@ -144,6 +179,12 @@ describe("US-SOZ-11 the handover counts only when both sides confirmed", () => {
   });
 
   it("a refused creation (taken name) leaves everything as it was: swap accepted, nothing archived, the last confirmation not kept", async () => {
+    store = new InMemoryHandover({
+      giver: GIVER,
+      recipient: RECIPIENT,
+      mode: "swap",
+      type: "plant",
+    });
     await run({}, RECIPIENT);
     store.refuseReceive = "name_taken";
     const r = await run({}, GIVER);

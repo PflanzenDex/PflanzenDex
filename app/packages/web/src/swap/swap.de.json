@@ -70,5 +70,21 @@
   "match.entry.requests.aria": "Anfrage ansehen: {name}",
   "match.alreadyRequested": "Schon angefragt: {title}.",
   "deck.askMore": "„Anfragen“ fragt das Angebot an, „Ablehnen“ und „Später“ bleiben bei dir gespeichert. Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen.",
-  "deck.friendFallback": "Ein Freund"
+  "deck.friendFallback": "Ein Freund",
+  "handover.waiting": "Deine Bestätigung ist gespeichert. Sobald {who} auch bestätigt hat, wird übergeben.",
+  "handover.doneRecipient": "Die Übergabe ist abgeschlossen. Die Pflanze ist jetzt in deiner Sammlung.",
+  "handover.doneKept": "Die Übergabe ist abgeschlossen. Deine Pflanze bleibt in deiner Sammlung.",
+  "handover.archiveBefore": "„{name}“ geht ins Archiv, sobald {who} bestätigt.",
+  "handover.archiveBeforeUnnamed": "Die Pflanze geht ins Archiv, sobald {who} bestätigt.",
+  "handover.archived": "„{name}“ ist im Archiv.",
+  "handover.archivedUnnamed": "Die Pflanze ist im Archiv.",
+  "handover.archiveLink": "Im Archiv ansehen",
+  "handover.done": "Die Übergabe ist abgeschlossen.",
+  "handover.archiveWithYou": "„{name}“ geht mit deiner Bestätigung ins Archiv.",
+  "handover.archiveWithYouUnnamed": "Die Pflanze geht mit deiner Bestätigung ins Archiv.",
+  "handover.marker": "Kennzeichen für deine neue Pflanze (nur nötig, wenn du die Art schon hast)",
+  "handover.aria.receipt": "Erhalt bestätigen: {title}",
+  "handover.aria.handover": "Übergabe bestätigen: {title}",
+  "handover.button.receipt": "Erhalt bestätigen",
+  "handover.button.handover": "Übergabe bestätigen"
 }
