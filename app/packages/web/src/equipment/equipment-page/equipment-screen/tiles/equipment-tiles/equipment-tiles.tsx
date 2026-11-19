@@ -15,9 +15,29 @@ export const NEW_LAYER = "new";
 const count = (n: number, one: string, many: string) => `${n}\u00a0${n === 1 ? one : many}`;
 
 /**
- * One part of the equipment as one line of the flat grouped list (US-QS-22, US-QS-32, FX-35 step 5): its name, then its count
- * or value at the trailing edge, and a chevron. Choosing it opens its layer. A view, not an object, so it has no thumbnail.
- * One line keeps six parts within 360 x 640 px (the page fits one screen, US-QS-22).
+ * The value of a part is in its row twice, and each copy is shown in one width of the row only (US-QS-32, FX-35 step 5).
+ * At least 18 rem (288 px at 100 % text, a 328 px row) it sits at the trailing edge, on the line of the name. Below that
+ * (at 200 % text 18 rem is wider than the row) it sits under the name, on the meta line. Only the shown copy is read: text
+ * that is display:none is not part of the accessible name, so the name holds the value once.
+ */
+const BESIDE_THE_NAME = "hidden @min-[18rem]:inline";
+const UNDER_THE_NAME = "@min-[18rem]:hidden";
+
+/**
+ * GroupedRow always renders its trailing and its meta wrapper, and a flex gap is spent on each wrapper even when the copy
+ * inside is hidden. The empty trailing wrapper below 18 rem costs one gap (24 px at 200 % text), which narrowed the name of
+ * "Lampen und Zonen" by a third line; the empty meta wrapper from 18 rem costs 2 px per row at 100 %. So the wrapper of the
+ * copy a width hides is hidden too: the trailing one below 18 rem, the meta one from 18 rem. The selectors follow the markup
+ * of GroupedRow (a button in the `li`, its name column, the trailing wrapper before the chevron); they reach only the rows
+ * of this list.
+ */
+const LIST =
+  "@container @max-[18rem]:[&_li>*>span:nth-last-child(2)]:hidden @min-[18rem]:[&_li>*>span:first-child>span:last-child]:hidden";
+
+/**
+ * One part of the equipment as one row of the flat grouped list (US-QS-22, US-QS-32, FX-35 step 5): its name, its count or
+ * value, and a chevron. Choosing it opens its layer. A view, not an object, so it has no thumbnail. The width of the row
+ * decides the shape (the `@container` of the list), so the value never squeezes the name (see BESIDE_THE_NAME).
  */
 function Part(props: { id: string; name: string; info: string }) {
   const { openLayer, open } = useLayer(props.id);
@@ -28,7 +48,8 @@ function Part(props: { id: string; name: string; info: string }) {
       haspopup="dialog"
       expanded={open}
       title={props.name}
-      trailing={props.info}
+      trailing={<span className={BESIDE_THE_NAME}>{props.info}</span>}
+      meta={<span className={UNDER_THE_NAME}>{props.info}</span>}
     />
   );
 }
@@ -42,7 +63,7 @@ export function EquipmentTiles({ data }: { data: EquipmentData }) {
   const sum = equipmentCosts(data.items).total.sumEur;
   const lamps = data.light.lamps.length + data.zones.unassigned.length;
   return (
-    <GroupedList>
+    <GroupedList className={LIST}>
       <Part id={ITEMS_LAYER} name="Geräte" info={count(data.items.length, "Gerät", "Geräte")} />
       <Part
         id={COSTS_LAYER}

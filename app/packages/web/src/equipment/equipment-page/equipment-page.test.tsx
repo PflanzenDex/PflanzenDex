@@ -258,7 +258,8 @@ describe("US-EQU-01 equipment page", () => {
     await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
     // The layer closes, the outcome stands on the screen and the tile counts the new record (US-QS-22).
     expect(await screen.findByText(/Gerät „Neue Lampe“ gespeichert/)).toBeTruthy();
-    expect(await screen.findByText("1 Gerät")).toBeTruthy();
+    // The count is in the tile twice, one copy per width (equipment-tiles.tsx).
+    expect(await screen.findAllByText("1 Gerät")).toHaveLength(2);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
     expect(JSON.parse(String(post?.[1]?.body))).toEqual({
       type: "Timer",
@@ -820,6 +821,17 @@ describe("US-QS-32 zone names and a missing zone in equipment", () => {
   });
 });
 
+// A row of the overview holds its value twice, one copy per width (equipment-tiles.tsx). jsdom has no layout, so the text a
+// row reads at one width is taken by leaving out the copy that width hides: beside the name at 18 rem and up, under it below.
+const readsAt = (row: HTMLElement, width: "beside" | "under") => {
+  const copy = row.cloneNode(true) as HTMLElement;
+  const hidden = width === "beside" ? "@min-[18rem]:hidden" : "hidden";
+  for (const span of Array.from(copy.querySelectorAll("span"))) {
+    if (span.classList.contains(hidden)) span.remove();
+  }
+  return (copy.textContent ?? "").replace(/\s+/g, " ").trim();
+};
+
 describe("US-QS-32 the equipment rows are flat grouped rows (FX-35, SG-LIST-03, SG-SHAPE-03)", () => {
   it("US-QS-32 the six parts are rows of one grouped list in their order, each with its name and info, and each opens its layer", async () => {
     fakeServer([item(), item({ id: "e2", name: "Timer A", type: "Timer" })]);
@@ -829,20 +841,42 @@ describe("US-QS-32 the equipment rows are flat grouped rows (FX-35, SG-LIST-03, 
     expect(Array.from(list.children).every((child) => child.tagName === "LI")).toBe(true);
     expect(list.children).toHaveLength(6);
     const rows = within(list).getAllByRole("button");
-    expect(rows.map((row) => row.textContent)).toEqual([
-      "Geräte 2 Geräte",
+    const names = [
+      "Geräte 2 Geräte",
       "Kosten unbekannt",
       "Bedarf nichts fehlt",
-      "Lampen und Zonen 0 Lampen",
-      "Sensoren 0 Sensoren",
-      "Geräte-Wünsche 0 offene Wünsche",
-    ]);
+      "Lampen und Zonen 0 Lampen",
+      "Sensoren 0 Sensoren",
+      "Geräte-Wünsche 0 offene Wünsche",
+    ];
+    expect(rows.map((row) => readsAt(row, "beside"))).toEqual(names);
+    expect(rows.map((row) => readsAt(row, "under"))).toEqual(names);
     expect(rows.every((row) => row.getAttribute("aria-haspopup") === "dialog")).toBe(true);
     // The layer is modal: the list behind it is hidden from assistive technology, so the row is read before the tap.
     const costs = rows[1] as HTMLElement;
     await userEvent.click(costs);
     expect(await screen.findByRole("dialog", { name: "Kosten" })).toBeTruthy();
     expect(costs.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("US-QS-32 each overview value is in its row once per width: beside the name from 18 rem, under it below", async () => {
+    fakeServer([item()]);
+    view(<EquipmentPage api="http://api" token={token} />);
+    const first = await screen.findByRole("button", { name: /^Geräte 1/ });
+    const list = first.closest("ul") as HTMLElement;
+    // The list is the size container of its rows, so the width of the row decides the shape.
+    expect(list.parentElement?.classList.contains("@container")).toBe(true);
+    for (const row of within(list).getAllByRole("button")) {
+      const spans = Array.from(row.querySelectorAll("span"));
+      const beside = spans.filter(
+        (span) =>
+          span.classList.contains("hidden") && span.classList.contains("@min-[18rem]:inline"),
+      );
+      const under = spans.filter((span) => span.classList.contains("@min-[18rem]:hidden"));
+      expect(beside).toHaveLength(1);
+      expect(under).toHaveLength(1);
+      expect(beside[0]?.textContent).toBe(under[0]?.textContent);
+    }
   });
 
   it("US-QS-32 an item is one object row: a drawn placeholder, its name, the facts line, and the Defekt badge as its one trailing element", async () => {
