@@ -40,10 +40,13 @@ export async function failureOf(
   }
   const refusal = e instanceof Error ? e.message : "";
   // The message table of the core is read only when a refusal arrives: a static import would put it into the start chunk,
-  // which the bundle budget keeps small (QG-U6, DS-08).
-  const { ERROR_TEXTS } = await import("@pflanzendex/core");
-  const known = Object.hasOwn(ERROR_TEXTS, refusal);
+  // which the bundle budget keeps small (QG-U6, DS-08). When that chunk cannot load, the general text stands (P-10).
+  const table: Record<string, string> = await import("@pflanzendex/core").then(
+    (m) => m.ERROR_TEXTS,
+    () => ({}),
+  );
+  const known = Object.hasOwn(table, refusal);
   const code = known ? refusal : ACCOUNT_NOT_LOADABLE;
-  const text = known ? ERROR_TEXTS[refusal as keyof typeof ERROR_TEXTS] : t("session.failed");
+  const text = known ? (table[refusal] ?? t("session.failed")) : t("session.failed");
   return { code, text: retrying ? `${t("session.failedAgain")} ${text}` : text };
 }
