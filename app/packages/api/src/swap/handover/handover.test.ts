@@ -56,15 +56,17 @@ const SWAP_HISTORY_ENTRY: KeyShape = {
 let pool: Pool;
 let admin: Pool;
 let releaseTaxa: (() => Promise<void>) | undefined;
-// subF and subG are fresh recipients of the plant and the offshoot handovers: a recipient with several unmarked
-// specimens of a species must give markers (`specimen.markers_missing`), which would change the other tests' states.
-const [subA, subB, subC, subD, subE, subOp, subF, subG] = [0, 1, 2, 3, 4, 5, 6, 7].map(
+// subF, subG and subH are fresh recipients of the plant, the offshoot and the recipient-first handovers: a recipient with
+// several unmarked specimens of a species must give markers (`specimen.markers_missing`), which would change the other tests' states.
+const [subA, subB, subC, subD, subE, subOp, subF, subG, subH] = [0, 1, 2, 3, 4, 5, 6, 7, 8].map(
   () => `soz11-${randomUUID()}`,
-) as [string, string, string, string, string, string, string, string];
+) as [string, string, string, string, string, string, string, string, string];
+// The display name an account gets from its sign-in (the token's `name`); a friend's row stores it.
+const nameOf = (sub: string) => `Name ${sub.slice(-4)}`;
 const reviewer: TokenVerifier = async (token) => {
   const [kind, sub] = token.split(":");
   return kind === "valid" && sub
-    ? { sub, email: `${sub}@example.test`, name: `Name ${sub.slice(-4)}`, email_verified: true }
+    ? { sub, email: `${sub}@example.test`, name: nameOf(sub), email_verified: true }
     : null;
 };
 // 2026-10-09 23:30 UTC: already 10 October in Berlin (NFR-08).
@@ -146,7 +148,7 @@ beforeAll(async () => {
   releaseTaxa = await holdTaxonLock(admin);
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => clockNow });
-  for (const sub of [subA, subB, subC, subD, subE, subOp, subF, subG])
+  for (const sub of [subA, subB, subC, subD, subE, subOp, subF, subG, subH])
     await call(sub, "GET", "/account");
   await admin.query(
     "insert into account_role (account, role) select id, 'operator' from account where subject = $1",
@@ -178,10 +180,11 @@ beforeAll(async () => {
   await befriend(subA, subE);
   await befriend(subA, subF);
   await befriend(subA, subG);
+  await befriend(subA, subH);
 }, 120_000);
 afterAll(async () => {
   const accounts = "select id from account where subject = any($1)";
-  const subs = [[subA, subB, subC, subD, subE, subOp, subF, subG]];
+  const subs = [[subA, subB, subC, subD, subE, subOp, subF, subG, subH]];
   await admin.query(`delete from swap where account_id in (${accounts})`, subs);
   await admin.query(`delete from offer where account_id in (${accounts})`, subs);
   await admin.query(`delete from care_profile where account_id in (${accounts})`, subs);
@@ -286,7 +289,10 @@ describe("US-SOZ-11 the handover through the API", () => {
       id: string;
       archivedReason: string;
     }[];
-    expect(archived.find((x) => x.id === a.specimenId)?.archivedReason).toMatch(/^Verschenkt an /);
+    // US-BES-07: the reason names the recipient (B), whoever confirmed last; the giver's own name never appears in it.
+    expect(archived.find((x) => x.id === a.specimenId)?.archivedReason).toBe(
+      `Verschenkt an ${nameOf(subB)}`,
+    );
     const shared = (await call(subB, "GET", "/sharing")).body.shared as { specimenId: string }[];
     expect(shared.map((s) => s.specimenId)).not.toContain(done.body.receivedSpecimenId);
   });
@@ -300,7 +306,10 @@ describe("US-SOZ-11 the handover through the API", () => {
       id: string;
       archivedReason: string;
     }[];
-    expect(archived.find((x) => x.id === a.specimenId)?.archivedReason).toMatch(/^Getauscht mit /);
+    // US-BES-07: the recipient (F) confirmed last and is still the one the reason names.
+    expect(archived.find((x) => x.id === a.specimenId)?.archivedReason).toBe(
+      `Getauscht mit ${nameOf(subF)}`,
+    );
     const mine = (await call(subF, "GET", "/specimens")).body.specimens as {
       id: string;
       status: string;
@@ -317,6 +326,26 @@ describe("US-SOZ-11 the handover through the API", () => {
       (s: { swapId: string }) => s.swapId === a.swapId,
     );
     expect(restored).toMatchObject({ specimenName: side.specimenName, specimenArchived: false });
+  });
+
+  it("US-BES-07 US-SOZ-11 the recipient confirms first and the giver last: the reason names the recipient by the name the giver's row stores, never the giver", async () => {
+    const a = await accepted("H11", "give_away", subH, "plant");
+    expect(await confirm(subH, a.swapId)).toMatchObject({
+      status: 200,
+      body: { status: "waiting" },
+    });
+    const done = await confirm(subA, a.swapId);
+    expect(done.body).toMatchObject({
+      status: "handed_over",
+      receivedSpecimenId: expect.any(String),
+    });
+    const archived = (await call(subA, "GET", "/specimens/archived")).body.archived as {
+      id: string;
+      archivedReason: string;
+    }[];
+    const reason = archived.find((x) => x.id === a.specimenId)?.archivedReason;
+    expect(reason).toBe(`Verschenkt an ${nameOf(subH)}`);
+    expect(reason).not.toContain(nameOf(subA));
   });
 
   it("US-SOZ-11 an offshoot handed over leaves the giver's plant active and the swap names the given specimen (history entry)", async () => {
