@@ -15,8 +15,9 @@ export const NEW_LAYER = "new";
 const count = (n: number, one: string, many: string) => `${n}\u00a0${n === 1 ? one : many}`;
 
 /**
- * One part of the equipment as a row of the flat grouped list (US-QS-22, US-QS-32, FX-35 step 5): its name, its count or
- * value on the meta line and a chevron. Choosing it opens its layer. A view, not an object, so it has no thumbnail.
+ * One part of the equipment as one line of the flat grouped list (US-QS-22, US-QS-32, FX-35 step 5): its name, then its count
+ * or value at the trailing edge, and a chevron. Choosing it opens its layer. A view, not an object, so it has no thumbnail.
+ * One line keeps six parts within 360 x 640 px (the page fits one screen, US-QS-22).
  */
 function Part(props: { id: string; name: string; info: string }) {
   const { openLayer, open } = useLayer(props.id);
@@ -27,7 +28,7 @@ function Part(props: { id: string; name: string; info: string }) {
       haspopup="dialog"
       expanded={open}
       title={props.name}
-      meta={props.info}
+      trailing={props.info}
     />
   );
 }
