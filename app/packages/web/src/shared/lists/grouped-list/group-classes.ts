@@ -25,3 +25,10 @@ const OBJECT_HAIRLINE_ON_ROWS =
  * empty card down to the pager.
  */
 export const OBJECT_GROUP = `${GROUP_LIST} ${OBJECT_HAIRLINE_ON_ROWS} flex-none`;
+
+/**
+ * One group of rows without a thumbnail (a friend, a need, a reminder) in a pager's list (US-QS-32, SG-SHAPE-03): a flat
+ * list whose rows touch, with a hairline between two rows from the inset of `GroupedList` to its other inset. The rows
+ * are `GroupedRow`s with `bare`, the pager already wraps each one in its list item.
+ */
+export const ROW_GROUP = `${GROUP_LIST} [&>li]:relative [&>li+li]:before:absolute [&>li+li]:before:inset-x-4 [&>li+li]:before:top-0 [&>li+li]:before:h-px [&>li+li]:before:bg-border [&>li+li]:before:content-['']`;

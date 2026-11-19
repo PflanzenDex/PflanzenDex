@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1086,
+  "maxTotal": 1029,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -450,10 +450,6 @@
       "count": 8
     },
     {
-      "file": "packages/web/src/monitoring/inbox/inbox.tsx",
-      "count": 4
-    },
-    {
       "file": "packages/web/src/monitoring/reminders-section/reminders-section.tsx",
       "count": 6
     },
@@ -566,14 +562,6 @@
       "count": 4
     },
     {
-      "file": "packages/web/src/social/pages/friend-collection/friend-card/friend-card.tsx",
-      "count": 8
-    },
-    {
-      "file": "packages/web/src/social/pages/friend-collection/friend-collection.tsx",
-      "count": 7
-    },
-    {
       "file": "packages/web/src/social/pages/friend-collection/friend-equipment/friend-equipment.tsx",
       "count": 6
     },
@@ -592,10 +580,6 @@
     {
       "file": "packages/web/src/social/parts/code-form/code-form.tsx",
       "count": 5
-    },
-    {
-      "file": "packages/web/src/social/parts/friend-list/friend-list.tsx",
-      "count": 14
     },
     {
       "file": "packages/web/src/social/parts/invite-card/invite-card.tsx",

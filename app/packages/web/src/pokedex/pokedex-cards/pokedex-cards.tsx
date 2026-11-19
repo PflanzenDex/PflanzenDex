@@ -8,10 +8,6 @@ import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { catchText } from "./collector-card/catch-text";
 
-/** Layout of an entry that is not a button, e.g. a specimen that does not count yet. */
-export const CARD =
-  "grid min-w-0 content-start gap-1 break-words rounded-xl border border-border bg-card p-3 text-card-foreground";
-
 /** Small pills for the additions of a species (chips). */
 export function Chips(props: { chips: readonly string[] }) {
   if (props.chips.length === 0) return null;

@@ -20,7 +20,8 @@ import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-secti
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../social.de.json";
 
-const KEY = ["social", "friends"] as const;
+/** The cached read of the friends page; a friend's page that ends a friendship reloads it (US-QS-32). */
+export const FRIENDS_KEY = ["social", "friends"] as const;
 const tx = texts(table);
 type Token = () => Promise<string | undefined>;
 
@@ -165,7 +166,7 @@ export function FriendsPage(props: {
 }) {
   const { api, token } = props;
   const options: Options = { calm: props.calm ?? false, swapMark: props.swapMark };
-  const reload = useInvalidate(KEY);
+  const reload = useInvalidate(FRIENDS_KEY);
   const load = useCallback((t: string) => loadFriends(api, t), [api]);
   return (
     <LayerHost data-fit-screen="">
@@ -174,7 +175,7 @@ export function FriendsPage(props: {
           Freunde
         </h1>
         <LoadFrame
-          queryKey={KEY}
+          queryKey={FRIENDS_KEY}
           token={token}
           load={load}
           loadingText="Freunde werden geladen …"

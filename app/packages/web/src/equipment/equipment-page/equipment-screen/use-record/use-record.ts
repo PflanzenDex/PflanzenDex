@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { useWriteAction } from "../../../../shared/data";
 import { recordEquipment, type EquipmentInput } from "../../../equipment-api";
-import type { EquipmentPrefill } from "../../../overviews/wishes-view/wishes-api";
+import type { EquipmentFill } from "../../../equipment-form/equipment-form";
 import { NEW_LAYER } from "../tiles/equipment-tiles/equipment-tiles";
 
 /**
@@ -16,7 +16,7 @@ export function useRecord(
 ) {
   const write = useWriteAction(token, onWritten);
   const layer = useLayer(NEW_LAYER);
-  const [prefill, setPrefill] = useState<EquipmentPrefill | null>(null);
+  const [prefill, setPrefill] = useState<EquipmentFill | null>(null);
   const send = async (input: EquipmentInput): Promise<boolean> => {
     let saved = false;
     await write.run(async (t) => {
@@ -30,7 +30,7 @@ export function useRecord(
     }
     return saved;
   };
-  const fill = (p: EquipmentPrefill) => {
+  const fill = (p: EquipmentFill) => {
     setPrefill(p);
     layer.openLayer();
   };
