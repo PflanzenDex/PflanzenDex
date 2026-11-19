@@ -13,7 +13,7 @@ import table from "../../social.de.json";
 
 const t = texts(table);
 
-const speciesText = (i: BannerItem) =>
+export const speciesText = (i: BannerItem) =>
   i.speciesGerman ?? i.speciesLatin ?? t("news.speciesUnknown");
 export const itemText = (i: BannerItem) =>
   `${nameOf(i.friendName)}: ${i.count} × ${speciesText(i)}`;

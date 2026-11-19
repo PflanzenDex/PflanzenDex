@@ -10,6 +10,8 @@
   "news.okay": "Als gelesen markieren",
   "news.okayDone": "Als gelesen markiert.",
   "news.read": "Gelesen",
+  "news.groups": "Gruppen der Neuigkeiten",
+  "news.count": "{count} ×",
   "news.none": "Gerade nichts Neues von Freunden.",
   "news.markFailed": "Die Neuigkeiten sind nicht als gelesen markiert, sie bleiben neu.",
   "feed.type.newSpecies": "Neue Art gefangen",

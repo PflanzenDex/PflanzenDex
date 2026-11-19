@@ -1,12 +1,18 @@
-import { useCallback, useEffect, useId, useRef, type ReactNode } from "react";
-import type { Banner, BannerItem } from "@pflanzendex/core";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useSearchParams } from "react-router";
+import type { Banner } from "@pflanzendex/core";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-groups";
+import { PART_PARAM } from "@/shared/patterns/responsive/paged-groups/group-choices/group-choices";
+import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/pager";
+import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { refusalText } from "@/shared/lib/error-text";
 import { useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { markFeedSeen } from "../../api/feed-api";
-import { itemText, NewPlantsAsOf, NewPlantsHeadline } from "../friends-banner/friends-banner";
+import { NewPlantsAsOf } from "../friends-banner/friends-banner";
 import { useNewPlants, type Token } from "../friends-banner/use-new-plants";
+import { groupsOf, NewsRowLink } from "./news-rows/news-rows";
 import table from "../../social.de.json";
 
 const t = texts(table);
@@ -31,30 +37,8 @@ export function FriendsNewsTile(props: {
   return hasNews(banner) ? <>{props.tile(banner.count, t("news.title"), LAYER)}</> : null;
 }
 
-/**
- * The plants that became visible within the read window and were already seen (US-SOZ-06): read, not new, under the
- * heading "Gelesen" (a heading of the layer, one level below its title).
- */
-function ReadPlants({ items }: { items: readonly BannerItem[] }) {
-  const id = useId();
-  if (items.length === 0) return null;
-  return (
-    <section aria-labelledby={id} className="flex min-w-0 flex-col gap-1">
-      <h3 id={id} className="text-base font-semibold">
-        {t("news.read")}
-      </h3>
-      <ul className="flex min-w-0 flex-col gap-1">
-        {items.map((i, n) => (
-          <li
-            key={i.speciesLatin === null ? `${i.friendId}:${n}` : `${i.friendId}:${i.speciesLatin}`}
-          >
-            {itemText(i)}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
+/** The page size of the rows of the layer at the start, before the layout measures the room (starting value, assumption). */
+const PAGE_SIZE = 4;
 
 /** The copy the layer showed, with the connection state it showed it in. */
 type Copy = { banner: Banner; offline: boolean };
@@ -139,13 +123,36 @@ function useMarkReadOnClose(mark: Mark, open: boolean, banner: Banner | null, of
 }
 
 /**
- * The layer behind the tile (`?sheet=news`): what is new with "Stand", and below it "Gelesen" with what was read. It has no
- * "Als gelesen markieren": closing the layer marks what it showed as read (US-SOZ-06). An address `?sheet=news` with nothing
- * to show (an old link, or seen meanwhile) is closed the same way instead of showing an empty layer (US-QS-18).
+ * The choice and the page of the rows leave the address with the layer (US-QS-32): `part=` names the chosen friend or
+ * "Gelesen", `from=` the page. A choice pushes its own history entry, so a close finds no entry of the layer to go back to
+ * and only replaces the address; this takes both parts out, so the next opening starts at the first choice. The replace is
+ * a `keepFocus` step like the choice itself, so the focus stays where the layer returns it.
+ */
+function useDropRowsOnClose(open: boolean): void {
+  const [params, setParams] = useSearchParams();
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    const was = wasOpen.current;
+    wasOpen.current = open;
+    if (!was || open) return;
+    const next = new URLSearchParams(params);
+    next.delete(PART_PARAM);
+    dropPageParts(next, PAGE_PARAM);
+    if (next.toString() !== params.toString())
+      setParams(next, { replace: true, state: { keepFocus: true } });
+  }, [open, params, setParams]);
+}
+
+/**
+ * The layer behind the tile (`?sheet=news`): what is new as flat grouped rows, one choice per friend, and "Gelesen" with what
+ * was read (US-QS-32), with "Stand" above them when the copy is older. It has no "Als gelesen markieren": closing the layer
+ * marks what it showed as read (US-SOZ-06). An address `?sheet=news` with nothing to show (an old link, or seen meanwhile) is
+ * closed the same way instead of showing an empty layer (US-QS-18).
  */
 export function FriendsNewsLayer(props: { api: string; token: Token }) {
   const { status, offline, banner, reload } = useNewPlants(props.api, props.token);
   const { open, closeLayer } = useLayer(LAYER);
+  useDropRowsOnClose(open);
   const stale = open && status === "ready" && !hasNews(banner);
   // Closes once per stale address: Back must not run twice while the address changes.
   const closing = useRef(false);
@@ -163,12 +170,22 @@ export function FriendsNewsLayer(props: { api: string; token: Token }) {
   return (
     <LayerSheet id={LAYER} title={t("news.title")}>
       {hasNews(banner) ? (
-        <div className="flex min-w-0 flex-col gap-3">
+        // The rows page by the free height of the layer (`fit`): the wrappers pass that height down (US-QS-32).
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
           <div className="flex min-w-0 flex-col gap-2">
-            {banner.count === 0 ? <p>{t("news.none")}</p> : <NewPlantsHeadline news={banner} />}
+            {banner.count === 0 ? <p>{t("news.none")}</p> : null}
             <NewPlantsAsOf news={banner} offline={offline} />
           </div>
-          <ReadPlants items={banner.read} />
+          <PagedGroups
+            choicesLabel={t("news.groups")}
+            listLabel={t("feed.list")}
+            groups={groupsOf(banner)}
+            pageSize={PAGE_SIZE}
+            fit
+            listClassName={ROW_GROUP}
+            getKey={(row) => row.key}
+            renderItem={(row) => <NewsRowLink row={row} />}
+          />
         </div>
       ) : null}
     </LayerSheet>
