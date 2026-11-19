@@ -3,6 +3,7 @@ import { useLocation, useNavigationType } from "react-router";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { OLD_PARTS, PAGER_PARTS } from "@/shared/patterns/responsive/pager/paging/address";
 import { takeQuiet } from "./quiet-steps";
+import { claimedTitle } from "./view-start";
 
 const load = () => import("./focus-moves").then((m) => m.createFocusMover());
 
@@ -128,7 +129,9 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
   }, []);
 
   useEffect(() => {
-    document.title = title;
+    // A route that shows a page of its own (the not-found view) has claimed its title: that one counts for the address now.
+    const shownTitle = claimedTitle() ?? title;
+    document.title = shownTitle;
     const left = previous.current;
     const sameView = view.current === here;
     // A redirect of the app (`<Navigate replace>`: the root address or an old one) before the person has navigated on
@@ -142,13 +145,13 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
     const opener = layerOpener({ left, key, type, keepFocus, sameView });
     if (opener !== null) void mover.current?.then((m) => m.remember(opener));
     if (left === null || staysPut({ left, key, keepFocus, sameView })) return;
-    if (arrival) return void announcer?.announce(title);
+    if (arrival) return void announcer?.announce(shownTitle);
     return moveWhenLoaded({
       mover: mover.current,
       left,
       key,
       type,
-      announce: () => announcer?.announce(title),
+      announce: () => announcer?.announce(shownTitle),
     });
   }, [key, type, title, announcer, keepFocus, here]);
 
