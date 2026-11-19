@@ -12,7 +12,7 @@ import { RecommendationsView } from "../../../../overviews/needs-view/recommenda
 import { SensorsView } from "../../../../overviews/sensors-view/sensors-view";
 import { NEW_WISH_LAYER, WishesView } from "../../../../overviews/wishes-view/wishes-view";
 import { WishForm } from "../../../../overviews/wishes-view/wish-form/wish-form";
-import type { EquipmentPrefill } from "../../../../overviews/wishes-view/wishes-api";
+import type { EquipmentFill } from "../../../../equipment-form/equipment-form";
 import { ZonesView } from "../../../../overviews/zones-view/zones-view";
 import type { useLampActions } from "../../../lamp-actions/lamp-actions";
 import type { useWishActions } from "../../../../overviews/wishes-view/use-wish-actions";
@@ -138,7 +138,9 @@ export function EquipmentLayers(props: {
   data: EquipmentData;
   lamps: Lamps;
   wishes: Wishes;
-  prefill: EquipmentPrefill | null;
+  prefill: EquipmentFill | null;
+  /** Opens the form with what a need names (a lamp of its light zone, US-QS-32). */
+  fill: (prefill: EquipmentFill, from: HTMLElement) => void;
   /** The outcome of a write inside a layer; the screen behind it is covered (P-10). */
   outcome: ReactNode;
   running: boolean;
@@ -161,7 +163,7 @@ export function EquipmentLayers(props: {
       <LayerSheet id={NEEDS_LAYER} title={t("layers.needs")}>
         {/* The needs page by the free height of the layer; the recommendations stay below them (issue 1154). */}
         <div className="flex min-h-0 flex-1 flex-col gap-4">
-          <NeedsView needs={data.needs} />
+          <NeedsView needs={data.needs} fill={props.fill} />
           <RecommendationsView data={data} />
         </div>
       </LayerSheet>

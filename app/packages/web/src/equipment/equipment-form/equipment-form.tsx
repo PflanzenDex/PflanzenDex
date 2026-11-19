@@ -22,10 +22,16 @@ import {
 import type { EquipmentInput } from "../equipment-api";
 import type { EquipmentPrefill } from "../overviews/wishes-view/wishes-api";
 
+/**
+ * What the form takes over: "Gekauft" on an equipment wish (US-EQU-08) and, for a lamp that a need names, its light zone
+ * (US-EQU-07, US-QS-32). The zone is left out by the wish, so it stays empty there (P-08).
+ */
+export type EquipmentFill = EquipmentPrefill & { readonly lightZoneId?: string | null };
+
 /** "Gekauft" on an equipment wish fills the form with what the wish knows (US-EQU-08); the rest stays empty (P-08). */
 function usePrefill(
   form: UseFormReturn<EquipmentFields>,
-  prefill: EquipmentPrefill | null | undefined,
+  prefill: EquipmentFill | null | undefined,
 ) {
   useEffect(() => {
     if (!prefill) return;
@@ -35,6 +41,7 @@ function usePrefill(
       name: prefill.name,
       productId: prefill.productId ?? "",
       priceEur: prefill.priceEur === null ? "" : String(prefill.priceEur).replace(".", ","),
+      lightZoneId: prefill.lightZoneId ?? "",
     });
   }, [prefill, form]);
 }
@@ -56,7 +63,7 @@ function SaveBar({ pending }: { pending: boolean }) {
 export function EquipmentForm(props: {
   zones: readonly { zoneId: string; name: string }[];
   /** Set by "Gekauft" on an equipment wish: fills type, name, product id and price (US-EQU-08). */
-  prefill?: EquipmentPrefill | null;
+  prefill?: EquipmentFill | null;
   running: boolean;
   message: string | null;
   error: ApiError | null;

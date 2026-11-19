@@ -269,32 +269,23 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     show("friends");
     const list = await screen.findByRole("list", { name: "Freunde" });
     expect(list.textContent).toBe(
-      "BBenbefreundet seit 06.10.2026Gemeinsame Arten: unbekannt (noch nichts freigegeben)Sammlung ansehenFreundschaft beenden",
+      "BBen befreundet seit 06.10.2026 · Gemeinsame Arten: unbekannt (noch nichts freigegeben)",
     );
   });
 
-  it("US-QS-14 the two friend buttons sit in one wrapping row, like the buttons of the share cards", async () => {
+  it("US-QS-32 each friend is one link to the friend's collection, named by its visible text, with a chevron", async () => {
     fakeServer({
-      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
+      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: 7 }],
     });
     show("friends");
-    const see = await screen.findByRole("link", { name: "Sammlung ansehen: Ben" });
-    const end = screen.getByRole("button", { name: "Freundschaft beenden: Ben" });
-    const row = see.parentElement;
-    expect(row).toBe(end.parentElement);
-    expect(row?.className).toContain("flex-wrap");
-    expect(row?.className).toContain("gap-2");
-  });
-
-  it("US-QS-08 · WCAG 2.5.3 the friend link's and button's accessible names contain their visible text", async () => {
-    fakeServer({
-      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
-    });
-    show("friends");
-    const see = await screen.findByRole("link", { name: /^Sammlung ansehen/ });
-    expect(see.getAttribute("aria-label")).toContain("Sammlung ansehen");
-    const end = screen.getByRole("button", { name: /^Freundschaft beenden/ });
-    expect(end.getAttribute("aria-label")).toContain("Freundschaft beenden");
+    const row = await screen.findByRole("link", { name: /Ben befreundet seit 06\.10\.2026/ });
+    expect(row.getAttribute("href")).toBe("/friends/f1");
+    expect(row.textContent).toBe("BBen befreundet seit 06.10.2026 · Gemeinsame Arten: 7");
+    expect(row.querySelector("svg.lucide-chevron-right")).not.toBeNull();
+    // The row is the only control: no second link or button stands in it (US-QS-32, SG-TOUCH-02).
+    expect(row.querySelectorAll("a, button")).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: /Freundschaft beenden/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Sammlung ansehen/ })).toBeNull();
   });
 
   it("US-QS-08 · WCAG 2.5.3 the bulk buttons' accessible names contain their visible text", async () => {
@@ -317,21 +308,15 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(within(list).getByText("Ben")).toBeTruthy();
   });
 
-  it("US-SOZ-03 ending a friendship asks first, says what it does and then removes the friend", async () => {
+  it("US-QS-32 the friends list no longer ends a friendship: the end waits on the friend's collection page", async () => {
     const { calls } = fakeServer({
       friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
     });
     show("friends");
-    await userEvent.click(await screen.findByRole("button", { name: "Freundschaft beenden: Ben" }));
-    expect(screen.getByText(/alle Freigaben gelten dann nicht mehr/)).toBeTruthy();
-    expect(calls).toEqual([]);
-    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await screen.findByRole("link", { name: /Ben befreundet seit/ });
+    expect(screen.queryByRole("button", { name: /Freundschaft beenden/ })).toBeNull();
     expect(screen.queryByText(/alle Freigaben gelten dann nicht mehr/)).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Freundschaft beenden: Ben" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, beenden" }));
-    expect(await screen.findByText(/Freundschaft mit Ben beendet/)).toBeTruthy();
-    expect(calls[0]).toEqual({ path: "/friends/f1/end", body: {} });
-    expect((await screen.findAllByText(/Noch keine Freunde/)).length).toBeGreaterThan(0);
+    expect(calls).toEqual([]);
   });
 
   it("US-SOZ-01 · P-09 US-QS-20 the next action comes first: 'Freund hinzufügen' stands before the tiles, rows and the help line", async () => {
@@ -419,27 +404,25 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
       ],
     });
     show("friends");
-    expect(await screen.findByText("Gemeinsame Arten: 2")).toBeTruthy();
-    expect(screen.getByText("Gemeinsame Arten: 0")).toBeTruthy();
+    expect(await screen.findByText(/Gemeinsame Arten: 2$/)).toBeTruthy();
+    expect(screen.getByText(/Gemeinsame Arten: 0$/)).toBeTruthy();
   });
 
-  it("US-SOZ-02 US-QS-14 a friend row stacks name, date, shared species and actions as separate items with a gap", async () => {
+  it("US-QS-32 a friend is one flat row of the group: a row height of 44 px or more, the meta line is one line of text", async () => {
     fakeServer({
       friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: null }],
     });
     show("friends");
     const list = await screen.findByRole("list", { name: "Freunde" });
-    const row = within(list).getByRole("listitem").firstElementChild
-      ?.firstElementChild as HTMLElement;
-    expect(row.className).toMatch(/(^|\s)grid(\s|$)/);
-    expect(row.className).toMatch(/(^|\s)gap-\d/);
-    const items = Array.from(row.children).map((c) => c.textContent);
-    expect(items).toEqual([
-      expect.stringMatching(/Ben$/),
-      expect.stringMatching(/^befreundet seit /),
-      "Gemeinsame Arten: unbekannt (noch nichts freigegeben)",
-      "Sammlung ansehenFreundschaft beenden", // one wrapping row, see the test below
-    ]);
+    const item = within(list).getByRole("listitem");
+    const link = within(item).getByRole("link", { name: /Ben/ });
+    expect(link.className).toContain("min-h-11");
+    expect(link.querySelector("span.text-muted-foreground")?.textContent).toBe(
+      "befreundet seit 06.10.2026 · Gemeinsame Arten: unbekannt (noch nichts freigegeben)",
+    );
+    // The group is one flat list: the rows touch and a hairline separates them (no card per row).
+    expect(list.className).toContain("[&>li:first-child]:rounded-t-card");
+    expect(list.className).toContain("[&>li+li]:before:inset-x-4");
   });
 
   it("US-QS-14 the title sits on the page background like the other destinations, not inside a card", async () => {

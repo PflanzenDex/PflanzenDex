@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from "react-router";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { SharedSpecimen } from "@pflanzendex/core";
+import { createQueryClient } from "../../../shared/data";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { collectionTitle, FriendCollectionPage } from "./friend-collection";
 import table from "../../social.de.json";
 
@@ -332,5 +335,169 @@ describe("US-QS-14 · US-QS-15 a friend's collection is a sub-page with one page
   it("US-QS-15 the frame is one screen, so at a large text size only the content region scrolls (DS-61)", () => {
     show({ friend: { name: "Anna" }, cards: CARDS });
     expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
+  });
+});
+
+describe("US-QS-32 ending a friendship is in the menu of the friend's collection (US-SOZ-03)", () => {
+  beforeAll(() => {
+    Element.prototype.setPointerCapture ??= () => undefined;
+    Element.prototype.releasePointerCapture ??= () => undefined;
+  });
+  // A test that stubs the network state must not leak it into the next test, even when it fails.
+  afterEach(() => vi.restoreAllMocks());
+
+  /** A fake server: the collection and the devices read, and the end of the friendship answers `endStatus`. */
+  function endServer(endStatus = 200) {
+    const calls: { path: string; method: string }[] = [];
+    const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      calls.push({ path, method: init?.method ?? "GET" });
+      if (init?.method === "POST" && path === "/friends/f1/end")
+        return endStatus === 200
+          ? response(200, { status: "ended" })
+          : response(endStatus, { error: { code: "friend.not_found", text: "raw" } });
+      if (path.includes("/equipment/friends/")) return response(200, NO_DEVICES);
+      return response(200, { friend: { name: "Anna" }, cards: CARDS });
+    });
+    vi.stubGlobal("fetch", fetchFn);
+    return { calls };
+  }
+
+  /**
+   * Where the keeper ends up: the friends page shows the outcome as the hint of its address (P-10). `data-navigation` says
+   * how it was entered: "REPLACE" means the friend's page is not in the history any more.
+   */
+  function Landing() {
+    const location = useLocation();
+    const how = useNavigationType();
+    return (
+      <p data-navigation={how}>
+        Freunde-Startseite {(location.state as { hint?: string } | null)?.hint ?? ""}
+      </p>
+    );
+  }
+
+  /** The page at the friend's address with its own query client (the cache is read back) and, optionally, the announcer. */
+  function showAt(
+    options: { client?: ReturnType<typeof createQueryClient>; announcer?: boolean } = {},
+  ) {
+    const client = options.client ?? createQueryClient();
+    const page = (
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={["/friends/f1"]}>
+          <Routes>
+            <Route
+              path="/friends/:friendId"
+              element={<FriendCollectionPage api="http://api" token={token} friendId="f1" />}
+            />
+            <Route path="/friends" element={<Landing />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    return {
+      client,
+      ...render(options.announcer ? <AnnouncerProvider>{page}</AnnouncerProvider> : page),
+    };
+  }
+
+  it("US-QS-32 the top bar's 'Mehr' holds 'Freundschaft beenden' as a red menu action, and the body has no end button", async () => {
+    endServer();
+    showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    expect(screen.queryByRole("button", { name: /Freundschaft beenden/ })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    const item = screen.getByRole("menuitem", { name: "Freundschaft beenden" });
+    expect(item.className).toContain("text-destructive");
+  });
+
+  it("US-QS-32 the menu opens a question first; 'Abbrechen' ends nothing (US-SOZ-03, P-10)", async () => {
+    const { calls } = endServer();
+    showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    expect(await screen.findByText(/alle Freigaben gelten dann nicht mehr/)).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    expect(screen.queryByText(/alle Freigaben gelten dann nicht mehr/)).toBeNull();
+    expect(calls.some((c) => c.method === "POST")).toBe(false);
+  });
+
+  it("US-QS-32 'Ja, beenden' ends the friendship and the friends page says so (US-SOZ-03, P-10)", async () => {
+    const { calls } = endServer();
+    showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    expect(
+      await screen.findByText(/Freunde-Startseite Freundschaft mit Anna beendet/),
+    ).toBeTruthy();
+    expect(calls.find((c) => c.method === "POST")?.path).toBe("/friends/f1/end");
+    // The friend's page is replaced, so Back never returns to it with the question (US-QS-32).
+    expect(document.querySelector("[data-navigation]")?.getAttribute("data-navigation")).toBe(
+      "REPLACE",
+    );
+  });
+
+  it("US-QS-32 a refused end keeps the question on screen with its error and does not leave the page (P-10)", async () => {
+    endServer(404);
+    showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(screen.getByText(/alle Freigaben gelten dann nicht mehr/)).toBeTruthy();
+    expect(screen.queryByText(/Freunde-Startseite/)).toBeNull();
+    expect(screen.queryByText("raw")).toBeNull();
+  });
+
+  it("US-QS-32 Abbrechen returns the focus to the 'Mehr' trigger, not to the menu item that unmounted (WCAG 2.4.3)", async () => {
+    endServer();
+    showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    const more = screen.getByRole("button", { name: "Mehr" });
+    await userEvent.click(more);
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Abbrechen" }));
+    await waitFor(() => expect(document.activeElement).toBe(more));
+  });
+
+  it("US-QS-32 a friendship ended offline leaves the page at once; the write waits in the buffer and says so (US-QS-10)", async () => {
+    const { calls } = endServer();
+    const online = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    showAt({ announcer: true });
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    // The question is gone with the page: the friends page is shown, and the buffered state is said as text.
+    expect(await screen.findByText(/Freunde-Startseite/)).toBeTruthy();
+    // The note on screen and the polite announcement say the same text (US-QS-10).
+    expect(
+      (
+        await screen.findAllByText(
+          /Du bist offline\. Wird gesendet, sobald du wieder online bist: Freundschaft mit Anna beendet/,
+        )
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(calls.some((c) => c.method === "POST")).toBe(false);
+    online.mockRestore();
+  });
+
+  it("US-QS-32 a friendship that has ended drops the friend's cached collection and devices, so none of it shows again (P-05)", async () => {
+    endServer();
+    const { client } = showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    client.setQueryData(["social", "friend-equipment", "f1"], NO_DEVICES);
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    expect(
+      await screen.findByText(/Freunde-Startseite Freundschaft mit Anna beendet/),
+    ).toBeTruthy();
+    expect(client.getQueryData(["social", "friend-collection", "f1"])).toBeUndefined();
+    expect(client.getQueryData(["social", "friend-equipment", "f1"])).toBeUndefined();
   });
 });

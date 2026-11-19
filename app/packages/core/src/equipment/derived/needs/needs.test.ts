@@ -76,6 +76,19 @@ describe("US-EQU-07 what is missing, derived from own data", () => {
     }
   });
 
+  it("US-QS-32 each need names where its step is done: a device, a light zone, or nothing in the app for buying", async () => {
+    const s = setUp({ stock: { [Z2]: 4 }, wishZones: [Z3] });
+    const soil = await s.add("Substrate", "Erde");
+    await s.run(equipmentSetSupply({ equipment: s.equipment }), { id: soil, supply: "low" });
+    const timer = await s.add("Timer", "Timer A");
+    await s.run(equipmentSetStatus({ equipment: s.equipment }), { id: timer, status: "defective" });
+    const targets = new Map((await s.needs()).map((n) => [n.id, n.target]));
+    expect(targets.get(`supply:${soil}`)).toBeNull();
+    expect(targets.get(`replace:${timer}`)).toEqual({ kind: "device", id: timer });
+    expect(targets.get(`zone:${Z2}`)).toEqual({ kind: "zone", zoneId: Z2 });
+    expect(targets.get(`wish-zone:${Z3}`)).toEqual({ kind: "zone", zoneId: Z3 });
+  });
+
   it("US-EQU-07 a zone with specimens but no active lamp is listed; without specimens it is not", async () => {
     const s = setUp({ stock: { [Z2]: 4, [Z3]: 0 } });
     const list = await s.needs();

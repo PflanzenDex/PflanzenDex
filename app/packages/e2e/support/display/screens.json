@@ -1399,6 +1399,27 @@
     "route": "/friends/:friendId"
   },
   {
+    "id": "friend-end",
+    "account": "test2",
+    "path": "/friends?sheet=friends",
+    "steps": [
+      {
+        "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
+      },
+      {
+        "role": "button",
+        "name": "Mehr"
+      },
+      {
+        "role": "menuitem",
+        "name": "Freundschaft beenden"
+      }
+    ],
+    "layerFile": "social/pages/friend-collection/parts/friend-end/friend-end.tsx",
+    "title": "Freundschaft beenden",
+    "route": "/friends/:friendId"
+  },
+  {
     "id": "collection",
     "account": "test2",
     "path": "/collection",
