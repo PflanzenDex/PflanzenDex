@@ -8,7 +8,7 @@ import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/l
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Measurement } from "../../../specimens/cards/specimen-card/specimen-card";
-import { plantLayerId } from "../../rows/plant-tile/plant-tile";
+import { plantLayerId } from "@/shared/patterns/navigation/navigation/navigation";
 import type { Handlers, LayerProps, SlotRender } from "../layer-ids";
 import table from "../plant-layers.de.json";
 import { PlantCareTab } from "./plant-care-tab/plant-care-tab";

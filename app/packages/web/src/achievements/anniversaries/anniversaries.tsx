@@ -46,7 +46,7 @@ function Photo(props: { api: string; token: Token; photo: AnniversaryPhoto; labe
 
 /**
  * One anniversary: its row is the plant (US-ACH-06, SG-NAV-04). The whole row is the target and shows a chevron; it opens the
- * plant's layer in the Sammlung, the address the plant rows use (`plantAddress`). The photos stay below it.
+ * plant's layer in the Sammlung, the address the plant rows use (`plantAddress`). The photos stay below it. Archived plants are left out of the anniversaries (core); a plant archived since the list loaded is read by its address like any direct link, so the layer shows the plant or its error, never nothing (FR-BES-23, P-10).
  */
 function Entry(props: { api: string; token: Token; item: AnniversaryItem }) {
   const { item } = props;

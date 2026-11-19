@@ -9,14 +9,13 @@ import { RequestState } from "@/shared/patterns/states/request-state/request-sta
 import { localToday, type TodayList } from "@pflanzendex/core";
 import type { ReactNode } from "react";
 import { currentTimeZone, type Request } from "../../../shared/data";
-import { isTreatment, TodayRow, type TodayDestination } from "../today-row/today-row";
+import { isTreatment, TodayRow } from "../today-row/today-row";
+import type { TodayDestination } from "../../today-destinations";
 import { NowSkeleton } from "../today-skeleton/today-skeleton";
 import table from "../../today.de.json";
 
 const t = texts(table);
 const plural = plurals(table);
-
-export type { TodayDestination };
 
 /**
  * Rows per page of the further tasks below the tiles and in the layer `?sheet=tasks` (starting values, assumption;
@@ -38,24 +37,16 @@ function Content(props: {
   const { list } = props;
   const [first] = list.items;
   const today = localToday(new Date(), currentTimeZone());
+  // The "Stand" line is left out on the day of the list: it would only repeat "heute" (US-QS-32).
+  const stand = list.date === today ? undefined : summaryDate(list.date, today);
   return (
     <>
       {first ? (
         isTreatment(first) && props.treatmentsEntry ? (
-          <TodayRow
-            item={first}
-            // The "Stand" line is left out on the day of the list: it would only repeat "heute" (US-QS-32).
-            {...(list.date === today ? {} : { date: summaryDate(list.date, today) })}
-            onOpen={props.onOpen}
-            action={props.treatmentsEntry}
-          />
+          <TodayRow item={first} date={stand} treatmentEntry={props.treatmentsEntry} />
         ) : (
           <GroupedList>
-            <TodayRow
-              item={first}
-              {...(list.date === today ? {} : { date: summaryDate(list.date, today) })}
-              onOpen={props.onOpen}
-            />
+            <TodayRow item={first} date={stand} />
           </GroupedList>
         )
       ) : (
@@ -73,7 +64,6 @@ function Content(props: {
 /** The further tasks of the day, treatments excluded: one pager, in the page below the tiles or in the layer. */
 export function FurtherTasks(props: {
   list: TodayList;
-  onOpen: (d: TodayDestination) => void;
   param?: PagerPart;
   /** The page takes the free height below the tiles (the page, not the layer). */
   fit?: boolean;
@@ -92,13 +82,13 @@ export function FurtherTasks(props: {
       listClassName={props.fit ? `${ROW_GROUP} [contain:size]` : ROW_GROUP}
       getKey={(item) => item.id}
       {...(props.param ? { param: props.param } : {})}
-      renderItem={(item) => <TodayRow item={item} onOpen={props.onOpen} bare />}
+      renderItem={(item) => <TodayRow item={item} bare />}
     />
   );
 }
 
 /** What stands below the tiles: the further tasks inline and the later treatments in small text (US-QS-18). */
-export function Below(props: { list: TodayList; onOpen: (d: TodayDestination) => void }) {
+export function Below(props: { list: TodayList }) {
   const { list } = props;
   const [first] = list.items;
   const rest = list.items.slice(1).filter((item) => !isTreatment(item));
@@ -111,7 +101,7 @@ export function Below(props: { list: TodayList; onOpen: (d: TodayDestination) =>
           <h2 id="tasks-title" className="text-sm font-semibold">
             {t("tasks.title")}
           </h2>
-          <FurtherTasks list={list} onOpen={props.onOpen} fit />
+          <FurtherTasks list={list} fit />
         </section>
       )}
       {first && list.upcoming > 0 && (

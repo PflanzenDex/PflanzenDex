@@ -11,7 +11,7 @@ import { useObjectPhoto } from "@/shared/lists/object-row/use-object-photo";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { plantLayerId } from "@/collection";
+import { plantLayerId } from "@/shared/patterns/navigation/navigation/navigation";
 import { PHASE_TEXT, locationText, nextChangeText } from "../../../shared/text";
 import { needsSwitch, switchedText } from "../../phase-groups";
 import table from "../phases-list.de.json";

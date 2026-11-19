@@ -9,21 +9,17 @@ import { markFertilized, markWatered } from "@/monitoring";
 import { call, useFeature, useInvalidate, useRequest, useWriteAction } from "@/shared/data";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
+import { PATHS, plantAddress } from "@/shared/patterns/navigation/navigation/navigation";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { Button } from "@/shared/ui/button/button";
-import { plantLayerId } from "../../plants-screen/rows/plant-tile/plant-tile";
 import table from "./pot-label-page.de.json";
 import { LastFertilized } from "./last-fertilized/last-fertilized";
 import { PotLabelSkeleton } from "./pot-label-page.skeleton";
 
 type Token = () => Promise<string | undefined>;
 const ui = texts(table);
-
-/** The normal view of the plant: its layer in the plants of the Sammlung (US-QS-19). */
-const plantAddress = (id: string) => `${PATHS.collection}?view=plants&sheet=${plantLayerId(id)}`;
 
 const loadSpecimen = (api: string, token: string, id: string) =>
   call<Specimen>(fetch, `${api}/specimens/${encodeURIComponent(id)}`, token);

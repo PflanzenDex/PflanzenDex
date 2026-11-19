@@ -1,41 +1,50 @@
-// The classes of one flat group of rows (US-QS-32, SG-SHAPE-03, FX-35): one rounded group on the card colour with no border
-// of its own and no shadow (the forced-colors border keeps its boundary), and a hairline between two rows that never sits
-// above the first one. A plant list or the rows of one phase is one such group (SG-LIST-06): no group inside a group.
+// The classes of the flat groups of rows (US-QS-32, SG-SHAPE-03, FX-35, FX-06): one rounded group on the card colour with no
+// shadow and no group inside a group (SG-SHAPE-06). The group keeps its boundary in forced colors.
+//
+// A group of a pager (a list that pages by the free height, `flex-1` in fit mode) is a transparent list that stretches to
+// the height it measures: the card and the rounded corners move onto its rows. The first row is rounded at the top, the last
+// one at the bottom, and a hairline separates two rows. A short list ends after its last row; the list itself stays as tall as
+// the page allows, so the pager still measures the room it has (issue 1413).
 
 export const GROUP =
   "m-0 flex list-none flex-col overflow-hidden rounded-card border border-transparent bg-card p-0 text-card-foreground forced-colors:border-[CanvasText]";
 
-/** A group that is a list of its own (a pager's list): its rows touch, the hairline separates them. */
-export const GROUP_LIST = `${GROUP} gap-0`;
-
-/** The hairline between two rows of a group, from the text's left edge to the right edge. */
+/** The HAIRLINE between two rows of a group, from the text's left edge to the right edge (SG-SHAPE-07). */
 export const HAIRLINE =
   "relative before:absolute before:inset-x-4 before:top-0 before:h-px before:bg-border before:content-[''] first:before:hidden";
 
-/**
- * The object rows of one group (a list of its own): the hairline between two rows starts at the text, after the 56 px
- * thumbnail (8 + 56 + 8 px). The child selectors draw it on the rows the list holds, so a pager needs no class per row.
- */
-const OBJECT_HAIRLINE_ON_ROWS =
-  "[&>li]:relative [&>li+li]:before:absolute [&>li+li]:before:left-[72px] [&>li+li]:before:right-2 [&>li+li]:before:top-0 [&>li+li]:before:h-px [&>li+li]:before:bg-border [&>li+li]:before:content-['']";
+/** The list of a pager: transparent, no gap, and no `flex-none`, so the `flex-1` of a fitting pager stays (issue 1413). */
+const PAGER_LIST = "m-0 flex list-none flex-col gap-0 p-0 text-card-foreground";
 
 /**
- * One group of object rows: a flat list with a hairline between its rows and none above the first. `flex-none` wins over
- * the `flex-1` of a fitting pager list, so a short list ends after its last row instead of stretching the group into an
- * empty card down to the pager.
+ * The rows of a pager's list carry the group's look: each row is a card-coloured piece that clips its hover colour to the
+ * corners; the first row is rounded at the top, the last at the bottom. The forced-colors boundary runs left and right on
+ * every row, and at the top of the first and the bottom of the last, so the group keeps its edge.
  */
-export const OBJECT_GROUP = `${GROUP_LIST} ${OBJECT_HAIRLINE_ON_ROWS} flex-none`;
+const ROWS_OF_GROUP =
+  "[&>li]:relative [&>li]:overflow-hidden [&>li]:bg-card [&>li]:text-card-foreground [&>li]:border-x [&>li]:border-transparent [&>li]:forced-colors:border-x-[CanvasText] [&>li:first-child]:rounded-t-card [&>li:first-child]:border-t [&>li:first-child]:forced-colors:border-t-[CanvasText] [&>li:last-child]:rounded-b-card [&>li:last-child]:border-b [&>li:last-child]:forced-colors:border-b-[CanvasText]";
 
 /**
- * The hairline between the bare rows of a list of its own (a pager's list, FX-06): it starts at the text's left edge, 16 px
- * (SG-SHAPE-07), so a row's title lines up with the hairline. The child selectors draw it on the rows the list holds.
+ * The hairline between two rows of a pager's list: the before pseudo-element of every row after the first, across the classes
+ * `inset` names (its left and right, or its inset). The child selectors draw it on the rows the list holds, so a pager needs no
+ * class per row.
  */
-const ROW_HAIRLINE_ON_ROWS =
-  "[&>li]:relative [&>li+li]:before:absolute [&>li+li]:before:inset-x-4 [&>li+li]:before:top-0 [&>li+li]:before:h-px [&>li+li]:before:bg-border [&>li+li]:before:content-['']";
+function hairlineOnRows(inset: readonly string[]): string {
+  const sides = inset.map((c) => `[&>li+li]:before:${c}`).join(" ");
+  return `[&>li+li]:before:absolute ${sides} [&>li+li]:before:top-0 [&>li+li]:before:h-px [&>li+li]:before:bg-border [&>li+li]:before:content-['']`;
+}
+
+/** The hairline of object rows starts after the 56 px thumbnail (8 + 56 + 8 px), so the title lines up with it. */
+const OBJECT_HAIRLINE = hairlineOnRows(["left-[72px]", "right-2"]);
+
+/** The hairline of settings and task rows starts at the text's left edge, 16 px (SG-SHAPE-07). */
+const ROW_HAIRLINE = hairlineOnRows(["inset-x-4"]);
+
+/** One group of object rows (SG-LIST-03): a plant list in a pager, with the card on its rows and a hairline between them. */
+export const OBJECT_GROUP = `${PAGER_LIST} ${ROWS_OF_GROUP} ${OBJECT_HAIRLINE}`;
 
 /**
- * One group of navigating or acting rows in a pager (a task list, a list of zones or locations; US-QS-32, SG-SHAPE-03): a
- * flat list with a hairline between its rows and none above the first. Its rows are `GroupedRow`s with `bare`, because the
- * list wraps each one. `flex-none` as in `OBJECT_GROUP`: a short list ends after its last row.
+ * One group of navigating or acting rows in a pager (a task list, a list of zones or locations; FX-06, SG-SHAPE-03). Its rows
+ * are `GroupedRow`s with `bare`, because the list wraps each one.
  */
-export const ROW_GROUP = `${GROUP_LIST} ${ROW_HAIRLINE_ON_ROWS} flex-none`;
+export const ROW_GROUP = `${PAGER_LIST} ${ROWS_OF_GROUP} ${ROW_HAIRLINE}`;

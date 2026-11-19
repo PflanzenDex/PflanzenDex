@@ -153,8 +153,11 @@ describe("US-QS-19 tiles of the plants", () => {
     const items = plantItems();
     const group = items[0]?.parentElement;
     expect(group?.className).toContain("flex-col");
-    expect(group?.className).toContain("bg-card");
-    expect(group?.className).toContain("rounded-card");
+    // The list is transparent and stretches (flex-1 of the fitting pager, issue 1413); the card is on each row.
+    expect(group?.className.split(" ")).not.toContain("bg-card");
+    expect(group?.className).toContain("flex-1");
+    expect(group?.className).toContain("[&>li]:bg-card");
+    expect(group?.className).toContain("[&>li:first-child]:rounded-t-card");
     expect(group?.className).toContain("gap-0");
     expect(group?.className).not.toMatch(/\bgrid\b|grid-cols|shadow/);
     // The rows of the group are separated by a hairline between two rows (never above the first one), inset to the text.

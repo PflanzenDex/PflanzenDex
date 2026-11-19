@@ -101,7 +101,12 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     expect(screen.getByRole("link", { name: /^Abweichung „Efeu“/ })).toBeTruthy();
     expect(screen.getByText("2 Termine später")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: /^10\s+Tage überfällig „Aloe“/ }));
-    expect(onOpen).toHaveBeenCalledWith("treatments");
+    // The row opens its layer in place: it says so, and the layer's address is set (US-QS-15).
+    expect(
+      screen
+        .getByRole("button", { name: /^10\s+Tage überfällig „Aloe“/ })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
   });
 
   it("US-QS-18 · TE-07 P-09 the further items open as a layer by address, each with its state word and its way", async () => {
