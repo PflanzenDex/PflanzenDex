@@ -246,7 +246,9 @@ describe("US-LIC-02 collection page shows the distribution", () => {
       }),
     );
     render(page());
-    await userEvent.click(await screen.findByRole("button", { name: /Am leersten: Zone 3/ }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: /^Lichtzonen Zone 3, Zone 4 am leersten/ }),
+    );
     expect(
       await screen.findByRole("heading", { name: "Verteilung auf die Lichtzonen" }),
     ).toBeTruthy();

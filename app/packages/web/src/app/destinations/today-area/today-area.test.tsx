@@ -458,15 +458,15 @@ describe("US-QS-18 Heute fits one screen", () => {
     expect(address()).toBe("/today?sheet=treatments");
   });
 
-  it("US-QS-18 · TE-07 the other actions of Jetzt dran still open their view", async () => {
+  it("US-QS-32 · TE-07 the other actions of Jetzt dran are links to their view", async () => {
     fakeServer({
       items: [{ ...todayItem, id: "p", kind: "phase_deviation", target: "care_phases" }],
     });
     const open = vi.fn();
-    const user = userEvent.setup();
     show("/today", open);
-    await user.click(await screen.findByRole("button", { name: "Zu Pflegephasen: Aloe" }));
-    expect(open).toHaveBeenCalledWith("carePhases");
+    const link = await screen.findByRole("link", { name: /^Abweichung/ });
+    expect(link.getAttribute("href")).toBe("/collection?view=plants&group=phase");
+    expect(open).not.toHaveBeenCalled();
   });
 
   it("US-QS-18 nothing open says so with the next step, and the tiles stay", async () => {
@@ -576,13 +576,7 @@ describe("US-QS-18 Heute stays one column, with or without an anniversary", () =
                 tile: (draw) => (
                   <AnniversaryTile api="http://api" token={async () => "tok"} tile={draw} />
                 ),
-                layer: (
-                  <AnniversaryLayer
-                    api="http://api"
-                    token={async () => "tok"}
-                    onOpen={() => undefined}
-                  />
-                ),
+                layer: <AnniversaryLayer api="http://api" token={async () => "tok"} />,
               },
             ]}
           />

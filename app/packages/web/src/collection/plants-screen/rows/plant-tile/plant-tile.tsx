@@ -3,15 +3,13 @@ import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { useObjectPhoto } from "@/shared/lists/object-row/use-object-photo";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { plantLayerId } from "@/shared/patterns/navigation/navigation/navigation";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { UNKNOWN } from "../../../specimens/model/text";
 import table from "./plant-tile.de.json";
 
 const ui = texts(table);
-
-/** The layer of one plant is named after the plant: `?sheet=plant-<id>` (US-QS-19). */
-export const plantLayerId = (id: string): string => `plant-${id}`;
 
 /** The one state a tile shows (US-QS-19): an open treatment first, then the quality of the last measurement. */
 export function tileState(card: SpecimenCard): { text: string; attention: boolean } {

@@ -27,7 +27,7 @@ describe("US-QS-14 · page story Heute", () => {
       await screen.findByRole("button", { name: /^Behandlungen 2 · 1.überfällig$/ }),
     ).toBeTruthy();
     expect(screen.getAllByRole("button", { name: /Behandlungen/ })).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Zu Pflegephasen: Efeu" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Efeu/ })).toBeTruthy();
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
   });
 

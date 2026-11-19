@@ -1,5 +1,15 @@
 {
   "tile.label.one": "Jubiläum",
   "tile.label.other": "Jubiläen",
-  "layer.title": "Jubiläen"
+  "layer.title": "Jubiläen",
+  "time.halfYear": "ein halbes Jahr",
+  "time.year": "1 Jahr",
+  "time.years": "{years} Jahre",
+  "entry.sentence": "„{name}“ ist {time} bei dir.",
+  "entry.meta": "Jubiläum · Seit dem {date}.",
+  "photos": "Fotos",
+  "photo.first": "Erstes Foto",
+  "photo.latest": "Neuestes Foto",
+  "photo.alt": "{label} vom {date}",
+  "photo.caption": "{label}, {date}"
 }

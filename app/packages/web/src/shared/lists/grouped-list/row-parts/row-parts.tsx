@@ -15,6 +15,8 @@ export type RowContentProps = {
   trailing: ReactNode;
   current: boolean;
   destructive: boolean;
+  /** The amber row of the most urgent item: its meta line and chevron take the warning text colour. */
+  warning: boolean;
   chevron: boolean;
   object: boolean;
 };
@@ -45,7 +47,8 @@ export function RowContent(props: RowContentProps) {
             {" "}
             <span
               className={cn(
-                "text-sm text-muted-foreground [overflow-wrap:anywhere]",
+                "text-sm [overflow-wrap:anywhere]",
+                !props.warning && "text-muted-foreground",
                 props.object && OBJECT_META,
               )}
             >
@@ -63,7 +66,13 @@ export function RowContent(props: RowContentProps) {
         </>
       )}
       {props.chevron && (
-        <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+        <ChevronRight
+          aria-hidden="true"
+          className={cn(
+            "size-4 shrink-0",
+            props.warning ? "text-warning-foreground" : "text-muted-foreground",
+          )}
+        />
       )}
     </>
   );
