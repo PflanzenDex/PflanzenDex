@@ -600,7 +600,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(within(layer).getByText(/Noch unbekannt: Hersteller und Modell/)).toBeTruthy();
   });
 
-  it("US-QS-32 · SG-COLOR-04 a defective device shows an amber 'Defekt' badge beside its name; an active one shows no 'Aktiv'; 'Ausgemustert' is a neutral badge", async () => {
+  it("US-QS-32 · SG-COLOR-04 a defective device shows an amber 'Defekt' badge beside its name; an active one shows no 'Aktiv'; 'Ausgemustert' leads the meta line, with no badge", async () => {
     fakeServer([
       item({ id: "e1", name: "Lampe defekt", status: "defective" }),
       item({ id: "e2", name: "Lampe aktiv", status: "active" }),
@@ -613,23 +613,26 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(active.textContent).not.toContain("Aktiv");
     expect(active.textContent).not.toContain("Defekt");
     const retired = screen.getByRole("button", { name: /Lampe alt/ });
-    expect(retired.textContent).toMatch(/Ausgemustert$/);
+    // The retirement is plain muted text at the head of the meta line, so the row has no trailing badge at all.
+    expect(within(retired).getByText("Ausgemustert · Lampe · Lichtzone fehlt")).toBeTruthy();
+    expect(within(retired).queryByText("Ausgemustert")).toBeNull();
     expect(retired.querySelector(".bg-warning")).toBeNull();
-    // The state is the trailing badge, outlined as an ended state (SG-COLOR-01), and the facts line keeps no state.
-    expect(within(retired).getByText("Ausgemustert").className).toContain("border-border");
-    expect(within(retired).getByText("Lampe · Lichtzone fehlt")).toBeTruthy();
+    expect(retired.textContent).toMatch(/Lichtzone fehlt$/);
   });
 
-  it("US-QS-32 · P-10 'Ausgemustert' is the trailing element of its row, never cut off in the facts line that truncates", async () => {
+  it("US-QS-32 · P-10 'Ausgemustert' leads the meta line as plain muted text; no trailing badge is left to squeeze the name", async () => {
     fakeServer([item({ id: "e3", name: "Lampe alt", status: "retired" })]);
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
     const row = await screen.findByRole("button", { name: /Lampe alt/ });
-    const facts = within(row).getByText("Lampe · Lichtzone fehlt");
-    expect(facts.className.split(" ")).toContain("truncate");
-    expect(facts.textContent).not.toContain("Ausgemustert");
-    const badge = within(row).getByText("Ausgemustert");
-    expect(badge.parentElement?.className.split(" ")).toContain("max-w-[60%]");
-    expect(row.textContent?.endsWith("Ausgemustert")).toBe(true);
+    const meta = within(row).getByText("Ausgemustert · Lampe · Lichtzone fehlt");
+    expect(meta.className.split(" ")).toEqual(
+      expect.arrayContaining(["truncate", "text-muted-foreground"]),
+    );
+    expect(meta.className.split(" ")).not.toContain("max-w-[60%]");
+    expect(meta.parentElement?.className.split(" ")).not.toContain("max-w-[60%]");
+    // Only the name and the meta line are in the row's text: nothing trails them but the chevron.
+    expect(row.textContent).toBe("Lampe alt Ausgemustert · Lampe · Lichtzone fehlt");
+    expect(row.querySelectorAll("svg")).toHaveLength(2);
   });
 
   it.each([360, 1440])(

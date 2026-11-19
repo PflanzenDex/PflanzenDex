@@ -22,27 +22,27 @@ const ITEM_PREFIX = "item-";
 const t = texts(table);
 
 /**
- * The state of a record at the trailing edge (US-QS-32): a defect is the amber badge, a retirement the neutral one, and
- * "Aktiv" is the normal state and shows nothing (SG-COLOR-01, SG-COLOR-04, SG-LIST-03). It is not in the facts line, which
- * truncates, so a retirement cannot be cut off there (P-10).
+ * The trailing badge of a record (US-QS-32, SG-COLOR-04, SG-LIST-03): only a defect has one, the amber warning. A retirement
+ * leads the meta line instead (see ItemRow), as plain muted text, so no badge can squeeze the name at a large text size;
+ * "Aktiv" is the normal state and shows nothing.
  */
-function statusOf(status: EquipmentRow["status"]) {
+function defectBadge(status: EquipmentRow["status"]) {
   if (status === DEFECTIVE_STATUS)
     return <Badge variant="warning">{STATUS_LABELS.defective}</Badge>;
-  if (status === RETIRED_STATUS) return <Badge variant="outline">{STATUS_LABELS.retired}</Badge>;
   return undefined;
 }
 
 /**
  * One record as an object row (name, kind, zone or pot size, state); the full record opens as a layer (US-QS-22, US-QS-32,
- * FX-35 step 5). Items have no photo: the drawn placeholder stands in the thumbnail. The state is the row's one trailing
- * element (see statusOf).
+ * FX-35 step 5). Items have no photo: the drawn placeholder stands in the thumbnail. A retirement leads the meta line
+ * ("Ausgemustert · Lampe · …"), so it is never the part that truncates (P-10); a defect is the row's one trailing badge.
  */
 export function ItemRow(props: { item: EquipmentRow; zone: string | undefined }) {
   const { item, zone } = props;
   const sheet = ITEM_PREFIX + item.id;
   const { openLayer, open } = useLayer(sheet);
   const facts = [
+    item.status === RETIRED_STATUS ? STATUS_LABELS.retired : null,
     TYPE_LABELS[item.type],
     item.type === LAMP_TYPE ? (zone ?? t("zone.missing")) : null,
     item.type === POT_TYPE
@@ -56,7 +56,7 @@ export function ItemRow(props: { item: EquipmentRow; zone: string | undefined })
       id={`row-${sheet}`}
       title={item.name}
       meta={facts.join(" · ")}
-      trailing={statusOf(item.status)}
+      trailing={defectBadge(item.status)}
       haspopup="dialog"
       expanded={open}
       onClick={(e) => openLayer(e.currentTarget)}
