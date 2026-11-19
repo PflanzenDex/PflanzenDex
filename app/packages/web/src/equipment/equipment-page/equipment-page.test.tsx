@@ -9,6 +9,7 @@ import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toa
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { EquipmentPage } from "./equipment-page";
+import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 // The toast of an undo needs the provider of the app shell above the page (US-QS-07). The page sits in the frame of
@@ -599,7 +600,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(within(layer).getByText(/Noch unbekannt: Hersteller und Modell/)).toBeTruthy();
   });
 
-  it("US-QS-32 · SG-COLOR-04 a defective device shows an amber 'Defekt' badge beside its name; an active one shows no 'Aktiv'; 'Ausgemustert' is neutral text", async () => {
+  it("US-QS-32 · SG-COLOR-04 a defective device shows an amber 'Defekt' badge beside its name; an active one shows no 'Aktiv'; 'Ausgemustert' is a neutral badge", async () => {
     fakeServer([
       item({ id: "e1", name: "Lampe defekt", status: "defective" }),
       item({ id: "e2", name: "Lampe aktiv", status: "active" }),
@@ -614,6 +615,21 @@ describe("US-QS-22 the equipment fits one screen", () => {
     const retired = screen.getByRole("button", { name: /Lampe alt/ });
     expect(retired.textContent).toMatch(/Ausgemustert$/);
     expect(retired.querySelector(".bg-warning")).toBeNull();
+    // The state is the trailing badge, outlined as an ended state (SG-COLOR-01), and the facts line keeps no state.
+    expect(within(retired).getByText("Ausgemustert").className).toContain("border-border");
+    expect(within(retired).getByText("Lampe · Lichtzone fehlt")).toBeTruthy();
+  });
+
+  it("US-QS-32 · P-10 'Ausgemustert' is the trailing element of its row, never cut off in the facts line that truncates", async () => {
+    fakeServer([item({ id: "e3", name: "Lampe alt", status: "retired" })]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    const row = await screen.findByRole("button", { name: /Lampe alt/ });
+    const facts = within(row).getByText("Lampe · Lichtzone fehlt");
+    expect(facts.className.split(" ")).toContain("truncate");
+    expect(facts.textContent).not.toContain("Ausgemustert");
+    const badge = within(row).getByText("Ausgemustert");
+    expect(badge.parentElement?.className.split(" ")).toContain("max-w-[60%]");
+    expect(row.textContent?.endsWith("Ausgemustert")).toBe(true);
   });
 
   it.each([360, 1440])(
@@ -891,5 +907,20 @@ describe("US-QS-32 the equipment rows are flat grouped rows (FX-35, SG-LIST-03, 
     expect(row.getAttribute("aria-haspopup")).toBe("dialog");
     await userEvent.click(row);
     expect(await screen.findByRole("dialog", { name: "Lampe defekt" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 · DS-52 the placeholder of the equipment has the shape of the loaded page", () => {
+  it("US-QS-32 · DS-52 one block of the default button (44 px, the full width) and the six parts; no help line", () => {
+    const { container } = render(<EquipmentPageSkeleton label="Geräte werden geladen …" />);
+    const status = container.querySelector("[role=status]") as HTMLElement;
+    const blocks = Array.from(status.children).filter((el) => el.tagName === "DIV");
+    // The one block is the button of the page (Body: "Gerät erfassen", min-h 44 px, the column width); the list follows it.
+    expect(blocks).toHaveLength(1);
+    const button = blocks[0] as HTMLElement;
+    expect(button.className.split(" ")).toEqual(expect.arrayContaining(["h-11", "w-full"]));
+    expect(button.className).not.toContain("w-40");
+    expect(status.querySelector(".h-10")).toBeNull();
+    expect(status.querySelectorAll("li")).toHaveLength(6);
   });
 });

@@ -212,3 +212,39 @@ describe("US-WUN-05 · US-QS-32 the question of 'Verwerfen' has the row's width"
     expect(screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" })).toBeTruthy();
   });
 });
+
+describe("US-QS-32 the name keeps its width at 200 % text (FX-35 step 5)", () => {
+  it("US-QS-32 the row keeps 18 rem: at 200 % text it is wider than the list and scrolls sideways in its own wrapper, not squeezed", () => {
+    const { container } = show();
+    const wrapper = container.querySelector('[data-scroll-x="row"]') as HTMLElement;
+    expect(wrapper.className.split(" ")).toContain("overflow-x-auto");
+    const keep = wrapper.firstElementChild as HTMLElement;
+    expect(keep.className.split(" ")).toContain("min-w-[18rem]");
+    expect(keep.contains(screen.getByRole("button", { name: /^1\. Aloe/ }))).toBe(true);
+  });
+});
+
+describe("US-WUN-05 · US-QS-32 the focus follows the question of 'Verwerfen' (WCAG 2.4.3)", () => {
+  it("US-WUN-05 · US-QS-32 Verwerfen moves the focus to 'Ja, verwerfen' when the question opens, not to the body", async () => {
+    show();
+    await userEvent.click(screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" }));
+    const yes = screen.getByRole("button", { name: "Ja, verwerfen: Aloe (Aloe vera)" });
+    await waitFor(() => expect(document.activeElement).toBe(yes));
+  });
+
+  it("US-WUN-05 · US-QS-32 Abbrechen gives the focus back to the 'Verwerfen' button of the row", async () => {
+    show();
+    await userEvent.click(screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" }));
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    const trigger = screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" });
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+  });
+
+  it("US-WUN-05 · US-QS-32 from the keyboard: Enter on 'Verwerfen' opens the question with the focus on 'Ja, verwerfen'", async () => {
+    show();
+    screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" }).focus();
+    await userEvent.keyboard("{Enter}");
+    const yes = screen.getByRole("button", { name: "Ja, verwerfen: Aloe (Aloe vera)" });
+    await waitFor(() => expect(document.activeElement).toBe(yes));
+  });
+});

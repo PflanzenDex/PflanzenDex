@@ -349,3 +349,19 @@ describe("US-QS-32 the candidate card names a species the SG-TYPE-08 way (F-0067
     expect(screen.getAllByText("Ficus lyrata")).toHaveLength(1);
   });
 });
+
+describe("US-WUN-05 the card's own 'Verwerfen' asks in its place and gives the focus back (WCAG 2.4.3)", () => {
+  afterEach(cleanup);
+
+  it("US-WUN-05 Verwerfen opens the question in the card, the focus moves to 'Ja, verwerfen', Abbrechen returns it and writes nothing", async () => {
+    const onDiscard = vi.fn();
+    render(<CandidateCard c={mockCandidate()} rank={1} onDiscard={onDiscard} />);
+    await userEvent.click(screen.getByRole("button", { name: /^Verwerfen: / }));
+    const yes = screen.getByRole("button", { name: /^Ja, verwerfen: / });
+    await waitFor(() => expect(document.activeElement).toBe(yes));
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    const trigger = screen.getByRole("button", { name: /^Verwerfen: / });
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+    expect(onDiscard).not.toHaveBeenCalled();
+  });
+});

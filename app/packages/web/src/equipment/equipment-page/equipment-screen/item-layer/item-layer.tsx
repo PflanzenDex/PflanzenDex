@@ -22,10 +22,21 @@ const ITEM_PREFIX = "item-";
 const t = texts(table);
 
 /**
+ * The state of a record at the trailing edge (US-QS-32): a defect is the amber badge, a retirement the neutral one, and
+ * "Aktiv" is the normal state and shows nothing (SG-COLOR-01, SG-COLOR-04, SG-LIST-03). It is not in the facts line, which
+ * truncates, so a retirement cannot be cut off there (P-10).
+ */
+function statusOf(status: EquipmentRow["status"]) {
+  if (status === DEFECTIVE_STATUS)
+    return <Badge variant="warning">{STATUS_LABELS.defective}</Badge>;
+  if (status === RETIRED_STATUS) return <Badge variant="outline">{STATUS_LABELS.retired}</Badge>;
+  return undefined;
+}
+
+/**
  * One record as an object row (name, kind, zone or pot size, state); the full record opens as a layer (US-QS-22, US-QS-32,
- * FX-35 step 5). Items have no photo: the drawn placeholder stands in the thumbnail. "Aktiv" is the normal state and not
- * shown. A defect is the amber badge at the trailing edge (SG-COLOR-04, SG-LIST-03); "Ausgemustert" is plain text at the end
- * of the facts line.
+ * FX-35 step 5). Items have no photo: the drawn placeholder stands in the thumbnail. The state is the row's one trailing
+ * element (see statusOf).
  */
 export function ItemRow(props: { item: EquipmentRow; zone: string | undefined }) {
   const { item, zone } = props;
@@ -39,18 +50,13 @@ export function ItemRow(props: { item: EquipmentRow; zone: string | undefined })
         ? t("pot.sizeUnknown")
         : withUnit(item.diameterCm, "cm")
       : null,
-    item.status === RETIRED_STATUS ? STATUS_LABELS.retired : null,
   ].filter(Boolean);
   return (
     <ObjectRow
       id={`row-${sheet}`}
       title={item.name}
       meta={facts.join(" · ")}
-      trailing={
-        item.status === DEFECTIVE_STATUS ? (
-          <Badge variant="warning">{STATUS_LABELS.defective}</Badge>
-        ) : undefined
-      }
+      trailing={statusOf(item.status)}
       haspopup="dialog"
       expanded={open}
       onClick={(e) => openLayer(e.currentTarget)}

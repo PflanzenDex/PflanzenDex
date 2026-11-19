@@ -24,20 +24,17 @@ const BESIDE_THE_NAME = "hidden @min-[18rem]:inline";
 const UNDER_THE_NAME = "@min-[18rem]:hidden";
 
 /**
- * GroupedRow always renders its trailing and its meta wrapper, and a flex gap is spent on each wrapper even when the copy
- * inside is hidden. The empty trailing wrapper below 18 rem costs one gap (24 px at 200 % text), which narrowed the name of
- * "Lampen und Zonen" by a third line; the empty meta wrapper from 18 rem costs 2 px per row at 100 %. So the wrapper of the
- * copy a width hides is hidden too: the trailing one below 18 rem, the meta one from 18 rem. The selectors follow the markup
- * of GroupedRow (a button in the `li`, its name column, the trailing wrapper before the chevron); they reach only the rows
- * of this list.
+ * The list is the size container (`@container`) of its rows, so the width of a row decides which copy shows. GroupedRow keeps
+ * the wrapper of the hidden copy, and its empty flex gap stays: 2 px per row at 100 % text and 24 px of the name's width at
+ * 200 % text. Accepted (US-QS-32).
  */
-const LIST =
-  "@container @max-[18rem]:[&_li>*>span:nth-last-child(2)]:hidden @min-[18rem]:[&_li>*>span:first-child>span:last-child]:hidden";
+const LIST = "@container";
 
 /**
  * One part of the equipment as one row of the flat grouped list (US-QS-22, US-QS-32, FX-35 step 5): its name, its count or
  * value, and a chevron. Choosing it opens its layer. A view, not an object, so it has no thumbnail. The width of the row
- * decides the shape (the `@container` of the list), so the value never squeezes the name (see BESIDE_THE_NAME).
+ * decides the shape (the `@container` of the list), so the value does not sit beside a name that is too narrow for it (see
+ * BESIDE_THE_NAME).
  */
 function Part(props: { id: string; name: string; info: string }) {
   const { openLayer, open } = useLayer(props.id);

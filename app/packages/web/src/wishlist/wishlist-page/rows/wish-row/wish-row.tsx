@@ -1,4 +1,4 @@
-import { useState } from "react";
+import type { Ref } from "react";
 import type { Candidate } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
@@ -8,7 +8,11 @@ import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { germanNameOf } from "@/shared/species-name/species-name";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LEVELS, UNKNOWN } from "../../../candidate-card/candidate-card";
-import { Discard } from "../../../candidate-card/discard/discard";
+import {
+  DiscardQuestion,
+  DiscardTrigger,
+  useDiscardQuestion,
+} from "../../../candidate-card/discard/discard";
 import { isPlainHttps } from "../../../schemas";
 import table from "../../../wishlist.de.json";
 
@@ -60,9 +64,9 @@ function WishActions(props: {
   c: Candidate;
   busy: boolean;
   onBuy: (c: Candidate) => void;
-  onDiscard: (c: Candidate) => void;
   asking: boolean;
-  onAsking: (asking: boolean) => void;
+  onAsk: () => void;
+  trigger: Ref<HTMLButtonElement>;
 }) {
   const { c, busy } = props;
   return (
@@ -78,14 +82,7 @@ function WishActions(props: {
         {t("card.buy")}
       </Button>
       {props.asking ? null : (
-        <Discard
-          c={c}
-          onDiscard={props.onDiscard}
-          busy={busy}
-          compact
-          asking={false}
-          onAsking={props.onAsking}
-        />
+        <DiscardTrigger c={c} busy={busy} compact onAsk={props.onAsk} triggerRef={props.trigger} />
       )}
     </div>
   );
@@ -109,37 +106,39 @@ export function WishRow(props: {
   const { c, rank, access } = props;
   const { openLayer, open } = useLayer(wishLayerId(c.id));
   const [ref, src] = useObjectPhoto(access, storedPicturePath(c));
-  const [asking, setAsking] = useState(false);
+  const discard = useDiscardQuestion();
   return (
     <div data-priority={c.priority.kind} data-scroll-x="row" className="min-w-0 overflow-x-auto">
-      <ObjectRow
-        rootRef={ref}
-        src={src}
-        title={titleOf(c, rank)}
-        meta={metaOf(c)}
-        haspopup="dialog"
-        expanded={open}
-        onClick={(event) => openLayer(event.currentTarget)}
-        action={
-          <WishActions
-            c={c}
-            busy={props.busy}
-            onBuy={props.onBuy}
-            onDiscard={props.onDiscard}
-            asking={asking}
-            onAsking={setAsking}
-          />
-        }
-      />
-      {asking ? (
+      {/* The row keeps 18 rem (US-QS-32): at 200 % text the actions take more than the list has, so the row is wider than the
+          list and this wrapper scrolls sideways, instead of the name shrinking to a few characters. */}
+      <div className="min-w-[18rem]">
+        <ObjectRow
+          rootRef={ref}
+          src={src}
+          title={titleOf(c, rank)}
+          meta={metaOf(c)}
+          haspopup="dialog"
+          expanded={open}
+          onClick={(event) => openLayer(event.currentTarget)}
+          action={
+            <WishActions
+              c={c}
+              busy={props.busy}
+              onBuy={props.onBuy}
+              asking={discard.asking}
+              onAsk={discard.ask}
+              trigger={discard.triggerRef}
+            />
+          }
+        />
+      </div>
+      {discard.asking ? (
         <div className="px-3 pb-3">
-          <Discard
+          <DiscardQuestion
             c={c}
-            onDiscard={props.onDiscard}
             busy={props.busy}
-            compact
-            asking
-            onAsking={setAsking}
+            onDiscard={props.onDiscard}
+            onCancel={discard.cancel}
           />
         </div>
       ) : null}

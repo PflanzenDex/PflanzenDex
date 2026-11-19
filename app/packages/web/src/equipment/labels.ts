@@ -18,7 +18,7 @@ export const TYPE_LABELS: Record<EquipmentType, string> = {
 export const LAMP_TYPE = "Lamp" as const;
 export const POT_TYPE = "Pot" as const;
 
-/** The statuses a row branches on, compared as values (FR-QG-12): a defect is amber beside the name, a retirement plain text (US-QS-32). */
+/** The statuses a row branches on, compared as values (FR-QG-12): a defect is an amber badge, a retirement a neutral one, both at the trailing edge of the row (US-QS-32). */
 export const DEFECTIVE_STATUS = "defective" as const;
 export const RETIRED_STATUS = "retired" as const;
 
