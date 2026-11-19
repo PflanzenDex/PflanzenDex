@@ -126,6 +126,7 @@ describe("US-SOZ-09 the exchange list", () => {
         otherId: "ben",
         otherName: "Ben",
         offerId: A1,
+        specimenName: null,
         speciesLatin: "Aloe vera",
         speciesGerman: null,
         type: "cutting",

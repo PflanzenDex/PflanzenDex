@@ -81,10 +81,14 @@ async function complete(c: Completion): Promise<Verdict> {
   const { steps, swapId, ctx, userId, prepared, today, deps } = c;
   const giver = ctx.role === "giver" ? userId : (ctx.otherId as string);
   const recipient = ctx.role === "giver" ? (ctx.otherId as string) : userId;
-  const who = ctx.otherName ?? "einem Freund";
-  const reason = ctx.mode === "give_away" ? `Verschenkt an ${who}` : `Getauscht mit ${who}`;
-  await steps.archiveGiven(giver, ctx.specimenId as string, reason, today);
-  const status = ctx.type === "plant" ? "plant" : "cutting";
+  // Only a plant leaves the giver's collection (Q-149); a cutting or offshoot keeps its mother plant (see `finish`).
+  const plant = ctx.type === "plant";
+  if (plant) {
+    const who = ctx.otherName ?? "einem Freund";
+    const reason = ctx.mode === "give_away" ? `Verschenkt an ${who}` : `Getauscht mit ${who}`;
+    await steps.archiveGiven(giver, ctx.specimenId as string, reason, today);
+  }
+  const status = plant ? "plant" : "cutting";
   // Same rule as a new specimen (US-BES-02/04): a cutting stands in cutting light, a plant at the target of its phase.
   const locationId =
     status === "cutting"
@@ -169,9 +173,10 @@ async function confirmed(
 
 /**
  * Confirms the handover of an accepted swap (US-SOZ-11, ADR 0012, FR-SOZ-05). It counts only when both sides confirmed:
- * the first confirmation is recorded and waits. The confirmation that completes it runs one transaction: the giver's
- * specimen is archived ("Getauscht mit <name>" or "Verschenkt an <name>", US-BES-07) and the recipient gets a new
- * specimen of the same species under the naming rule (DM-BES-03; a cutting or offshoot becomes a cutting, US-BES-04;
+ * the first confirmation is recorded and waits. The confirmation that completes it runs one transaction: for a plant the
+ * giver's specimen is archived ("Getauscht mit <name>" or "Verschenkt an <name>", US-BES-07); a cutting or offshoot leaves
+ * the mother plant active, and the swap row keeps the given specimen as its history entry (US-SOZ-11, Q-149). The
+ * recipient gets a new specimen of the same species under the naming rule (DM-BES-03; a cutting or offshoot becomes a cutting, US-BES-04;
  * caught date = the local handover date in the confirming person's time zone, NFR-08; location from the recipient's care profile, unknown without one, P-08; private,
  * no sharing row). Measurements, treatments and location of the giver are not passed on. The recipient names a marker
  * when the naming rule asks for one (assumption, decided by the PO: asked at the recipient's own confirmation; the

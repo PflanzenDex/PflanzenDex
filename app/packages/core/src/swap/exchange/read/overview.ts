@@ -17,9 +17,17 @@ export async function swapOverview(
   userId: string,
 ): Promise<SwapOverview> {
   await deps.swaps.cancelOrphaned(userId);
-  const mine = await deps.swaps.list(userId);
+  const [mine, names] = await Promise.all([
+    deps.swaps.list(userId),
+    deps.swaps.offeredNames(userId),
+  ]);
+  // The offered specimen's name on the giver's side only (P-05); the recipient's side names nothing.
+  const sides = mine.map((s) => ({
+    ...s,
+    specimenName: s.role === "giver" ? (names.get(s.swapId) ?? null) : null,
+  }));
   return {
-    received: mine.filter((s) => s.role === "giver"),
-    sent: mine.filter((s) => s.role === "recipient"),
+    received: sides.filter((s) => s.role === "giver"),
+    sent: sides.filter((s) => s.role === "recipient"),
   };
 }

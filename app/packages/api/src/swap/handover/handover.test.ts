@@ -15,6 +15,8 @@ const SWAP_SIDE: KeyShape = {
   role: true,
   otherName: true,
   offerId: true,
+  // The offered specimen's own name: the giver's row only, the recipient's row has null (P-05, US-SOZ-11).
+  specimenName: true,
   speciesLatin: true,
   speciesGerman: true,
   type: true,
@@ -53,9 +55,11 @@ const SWAP_HISTORY_ENTRY: KeyShape = {
 let pool: Pool;
 let admin: Pool;
 let releaseTaxa: (() => Promise<void>) | undefined;
-const [subA, subB, subC, subD, subE, subOp] = [0, 1, 2, 3, 4, 5].map(
+// subF and subG are fresh recipients of the plant and the offshoot handovers: a recipient with several unmarked
+// specimens of a species must give markers (`specimen.markers_missing`), which would change the other tests' states.
+const [subA, subB, subC, subD, subE, subOp, subF, subG] = [0, 1, 2, 3, 4, 5, 6, 7].map(
   () => `soz11-${randomUUID()}`,
-) as [string, string, string, string, string, string];
+) as [string, string, string, string, string, string, string, string];
 const reviewer: TokenVerifier = async (token) => {
   const [kind, sub] = token.split(":");
   return kind === "valid" && sub
@@ -108,12 +112,17 @@ async function befriend(inviter: string, redeemer: string) {
   });
   clockNow = NOW;
 }
-/** An accepted swap: A offers a fresh specimen (marker `m`), B requests, A accepts. */
-async function accepted(m: string, mode: "swap" | "give_away" = "swap", by = subB) {
+/** An accepted swap: A offers a fresh specimen (marker `m`) of the given type, B requests, A accepts. */
+async function accepted(
+  m: string,
+  mode: "swap" | "give_away" = "swap",
+  by = subB,
+  type: "cutting" | "plant" | "offshoot" = "cutting",
+) {
   const id = await specimen(subA, m);
   await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
-  const offerId = (await call(subA, "POST", "/offers", { specimenId: id, type: "cutting", mode }))
-    .body.id as string;
+  const offerId = (await call(subA, "POST", "/offers", { specimenId: id, type, mode })).body
+    .id as string;
   const swapId = (await call(by, "POST", `/offers/${offerId}/request`, {})).body.swapId as string;
   await call(subA, "POST", `/swaps/${swapId}/answer`, { action: "accept" });
   return { specimenId: id, offerId, swapId };
@@ -136,7 +145,8 @@ beforeAll(async () => {
   releaseTaxa = await holdTaxonLock(admin);
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => clockNow });
-  for (const sub of [subA, subB, subC, subD, subE, subOp]) await call(sub, "GET", "/account");
+  for (const sub of [subA, subB, subC, subD, subE, subOp, subF, subG])
+    await call(sub, "GET", "/account");
   await admin.query(
     "insert into account_role (account, role) select id, 'operator' from account where subject = $1",
     [subOp],
@@ -165,10 +175,12 @@ beforeAll(async () => {
   await befriend(subA, subC);
   await befriend(subA, subD);
   await befriend(subA, subE);
+  await befriend(subA, subF);
+  await befriend(subA, subG);
 }, 120_000);
 afterAll(async () => {
   const accounts = "select id from account where subject = any($1)";
-  const subs = [[subA, subB, subC, subD, subE, subOp]];
+  const subs = [[subA, subB, subC, subD, subE, subOp, subF, subG]];
   await admin.query(`delete from swap where account_id in (${accounts})`, subs);
   await admin.query(`delete from offer where account_id in (${accounts})`, subs);
   await admin.query(`delete from care_profile where account_id in (${accounts})`, subs);
@@ -210,7 +222,7 @@ describe("US-SOZ-11 the handover through the API", () => {
     });
   });
 
-  it("the first confirmation waits; the second completes: the giver's specimen is archived, the recipient gets a new one with today's local date at the growth location of the recipient's own care profile, both sides see 'handed over'", async () => {
+  it("US-SOZ-11 the first confirmation waits; the second completes: a cutting leaves the giver's plant active, the recipient gets a new cutting with today's local date at the growth location of the recipient's own care profile, both sides see 'handed over'", async () => {
     const mineLoc = (
       await call(subB, "POST", "/locations", {
         name: "Fensterbank",
@@ -237,11 +249,11 @@ describe("US-SOZ-11 the handover through the API", () => {
       status: 200,
       body: { status: "handed_over", receivedSpecimenId: expect.any(String) },
     });
+    // A cutting leaves the mother plant in the collection (Q-149); only a plant is archived (see the plant test below).
     const archived = (await call(subA, "GET", "/specimens/archived")).body.archived as {
       id: string;
-      archivedReason: string;
     }[];
-    expect(archived.find((x) => x.id === a.specimenId)?.archivedReason).toMatch(/^Getauscht mit /);
+    expect(archived.map((x) => x.id)).not.toContain(a.specimenId);
     const mine = (await call(subB, "GET", "/specimens")).body.specimens as {
       id: string;
       status: string;
@@ -264,8 +276,8 @@ describe("US-SOZ-11 the handover through the API", () => {
     expect((await confirm(subA, a.swapId)).body).toMatchObject({ status: "handed_over" });
   });
 
-  it("a gift is archived as 'Verschenkt an'; the recipient's new specimen is private (nothing shared)", async () => {
-    const a = await accepted("H3", "give_away");
+  it("US-SOZ-11 a plant given away is archived as 'Verschenkt an'; the recipient's new specimen is private (nothing shared)", async () => {
+    const a = await accepted("H3", "give_away", subB, "plant");
     await confirm(subA, a.swapId);
     // B owns the species since the test before, so the naming rule asks for a marker.
     const done = await confirm(subB, a.swapId, { marker: "blau" });
@@ -276,6 +288,73 @@ describe("US-SOZ-11 the handover through the API", () => {
     expect(archived.find((x) => x.id === a.specimenId)?.archivedReason).toMatch(/^Verschenkt an /);
     const shared = (await call(subB, "GET", "/sharing")).body.shared as { specimenId: string }[];
     expect(shared.map((s) => s.specimenId)).not.toContain(done.body.receivedSpecimenId);
+  });
+
+  it("US-SOZ-11 a plant handed over by swap is archived as 'Getauscht mit' and the recipient gets a plant", async () => {
+    const a = await accepted("H6", "swap", subF, "plant");
+    await confirm(subA, a.swapId);
+    const done = await confirm(subF, a.swapId);
+    expect(done.body).toMatchObject({ status: "handed_over" });
+    const archived = (await call(subA, "GET", "/specimens/archived")).body.archived as {
+      id: string;
+      archivedReason: string;
+    }[];
+    expect(archived.find((x) => x.id === a.specimenId)?.archivedReason).toMatch(/^Getauscht mit /);
+    const mine = (await call(subF, "GET", "/specimens")).body.specimens as {
+      id: string;
+      status: string;
+    }[];
+    expect(mine.find((x) => x.id === done.body.receivedSpecimenId)?.status).toBe("plant");
+  });
+
+  it("US-SOZ-11 an offshoot handed over leaves the giver's plant active and the swap names the given specimen (history entry)", async () => {
+    const a = await accepted("H7", "swap", subG, "offshoot");
+    await confirm(subA, a.swapId);
+    const done = await confirm(subG, a.swapId);
+    expect(done.body).toMatchObject({ status: "handed_over" });
+    const archived = (await call(subA, "GET", "/specimens/archived")).body.archived as {
+      id: string;
+    }[];
+    expect(archived.map((x) => x.id)).not.toContain(a.specimenId);
+    const mine = (await call(subA, "GET", "/specimens")).body.specimens as {
+      id: string;
+      status: string;
+    }[];
+    expect(mine.find((x) => x.id === a.specimenId)).toBeDefined();
+    const sent = (await call(subA, "GET", "/swaps")).body.received as {
+      swapId: string;
+      status: string;
+      givenSpecimenId: string | null;
+    }[];
+    expect(sent.find((s) => s.swapId === a.swapId)).toMatchObject({
+      status: "handed_over",
+      givenSpecimenId: a.specimenId,
+    });
+    const history = (await call(subA, "GET", "/swaps/history")).body.entries as {
+      swapId: string;
+      type: string;
+      specimenId: string | null;
+    }[];
+    expect(history.find((e) => e.swapId === a.swapId)).toMatchObject({
+      type: "offshoot",
+      specimenId: a.specimenId,
+    });
+  });
+
+  it("US-SOZ-11 the giver's side names the offered specimen; the recipient's side does not (P-05)", async () => {
+    const a = await accepted("H8", "swap", subF, "cutting");
+    const name = (
+      (await call(subA, "GET", "/specimens")).body.specimens as { id: string; name: string }[]
+    ).find((x) => x.id === a.specimenId)?.name;
+    expect(name).toBeTruthy();
+    const giverSide = (await call(subA, "GET", "/swaps")).body.received.find(
+      (s: { swapId: string }) => s.swapId === a.swapId,
+    );
+    expect(giverSide.specimenName).toBe(name);
+    const recipientSide = (await call(subF, "GET", "/swaps")).body.sent.find(
+      (s: { swapId: string }) => s.swapId === a.swapId,
+    );
+    expect(recipientSide.specimenName).toBeNull();
   });
 
   it("a recipient who has the species already is asked for a marker and nothing is written until it is given", async () => {

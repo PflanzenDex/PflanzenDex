@@ -66,6 +66,12 @@ export class InMemoryExchange implements ExchangeStore {
   async list(userId: string): Promise<readonly SwapSide[]> {
     return this.sides[userId] ?? [];
   }
+
+  /** The offered specimens' names per user and swap ID (the giver's side), as the database would answer. */
+  readonly names: Record<string, Map<string, string>> = {};
+  async offeredNames(userId: string): Promise<ReadonlyMap<string, string>> {
+    return this.names[userId] ?? new Map();
+  }
 }
 
 export const friendOffer = (extra: Partial<FriendOffer> = {}): FriendOffer => ({
@@ -117,6 +123,7 @@ export const swapSide = (extra: Partial<SwapSide> = {}): SwapSide => ({
   otherId: "ben",
   otherName: "Ben",
   offerId: "o1",
+  specimenName: null,
   speciesLatin: "Aloe vera",
   speciesGerman: "Echte Aloe",
   type: "cutting",

@@ -28,6 +28,8 @@ export interface SwapSide {
   readonly otherId: string | null;
   readonly otherName: string | null;
   readonly offerId: string;
+  /** The offered specimen's name, set by the requests overview on the giver's side only (`null` = none, P-05); absent elsewhere. */
+  readonly specimenName?: string | null;
   readonly speciesLatin: string | null;
   readonly speciesGerman: string | null;
   readonly type: OfferType;
@@ -84,6 +86,8 @@ export interface ExchangeStore {
   ): Promise<{ readonly outcome: RequestOutcome; readonly swapId: string | null }>;
   /** The caller's own side of every swap, newest first. */
   list(userId: string): Promise<readonly SwapSide[]>;
+  /** The name of the offered specimen by swap ID, on the caller's giver rows (P-05); a gone specimen is absent. */
+  offeredNames(userId: string): Promise<ReadonlyMap<string, string>>;
   /** Answers or changes a swap; both sides change together, nothing is written on a refusal. */
   answer(
     userId: string,

@@ -1,6 +1,7 @@
 import type { Pool } from "pg";
 import { withAccount } from "../kernel/index.ts";
 import { runHandover, type HandoverSession, type ReceiveRefusal } from "./handover.ts";
+import { offeredNamesOf } from "./offered-names.ts";
 
 // Same shapes as the interfaces in `core` (structurally equal; `db` does not import `core`).
 export interface FriendOfferRow {
@@ -179,6 +180,8 @@ export class SwapsPostgres {
     return new Map(r.rows.map((z) => [z.id, { from: z.from, date: z.date }]));
   }
 
+  /** The name of the offered specimen by swap ID, on the caller's giver rows (P-05; read through the collection, AB-9). */
+  offeredNames = (userId: string) => withAccount(this.pool, userId, offeredNamesOf);
   /** The caller's own side of every swap, newest first. */
   async list(userId: string): Promise<readonly SwapRow[]> {
     const r = await withAccount(this.pool, userId, (c) =>

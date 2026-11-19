@@ -9,6 +9,7 @@ const side = (extra: Partial<SwapSide> = {}): SwapSide => ({
   otherId: "ben",
   otherName: "Ben",
   offerId: "o1",
+  specimenName: null,
   speciesLatin: "Aloe vera",
   speciesGerman: "Echte Aloe",
   type: "cutting",
