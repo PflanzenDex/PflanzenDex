@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { useLayoutEffect } from "react";
 import {
   act,
@@ -654,4 +656,33 @@ describe("US-QS-32 the light layers ask before they discard typed input", () => 
     await userEvent.keyboard("{Escape}");
     expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
   });
+});
+
+// The one-screen gate (QG-U8, the CI jobs one-screen, layout shift and a11y-routes) clicks the rows of these two screens by
+// the steps of the register. The page must name the rows so: a step that finds no row times out in CI (US-QS-32).
+// The tests run in the web package (npm run test -w), so the register is two folders up from there.
+const REGISTER = JSON.parse(
+  readFileSync(resolve(process.cwd(), "../e2e/support/display/screens.json"), "utf8"),
+) as { id: string; steps?: { role: string; name?: string; re?: string }[] }[];
+
+describe("US-QS-32 the rows of the light page are named by their visible text, as the one-screen steps name them", () => {
+  for (const id of ["light-zone-edit", "light-location-edit"]) {
+    it(`US-QS-32 every step of ${id} finds its row on the page`, async () => {
+      const steps = REGISTER.find((s) => s.id === id)?.steps ?? [];
+      expect(steps.length).toBeGreaterThan(0);
+      fakeServer({
+        zones: [zone],
+        locations: [{ ...location, id: "s2", name: "Bad", lightZoneId: "z1" }],
+      });
+      render(<LightPage api="http://api" token={async () => "tok"} />);
+      for (const step of steps) {
+        // eslint-disable-next-line security/detect-non-literal-regexp -- the pattern comes from the checked-in register
+        const name = step.re !== undefined ? new RegExp(step.re, "i") : (step.name ?? "");
+        expect(
+          await screen.findByRole(step.role as "button", { name }),
+          `${id}: ${JSON.stringify(step)}`,
+        ).toBeTruthy();
+      }
+    });
+  }
 });
