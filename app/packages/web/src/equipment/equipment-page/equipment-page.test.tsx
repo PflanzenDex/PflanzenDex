@@ -571,7 +571,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     await screen.findByRole("button", { name: /^Kosten/ });
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByText("Zone 3")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: /^Geräte1\u00a0Gerät/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Geräte 1\u00a0Gerät/ }));
     const layer = await screen.findByRole("dialog", { name: "Geräte" });
     expect(within(layer).getByRole("button", { name: /Zone 3/ })).toBeTruthy();
   });
@@ -627,7 +627,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
             <EquipmentPage api="http://api" token={token} />
           </StrictMode>,
         );
-        await userEvent.click(await screen.findByRole("button", { name: /^Geräte2\u00a0Geräte/ }));
+        await userEvent.click(await screen.findByRole("button", { name: /^Geräte 2\u00a0Geräte/ }));
         await userEvent.click(await screen.findByRole("button", { name: /Zone 3/ }));
         await screen.findByRole("heading", { name: "Zone 3" });
         await userEvent.keyboard("{Escape}");
@@ -817,5 +817,45 @@ describe("US-QS-32 zone names and a missing zone in equipment", () => {
     expect(card.textContent).toContain(`15${NBSP}W · Zone 1 (Stecklingslicht)`);
     const keller = (await screen.findByText("Lampe Keller")).closest("details") as HTMLElement;
     expect(keller.textContent).toContain(`20${NBSP}W · Lichtzone fehlt`);
+  });
+});
+
+describe("US-QS-32 the equipment rows are flat grouped rows (FX-35, SG-LIST-03, SG-SHAPE-03)", () => {
+  it("US-QS-32 the six parts are rows of one grouped list in their order, each with its name and info, and each opens its layer", async () => {
+    fakeServer([item(), item({ id: "e2", name: "Timer A", type: "Timer" })]);
+    view(<EquipmentPage api="http://api" token={token} />);
+    const first = await screen.findByRole("button", { name: /^Geräte 2/ });
+    const list = first.closest("ul") as HTMLElement;
+    expect(Array.from(list.children).every((child) => child.tagName === "LI")).toBe(true);
+    expect(list.children).toHaveLength(6);
+    const rows = within(list).getAllByRole("button");
+    expect(rows.map((row) => row.textContent)).toEqual([
+      "Geräte 2 Geräte",
+      "Kosten unbekannt",
+      "Bedarf nichts fehlt",
+      "Lampen und Zonen 0 Lampen",
+      "Sensoren 0 Sensoren",
+      "Geräte-Wünsche 0 offene Wünsche",
+    ]);
+    expect(rows.every((row) => row.getAttribute("aria-haspopup") === "dialog")).toBe(true);
+    // The layer is modal: the list behind it is hidden from assistive technology, so the row is read before the tap.
+    const costs = rows[1] as HTMLElement;
+    await userEvent.click(costs);
+    expect(await screen.findByRole("dialog", { name: "Kosten" })).toBeTruthy();
+    expect(costs.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("US-QS-32 an item is one object row: a drawn placeholder, its name, the facts line, and the Defekt badge as its one trailing element", async () => {
+    fakeServer([item({ id: "e1", name: "Lampe defekt", status: "defective" })]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    const row = await screen.findByRole("button", { name: /Lampe defekt/ });
+    expect(row.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
+    expect(within(row).getByText("Lampe · Lichtzone fehlt")).toBeTruthy();
+    expect(within(row).getByText("Defekt").className).toContain("bg-warning");
+    // The badge takes the place of the chevron: the placeholder is the row's only icon (SG-LIST-03).
+    expect(row.querySelectorAll("svg")).toHaveLength(1);
+    expect(row.getAttribute("aria-haspopup")).toBe("dialog");
+    await userEvent.click(row);
+    expect(await screen.findByRole("dialog", { name: "Lampe defekt" })).toBeTruthy();
   });
 });

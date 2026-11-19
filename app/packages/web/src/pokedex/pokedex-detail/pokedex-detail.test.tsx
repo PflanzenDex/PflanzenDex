@@ -198,9 +198,10 @@ describe("US-POK-09 · US-QS-22 the layer of a species is in the address", () =>
 
   it("US-POK-09 · US-QS-32 · SG-ICON-01 every entry shows a visible tap marker (a lucide chevron icon), not only the hover state", async () => {
     await open();
-    const marker = card("Ficus lyrata").closest("li")?.querySelector("[data-chevron]");
+    // The chevron of the object row (GroupedRow, SG-LIST-03): an icon after the placeholder, never text.
+    const marker = card("Ficus lyrata").closest("li")?.querySelector("svg.lucide-chevron-right");
     expect(marker?.tagName.toLowerCase()).toBe("svg");
-    expect(marker?.getAttribute("class")).toContain("size-5");
+    expect(marker?.getAttribute("class")).toContain("size-4");
     expect(marker?.getAttribute("class")).not.toContain("after:content");
     expect(marker?.textContent).toBe("");
     expect(marker?.getAttribute("aria-hidden")).toBe("true");

@@ -10,9 +10,15 @@ export function Discard(props: {
   busy: boolean;
   /** Small button and, when asking, the full width of a row that wraps (US-QS-22). */
   compact?: boolean;
+  /** The caller holds the question (the wish row asks below its row, US-QS-32); without `onAsking` Discard asks itself. */
+  asking?: boolean;
+  onAsking?: (asking: boolean) => void;
 }) {
   const { c, compact } = props;
-  const [asking, setAsking] = useState(false);
+  const [ownAsking, setOwnAsking] = useState(false);
+  const controlled = props.onAsking !== undefined;
+  const asking = controlled ? props.asking === true : ownAsking;
+  const setAsking = (next: boolean) => (controlled ? props.onAsking?.(next) : setOwnAsking(next));
   if (!asking)
     return (
       <Button

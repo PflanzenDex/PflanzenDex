@@ -485,13 +485,15 @@ describe("US-QS-22 the species fit one screen", () => {
 });
 
 describe("US-QS-22 neutral species entries", () => {
-  it("US-QS-22 · US-QS-32 · SG-ICON-01 a species entry has a neutral border and a chevron icon, no primary outline (ADR 0017)", async () => {
+  it("US-QS-22 · US-QS-32 · SG-ICON-01 a species entry is a flat object row with a chevron icon and no primary outline (ADR 0017)", async () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />);
     const entry = (await screen.findAllByRole("button", { name: /^Opuntia microdasys/ }))[0];
-    expect(entry?.className).toContain("border-border");
+    // An object row is flat: its group draws the card, the row has no outline of its own (FX-35 step 5).
     expect(entry?.className).not.toMatch(/border-primary|text-primary/);
-    expect(entry?.querySelector("svg[data-chevron]")?.getAttribute("aria-hidden")).toBe("true");
+    expect(entry?.querySelector("svg.lucide-chevron-right")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
   });
 });
 

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import type { ApiError } from "../../../../../shared/data";
 import { EquipmentForm } from "../../../../equipment-form/equipment-form";
@@ -57,6 +58,7 @@ function Items(props: { data: EquipmentData; lamps: Lamps }) {
       pageSize={ITEMS_PER_PAGE}
       label={t("items.label")}
       param={LAYER_PARAM}
+      listClassName={OBJECT_GROUP}
       getKey={(item) => item.id}
       renderItem={(item) => <ItemRow item={item} zone={zoneNames.get(item.lightZoneId ?? "")} />}
     />
