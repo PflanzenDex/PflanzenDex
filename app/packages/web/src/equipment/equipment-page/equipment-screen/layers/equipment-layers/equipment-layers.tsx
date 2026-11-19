@@ -33,8 +33,11 @@ import table from "../../../../equipment.de.json";
 
 const t = texts(table);
 
-/** Rows per page of the list of what I own (starting value, assumption; the page size from the free height is #1029). */
-const ITEMS_PER_PAGE = 6;
+/**
+ * Rows per page of the list of what I own (starting value, assumption; the page size from the free height is #1029). Five
+ * object rows of 76 px and the page bar fit the layer at 360 x 640 px (one-screen, US-QS-22, US-QS-32).
+ */
+const ITEMS_PER_PAGE = 5;
 
 type Lamps = ReturnType<typeof useLampActions>;
 type Wishes = ReturnType<typeof useWishActions>;
