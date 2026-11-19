@@ -30,9 +30,38 @@ async function hitsItself(target: Locator): Promise<boolean> {
   });
 }
 
+/** The anniversaries tile: its name ends in its label, "1 Jubiläum" for one anniversary, "2 Jubiläen" for more (tile.label). */
+const anniversariesTile = (page: Page): Locator =>
+  page.getByRole("button", { name: /(Jubiläum|Jubiläen)$/ });
+
+/**
+ * After a change of the text size the overview settles: the tile loads lazily, and the app writes the reserve of `main`
+ * (`--bar-reserve`, the bottom padding that the frame's height derives from) from a ResizeObserver on the bottom bar. Read
+ * before that, the frame still reserves the old bar height and its bottom lies under the bar (28 px at 360 px and 200 %,
+ * measured for issue 2281). The test waits for that condition, the reserve equals the bar's height (0.5 px), and assumes no
+ * number of frames: a slower runner takes more of them.
+ */
+async function settleOverview(page: Page): Promise<void> {
+  await expect(anniversariesTile(page)).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const bar = document.querySelector("nav[data-bottom-bar]");
+        const main = document.querySelector<HTMLElement>("main");
+        const reserve = parseFloat(main?.style.getPropertyValue("--bar-reserve") ?? "");
+        return (
+          bar !== null &&
+          Number.isFinite(reserve) &&
+          Math.abs(reserve - bar.getBoundingClientRect().height) <= 0.5
+        );
+      }),
+    )
+    .toBe(true);
+}
+
 /** On the settled "Heute", the anniversaries tile covers neither the further tasks, their pager nor the later line, and they are hit. */
 async function expectNoCover(page: Page, size: string): Promise<void> {
-  const tile = await boxOf(page.getByRole("button", { name: /Jubiläen$/ }));
+  const tile = await boxOf(anniversariesTile(page));
   const later = page.getByText("3 Termine später", { exact: true });
   const weiter = page.getByRole("button", { name: "Weiter", exact: true });
   const parts: Record<string, Locator> = {
@@ -84,6 +113,7 @@ test.describe("US-QS-18 Heute at 360 px", () => {
     await signInToApp(page, account);
     await page.setViewportSize({ width: 360, height: 640 });
     await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+    await settleOverview(page);
     await expectNoCover(page, "360x640 at 200 %");
     // The content is taller than the window and scrolls inside the frame; it does not collapse under the tile.
     expect(
@@ -105,6 +135,7 @@ test.describe("US-QS-14 Heute taller than the window", () => {
     await signInToApp(page, account);
     await page.setViewportSize({ width: 360, height: 640 });
     await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+    await settleOverview(page);
     const frame = page.locator("[data-fit-fill]");
     expect(await frame.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
     await frame.evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
