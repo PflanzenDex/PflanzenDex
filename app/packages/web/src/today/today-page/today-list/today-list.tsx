@@ -13,7 +13,6 @@ import { isTreatment, TodayRow } from "../today-row/today-row";
 import type { TodayDestination } from "../../today-destinations";
 import { NowSkeleton } from "../today-skeleton/today-skeleton";
 import table from "../../today.de.json";
-import { ListFailure } from "./list-failure/list-failure";
 
 const t = texts(table);
 const plural = plurals(table);
@@ -27,39 +26,8 @@ const PAGE_SIZE = { phone: 3, md: 6 } as const;
 const laterText = (n: number): string => plural.counted("later", n);
 
 /**
- * The label of the section inside the pager's flat group: 16 px, semibold, with its own padding so it reads as the head of the
- * rows below (SG-TYPE-02, SG-LIST-10). The group keeps its card and hairlines.
- */
-const SECTION_LABEL = "px-4 pb-1 pt-3 text-base font-semibold text-foreground";
-
-/** One entry of the further tasks: the label of the section that needs action today, or a task row. */
-type Entry = { kind: "section" } | { kind: "row"; item: TodayItem };
-
-/**
- * The entries of the further tasks (SG-LIST-10): the items that need action today stand under "Heute"; the label is an entry
- * of the group only when there are rows. The treatments are not listed here (US-QS-18).
- */
-function entriesOf(rest: readonly TodayItem[]): Entry[] {
-  if (rest.length === 0) return [];
-  return [{ kind: "section" }, ...rest.map((item): Entry => ({ kind: "row", item }))];
-}
-
-const entryKey = (entry: Entry, index: number): string =>
-  entry.kind === "section" ? "section:today" : `${index}:${entry.item.id}`;
-
-/** One entry rendered: the label, or a task row (a GroupedRow with its target). */
-function EntryView(props: { entry: Entry; level: 2 | 3 }) {
-  const { entry } = props;
-  if (entry.kind === "section") {
-    const Heading = props.level === 3 ? "h3" : "h2";
-    return <Heading className={SECTION_LABEL}>{t("sections.today")}</Heading>;
-  }
-  return <TodayRow item={entry.item} bare />;
-}
-
-/**
  * The further tasks of the day, treatments excluded: one fitted pager, in the page below the tiles or in the layer
- * `?sheet=tasks`. The section label and the rows form one flat group (SG-SHAPE-03, SG-LIST-10).
+ * `?sheet=tasks`. Its rows are flat `GroupedRow`s in one group (SG-SHAPE-03).
  */
 export function FurtherTasks(props: {
   list: TodayList;
@@ -71,7 +39,7 @@ export function FurtherTasks(props: {
   const rest = props.list.items.slice(1).filter((item) => !isTreatment(item));
   return (
     <Pager
-      items={entriesOf(rest)}
+      items={rest}
       pageSize={pageSize}
       {...(props.fit ? { fit: true } : {})}
       label={t("tasks.title")}
@@ -79,14 +47,14 @@ export function FurtherTasks(props: {
       // pager at a larger text size without growing with the page it shows, so the page size follows the free height
       // only (issue 1113).
       listClassName={props.fit ? `${ROW_GROUP} [contain:size]` : ROW_GROUP}
-      getKey={entryKey}
+      getKey={(item: TodayItem) => item.id}
       {...(props.param ? { param: props.param } : {})}
-      renderItem={(entry) => <EntryView entry={entry} level={3} />}
+      renderItem={(item) => <TodayRow item={item} bare />}
     />
   );
 }
 
-/** What stands below the tiles: the further tasks in their section and the later treatments in small text (US-QS-18). */
+/** What stands below the most urgent item: the further tasks and the later treatments in small text (US-QS-18). */
 export function Below(props: { list: TodayList }) {
   const { list } = props;
   const [first] = list.items;
@@ -115,8 +83,9 @@ export function Below(props: { list: TodayList }) {
 }
 
 /**
- * The most urgent item of the day, in the state of the page's own request. That request is read here and not by a second frame:
- * a second observer would refetch a failed list on every mount (issue 1697).
+ * The first section's list in the state of the page's own request. That request is read here and not by a second frame:
+ * a second observer would refetch a failed list on every mount, and the page's gate would unmount and remount it in a loop
+ * (issue 1697).
  */
 export function ListState(props: {
   today: Request<TodayList>;
@@ -125,11 +94,10 @@ export function ListState(props: {
   treatmentsEntry?: ReactNode;
 }) {
   const { today } = props;
-  if (today.status === "error")
-    return <ListFailure text={today.error?.text} onRetry={today.retry} />;
   return (
     <RequestState
       status={today.status}
+      {...(today.error ? { errorText: today.error.text } : {})}
       onRetry={today.retry}
       offline={today.offline}
       skeleton={<NowSkeleton label={props.loading} />}

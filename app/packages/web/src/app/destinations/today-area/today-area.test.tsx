@@ -666,7 +666,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
         true,
       );
       // The further tasks behind the layer keep their page: the two lists do not share the address (issue 2070).
-      expect(positionsBehind(layer)).toEqual(["Seite 1 von 5"]);
+      expect(positionsBehind(layer)).toEqual(["Seite 1 von 4"]);
     } finally {
       restore();
     }
@@ -689,7 +689,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
       for (let page = 1; page <= 4; page++) {
         expect(position()).toBe(`Seite ${page} von 4`);
         pages.push(names());
-        expect(positionsBehind(layer)).toEqual(["Seite 1 von 5"]);
+        expect(positionsBehind(layer)).toEqual(["Seite 1 von 4"]);
         if (page < 4) await user.click(within(layer).getByRole("button", { name: "Weiter" }));
       }
       expect(pages).toEqual([

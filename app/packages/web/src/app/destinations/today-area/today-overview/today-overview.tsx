@@ -27,10 +27,13 @@ export function TreatmentsEntry(props: {
   return (
     <GroupedRow
       bare
+      // The amber row of the card: its warning tone keeps the text colour and drops the grey hover (SG-COLOR-04).
+      tone="warning"
       haspopup="dialog"
       expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
-      title={<>Behandlungen</>}
+      // The word stays whole at 200 % text: it never breaks inside itself (issue 1113).
+      title={<span className="whitespace-nowrap [overflow-wrap:normal]">Behandlungen</span>}
       meta={
         <>
           {treatments.status === "ready" ? (
