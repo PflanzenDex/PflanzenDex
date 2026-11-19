@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useLocation } from "react-router";
 import {
   BAR_SHOW_CLASS,
@@ -118,8 +119,9 @@ export function StartPageSkeleton() {
  * and it shows through the session check and while the code of the shell loads. It is drawn, not operable: the bars have
  * no links yet, so it holds no control and no landmark for them. The top bar carries the title of the address where the
  * page has one, as the page does (issue 2230); the root shows "Heute", where it redirects.
+ * `body` replaces the skeleton in the main column: a failed account load shows its error there, inside both bars (F-0059, Q03).
  */
-export function StartFrame() {
+export function StartFrame({ body }: { body?: ReactNode }) {
   const { pathname, search } = useLocation();
   const title = startTitleOf(pathname);
   const md = useIsMd();
@@ -151,7 +153,7 @@ export function StartFrame() {
         <main className="flex-1 px-4 pb-4 md:pb-6 tall-window:pb-[calc(4rem+env(safe-area-inset-bottom))] tall-window:md:pb-6 pt-4 md:px-6 md:pt-6 xl:px-10">
           <div className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-2">
             {title !== null && !inBar ? <TitleRow title={title} inBar={false} /> : null}
-            <StartBody pathname={pathname} search={search} />
+            {body ?? <StartBody pathname={pathname} search={search} />}
           </div>
         </main>
       </div>

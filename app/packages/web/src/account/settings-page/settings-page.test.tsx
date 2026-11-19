@@ -643,10 +643,32 @@ describe("US-QS-17 settings as a list of groups", () => {
     expect(screen.queryByLabelText("Anzeigename")).toBeNull();
   });
 
-  it("US-QS-17 · P-08 an unknown name or time zone reads 'unbekannt'", async () => {
+  it("US-QS-32 · F-0315 an unknown name and an unsaved zone read Name unbekannt and Zeitzone vom Gerät, never a bare unbekannt", async () => {
     fakeServer({ ...PROFILE, displayName: null, timeZone: null });
-    show();
-    expect((await row("Profil")).textContent).toContain("unbekannt · unbekannt");
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+      timeZone: "Europe/Berlin",
+    } as Intl.ResolvedDateTimeFormatOptions);
+    try {
+      show();
+      const text = (await row("Profil")).textContent ?? "";
+      expect(text).toContain("Name unbekannt · Zeitzone vom Gerät");
+      expect(text).not.toMatch(/(^|[^ ])unbekannt · /);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("US-QS-32 · F-0315 without a saved zone and without a device zone the row reads Zeitzone unbekannt", async () => {
+    fakeServer({ ...PROFILE, timeZone: null });
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+      timeZone: undefined,
+    } as unknown as Intl.ResolvedDateTimeFormatOptions);
+    try {
+      show();
+      expect((await row("Profil")).textContent).toContain("Anna · Zeitzone unbekannt");
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it("US-QS-17 summarises what is on in the privacy group and own light thresholds", async () => {

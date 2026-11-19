@@ -5,27 +5,17 @@ import { useFeature } from "@/shared/data";
 import { BUSY_LOOK, cn } from "@/shared/lib/utils";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
+import { RetryFailedLoad } from "@/shared/patterns/states/request-state/failed-value/failed-value";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import {
   accountAddress,
   type AccountSection,
 } from "@/shared/patterns/navigation/navigation/navigation";
 import type { Account } from "@/account";
-import { SECTIONS, rowId } from "../account-model/account-model";
-import { useAccountValues, type Values } from "./account-values";
+import { rowId } from "../account-model/account-model";
+import { rowsOf, useAccountValues } from "./account-values";
 import { InstallRow } from "./install-row/install-row";
 import { EverywhereError } from "./everywhere-error/everywhere-error";
-
-/** The rows of the index: every section that is on for the account; the profile has its own row above them. */
-function rowsOf(values: Values, ai: boolean | undefined, hasOverview: boolean) {
-  return SECTIONS.filter(
-    (s) =>
-      s.key !== "profile" &&
-      (s.key !== "achievements" || values.achievementsShown) &&
-      (s.key !== "aiClients" || ai) &&
-      (s.key !== "functions" || hasOverview),
-  );
-}
 
 type Token = () => Promise<string | undefined>;
 
@@ -169,6 +159,7 @@ export function AccountIndex(props: IndexProps) {
         </li>
         {rows.map((s) => {
           const value = values[s.key];
+          const retry = values.retries[s.key];
           return (
             <li key={s.key}>
               <Row to={s.key} id={rowId(s.key)} current={props.current === s.key}>
@@ -179,6 +170,12 @@ export function AccountIndex(props: IndexProps) {
                   )}
                 </span>
               </Row>
+              {/* A failed section offers its retry beside its row; the link itself holds no control (US-QS-32). */}
+              {retry ? (
+                <div className="px-3 pb-2">
+                  <RetryFailedLoad name={s.title} onRetry={retry} />
+                </div>
+              ) : null}
             </li>
           );
         })}
