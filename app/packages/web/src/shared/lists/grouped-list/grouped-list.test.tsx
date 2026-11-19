@@ -256,6 +256,14 @@ describe("US-QS-32 the groups of a pager keep the room a fitting list measures (
     }
   });
 
+  it("US-QS-32 a row of a pager is never squeezed below its content: each row is a flex item that keeps its height (issue 2272)", () => {
+    // The rows clip their hover colour (overflow hidden), which makes a flex item's minimum height 0: without shrink-0 a
+    // squeezed list collapses its rows to their borders at 200 % text, and the page size is measured from those rows.
+    for (const group of [OBJECT_GROUP, ROW_GROUP]) {
+      expect(group).toContain("[&>li]:shrink-0");
+    }
+  });
+
   it("US-QS-32 the forced-colors boundary runs left and right on every row, and at the top of the first and the bottom of the last", () => {
     expect(ROW_GROUP).toContain("[&>li]:forced-colors:border-x-[CanvasText]");
     expect(ROW_GROUP).toContain("[&>li:first-child]:forced-colors:border-t-[CanvasText]");

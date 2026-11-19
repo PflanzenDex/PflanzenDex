@@ -117,4 +117,13 @@ describe("US-QS-32 needs are rows titled by their next action, opening where it 
     expect(list.className).toContain("[&>li:first-child]:rounded-t-card");
     for (const row of rows) expect(row.className).not.toContain("rounded-lg");
   });
+
+  it("US-QS-32 the rows of the needs do not count towards the height of their section, and the section never shrinks below its content, so the pager never falls under the recommendations at 200 % text (issue 2272)", () => {
+    render(<NeedsView needs={[need({ id: "a" }), need({ id: "b" })]} fill={noop} />);
+    const list = screen.getByRole("list", { name: "Fehlt / Nachkaufen" });
+    // Size containment (issue 1113, as the today page): the page size follows the free height, not the rows on the page.
+    expect(list.className).toContain("[contain:size]");
+    const section = list.closest("section") as HTMLElement;
+    expect(section.className.split(" ")).not.toContain("min-h-0");
+  });
 });

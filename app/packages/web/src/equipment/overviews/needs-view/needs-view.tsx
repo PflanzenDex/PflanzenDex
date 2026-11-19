@@ -60,10 +60,9 @@ export function NeedsView(props: {
 }) {
   const { needs } = props;
   return (
-    <section
-      aria-labelledby="equipment-needs-title"
-      className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
-    >
+    // No min-h-0: a section that may shrink below its content lets the pager fall under the recommendations at 200 % text
+    // (issue 2272, as the further tasks of the today page, issue 1113).
+    <section aria-labelledby="equipment-needs-title" className="flex min-w-0 flex-1 flex-col gap-3">
       <h2 id="equipment-needs-title" className="text-base font-semibold">
         {t("needs.title")}
       </h2>
@@ -77,7 +76,9 @@ export function NeedsView(props: {
           label={t("needs.title")}
           param={LAYER_PARAM}
           replace
-          listClassName={ROW_GROUP}
+          // The rows do not count towards the height of the section (size containment, issue 1113): the page size follows the
+          // free height only, not the rows on the page (issue 2272).
+          listClassName={`${ROW_GROUP} [contain:size]`}
           getKey={(n) => n.id}
           renderItem={(n) => <NeedRow need={n} fill={props.fill} />}
         />
