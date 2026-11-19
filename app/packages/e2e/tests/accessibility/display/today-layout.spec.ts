@@ -35,16 +35,28 @@ const anniversariesTile = (page: Page): Locator =>
   page.getByRole("button", { name: /(Jubiläum|Jubiläen)$/ });
 
 /**
- * After a change of the text size the overview settles over the next frames: the tile loads lazily, and the frame takes
- * the height of the bottom bar from a ResizeObserver. Read before that, the frame still reserves the old bar height and
- * its bottom lies under the bar (28 px at 360 px and 200 %, measured for issue 2281).
+ * After a change of the text size the overview settles: the tile loads lazily, and the app writes the reserve of `main`
+ * (`--bar-reserve`, the bottom padding that the frame's height derives from) from a ResizeObserver on the bottom bar. Read
+ * before that, the frame still reserves the old bar height and its bottom lies under the bar (28 px at 360 px and 200 %,
+ * measured for issue 2281). The test waits for that condition, the reserve equals the bar's height (0.5 px), and assumes no
+ * number of frames: a slower runner takes more of them.
  */
 async function settleOverview(page: Page): Promise<void> {
   await expect(anniversariesTile(page)).toBeVisible();
-  await page.evaluate(
-    () =>
-      new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))),
-  );
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const bar = document.querySelector("nav[data-bottom-bar]");
+        const main = document.querySelector<HTMLElement>("main");
+        const reserve = parseFloat(main?.style.getPropertyValue("--bar-reserve") ?? "");
+        return (
+          bar !== null &&
+          Number.isFinite(reserve) &&
+          Math.abs(reserve - bar.getBoundingClientRect().height) <= 0.5
+        );
+      }),
+    )
+    .toBe(true);
 }
 
 /** On the settled "Heute", the anniversaries tile covers neither the further tasks, their pager nor the later line, and they are hit. */
