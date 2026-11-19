@@ -23,3 +23,15 @@ describe("US-LIC-05 location form (US-QS-32 · F-0186)", () => {
     expect(label?.className.includes("text-destructive")).toBe(false);
   });
 });
+
+const zone = { id: "z1", name: "Zone 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
+
+describe("US-QS-32 · issue 1960 the light zone of a location", () => {
+  it("US-QS-32 · issue 1960 the empty choice reads 'Keine Lichtzone', and one line under the field says what it does", () => {
+    render(<LocationForm zones={[zone]} onSave={vi.fn(async () => null)} />);
+    const select = screen.getByRole("combobox", { name: "Lichtzone" });
+    expect(screen.getByRole("option", { name: "Keine Lichtzone" })).toBeTruthy();
+    const hint = screen.getByText("Ohne Lichtzone erscheint der Standort in den Hinweisen.");
+    expect((select.getAttribute("aria-describedby") ?? "").split(" ")).toContain(hint.id);
+  });
+});

@@ -1,4 +1,11 @@
 {
   "empty.line": "Du hast noch keine Pflanze.",
-  "empty.action": "Pflanze anlegen"
+  "empty.action": "Pflanze anlegen",
+  "pick.search": "Pflanze suchen",
+  "pick.searchPlaceholder": "Name, Gattung, Familie",
+  "pick.place": "Standort",
+  "pick.allPlaces": "Alle Standorte",
+  "pick.unknownPlace": "Standort unbekannt",
+  "pick.none": "Keine Pflanze passt. Ändere die Suche oder den Standort.",
+  "pick.label": "Pflanzen"
 }

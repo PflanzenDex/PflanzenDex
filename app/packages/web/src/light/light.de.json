@@ -40,5 +40,15 @@
   "need.action": "Lichtbedarf eintragen",
   "need.labelFor": "Lichtbedarf eintragen für „{name}“",
   "overview.zoneUnknown": "Lichtzone unbekannt",
-  "form.cancel": "Abbrechen"
+  "form.cancel": "Abbrechen",
+  "location.name": "Name",
+  "location.zone": "Lichtzone",
+  "location.zoneNone": "Keine Lichtzone",
+  "location.zoneHint": "Ohne Lichtzone erscheint der Standort in den Hinweisen.",
+  "location.kind": "Innen oder außen",
+  "location.indoor": "innen",
+  "location.outdoor": "außen",
+  "location.editLabel": "{name} ändern",
+  "location.createLabel": "Standort anlegen",
+  "location.save": "Speichern"
 }
