@@ -77,8 +77,9 @@ export function NeedsView(props: {
           param={LAYER_PARAM}
           replace
           // The rows do not count towards the height of the section (size containment, issue 1113): the page size follows the
-          // free height only, not the rows on the page (issue 2272).
-          listClassName={`${ROW_GROUP} [contain:size]`}
+          // free height only, not the rows on the page (issue 2272). The rows never shrink here, and only here: the shared rows
+          // of the Heute lists rely on shrinking a few px at 100 % text (issue 2272), so ROW_GROUP keeps its rows as they are.
+          listClassName={`${ROW_GROUP} [&>li]:shrink-0 [contain:size]`}
           getKey={(n) => n.id}
           renderItem={(n) => <NeedRow need={n} fill={props.fill} />}
         />

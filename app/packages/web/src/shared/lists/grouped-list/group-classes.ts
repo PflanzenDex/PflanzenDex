@@ -20,12 +20,9 @@ const PAGER_LIST = "m-0 flex list-none flex-col gap-0 p-0 text-card-foreground";
  * The rows of a pager's list carry the group's look: each row is a card-coloured piece that clips its hover colour to the
  * corners; the first row is rounded at the top, the last at the bottom. The forced-colors boundary runs left and right on
  * every row, and at the top of the first and the bottom of the last, so the group keeps its edge.
- *
- * A row never shrinks (`shrink-0`, issue 2272): clipping makes a flex item's minimum height 0, so a list squeezed to the free
- * height would collapse its rows to their borders at 200 % text, and the page size would be measured from those 2 px rows.
  */
 const ROWS_OF_GROUP =
-  "[&>li]:relative [&>li]:shrink-0 [&>li]:overflow-hidden [&>li]:bg-card [&>li]:text-card-foreground [&>li]:border-x [&>li]:border-transparent [&>li]:forced-colors:border-x-[CanvasText] [&>li:first-child]:rounded-t-card [&>li:first-child]:border-t [&>li:first-child]:forced-colors:border-t-[CanvasText] [&>li:last-child]:rounded-b-card [&>li:last-child]:border-b [&>li:last-child]:forced-colors:border-b-[CanvasText]";
+  "[&>li]:relative [&>li]:overflow-hidden [&>li]:bg-card [&>li]:text-card-foreground [&>li]:border-x [&>li]:border-transparent [&>li]:forced-colors:border-x-[CanvasText] [&>li:first-child]:rounded-t-card [&>li:first-child]:border-t [&>li:first-child]:forced-colors:border-t-[CanvasText] [&>li:last-child]:rounded-b-card [&>li:last-child]:border-b [&>li:last-child]:forced-colors:border-b-[CanvasText]";
 
 /**
  * The hairline between two rows of a pager's list: the before pseudo-element of every row after the first, across the classes
