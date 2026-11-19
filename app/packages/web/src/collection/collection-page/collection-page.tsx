@@ -2,7 +2,7 @@ import { useInvalidate } from "../../shared/data";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { CollectionPageSkeleton } from "./collection-page.skeleton";
-import { PageFrame } from "../specimens/cards/parts/parts";
+import { PageFrame, Plain } from "../specimens/cards/parts/parts";
 import type { Props } from "./collection-props";
 import { COLLECTION_KEY, useCollection, useHostReport } from "../specimens/hooks/use-collection";
 import { useArchive } from "../specimens/hooks/use-archive";
@@ -26,9 +26,12 @@ function pageStatus(summary: string, first: string): "ready" | "pending" | "erro
  * Collection, create (US-BES-02), markers (US-BES-03), archive (US-BES-07): the form with a chosen species, otherwise the
  * list with the archive below. The species comes from the catalog; the app wires the two. The forms of a plant are full
  * views with an address (US-QS-15): the address opens them, Back closes them, and their state follows the address.
+ * Shown inside the Sammlung (`host`) the page is flat like the other arrangements of it (US-QS-32): the destination's
+ * gutter is the only one, so the list and its skeleton start at the same x as the grouped lists.
  */
 export function CollectionPage(props: Props) {
   const { api, token, newSpecies } = props;
+  const Frame = props.host ? Plain : PageFrame;
   const { form, formPlant } = usePageAddress(api, token, props);
   const request = useCollection(api, token);
   // The plants are read page by page; the first page is part of the view, a failure of it fails the whole view (P-10).
@@ -62,7 +65,7 @@ export function CollectionPage(props: Props) {
   return (
     // No min-h-0: the card is never shorter than what it holds, so at a larger text size it grows with its content
     // and the one-screen frame scrolls (issue 1113); at normal text the list inside takes the free height.
-    <PageFrame className="flex flex-1 flex-col">
+    <Frame className="flex flex-1 flex-col">
       <RequestState
         status={status}
         {...(requestFailed ? { errorText: requestFailed.text } : {})}
@@ -86,6 +89,6 @@ export function CollectionPage(props: Props) {
           />
         )}
       </RequestState>
-    </PageFrame>
+    </Frame>
   );
 }

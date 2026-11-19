@@ -309,3 +309,19 @@ IDs are never renumbered.
 - **Fix:** A shared slot has one owner: `AppBarSlot` keeps the claims in mount order, and only the first claim draws in the bar (`useBarClaim`). Any new portal target that several mounted components can fill needs the same rule.
 - **Can it become a gate?** No: whether two claimants can be mounted at once depends on the page's Suspense structure. The claim-order test in `app-bar-slot.test.tsx` and the hand-over test in `start-frame/handover.test.tsx` pin this case.
 - **Source:** Issue #2230 (recheck of FX-08 on four devices).
+
+## PF-038 A layout read right after a text-size or viewport change races the app's ResizeObserver
+
+- **Symptom:** An e2e layout test fails now and then on a phone size with 200 % text (Heute, issue 2281: the scrolling frame ends 28 px under the bottom bar, or the frame is not taller than the window), and passes when run again or watched in the trace.
+- **Cause:** The test injects `html { font-size: 200% }` and reads boxes in the same task. The shell writes the bar's real height to `--bar-reserve` on `main` from a ResizeObserver, a few frames later (5 frames, 541 ms in one local run), and the lazy tiles load later still. Until then the frame still reserves the old bar height. A fixed wait of n frames only moves the race to a slower runner.
+- **Fix:** Wait for the state the app writes, not for time or frames: `expect.poll` until `--bar-reserve` equals the height of `nav[data-bottom-bar]`, after the lazily loaded parts are visible (`settleOverview` in `e2e/tests/accessibility/display/today-layout.spec.ts`). Never poll the assertion under test.
+- **Can it become a gate?** No: which value a test must wait for depends on the view. The helper is the pattern to copy.
+- **Source:** Issue #2281, PR #2282.
+
+## PF-039 A Docker bind mount from the system temp folder is empty on a Mac
+
+- **Symptom:** A check that runs a container passes in CI but hangs or times out on a Mac: `make ds-snapshots-check` timed out on every story, and the container saw an empty catalog.
+- **Cause:** Colima (and Docker Desktop by default) share only `$HOME` into their VM. `os.tmpdir()` on macOS is `/var/folders/…`, outside it, so `docker run -v <tmp>:/x` silently mounts an empty, root-owned folder instead of failing. GitHub runners use `/tmp`, which Docker sees, so CI stays green.
+- **Fix:** Put every folder a container mounts under the repo, for example a `mkdtemp` under `app/.cache` (gitignored), never under `os.tmpdir()`. A script that rewrites files from a container run writes to a staging folder and swaps only after a passing run, so a failed run destroys nothing.
+- **Can it become a gate?** Partly: the QG-U5 self-test (`ds-snapshots.selftest.mjs`) asserts that the catalog is built under `app/.cache` and that a failed update leaves the baselines as they were. A general rule ("no `os.tmpdir()` next to `docker`") is not worth a gate until a second script mounts folders (E-30).
+- **Source:** Issue #2286, PR #2288.

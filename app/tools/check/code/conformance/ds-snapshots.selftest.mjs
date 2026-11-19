@@ -4,15 +4,21 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { after, describe, it } from "node:test";
-import { expectedPageBaselines } from "./ds-snapshots.lib.mjs";
-import { runCatalog } from "./ds-snapshots.mjs";
+import { expectedBaselines, expectedPageBaselines } from "./ds-snapshots.lib.mjs";
+import { resultsDir, runCatalog, scratchDir } from "./ds-snapshots.mjs";
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ds-snapshots-selftest-"));
+// Under app/.cache, not os.tmpdir(): the fixture folders are mounted into the container (issue 2286).
+const tmp = scratchDir("ds-snapshots-selftest-");
 // The fixture folder is removed after the file, also when a test fails (#1278).
 after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+// app/.cache, the scratch root of the check (issue 2286): the catalog and the staging folders live in it.
+const cacheRoot = path.dirname(resultsDir);
+const stagingDirs = () =>
+  fs.existsSync(cacheRoot)
+    ? fs.readdirSync(cacheRoot).filter((f) => f.startsWith("ds-snapshots-staging-"))
+    : [];
 const dirs = (name) => ({
   snapshotDir: path.join(tmp, name, "baselines"),
   pageSnapshotDir: path.join(tmp, name, "page-baselines"),
@@ -99,5 +105,39 @@ describe("QG-U5 · US-QS-07 · visual regression catches", () => {
     });
     assert.notEqual(r.status, 0);
     assert.equal(r.findings.length, 2 + 10); // the new page without baselines fails (FR-QG-27)
+  });
+});
+
+describe("QG-U5 · US-QS-07 · the catalog and a failed update (#2286)", () => {
+  it("QG-U5 · US-QS-07 · the catalog is built under app/.cache, which Docker can mount on every host (#2286)", () => {
+    // docker: "false" stands in for the container run; only the catalog build is under test here.
+    const r = runCatalog({ fixtures: true, docker: "false", ...dirs("location") });
+    assert.ok(r.catalog, "runCatalog returns the catalog it built");
+    assert.ok(
+      path.resolve(r.catalog).startsWith(cacheRoot + path.sep),
+      `${r.catalog} is outside ${cacheRoot}`,
+    );
+  });
+
+  it("QG-U5 · US-QS-07 · a failed --update leaves the baselines untouched (#2286)", () => {
+    // The baselines are written here, not copied from the first test: its screenshots need a working container.
+    const c = dirs("failed-update");
+    const uiNames = expectedBaselines(["ds-snapshot-fixture-padding--default"]);
+    const pageNames = expectedPageBaselines(["ds-snapshot-fixture-page--default"]);
+    fs.mkdirSync(c.snapshotDir, { recursive: true });
+    fs.mkdirSync(c.pageSnapshotDir, { recursive: true });
+    uiNames.forEach((f, i) => fs.writeFileSync(path.join(c.snapshotDir, f), `ui-${i}`));
+    pageNames.forEach((f, i) => fs.writeFileSync(path.join(c.pageSnapshotDir, f), `page-${i}`));
+    const ui = hashes(c.snapshotDir);
+    const pages = hashes(c.pageSnapshotDir);
+    assert.equal(Object.keys(ui).length, 2);
+    assert.equal(Object.keys(pages).length, 10);
+    const staging = stagingDirs();
+    // docker: "false" exits 1 like a failing `docker run`: the update must not have touched the baselines.
+    const r = runCatalog({ fixtures: true, update: true, docker: "false", ...c });
+    assert.notEqual(r.status, 0);
+    assert.deepEqual(hashes(c.snapshotDir), ui);
+    assert.deepEqual(hashes(c.pageSnapshotDir), pages);
+    assert.deepEqual(stagingDirs(), staging, "the staging folders are removed after the run");
   });
 });
