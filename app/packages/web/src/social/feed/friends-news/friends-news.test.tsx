@@ -505,3 +505,15 @@ describe("NFR-12 Heute asks for the news of friends once on a cold start (issue 
     await vi.waitFor(() => expect(bannerReads()).toBe(2));
   });
 });
+
+describe("US-QS-32 the rows of the layer on Heute keep their height at 200 % text (issue 2293)", () => {
+  it("US-QS-32 the plant rows of the layer never shrink below their content, so a squeezed fit list cannot collapse them (issue 2293)", async () => {
+    server(twoFriends());
+    render(<Today at="/today?sheet=news" />);
+    const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    const list = await within(layer).findByRole("list", { name: "Neuigkeiten" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    // A squeezed list must not collapse a clipped row to its borders: the rows keep their content (issue 2293, as issue 2272).
+    expect(list.className).toContain("[&>li]:shrink-0");
+  });
+});
