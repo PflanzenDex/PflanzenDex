@@ -85,7 +85,7 @@ async function loadState(mgr: UserManager, retrying: boolean): Promise<State> {
     }
     if (e instanceof Error && e.message === "invitation_required")
       return { kind: "invitationNeeded" };
-    return { kind: "error", ...failureOf(e, retrying) };
+    return { kind: "error", ...(await failureOf(e, retrying)) };
   }
 }
 

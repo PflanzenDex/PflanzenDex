@@ -1,6 +1,5 @@
 // The failure of the account load as a code and its German text (US-QS-32, F-0059). Kept apart from the session hook so each
 // module stays within its size; the texts come from the message table of the sign-in views (SG-COPY-06, P-10).
-import { ERROR_TEXTS } from "@pflanzendex/core";
 import { isOnline } from "../../shared/platform/browser/network";
 import { texts } from "../../shared/lib/text-rules/texts";
 import { ACCOUNT_NOT_LOADABLE } from "../api/account-api";
@@ -24,7 +23,10 @@ function noAnswer(e: unknown): boolean {
  * connection state with the web's own code `network.not_reachable`; a refusal shows the text of its code when the message
  * table knows it, else `account.not_loadable`. A retry that fails again says so in front of the text.
  */
-export function failureOf(e: unknown, retrying: boolean): { code: string; text: string } {
+export async function failureOf(
+  e: unknown,
+  retrying: boolean,
+): Promise<{ code: string; text: string }> {
   if (noAnswer(e)) {
     const offline = !isOnline();
     const text = offline
@@ -37,6 +39,9 @@ export function failureOf(e: unknown, retrying: boolean): { code: string; text: 
     return { code: "network.not_reachable", text };
   }
   const refusal = e instanceof Error ? e.message : "";
+  // The message table of the core is read only when a refusal arrives: a static import would put it into the start chunk,
+  // which the bundle budget keeps small (QG-U6, DS-08).
+  const { ERROR_TEXTS } = await import("@pflanzendex/core");
   const known = Object.hasOwn(ERROR_TEXTS, refusal);
   const code = known ? refusal : ACCOUNT_NOT_LOADABLE;
   const text = known ? ERROR_TEXTS[refusal as keyof typeof ERROR_TEXTS] : t("session.failed");
