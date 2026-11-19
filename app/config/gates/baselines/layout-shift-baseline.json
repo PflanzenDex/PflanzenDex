@@ -237,16 +237,6 @@
       "cls": 0.098
     },
     {
-      "screen": "today-sheet-news",
-      "size": "360x640",
-      "cls": 0.091
-    },
-    {
-      "screen": "today-sheet-news",
-      "size": "1280x800",
-      "cls": 0.096
-    },
-    {
       "screen": "today-sheet-plan",
       "size": "360x640",
       "cls": 0.144
