@@ -16,6 +16,8 @@ export interface HandoverContext {
   readonly mode: OfferMode | null;
   /** The name of the other side as stored at the request; `null` = none (P-08). */
   readonly otherName: string | null;
+  /** The recipient's name as the giver's side stored it at the request; `null` = none (P-08). Whoever confirms last. */
+  readonly recipientName: string | null;
 }
 
 /** A specimen as the handover reads it (a subset of `SpecimenRow` of `collection`). */

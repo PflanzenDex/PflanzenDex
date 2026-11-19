@@ -35,6 +35,8 @@ export interface HandoverContext {
   readonly mode: "swap" | "give_away" | null;
   /** The name of the other side as stored when the request was made; `null` = it has none (P-08). */
   readonly otherName: string | null;
+  /** The recipient's name as the giver's side stored it at the request; `null` = none (P-08). */
+  readonly recipientName: string | null;
 }
 
 export type ReceiveRefusal = "name_taken" | "marker_taken" | "species_unknown";
@@ -61,7 +63,7 @@ export class HandoverSession {
   /** Records my confirmation (and the marker, for the recipient) on both rows. */
   async confirm(swapId: string, marker: string | null): Promise<HandoverContext> {
     const r = await this.c.query<HandoverContext>(
-      `select outcome, all_done as "both", role, other_id as "otherId", offer_id as "offerId", specimen_id as "specimenId", type, marker, mode, other_name as "otherName"
+      `select outcome, all_done as "both", role, other_id as "otherId", offer_id as "offerId", specimen_id as "specimenId", type, marker, mode, other_name as "otherName", recipient_name as "recipientName"
          from confirm_handover($1, $2)`,
       [swapId, marker],
     );

@@ -538,6 +538,21 @@ describe("US-SOZ-11 the handover in one transaction", () => {
     ).toBe("handed_over");
   });
 
+  it("US-BES-07 US-SOZ-11 the confirmation answers the recipient's name for both roles, the same person whoever confirms last", async () => {
+    const a = await accepted();
+    const recipientName = `N-${ben.slice(0, 4)}`;
+    const asRecipient = await swaps.handover(ben, async (s) => ({
+      commit: true,
+      value: await s.confirm(a.swapId, null),
+    }));
+    const asGiver = await swaps.handover(anna, async (s) => ({
+      commit: true,
+      value: await s.confirm(a.swapId, null),
+    }));
+    expect(asRecipient).toMatchObject({ role: "recipient", both: false, recipientName });
+    expect(asGiver).toMatchObject({ role: "giver", both: true, recipientName });
+  });
+
   it("the recipient starts with an empty history: nothing but the species is passed on", async () => {
     const a = await accepted();
     await confirmAs(anna, a);
