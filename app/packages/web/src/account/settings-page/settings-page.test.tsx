@@ -706,24 +706,36 @@ describe("US-QS-17 settings as a list of groups", () => {
     expect(text).not.toMatch(/von \d+ an/);
   });
 
-  it("US-QS-17 · P-10 a failing style load reads 'unbekannt' in its row only", async () => {
+  it("US-QS-32 · P-08 a failing style load reads Nicht geladen beside its row, with a retry that loads it again, never unbekannt", async () => {
     fakeServer();
     const ok = globalThis.fetch;
+    let failing = true;
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async (url, init) =>
-        new URL(String(url)).pathname === "/onboarding/style" ? response(500, {}) : ok(url, init),
+        new URL(String(url)).pathname === "/onboarding/style" && failing
+          ? response(500, {})
+          : ok(url, init),
       ),
     );
     show();
-    await waitFor(
-      () =>
-        expect(screen.getByRole("button", { name: /^Wie nutzt/ }).textContent).toContain(
-          "unbekannt",
-        ),
-      { timeout: 4000 },
-    );
+    const retry = await screen.findByRole("button", {
+      name: "Erneut versuchen: Wie nutzt du die App?",
+    });
+    const rowText = screen.getByRole("button", { name: /^Wie nutzt/ }).textContent ?? "";
+    expect(rowText).toContain("Nicht geladen");
+    expect(rowText).not.toContain("unbekannt");
     expect((await row("Profil")).textContent).toContain("Anna");
+    failing = false;
+    await userEvent.click(retry);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /^Wie nutzt/ }).textContent).toContain(
+        "ein paar Pflanzen",
+      ),
+    );
+    expect(
+      screen.queryByRole("button", { name: "Erneut versuchen: Wie nutzt du die App?" }),
+    ).toBeNull();
   });
 
   it.each([

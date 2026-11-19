@@ -85,7 +85,7 @@ function LabelPlant(props: { api: string; token: Token; id: string }) {
 }
 
 /**
- * The plant with its two quick actions; an archived plant says so and offers no action (US-BES-17, P-09, P-10).
+ * The active plant with its quick actions (US-BES-17, P-09); an archived plant opens `Archived` instead (see `LabelPlant`).
  * "Gegossen" and "Gedüngt" refresh all monitoring data, so the watering and the fertilizing line show the new state (US-MON-05, US-MON-09).
  */
 function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure: () => void }) {
@@ -94,50 +94,46 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
   return (
     <section aria-labelledby="pot-label-title" className="flex min-w-0 flex-col gap-4">
       <PageHeader headingId="pot-label-title" title={specimen.name} />
-      {!isActive(specimen) ? null : (
-        <>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Button
-              type="button"
-              size="touch"
-              disabled={write.running}
-              onClick={() =>
-                void write.run((t) => markWatered(api, t, [specimen.id]), ui("watered"))
-              }
-            >
-              {ui("water")}
-            </Button>
-            <Button
-              type="button"
-              size="touch"
-              variant="outline"
-              disabled={write.running}
-              onClick={() =>
-                void write.run((t) => markFertilized(api, t, specimen.id), ui("fertilized"))
-              }
-            >
-              {ui("fertilize")}
-            </Button>
-            <Button type="button" size="touch" variant="outline" onClick={onMeasure}>
-              {ui("measure")}
-            </Button>
-          </div>
-          <LastFertilized api={api} token={token} specimenId={specimen.id} />
-          {write.message ? (
-            <p role="status" className="text-sm">
-              {write.message}
-            </p>
-          ) : null}
-          {write.error ? (
-            <p role="alert" className="rounded-lg border border-destructive p-2 text-sm">
-              {errorText(write.error.code)}
-            </p>
-          ) : null}
-          <Button asChild variant="link">
-            <Link to={plantAddress(specimen.id)}>{ui("toPlant")}</Link>
+      <>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Button
+            type="button"
+            size="touch"
+            disabled={write.running}
+            onClick={() => void write.run((t) => markWatered(api, t, [specimen.id]), ui("watered"))}
+          >
+            {ui("water")}
           </Button>
-        </>
-      )}
+          <Button
+            type="button"
+            size="touch"
+            variant="outline"
+            disabled={write.running}
+            onClick={() =>
+              void write.run((t) => markFertilized(api, t, specimen.id), ui("fertilized"))
+            }
+          >
+            {ui("fertilize")}
+          </Button>
+          <Button type="button" size="touch" variant="outline" onClick={onMeasure}>
+            {ui("measure")}
+          </Button>
+        </div>
+        <LastFertilized api={api} token={token} specimenId={specimen.id} />
+        {write.message ? (
+          <p role="status" className="text-sm">
+            {write.message}
+          </p>
+        ) : null}
+        {write.error ? (
+          <p role="alert" className="rounded-lg border border-destructive p-2 text-sm">
+            {errorText(write.error.code)}
+          </p>
+        ) : null}
+        <Button asChild variant="link">
+          <Link to={plantAddress(specimen.id)}>{ui("toPlant")}</Link>
+        </Button>
+      </>
     </section>
   );
 }
@@ -158,11 +154,7 @@ function NotFound() {
 }
 
 const dateOf = (iso: string | null) => (iso ? dateText(iso) : UNKNOWN);
-/**
- * An archived plant of the keeper's own account (owner answers Q-85 and Q-137, US-QS-32): read-only, with "Archiviert am …" on
- * top, its reason and catch date, and "Pflanze wiederherstellen" as its one tinted action. After the restore the label loads
- * again and shows the active plant.
- */
+/** An archived plant (owner answers Q-85 and Q-137, US-QS-32): read-only, "Archiviert am …" on top, and the one action "Pflanze wiederherstellen". */
 function Archived(props: { api: string; token: Token; id: string; specimen: Specimen }) {
   const { api, token, id, specimen } = props;
   const refresh = useInvalidate(COLLECTION_KEY);
@@ -181,6 +173,11 @@ function Archived(props: { api: string; token: Token; id: string; specimen: Spec
           ? ui("caughtOn", { date: dateOf(specimen.caughtAt) })
           : ui("caughtUnknown")}
       </p>
+      {write.message ? (
+        <p role="status" className="text-sm">
+          {write.message}
+        </p>
+      ) : null}
       {write.error ? (
         <p role="alert" className="rounded-lg border border-destructive p-2 text-sm">
           {errorText(write.error.code)}
@@ -191,7 +188,7 @@ function Archived(props: { api: string; token: Token; id: string; specimen: Spec
         size="touch"
         variant="tinted"
         disabled={write.running}
-        onClick={() => void write.run((t) => restoreSpecimen(api, t, specimen.id), ui("restore"))}
+        onClick={() => void write.run((t) => restoreSpecimen(api, t, specimen.id), ui("restored"))}
       >
         {ui("restore")}
       </Button>
