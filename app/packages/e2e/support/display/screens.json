@@ -942,7 +942,7 @@
     "account": "test2",
     "path": "/label/unbekannt",
     "route": "/label/:id",
-    "title": "Pflanze nicht gefunden"
+    "title": "Etikett ohne Pflanze"
   },
   {
     "id": "operator-sheet-zahlen",

@@ -314,7 +314,7 @@ Acceptance criteria:
 - Given a new account without a plant, when I open "Heute", then the first-plant guide shows in place of the day's tasks, with the same steps and "Überspringen" as before (US-ONB-01); after skipping, "Heute" shows the day's tasks, after saving the guide names the next step as before.
 - Given a calm hint is due (US-ONB-07: `first_plant_saved`, `function_unlocked`), then it shows on "Heute" as the same quiet note with "Hinweis schließen", above the day's tasks, with the same rules (calm mode, style, 7 days, dismissal per account).
 - Given announced locked functions (US-ONB-05), then "Heute" lists them as before as rows "Noch nicht geöffnet" with mark and way, below the day's tasks; calm mode and switched-off functions show nothing.
-- Given a link or bookmark to `/`, then it lands on "Heute"; the unknown-address fallback leads to "Heute" too.
+- Given a link or bookmark to `/`, then it lands on "Heute"; an address that matches no page shows the not-found view "Diese Seite gibt es nicht" inside the frame with the one action "Zu Heute" (owner answer Q-25, finding F-0058, US-QS-32), and does not redirect to "Heute".
 - Given "Heute" is opened, then the introduction loads as its own chunk with "Heute" and the hint note only when a hint is due, so the initial JavaScript does not carry them (QG-U6). Assumption: the guide itself is part of the introduction chunk, because a separate chunk for it pushed the initial bundle over its budget by 0.4 kB (nested lazy loading, 2026-10-29); revisit when the budget is reviewed.
 - Given the number of plants cannot be read, then "Heute" still shows the day's tasks without the introduction, so the view is never blank (P-10).
 

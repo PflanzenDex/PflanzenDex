@@ -640,11 +640,16 @@ describe("US-ACC-01 App", () => {
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
   });
 
-  it("US-QS-07 · an unknown address lands on Heute", async () => {
+  it("US-QS-07 · US-QS-32 an unknown address shows the not-found view inside the frame, with both bars and its way on", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/gibt-es-nicht");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+    ).toBeTruthy();
+    expect(document.title).toBe("Seite nicht gefunden – PflanzenDéx");
+    await userEvent.click(screen.getByRole("button", { name: "Zu Heute" }));
     await waitFor(() => expectHeute());
   });
 

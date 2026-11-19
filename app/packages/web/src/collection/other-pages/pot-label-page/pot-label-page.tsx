@@ -3,17 +3,26 @@
 // is read before the keeper is signed in (the app shows the sign-in first), and a foreign id looks like an unknown one.
 import { useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
+import { Tag } from "lucide-react";
 import { isActive, type Specimen } from "@pflanzendex/core";
 import { MeasurePage } from "@/care";
 import { markFertilized, markWatered } from "@/monitoring";
 import { call, useFeature, useInvalidate, useRequest, useWriteAction } from "@/shared/data";
 import { errorText } from "@/shared/lib/error-text";
+import { UNKNOWN, dateText } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { PATHS, plantAddress } from "@/shared/patterns/navigation/navigation/navigation";
+import {
+  ADD_PLANT_PATH,
+  PATHS,
+  plantAddress,
+} from "@/shared/patterns/navigation/navigation/navigation";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { Button } from "@/shared/ui/button/button";
+import { restoreSpecimen } from "../../archived/archived-api";
+import { COLLECTION_KEY } from "../../specimens/hooks/use-collection";
 import table from "./pot-label-page.de.json";
 import { LastFertilized } from "./last-fertilized/last-fertilized";
 import { PotLabelSkeleton } from "./pot-label-page.skeleton";
@@ -50,6 +59,8 @@ function LabelPlant(props: { api: string; token: Token; id: string }) {
   const specimen = plant.value;
   // The same answer for a foreign and an unknown id (P-05): one view, no name, no hint that the plant exists.
   if (plant.error?.code === "specimen.not_found") return <NotFound />;
+  if (specimen && !measuring && !isActive(specimen))
+    return <Archived api={api} token={token} id={id} specimen={specimen} />;
   return (
     <RequestState
       status={plant.status}
@@ -83,14 +94,7 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
   return (
     <section aria-labelledby="pot-label-title" className="flex min-w-0 flex-col gap-4">
       <PageHeader headingId="pot-label-title" title={specimen.name} />
-      {!isActive(specimen) ? (
-        <>
-          <p className="text-sm">{errorText("specimen.archived")}</p>
-          <Button asChild variant="outline" size="touch">
-            <Link to={PATHS.collection}>{ui("toCollection")}</Link>
-          </Button>
-        </>
-      ) : (
+      {!isActive(specimen) ? null : (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
             <Button
@@ -138,14 +142,58 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
   );
 }
 
-/** Foreign and unknown labels: the same text, nothing of a collection (P-05). The way on leads to the collection. */
+/** Foreign and unknown labels (P-05): one view with no name, its own mark, the cause in one line, and the two ways on (US-QS-32). */
 function NotFound() {
+  const navigate = useNavigate();
+  return (
+    <EmptyState
+      level={1}
+      icon={Tag}
+      title={ui("notFound")}
+      description={ui("notFoundCause")}
+      action={{ label: ui("addPlant"), onClick: () => void navigate(ADD_PLANT_PATH) }}
+      secondary={{ label: ui("toCollection"), onClick: () => void navigate(PATHS.collection) }}
+    />
+  );
+}
+
+const dateOf = (iso: string | null) => (iso ? dateText(iso) : UNKNOWN);
+/**
+ * An archived plant of the keeper's own account (owner answers Q-85 and Q-137, US-QS-32): read-only, with "Archiviert am …" on
+ * top, its reason and catch date, and "Pflanze wiederherstellen" as its one tinted action. After the restore the label loads
+ * again and shows the active plant.
+ */
+function Archived(props: { api: string; token: Token; id: string; specimen: Specimen }) {
+  const { api, token, id, specimen } = props;
+  const refresh = useInvalidate(COLLECTION_KEY);
+  const reloadLabel = useInvalidate(["label", "specimen", id]);
+  const write = useWriteAction(token, () => {
+    refresh();
+    reloadLabel();
+  });
   return (
     <section aria-labelledby="pot-label-title" className="flex min-w-0 flex-col gap-4">
-      <PageHeader headingId="pot-label-title" title={ui("notFound")} />
-      <p className="text-sm">{errorText("specimen.not_found")}</p>
-      <Button asChild variant="outline" size="touch">
-        <Link to={PATHS.collection}>{ui("toCollection")}</Link>
+      <PageHeader headingId="pot-label-title" title={specimen.name} />
+      <p className="text-sm">{ui("archivedOn", { date: dateOf(specimen.archivedAt) })}</p>
+      <p className="text-sm">{ui("reason", { reason: specimen.archivedReason ?? UNKNOWN })}</p>
+      <p className="text-sm">
+        {specimen.caughtAt
+          ? ui("caughtOn", { date: dateOf(specimen.caughtAt) })
+          : ui("caughtUnknown")}
+      </p>
+      {write.error ? (
+        <p role="alert" className="rounded-lg border border-destructive p-2 text-sm">
+          {errorText(write.error.code)}
+        </p>
+      ) : null}
+      <Button
+        type="button"
+        size="touch"
+        variant="tinted"
+        disabled={write.running}
+        onClick={() => void write.run((t) => restoreSpecimen(api, t, specimen.id), ui("restore"))}
+      >
+        {ui("restore")}
       </Button>
     </section>
   );
