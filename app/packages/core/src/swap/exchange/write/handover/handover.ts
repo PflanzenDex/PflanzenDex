@@ -77,14 +77,20 @@ interface Completion {
   };
 }
 
+/** The two sides of the swap, from the caller's point of view. */
+const sides = (ctx: HandoverContext, userId: string) => ({
+  giver: ctx.role === "giver" ? userId : (ctx.otherId as string),
+  recipient: ctx.role === "giver" ? (ctx.otherId as string) : userId,
+});
+
 async function complete(c: Completion): Promise<Verdict> {
   const { steps, swapId, ctx, userId, prepared, today, deps } = c;
-  const giver = ctx.role === "giver" ? userId : (ctx.otherId as string);
-  const recipient = ctx.role === "giver" ? (ctx.otherId as string) : userId;
+  const { giver, recipient } = sides(ctx, userId);
   // Only a plant leaves the giver's collection (Q-149); a cutting or offshoot keeps its mother plant (see `finish`).
   const plant = ctx.type === "plant";
   if (plant) {
-    const who = ctx.otherName ?? "einem Freund";
+    // US-BES-07: the reason names the recipient whoever confirms last; `ctx.otherName` would name the giver then.
+    const who = ctx.recipientName ?? "einem Freund";
     const reason = ctx.mode === "give_away" ? `Verschenkt an ${who}` : `Getauscht mit ${who}`;
     await steps.archiveGiven(giver, ctx.specimenId as string, reason, today);
   }
@@ -128,12 +134,6 @@ const CODE = {
   species_unknown: "species.not_found",
   specimen_gone: "specimen.not_found",
 } as const;
-
-/** The two sides of the swap, from the caller's point of view. */
-const sides = (ctx: HandoverContext, userId: string) => ({
-  giver: ctx.role === "giver" ? userId : (ctx.otherId as string),
-  recipient: ctx.role === "giver" ? (ctx.otherId as string) : userId,
-});
 
 /** Everything between the confirmation and the writes: the offered specimen, the species and the naming plan. */
 async function prepare(
