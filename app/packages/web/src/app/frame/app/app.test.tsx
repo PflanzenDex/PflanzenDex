@@ -32,6 +32,8 @@ vi.mock("oidc-client-ts", () => ({
     getUser = mgr.getUser;
     removeUser = mgr.removeUser;
     signinRedirect = mgr.signinRedirect;
+    // The sign-in manager of the app wraps this method for the shared renewal (issue 2274, api/renewal.ts).
+    signinSilent = vi.fn(async () => undefined);
     signoutRedirect = mgr.signoutRedirect;
   },
 }));
