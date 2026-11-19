@@ -150,7 +150,7 @@ describe("US-LIC-05 page locations and light zones", () => {
   it("US-QS-19 the page heading comes first; the reference is a layer, not a column below the lists", async () => {
     fakeServer({ zones: [zone], locations: [location] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await screen.findByRole("heading", { name: "Zone 2" });
+    await screen.findByRole("button", { name: /^Zone 2\b/ });
     const headings = screen.getAllByRole("heading");
     expect(headings[0]).toMatchObject({ tagName: "H1", textContent: "Standorte und Lichtzonen" });
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
@@ -163,8 +163,8 @@ describe("US-LIC-05 page locations and light zones", () => {
     delayLoads();
     render(<LightPage api="http://api" token={async () => "tok"} />);
     expect((await screen.findByRole("status")).textContent).toContain("werden geladen");
-    expect(await screen.findByRole("heading", { name: "Zone 2" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Balkon" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Zone 2\b/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Balkon\b/ })).toBeTruthy();
   });
 
   it('without sign-in: error text with action "Erneut versuchen", no call to the API (P-09)', async () => {
@@ -176,7 +176,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     token.mockResolvedValue("tok");
     fakeServer({ zones: [zone] });
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    expect(await screen.findByRole("heading", { name: "Zone 2" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Zone 2\b/ })).toBeTruthy();
   });
 
   it("a server error while loading is shown with its text, nothing is shown half", async () => {
@@ -205,7 +205,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Es ist ein Fehler aufgetreten",
     );
-    expect(screen.getByRole("heading", { name: "Zone 2" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Zone 2\b/ })).toBeTruthy();
     fetchFn.mockImplementation(normal);
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByText(/Noch keine Art: lege zuerst eine Pflanze an\./)).toBeTruthy();
@@ -223,7 +223,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     );
     await userEvent.type(screen.getByLabelText("Lux-Obergrenze"), "8000");
     await userEvent.click(screen.getByRole("button", { name: "Lichtzone anlegen" }));
-    expect(await screen.findByRole("heading", { name: "Fensterbank" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Fensterbank\b/ })).toBeTruthy();
     const post = calls.find((a) => a.method === "POST" && a.url === "/light-zones");
     expect(post?.body).toEqual({
       name: "Fensterbank",
@@ -237,7 +237,7 @@ describe("US-LIC-05 page locations and light zones", () => {
   it("creates a location without zone and names it in the list afterwards", async () => {
     const { calls } = fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await screen.findByRole("heading", { name: "Zone 2" });
+    await screen.findByRole("button", { name: /^Zone 2\b/ });
     await pressFirst("Neuer Standort");
     await userEvent.type(
       screen.getByLabelText("Name", { selector: "form[aria-label='Standort anlegen'] input" }),
@@ -248,7 +248,7 @@ describe("US-LIC-05 page locations and light zones", () => {
       "outdoor",
     );
     await userEvent.click(screen.getByRole("button", { name: "Standort anlegen" }));
-    expect(await screen.findByRole("heading", { name: "Fensterbank" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Fensterbank\b/ })).toBeTruthy();
     const post = calls.find((a) => a.method === "POST" && a.url === "/locations");
     expect(post?.body).toEqual({ name: "Fensterbank", lightZoneId: null, kind: "outdoor" });
   });
@@ -264,7 +264,7 @@ describe("US-LIC-05 page locations and light zones", () => {
   it("changes a zone: the form shows the old values, after saving the new name is there", async () => {
     const { calls } = fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     const name = screen.getByLabelText("Name", {
       selector: "form[aria-label='Zone 2 ändern'] input",
     });
@@ -272,7 +272,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     await userEvent.clear(name);
     await userEvent.type(name, "Zone 3");
     await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
-    expect(await screen.findByRole("heading", { name: "Zone 3" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Zone 3\b/ })).toBeTruthy();
     const put = calls.find((a) => a.method === "PUT");
     expect(put?.body).toMatchObject({ name: "Zone 3", luxCeiling: 15000, ppfd: 300 });
   });
@@ -280,28 +280,28 @@ describe("US-LIC-05 page locations and light zones", () => {
   it("cancel while changing discards the input without a write call", async () => {
     const { calls } = fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
-    expect(screen.getByRole("heading", { name: "Zone 2" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Zone 2\b/ })).toBeTruthy();
     expect(calls.every((a) => a.method === "GET")).toBe(true);
   });
 
   it("US-QS-19 deleting is only in the layer of the zone, asks first; a used zone stays with the error text of the API", async () => {
     const { calls } = fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
     expect(calls.some((a) => a.method === "DELETE")).toBe(false);
     await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
     expect((await screen.findAllByText(/wird noch genutzt/)).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Zone 2" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Zone 2\b/ })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Lichtzone löschen" })).toBeTruthy();
   });
 
   it("US-QS-32 · SG-BTN-03 'Lichtzone löschen' is a red plain button and the last action of the layer", async () => {
     fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     const remove = screen.getByRole("button", { name: "Lichtzone löschen" });
     expect(remove.className.split(/\s+/)).toContain("text-destructive");
     expect(remove.className.split(/\s+/).some((c) => /^bg-/.test(c))).toBe(false);
@@ -316,7 +316,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
     expect(screen.queryByRole("button", { name: "Löschen" })).toBeNull();
-    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
     await userEvent.click(screen.getByRole("button", { name: "Nicht löschen" }));
     expect(screen.getByRole("button", { name: "Lichtzone löschen" })).toBeTruthy();
@@ -325,7 +325,7 @@ describe("US-LIC-05 page locations and light zones", () => {
   it("assigns a light zone to a location without zone", async () => {
     const { calls } = fakeServer({ zones: [zone], locations: [location] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Balkon ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Balkon\b/ }));
     await userEvent.selectOptions(
       screen.getByLabelText("Lichtzone", { selector: "form[aria-label='Balkon ändern'] select" }),
       "z1",
@@ -344,7 +344,7 @@ describe("US-QS-14 feedback on the light page", () => {
   it("US-QS-14 a saved location is confirmed with a toast", async () => {
     fakeServer({ zones: [zone], locations: [location] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Balkon ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Balkon\b/ }));
     await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
     expect(await screen.findByText("Standort gespeichert.")).toBeTruthy();
   });
@@ -370,7 +370,7 @@ describe("US-LIC-01 determine the zone of a species on the page", () => {
   it("queries the derivation of the API and shows zone and reason", async () => {
     const { calls } = fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await screen.findByRole("heading", { name: "Zone 2" });
+    await screen.findByRole("button", { name: /^Zone 2\b/ });
     await userEvent.click(screen.getByRole("button", { name: REFERENCE }));
     await userEvent.click(screen.getByRole("button", { name: "Rechner" }));
     await userEvent.type(screen.getByLabelText("Lichtbedarf der Art"), "15000");
@@ -385,7 +385,7 @@ describe("US-LIC-01 determine the zone of a species on the page", () => {
     let signedIn = true;
     const token = async () => (signedIn ? "tok" : undefined);
     render(<LightPage api="http://api" token={token} />);
-    await screen.findByRole("heading", { name: "Zone 2" });
+    await screen.findByRole("button", { name: /^Zone 2\b/ });
     await userEvent.click(screen.getByRole("button", { name: REFERENCE }));
     await userEvent.click(screen.getByRole("button", { name: "Rechner" }));
     signedIn = false;
@@ -470,7 +470,7 @@ describe("US-QS-19 management on one screen", () => {
     setViewportWidth(360);
     fakeServer({ zones: [zone], locations: [location] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await screen.findByRole("heading", { name: "Zone 2" });
+    await screen.findByRole("button", { name: /^Zone 2\b/ });
     expect(
       screen.getByRole("button", { name: "Lichtzonen (1)" }).getAttribute("aria-pressed"),
     ).toBe("true");
@@ -495,14 +495,18 @@ describe("US-QS-19 management on one screen", () => {
     expect(screen.getByRole("status").textContent).toContain("Seite 2 von 2");
   });
 
-  it("US-QS-19 each row shows name, facts and one Ändern button, and its layer holds the form", async () => {
+  it("US-QS-32 each zone and location is one button named by its visible text, with a chevron, and its layer holds the form", async () => {
     fakeServer({ zones: [zone], locations: [location] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    expect(await screen.findByRole("button", { name: "Zone 2 ändern" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Balkon ändern" })).toBeTruthy();
+    const zoneRow = await screen.findByRole("button", { name: /^Zone 2\b/ });
+    expect(zoneRow.textContent).toContain("bis 15.000");
+    expect(zoneRow.querySelector("svg")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /ändern$/ })).toBeNull();
+    const locationRow = screen.getByRole("button", { name: /^Balkon\b/ });
+    expect(locationRow.querySelector("svg")).not.toBeNull();
     expect(screen.getByText(/^bis 15\.000/)).toBeTruthy();
     expect(screen.getByText("Lichtzone fehlt · außen")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Balkon ändern" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Balkon\b/ }));
     expect(
       screen.getByLabelText("Name", { selector: "form[aria-label='Balkon ändern'] input" }),
     ).toBeTruthy();
@@ -547,7 +551,7 @@ describe("US-QS-32 the light layers ask before they discard typed input", () => 
   it("US-QS-32 Lichtzone ändern: typed name and Escape asks; Weiter bearbeiten keeps the value and the layer", async () => {
     fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.type(screen.getByLabelText("Name", { selector: ZONE_NAME }), " neu");
     await userEvent.keyboard("{Escape}");
     const question = await screen.findByRole("dialog", QUESTION);
@@ -561,7 +565,7 @@ describe("US-QS-32 the light layers ask before they discard typed input", () => 
   it("US-QS-32 Lichtzone ändern: typed name and Back asks; Eingabe verwerfen closes the layer and writes nothing", async () => {
     const { calls } = fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.type(screen.getByLabelText("Name", { selector: ZONE_NAME }), " neu");
     // The first input pushes the guard entry; Back is pressed once that entry is committed, as the Back tests of US-QS-15 do.
     await waitFor(() => expect(route.guarded).toBe(true));
@@ -578,7 +582,7 @@ describe("US-QS-32 the light layers ask before they discard typed input", () => 
   it("US-QS-32 Lichtzone ändern without typed input: Escape closes the layer at once, with no question", async () => {
     fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await screen.findByLabelText("Name", { selector: ZONE_NAME });
     await userEvent.keyboard("{Escape}");
     await waitFor(() =>
@@ -590,7 +594,7 @@ describe("US-QS-32 the light layers ask before they discard typed input", () => 
   it("US-QS-32 Lichtzone ändern: Abbrechen after typed input closes the layer without a question", async () => {
     const { calls } = fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.type(screen.getByLabelText("Name", { selector: ZONE_NAME }), " neu");
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     await waitFor(() =>
@@ -603,10 +607,10 @@ describe("US-QS-32 the light layers ask before they discard typed input", () => 
   it("US-QS-32 Lichtzone ändern: a saved change closes the layer without a question", async () => {
     fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Zone 2 ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.type(screen.getByLabelText("Name", { selector: ZONE_NAME }), " neu");
     await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
-    expect(await screen.findByRole("heading", { name: "Zone 2 neu" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Zone 2 neu\b/ })).toBeTruthy();
     await waitFor(() =>
       expect(screen.queryByLabelText("Name", { selector: ZONE_NAME })).toBeNull(),
     );
@@ -616,7 +620,7 @@ describe("US-QS-32 the light layers ask before they discard typed input", () => 
   it("US-QS-32 Standort ändern: typed name and Escape asks", async () => {
     fakeServer({ zones: [zone], locations: [location] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Balkon ändern" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Balkon\b/ }));
     await userEvent.type(
       screen.getByLabelText("Name", { selector: "form[aria-label='Balkon ändern'] input" }),
       " Süd",
@@ -641,7 +645,7 @@ describe("US-QS-32 the light layers ask before they discard typed input", () => 
   it("US-QS-32 Standort anlegen: typed name and Escape asks", async () => {
     fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
-    await screen.findByRole("heading", { name: "Zone 2" });
+    await screen.findByRole("button", { name: /^Zone 2\b/ });
     await pressFirst("Neuer Standort");
     await userEvent.type(
       screen.getByLabelText("Name", { selector: "form[aria-label='Standort anlegen'] input" }),

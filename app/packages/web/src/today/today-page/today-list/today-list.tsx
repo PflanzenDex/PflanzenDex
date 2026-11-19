@@ -1,6 +1,8 @@
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { summaryDate } from "@/shared/lib/format";
 import { plurals, texts } from "@/shared/lib/text-rules/texts";
+import { GroupedList } from "@/shared/lists/grouped-list/grouped-list";
+import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
@@ -39,15 +41,23 @@ function Content(props: {
   return (
     <>
       {first ? (
-        <TodayRow
-          item={first}
-          // The "Stand" line is left out on the day of the list: it would only repeat "heute" (US-QS-32).
-          {...(list.date === today ? {} : { date: summaryDate(list.date, today) })}
-          onOpen={props.onOpen}
-          {...(isTreatment(first) && props.treatmentsEntry
-            ? { action: props.treatmentsEntry }
-            : {})}
-        />
+        isTreatment(first) && props.treatmentsEntry ? (
+          <TodayRow
+            item={first}
+            // The "Stand" line is left out on the day of the list: it would only repeat "heute" (US-QS-32).
+            {...(list.date === today ? {} : { date: summaryDate(list.date, today) })}
+            onOpen={props.onOpen}
+            action={props.treatmentsEntry}
+          />
+        ) : (
+          <GroupedList>
+            <TodayRow
+              item={first}
+              {...(list.date === today ? {} : { date: summaryDate(list.date, today) })}
+              onOpen={props.onOpen}
+            />
+          </GroupedList>
+        )
       ) : (
         <EmptyState
           title={t("empty.title")}
@@ -79,10 +89,10 @@ export function FurtherTasks(props: {
       // The rows do not count towards the height of the section (size containment): the section keeps one row and the
       // pager at a larger text size without growing with the page it shows, so the page size follows the free height
       // only (issue 1113).
-      {...(props.fit ? { listClassName: "[contain:size]" } : {})}
+      listClassName={props.fit ? `${ROW_GROUP} [contain:size]` : ROW_GROUP}
       getKey={(item) => item.id}
       {...(props.param ? { param: props.param } : {})}
-      renderItem={(item) => <TodayRow item={item} onOpen={props.onOpen} />}
+      renderItem={(item) => <TodayRow item={item} onOpen={props.onOpen} bare />}
     />
   );
 }

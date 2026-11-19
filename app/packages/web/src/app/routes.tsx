@@ -85,7 +85,7 @@ function TodayRoute(props: { api: string; token: Token; onOpen: (v: LinkTarget) 
   const social = useFeature("social");
   const { api, token } = props;
   const tiles: TodayTile[] = [
-    anniversaryTile({ api, token, onOpen: () => props.onOpen("collection") }),
+    anniversaryTile({ api, token }),
     ...(social
       ? [
           {

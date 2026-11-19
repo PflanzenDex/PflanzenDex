@@ -1,6 +1,8 @@
 // Public interface of the module `today` (ADR 0003): the central "Today" list (TE-07).
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 export type { TodayDestination } from "./today-page/today-page";
+// The view each destination opens: a row that opens a view is a link to it (US-QS-32); the area's `open` uses the same map.
+export { VIEW_OF } from "./today-page/today-row/today-row";
 export const TodayPage = lazyPage(() =>
   import("./today-page/today-page").then((m) => ({ default: m.TodayPage })),
 );

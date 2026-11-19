@@ -9,7 +9,7 @@ import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { HintsPage } from "@/collection";
 import { PlanLayer, TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
-import { TodayPage, TodaySkeleton, type TodayDestination } from "@/today";
+import { TodayPage, TodaySkeleton, VIEW_OF, type TodayDestination } from "@/today";
 import {
   HintsLayerSkeleton,
   TreatmentsLayerSkeleton,
@@ -37,16 +37,6 @@ export type TodayTile = {
   id: string;
   tile: (draw: DrawTile) => ReactNode;
   layer: ReactNode;
-};
-
-/** Where the actions of "Jetzt dran" lead (TE-07): treatments and hints open their layer, the rest are views. */
-const VIEW: Partial<Record<TodayDestination, LinkTarget>> = {
-  care_phases: "carePhases",
-  collection: "collection",
-  // Measuring and the wishlist live in the Sammlung (US-QS-14, US-QS-04).
-  measurements: "collection",
-  wishlist: "collection",
-  equipment: "collection",
 };
 
 /**
@@ -79,7 +69,7 @@ export function TodayArea(props: {
   const open = (d: TodayDestination) => {
     if (d === "treatments") return treatments.openLayer();
     if (d === "hints") return hints.openLayer();
-    const view = VIEW[d];
+    const view = VIEW_OF[d];
     if (view) props.onOpen(view);
   };
   return (

@@ -79,6 +79,10 @@ const many = (n: number) => Array.from({ length: n }, (_, i) => card(i + 1));
 afterEach(cleanup);
 afterEach(releaseSheetExits);
 
+/** The rows of the plant list ("Pflanzen"); the light-zone row above it is a list item of its own (F-0114). */
+const plantItems = () =>
+  within(screen.getByRole("list", { name: "Pflanzen" })).getAllByRole("listitem");
+
 describe("US-QS-19 tiles of the plants", () => {
   it("US-QS-08 · WCAG 2.5.3 the plant row's accessible name is its visible title (no aria-label, no decorative glyph in the text)", () => {
     screenWith([card(1, { name: "Aloe" })]);
@@ -133,11 +137,11 @@ describe("US-QS-19 tiles of the plants", () => {
 
   it("US-QS-19 · FR-BES-23 the plants are paged, the first entry is in the address and an entry past the end shows the last page", async () => {
     screenWith(many(8));
-    expect(screen.getAllByRole("listitem")).toHaveLength(6);
+    expect(plantItems()).toHaveLength(6);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByTestId("address").textContent).toBe("?from=6");
-    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(plantItems()).toHaveLength(2);
     expect(screen.getByRole("button", { name: /^Pflanze 7(\s|$)/ })).toBeTruthy();
     cleanup();
     screenWith(many(8), {}, "/?from=9");
@@ -146,7 +150,7 @@ describe("US-QS-19 tiles of the plants", () => {
 
   it("US-QS-32 the plant rows are one flat group in one column at every width: no grid, no gap, no box per row (SG-SHAPE-03, FX-35)", () => {
     screenWith(many(8));
-    const items = screen.getAllByRole("listitem");
+    const items = plantItems();
     const group = items[0]?.parentElement;
     expect(group?.className).toContain("flex-col");
     expect(group?.className).toContain("bg-card");
@@ -165,12 +169,12 @@ describe("US-QS-19 tiles of the plants", () => {
     expect(surface?.className).not.toMatch(/\bborder-border\b|\brounded-lg\b|\bbg-card\b/);
   });
 
-  it("US-QS-19 at 200 % text the insight row wraps at whole words: the row may wrap, the insight never gets narrower than its longest word, and the section grows with its content (issue 1113)", () => {
+  it("US-QS-32 the light-zone row is a row of its own above the plants: a chevron, at least 44 px high, and the section grows with its content (F-0114)", () => {
     screenWith(many(8));
-    const insight = screen.getByRole("button", { name: /Lichtzonen ansehen|Am leersten/ });
-    expect(insight.className).not.toContain("min-w-0");
-    expect(insight.querySelector("span.break-normal")).not.toBeNull();
-    expect(insight.parentElement?.className).toContain("flex-wrap");
+    const insight = screen.getByRole("button", { name: /^Lichtzonen/ });
+    expect(insight.querySelector("svg")).not.toBeNull();
+    expect(insight.className).toContain("min-h-11");
+    expect(insight.className).not.toContain("basis-0");
     const section = screen.getByRole("region", { name: "Pflanzen" });
     expect(section.className).not.toContain("min-h-0");
   });
@@ -212,7 +216,7 @@ describe("US-QS-19 page size fills the free height of the region (tiles)", () =>
   it("US-QS-19 the tiles fill the free height of the region: whole rows per page, the pager below", () => {
     region = 532;
     screenWith(many(8));
-    expect(screen.getAllByRole("listitem")).toHaveLength(5);
+    expect(plantItems()).toHaveLength(5);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
   });
 });
@@ -221,7 +225,7 @@ describe("US-QS-19 the layers of the plants", () => {
   it("US-QS-19 the insight row names the thinnest zone and opens the layer with the distribution and the way to the management", async () => {
     const onManage = vi.fn();
     screenWith(many(2), { onManage });
-    await userEvent.click(screen.getByRole("button", { name: /Am leersten: Zone 3/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Lichtzonen Zone 3 am leersten/ }));
     const layer = await screen.findByRole("dialog", { name: "Lichtzonen" });
     expect(screen.getByTestId("address").textContent).toBe("?sheet=zones");
     expect(within(layer).getByText(/Zone 3: 1 Pflanze/)).toBeTruthy();
@@ -328,7 +332,7 @@ describe("US-QS-19 loading and error states of the plants", () => {
     );
     render(page());
     expect(await screen.findByText("Du hast noch keine Pflanze")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Lichtzonen ansehen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Lichtzonen" })).toBeTruthy();
     vi.unstubAllGlobals();
   });
 });
@@ -355,7 +359,7 @@ describe("NFR-12 the Sammlung transfers thumbnails only", () => {
     );
     screenWith(photographed);
     await waitFor(() => expect(requested.length).toBeGreaterThan(0));
-    const visible = screen.getAllByRole("listitem").length;
+    const visible = plantItems().length;
     await waitFor(() => expect(requested).toHaveLength(visible));
     expect(requested.every((url) => url.endsWith("/photo?size=thumb"))).toBe(true);
     vi.unstubAllGlobals();

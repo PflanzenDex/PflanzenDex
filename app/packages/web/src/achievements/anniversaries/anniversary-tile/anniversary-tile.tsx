@@ -27,11 +27,11 @@ export function AnniversaryTile(props: {
 }
 
 /**
- * The layer behind the tile (`?sheet=anniversaries`): the entries with their text, photos and "Zur Sammlung", as on the
- * former card. An address with no anniversary left (an old link, or a calm mode switched on meanwhile) is closed instead
+ * The layer behind the tile (`?sheet=anniversaries`): the entries with their text, photos and the plant each row opens (US-QS-32).
+ * An address with no anniversary left (an old link, or a calm mode switched on meanwhile) is closed instead
  * of showing an empty layer (P-10, as the new plants of friends).
  */
-export function AnniversaryLayer(props: { api: string; token: Token; onOpen: () => void }) {
+export function AnniversaryLayer(props: { api: string; token: Token }) {
   const { ready, items } = useEntries(props.api, props.token);
   const { open, closeLayer } = useLayer(LAYER);
   const stale = open && ready && items.length === 0;
@@ -48,7 +48,7 @@ export function AnniversaryLayer(props: { api: string; token: Token; onOpen: () 
   }, [stale, closeLayer]);
   return (
     <LayerSheet id={LAYER} title={t("layer.title")}>
-      <Anniversaries api={props.api} token={props.token} onOpen={props.onOpen} />
+      <Anniversaries api={props.api} token={props.token} />
     </LayerSheet>
   );
 }

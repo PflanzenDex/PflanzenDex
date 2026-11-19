@@ -128,10 +128,10 @@ describe("US-QS-17 the index of Konto", () => {
     expect(within(list).getByRole("button", { name: "Abmelden …" })).toBeTruthy();
   });
 
-  it("US-QS-17 Abmelden … is a row with the same chevron as the sections (issue 1045)", async () => {
+  it("US-QS-32 Abmelden … is a button without a chevron: it acts in place and opens a confirmation, no view (F-0098)", async () => {
     show();
     const button = await screen.findByRole("button", { name: "Abmelden …" });
-    expect(button.querySelector("svg")).not.toBeNull();
+    expect(button.querySelector("svg")).toBeNull();
     expect(button.className).toContain("border-transparent");
   });
 

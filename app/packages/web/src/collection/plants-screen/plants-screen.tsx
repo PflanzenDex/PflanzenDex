@@ -132,28 +132,30 @@ function Grouped(props: Props) {
 function Row(props: Props) {
   const archive = useLayer(ARCHIVE_LAYER);
   return (
-    // Wraps at a larger text size, so the insight keeps its longest word whole (issue 1113).
-    <div className="flex flex-wrap items-center gap-2">
+    // The light-zone row is a row of its own above the buttons (F-0114, US-QS-32); the buttons wrap at a larger text size.
+    <div className="flex flex-col gap-2">
       <ZoneInsightRow distribution={props.distribution} />
-      {props.archived.length > 0 ? (
+      <div className="flex flex-wrap items-center gap-2">
+        {props.archived.length > 0 ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-haspopup="dialog"
+            onClick={(event) => archive.openLayer(event.currentTarget)}
+          >
+            Archiv ({props.archived.length})
+          </Button>
+        ) : null}
         <Button
           type="button"
-          variant="outline"
-          size="sm"
-          aria-haspopup="dialog"
-          onClick={(event) => archive.openLayer(event.currentTarget)}
+          size="icon"
+          aria-label="Pflanze anlegen"
+          onClick={props.onSpeciesChoose}
         >
-          Archiv ({props.archived.length})
+          <Plus aria-hidden="true" className="size-5" />
         </Button>
-      ) : null}
-      <Button
-        type="button"
-        size="icon"
-        aria-label="Pflanze anlegen"
-        onClick={props.onSpeciesChoose}
-      >
-        <Plus aria-hidden="true" className="size-5" />
-      </Button>
+      </div>
     </div>
   );
 }

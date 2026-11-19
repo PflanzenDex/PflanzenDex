@@ -25,3 +25,17 @@ const OBJECT_HAIRLINE_ON_ROWS =
  * empty card down to the pager.
  */
 export const OBJECT_GROUP = `${GROUP_LIST} ${OBJECT_HAIRLINE_ON_ROWS} flex-none`;
+
+/**
+ * The hairline between the bare rows of a list of its own (a pager's list, FX-06): it starts at the text's left edge, 16 px
+ * (SG-SHAPE-07), so a row's title lines up with the hairline. The child selectors draw it on the rows the list holds.
+ */
+const ROW_HAIRLINE_ON_ROWS =
+  "[&>li]:relative [&>li+li]:before:absolute [&>li+li]:before:inset-x-4 [&>li+li]:before:top-0 [&>li+li]:before:h-px [&>li+li]:before:bg-border [&>li+li]:before:content-['']";
+
+/**
+ * One group of navigating or acting rows in a pager (a task list, a list of zones or locations; US-QS-32, SG-SHAPE-03): a
+ * flat list with a hairline between its rows and none above the first. Its rows are `GroupedRow`s with `bare`, because the
+ * list wraps each one. `flex-none` as in `OBJECT_GROUP`: a short list ends after its last row.
+ */
+export const ROW_GROUP = `${GROUP_LIST} ${ROW_HAIRLINE_ON_ROWS} flex-none`;
