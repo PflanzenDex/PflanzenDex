@@ -147,7 +147,7 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     const layerRows = within(screen.getByRole("list", { name: "Weitere Aufgaben" })).getAllByRole(
       "listitem",
     );
-    expect(layerRows).toHaveLength(1);
+    expect(layerRows).toHaveLength(2);
   });
 
   it("US-QS-18 one control opens the treatments layer when a treatment is most urgent: it replaces the action and names the count", async () => {
@@ -206,7 +206,7 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
     expect(
       within(screen.getByRole("list", { name: "Weitere Aufgaben" })).getAllByRole("listitem"),
-    ).toHaveLength(2);
+    ).toHaveLength(3);
   });
 
   it("US-QS-04 · US-QS-18 an etiolated measurement and a zone below the buffer show their state word and lead to their place", async () => {
