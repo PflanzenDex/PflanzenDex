@@ -1,5 +1,9 @@
 // Pure helpers of the QG-U5 visual regression (US-QS-07): which stories are snapshotted, what the baseline file
-// names are, and which baselines are missing or stale. No browser and no Docker in here, so they are unit tested.
+// names are, which baselines are missing or stale, and the `docker run` arguments. No browser and no Docker run in
+// here, so they are unit tested; replacePngs is the one file operation (a move inside a folder), unit tested on a temp
+// folder.
+import fs from "node:fs";
+import path from "node:path";
 export const SCHEMES = ["light", "dark"];
 export const VIEWPORT = { width: 360, height: 640 };
 export const UI_IMPORT = "./src/shared/ui/";
@@ -75,6 +79,73 @@ export const baselineName = (id, scheme) => `${id}--${scheme}.png`;
 
 export function expectedBaselines(ids) {
   return ids.flatMap((id) => SCHEMES.map((scheme) => baselineName(id, scheme)));
+}
+
+/**
+ * The `docker run` arguments: the app read-only, the catalog, both baseline folders (the staging folders of an update)
+ * and the results. The image, the worker count and the app root come in as arguments.
+ */
+export function dockerArgs({
+  appRoot,
+  image,
+  workers,
+  catalog,
+  ids,
+  pages,
+  skipped,
+  snapshotDir,
+  pageSnapshotDir,
+  outputDir,
+  storyArgs,
+  update,
+}) {
+  const env = (k, v) => ["-e", `${k}=${v}`];
+  return [
+    "run",
+    "--rm",
+    "--init",
+    "--ipc=host",
+    "--user",
+    `${process.getuid()}:${process.getgid()}`,
+    "-v",
+    `${appRoot}:/work/app:ro`,
+    "-v",
+    `${catalog}:/catalog:ro`,
+    "-v",
+    `${snapshotDir}:/snapshots/ui`,
+    "-v",
+    `${pageSnapshotDir}:/snapshots/pages`,
+    "-v",
+    `${outputDir}:/out`,
+    ...env("DS_CATALOG", "/catalog"),
+    ...env("DS_SNAPSHOT_DIR", "/snapshots"),
+    ...env("DS_OUTPUT_DIR", "/out/results"),
+    ...env("DS_STORIES", JSON.stringify(ids)),
+    ...env("DS_PAGES", JSON.stringify(pages)),
+    ...env("DS_QUARANTINE", JSON.stringify(skipped)),
+    ...env("DS_STORY_ARGS", storyArgs),
+    ...env("DS_UPDATE", update ? "1" : "0"),
+    ...env("DS_WORKERS", workers),
+    ...env("HOME", "/tmp"),
+    image,
+    "node",
+    "/work/app/tools/check/code/conformance/ds-snapshots.container.mjs",
+  ];
+}
+
+/**
+ * An update that passed: the staged pictures move into the baseline folder (over the old file of the same name), the
+ * old pictures that no story renders any more are removed, and every other file stays (issue 2286). Staged files go
+ * in first, so no picture is missing in between.
+ */
+export function replacePngs(stagedDir, baselineDir) {
+  fs.mkdirSync(baselineDir, { recursive: true });
+  const isPng = (f) => f.endsWith(".png");
+  const fresh = fs.readdirSync(stagedDir).filter(isPng);
+  for (const f of fresh) fs.renameSync(path.join(stagedDir, f), path.join(baselineDir, f));
+  const keep = new Set(fresh);
+  for (const f of fs.readdirSync(baselineDir).filter(isPng))
+    if (!keep.has(f)) fs.rmSync(path.join(baselineDir, f));
 }
 
 /** Compares the expected baseline names with the files in the baseline directory. */
