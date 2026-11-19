@@ -317,3 +317,11 @@ IDs are never renumbered.
 - **Fix:** Wait for the state the app writes, not for time or frames: `expect.poll` until `--bar-reserve` equals the height of `nav[data-bottom-bar]`, after the lazily loaded parts are visible (`settleOverview` in `e2e/tests/accessibility/display/today-layout.spec.ts`). Never poll the assertion under test.
 - **Can it become a gate?** No: which value a test must wait for depends on the view. The helper is the pattern to copy.
 - **Source:** Issue #2281, PR #2282.
+
+## PF-039 A Docker bind mount from the system temp folder is empty on a Mac
+
+- **Symptom:** A check that runs a container passes in CI but hangs or times out on a Mac: `make ds-snapshots-check` timed out on every story, and the container saw an empty catalog.
+- **Cause:** Colima (and Docker Desktop by default) share only `$HOME` into their VM. `os.tmpdir()` on macOS is `/var/folders/…`, outside it, so `docker run -v <tmp>:/x` silently mounts an empty, root-owned folder instead of failing. GitHub runners use `/tmp`, which Docker sees, so CI stays green.
+- **Fix:** Put every folder a container mounts under the repo, for example a `mkdtemp` under `app/.cache` (gitignored), never under `os.tmpdir()`. A script that rewrites files from a container run writes to a staging folder and swaps only after a passing run, so a failed run destroys nothing.
+- **Can it become a gate?** Partly: the QG-U5 self-test (`ds-snapshots.selftest.mjs`) asserts that the catalog is built under `app/.cache` and that a failed update leaves the baselines as they were. A general rule ("no `os.tmpdir()` next to `docker`") is not worth a gate until a second script mounts folders (E-30).
+- **Source:** Issue #2286, PR #2288.
