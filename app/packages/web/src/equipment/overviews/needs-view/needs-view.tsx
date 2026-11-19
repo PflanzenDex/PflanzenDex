@@ -1,4 +1,4 @@
-import type { Need, NeedKind } from "@pflanzendex/core";
+import type { Need } from "@pflanzendex/core";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
@@ -11,34 +11,6 @@ const t = texts(table);
 
 /** Needs per page until the layout measures the free height of the layer (starting value, assumption; #1029, issue 1154). */
 const NEEDS_PER_PAGE = 2;
-
-/** The step of each kind: the row's title says what to do (P-09, US-QS-32). */
-const STEP: Record<
-  NeedKind,
-  "needs.step.supply" | "needs.step.zone" | "needs.step.wish" | "needs.step.replace"
-> = {
-  supply_low: "needs.step.supply",
-  zone_without_lamp: "needs.step.zone",
-  wish_without_lamp: "needs.step.wish",
-  no_replacement: "needs.step.replace",
-};
-
-/** What a need opens: the device it names, or the form of a new lamp for the light zone it names. */
-type NeedTarget =
-  | { readonly kind: "device"; readonly id: string }
-  | { readonly kind: "lamp"; readonly zoneId: string };
-
-/**
- * The target of a need, read from the stable key of its cause: the core writes `supply:<id>` and `replace:<id>` for a
- * device and `zone:<zone>` and `wish-zone:<zone>` for a light zone. The key is read here and not added to the core type,
- * because the AI reads of the needs return that type unchanged (US-QS-32, US-EQU-07).
- */
-export function needTarget(need: Need): NeedTarget {
-  const key = need.id.slice(need.id.indexOf(":") + 1);
-  return need.kind === "zone_without_lamp" || need.kind === "wish_without_lamp"
-    ? { kind: "lamp", zoneId: key }
-    : { kind: "device", id: key };
-}
 
 /** The address of a device's record: the equipment page with its item layer open (US-QS-22). */
 const itemAddress = (id: string) =>
@@ -54,25 +26,27 @@ const lampFill = (zoneId: string): EquipmentFill => ({
 });
 
 /**
- * One need as a row (US-QS-32, SG-TOUCH-02): titled by the step, with the reason and its source as the one meta line. The
- * whole row is the target: a device opens its record, a lamp opens the form with its zone filled in.
+ * One need as a row (US-QS-32, SG-TOUCH-02). The title is the core's next action, so the title says the step; the target
+ * is where that step is done, and a row whose step happens outside the app (buying) is plain text with no chevron. The
+ * reason and its source are the one meta line.
  */
-function NeedRow(props: { need: Need; fill: (prefill: EquipmentFill) => void }) {
+function NeedRow(props: { need: Need; fill: (prefill: EquipmentFill, from: HTMLElement) => void }) {
   const { need } = props;
-  const target = needTarget(need);
-  const title = t(STEP[need.kind]);
   const meta = t("needs.meta", { reason: need.reason, source: need.source });
-  if (target.kind === "device")
-    return <GroupedRow bare to={itemAddress(target.id)} title={title} meta={meta} />;
-  return (
-    <GroupedRow
-      bare
-      haspopup="dialog"
-      onClick={() => props.fill(lampFill(target.zoneId))}
-      title={title}
-      meta={meta}
-    />
-  );
+  const target = need.target;
+  if (target?.kind === "device")
+    return <GroupedRow bare to={itemAddress(target.id)} title={need.nextAction} meta={meta} />;
+  if (target?.kind === "zone")
+    return (
+      <GroupedRow
+        bare
+        haspopup="dialog"
+        onClick={(event) => props.fill(lampFill(target.zoneId), event.currentTarget)}
+        title={need.nextAction}
+        meta={meta}
+      />
+    );
+  return <GroupedRow bare title={need.nextAction} meta={meta} />;
 }
 
 /**
@@ -82,7 +56,7 @@ function NeedRow(props: { need: Need; fill: (prefill: EquipmentFill) => void }) 
  */
 export function NeedsView(props: {
   needs: readonly Need[];
-  fill: (prefill: EquipmentFill) => void;
+  fill: (prefill: EquipmentFill, from: HTMLElement) => void;
 }) {
   const { needs } = props;
   return (

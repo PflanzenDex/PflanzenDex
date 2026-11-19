@@ -140,7 +140,7 @@ export function EquipmentLayers(props: {
   wishes: Wishes;
   prefill: EquipmentFill | null;
   /** Opens the form with what a need names (a lamp of its light zone, US-QS-32). */
-  fill: (prefill: EquipmentFill) => void;
+  fill: (prefill: EquipmentFill, from: HTMLElement) => void;
   /** The outcome of a write inside a layer; the screen behind it is covered (P-10). */
   outcome: ReactNode;
   running: boolean;

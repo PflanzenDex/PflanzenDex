@@ -13,6 +13,7 @@ export type {
   CostView,
   Need,
   NeedKind,
+  NeedTarget,
   NeedsDependencies,
   ProductEntry,
   ProductPrice,

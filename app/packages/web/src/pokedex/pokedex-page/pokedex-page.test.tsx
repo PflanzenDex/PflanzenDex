@@ -131,7 +131,8 @@ describe("US-POK-06 page of the caught species", () => {
     view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
     const row = await screen.findByRole("link", { name: /Amaryllis/ });
     expect(row.getAttribute("href")).toBe("/collection?view=plants&sheet=plant-e1");
-    expect(row.textContent).toContain("Gattung Hippeastrum");
+    // The Latin name as it is stored, with no "Gattung" label (P-08); the next action is in the shared explanation.
+    expect(row.textContent).toBe("Amaryllis Hippeastrum");
     expect(row.querySelector("svg.lucide-chevron-right")).not.toBeNull();
     expect(screen.queryByText(riddle.text)).toBeNull();
     expect(
@@ -149,6 +150,27 @@ describe("US-POK-06 page of the caught species", () => {
     const row = await screen.findByRole("link", { name: /Amaryllis/ });
     expect(row.textContent).toContain("Art nicht lesbar");
     expect(row.textContent).not.toContain("Gattung");
+  });
+
+  it("US-QS-32 rows whose next action differs each say their own; the shared explanation holds only what is common (P-09)", async () => {
+    const second = {
+      specimenId: "e2",
+      specimenName: "Kaktus",
+      latinName: null,
+      text: "x",
+      nextAction: "Lege die Art fest.",
+    };
+    fakeServer(() =>
+      response(200, { ownership: { caught: [lemon], unidentified: [riddle, second] } }),
+    );
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
+    const first = await screen.findByRole("link", { name: /Amaryllis/ });
+    expect(first.textContent).toBe("Amaryllis Hippeastrum · Bestimme die Art, dann zählt sie.");
+    const other = screen.getByRole("link", { name: /Kaktus/ });
+    expect(other.textContent).toBe("Kaktus Art nicht lesbar · Lege die Art fest.");
+    expect(
+      screen.getByText("Diese Pflanzen haben noch keine bestimmte Art und zählen noch nicht."),
+    ).toBeTruthy();
   });
 
   it("US-POK-06 · P-09 the layer of the uncounted plants opened by address without any says that all of them count (issue 1653, F24)", async () => {

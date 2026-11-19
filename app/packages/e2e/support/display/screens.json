@@ -1415,7 +1415,7 @@
         "name": "Freundschaft beenden"
       }
     ],
-    "layerFile": "social/parts/friend-list/friend-end/friend-end.tsx",
+    "layerFile": "social/pages/friend-collection/parts/friend-end/friend-end.tsx",
     "title": "Freundschaft beenden",
     "route": "/friends/:friendId"
   },

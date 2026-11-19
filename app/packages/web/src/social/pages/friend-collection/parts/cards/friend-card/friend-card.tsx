@@ -3,8 +3,8 @@ import { Badge } from "@/shared/ui/display/badge/badge";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { dateText } from "../../../../parts/invite-card/invite-card";
-import table from "../../../../social.de.json";
+import { dateText } from "../../../../../parts/invite-card/invite-card";
+import table from "../../../../../social.de.json";
 
 const tx = texts(table);
 

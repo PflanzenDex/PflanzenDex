@@ -5,24 +5,27 @@ import { MemoryRouter } from "react-router";
 import type { ReactElement } from "react";
 import type { Need } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { NeedsView, needTarget } from "./needs-view";
+import { NeedsView } from "./needs-view";
 
 afterEach(cleanup);
 
 const render = (ui: ReactElement) => plainRender(<MemoryRouter>{ui}</MemoryRouter>);
 const noop = () => undefined;
 
-const need = (id: string, kind: Need["kind"] = "supply_low"): Need => ({
-  id,
-  kind,
-  reason: `${id} wird knapp.`,
+const need = (over: Partial<Need> & Pick<Need, "id">): Need => ({
+  kind: "supply_low",
+  reason: `${over.id} wird knapp.`,
   source: "Vorrat unter Geräte",
-  nextAction: "Kaufe Nachschub.",
+  nextAction: "Kaufe Nachschub und stelle den Vorrat danach wieder auf „Vorhanden“.",
+  target: null,
+  ...over,
 });
 
 describe("US-EQU-07 what is missing", () => {
   it("US-EQU-07 · US-QS-15 · issue 1154 the needs page by the free height of the layer", () => {
-    render(<NeedsView needs={[need("a"), need("b"), need("c")]} fill={noop} />);
+    render(
+      <NeedsView needs={[need({ id: "a" }), need({ id: "b" }), need({ id: "c" })]} fill={noop} />,
+    );
     const list = screen.getByRole("list", { name: "Fehlt / Nachkaufen" });
     expect(list.hasAttribute("data-page-fit")).toBe(true);
   });
@@ -33,80 +36,81 @@ describe("US-EQU-07 what is missing", () => {
   });
 });
 
-describe("US-QS-32 needs are rows titled by their step (SG-TOUCH-02, SG-LIST-04)", () => {
-  it("US-QS-32 each need is one row: the step as its title, the reason and the source as one meta line", () => {
+describe("US-QS-32 needs are rows titled by their next action, opening where it is done", () => {
+  it("US-QS-32 each need is one row: the core's next action as its title, the reason and the source as one meta line", () => {
     render(
       <NeedsView
         needs={[
-          {
+          need({
             id: "supply:1",
-            kind: "supply_low",
             reason: "„Erde“ wird knapp.",
-            source: "Vorrat unter Geräte",
-            nextAction: "Kaufe Nachschub.",
-          },
+            nextAction: "Kaufe Nachschub und stelle den Vorrat danach wieder auf „Vorhanden“.",
+          }),
         ]}
         fill={noop}
       />,
     );
-    const row = screen.getByRole("link", { name: /Nachschub kaufen/ });
-    expect(row.textContent).toBe("Nachschub kaufen „Erde“ wird knapp. Quelle: Vorrat unter Geräte");
-    expect(screen.queryByText("Kaufe Nachschub.")).toBeNull();
+    const row = screen.getByText(/Kaufe Nachschub/).closest("li");
+    expect(row?.textContent).toBe(
+      "Kaufe Nachschub und stelle den Vorrat danach wieder auf „Vorhanden“. „Erde“ wird knapp. Quelle: Vorrat unter Geräte",
+    );
   });
 
-  it("US-QS-32 a device need is one link to the device's record, with a chevron", () => {
-    render(<NeedsView needs={[need("replace:lamp-7", "no_replacement")]} fill={noop} />);
-    const link = screen.getByRole("link", { name: /Gerät reparieren oder ersetzen/ });
+  it("US-QS-32 a need whose step is done in the app with a device is one link to the device's record, with a chevron", () => {
+    render(
+      <NeedsView
+        needs={[
+          need({
+            id: "replace:lamp-7",
+            kind: "no_replacement",
+            nextAction: "Repariere das Gerät, erfasse ein Ersatzgerät oder wünsche dir eines.",
+            target: { kind: "device", id: "lamp-7" },
+          }),
+        ]}
+        fill={noop}
+      />,
+    );
+    const link = screen.getByRole("link", { name: /Repariere das Gerät/ });
     expect(link.getAttribute("href")).toBe("/collection?view=equipment&sheet=item-lamp-7");
     expect(link.querySelector("svg.lucide-chevron-right")).not.toBeNull();
   });
 
-  it("US-QS-32 a lamp need is a row that opens the form with its light zone filled in", async () => {
+  it("US-QS-32 a need for a lamp in a light zone opens the form with that zone filled in, and the row is its opener", async () => {
     const fill = vi.fn();
     render(
       <NeedsView
         needs={[
-          {
+          need({
             id: "zone:zone-3",
             kind: "zone_without_lamp",
-            reason: "14 Pflanzen stehen in Zone 3 ohne aktive Lampe.",
+            reason: "Die Lichtzone Zone 3 hat 14 Pflanzen, aber keine aktive Lampe.",
             source: "Pflanzen je Lichtzone",
-            nextAction: "Erfasse eine Lampe.",
-          },
+            nextAction: "Ordne dieser Zone eine aktive Lampe zu oder erfasse eine neue Lampe.",
+            target: { kind: "zone", zoneId: "zone-3" },
+          }),
         ]}
         fill={fill}
       />,
     );
-    const row = screen.getByRole("button", { name: /Lampe erfassen/ });
+    const row = screen.getByRole("button", { name: /Ordne dieser Zone eine aktive Lampe zu/ });
     expect(row.getAttribute("aria-haspopup")).toBe("dialog");
     await userEvent.click(row);
-    expect(fill).toHaveBeenCalledWith({
-      type: "Lamp",
-      name: "",
-      productId: null,
-      priceEur: null,
-      lightZoneId: "zone-3",
-    });
+    expect(fill).toHaveBeenCalledWith(
+      { type: "Lamp", name: "", productId: null, priceEur: null, lightZoneId: "zone-3" },
+      row,
+    );
   });
 
-  it("US-QS-32 the target of each need is read from the key of its cause: a device or a light zone", () => {
-    expect(needTarget(need("wish-zone:zone-2", "wish_without_lamp"))).toEqual({
-      kind: "lamp",
-      zoneId: "zone-2",
-    });
-    expect(needTarget(need("zone:zone-1", "zone_without_lamp"))).toEqual({
-      kind: "lamp",
-      zoneId: "zone-1",
-    });
-    expect(needTarget(need("supply:abc", "supply_low"))).toEqual({ kind: "device", id: "abc" });
-    expect(needTarget(need("replace:def", "no_replacement"))).toEqual({
-      kind: "device",
-      id: "def",
-    });
+  it("US-QS-32 a need whose step happens outside the app is plain text: no link, no button, no chevron, and no record opens for buying", () => {
+    render(<NeedsView needs={[need({ id: "supply:soil" })]} fill={noop} />);
+    const row = screen.getByText(/Kaufe Nachschub/).closest("li") as HTMLElement;
+    expect(within(row).queryByRole("link")).toBeNull();
+    expect(within(row).queryByRole("button")).toBeNull();
+    expect(row.querySelector("svg")).toBeNull();
   });
 
   it("US-QS-32 the needs form one flat group of rows, not a box per need", () => {
-    render(<NeedsView needs={[need("a"), need("b")]} fill={noop} />);
+    render(<NeedsView needs={[need({ id: "a" }), need({ id: "b" })]} fill={noop} />);
     const list = screen.getByRole("list", { name: "Fehlt / Nachkaufen" });
     const rows = within(list).getAllByRole("listitem");
     expect(rows).toHaveLength(2);

@@ -9,10 +9,10 @@ import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-secti
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useWriteAction } from "../../../../../shared/data";
-import { addToWishlist } from "../../../../api/friends-api";
+import { useWriteAction } from "../../../../../../shared/data";
+import { addToWishlist } from "../../../../../api/friends-api";
 import { FriendCard } from "../friend-card/friend-card";
-import table from "../../../../social.de.json";
+import table from "../../../../../social.de.json";
 
 const tx = texts(table);
 

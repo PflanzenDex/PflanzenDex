@@ -13,6 +13,5 @@
   "uncountedTitle": "Noch nicht gezählt",
   "uncountedNone": "Jede deiner Pflanzen zählt schon als gefangene Art.",
   "uncountedExplain": "Diese Pflanzen haben noch keine bestimmte Art und zählen noch nicht.",
-  "uncountedGenus": "Gattung {genus}",
   "uncountedUnknown": "Art nicht lesbar"
 }

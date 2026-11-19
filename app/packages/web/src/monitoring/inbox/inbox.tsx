@@ -1,4 +1,4 @@
-import type { ReminderOccasion, ReminderRow, ReminderStatus } from "@pflanzendex/core";
+import type { Occasion, ReminderOccasion, ReminderRow, ReminderStatus } from "@pflanzendex/core";
 import { useCallback } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
@@ -55,31 +55,41 @@ const dayText = (localDate: string) =>
  * One day of the inbox (US-QS-32): its entries are one flat group of rows, each row the entry's text and the link to where
  * its step is done. The step is said once under the group, not under every entry.
  */
+/** The entries of one day grouped by occasion, in the order each occasion first appears (US-QS-32). */
+function byOccasion(items: readonly Occasion[]): Occasion[][] {
+  const groups = new Map<ReminderOccasion, Occasion[]>();
+  for (const item of items) groups.set(item.occasion, [...(groups.get(item.occasion) ?? []), item]);
+  return [...groups.values()];
+}
+
+/** The distinct steps of a group, each once: identical entries say their step once, different steps are all kept (P-09). */
+const stepsOf = (group: readonly Occasion[]) => [...new Set(group.map((item) => item.nextAction))];
+
+/**
+ * One day of the inbox (US-QS-32): its entries are grouped by occasion, one flat group of rows per occasion. Each row is the
+ * entry's text and the link to where its step is done; the group names its step once, as its footer.
+ */
 function Reminder({ row }: { row: ReminderRow }) {
-  const steps = [...new Set(row.items.map((item) => item.nextAction))];
   return (
     <section className="flex min-w-0 flex-col gap-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h4 className="m-0 text-base font-semibold">{dayText(row.localDate)}</h4>
         <span className="text-sm text-muted-foreground">{ui(STATUS_TEXT[row.status])}</span>
       </div>
-      <GroupedList
-        footer={
-          steps.length > 0 ? (
-            <>
-              {steps.map((step) => (
-                <span key={step} className="block">
-                  {step}
-                </span>
-              ))}
-            </>
-          ) : undefined
-        }
-      >
-        {row.items.map((item) => (
-          <GroupedRow key={item.id} to={OPENS[item.occasion]} title={item.text} />
-        ))}
-      </GroupedList>
+      {byOccasion(row.items).map((group) => (
+        <GroupedList
+          key={group[0]?.occasion}
+          footer={stepsOf(group).map((step) => (
+            <span key={step} className="block">
+              {step}
+            </span>
+          ))}
+        >
+          {group.map((item) => (
+            <GroupedRow key={item.id} to={OPENS[item.occasion]} title={item.text} />
+          ))}
+        </GroupedList>
+      ))}
       {row.status === "failed" && <p className="m-0 text-sm">{ui("inbox.failed")}</p>}
     </section>
   );

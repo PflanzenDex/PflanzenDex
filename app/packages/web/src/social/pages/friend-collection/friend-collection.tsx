@@ -1,19 +1,17 @@
-import { useCallback, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useCallback } from "react";
 import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
-import { LoadFrame, useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
-import { endFriendship, loadFriendCollection } from "../../api/friends-api";
+import { LoadFrame, useRequest } from "../../../shared/data";
+import { loadFriendCollection } from "../../api/friends-api";
 import { nameOf } from "../../parts/request-list/request-list";
-import { FriendEndLayer, FriendEndMenu } from "../../parts/friend-list/friend-end/friend-end";
-import { FRIENDS_KEY } from "../friends-page/friends-page";
+import { FriendEndLayer, FriendEndMenu, useEndFriendship } from "./parts/friend-end/friend-end";
 import {
   EQUIPMENT_LAYER,
   FriendEquipment,
   FriendEquipmentOpener,
 } from "./friend-equipment/friend-equipment";
-import { FriendCards } from "./cards/friend-cards/friend-cards";
+import { FriendCards } from "./parts/cards/friend-cards/friend-cards";
 import { FriendCollectionSkeleton } from "./friend-collection.skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../social.de.json";
@@ -44,15 +42,8 @@ export function FriendCollectionPage(props: {
   const queryKey = ["social", "friend-collection", friendId];
   // The same request as the frame below shares one cached copy: the heading names the friend once it is there (US-QS-20).
   const loaded = useRequest({ queryKey, token: props.token, load });
-  const navigate = useNavigate();
-  const ending = useWriteAction(props.token, useInvalidate(FRIENDS_KEY));
-  // The friendship is gone: the friends page is the place that says so, with the outcome as its hint (P-10).
-  useEffect(() => {
-    if (ending.message !== null) navigate(PATHS.friends, { state: { hint: ending.message } });
-  }, [ending.message, navigate]);
   const name = nameOf(loaded.value?.friend.name ?? null);
-  const onYes = () =>
-    void ending.run((t) => endFriendship(api, t, friendId), tx("friends.ended", { name }));
+  const { ending, onYes } = useEndFriendship({ api, token: props.token, friendId, name });
   return (
     <LayerHost data-fit-screen="">
       <FullView

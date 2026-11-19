@@ -158,9 +158,11 @@ function Layers(props: {
 /** The plant of a specimen in its plant layer (US-QS-22, US-QS-32). */
 const plantAddress = (id: string) => `${PATHS.collection}?view=plants&sheet=${plantLayerId(id)}`;
 
-/** The genus a plant is named with; an unreadable species stays unknown instead of being guessed (P-08). */
-const genusText = (latinName: string | null) =>
-  latinName === null ? ui("uncountedUnknown") : ui("uncountedGenus", { genus: latinName });
+/** The Latin name as stored (or "unbekannt"), plus its own next action when the rows do not share one (P-08, P-09). */
+const metaOf = (s: UnidentifiedSpecimen, common: string | null) => {
+  const name = s.latinName ?? ui("uncountedUnknown");
+  return common === null ? `${name} · ${s.nextAction}` : name;
+};
 
 /**
  * The specimens that do not count yet (US-QS-32): one line says why and what to do, once; then one row per plant that opens
@@ -168,10 +170,14 @@ const genusText = (latinName: string | null) =>
  */
 function Unidentified(props: { specimens: readonly UnidentifiedSpecimen[] }) {
   if (props.specimens.length === 0) return <p className="text-sm">{ui("uncountedNone")}</p>;
-  const next = props.specimens[0]?.nextAction ?? "";
+  // A next action the rows share is said once, in the explanation (P-09).
+  const actions = new Set(props.specimens.map((s) => s.nextAction));
+  const common = actions.size === 1 ? ([...actions][0] ?? null) : null;
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <p className="text-sm">{`${ui("uncountedExplain")} ${next}`}</p>
+      <p className="text-sm">
+        {common === null ? ui("uncountedExplain") : `${ui("uncountedExplain")} ${common}`}
+      </p>
       <Pager
         items={props.specimens}
         pageSize={4}
@@ -183,7 +189,7 @@ function Unidentified(props: { specimens: readonly UnidentifiedSpecimen[] }) {
           <ObjectRow
             to={plantAddress(s.specimenId)}
             title={s.specimenName}
-            meta={genusText(s.latinName)}
+            meta={metaOf(s, common)}
           />
         )}
       />

@@ -145,5 +145,10 @@ describe("US-QS-32 the inbox entries are rows to the place of their step", () =>
     expect(screen.getByRole("link", { name: /Kakteen/ }).getAttribute("href")).toBe(
       "/collection?view=plants&group=phase",
     );
+    // Each occasion names its own step once, under its own group (P-09, #2016): no step is listed under every line.
+    expect(screen.getAllByText("Gieße die Pflanze und trage sie als gegossen ein.")).toHaveLength(
+      1,
+    );
+    expect(screen.getAllByText("Stelle die Pflanze um.")).toHaveLength(1);
   });
 });

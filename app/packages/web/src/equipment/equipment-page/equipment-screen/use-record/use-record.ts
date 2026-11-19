@@ -30,9 +30,10 @@ export function useRecord(
     }
     return saved;
   };
-  const fill = (p: EquipmentFill) => {
+  // `from` is the control that opens the form: Abbrechen and the saved form return the focus to it (WCAG 2.4.3).
+  const fill = (p: EquipmentFill, from?: HTMLElement | null) => {
     setPrefill(p);
-    layer.openLayer();
+    layer.openLayer(from);
   };
   return { write, send, prefill, fill, openLayer: layer.openLayer };
 }

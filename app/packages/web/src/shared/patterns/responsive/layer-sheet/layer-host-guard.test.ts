@@ -60,7 +60,7 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
   "social/pages/friend-collection/friend-collection.tsx": [
     "social/pages/friend-collection/friend-collection.tsx",
   ],
-  "social/parts/friend-list/friend-end/friend-end.tsx": [
+  "social/pages/friend-collection/parts/friend-end/friend-end.tsx": [
     "social/pages/friend-collection/friend-collection.tsx",
   ],
   "swap/pages/exchange/exchange.tsx": ["swap/pages/exchange/exchange.tsx"],
