@@ -330,6 +330,24 @@ describe("US-QS-32 FR-SOZ-03 'Stand' in the layer on Heute: only an older copy s
   });
 });
 
+/** A stub whose banner answers only when the test releases it, so the layer is seen while it loads (US-QS-32). */
+function gatedServer(initial: unknown) {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>(async (url) => {
+      const path = new URL(String(url)).pathname;
+      if (path !== "/feed/banner") return response(404, {});
+      await gate;
+      return response(200, initial);
+    }),
+  );
+  return { release };
+}
+
 /** The layer on its own route, so following a row (a link to a friend's collection) unmounts it, as the app does. */
 function Routed() {
   return (
@@ -400,6 +418,18 @@ describe("US-QS-32 the layer on Heute is flat grouped rows: one choice per frien
     await vi.waitFor(() => expect(posts).toEqual([{ upTo: ASOF }]));
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(posts).toHaveLength(1);
+  });
+
+  it("US-QS-32 while the banner loads, the layer shows a hidden skeleton of its final shape, and it goes when the banner arrives", async () => {
+    const { release } = gatedServer(twoFriends());
+    render(<Today at="/today?sheet=news" />);
+    const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    await vi.waitFor(() => expect(layer.querySelector("[data-news-skeleton]")).not.toBeNull());
+    expect(layer.querySelector("[data-news-skeleton]")?.getAttribute("aria-hidden")).toBe("true");
+    expect(within(layer).queryByRole("link")).toBeNull();
+    release();
+    await within(layer).findByRole("link", { name: "Glücksfeder 2 ×" });
+    expect(layer.querySelector("[data-news-skeleton]")).toBeNull();
   });
 });
 

@@ -12,6 +12,7 @@ import { useToast } from "@/shared/patterns/states/toast/toast-provider/toast-pr
 import { markFeedSeen } from "../../api/feed-api";
 import { NewPlantsAsOf } from "../friends-banner/friends-banner";
 import { useNewPlants, type Token } from "../friends-banner/use-new-plants";
+import { FriendsNewsSkeleton } from "./friends-news.skeleton";
 import { groupsOf, NewsRowLink } from "./news-rows/news-rows";
 import table from "../../social.de.json";
 
@@ -172,10 +173,8 @@ export function FriendsNewsLayer(props: { api: string; token: Token }) {
       {hasNews(banner) ? (
         // The rows page by the free height of the layer (`fit`): the wrappers pass that height down (US-QS-32).
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-          <div className="flex min-w-0 flex-col gap-2">
-            {banner.count === 0 ? <p>{t("news.none")}</p> : null}
-            <NewPlantsAsOf news={banner} offline={offline} />
-          </div>
+          {banner.count === 0 ? <p>{t("news.none")}</p> : null}
+          <NewPlantsAsOf news={banner} offline={offline} />
           <PagedGroups
             choicesLabel={t("news.groups")}
             listLabel={t("feed.list")}
@@ -187,6 +186,8 @@ export function FriendsNewsLayer(props: { api: string; token: Token }) {
             renderItem={(row) => <NewsRowLink row={row} />}
           />
         </div>
+      ) : status === "pending" ? (
+        <FriendsNewsSkeleton rows={PAGE_SIZE} />
       ) : null}
     </LayerSheet>
   );
