@@ -1,6 +1,6 @@
 // `make board` (US-DEV-08): who works on which open story/enabler of a release, with PR and age of the
 // last commit. Flags: STALE (claim older than CLAIM_STALE_HOURS, default 48, assumption), DOUBLE (more than
-// one assignee, live branch or open PR for one story) and NO-CLAIM (work exists but nobody is assigned).
+// one assignee, live branch or open PR for one issue; the key is the issue number) and NO-CLAIM (work exists but nobody is assigned).
 // Release and type come from the project board (fields Release and Typ), not from milestones or labels.
 // Usage: node board.mjs [release]   (default: the first release in board order with open work)
 import { fetchOpenIssues, fetchPrs, realClient } from "./claim/lib/claim-client.mjs";

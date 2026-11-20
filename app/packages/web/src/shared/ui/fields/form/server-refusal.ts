@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
 import { refusalText } from "@/shared/lib/error-text";
 
@@ -24,7 +24,9 @@ export function useServerRefusal<T extends FieldValues, E extends Refusal>(
 ) {
   const alertRef = useRef<HTMLDivElement>(null);
   const alertText = error && fieldsOf(error).length === 0 ? refusalText(error) : null;
-  useEffect(() => {
+  // A layout effect: the field or the alert that takes the focus is in the commit of the refusal, so the focus is on it
+  // before anything reads the page (SC 2.4.3); a passive effect leaves it on the body until React flushes it.
+  useLayoutEffect(() => {
     if (!error) return;
     const fields = fieldsOf(error);
     fields.forEach((field, i) =>

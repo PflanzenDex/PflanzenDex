@@ -1,0 +1,6 @@
+{
+  "name": "status-panel",
+  "version": "0.1.0",
+  "description": "PflanzenDex status panel: worktrees with PR and ci-status, heavy lock, owner-merge PRs and your open claim drafts (read-only, refreshes every 45 s)",
+  "types": "./types/index.d.ts"
+}

@@ -33,7 +33,7 @@ function StyleFieldset(props: { api: string; token: Token; state: KeeperStyleSta
   return (
     <fieldset className="m-0 flex min-w-0 flex-col rounded-lg border-2 border-border px-3 pb-2 pt-1">
       <legend className="sr-only">Wie nutzt du die App?</legend>
-      <StyleSelect value={style} disabled={saving} onPick={(s) => void save(s)} />
+      <StyleSelect value={style} busy={saving} onPick={(s) => void save(s)} />
       {/* One line of hint (SG-COPY-05, US-QS-32); what the chosen style means and what stays open sit behind it. */}
       <MoreHelp
         more={

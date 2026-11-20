@@ -365,3 +365,19 @@ IDs are never renumbered.
 - **Fix:** Pick an option by keyboard through type-ahead: focus the select and type the option's label (`chooseOption` in `app/packages/e2e/support/keyboard.ts`), which works on both, and assert the value afterwards.
 - **Can it become a gate?** No: it is a platform difference of the browser, and the helper already covers it.
 - **Source:** Issue #1720, PR #2319.
+
+## PF-045 A control that turns `disabled` while it saves drops the keyboard focus
+
+- **Symptom:** A switch or select that saves at once announces "Gespeichert.", but the focus is on the page body afterwards; a second Space does nothing. A focus test right after the key press can still pass in jsdom.
+- **Cause:** The browser moves the focus away from an element that becomes `disabled`, so `disabled={saving}` on the focused control sends it to BODY. jsdom does the same, but only on its next rendering tick (about 16 ms), so an immediate `document.activeElement` check races it.
+- **Fix:** Mark a control that saves in place as busy with `aria-disabled={saving || undefined}` (look: `BUSY_LOOK` in `shared/lib/utils.ts`) and drop a press while busy in its handler or by the saver's busy guard; keep `disabled` for controls that do not hold the focus during the save. In the test, wait a rendering tick before the focus check and check again after the save resolves and after a second key press.
+- **Can it become a gate?** No: whether a control holds the focus while it saves needs judgment; the tests of each such control pin it.
+- **Source:** Issue #2317 (US-QS-32), PR #2356.
+
+## PF-046 A ticket lead that starts its implementer in the background hands back before the work is done
+
+- **Symptom:** The ticket lead reports to the orchestrator while its implementer still runs; the implementer's later commits go unreviewed, the PR stays a draft, or the work is lost when the session ends.
+- **Cause:** `ticket-lead.md` said to start the implementer "in the background". A background subagent's result arrives as a later notification, and the lead's turn ended (and handed back) before it came.
+- **Fix:** A ticket lead starts its implementer and every specialist with `run_in_background: false` and never hands back while a subagent of its own runs (`.claude/agents/ticket-lead.md`, step 1).
+- **Can it become a gate?** No: whether a subagent still runs is not visible to a check after the hand-back; the agent definition carries the rule.
+- **Source:** Three incidents on 2026-11-20 (issues #2322, #2318), issue #2363.

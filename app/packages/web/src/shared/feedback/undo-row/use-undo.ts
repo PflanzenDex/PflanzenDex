@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 
 /** How long a change stays in its place with its undo (SG-FEED-03; starting value and assumption of US-QS-32). */
@@ -111,7 +111,8 @@ export function placeHeld<T>(
  */
 export function useReturnFocus(shown: boolean, control: RefObject<HTMLElement | null>): void {
   const wasShown = useRef(false);
-  useEffect(() => {
+  // A layout effect: the control gets the focus in the commit that removes the undo row, not a frame later.
+  useLayoutEffect(() => {
     if (shown) {
       wasShown.current = true;
       return;
