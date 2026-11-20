@@ -44,3 +44,4 @@ Each subagent's fixed rules are in `.claude/agents/<name>.md`; start it with `su
 - Read-only reviews: `pr-reviewer` (merge verdict), `security-reviewer` (tenant isolation, privacy, auth, AI interface), `design-judge` (style guide), `a11y-auditor` (keyboard and screen reader).
 - `ci-triager` (red `ci-status`), `device-checker` (rechecks merged FX fixes on the devices).
 - `illustrator` (SVG motifs, US-QS-31), `copywriter` (German wording proposals), `spec-writer` (spec text), `catalog-researcher` (catalog batch attributes).
+- **Status panel:** the repo's mod `status-panel@pflanzendex` shows worktrees with PR and `ci-status`, the heavy lock, `owner-merge` PRs and your claim drafts; `/status-panel` opens it (install, opt-out and what it reads: `docs/guides/operations/status-panel.md`).
