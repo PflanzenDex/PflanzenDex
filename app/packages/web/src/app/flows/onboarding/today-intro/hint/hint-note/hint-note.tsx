@@ -38,8 +38,9 @@ export function HintNote(props: {
       role="status"
       className="flex flex-wrap items-center gap-3 rounded-xl border border-border px-3 py-2"
     >
-      {/* At 200 % text the text is at least 12 rem wide, so the close icon wraps below it instead of squeezing the words (SG-TYPE-04). */}
-      <p className="m-0 min-w-48 flex-1">{HINT_TEXTS[occasion]}</p>
+      {/* The text asks for 12 rem (flex basis), so at 200 % text the close icon wraps below it instead of squeezing the
+          words (SG-TYPE-04); min-w-0 lets it shrink to the row, so a 360 px phone never scrolls sideways. */}
+      <p className="m-0 min-w-0 flex-1 basis-48">{HINT_TEXTS[occasion]}</p>
       <NetworkSlot visible={false}>
         <Button
           type="button"
