@@ -623,12 +623,20 @@ const isExcludeArg = (args, k) =>
 // unless --exclude names them. An rg reads hidden files with --hidden, -. or two u flags (-uu, -uuu).
 function searchRefusal(name, args) {
   if (GREP_NAMES.has(name)) {
-    const recursive = args.some(
-      (a) =>
-        a.value === "--recursive" ||
-        a.value === "--dereference-recursive" ||
-        /^-[A-Za-z]*[rR]/.test(a.value),
+    // `-d recurse` reads the folders recursively in every spelling: `-drecurse`, `--directories=recurse`, `--directories recurse`.
+    const recursesDirectories = args.some(
+      (a, k) =>
+        /^(?:-d|--d[a-z-]*=?)recurse$/.test(a.value) ||
+        (/^(?:-d|--d[a-z-]*)$/.test(a.value) && args[k + 1]?.value === "recurse"),
     );
+    const recursive =
+      recursesDirectories ||
+      args.some(
+        (a) =>
+          a.value === "--recursive" ||
+          a.value === "--dereference-recursive" ||
+          /^-[A-Za-z]*[rR]/.test(a.value),
+      );
     if (!recursive) return null;
     const excluded = args.some((a, k) =>
       a.value.startsWith("--exclude=")
@@ -637,12 +645,16 @@ function searchRefusal(name, args) {
     );
     return excluded ? null : RECURSIVE_SEARCH_REASON;
   }
-  const hidden = args.some(
-    (a) =>
-      a.value === "--hidden" ||
-      /^-[A-Za-z]*\.[A-Za-z]*$/.test(a.value) ||
-      (/^-[A-Za-z]+$/.test(a.value) && (a.value.match(/u/g) ?? []).length >= 2),
-  );
+  // The u flags count across separate flags and the long form: one -u drops .gitignore only, two (-uu, -u -u, --unrestricted twice)
+  // also search hidden files.
+  const unrestricted = args.reduce((count, a) => {
+    if (a.value === "--unrestricted") return count + 1;
+    if (/^-[A-Za-z]+$/.test(a.value)) return count + (a.value.match(/u/g) ?? []).length;
+    return count;
+  }, 0);
+  const hidden =
+    unrestricted >= 2 ||
+    args.some((a) => a.value === "--hidden" || /^-[A-Za-z]*\.[A-Za-z]*$/.test(a.value));
   return hidden ? RECURSIVE_SEARCH_REASON : null;
 }
 

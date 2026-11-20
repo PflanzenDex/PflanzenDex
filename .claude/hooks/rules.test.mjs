@@ -973,6 +973,28 @@ const refusesSearch = (cmd) => {
   assert.equal(verdict.reason, RECURSIVE_SEARCH_REASON, cmd);
 };
 
+test("US-QG-07: grep reads directories recursively with -d recurse in every spelling; without --exclude of the .env files it is refused, and -d skip is a plain search", () => {
+  for (const cmd of [
+    "grep -d recurse PGPORT app",
+    "grep -drecurse PGPORT app",
+    "grep --directories=recurse PGPORT app",
+    "grep --directories recurse PGPORT app",
+  ]) {
+    refusesSearch(cmd);
+  }
+  passesEnv("grep -d recurse --exclude='.env*' PGPORT app");
+  passesEnv("grep -d skip PGPORT Makefile");
+  passesEnv("grep --directories=read PGPORT Makefile");
+});
+
+test("US-QG-07: rg counts its unrestricted flags across separate flags and in the long form; one -u or one --unrestricted passes, two are refused", () => {
+  for (const cmd of ["rg -u -u KEY", "rg -u -uu KEY", "rg --unrestricted --unrestricted KEY"]) {
+    refusesSearch(cmd);
+  }
+  passesEnv("rg -u KEY");
+  passesEnv("rg --unrestricted KEY");
+});
+
 test("US-QG-07: a Grep glob is split on spaces and commas, as the Grep tool splits it, and each part is judged", () => {
   for (const glob of ["*.mjs,.env.worktree", "*.ts .env*", "*.mjs, .env", "*.md ,.env.local"]) {
     assert.equal(envReadRefusal("Grep", { glob }), ENV_READ_REASON, glob);
