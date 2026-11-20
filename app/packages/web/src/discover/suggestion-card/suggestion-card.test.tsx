@@ -240,3 +240,62 @@ describe("US-ENT-01 every card has element ids of its own (axe duplicate-id)", (
     expect(document.activeElement).toBe(title.current);
   });
 });
+
+describe("US-QS-32 · SG-PHOTO-02 the card shows the drawn placeholder, not an emoji, without a picture", () => {
+  it("US-QS-32 · SG-PHOTO-02 a suggestion without a picture shows the drawn sprout of the family, and no emoji", () => {
+    const { container } = render(<SuggestionCard suggestion={suggestion()} />);
+    expect(container.textContent).not.toContain("🌱");
+    expect(container.querySelector("figure[data-card-picture] svg")).not.toBeNull();
+  });
+});
+
+describe("US-QS-32 · SG-PHOTO-03 the Wikipedia credit sits directly under the picture", () => {
+  it("US-QS-32 · SG-PHOTO-03 the credit is the caption of the picture, before the name, not the last line of the card", () => {
+    const { container } = render(
+      <SuggestionCard
+        suggestion={suggestion({ imageUrl: "https://upload.wikimedia.org/a.jpg" })}
+      />,
+    );
+    const figure = container.querySelector("figure[data-card-picture]") as HTMLElement;
+    const caption = figure.querySelector("figcaption");
+    expect(caption?.textContent).toBe("Bild und Text: Wikipedia (CC BY-SA)");
+    expect(caption?.previousElementSibling).toBe(figure.firstElementChild);
+    const name = screen.getByRole("heading", { name: "Aglaonema commutatum" });
+    expect(caption?.compareDocumentPosition(name) ?? 0).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("US-QS-32 · SG-PHOTO-03 the credit stays under the drawn placeholder when the card has no picture", () => {
+    const { container } = render(<SuggestionCard suggestion={suggestion()} />);
+    const figure = container.querySelector("figure[data-card-picture]") as HTMLElement;
+    expect(figure.querySelector("figcaption")?.textContent).toBe(
+      "Bild und Text: Wikipedia (CC BY-SA)",
+    );
+  });
+
+  it("US-QS-32 · SG-PHOTO-03 no caption without a known source and without any Wikipedia text", () => {
+    const { container } = render(
+      <SuggestionCard
+        suggestion={suggestion({ summary: null, imageUrl: null, sourceUrl: null })}
+      />,
+    );
+    expect(container.querySelector("figcaption")).toBeNull();
+  });
+});
+
+describe("US-QS-32 · SG-SHAPE-01 the card has the card radius of 22 px", () => {
+  it("US-QS-32 · SG-SHAPE-01 the suggestion card takes rounded-card, not the tile radius", () => {
+    show(suggestion());
+    const card = screen.getByRole("article");
+    expect(card.className).toContain("rounded-card");
+    expect(card.className).not.toContain("rounded-xl");
+  });
+});
+
+describe("US-QS-32 · SG-TYPE-04 at large text the card has no scroll region of its own", () => {
+  it("US-QS-32 · SG-TYPE-04 a card that takes its own height (large text) does not scroll inside itself, the deck does", () => {
+    render(<SuggestionCard suggestion={suggestion()} fill={false} />);
+    const card = screen.getByRole("article");
+    expect(card.className).not.toContain("overflow-y-auto");
+    expect(card.className).not.toContain("flex-1");
+  });
+});
