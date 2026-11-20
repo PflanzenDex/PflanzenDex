@@ -121,6 +121,9 @@ export function App() {
   // A keeper who was signed in on this device sees the signed-in frame with the page skeleton from the first paint, through
   // the session check and the shell's code, without an empty frame (SG-STATE-02, issue 1876); the card stays for sign-in.
   if (z.kind === "loading" && likelySignedIn()) return <StartFrame />;
+  // A keeper who was signed in on this device sees a failed account load inside both bars, where the page would be (F-0059, Q03).
+  if (z.kind === "error" && !z.reloadPage && likelySignedIn())
+    return <StartFrame body={<AppError text={z.text} onReload={() => void s.reload()} />} />;
   if (z.kind !== "signedIn")
     return (
       <main className="flex min-h-dvh flex-col items-center px-4 py-6 md:pt-20">

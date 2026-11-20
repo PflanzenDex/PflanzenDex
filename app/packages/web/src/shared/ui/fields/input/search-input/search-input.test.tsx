@@ -80,3 +80,27 @@ describe("US-QS-11 · the search field shows its key", () => {
     expect(screen.getByRole("searchbox").closest("div")?.querySelector("kbd")).toBeNull();
   });
 });
+
+describe("US-QS-32 · SG-SEARCH-01 the search field shows the search icon at its left", () => {
+  it("US-QS-32 · SG-SEARCH-01 the search icon sits inside the field at its left edge and is hidden from assistive technology", () => {
+    render(<Harness initial="" />);
+    const wrapper = screen.getByRole("searchbox").parentElement as HTMLElement;
+    const icon = wrapper.querySelector("svg");
+    expect(icon).not.toBeNull();
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
+    expect(icon?.getAttribute("class")).toContain("absolute");
+    expect(icon?.getAttribute("class")).toContain("start-3");
+  });
+
+  it("US-QS-32 · SG-SEARCH-01 the text keeps clear of the icon: the field has room for it at its start", () => {
+    render(<Harness initial="" />);
+    expect(screen.getByRole("searchbox").className.split(" ")).toContain("ps-10");
+  });
+
+  it("US-QS-32 · SG-SEARCH-01 the icon and the clear control both sit in the field while it holds text", () => {
+    render(<Harness initial="Monstera" />);
+    const wrapper = screen.getByRole("searchbox").parentElement as HTMLElement;
+    expect(wrapper.querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Suche leeren" })).toBeTruthy();
+  });
+});

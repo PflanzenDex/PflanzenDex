@@ -105,6 +105,54 @@ describe("EmptyState (US-QS-07, DS-26, P-09)", () => {
     expect(container.querySelector("svg.lucide-sprout")).toBeNull();
   });
 
+  it("US-QS-32 · SG-STATE-03 a page-level state (level 1) is the one h1 of its view, the title keeps its size", () => {
+    render(<EmptyState level={1} title="Diese Seite gibt es nicht" />);
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("heading", { level: 2 })).toBeNull();
+  });
+
+  it("US-QS-32 · SG-BTN-01 a secondary action is a plain button after the filled one and runs its handler", async () => {
+    const onPrimary = vi.fn();
+    const onSecondary = vi.fn();
+    render(
+      <EmptyState
+        level={1}
+        title="Etikett ohne Pflanze"
+        action={{ label: "Pflanze anlegen", onClick: onPrimary }}
+        secondary={{ label: "Zur Sammlung", onClick: onSecondary }}
+      />,
+    );
+    const filled = screen.getByRole("button", { name: "Pflanze anlegen" });
+    const plain = screen.getByRole("button", { name: "Zur Sammlung" });
+    expect(filled.className.split(/\s+/)).toContain("bg-primary");
+    expect(plain.className.split(/\s+/)).toContain("text-primary");
+    expect(plain.className.split(/\s+/)).not.toContain("bg-accent");
+    await userEvent.click(plain);
+    expect(onSecondary).toHaveBeenCalledOnce();
+    expect(onPrimary).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 · SG-BTN-01 without a secondary action the state shows only its primary button (callers unchanged)", () => {
+    render(<EmptyState title="Leer" action={{ label: "Los", href: "/x" }} />);
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("US-QS-32 a secondary action can be a link to its target", () => {
+    render(
+      <EmptyState
+        title="Etikett ohne Pflanze"
+        action={{ label: "Pflanze anlegen", href: "/collection/new" }}
+        secondary={{ label: "Zur Sammlung", href: "/collection" }}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "Zur Sammlung" }).getAttribute("href")).toBe(
+      "/collection",
+    );
+  });
+
   it("US-QS-32 · SG-ICON-01 no exclamation mark and no emoji stand in for an icon", () => {
     const { container } = render(
       <EmptyState

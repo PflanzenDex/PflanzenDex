@@ -1,4 +1,4 @@
-import { useCallback, type ReactNode } from "react";
+import { Fragment, useCallback, type ReactNode } from "react";
 import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { CalmModeSection, loadAchievementSettings } from "../../achievements";
@@ -16,6 +16,10 @@ import {
   wishlistValue,
 } from "./groups/group-values";
 import { useProfileSaver } from "./groups/profile-saver";
+import {
+  NOT_LOADED,
+  RetryFailedLoad,
+} from "@/shared/patterns/states/request-state/failed-value/failed-value";
 import { SettingsRow } from "./groups/settings-row/settings-row";
 import {
   NotificationsGroup,
@@ -36,8 +40,11 @@ type Token = () => Promise<string | undefined>;
 /** The value of the row while it loads; it shows after the delay (DS-57, issue 1726). */
 const STYLE_LOADING = "wird geladen …";
 
-/** The value of the row "Wie nutzt du die App?": loaded on its own, so a failure shows here and nowhere else (P-10). */
-function useStyleValue(api: string, token: Token): ReactNode {
+/**
+ * The row "Wie nutzt du die App?": loaded on its own, so a failure shows here and nowhere else (P-10). A failed load reads
+ * "Nicht geladen" and returns its retry, which the list shows beside the row (a row is a button and holds no control, US-QS-32).
+ */
+function useStyleRow(api: string, token: Token): { value: ReactNode; retry?: () => void } {
   const style = useRequest({
     queryKey: ["onboarding", "style"],
     fresh: true,
@@ -51,17 +58,18 @@ function useStyleValue(api: string, token: Token): ReactNode {
     load: useCallback((t: string) => loadAchievementSettings(api, t), [api]),
   });
   const loading = useHeldLoader(style.status === "pending");
-  if (loading) return <DelayedSkeleton>{STYLE_LOADING}</DelayedSkeleton>;
-  if (style.value === undefined) return UNKNOWN;
-  return styleValue(style.value.style, calm.value?.calmMode);
+  if (loading) return { value: <DelayedSkeleton>{STYLE_LOADING}</DelayedSkeleton> };
+  if (style.status === "error") return { value: NOT_LOADED, retry: style.retry };
+  if (style.value === undefined) return { value: UNKNOWN };
+  return { value: styleValue(style.value.style, calm.value?.calmMode) };
 }
 
 function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
   const saver = useProfileSaver(props.api, props.token, props.profile);
-  const styleText = useStyleValue(props.api, props.token);
+  const style = useStyleRow(props.api, props.token);
   const p = saver.saved;
   const ids = SETTINGS_LAYER;
-  const layers: readonly { id: string; title: string; value: ReactNode; body: ReactNode }[] = [
+  const layers: readonly SettingsLayer[] = [
     {
       id: ids.profile,
       title: "Profil",
@@ -83,7 +91,8 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
     {
       id: ids.style,
       title: "Wie nutzt du die App?",
-      value: styleText,
+      value: style.value,
+      ...(style.retry ? { retry: style.retry } : {}),
       body: (
         <div className="flex flex-col gap-3">
           <KeeperStyleSection api={props.api} token={props.token} />
@@ -104,15 +113,29 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
   return <SettingsLayers layers={layers} />;
 }
 
+/** One group of the list: its row, its layer, and the retry of a failed load beside the row (US-QS-32). */
+type SettingsLayer = {
+  id: string;
+  title: string;
+  value: ReactNode;
+  retry?: () => void;
+  body: ReactNode;
+};
+
 /** The rows of the groups and, beside them, one layer per group (US-QS-17): the layer opens from its row. */
-function SettingsLayers(props: {
-  layers: readonly { id: string; title: string; value: ReactNode; body: ReactNode }[];
-}) {
+function SettingsLayers(props: { layers: readonly SettingsLayer[] }) {
   return (
     <>
       <div className="flex min-w-0 max-w-xl flex-1 flex-col">
         {props.layers.map((l) => (
-          <SettingsRow key={l.id} id={l.id} title={l.title} value={l.value} />
+          <Fragment key={l.id}>
+            <SettingsRow id={l.id} title={l.title} value={l.value} />
+            {l.retry ? (
+              <div className="px-3 pb-2">
+                <RetryFailedLoad name={l.title} onRetry={l.retry} />
+              </div>
+            ) : null}
+          </Fragment>
         ))}
       </div>
       {props.layers.map((l) => (
