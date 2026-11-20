@@ -302,6 +302,30 @@ describe("US-QS-32 · SG-TYPE-04 at 200 % text the deck scrolls as a whole", () 
       expect(el.className).not.toMatch(/overflow-(y-)?(auto|scroll)/);
   });
 
+  it("US-QS-32 · SG-TYPE-04 the card underneath takes its own height too at large text, as the front card does", () => {
+    const { container } = renderAt200({
+      suggestions: [suggestion("Ficus lyrata"), suggestion("Aloe vera")],
+    });
+    const under = container.querySelector<HTMLElement>('[data-level="1"] article');
+    expect(under?.className).toContain("flex-none");
+    expect(under?.className).not.toContain("overflow-y-auto");
+    expect(under?.className).not.toContain("flex-1");
+  });
+
+  it("US-QS-32 · SG-TYPE-04 at the normal size the card underneath fills its frame like the front card", () => {
+    const { container } = render(
+      <DeckView
+        deck={{ ...deck, suggestions: [suggestion("Ficus lyrata"), suggestion("Aloe vera")] }}
+        onDecide={saveOk}
+        onUndo={undoOk}
+        onNewDeck={() => undefined}
+      />,
+    );
+    const under = container.querySelector<HTMLElement>('[data-level="1"] article');
+    expect(under?.className).toContain("flex-1");
+    expect(under?.className).toContain("overflow-y-auto");
+  });
+
   it("US-QS-32 · SG-TYPE-04 the decision buttons come after the card in the flow, not under it", () => {
     renderAt200();
     const card = screen.getByRole("article");

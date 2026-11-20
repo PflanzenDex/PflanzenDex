@@ -12,16 +12,16 @@ import { texts } from "@/shared/lib/text-rules/texts";
 const t = texts(table);
 
 /**
- * The picture with its credit directly under it (US-QS-32, SG-PHOTO-03): the image is a link to its source, not a
- * copy (P-05); without a picture the drawn placeholder of the family stands in (SG-PHOTO-02), never an emoji.
- */
-/**
  * At the normal text size the picture is capped by the height of the screen less the room the card's text needs (about 600 px,
  * measured at 360 × 640 to 430 × 852, US-QS-21): the width follows the height, so the box stays 4:3 and is centred. At large
  * text the card has its own height and the picture is not capped.
  */
 const PICTURE_CAP = "mx-auto w-[min(100%,calc((100dvh_-_600px)*4/3))]";
 
+/**
+ * The picture with its credit directly under it (US-QS-32, SG-PHOTO-03): the image is a link to its source, not a
+ * copy (P-05); without a picture the drawn placeholder of the family stands in (SG-PHOTO-02), never an emoji.
+ */
 function Picture({ s, fill }: { s: Suggestion; fill: boolean }) {
   const shown = s.summary !== null || s.imageUrl !== null;
   return (
