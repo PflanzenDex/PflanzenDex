@@ -88,15 +88,24 @@ export function FormButtons(props: {
  */
 export const FORM_GRID = "grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2";
 
-/** One labelled select of a form; the options are passed as children. */
+/**
+ * One labelled select of a form; the options are passed as children. An optional `description` sits under the field and
+ * is read with it (issue 1960: what "Keine Lichtzone" means for a location).
+ */
 export function SelectField<T extends FieldValues>(props: {
   control: Control<T>;
   name: FieldPath<T>;
   label: string;
+  description?: string | undefined;
   children: React.ReactNode;
 }) {
   return (
-    <Field control={props.control} name={props.name} label={props.label}>
+    <Field
+      control={props.control}
+      name={props.name}
+      label={props.label}
+      description={props.description}
+    >
       {(field) => <Select {...field}>{props.children}</Select>}
     </Field>
   );
