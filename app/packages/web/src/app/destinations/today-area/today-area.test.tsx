@@ -787,7 +787,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
         .getByRole("button", { name: "Termin, 1 Angabe fehlt" })
         .getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(within(form).getByLabelText(/Grund/)).toBe(document.activeElement);
+    // The text is committed before the view moves and the reason takes the focus, one commit later: wait for the focus.
+    await waitFor(() => expect(within(form).getByLabelText(/Grund/)).toBe(document.activeElement));
   });
 
   it("US-QS-18 · US-BEH-03 the history per plant stays reachable in the layer under Erledigt", async () => {

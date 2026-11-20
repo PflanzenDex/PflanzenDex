@@ -16,7 +16,7 @@ const t = texts(table);
  * True when the text size is raised to 150 % or more (US-QS-21, WCAG 1.4.4). Media queries do not follow the root font
  * size, so the row reads it: a sticky row would then cover the card, so it scrolls with the content instead.
  */
-function largeText(): boolean {
+export function largeText(): boolean {
   return parseFloat(getComputedStyle(document.documentElement).fontSize) >= 24;
 }
 

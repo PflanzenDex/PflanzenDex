@@ -167,7 +167,7 @@ Blocked: the reading job uses AI run by the operator, and E-04 says there is no 
 
 ## Dependencies and build order
 
-Release split (owner decision 2026-11-05): R2 for US-DEAL-01 to US-DEAL-04 and US-DEAL-06, and for the in-app offer list of US-DEAL-05; R3 for the push criteria of US-DEAL-05. Priority P2 for R2 and R3 by the rule of thumb in `CLAUDE.md`; the owner may overrule per ticket.
+Release split (owner decision 2026-11-05): R2 for US-DEAL-01 to US-DEAL-04 and US-DEAL-06, and for the in-app offer list of US-DEAL-05; R3 for the push criteria of US-DEAL-05. Priority P2 for R2 and R3 by the rule of thumb in `docs/guides/operations/parallel-work.md`; the owner may overrule per ticket.
 
 The push criteria of US-DEAL-05 wait for R3, because web push (US-MON-01, ADR 0015) is placed in R3 in `09-reminders-and-sensors.md`. The list and the matching do not wait. US-DEAL-06 stays blocked by E-28 (open, unchanged).
 

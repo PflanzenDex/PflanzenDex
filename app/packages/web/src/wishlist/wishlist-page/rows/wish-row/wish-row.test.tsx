@@ -213,14 +213,17 @@ describe("US-WUN-05 · US-QS-32 the question of 'Verwerfen' has the row's width"
   });
 });
 
-describe("US-QS-32 the name keeps its width at 200 % text (FX-35 step 5)", () => {
-  it("US-QS-32 the row keeps 18 rem: at 200 % text it is wider than the list and scrolls sideways in its own wrapper, not squeezed", () => {
+describe("US-QS-32 the name keeps its width at 200 % text (FX-35 step 5, issue 2322)", () => {
+  it("US-QS-32 the row needs no sideways scroll wrapper: its actions wrap below the name (the shared object row rule), so the row is no wider than the list", () => {
     const { container } = show();
-    const wrapper = container.querySelector('[data-scroll-x="row"]') as HTMLElement;
-    expect(wrapper.className.split(" ")).toContain("overflow-x-auto");
-    const keep = wrapper.firstElementChild as HTMLElement;
-    expect(keep.className.split(" ")).toContain("min-w-[18rem]");
-    expect(keep.contains(screen.getByRole("button", { name: /^1\. Aloe/ }))).toBe(true);
+    expect(container.querySelector('[data-scroll-x="row"]')).toBeNull();
+    expect(container.querySelector(".min-w-\\[18rem\\]")).toBeNull();
+    const row = container.querySelector("[data-priority]") as HTMLElement;
+    expect(row.className.split(" ")).toContain("min-w-0");
+    expect(row.contains(screen.getByRole("button", { name: /^1\. Aloe/ }))).toBe(true);
+    // The two actions wrap inside their box when the row is narrower than both (200 % text on a phone), so nothing sticks out.
+    const actions = screen.getByRole("button", { name: "Gekauft: Aloe (Aloe vera)" }).parentElement;
+    expect(actions?.className.split(" ")).toEqual(expect.arrayContaining(["flex-wrap", "min-w-0"]));
   });
 });
 

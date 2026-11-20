@@ -348,3 +348,15 @@ describe("US-ENT-10 the cards lie as a stack with visible depth", () => {
     expect(levels(container)[1]).toMatchObject({ scale: "0.96", y: "8px" });
   });
 });
+
+describe("US-QS-32 · SG-SHAPE-01 the cards underneath have the card radius of the top card", () => {
+  it("US-QS-32 · SG-SHAPE-01 each card of the stack below the top card takes rounded-card, so the deck shows one radius", () => {
+    const { container } = render(ui({ depth: 5, under: <p>Nächste</p> }));
+    const levels = Array.from(container.querySelectorAll<HTMLElement>("[data-level]"));
+    expect(levels).toHaveLength(2);
+    for (const level of levels) {
+      expect(level.className).toContain("rounded-card");
+      expect(level.className).not.toContain("rounded-xl");
+    }
+  });
+});

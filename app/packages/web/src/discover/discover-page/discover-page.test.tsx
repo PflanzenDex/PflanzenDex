@@ -248,6 +248,37 @@ describe("US-QS-14 focus follows the view (SC 2.4.3)", () => {
     const heading = await screen.findByRole("heading", { name: /Keine neuen Vorschläge/ });
     expect(document.activeElement).toBe(heading);
   });
+
+  it("US-QS-14 the end-state heading takes the focus in the commit that shows it, so no read sees the focus on the body", async () => {
+    fakeServer(async (deck) =>
+      response(
+        200,
+        deck === 1
+          ? deckOf(suggestion("Aspidistra elatior"))
+          : deckOf(suggestion("Ficus lyrata"), suggestion("Aloe vera")),
+      ),
+    );
+    const user = userEvent.setup();
+    render(<DiscoverPage api="http://api" token={token} />);
+    await card();
+    // The focus at the moment the heading enters the DOM, read before any wait of the test can let React's effects run.
+    let focusWhenShown: Element | null | undefined;
+    const observer = new MutationObserver(() => {
+      if (focusWhenShown !== undefined) return;
+      const shown = Array.from(document.querySelectorAll("h2")).find((h) =>
+        /Für heute durch/.test(h.textContent ?? ""),
+      );
+      if (shown) focusWhenShown = document.activeElement;
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    try {
+      await user.click(screen.getByRole("button", { name: "Wünschen" }));
+      const end = await screen.findByRole("heading", { name: /Für heute durch/ });
+      expect(focusWhenShown).toBe(end);
+    } finally {
+      observer.disconnect();
+    }
+  });
 });
 
 describe("US-ENT-04 decisions are saved", () => {

@@ -218,4 +218,25 @@ describe("US-QS-32 a task row of Heute is one row with its whole target (SG-TOUC
     expect(screen.getAllByRole("button")).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Behandlungen 5 · 2 überfällig" })).toBeTruthy();
   });
+
+  it("US-QS-32 the treatment card's sentence is primary content at 16 px, its 'Stand' line is secondary at 14 px (SG-TYPE-02)", () => {
+    render(
+      wrap(
+        <TodayRow
+          item={item({
+            id: "treatment:1",
+            kind: "treatment_overdue",
+            text: "„Aloe“: Läuse – überfällig seit 10 Tagen.",
+            target: "treatments",
+          })}
+          date="10.10.2026"
+          treatmentEntry={<button type="button">Behandlungen</button>}
+        />,
+      ),
+    );
+    expect(screen.getByText(/Aloe/).className).toContain("text-base");
+    const stand = screen.getByText("Stand: 10.10.2026");
+    expect(stand.className).toContain("text-sm");
+    expect(stand.className).not.toContain("text-xs");
+  });
 });

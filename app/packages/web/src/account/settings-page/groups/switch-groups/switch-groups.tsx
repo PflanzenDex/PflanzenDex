@@ -23,7 +23,10 @@ type Flag = "everythingPrivate" | "noRecommendations" | "rarityConsent";
 /**
  * A switch saves at once (US-QS-17): the whole stored profile with this one change goes out. The switch itself is the
  * result (SG-FEED-01): a refused save leaves it where it was and says why by the error code's text (P-10); a saved one
- * is said to screen readers by the announcer, with no box in the page (SG-FEED-04, US-QS-32).
+ * is said to screen readers by the announcer, with no box in the page (SG-FEED-04, US-QS-32). While a save runs the
+ * switches are `aria-disabled`, not `disabled`: a focused control that becomes disabled loses the focus, and the second
+ * Space of the keeper would do nothing (US-QS-32, issue 2317). A press meanwhile sends nothing (the saver answers `null`
+ * while busy) and React restores the stored state of the box.
  */
 function useSwitchSave(saver: ProfileSaver, onSaved?: (profile: AccountProfile) => void) {
   const [error, setError] = useState<ApiError | null>(null);
@@ -57,7 +60,7 @@ export function NotificationsGroup({ saver }: { saver: ProfileSaver }) {
             key={o}
             name={`notifications.${o}`}
             checked={saver.saved.notifications[o]}
-            disabled={saver.saving}
+            aria-disabled={saver.saving || undefined}
             needsNetwork
             onChange={(e) =>
               void change({
@@ -92,7 +95,7 @@ export function PrivacyGroup({ saver }: { saver: ProfileSaver }) {
             key={s.name}
             name={s.name}
             checked={saver.saved[s.name]}
-            disabled={saver.saving}
+            aria-disabled={saver.saving || undefined}
             needsNetwork
             onChange={(e) => void change({ [s.name]: e.target.checked })}
           >
