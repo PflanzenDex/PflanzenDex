@@ -11,6 +11,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { FILE_RULES, RULES, TOKEN_FILE } from "./check-design-system-rules.mjs";
 import { importViolations } from "./check-design-system-imports.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const WEB = "packages/web";
 export const REQUIRED_DEPENDENCIES = [
@@ -177,4 +178,4 @@ function main() {
   console.log(`Design system check passed (${entries.length} known violations in the baseline).`);
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) main();
+if (isEntryPoint(import.meta.url)) main();

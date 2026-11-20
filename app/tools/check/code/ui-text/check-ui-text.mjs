@@ -6,8 +6,8 @@
 //   UT-2  an entry is higher than the file's count or the file has none left (lower or remove the entry),
 //   UT-3  the counts add up to more than `maxTotal` (lower `maxTotal` when texts move into a table; never raise it).
 import fs from "node:fs";
-import { fileURLToPath } from "node:url";
 import { lintFindings } from "../../quality/gates/eslint-shared.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 export const RULE = "ui-text/no-literal-text";
 export const BASELINE_FILE = "config/gates/baselines/ui-text-baseline.json";
@@ -52,7 +52,7 @@ async function currentCounts() {
   return counts;
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const counts = await currentCounts();
   if (process.argv.includes("--write")) {
     fs.writeFileSync(BASELINE_FILE, `${JSON.stringify(toBaseline(counts), null, 2)}\n`);

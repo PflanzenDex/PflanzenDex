@@ -3,11 +3,12 @@
 //   node issue-cli.mjs check --issue <n> [--event <action>]     (writes valid, type, epic to $GITHUB_OUTPUT when set)
 //   node issue-cli.mjs sync --issue <n> --type <label> --epic <code>
 // Exit 0 ok, 1 refused or failed, 2 usage. Operations: issue.mjs. Allowed list: app/config/project/issue-taxonomy.json.
-import { readFileSync, realpathSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { realClient } from "../../claim/lib/claim-client.mjs";
 import { checkIssue, createIssue, IssueRefused, syncIssue } from "./issue.mjs";
+import { isEntryPoint } from "../../../check/shared/entry-point.mjs";
 
 const TAXONOMY_FILE = fileURLToPath(
   new URL("../../../../config/project/issue-taxonomy.json", import.meta.url),
@@ -83,7 +84,7 @@ export async function main(
   return 0;
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main(process.argv.slice(2), { env: process.env })
     .then((code) => process.exit(code))
     .catch((e) => {

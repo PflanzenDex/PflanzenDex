@@ -8,13 +8,14 @@
 //   5. the PR grows no baseline (app/config/gates/baselines/, US-QG-07): the merge base and the head are compared; a
 //      baseline that only shrinks merges, and a version that cannot be read refuses the PR
 import { execFileSync, spawnSync } from "node:child_process";
-import { readFileSync, readdirSync, realpathSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { baselineChanges, baselineProblems } from "../../../.claude/hooks/baseline-growth.mjs";
 import { isGateFile } from "../../../.claude/hooks/rules.mjs";
 import { realClient } from "./claim/lib/claim-client.mjs";
 import { mergeProblems } from "./actions/ci-reuse/ci-wait.mjs";
+import { isEntryPoint } from "../check/shared/entry-point.mjs";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const ID = /\b(?:US|FR|DM)-[A-Z]+-\d+\b|\bNFR-\d+\b/g;
@@ -167,5 +168,4 @@ async function main(number) {
   return 0;
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
-  process.exitCode = await main(process.argv[2]);
+if (isEntryPoint(import.meta.url)) process.exitCode = await main(process.argv[2]);

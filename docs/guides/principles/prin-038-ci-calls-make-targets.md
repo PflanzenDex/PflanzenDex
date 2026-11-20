@@ -15,7 +15,7 @@ Number of workflow `run:` steps that call `npm`, `npx` or `node` directly, excep
 
 ## Checked by
 
-`app/tools/check/release/check-ci-drift.mjs`.
+`app/tools/check/delivery/release/check-ci-drift.mjs`.
 
 ## Gate
 
@@ -23,4 +23,4 @@ Number of workflow `run:` steps that call `npm`, `npx` or `node` directly, excep
 
 ## Evidence
 
-Tests in `app/tools/check/release/check-ci-drift.test.mjs`. The allowlist lives in the script, so an addition is a change to a check script that needs a reason in the PR.
+Tests in `app/tools/check/delivery/release/check-ci-drift.test.mjs`. The allowlist lives in the script, so an addition is a change to a check script that needs a reason in the PR.

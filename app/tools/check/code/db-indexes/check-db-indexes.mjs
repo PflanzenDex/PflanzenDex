@@ -11,6 +11,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { compareBaseline, toBaseline } from "./db-indexes-baseline.mjs";
 import { replay } from "./db-indexes-schema.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const app = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 export const MIGRATIONS = path.join(app, "packages", "db", "migrations");
@@ -101,5 +102,4 @@ function main(argv) {
   return 0;
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
-  process.exit(main(process.argv.slice(2)));
+if (isEntryPoint(import.meta.url)) process.exit(main(process.argv.slice(2)));

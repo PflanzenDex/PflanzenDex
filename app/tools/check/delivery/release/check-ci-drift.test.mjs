@@ -7,9 +7,11 @@ import { test, describe } from "node:test";
 import assert from "node:assert";
 import { findDrift, readRepo } from "./check-ci-drift.mjs";
 
-// The check and the repository it reads: the script in this folder, and the root four folders above it (US-QG-02).
+// The check and the repository it reads: the script in this folder, and the root five folders above it (US-QG-02).
 const SCRIPT = fileURLToPath(new URL("./check-ci-drift.mjs", import.meta.url));
-const ROOT = path.resolve(path.dirname(SCRIPT), "../../../..");
+// The entry-point helper the script imports from its shared folder (US-QG-02); a copy of the script needs it at the same depth.
+const HELPER = fileURLToPath(new URL("../../shared/entry-point.mjs", import.meta.url));
+const ROOT = path.resolve(path.dirname(SCRIPT), "../../../../..");
 
 describe("US-DEV-01: CI drift checker", () => {
   test("US-DEV-01: returns empty findings for valid config", () => {
@@ -400,9 +402,11 @@ ci-ui: ## Part 3
     const tree = fs.mkdtempSync(path.join(os.tmpdir(), "ci-drift-tree-"));
     t.after(() => fs.rmSync(tree, { recursive: true, force: true }));
     // A copy of the script at the same depth: its root is the temporary tree, which has nothing in it yet.
-    const folder = path.join(tree, "app", "tools", "check", "release");
+    const folder = path.join(tree, "app", "tools", "check", "delivery", "release");
     fs.mkdirSync(folder, { recursive: true });
     fs.copyFileSync(SCRIPT, path.join(folder, "check-ci-drift.mjs"));
+    fs.mkdirSync(path.join(tree, "app", "tools", "check", "shared"), { recursive: true });
+    fs.copyFileSync(HELPER, path.join(tree, "app", "tools", "check", "shared", "entry-point.mjs"));
     const run = () =>
       spawnSync(process.execPath, [path.join(folder, "check-ci-drift.mjs")], {
         cwd: tree,
@@ -433,13 +437,15 @@ ci-ui: ## Part 3
       fs.rmSync(link, { force: true });
       fs.rmSync(tree, { recursive: true, force: true });
     });
-    const folder = path.join(tree, "app", "tools", "check", "release");
+    const folder = path.join(tree, "app", "tools", "check", "delivery", "release");
     fs.mkdirSync(folder, { recursive: true });
     fs.copyFileSync(SCRIPT, path.join(folder, "check-ci-drift.mjs"));
+    fs.mkdirSync(path.join(tree, "app", "tools", "check", "shared"), { recursive: true });
+    fs.copyFileSync(HELPER, path.join(tree, "app", "tools", "check", "shared", "entry-point.mjs"));
     fs.symlinkSync(tree, link, "dir");
     const result = spawnSync(
       process.execPath,
-      [path.join(link, "app", "tools", "check", "release", "check-ci-drift.mjs")],
+      [path.join(link, "app", "tools", "check", "delivery", "release", "check-ci-drift.mjs")],
       { cwd: real, encoding: "utf8" },
     );
     assert.equal(result.status, 1, result.stdout);
@@ -450,7 +456,7 @@ ci-ui: ## Part 3
 describe("FR-QG-01: the Makefile", () => {
   test("FR-QG-01: every documented target is declared in .PHONY (typo guard)", () => {
     const lines = fs
-      .readFileSync(new URL("../../../../Makefile", import.meta.url), "utf8")
+      .readFileSync(new URL("../../../../../Makefile", import.meta.url), "utf8")
       .split("\n");
     const phony = new Set(
       lines
@@ -469,7 +475,7 @@ describe("FR-QG-01: the Makefile", () => {
 describe("US-DEV-01: make help", () => {
   test("US-DEV-01: make help lists every target that has a ## description, digits in the name included", () => {
     const lines = fs
-      .readFileSync(new URL("../../../../Makefile", import.meta.url), "utf8")
+      .readFileSync(new URL("../../../../../Makefile", import.meta.url), "utf8")
       .split("\n");
     const described = lines.flatMap((l) => l.match(/^([a-z0-9][a-z0-9-]*):.*## /)?.[1] ?? []);
     assert.ok(described.length > 0, "no target with a ## description found");
@@ -490,7 +496,7 @@ describe("US-DEV-01: make help", () => {
         .replaceAll("$$", () => "$")
         .replaceAll("$(MAKEFILE_LIST)", () => `Makefile '${envFile}'`);
       const help = spawnSync("bash", ["-c", command], {
-        cwd: fileURLToPath(new URL("../../../../", import.meta.url)),
+        cwd: fileURLToPath(new URL("../../../../../", import.meta.url)),
         encoding: "utf8",
       });
       assert.equal(help.status, 0, help.stderr);

@@ -3,13 +3,12 @@
 // title or body. Editing or deleting an existing entry does not count. Inputs come from environment variables, never from
 // the command line (PR titles and bodies are untrusted input).
 import { execFileSync } from "node:child_process";
-import fs from "node:fs";
-import { fileURLToPath } from "node:url";
 import {
   FRAGMENT_DIR,
   fragmentLine,
   isFragmentName,
-} from "../../../packages/web/src/app/destinations/account-area/whats-new/news-lines.mjs";
+} from "../../../../packages/web/src/app/destinations/account-area/whats-new/news-lines.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 export const CHANGELOG_FILE = "app/packages/web/src/news/news.de.json";
 export const SKIP_MARKER = "[skip-changelog]";
@@ -99,5 +98,4 @@ function main(env) {
   return result.ok ? 0 : 1;
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
-  process.exit(main(process.env));
+if (isEntryPoint(import.meta.url)) process.exit(main(process.env));

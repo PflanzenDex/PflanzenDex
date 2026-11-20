@@ -6,6 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../../shared/entry-point.mjs";
 
 const MARKER = /<!--\s*const:\s*([^\s>]+)([^>]*)-->/g;
 
@@ -96,5 +97,4 @@ async function main() {
   );
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
-  await main();
+if (isEntryPoint(import.meta.url)) await main();

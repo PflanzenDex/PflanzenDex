@@ -1,5 +1,5 @@
 {
-  "_comment": "Tolerated high/critical npm advisories (QG-S2). Only unpatched dev/release tooling (semantic-release, markdownlint-cli2, never shipped in the app runtime). The expiry is 30 days (an assumption, starting value; chosen by the owner on 2026-10-29), so upstream fixes get picked up soon; when it passes, tools/check/supply/check-audit.mjs fails so each entry gets re-reviewed: look for a patched release first, then extend with a new reason or remove the entry.",
+  "_comment": "Tolerated high/critical npm advisories (QG-S2). Only unpatched dev/release tooling (semantic-release, markdownlint-cli2, never shipped in the app runtime). The expiry is 30 days (an assumption, starting value; chosen by the owner on 2026-10-29), so upstream fixes get picked up soon; when it passes, tools/check/delivery/supply/check-audit.mjs fails so each entry gets re-reviewed: look for a patched release first, then extend with a new reason or remove the entry.",
   "entries": [
     {
       "advisory": "GHSA-gg6h-894w-4m9c",

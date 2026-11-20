@@ -3,10 +3,10 @@
 // accepts no wildcard in the host part, so the port is added through the admin API. Idempotent.
 // Usage: node tools/keycloak/web-port.mjs [port ...]   (default: PFLANZENDEX_DEV_WEB_PORT from the environment or .env.worktree)
 // Env:   KC_ADMIN_PASSWORD (default: app/config/dev/.env of the main checkout, dev-env.mjs), E2E_KEYCLOAK_URL.
-import fs from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { adminPassword, envValue } from "./dev-env.mjs";
+import { isEntryPoint } from "../check/shared/entry-point.mjs";
 
 const REALM = "pflanzendex";
 const CLIENT_ID = "pflanzendex-web";
@@ -78,7 +78,7 @@ async function main(args) {
   console.log(`Allowed redirect origin(s): ${ports.map(origin).join(", ")}`);
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main(process.argv.slice(2)).catch((e) => {
     console.error(`keycloak web-port: ${e.message}`);
     process.exit(1);

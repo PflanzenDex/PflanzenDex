@@ -3,10 +3,9 @@
 // There is no push check: who may push to a branch is decided by GitHub, not by a local hook.
 // Opt-out, always explicit: SKIP_CLAIM_CHECK=1 (make worktree BRANCH=x SKIP_CLAIM_CHECK=1).
 // A check that cannot reach GitHub warns and lets go: offline work must stay possible.
-import fs from "node:fs";
-import { fileURLToPath } from "node:url";
 import { findIssuesByKey, me, realClient } from "./lib/claim-client.mjs";
 import { keyOfBranch } from "./lib/claim-lib.mjs";
+import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 
 /** Verdict for one branch: { ok, message }. */
 export async function checkBranch(client, branch) {
@@ -47,7 +46,7 @@ export async function run(client, branch, log = console.error) {
   return verdict.ok;
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   if (process.env.SKIP_CLAIM_CHECK === "1") {
     console.error("claim: check skipped (SKIP_CLAIM_CHECK=1)");
     process.exit(0);

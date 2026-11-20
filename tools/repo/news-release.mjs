@@ -2,14 +2,7 @@
 // app/packages/web/src/news/news.de.json and deletes their fragments. The lines move, nothing is copied, so no line shows
 // twice. The person who cuts the release commits both changes as one commit (release-checklist, step 7b). The rules are
 // pure and tested in app/packages/web/src/news/news-lines.test.ts (planRelease); this file does the file system part.
-import {
-  existsSync,
-  readdirSync,
-  readFileSync,
-  realpathSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -18,6 +11,7 @@ import {
   isFragmentName,
   planRelease,
 } from "../../app/packages/web/src/app/destinations/account-area/whats-new/news-lines.mjs";
+import { isEntryPoint } from "../../app/tools/check/shared/entry-point.mjs";
 
 export const NEWS_FILE = "app/packages/web/src/news/news.de.json";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -91,5 +85,4 @@ export function main(argv, root = ROOT) {
   }
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
-  process.exitCode = main(process.argv);
+if (isEntryPoint(import.meta.url)) process.exitCode = main(process.argv);

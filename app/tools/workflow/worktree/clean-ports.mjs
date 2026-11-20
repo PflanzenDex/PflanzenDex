@@ -3,9 +3,9 @@
 // current user are stopped; each stop is named in the output. Another user's listener is reported and left alone.
 // Usage: node tools/workflow/worktree/clean-ports.mjs   (from app/, as `make clean-ports` runs it)
 import { spawnSync } from "node:child_process";
-import { existsSync, realpathSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 import { WORKTREE_ENV_FILE, worktreePorts } from "./dev-servers.mjs";
+import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 
 // The defaults of the main checkout: `PORT` of the API (main.ts) and the Vite dev server's default port.
 export const MAIN_CHECKOUT_PORTS = { api: 3000, web: 5173 };
@@ -165,7 +165,7 @@ async function main() {
   return result.ok ? 0 : 1;
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main()
     .then((code) => process.exit(code))
     .catch((error) => {

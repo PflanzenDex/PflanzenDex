@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODULE_CONFIG } from "../../../../config/lint/modules.config.mjs";
 import { storiesByModule } from "../../code/modules/module-report.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const STORY = /^###\s+(US-([A-Z]+)-\d+)\s+·.*·\s*(⬜|🟨|✅)/u;
 const DEF = /^(?:#{2,4}\s+|\|\s*\*{0,2})((?:US|FR|DM)-[A-Z]+-\d+|E-\d+)\b/;
@@ -151,7 +152,7 @@ export function run(root) {
   return { stories, errors, hints: [...trace.hints, ...byModule.hints], refs, byModule };
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const { stories, errors, hints, refs, byModule } = run(
     fileURLToPath(new URL("../../../../..", import.meta.url)),
   );

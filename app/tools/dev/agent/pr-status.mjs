@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // US-DEV-12: compact PR check status. One query, no polling.
 import { execFileSync } from "node:child_process";
-import fs from "node:fs";
-import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 
 // gh 2.45 has no --json for `gh pr checks`: parse the tab-separated lines (name, state, elapsed, url).
 export function parseChecks(text) {
@@ -27,7 +26,7 @@ export function summarizeChecks(checks) {
   return lines.join("\n");
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const pr = process.argv[2];
   if (!/^\d+$/.test(pr ?? "")) {
     console.error("usage: node app/tools/dev/agent/pr-status.mjs <pr-number>");

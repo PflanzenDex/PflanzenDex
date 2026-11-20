@@ -9,6 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../shared/entry-point.mjs";
 
 export const LEVELS = ["observed", "measurable", "checked", "gated"];
 export const SECTIONS = {
@@ -191,7 +192,7 @@ export function run(root) {
   });
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const problems = run(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../.."));
   for (const p of problems) console.error(p);
   if (problems.length) process.exit(1);

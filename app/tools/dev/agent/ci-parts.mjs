@@ -8,10 +8,10 @@
 // it (PFLANZENDEX_HEAVY_OWNER, exported by the Makefile), or this process when npm runs it directly; the parts inherit the
 // owner, so a heavy make target among them does not wait for itself. CI skips the lock: each CI job is its own machine.
 import { spawnSync } from "node:child_process";
-import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { runCiParts } from "../../check/quality/gates/gate-steps.mjs";
 import { formatBlock, runArgv } from "../../check/quality/gates/run-gates.mjs";
+import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 
 function heavyLock() {
   if (process.env.CI) return 0;
@@ -21,7 +21,7 @@ function heavyLock() {
   return lock.status ?? 1;
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const locked = heavyLock();
   if (locked !== 0) process.exit(locked);
   const { code, summary } = await runCiParts({

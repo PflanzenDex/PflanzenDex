@@ -6,13 +6,13 @@
 // Usage: node read-only-cli.mjs run-jobs|conflicts|test-files|format-check|board-item
 // Exit 0 ok (conflicts: clean), 1 a read or a run failed or a merge conflicts, 2 usage or input refused before any call.
 import { spawn } from "node:child_process";
-import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { realClient, repoName } from "../../../workflow/claim/lib/claim-client.mjs";
 import { boardItemOf } from "../../../workflow/claim/lib/board-client.mjs";
 import { pagedKey } from "../../../workflow/actions/ci-reuse/ci-wait.mjs";
 import { filesOf, numberOf, requireFiles, runnerOf, UsageError } from "./read-only-lib.mjs";
+import { isEntryPoint } from "../../../check/shared/entry-point.mjs";
 
 const ROOT = fileURLToPath(new URL("../../../../../", import.meta.url));
 const APP = join(ROOT, "app");
@@ -184,7 +184,7 @@ async function cli(argv) {
   }
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   cli(process.argv.slice(2)).then((code) => {
     process.exitCode = code;
   });

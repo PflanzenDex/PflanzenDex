@@ -7,10 +7,10 @@
 // Usage: node rest-cli.mjs pr-state|issue-read|pr-text|issue-comment (the inputs are the REST_* variables above).
 // Exit 0 ok, 1 GitHub failed (the message says so), 2 usage or input refused before any call. The transport is
 // claim-client.mjs (realClient, json, repoName) and the paging of ci-wait.mjs (pagedKey).
-import { readFileSync, realpathSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { json, realClient, repoName } from "../../claim/lib/claim-client.mjs";
 import { pagedKey } from "../ci-reuse/ci-wait.mjs";
+import { isEntryPoint } from "../../../check/shared/entry-point.mjs";
 
 class UsageError extends Error {}
 
@@ -130,7 +130,7 @@ export async function main(argv, { client = realClient(), env = process.env } = 
   return command.run(client, n, env);
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main(process.argv.slice(2))
     .then((text) => console.log(text))
     .catch((e) => {

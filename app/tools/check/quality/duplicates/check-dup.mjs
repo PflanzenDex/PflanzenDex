@@ -9,6 +9,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 export const TARGET_PERCENT = 1;
 
@@ -41,7 +42,7 @@ export function biggest(report, count = 5) {
     );
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const root = fileURLToPath(new URL("../../../../", import.meta.url));
   const limits = JSON.parse(
     fs.readFileSync(path.join(root, "config/gates/quality-limits.json"), "utf8"),

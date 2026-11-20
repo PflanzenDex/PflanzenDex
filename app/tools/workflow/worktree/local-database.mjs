@@ -1,10 +1,9 @@
+import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 // Local-only guard of `make db-reset`, `make db-seed` and `make pokedex-build` (US-DEV-01). These targets change the test
 // database of this worktree and nothing else, so they refuse: a PFLANZENDEX_ENV other than local or test, NODE_ENV
 // production, a worktree database URL that is not on this machine, and a DATABASE_URL that is set to anything but that
 // database (a staging URL left in the shell cannot reach a reset, a seed or a build).
 // Usage: node tools/workflow/worktree/local-database.mjs <worktree database URL>   (the Makefile passes $(PFLANZENDEX_TEST_DATABASE_URL))
-import fs from "node:fs";
-import { fileURLToPath } from "node:url";
 
 export const LOCAL_ENVIRONMENTS = ["local", "test"];
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
@@ -45,7 +44,7 @@ export function localDatabaseRefusal(env, worktreeUrl) {
   return undefined;
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const reason = localDatabaseRefusal(process.env, process.argv[2] ?? "");
   if (reason) {
     console.error(`local-database: refused: ${reason}.`);

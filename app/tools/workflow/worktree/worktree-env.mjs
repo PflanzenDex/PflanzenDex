@@ -13,7 +13,8 @@ import { existsSync, readFileSync, realpathSync, rmSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
-import { depsFindings } from "../../check/supply/check-deps.mjs";
+import { depsFindings } from "../../check/delivery/supply/check-deps.mjs";
+import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 
 // Port blocks (US-DEV-08): one block of PORT_SLOTS per service, and all ports of a worktree share its slot. The e2e ports
 // have blocks of their own, apart from the dev servers, so a gate never reuses a running `make dev` server (issue 1745).
@@ -182,7 +183,7 @@ async function depsMain(args) {
   }
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   if (process.argv[2] === "--deps") {
     await depsMain(process.argv.slice(3));
   } else {

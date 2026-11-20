@@ -4,13 +4,14 @@
 // main checkout) the two commands run exactly as before: no variables, no port flags.
 // Usage: npm run dev   (in app/, as `make dev` does)
 import { spawn } from "node:child_process";
-import { existsSync, realpathSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { envValue } from "../../keycloak/dev-env.mjs";
 import { parsePort } from "../../keycloak/web-port.mjs";
+import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 // tools/workflow/worktree -> tools/workflow -> tools -> app -> worktree root
@@ -149,7 +150,7 @@ async function main() {
   return runConcurrently(plan.args, plan.variables);
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main()
     .then((code) => process.exit(code))
     .catch((e) => {

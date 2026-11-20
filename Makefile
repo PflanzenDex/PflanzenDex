@@ -145,10 +145,10 @@ help: ## List all targets with a one-line description
 # node_modules that already match package-lock.json (the check-deps stamp) are kept: in CI they come from the
 # node_modules cache (issue 1123, measured saving 30-50 s per job). FRESH=1 always reinstalls.
 setup: ## Install dependencies (npm ci, or npm install without a lock file); skipped when node_modules matches the lock file (FRESH=1 forces)
-	cd $(APP) && if [ -z "$$FRESH" ] && [ -f package-lock.json ] && node tools/check/supply/check-deps.mjs 2>/dev/null; then \
+	cd $(APP) && if [ -z "$$FRESH" ] && [ -f package-lock.json ] && node tools/check/delivery/supply/check-deps.mjs 2>/dev/null; then \
 	  echo "setup: node_modules matches package-lock.json, npm ci skipped (FRESH=1 reinstalls)"; \
 	elif [ -f package-lock.json ]; then npm ci; else npm install; fi
-	cd $(APP) && node tools/check/supply/check-deps.mjs --stamp
+	cd $(APP) && node tools/check/delivery/supply/check-deps.mjs --stamp
 	$(if $(CI),,$(MAKE) hooks)
 
 hooks: ## Enable the git hooks in .githooks/ (commit-msg, pre-commit, pre-push, hints)
@@ -398,7 +398,7 @@ db-indexes: ## Every foreign key and tenant column (account_id) of the migration
 	cd $(APP) && npm run db-indexes
 
 gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundaries, unused code, format; a green result of this exact content is skipped (FRESH=1 runs all, issue 1608)
-	cd $(APP) && node tools/check/supply/check-deps.mjs
+	cd $(APP) && node tools/check/delivery/supply/check-deps.mjs
 	cd $(APP) && npm run gates
 
 # Declares the gate files that a branch will change, before the first edit of them (US-QG-07). The Claude Code hook then asks

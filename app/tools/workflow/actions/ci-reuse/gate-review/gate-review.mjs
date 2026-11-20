@@ -2,8 +2,6 @@
 // Per pull request: its gate files, the CI state on its head as it stands (ci-verdict.mjs and ci-report.mjs, never waited
 // for), whether it conflicts, its age and the direction of its gate changes (gate-direction.mjs). It merges, approves,
 // comments on and edits nothing: every gate PR still gets a human merge (ADR 0005). REST only, through ci-wait.mjs.
-import fs from "node:fs";
-import { fileURLToPath } from "node:url";
 import { isBaselineFile } from "../../../../../../.claude/hooks/baseline-growth.mjs";
 import { isGateFile } from "../../../../../../.claude/hooks/rules.mjs";
 import { json, realClient, repoName, restList } from "../../../claim/lib/claim-client.mjs";
@@ -11,6 +9,7 @@ import { definedAt, readSnapshot } from "../ci-wait.mjs";
 import { assess, MAX_FILES } from "../verdict/ci-verdict.mjs";
 import { stateLine } from "../ci-report.mjs";
 import { classifyFile, directionOf, needsText } from "./gate-direction.mjs";
+import { isEntryPoint } from "../../../../check/shared/entry-point.mjs";
 
 const MAX_OPEN = 300; // the bound of the REST list of open pull requests, as the claim tools read it
 const DAY_MS = 86_400_000;
@@ -161,7 +160,7 @@ async function main() {
   return 0;
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   process.exitCode = await main().catch((err) => {
     console.error(`gate-review: ${err.message}`);
     return 1;

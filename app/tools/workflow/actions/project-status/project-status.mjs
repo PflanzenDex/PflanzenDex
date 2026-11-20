@@ -1,7 +1,6 @@
 // Moves the project status on PR events (US-DEV-05); run by .github/workflows/project-status.yml with a GitHub App
 // token in GH_TOKEN. Usage: node project-status.mjs event <event.json>   |   node project-status.mjs check
-import { readFileSync, realpathSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { json, realClient } from "../../claim/lib/claim-client.mjs";
 import {
   editBoardField,
@@ -10,6 +9,7 @@ import {
   STATUS_FIELD,
 } from "../../claim/lib/board-client.mjs";
 import { drift, transitions } from "./project-status-lib.mjs";
+import { isEntryPoint } from "../../../check/shared/entry-point.mjs";
 
 const OWNER = "PflanzenDex";
 
@@ -98,5 +98,4 @@ export async function main(argv, client = realClient()) {
   return 2;
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
-  process.exit(await main(process.argv.slice(2)));
+if (isEntryPoint(import.meta.url)) process.exit(await main(process.argv.slice(2)));

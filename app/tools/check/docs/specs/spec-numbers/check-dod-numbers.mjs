@@ -9,6 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseSpecNumber, resolveConstant } from "./check-spec-numbers.mjs";
+import { isEntryPoint } from "../../../shared/entry-point.mjs";
 
 export const DOD_FILES = [".github/pull_request_template.md", "AGENTS.md", "CONTRIBUTING.md"];
 const CONFIG_DIRS = ["app/config/gates", "app/config/lint"];
@@ -101,5 +102,4 @@ async function main() {
   );
 }
 
-if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
-  await main();
+if (isEntryPoint(import.meta.url)) await main();
