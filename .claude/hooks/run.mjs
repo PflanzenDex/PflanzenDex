@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Entry point for all Claude Code hooks of this repo (US-QG-07, US-DEV-02).
-// Usage from .claude/settings.json: node .claude/hooks/run.mjs <guard-edit|guard-bash|after-edit|after-bash|stop|subagent-stop>
+// Usage from .claude/settings.json: node .claude/hooks/run.mjs <guard-edit|guard-bash|guard-read|after-edit|after-bash|stop|subagent-stop>
 // A hook must never hang or break a session: every step has a time limit and unexpected errors end with exit 0.
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -20,6 +20,7 @@ import {
 } from "./gate-confirmations.mjs";
 import {
   asksBeforeEdit,
+  envReadRefusal,
   isCodePath,
   isMigrationFile,
   isSpecPath,
@@ -398,6 +399,11 @@ const handlers = {
     const where = /\bgit\b|\b(reset|clean)\b/.test(command) ? bashWhere() : {};
     const verdict = judgeCommand(command, where);
     if (verdict) preToolUse(verdict.decision, verdict.reason);
+  },
+  // Read and Grep never open a secret env file (US-QG-07, issue 2354): the path and the glob are judged, not the contents.
+  "guard-read"() {
+    const refusal = envReadRefusal(input.tool_name, input.tool_input ?? {});
+    if (refusal) preToolUse("deny", refusal);
   },
   "after-edit"() {
     const { root: fileRoot, file } = locate(input.tool_input?.file_path);
