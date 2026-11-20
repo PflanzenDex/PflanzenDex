@@ -11,6 +11,7 @@ import { MeasurementHeader } from "../measurement-header/measurement-header";
 import { MeasurePageSkeleton } from "./measure-page.skeleton";
 import { CourseLayer } from "./course-layer/course-layer";
 import { GrowthNoteLayer } from "./growth-note-layer/growth-note-layer";
+import { useSaveAnnouncement } from "./growth-note-layer/use-save-announcement";
 import { useMeasureSend } from "../measurement-header/measurement-photo";
 
 type Token = () => Promise<string | undefined>;
@@ -100,7 +101,7 @@ export function MeasurePage(props: MeasurePageProps) {
     [api, specimen.id],
   );
   const say = useSay();
-  const { send, saved, saves, photoStatus } = useMeasureSend({
+  const { send, saved, saves, confirmed, photoStatus } = useMeasureSend({
     api,
     token,
     specimenId: specimen.id,
@@ -109,6 +110,8 @@ export function MeasurePage(props: MeasurePageProps) {
     ...(props.onSaved ? { onSaved: props.onSaved } : {}),
   });
   const moments = useGrowthMoments(api, token, specimen.id);
+  // One announcement per save: the confirmation with its growth note (US-QS-08, issue 2323).
+  useSaveAnnouncement({ saves, confirmed, moments, say });
   return (
     <section aria-labelledby="measure-title" className="flex min-w-0 flex-col gap-3">
       <PageHeader
