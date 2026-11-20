@@ -2,7 +2,7 @@
   "empty.line": "Du hast noch keine Pflanze.",
   "empty.action": "Pflanze anlegen",
   "pick.search": "Pflanze suchen",
-  "pick.searchPlaceholder": "Name, Gattung, Familie",
+  "pick.searchPlaceholder": "Name oder Gattung",
   "pick.place": "Standort",
   "pick.allPlaces": "Alle Standorte",
   "pick.unknownPlace": "Standort unbekannt",

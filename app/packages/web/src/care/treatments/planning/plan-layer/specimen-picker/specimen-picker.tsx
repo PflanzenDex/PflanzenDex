@@ -16,8 +16,11 @@ const ui = texts(table);
 
 /** The value of the location filter for plants without a location (P-08); no real location has this name. */
 const UNKNOWN_PLACE = "__unknown__";
-/** Plants per page of the choice (starting values, assumption; US-QS-15): four on a phone, six from 768 px. */
-const PICK_PAGE_SIZE = { phone: 4, md: 6 } as const;
+/**
+ * Plants per page of the choice (starting values, assumption; US-QS-15): three on a phone (owner decision 2026-11-20,
+ * FX-24: the layer fits 360 x 640), six from 768 px.
+ */
+const PICK_PAGE_SIZE = { phone: 3, md: 6 } as const;
 
 type Field = ControllerRenderProps<TreatmentFields, "specimenIds">;
 

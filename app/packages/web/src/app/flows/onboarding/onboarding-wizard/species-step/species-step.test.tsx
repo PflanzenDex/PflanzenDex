@@ -61,7 +61,7 @@ describe("US-QS-32 · issue 1964 the species field of the first plant", () => {
   it("US-QS-32 · issue 1964 the field is named 'Art' and shows the example placeholder", () => {
     render(<Step />);
     const field = screen.getByLabelText("Art") as HTMLInputElement;
-    expect(field.getAttribute("placeholder")).toBe("z. B. Monstera oder Fensterblatt");
+    expect(field.getAttribute("placeholder")).toBe("z. B. Monstera");
   });
 
   it("US-QS-32 · issue 1964 a name without a hit says one line with the query, and 'Art vorschlagen' sits below it", async () => {

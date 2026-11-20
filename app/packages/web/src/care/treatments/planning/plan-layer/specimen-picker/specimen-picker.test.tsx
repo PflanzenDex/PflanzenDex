@@ -32,7 +32,7 @@ describe("US-QS-32 · SG-SEARCH-01 the search of the plant picker", () => {
   it("US-QS-32 · SG-SEARCH-01 the search field is named 'Pflanze suchen', shows an example and comes before the location filter", () => {
     render(<Harness />);
     const search = screen.getByRole("searchbox", { name: "Pflanze suchen" });
-    expect(search.getAttribute("placeholder")).toBe("Name, Gattung, Familie");
+    expect(search.getAttribute("placeholder")).toBe("Name oder Gattung");
     const place = screen.getByRole("combobox", { name: "Standort" });
     expect(search.compareDocumentPosition(place) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
