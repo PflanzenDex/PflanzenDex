@@ -1,5 +1,5 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
-import type { RefObject } from "react";
+import { useState, type RefObject } from "react";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
 import { CATALOG_ADDRESS } from "@/shared/patterns/navigation/navigation/navigation";
@@ -8,10 +8,11 @@ import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
 import table from "../discover.de.json";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { cn } from "@/shared/lib/utils";
 import { useDecisions, type Decision, type OnDecide, type OnUndo } from "./use-decisions";
 import { useDeckPosition } from "./use-deck-position";
 import { useDeckKeys } from "./use-deck-keys";
-import { Actions, DeckEmpty, DeckEnd, UndoButton } from "./deck-states/deck-states";
+import { Actions, DeckEmpty, DeckEnd, UndoButton, largeText } from "./deck-states/deck-states";
 
 const t = texts(table);
 
@@ -74,6 +75,8 @@ function Stack(props: {
   frontTitle: RefObject<HTMLHeadingElement | null>;
   onSwipe: (d: SwipeDirection) => void;
   onExited: (d: SwipeDirection) => void;
+  /** Large text: the card takes its own height and the deck scrolls as a whole (US-QS-32). */
+  large: boolean;
 }) {
   const { suggestions } = props.deck;
   const current = suggestions[props.position];
@@ -90,16 +93,28 @@ function Stack(props: {
         stamps={STAMPS}
         depth={suggestions.length - props.position - 1}
         enterFrom={props.returned}
-        under={next === undefined ? undefined : <SuggestionCard suggestion={next} />}
+        under={
+          next === undefined ? undefined : <SuggestionCard suggestion={next} fill={!props.large} />
+        }
         onSwipe={props.onSwipe}
         onExited={props.onExited}
-        className="mx-auto flex min-h-48 w-full max-w-md flex-1 basis-0"
+        className={cn(
+          "mx-auto flex min-h-48 w-full max-w-md",
+          props.large ? "flex-none" : "flex-1 basis-0",
+        )}
       >
-        <SuggestionCard suggestion={current} titleRef={props.frontTitle} />
+        <SuggestionCard suggestion={current} titleRef={props.frontTitle} fill={!props.large} />
       </SwipeCard>
     </>
   );
 }
+
+/**
+ * The column of the deck: at the normal size it keeps the height of one card and the card fills the free height, so the
+ * deck fits one screen; at large text it takes its own height and the page scrolls (US-QS-32, SG-TYPE-04).
+ */
+const deckColumn = (large: boolean) =>
+  cn("flex min-w-0 flex-col gap-2", !large && "min-h-[21rem] flex-1");
 
 /**
  * One deck as a card stack, one card at a time, with the arrow keys and Backspace while the deck has the focus
@@ -123,6 +138,8 @@ function Cards(props: {
     props.onUndo,
     moves,
   );
+  // Read once, as the decision row does: a text size set while the deck is open takes effect with the next deck.
+  const [large] = useState(largeText);
   const current = deck.empty === null ? deck.suggestions[position] : undefined;
   const onKeyDown = useDeckKeys({
     onFly: current === undefined ? undefined : fly,
@@ -152,7 +169,7 @@ function Cards(props: {
     );
   return (
     // The card and its buttons share the keys of the deck (US-ENT-10).
-    <div className="flex min-h-[21rem] min-w-0 flex-1 flex-col gap-2" onKeyDown={onKeyDown}>
+    <div className={deckColumn(large)} onKeyDown={onKeyDown}>
       <Stack
         deck={deck}
         position={position}
@@ -161,6 +178,7 @@ function Cards(props: {
         frontTitle={frontTitle}
         onSwipe={fly}
         onExited={(d) => void decide(current.species, DECISION[d])}
+        large={large}
       />
       {error !== null && <Banner variant="error">{error}</Banner>}
       {taken !== null && <UndoButton onClick={takeBack} />}
