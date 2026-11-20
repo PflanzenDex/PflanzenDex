@@ -195,4 +195,16 @@ describe("US-DEV-01 states profile makes every inventory state reachable (#1072)
       await count("select count(*) n from specimen where location_id is null"),
     ).toBeGreaterThan(0);
   });
+
+  it("US-QS-32 a plant without location and without target: Ben's phase list shows it with neither (Kein Standort, issue 2322)", async () => {
+    const phases = list(await get(subjectOf.ben, `/care-phases?timeZone=${TZ}`), "phases");
+    const neu = phases.filter((p) => p["marker"] === "Neu");
+    expect(neu).toHaveLength(1);
+    expect(neu[0]?.["speciesName"]).toBe("Glücksfeder");
+    expect(neu[0]?.["locationId"]).toBeNull();
+    expect(neu[0]?.["targetLocationId"]).toBeNull();
+    expect(
+      await count("select count(*) n from specimen where location_id is null and marker = 'Neu'"),
+    ).toBe(1);
+  });
 });
