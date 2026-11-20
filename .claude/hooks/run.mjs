@@ -20,6 +20,7 @@ import {
 } from "./gate-confirmations.mjs";
 import {
   asksBeforeEdit,
+  ENV_READ_REASON,
   envReadRefusal,
   isCodePath,
   isMigrationFile,
@@ -41,7 +42,17 @@ import {
 } from "./subagent-gates.mjs";
 
 const event = process.argv[2];
-const input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
+// A request that cannot be read is denied by guard-read (US-QG-07, issue 2354); every other event fails here as it always did.
+let input = {};
+let unreadable = false;
+try {
+  input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
+  if (input === null || typeof input !== "object")
+    throw new SyntaxError("the request is not an object");
+} catch (error) {
+  if (event !== "guard-read") throw error;
+  unreadable = true;
+}
 const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
 const run = (cmd, args, opts = {}) =>
   execFileSync(cmd, args, {
@@ -400,9 +411,17 @@ const handlers = {
     const verdict = judgeCommand(command, where);
     if (verdict) preToolUse(verdict.decision, verdict.reason);
   },
-  // Read and Grep never open a secret env file (US-QG-07, issue 2354): the path and the glob are judged, not the contents.
+  // Read and Grep never open a secret env file (US-QG-07, issue 2354): the path and the glob are judged, not the contents. A request
+  // that cannot be judged is refused, never passed: an unreadable request, or a check that throws.
   "guard-read"() {
-    const refusal = envReadRefusal(input.tool_name, input.tool_input ?? {});
+    let refusal;
+    try {
+      refusal = unreadable
+        ? ENV_READ_REASON
+        : envReadRefusal(input.tool_name, input.tool_input ?? {});
+    } catch {
+      refusal = ENV_READ_REASON;
+    }
     if (refusal) preToolUse("deny", refusal);
   },
   "after-edit"() {

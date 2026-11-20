@@ -20,6 +20,7 @@ import {
   judgeCommand,
   prettierCanFormat,
   ranGates,
+  RECURSIVE_SEARCH_REASON,
   recordWriteRefusal,
   stripText,
 } from "./rules.mjs";
@@ -894,19 +895,32 @@ test("US-QG-07: a Bash command that names a .env file without reading it passes:
   assert.equal(envReadBash("ls -la .env.worktree"), null);
 });
 
-test("US-QG-07: a command the check cannot read is refused when it names a .env file; a $'...' quote is refused, since it can spell a name", () => {
+test("US-QG-07: a command the check cannot read is refused when it names a .env file, and a $'...' quote is judged as the text it spells", () => {
   refusesEnv('cat ".env.worktree');
   passesEnv('echo "unclosed');
-  const verdict = judgeCommand("cat $'\\x2e'env", WORKTREE);
-  assert.equal(verdict?.decision, "deny");
-  assert.match(verdict.reason, /quote can spell a name/);
+  refusesEnv("cat $'\\x2e'env");
+  refusesEnv("cat $'.env'");
+  refusesEnv("cat $'\\x2e\\x65nv'");
+  refusesEnv('cat $".env.worktree"');
+  passesEnv("IFS=$'\\n'");
+  passesEnv("printf $'\\t'");
 });
 
-test("US-QG-07: the limits of the text check are documented: a name read from a pipe, a recursive search and a script written to disk are not seen", () => {
+test("US-QG-07: characters that only look like quotes or substitutions pass: a $ at the end of a regex, a $ inside double quotes", () => {
+  passesEnv("grep -E 'foo$' file");
+  passesEnv("sed 's/x$//' app/x.ts");
+  passesEnv("grep -v '^$' x");
+  passesEnv('echo "costs $"');
+  passesEnv("gh api repos/x --jq 'test(\"x$\")'");
+});
+
+test("US-QG-07: the limits of the text check are documented: a name read from a pipe, git grep over untracked files, docker compose config, a git alias and a script written to disk are not seen", () => {
   // These pass on purpose only because the check reads command text; they are not a decision to allow them (see the report of
   // issue 2354). A change of this behaviour changes the test.
   assert.equal(envReadBash("ls -a | xargs cat"), null);
-  assert.equal(envReadBash("grep -r KC_ADMIN_PASSWORD app"), null);
+  assert.equal(envReadBash("git grep --untracked KC_ADMIN_PASSWORD app"), null);
+  assert.equal(envReadBash("docker compose config"), null);
+  assert.equal(envReadBash("git -c alias.x='!cat .env' x"), null);
   assert.equal(envReadBash("cat > x.sh <<'EOF'\ncat .env\nEOF"), null);
 });
 
@@ -950,4 +964,144 @@ test("US-QG-07: settings.json sends Read and Grep to guard-read with a time limi
   assert.equal(reader.hooks.length, 1);
   assert.match(reader.hooks[0].command, /run\.mjs" guard-read$/);
   assert.equal(reader.hooks[0].timeout, 10);
+});
+
+// Review rework of issue 2354 (PR #2369): one test per review item.
+const refusesSearch = (cmd) => {
+  const verdict = judgeCommand(cmd, WORKTREE);
+  assert.equal(verdict?.decision, "deny", cmd);
+  assert.equal(verdict.reason, RECURSIVE_SEARCH_REASON, cmd);
+};
+
+test("US-QG-07: a Grep glob is split on spaces and commas, as the Grep tool splits it, and each part is judged", () => {
+  for (const glob of ["*.mjs,.env.worktree", "*.ts .env*", "*.mjs, .env", "*.md ,.env.local"]) {
+    assert.equal(envReadRefusal("Grep", { glob }), ENV_READ_REASON, glob);
+  }
+  for (const glob of ["*.mjs,*.ts", "*.md *.ts", "docs/**/*.md"]) {
+    assert.equal(envReadRefusal("Grep", { glob }), null, glob);
+  }
+});
+
+test("US-QG-07: the arguments after a shell's -c string are operands: $0 and $1 can name a .env file", () => {
+  refusesEnv(`bash -c 'cat "$0"' .env`);
+  refusesEnv("sh -c 'cat $1' _ .env");
+  refusesEnv(`bash -c 'cat "$1"' x .env.worktree`);
+  passesEnv(`bash -c 'echo "$0"' ls`);
+});
+
+test("US-QG-07: a request the guard cannot read is denied, a check that throws denies the command with the .env reason, and other hooks keep failing as before", () => {
+  const hook = fileURLToPath(new URL("./run.mjs", import.meta.url));
+  const garbled = spawnSync("node", [hook, "guard-read"], { input: "{not json", encoding: "utf8" });
+  assert.equal(garbled.status, 0, garbled.stderr);
+  const denied = JSON.parse(garbled.stdout).hookSpecificOutput;
+  assert.equal(denied.permissionDecision, "deny");
+  assert.equal(denied.permissionDecisionReason, ENV_READ_REASON);
+  const deepGlob = spawnSync("node", [hook, "guard-read"], {
+    input: JSON.stringify({ tool_name: "Grep", tool_input: { glob: "{a}".repeat(20000) } }),
+    encoding: "utf8",
+  });
+  assert.equal(JSON.parse(deepGlob.stdout).hookSpecificOutput.permissionDecision, "deny");
+  const verdict = judgeCommand("{a}".repeat(20000), WORKTREE);
+  assert.equal(verdict?.decision, "deny");
+  assert.equal(verdict.reason, ENV_READ_REASON);
+  const other = spawnSync("node", [hook, "guard-bash"], { input: "{not json", encoding: "utf8" });
+  assert.notEqual(other.status, 0);
+  assert.equal(other.stdout, "");
+});
+
+test("US-QG-07: each simple command is judged on its own: a .env name in a commit message does not make the next command a reader", () => {
+  passesEnv('git commit -m "docs: a .env rule note" && node --test');
+  passesEnv('git commit -m "feat: x .env y" && make ci');
+  refusesEnv('echo "cat .env" | bash');
+  refusesEnv('echo "cat .env" | bash && make ci');
+});
+
+test("US-QG-07: `[[ -f .env.worktree ]]` is a test and passes; a read after it is still refused", () => {
+  passesEnv("[[ -f .env.worktree ]]");
+  refusesEnv("[[ -f .env.worktree ]] && cat .env.worktree");
+});
+
+test("US-QG-07: find only lists names, so it passes; an exec that may read every file it finds is refused unless -name keeps it off the secret files", () => {
+  passesEnv("find . -name '.env*'");
+  passesEnv("find app -name '*.ts' -exec grep -l TODO {} +");
+  passesEnv("find . -name .env.worktree -exec ls -la {} \\;");
+  passesEnv("find . -name '*.md' -fprint /tmp/list.txt");
+  refusesEnv("find . -name '.env*' -exec cat {} \\;");
+  refusesEnv("find . -exec cat {} \\;");
+  refusesEnv("find . -name '*.ts' -o -name '.env*' -exec cat {} \\;");
+  refusesEnv("find . -name '*.ts' -exec cat .env {} \\;");
+  refusesEnv("find . -name '*.md' -fprint .env");
+});
+
+test("US-QG-07: names that a pipeline feeds to xargs are judged: a find of .env files piped to cat is refused", () => {
+  refusesEnv("find . -name '.env*' -print0 | xargs -0 cat");
+  refusesEnv("printf '.env.worktree' | xargs cat");
+  passesEnv("find . -name '.env*' | xargs ls -la");
+  passesEnv("find . -name '*.ts' | xargs cat");
+});
+
+test("US-QG-07: heredocs with a backslash-quoted delimiter, a dash in the delimiter or a dash before it hold text, and a shell run from one is still judged", () => {
+  passesEnv("gh pr create --body-file - <<\\EOF\nThe file .env.worktree stays local.\nEOF");
+  passesEnv("gh pr create --body-file - <<'PR-BODY'\nThe file .env.worktree stays local.\nPR-BODY");
+  passesEnv("git commit -F - <<-EOF\n\tfix: never read .env.worktree\n\tEOF");
+  refusesEnv("bash <<-'PR-BODY'\ncat .env\n\tPR-BODY");
+  refusesEnv("bash <<\\SH\ncat .env\nSH");
+});
+
+test("US-QG-07: a recursive grep is refused unless --exclude keeps the .env files out; a plain grep and rg without hidden files pass", () => {
+  for (const cmd of [
+    "grep -rn PGPORT .",
+    "grep -R PGPORT app",
+    "grep --recursive PGPORT app",
+    "grep --dereference-recursive PGPORT app",
+    "grep -nr PGPORT app",
+    "egrep -rn PGPORT app",
+  ]) {
+    refusesSearch(cmd);
+  }
+  for (const cmd of [
+    "grep -rn --exclude='.env*' PGPORT .",
+    "grep -rn --exclude=.env* PGPORT .",
+    "grep -rn --exclude '.env*' PGPORT .",
+    "grep -n PGPORT Makefile",
+    "rg PGPORT",
+    "rg -u PGPORT",
+  ]) {
+    passesEnv(cmd);
+  }
+  for (const cmd of [
+    "rg --hidden PGPORT",
+    "rg -uu PGPORT",
+    "rg -uuu PGPORT",
+    "rg -. PGPORT",
+    "rg --no-ignore --hidden PGPORT",
+    "rg -nuu PGPORT",
+  ]) {
+    refusesSearch(cmd);
+  }
+});
+
+test("US-QG-07: settings.json denies Read of .env.worktree as a second layer, and no Read deny rule matches .env.example", () => {
+  const settings = JSON.parse(readFileSync(new URL("../settings.json", import.meta.url), "utf8"));
+  const deny = settings.permissions.deny;
+  assert.ok(deny.includes("Read(**/.env.worktree)"), "a Read deny rule for .env.worktree");
+  const readGlobs = deny
+    .filter((rule) => rule.startsWith("Read("))
+    .map((rule) => rule.slice("Read(".length, -1));
+  const matches = (glob, path) =>
+    new RegExp(
+      `^${glob
+        .split("**/")
+        .map((part) =>
+          part
+            .split("*")
+            .map((s) => s.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
+            .join("[^/]*"),
+        )
+        .join("(?:.*/)?")}$`,
+    ).test(path);
+  assert.ok(readGlobs.some((glob) => matches(glob, ".env.worktree")));
+  for (const path of [".env.example", "app/config/deploy/.env.example"]) {
+    assert.ok(!readGlobs.some((glob) => matches(glob, path)), path);
+  }
 });
