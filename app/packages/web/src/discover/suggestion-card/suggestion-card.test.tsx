@@ -299,3 +299,31 @@ describe("US-QS-32 · SG-TYPE-04 at large text the card has no scroll region of 
     expect(card.className).not.toContain("flex-1");
   });
 });
+
+describe("US-QS-32 · SG-PHOTO-01 the picture box keeps 4:3 and is capped by height at the normal text size", () => {
+  const boxOf = (container: HTMLElement) =>
+    container.querySelector("figure[data-card-picture]")?.firstElementChild as HTMLElement;
+
+  it("US-QS-32 · SG-PHOTO-01 at the normal size the box takes its width from a height cap, so it stays 4:3 and centred", () => {
+    const { container } = render(
+      <SuggestionCard
+        suggestion={suggestion({ imageUrl: "https://upload.wikimedia.org/a.jpg" })}
+      />,
+    );
+    const box = boxOf(container);
+    expect(box.className).toContain("aspect-[4/3]");
+    expect(box.className).toContain("mx-auto");
+    expect(box.className).toContain("100dvh_-_600px");
+    expect(box.className).toContain("*4/3");
+  });
+
+  it("US-QS-32 · SG-PHOTO-01 at large text the card has its own height, so the box is not capped", () => {
+    const { container } = render(
+      <SuggestionCard
+        suggestion={suggestion({ imageUrl: "https://upload.wikimedia.org/a.jpg" })}
+        fill={false}
+      />,
+    );
+    expect(boxOf(container).className).not.toContain("dvh");
+  });
+});
