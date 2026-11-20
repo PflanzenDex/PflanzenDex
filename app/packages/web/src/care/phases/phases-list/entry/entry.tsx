@@ -1,4 +1,3 @@
-import { useLocation, useSearchParams } from "react-router";
 import {
   phaseStatus,
   type LightLocation,
@@ -12,15 +11,12 @@ import { useObjectPhoto } from "@/shared/lists/object-row/use-object-photo";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
-import {
-  PLANT_LOCATION_TAB,
-  PLANT_TAB_PARAM,
-  plantLayerId,
-} from "@/shared/patterns/navigation/navigation/navigation";
+import { plantLayerId } from "@/shared/patterns/navigation/navigation/navigation";
 import { PHASE_TEXT, locationText, nextChangeText } from "../../../shared/text";
 import { needsSwitch, switchedText } from "../../phase-groups";
 import table from "../phases-list.de.json";
 import { CardEntry } from "./card-entry/card-entry";
+import { LocateAction } from "./locate-action/locate-action";
 import type { Confirm } from "./entry-types";
 
 export type { Confirm } from "./entry-types";
@@ -57,17 +53,6 @@ function HintChip({ hints }: { hints: readonly string[] }) {
 function placeBadge(status: PhaseStatus) {
   if (status === "deviation") return <Badge variant="warning">{ui("deviates")}</Badge>;
   return undefined;
-}
-
-/** The Standort tab in the plant's own layer, replaced like the tab choice of the layer (`usePlantTab`, US-QS-32). */
-function useShowLocationTab(): () => void {
-  const [params, setParams] = useSearchParams();
-  const location = useLocation();
-  return () => {
-    const next = new URLSearchParams(params);
-    next.set(PLANT_TAB_PARAM, PLANT_LOCATION_TAB[PLANT_TAB_PARAM]);
-    setParams(next, { replace: true, state: location.state });
-  };
 }
 
 /**
@@ -115,12 +100,12 @@ function CompactEntry(props: {
 }) {
   const { row: z, locations } = props;
   const { openLayer, open } = useLayer(plantLayerId(z.specimenId));
-  const showLocation = useShowLocationTab();
   const [ref, src] = useObjectPhoto(props.access, z.photo?.url);
   const status = phaseStatus(z);
   const moves = needsSwitch(z);
   const canSwitch = props.onConfirm !== undefined && moves;
-  const locate = status === "location_missing" && !canSwitch; // opens the plant's own location choice (US-QS-32)
+  // A missing location without a switch: no trailing element, the action "Standort setzen" sits in the hint line (US-QS-32).
+  const locate = status === "location_missing" && !canSwitch;
   const action = canSwitch ? (
     <Button
       type="button"
@@ -132,19 +117,8 @@ function CompactEntry(props: {
     >
       {ui("switch")}
     </Button>
-  ) : locate ? (
-    <Button
-      type="button"
-      variant="secondary"
-      className="shrink-0 px-3"
-      aria-label={ui("locateLabel", { name: z.name })}
-      onClick={(event) =>
-        props.opens ? openLayer(event.currentTarget, PLANT_LOCATION_TAB) : showLocation()
-      }
-    >
-      {ui("locate")}
-    </Button>
   ) : undefined;
+  const hints = <HintChip hints={rowHints(z, status, canSwitch)} />;
   return (
     <div className="flex flex-col gap-1">
       <ObjectRow
@@ -159,7 +133,15 @@ function CompactEntry(props: {
         expanded={props.opens ? open : undefined}
         onClick={props.opens ? (event) => openLayer(event.currentTarget) : undefined}
       />
-      <HintChip hints={rowHints(z, status, canSwitch)} />
+      {locate ? (
+        // The chip and the action share one line; the line wraps at large text, so the row keeps its full width (issue 2150).
+        <div className="flex flex-wrap items-center gap-2">
+          {hints}
+          <LocateAction row={z} opens={props.opens} />
+        </div>
+      ) : (
+        hints
+      )}
     </div>
   );
 }

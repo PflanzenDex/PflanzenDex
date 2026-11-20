@@ -123,7 +123,7 @@ describe("US-QS-32 (issue 2150) a phase row without a location says 'Kein Stando
     expect(screen.queryByText(/Weise der Pflanze unter „Hinweise“/)).toBeNull();
   });
 
-  it("US-QS-32 (issue 2150) the button 'Standort setzen: Bogenhanf' sits beside the row, never inside the row's button", () => {
+  it("US-QS-32 (issue 2150) the button 'Standort setzen: Bogenhanf' sits in the hint line under the row beside 'Kein Standort', never inside the row's button", () => {
     render(
       <MemoryRouter>
         <Entry
@@ -141,6 +141,10 @@ describe("US-QS-32 (issue 2150) a phase row without a location says 'Kein Stando
     expect(setter.textContent).toBe("Standort setzen");
     expect(within(opener).queryByRole("button")).toBeNull();
     expect(opener.contains(setter)).toBe(false);
+    // The hint line: the neutral chip and the action share one line under the row, so the row keeps its full width.
+    const line = setter.parentElement as HTMLElement;
+    expect(within(line).getByText("Kein Standort")).toBeTruthy();
+    expect(within(opener).queryByText("Kein Standort")).toBeNull();
   });
 
   it("US-QS-32 (issue 2150) a click on 'Standort setzen' opens the plant's layer on its Standort tab in one new entry", async () => {
