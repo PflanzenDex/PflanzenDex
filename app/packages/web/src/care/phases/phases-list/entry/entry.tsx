@@ -16,6 +16,7 @@ import { PHASE_TEXT, locationText, nextChangeText } from "../../../shared/text";
 import { needsSwitch, switchedText } from "../../phase-groups";
 import table from "../phases-list.de.json";
 import { CardEntry } from "./card-entry/card-entry";
+import { LocateAction } from "./locate-action/locate-action";
 import type { Confirm } from "./entry-types";
 
 export type { Confirm } from "./entry-types";
@@ -47,11 +48,10 @@ function HintChip({ hints }: { hints: readonly string[] }) {
 
 /**
  * The one trailing badge of a phase row when there is no action (SG-LIST-03): the place only when it deviates (amber,
- * "Weicht ab") or is missing (neutral). A plant in place shows no place (owner answer Q-82).
+ * "Weicht ab"). A plant in place shows no place (owner answer Q-82); a missing place is the action (US-QS-32).
  */
 function placeBadge(status: PhaseStatus) {
   if (status === "deviation") return <Badge variant="warning">{ui("deviates")}</Badge>;
-  if (status === "location_missing") return <Badge>{ui("locationMissing")}</Badge>;
   return undefined;
 }
 
@@ -69,12 +69,12 @@ function metaOf(z: PhasesRow, locations: readonly LightLocation[], moves: boolea
 
 /**
  * The hints under a phase row, the next step of an entry that is missing (P-09, P-10): a missing location with a target
- * keeps the switch hint (the place fact moves into the action), a missing location without one keeps its hint, and a
- * plant without a target names what to choose.
+ * keeps the switch hint (the place fact moves into the action), a missing location without one says "Kein Standort" (the
+ * action "Standort setzen" sits beside the chip under the row, US-QS-32), and a plant without a target names what to choose.
  */
 function rowHints(z: PhasesRow, status: PhaseStatus, canSwitch: boolean): string[] {
   const location =
-    status === "location_missing" ? (canSwitch ? ui("switchHint") : ui("hintLocation")) : null;
+    status === "location_missing" ? (canSwitch ? ui("switchHint") : ui("noLocation")) : null;
   return [
     z.nextChange === null ? ui("hintReview") : null,
     location,
@@ -104,6 +104,8 @@ function CompactEntry(props: {
   const status = phaseStatus(z);
   const moves = needsSwitch(z);
   const canSwitch = props.onConfirm !== undefined && moves;
+  // A missing location without a switch: no trailing element, the action "Standort setzen" sits in the hint line (US-QS-32).
+  const locate = status === "location_missing" && !canSwitch;
   const action = canSwitch ? (
     <Button
       type="button"
@@ -116,6 +118,7 @@ function CompactEntry(props: {
       {ui("switch")}
     </Button>
   ) : undefined;
+  const hints = <HintChip hints={rowHints(z, status, canSwitch)} />;
   return (
     <div className="flex flex-col gap-1">
       <ObjectRow
@@ -130,7 +133,15 @@ function CompactEntry(props: {
         expanded={props.opens ? open : undefined}
         onClick={props.opens ? (event) => openLayer(event.currentTarget) : undefined}
       />
-      <HintChip hints={rowHints(z, status, canSwitch)} />
+      {locate ? (
+        // The chip and the action share one line; the line wraps at large text, so the row keeps its full width (issue 2150).
+        <div className="flex flex-wrap items-center gap-2">
+          {hints}
+          <LocateAction row={z} opens={props.opens} />
+        </div>
+      ) : (
+        hints
+      )}
     </div>
   );
 }

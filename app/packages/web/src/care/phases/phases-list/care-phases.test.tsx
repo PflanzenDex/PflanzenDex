@@ -176,10 +176,11 @@ describe("US-QS-32 the phase row is the plant row: its own name, its species, on
     expect(h).not.toContain("Standort: Regal Süd");
   });
 
-  it("US-QS-32 a missing location is a neutral badge 'Standort fehlt', never amber (SG-COLOR-04)", () => {
+  it("US-QS-32 (issue 2150) a missing location is no badge: the row names 'Kein Standort' in a neutral chip, never amber (SG-COLOR-04)", () => {
     const h = onlyRow({ locationId: null, targetLocationId: "s2" });
-    expect(classOf(h, "Standort fehlt")).toContain("bg-secondary");
-    expect(classOf(h, "Standort fehlt")).not.toContain("bg-warning");
+    expect(h).not.toContain("Standort fehlt");
+    expect(classOf(h, "Kein Standort")).toContain("bg-secondary");
+    expect(classOf(h, "Kein Standort")).not.toContain("bg-warning");
   });
 
   it("US-QS-32 a plant that has to move shows the 'Umstellen' button, and only that as its trailing element", () => {
@@ -201,9 +202,9 @@ describe("US-QS-32 the phase row is the plant row: its own name, its species, on
     expect(h).toContain("Weicht ab: steht am Standort");
   });
 
-  it("US-QS-32 the hint chip is neutral: a hint that names the next step of a missing entry carries no warning class (SG-COLOR-04)", () => {
+  it("US-QS-32 (issue 2150) the hint chip is neutral: 'Kein Standort' names the next step of a missing entry and carries no warning class (SG-COLOR-04)", () => {
     const h = onlyRow({ locationId: null, targetLocationId: "s2" });
-    const chip = classOf(h, "Weise der Pflanze");
+    const chip = classOf(h, "Kein Standort");
     expect(chip).toContain("bg-secondary");
     expect(chip).toContain("text-foreground");
     expect(chip).not.toContain("bg-warning");
@@ -275,10 +276,12 @@ describe("US-QS-32 the meta line of a phase row: species first, then the forecas
     expect(h).not.toContain("Standort fehlt");
   });
 
-  it("US-QS-32 a missing location without a switch keeps its badge and the hint for the next step (P-09, P-10)", () => {
+  it("US-QS-32 (issue 2150) a missing location without a switch names 'Kein Standort' and offers 'Standort setzen', no badge (P-09, P-10)", () => {
     const h = rowWith({ locationId: null, targetLocationId: "s2" });
-    expect(h).toContain("Standort fehlt");
-    expect(h).toContain("Weise der Pflanze unter „Hinweise“ einen Standort zu.");
+    expect(h).toContain("Kein Standort");
+    expect(h).toContain("Standort setzen: Bogenhanf");
+    expect(h).not.toContain("Standort fehlt");
+    expect(h).not.toContain("Weise der Pflanze unter „Hinweise“");
   });
 });
 

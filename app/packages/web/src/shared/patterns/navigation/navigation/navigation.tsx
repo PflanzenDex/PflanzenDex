@@ -73,6 +73,13 @@ export const plantLayerId = (id: string): string => `plant-${id}`;
  */
 export const plantAddress = (id: string): string =>
   `${PATHS.collection}?view=plants&sheet=${encodeURIComponent(plantLayerId(id))}`;
+/** The query parameter of the tab in a plant's layer (US-QS-23, `plant-layer.tsx`). */
+export const PLANT_TAB_PARAM = "tab";
+/**
+ * The tab of a plant's layer that holds its location (US-QS-32, FR-PHA-03): `tab=standort` next to `sheet=plant-<id>` opens
+ * it. Defined here, not in the plant layer, so the care rows reach it without the layer's module (`plant-layer.tsx`).
+ */
+export const PLANT_LOCATION_TAB = { [PLANT_TAB_PARAM]: "standort" } as const;
 
 /** The former addresses of "Wunschliste" and "Artenvergleich": the third mode and an arrangement of the species of the Sammlung (US-QS-14). */
 export const LEGACY_WISHLIST_PATH = "/wishlist";

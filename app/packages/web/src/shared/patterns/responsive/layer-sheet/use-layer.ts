@@ -34,8 +34,12 @@ type LayerControl = {
   open: boolean;
   /** The address names another layer: this one is replaced, not closed, so it leaves at once (US-QS-15, F7). */
   replaced: boolean;
-  /** Opens the layer: pushes a history entry, so Back closes it. Pass the event target to return focus to it. */
-  openLayer: (from?: HTMLElement | null) => void;
+  /**
+   * Opens the layer: pushes a history entry, so Back closes it. Pass the event target to return focus to it. `extra` adds
+   * search parameters to the same entry, so a layer opens on one of its tabs in one step (US-QS-32, `PLANT_LOCATION_TAB`);
+   * the layer's own `sheet` always wins over `extra`.
+   */
+  openLayer: (from?: HTMLElement | null, extra?: Record<string, string>) => void;
   /**
    * Closes the layer: back when the app opened it, otherwise it only removes the address part. A layer that a reload or a
    * link opened gets its list below it first (`useLayerOrdering`, issue 2145), so it is back too; the replace is the
@@ -101,10 +105,11 @@ export function useLayer(id: string): LayerControl {
   return {
     open,
     replaced: named !== null && !open,
-    openLayer: (from) => {
+    openLayer: (from, extra) => {
       opener = from ?? (document.activeElement as HTMLElement | null);
       returnTo = null;
       const next = new URLSearchParams(params);
+      for (const [key, value] of Object.entries(extra ?? {})) next.set(key, value);
       next.set(PARAM, id);
       // RouteFocus ignores `?sheet`, so the view behind the layer does not move the focus to its heading. The entry below
       // the layer is the address it is opened from (issue 2145).

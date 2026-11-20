@@ -8,7 +8,11 @@ import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/l
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Measurement } from "../../../specimens/cards/specimen-card/specimen-card";
-import { plantLayerId } from "@/shared/patterns/navigation/navigation/navigation";
+import {
+  PLANT_LOCATION_TAB,
+  PLANT_TAB_PARAM,
+  plantLayerId,
+} from "@/shared/patterns/navigation/navigation/navigation";
 import type { Handlers, LayerProps, SlotRender } from "../layer-ids";
 import table from "../plant-layers.de.json";
 import { PlantCareTab } from "./plant-care-tab/plant-care-tab";
@@ -17,16 +21,18 @@ import { Chips, MeasureButton, PlantOverview } from "./plant-overview/plant-over
 import { PlantSlotSkeleton, type SlotPart } from "./plant-layer.skeleton";
 
 const t = texts(table);
-const TAB_PARAM = "tab";
 /** The status names of a plant and a cutting, compared as values (FR-QG-12); a cutting gets no repot plan (US-BES-04). */
 const PLANT_STATUS = "plant" as const;
 const CUTTING_STATUS = "cutting" as const;
-/** The tabs and their values in the address (`&tab=`); an absent or unknown value means the overview (US-QS-23). */
+/**
+ * The tabs and their values in the address (`&tab=`, `PLANT_TAB_PARAM`); an absent or unknown value means the overview
+ * (US-QS-23). The Standort value is shared with the care rows that open it (`PLANT_LOCATION_TAB`, US-QS-32).
+ */
 const TABS = [
   { value: "ueberblick", label: t("tabs.overview") },
   { value: "verlauf", label: t("tabs.history") },
   { value: "pflege", label: t("tabs.care") },
-  { value: "standort", label: t("tabs.location") },
+  { value: PLANT_LOCATION_TAB[PLANT_TAB_PARAM], label: t("tabs.location") },
 ] as const;
 
 /**
@@ -36,11 +42,11 @@ const TABS = [
 export function usePlantTab() {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
-  const raw = params.get(TAB_PARAM);
+  const raw = params.get(PLANT_TAB_PARAM);
   const tab = TABS.find((t) => t.value === raw)?.value ?? TABS[0].value;
   const choose = (value: string) => {
     const next = new URLSearchParams(params);
-    next.set(TAB_PARAM, value);
+    next.set(PLANT_TAB_PARAM, value);
     setParams(next, { replace: true, state: location.state });
   };
   return { tab, choose };
