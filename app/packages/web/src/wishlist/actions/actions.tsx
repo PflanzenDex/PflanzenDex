@@ -65,7 +65,7 @@ export function useCandidateWrite(
           r.ok
             ? {
                 hint: {
-                  text: `Das Bild von „${c.title}“ ist bei dir gespeichert. Quelle und Lizenz stehen am Bild.`,
+                  text: `Das Bild von „${c.title}“ ist bei dir gesichert. Quelle und Lizenz stehen am Bild.`,
                   nextAction:
                     "Entscheide jetzt: Gekauft oder Verwerfen, oder schau dir die nächste Karte an.",
                 },

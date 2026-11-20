@@ -144,7 +144,7 @@ export async function removeDuplicateWish(
   return r.ok ? { ok: true, value: r.value as WishRemoveResult } : r;
 }
 
-/** "Bild speichern" (US-WUN-04): stores a local copy of the wish image from Wikimedia Commons with source and license. */
+/** "Bild sichern" (US-WUN-04): stores a local copy of the wish image from Wikimedia Commons with source and license. */
 export async function storeWishImage(
   api: string,
   token: string,

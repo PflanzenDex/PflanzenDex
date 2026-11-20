@@ -178,7 +178,7 @@ describe("US-BES-04 repotted on the card", () => {
     expect(screen.queryByRole("menuitem", { name: "Eintopfen eintragen" })).toBeNull();
   });
 
-  it("US-BES-04: tapping Eintopfen eintragen changes nothing until Speichern, Abbrechen changes nothing either", async () => {
+  it("US-BES-04: tapping Eintopfen eintragen changes nothing until Sichern, Abbrechen changes nothing either", async () => {
     const { posts } = fakeServer();
     render(page());
     await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
@@ -202,7 +202,7 @@ describe("US-BES-04 repotted on the card", () => {
     );
   });
 
-  it("US-BES-04: Speichern repots with the chosen date, reloads and says what happens next (P-09)", async () => {
+  it("US-BES-04: Sichern repots with the chosen date, reloads and says what happens next (P-09)", async () => {
     const { posts } = fakeServer();
     render(page());
     await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));

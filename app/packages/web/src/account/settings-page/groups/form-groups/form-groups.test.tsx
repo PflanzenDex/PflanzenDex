@@ -195,7 +195,7 @@ const announced = () =>
   document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]')?.textContent ?? "";
 
 describe("US-QS-32 · F-0048 a saved group is its own result", () => {
-  it("US-QS-32 · F-0048 after a save no status box is in the page and the announcer says 'Einstellungen gespeichert.'", async () => {
+  it("US-QS-32 · F-0048 after a save no status box is in the page and the announcer says 'Einstellungen gesichert.'", async () => {
     fakeServer();
     render(
       <MemoryRouter initialEntries={["/?sheet=profile"]}>
@@ -207,8 +207,8 @@ describe("US-QS-32 · F-0048 a saved group is its own result", () => {
     const name = await screen.findByLabelText("Anzeigename");
     await userEvent.clear(name);
     await userEvent.type(name, "Lena L");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
-    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
+    await waitFor(() => expect(announced()).toBe("Einstellungen gesichert."));
     expect(screen.queryByRole("status")).toBeNull();
   });
 });

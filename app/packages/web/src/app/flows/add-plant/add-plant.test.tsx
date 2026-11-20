@@ -308,7 +308,7 @@ const REFUSED_MARKER_TEXT =
 /** The client's own texts of the marker rule (collection's MARKER_MISSING and MARKERS_MISSING, F-0093). */
 const CLIENT_MARKER_TEXT =
   "Gib ein Kennzeichen an, damit du die Töpfe dieser Art unterscheiden kannst.";
-const MISSING_ANSWERS_TEXT = "Vergib zuerst alle fehlenden Kennzeichen, bevor du speicherst.";
+const MISSING_ANSWERS_TEXT = "Vergib zuerst alle fehlenden Kennzeichen, bevor du sicherst.";
 
 describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form (issue 1638)", () => {
   it("US-BES-03 · US-ONB-01 an owned species waits for the lazily loaded marker field, preset as in the long form, and saves with it (issue 1638)", async () => {

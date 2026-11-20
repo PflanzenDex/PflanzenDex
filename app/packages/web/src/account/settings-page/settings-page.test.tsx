@@ -507,7 +507,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     expect(screen.getByText(/eine Annahme/)).toBeTruthy();
   });
 
-  it("US-LIC-03 'Speichern' is enabled before anything changed; an unchanged save answers with a message and sends nothing", async () => {
+  it("US-LIC-03 'Sichern' is enabled before anything changed; an unchanged save answers with a message and sends nothing", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show("light");
@@ -776,7 +776,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     setViewportWidth(1024);
   });
 
-  it("US-QS-17 Profil saves only with 'Speichern' and the row shows the new value afterwards", async () => {
+  it("US-QS-17 Profil saves only with 'Sichern' and the row shows the new value afterwards", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show("profile");
