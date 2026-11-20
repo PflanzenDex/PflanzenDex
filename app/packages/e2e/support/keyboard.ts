@@ -33,11 +33,20 @@ export async function typeInto(page: Page, field: Locator, text: string): Promis
   await page.keyboard.type(text);
 }
 
-/** Moves a native select to the option at `index` (0 = first) with the arrow keys only. */
-export async function chooseByArrows(page: Page, select: Locator, index: number): Promise<void> {
+/**
+ * Chooses the option at `index` (0 = first) of a native select with the keyboard only: the select takes the focus and the
+ * label of the option is typed (type-ahead). Arrow keys are not used: in headless Chromium on macOS they open the popup and
+ * keep the value (measured on the devbox), so the arrow-key selection of the first run failed locally only.
+ */
+export async function chooseOption(page: Page, select: Locator, index: number): Promise<void> {
   await tabTo(page, select);
-  await page.keyboard.press("Home");
-  for (let i = 0; i < index; i++) await page.keyboard.press("ArrowDown");
+  const option = select.locator("option").nth(index);
+  const label = (await option.textContent())?.trim() ?? "";
+  if (label === "") throw new Error(`chooseOption: option ${index} of the select has no text`);
+  const value = await option.evaluate((el) => (el as HTMLOptionElement).value);
+  await page.keyboard.type(label);
+  // A type-ahead that misses leaves the old value: the helper fails here, not in a later step.
+  await expect(select).toHaveValue(value);
 }
 
 /** Signs in at the sign-in service with the keyboard only. */
@@ -78,14 +87,14 @@ export async function specimenByKeyboard(page: Page, species: string): Promise<v
   const form = page.getByRole("form", { name: "Art vorschlagen" });
   // Step 1 holds the name and the growth measure (US-QS-21).
   await typeInto(page, form.getByLabel(/^Lateinischer Name/), species);
-  await chooseByArrows(page, form.getByLabel(/^Wachstumsmaß/), 1);
+  await chooseOption(page, form.getByLabel(/^Wachstumsmaß/), 1);
   await press(page, form.getByRole("button", { name: "Weiter" }));
   await typeInto(page, form.getByLabel(/^Vergeilungsanzeichen/), "Die Rosette streckt sich.");
   await typeInto(page, form.getByLabel(/^Erfolgskriterien/), "Dichte, flache Rosette.");
   // The light is optional and sits behind "Mehr Angaben" (US-QS-24): the disclosure is opened with the keyboard.
   await press(page, form.getByText("Mehr Angaben", { exact: true }));
-  await chooseByArrows(page, form.getByLabel(/^Schwierigkeit/), 1);
-  await chooseByArrows(page, form.getByLabel(/^Standard-Lichtzone/), 3);
+  await chooseOption(page, form.getByLabel(/^Schwierigkeit/), 1);
+  await chooseOption(page, form.getByLabel(/^Standard-Lichtzone/), 3);
   await typeInto(page, form.getByLabel(/Lichtbedarf/), "40000");
   await press(page, form.getByRole("button", { name: "Vorschlag speichern" }));
   await press(page, page.getByRole("button", { name: "Diese Art wählen" }));

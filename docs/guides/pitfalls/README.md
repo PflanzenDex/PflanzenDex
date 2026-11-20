@@ -349,3 +349,19 @@ IDs are never renumbered.
 - **Fix:** Start a script's `main()` through `isEntryPoint(import.meta.url)` (`app/tools/check/shared/entry-point.mjs`, which compares realpaths); package scripts that cannot import it compare `realpathSync(process.argv[1])`. A test that compares paths builds its temp folder from `realpathSync(os.tmpdir())`. A test that copies a script into a temp tree copies the helper with it.
 - **Can it become a gate?** Not now (E-30): the shared helper removes the copies under `app/tools/` and `tools/`, and the symlink tests (`check-ci-drift.test.mjs`, `entry-point.test.mjs`) fail when the guard regresses.
 - **Source:** Issue #2290, PR #2309.
+
+## PF-043 A UI change that renames a text or heading turns only the nightly e2e red
+
+- **Symptom:** `dev` is green on every PR, but the nightly e2e job fails for days with dozens of tests, and then is cancelled by its 25-minute job timeout, so the run lists no failures at all.
+- **Cause:** PR CI runs Playwright only for release PRs and manual runs (E-15, `ci.yml` job `e2e`). A PR that turns a heading into a row, renames a page title or rewords an empty line or an error text still passes, and the e2e locators that name the old text break only at night. Each broken test then waits for its timeout and retries once, so a red suite needs far more than the green 15 minutes.
+- **Fix:** In a PR that changes a visible text, a heading or a role in `app/packages/web`, grep `app/packages/e2e` for the old text and role and update the specs in the same PR; run the affected spec files under `make heavy-lock` or dispatch `nightly.yml` on the branch. After a nightly cancelled by the timeout, read the per-test `error-context.md` files of its `e2e-report` artifact: they hold the error and the accessibility snapshot.
+- **Can it become a gate?** Not now (E-30): running e2e in every PR costs about 15 minutes of CI per UI PR, which E-15 declined. The nightly stays the check; this entry is the reminder.
+- **Source:** Issue #1720, PR #2319 (renames from #2185, #2190, #2192, #2266 and #2312 broke 28 tests).
+
+## PF-044 Arrow keys do not change a native select in headless Chromium on a Mac
+
+- **Symptom:** A keyboard-only e2e test that picks an option with Home and ArrowDown passes on the Linux CI runner and fails on the devbox: the select keeps "Bitte wählen".
+- **Cause:** On macOS, headless Chromium opens the select popup on ArrowDown and does not move the value; on Linux the arrows change the value directly.
+- **Fix:** Pick an option by keyboard through type-ahead: focus the select and type the option's label (`chooseOption` in `app/packages/e2e/support/keyboard.ts`), which works on both, and assert the value afterwards.
+- **Can it become a gate?** No: it is a platform difference of the browser, and the helper already covers it.
+- **Source:** Issue #1720, PR #2319.

@@ -1,5 +1,6 @@
 import { Suspense, useRef, useState, type ReactNode } from "react";
 import { FIRST_PLANT_STEPS } from "@pflanzendex/core";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { Button } from "@/shared/ui/button/button";
 import { KeeperStyleQuestion } from "../../../../account";
 import { SaveStep } from "./save-step/save-step";
@@ -63,8 +64,7 @@ function Created(props: {
   );
 }
 
-function Buttons(props: { f: Flow; onSkip: () => void }) {
-  const { f } = props;
+function Buttons({ f, onSkip }: { f: Flow; onSkip: () => void }) {
   return (
     <div className={ACTIONS}>
       {f.index === 0 ? (
@@ -95,7 +95,7 @@ function Buttons(props: { f: Flow; onSkip: () => void }) {
           </Button>
         </>
       )}
-      <Button type="button" variant="ghost" onClick={props.onSkip}>
+      <Button type="button" variant="ghost" onClick={onSkip}>
         {ui("skip")}
       </Button>
     </div>
@@ -160,11 +160,10 @@ export function OnboardingWizard(props: {
   entry?: ReactNode;
 }) {
   const f = useFirstPlant(props.api, props.token);
-  const step = FIRST_PLANT_STEPS[f.index];
   const stepLabel = ui("stepOf", { n: f.index + 1, total: FIRST_PLANT_STEPS.length });
   return (
     <div className="flex flex-col gap-3" ref={f.box}>
-      <h1 className="text-2xl font-semibold">{ui("today")}</h1>
+      <PageHeader headingId="today-title" title={ui("today")} />
       {f.created !== null ? (
         <Created
           name={f.created.name}
@@ -180,7 +179,7 @@ export function OnboardingWizard(props: {
             {ui("step", {
               n: f.index + 1,
               total: FIRST_PLANT_STEPS.length,
-              title: step?.title ?? "",
+              title: FIRST_PLANT_STEPS[f.index]?.title ?? "",
             })}
           </p>
           <Step

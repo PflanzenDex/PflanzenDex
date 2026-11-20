@@ -1,6 +1,6 @@
-import { expect, showLocations, test } from "../../../support/fixtures";
+import { expect, expectAnnounced, listRow, showLocations, test } from "../../../support/fixtures";
 import {
-  chooseByArrows,
+  chooseOption,
   keyboardWalk,
   openByKeyboard,
   press,
@@ -87,14 +87,14 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     await signInByKeyboard(page, account);
     await locationsByKeyboard(page);
     await press(page, page.getByRole("button", { name: "Standard-Zonen übernehmen" }));
-    await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
+    await expect(listRow(page, "Zone 2")).toBeVisible();
     await showLocations(page);
     await press(page, page.getByRole("button", { name: "Neuer Standort" }));
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await typeInto(page, form.getByLabel("Name"), "Fensterbank");
-    await chooseByArrows(page, form.getByLabel("Lichtzone"), 2);
+    await chooseOption(page, form.getByLabel("Lichtzone"), 2);
     await press(page, form.getByRole("button", { name: "Standort anlegen" }));
-    await expect(page.getByRole("heading", { level: 3, name: "Fensterbank" })).toBeVisible();
+    await expect(listRow(page, "Fensterbank")).toBeVisible();
   });
 
   test("US-QS-08 keyboard only: record a measurement (US-WAC-01)", async ({ page, account }) => {
@@ -103,13 +103,15 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     await specimenByKeyboard(page, "Echeveria elegans");
     await press(page, page.getByRole("list", { name: "Pflanzen" }).getByRole("button").first());
     await press(page, page.getByRole("button", { name: /^Messen: / }));
-    await expect(page.getByRole("heading", { level: 1, name: /^Messen: / })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Messen", exact: true }),
+    ).toBeVisible();
     const form = page.getByRole("form", { name: "Messung erfassen" });
     await typeInto(page, form.getByLabel(/^Messwert/), "12,5");
     // "Messung speichern" sits in the sticky footer beside the form, outside its element (US-QS-15).
     await press(page, page.getByRole("button", { name: "Messung speichern" }));
     // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
-    await expect(page.getByText(/^Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\.$/)).toBeVisible();
+    await expectAnnounced(page, /Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\./);
     // The course with the new measurement is the layer "Messverlauf" of the measure page (US-QS-15).
     await press(page, page.getByRole("button", { name: /^Messverlauf \(\d+\)$/ }));
     // The layer opens on "Überblick"; the rows are its part "Messungen" (US-QS-15).
@@ -153,7 +155,11 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     await press(page, page.getByRole("button", { name: "Behandlung speichern" }));
     const done = page.getByRole("button", { name: /^Wollläuse bei .* als erledigt abhaken$/ });
     await press(page, done);
-    await expect(page.getByText(/„Wollläuse“ als erledigt eingetragen am/)).toBeVisible();
+    // The tick-off stays in its place as "Erledigt · Rückgängig" for 8 s, then the row moves (US-QS-32, SG-FEED-03).
+    const undo = page.getByRole("button", { name: /^Rückgängig: Wollläuse bei / });
+    await expect(undo).toBeVisible();
+    await expect(page.getByText("Erledigt · Rückgängig", { exact: true })).toBeVisible();
+    await expect(undo).toBeHidden({ timeout: 12_000 });
   });
 
   test("US-QS-08 keyboard only: confirm the location of a specimen (US-PHA-03)", async ({
@@ -168,14 +174,14 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await typeInto(page, form.getByLabel("Name"), "Regal");
     await press(page, form.getByRole("button", { name: "Standort anlegen" }));
-    await expect(page.getByRole("heading", { level: 3, name: "Regal" })).toBeVisible();
+    await expect(listRow(page, "Regal")).toBeVisible();
     await specimenByKeyboard(page, "Haworthia cooperi");
     // The hint "Standort fehlt" carries the action that sets the location (US-PHA-03).
     await openByKeyboard(page, "Heute");
     // The hints are a layer above the overview of "Heute" (US-QS-18): the tile, named by its count and topic, opens it.
     await press(page, page.getByRole("button", { name: /Fehlt noch$/ }));
     const select = page.getByLabel(/^Standort für „/);
-    await chooseByArrows(page, select, 1);
+    await chooseOption(page, select, 1);
     await press(page, page.getByRole("button", { name: /^Standort setzen: / }));
     await expect(page.getByText(/steht jetzt am Standort „Regal“/)).toBeVisible();
   });

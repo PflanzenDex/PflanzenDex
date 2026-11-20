@@ -1,5 +1,5 @@
 import { randomInt } from "node:crypto";
-import { expect, test as base, type Page } from "@playwright/test";
+import { expect, test as base, type Locator, type Page } from "@playwright/test";
 import { createTestAccount, type TestAccount } from "./account";
 
 export { expect };
@@ -46,21 +46,38 @@ export async function showLocations(page: Page): Promise<void> {
 }
 
 /**
- * A confirmation toast lies over the bottom of a phone, where the main actions of a view and the bottom bar stand, and
- * stays about 6 s; under the pointer it stays for good. The keeper closes it with its button (US-QS-07) instead of the
- * test waiting for it to leave by itself.
+ * The result of a write that shows on the same screen is only announced (SG-FEED-01, US-QS-32): the shared polite live
+ * region holds its text and no toast opens. The test reads the result there.
  */
-export async function dismissToast(page: Page, text: string): Promise<void> {
-  const toast = page.getByRole("status").filter({ hasText: text });
-  await expect(toast).toBeVisible();
-  await toast.getByRole("button", { name: "Meldung schließen" }).click();
-  await expect(toast).toBeHidden();
+export async function expectAnnounced(page: Page, text: string | RegExp): Promise<void> {
+  await expect(
+    page.locator('[aria-live="polite"]').filter({ hasText: text }).first(),
+  ).toBeAttached();
 }
 
 /** The "+" of the locations: opens the create layer of a location (US-QS-19). */
 export async function addLocation(page: Page): Promise<void> {
   await showLocations(page);
   await page.getByRole("button", { name: "Neuer Standort" }).click();
+}
+
+/**
+ * A row of the lists of light zones and locations (US-LIC-05, US-QS-19): a button named by its title and facts ("Zone 2
+ * bis 15.000 Lux"). It has no heading; choosing it opens the layer of the entry. Titles here are unique on the page.
+ */
+export function listRow(page: Page, title: string): Locator {
+  return page.getByRole("button", { name: title });
+}
+
+/**
+ * A change that stays in its place for the undo window (SG-FEED-03, US-QS-32): the result and "Rückgängig" stand where the
+ * control was. The row leaves when its 8 s end; the check waits for that, no clock is faked.
+ */
+export async function expectUndoInPlace(page: Page, result: string, undo: RegExp): Promise<void> {
+  const button = page.getByRole("button", { name: undo });
+  await expect(button).toBeVisible();
+  await expect(page.getByText(`${result} · Rückgängig`, { exact: true })).toBeVisible();
+  await expect(button).toBeHidden({ timeout: 12_000 });
 }
 
 export async function openLocations(page: Page): Promise<void> {
@@ -82,7 +99,7 @@ export async function createLocation(page: Page, name: string): Promise<void> {
   const form = page.getByRole("form", { name: "Standort anlegen" });
   await form.getByLabel("Name").fill(name);
   await form.getByRole("button", { name: "Standort anlegen" }).click();
-  await expect(page.getByRole("heading", { level: 3, name })).toBeVisible();
+  await expect(listRow(page, name)).toBeVisible();
 }
 
 /** The plant whose name contains `name` (a species, or a species with its marker) as its layer with tabs (US-QS-23). */
