@@ -4,7 +4,7 @@ import { Select } from "@/shared/ui/fields/select/select";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../equipment.de.json";
 
-const t = texts(table);
+const ui = texts(table);
 
 export interface SensorActions {
   busy: boolean;
@@ -53,22 +53,22 @@ export function SensorsView(props: { view: SensorView; actions: SensorActions })
                 {s.name}
               </span>
               <label className="flex min-w-0 flex-col gap-1 text-sm">
-                <span id={labelId}>{t("sensors.assign")}</span>
+                <span id={labelId}>{ui("sensors.assign")}</span>
                 <Select
                   aria-labelledby={`${labelId} ${nameId}`}
                   value={valueOf(s.target)}
                   disabled={actions.busy}
                   onChange={(e) => actions.onTarget(s, toTarget(e.target.value))}
                 >
-                  <option value="">{t("sensors.unassigned")}</option>
-                  <optgroup label={t("sensors.groupPlants")}>
+                  <option value="">{ui("sensors.unassigned")}</option>
+                  <optgroup label={ui("sensors.groupPlants")}>
                     {view.specimens.map((x) => (
                       <option key={x.id} value={`specimen:${x.id}`}>
                         {x.name}
                       </option>
                     ))}
                   </optgroup>
-                  <optgroup label={t("sensors.groupLocations")}>
+                  <optgroup label={ui("sensors.groupLocations")}>
                     {view.locations.map((x) => (
                       <option key={x.id} value={`location:${x.id}`}>
                         {x.name}
