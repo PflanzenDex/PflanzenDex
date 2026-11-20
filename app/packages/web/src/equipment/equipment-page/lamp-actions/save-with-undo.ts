@@ -1,4 +1,4 @@
-import type { WriteSend } from "@/shared/data";
+import type { KeyScope, WriteSend } from "@/shared/data";
 import type { ToastApi } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import type { useWriteAction } from "../../../shared/data";
 
@@ -17,6 +17,8 @@ export async function saveWithUndo<T>(
     after: T;
     /** The write of one value; the change and its undo use the same one. */
     send: (value: T) => Send;
+    /** The repeat-guard key of the write of one value (US-QS-03): the change and its undo are two actions. */
+    scope: (value: T) => KeyScope;
     /** The German text of the toast for a saved value. */
     said: (value: T) => string;
     /** The German outcome in the layer for the change and for the undo. */
@@ -25,17 +27,22 @@ export async function saveWithUndo<T>(
   },
 ): Promise<void> {
   let saved = false;
-  await write.run(async (t, opts) => {
-    const r = await change.send(change.after)(t, opts);
-    saved = r.ok;
-    return r;
-  }, change.saved);
+  await write.run(
+    async (t, opts) => {
+      const r = await change.send(change.after)(t, opts);
+      saved = r.ok;
+      return r;
+    },
+    change.saved,
+    change.scope(change.after),
+  );
   if (!saved) return;
   toast.show({
     message: change.said(change.after),
     action: {
       label: "Rückgängig",
-      onAction: () => void write.run(change.send(change.before), change.undone),
+      onAction: () =>
+        void write.run(change.send(change.before), change.undone, change.scope(change.before)),
     },
   });
 }

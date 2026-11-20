@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Candidate } from "@pflanzendex/core";
-import { useWriteAction, type Response, type WriteOptions } from "../../shared/data";
+import { entityKey, useWriteAction, type Response, type WriteOptions } from "../../shared/data";
 import { buyWish, discardWish, storeWishImage } from "../wishlist-api";
 
 export type Token = () => Promise<string | undefined>;
@@ -37,6 +37,7 @@ export function useCandidateWrite(
     c: Candidate,
     send: (t: string, opts: WriteOptions) => Promise<Response<{ hint: Hint }>>,
     toPlant: boolean,
+    action: string,
   ) => {
     onRun();
     void write.run(
@@ -53,15 +54,15 @@ export function useCandidateWrite(
         return r;
       },
       "",
-      c.id,
+      entityKey("wish", c.id, action),
     );
   };
   return {
-    buy: (c: Candidate) => run(c, (t, o) => buyWish(api, t, c.id, o), true),
-    discard: (c: Candidate) => run(c, (t, o) => discardWish(api, t, c.id, o), false),
+    buy: (c: Candidate) => run(c, (t, o) => buyWish(api, t, c.id, o), true, "buy"),
+    discard: (c: Candidate) => run(c, (t, o) => discardWish(api, t, c.id, o), false, "discard"),
     storeImage: (c: Candidate) => {
       onRun();
-      void write.run(async (t, o) => {
+      const send: Parameters<typeof write.run>[0] = async (t, o) => {
         const r = await storeWishImage(api, t, c.id, o);
         setDone(
           r.ok
@@ -76,7 +77,8 @@ export function useCandidateWrite(
             : null,
         );
         return r;
-      }, "");
+      };
+      void write.run(send, "", entityKey("wish", c.id, "image"));
     },
     done,
     running: write.running,

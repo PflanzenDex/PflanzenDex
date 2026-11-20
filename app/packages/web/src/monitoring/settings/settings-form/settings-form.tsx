@@ -2,7 +2,7 @@ import { REMINDER_LIMITS, type ReminderOccasion, type ReminderSettings } from "@
 import { useCallback, useState, type FormEvent, type ReactNode } from "react";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { accountKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadReminderSettings, saveReminderSettings } from "../../api/reminders-api";
 import { PauseRows, withPause, type Paused } from "../pause-rows/pause-rows";
 import { TimeFields } from "./time-fields/time-fields";
@@ -64,6 +64,7 @@ function TimesForm(props: { api: string; token: Token; saved: ReminderSettings }
     void write.run(
       (t, opts) => saveReminderSettings(props.api, t, next, opts),
       "Erinnerungen gespeichert.",
+      accountKey(`reminders:${JSON.stringify(next)}`),
     );
   };
 
@@ -104,6 +105,7 @@ function PausesForm(props: { api: string; token: Token; saved: ReminderSettings 
     void write.run(
       (t, opts) => saveReminderSettings(props.api, t, next, opts),
       "Pausen gespeichert.",
+      accountKey(`reminders:${JSON.stringify(next)}`),
     );
   };
   const pause = (o: ReminderOccasion, until: string) => setPaused((p) => withPause(p, o, until));

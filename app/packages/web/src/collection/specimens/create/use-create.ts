@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import type { LightZone, Species, Specimen } from "@pflanzendex/core";
-import { REFERENCE_STALE_TIME, useRequest, useRepeatKey } from "../../../shared/data";
+import { accountKey, REFERENCE_STALE_TIME, useRequest, useRepeatKey } from "../../../shared/data";
 import { ZONES_KEY, loadZones } from "../../../light";
 import type { ApiError } from "../../../shared/data";
 import type { CreateInput } from "./create-input";
@@ -43,7 +43,7 @@ export function useCreate(
       if (!t || !newSpecies) return SIGN_IN;
       const r = await keys.run(
         (key) => createSpecimen(api, t, { speciesId: newSpecies.id, ...input }, { key }),
-        newSpecies.id,
+        accountKey(`create:${newSpecies.id}:${JSON.stringify(input)}`),
       );
       if (!r.ok) return r.error;
       say(createdText(r.value));

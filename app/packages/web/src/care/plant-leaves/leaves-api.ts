@@ -45,7 +45,7 @@ export async function recordLeaf(
   input: LeafInput,
   options: WriteOptions,
 ): Promise<Response<LeafRow>> {
-  const r = await createWrite(access.api, access.token, options)(
+  const r = await createWrite(access.api, access.token, { ...options, fetchFn: access.fetchFn })(
     "POST",
     `/specimens/${encodeURIComponent(specimenId)}/leaves`,
     { ...input, timeZone: currentTimeZone() },
@@ -60,10 +60,9 @@ export async function removeLeaf(
   leafId: string,
   options: WriteOptions,
 ): Promise<Response<{ id: string }>> {
-  const r = await createWrite(
-    access.api,
-    access.token,
-    options,
-  )("DELETE", `/specimens/${encodeURIComponent(specimenId)}/leaves/${encodeURIComponent(leafId)}`);
+  const r = await createWrite(access.api, access.token, { ...options, fetchFn: access.fetchFn })(
+    "DELETE",
+    `/specimens/${encodeURIComponent(specimenId)}/leaves/${encodeURIComponent(leafId)}`,
+  );
   return r.ok ? { ok: true, value: r.value as { id: string } } : r;
 }

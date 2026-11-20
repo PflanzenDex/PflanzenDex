@@ -17,9 +17,20 @@ export {
   useRequestPages,
   type Request,
 } from "./client/request/use-request";
-export { SIGN_IN, WRITE_SUCCEEDED, useWriteAction } from "./write-action/use-write-action";
+export {
+  SIGN_IN,
+  WRITE_SUCCEEDED,
+  entityRun,
+  useWriteAction,
+} from "./write-action/use-write-action";
 export type { WriteSend } from "./write-action/use-write-action";
-export { useRepeatKey } from "./write-action/repeat-key";
+export {
+  accountKey,
+  entityKey,
+  forgetRepeatKeys,
+  useRepeatKey,
+  type KeyScope,
+} from "./write-action/repeat-key";
 export { FeaturesProvider, useFeature, useFeatures } from "./client/features/features";
 export type { FeatureStates } from "./client/features/features";
 export { currentTimeZone, deviceTimeZone, setProfileTimeZone } from "./time-zone";

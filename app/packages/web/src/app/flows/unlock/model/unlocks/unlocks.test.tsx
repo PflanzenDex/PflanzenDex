@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createWrite, useWriteAction } from "../../../../../shared/data";
+import { accountKey, createWrite, useWriteAction } from "../../../../../shared/data";
 import { UnlocksProvider, useUnlocks } from "./unlocks";
 
 const json = (status: number, body: unknown) =>
@@ -71,6 +71,7 @@ describe("US-ONB-05 lock states refresh after every write", () => {
             void write.run(
               (t, opts) => createWrite("http://api.test", t, opts)("POST", "/specimens", {}),
               "Gespeichert.",
+              accountKey("save"),
             )
           }
         >

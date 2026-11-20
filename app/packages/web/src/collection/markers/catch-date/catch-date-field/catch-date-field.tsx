@@ -1,4 +1,4 @@
-import { useRepeatKey } from "@/shared/data";
+import { entityKey, useRepeatKey } from "@/shared/data";
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Control } from "react-hook-form";
@@ -80,7 +80,7 @@ export function useCatchDate(api: string, token: Token, after: () => void, say: 
       if (!t || !open) return SIGN_IN;
       const r = await keys.run(
         (key) => correctCatchDate(api, t, { id: open.id, catchDate }, { key }),
-        open.id,
+        entityKey("specimen", open.id, `catch-date:${catchDate}`),
       );
       if (!r.ok) return r.error;
       const date = r.value.caughtAt ? dateText(r.value.caughtAt) : UNKNOWN;

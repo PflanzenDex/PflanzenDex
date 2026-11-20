@@ -4,7 +4,7 @@ import { cn } from "@/shared/lib/utils";
 import { summaryDate } from "@/shared/lib/format";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { currentTimeZone } from "../../../shared/data";
+import { accountKey, currentTimeZone } from "../../../shared/data";
 import { markFeedSeen } from "../../api/feed-api";
 import { useNewPlants, type Token } from "./use-new-plants";
 import { nameOf } from "../../parts/request-list/request-list";
@@ -70,7 +70,11 @@ export function NewPlantsBody(props: {
 }) {
   const { news, okay, compact, offline } = props;
   const seen = async () => {
-    await okay.run((tk, opts) => markFeedSeen(props.api, tk, news.asOf, opts), t("news.okayDone"));
+    await okay.run(
+      (tk, opts) => markFeedSeen(props.api, tk, news.asOf, opts),
+      t("news.okayDone"),
+      accountKey(`feed-seen:${news.asOf}`),
+    );
     props.onSeen?.();
   };
   return (

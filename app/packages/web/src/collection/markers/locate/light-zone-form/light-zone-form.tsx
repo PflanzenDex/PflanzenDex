@@ -1,4 +1,4 @@
-import { useRepeatKey } from "@/shared/data";
+import { entityKey, useRepeatKey } from "@/shared/data";
 import { useCallback, useState } from "react";
 import { type Control } from "react-hook-form";
 import type { LightZone, SpecimenCard } from "@pflanzendex/core";
@@ -65,7 +65,7 @@ export function useLightZone(api: string, token: Token, after: () => void, say: 
       if (!t || !open) return SIGN_IN;
       const r = await keys.run(
         (key) => setLightZone(api, t, { id: open.id, lightZoneId }, { key }),
-        open.id,
+        entityKey("specimen", open.id, `zone:${lightZoneId ?? ""}`),
       );
       if (!r.ok) return r.error;
       const zone = zones.items.find((z) => z.id === lightZoneId);

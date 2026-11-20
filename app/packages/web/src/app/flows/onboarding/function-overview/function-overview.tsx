@@ -6,7 +6,7 @@ import { LayerOpenRow } from "@/shared/patterns/responsive/layer-sheet/layer-par
 import { useOverviewPageSize } from "./overview-page-size/overview-page-size";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useInvalidate, useWriteAction } from "../../../../shared/data";
+import { accountKey, useInvalidate, useWriteAction } from "../../../../shared/data";
 import { PATHS } from "../../../../shared/patterns/navigation/navigation/navigation";
 import { setKeeperSwitch, unlockFunction, type UnlockEntry } from "../../unlock/model/unlock-api";
 import { functionEmpty, functionName } from "../../unlock/model/unlock-texts";
@@ -55,6 +55,7 @@ function useOverviewWrites(api: string, token: Token) {
       run(
         (tk, opts) => unlockFunction(api, tk, id, opts),
         t("unlock.done", { name: functionName(id), empty: functionEmpty(id) }).trim(),
+        accountKey(`unlock:${id}`),
       ),
     [run, api],
   );
@@ -63,6 +64,7 @@ function useOverviewWrites(api: string, token: Token) {
       run(
         (tk, opts) => setKeeperSwitch(api, tk, { feature, enabled }, opts),
         enabled ? t("keeper.savedOn", { name }) : t("keeper.savedOff", { name }),
+        accountKey(`keeper:${feature}:${enabled}`),
       ),
     [run, api],
   );

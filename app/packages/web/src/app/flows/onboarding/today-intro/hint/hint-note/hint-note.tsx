@@ -1,4 +1,4 @@
-import { useRepeatKey, newRepeatKey } from "@/shared/data";
+import { accountKey, useRepeatKey, newRepeatKey } from "@/shared/data";
 import { useEffect, useState } from "react";
 import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { Button } from "@/shared/ui/button/button";
@@ -31,7 +31,10 @@ export function HintNote(props: {
   const dismiss = async () => {
     const t = await token();
     const r = t
-      ? await keys.run((key) => saveHint(api, t, { occasion, state: "dismissed" }, { key }))
+      ? await keys.run(
+          (key) => saveHint(api, t, { occasion, state: "dismissed" }, { key }),
+          accountKey(`dismiss:${occasion}`),
+        )
       : null;
     if (r?.ok) props.onGone();
     else setFailed(true);

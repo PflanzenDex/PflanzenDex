@@ -3,15 +3,8 @@ import {
   useToast,
   type ToastApi,
 } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
-import { useWriteAction } from "../../../shared/data";
-import {
-  describeLamp,
-  measureLamp,
-  setDeviationLimit,
-  setEquipmentStatus,
-  setLampZone,
-  type EquipmentStatus,
-} from "../../equipment-api";
+import { entityKey, useWriteAction } from "../../../shared/data";
+import { setEquipmentStatus, setLampZone, type EquipmentStatus } from "../../equipment-api";
 import { STATUS_LABELS, SUPPLY_LABELS } from "../../labels";
 import { saveWithUndo } from "./save-with-undo";
 import {
@@ -22,7 +15,7 @@ import {
   setSupply,
 } from "../../upkeep-api";
 import type { SensorActions } from "../../overviews/sensors-view/sensors-view";
-import type { LampLightActions } from "../../lamp-light/lamp-light";
+import { lightWrites } from "./light-writes";
 import type { MaintenanceActions } from "../parts/maintenance/maintenance";
 import type { SupplyActions } from "../parts/supply/supply";
 import { setEquipmentSharing } from "../parts/sharing/sharing-api";
@@ -42,6 +35,7 @@ function zoneWrites(api: string, write: Write, toast: ToastApi) {
       void write.run(
         (t, opts) => setLampZone(api, t, { id: lamp.id, lightZoneId }, opts),
         `Lampe „${lamp.name}“ umgezogen.`,
+        entityKey("lamp", lamp.id, `zone:${lightZoneId}`),
       ),
     onStatus: (lamp: LampRef & { status: EquipmentStatus }, status: EquipmentStatus) =>
       void saveWithUndo(write, toast, {
@@ -49,36 +43,11 @@ function zoneWrites(api: string, write: Write, toast: ToastApi) {
         after: status,
         send: (value) => (t, opts) =>
           setEquipmentStatus(api, t, { id: lamp.id, status: value }, opts),
+        scope: (value) => entityKey("lamp", lamp.id, `status:${value}`),
         said: (value) => `Zustand von „${lamp.name}“ ist jetzt „${STATUS_LABELS[value]}“.`,
         saved: `Zustand von „${lamp.name}“ gespeichert.`,
         undone: `Zustand von „${lamp.name}“ zurückgesetzt.`,
       }),
-  };
-}
-
-/** The writes on the light intensity (US-EQU-03): a measurement, the manufacturer's statement, the limit. */
-function lightWrites(api: string, write: Write): LampLightActions {
-  return {
-    busy: write.running,
-    onMeasure: async (lamp, input) => {
-      let saved = false;
-      await write.run(async (t, opts) => {
-        const r = await measureLamp(api, t, { id: lamp.id, input }, opts);
-        saved = r.ok;
-        return r;
-      }, `Messung für „${lamp.name}“ gespeichert.`);
-      return saved;
-    },
-    onData: (lamp, data) =>
-      void write.run(
-        (t, opts) => describeLamp(api, t, { id: lamp.id, ...data }, opts),
-        `Herstellerangabe für „${lamp.name}“ gespeichert.`,
-      ),
-    onLimit: (percent) =>
-      void write.run(
-        (t, opts) => setDeviationLimit(api, t, percent, opts),
-        percent === null ? "Die Prüfung ist aus." : `Grenze von ${percent} % gespeichert.`,
-      ),
   };
 }
 
@@ -90,11 +59,13 @@ function maintenanceWrites(api: string, write: Write): MaintenanceActions {
       void write.run(
         (t, opts) => setMaintenance(api, t, { id: item.id, input }, opts),
         `Betriebsdaten von „${item.name}“ gespeichert.`,
+        entityKey("equipment", item.id, `maintenance:${JSON.stringify(input)}`),
       ),
     onChecked: (item, checkedOn) =>
       void write.run(
         (t, opts) => markChecked(api, t, { id: item.id, checkedOn }, opts),
         `„${item.name}“ als geprüft vermerkt.`,
+        entityKey("equipment", item.id, `checked:${checkedOn}`),
       ),
   };
 }
@@ -109,6 +80,7 @@ function supplyWrites(api: string, write: Write, toast: ToastApi): SupplyActions
         before: item.supply,
         after: supply,
         send: (value) => (t, opts) => setSupply(api, t, { id: item.id, supply: value }, opts),
+        scope: (value) => entityKey("equipment", item.id, `supply:${value}`),
         said: (value) => `Vorrat von „${item.name}“ ist jetzt „${SUPPLY_LABELS[value]}“.`,
         saved: `Vorrat von „${item.name}“ gespeichert.`,
         undone: `Vorrat von „${item.name}“ zurückgesetzt.`,
@@ -120,6 +92,7 @@ function supplyWrites(api: string, write: Write, toast: ToastApi): SupplyActions
         agentLink === null
           ? `Verknüpfung von „${item.name}“ entfernt.`
           : `„${item.name}“ ist mit „${agentLink}“ verknüpft.`,
+        entityKey("equipment", item.id, `link:${agentLink}`),
       ),
   };
 }
@@ -132,6 +105,7 @@ function sensorWrites(api: string, write: Write): SensorActions {
       void write.run(
         (t, opts) => setSensorTarget(api, t, { id: sensor.id, ...target }, opts),
         `Zuordnung von „${sensor.name}“ gespeichert.`,
+        entityKey("sensor", sensor.id, `target:${JSON.stringify(target)}`),
       ),
   };
 }
@@ -151,6 +125,7 @@ function sharingWrites(
         share === "friends"
           ? `„${item.name}“ ist für Freunde sichtbar.`
           : `„${item.name}“ ist wieder privat.`,
+        entityKey("equipment", item.id, `share:${share}:${note}`),
       ),
   };
 }

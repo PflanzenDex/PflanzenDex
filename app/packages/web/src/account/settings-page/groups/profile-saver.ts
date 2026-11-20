@@ -1,5 +1,11 @@
 import { useCallback, useRef, useState } from "react";
-import { SIGN_IN, setProfileTimeZone, type ApiError, useRepeatKey } from "../../../shared/data";
+import {
+  accountKey,
+  SIGN_IN,
+  setProfileTimeZone,
+  type ApiError,
+  useRepeatKey,
+} from "../../../shared/data";
 import { saveProfile, type AccountProfile } from "../../api/account-api";
 
 type Token = () => Promise<string | undefined>;
@@ -26,7 +32,10 @@ export function useProfileSaver(api: string, token: Token, initial: AccountProfi
       setSaving(true);
       const t = await token();
       const r = t
-        ? await keys.run((key) => saveProfile(api, t, next, { key }))
+        ? await keys.run(
+            (key) => saveProfile(api, t, next, { key }),
+            accountKey(`profile:${JSON.stringify(next)}`),
+          )
         : { ok: false as const, error: SIGN_IN };
       busy.current = false;
       setSaving(false);

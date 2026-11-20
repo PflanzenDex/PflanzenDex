@@ -1,4 +1,4 @@
-import type { WriteSend } from "@/shared/data";
+import type { KeyScope, WriteSend } from "@/shared/data";
 import type { MergeOutcome, ReviewList } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
 import { useLocation, useSearchParams } from "react-router";
@@ -11,7 +11,7 @@ import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { dropPageParts, PAGE_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { ReviewPageSkeleton } from "./review-page.skeleton";
 import { DuplicatesNotice } from "./duplicates-notice/duplicates-notice";
 import { refusalText } from "@/shared/lib/error-text";
@@ -49,9 +49,9 @@ function useShow(): [Show, (show: Show) => void] {
 function useReviewActions(api: string, token: Token, refresh: () => void) {
   const [outcome, setOutcome] = useState<string | null>(null);
   const action = useWriteAction(token, refresh);
-  const run = (send: WriteSend, ok: string) => {
+  const run = (send: WriteSend, ok: string, scope: KeyScope) => {
     setOutcome(null);
-    void action.run(send, ok);
+    void action.run(send, ok, scope);
   };
   const actions: ReviewActions = {
     running: action.running,
@@ -59,18 +59,24 @@ function useReviewActions(api: string, token: Token, refresh: () => void) {
       run(
         (t, opts) => decideProposal(api, t, { caseId, status: "reviewed" }, opts),
         "Vorschlag freigegeben. Die Art ist jetzt für alle sichtbar.",
+        entityKey("case", caseId, "reviewed"),
       ),
     onReject: (caseId, reason) =>
       run(
         (t, opts) => decideProposal(api, t, { caseId, status: "rejected", reason }, opts),
         "Vorschlag zurückgewiesen. Der Ersteller sieht deinen Grund.",
+        entityKey("case", caseId, `rejected:${reason}`),
       ),
     onMerge: (caseId, targetSpeciesId) =>
-      run(async (t, opts) => {
-        const r = await mergeProposal(api, t, { caseId, targetSpeciesId }, opts);
-        if (r.ok) setOutcome(movedText(r.value as MergeOutcome));
-        return r;
-      }, "Vorschlag zusammengeführt."),
+      run(
+        async (t, opts) => {
+          const r = await mergeProposal(api, t, { caseId, targetSpeciesId }, opts);
+          if (r.ok) setOutcome(movedText(r.value as MergeOutcome));
+          return r;
+        },
+        "Vorschlag zusammengeführt.",
+        entityKey("case", caseId, `merge:${targetSpeciesId}`),
+      ),
   };
   return { actions, message: action.message, outcome, error: action.error };
 }

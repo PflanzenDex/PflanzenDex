@@ -7,7 +7,7 @@ import type {
 import type { useLightZone } from "../../markers/locate/light-zone-form/light-zone-form";
 import type { MarkTarget, useMarker } from "../../markers/marker/use-marker";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { setSpecimenLocation } from "../model/specimens-api";
+import { locateKey, setSpecimenLocation } from "../model/specimens-api";
 import type { FormKind } from "../../plants-screen/plant-layers/plant-forms/address/form-address";
 import type { useArchive } from "./use-archive";
 import { COLLECTION_KEY, type Token } from "./use-collection";
@@ -45,6 +45,7 @@ export function useListActions(api: string, token: Token, a: ListActions) {
         void place.run(
           (t, opts) => setSpecimenLocation(api, t, { id: specimenId, locationId }, opts),
           success,
+          locateKey(specimenId, locationId),
         );
       },
       onArchive: (e: Named) => {

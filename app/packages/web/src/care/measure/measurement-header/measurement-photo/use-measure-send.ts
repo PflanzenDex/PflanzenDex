@@ -1,5 +1,11 @@
 import { useCallback, useRef, useState } from "react";
-import { SIGN_IN, type ApiError, useRepeatKey, newRepeatKey } from "../../../../shared/data";
+import {
+  entityKey,
+  SIGN_IN,
+  type ApiError,
+  useRepeatKey,
+  newRepeatKey,
+} from "../../../../shared/data";
 import { recordMeasurement, type MeasurementInput } from "../../../shared/api/measurements-api";
 import { measurementText } from "../../../shared/text";
 import { refusalText } from "@/shared/lib/error-text";
@@ -42,8 +48,9 @@ export function useMeasureSend(props: {
     async (input: MeasurementInput, photo?: File): Promise<ApiError | null> => {
       const tok = await token();
       if (!tok) return SIGN_IN;
-      const r = await keys.run((key) =>
-        recordMeasurement({ api, token: tok }, specimenId, input, { key }),
+      const r = await keys.run(
+        (key) => recordMeasurement({ api, token: tok }, specimenId, input, { key }),
+        entityKey("specimen", specimenId, `measure:${JSON.stringify(input)}`),
       );
       if (!r.ok) return r.error;
       const text = measurementText(r.value);

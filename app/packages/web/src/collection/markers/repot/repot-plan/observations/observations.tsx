@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { RepotHint, RepotSign } from "@pflanzendex/core";
-import { SIGN_IN, type ApiError, useRepeatKey } from "@/shared/data";
+import { entityKey, SIGN_IN, type ApiError, useRepeatKey } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
@@ -49,7 +49,7 @@ export function Observations(props: {
     const r = token
       ? await keys.run(
           (key) => setRepotSign(access.api, token, { id, sign, ticked }, { key }),
-          sign,
+          entityKey("specimen", id, `sign:${sign}:${ticked}`),
         )
       : { ok: false as const, error: SIGN_IN };
     setBusy(null);

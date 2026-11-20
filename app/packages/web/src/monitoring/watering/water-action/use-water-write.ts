@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useUndo } from "@/shared/feedback/undo-row/use-undo";
 import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
-import { useInvalidate, useWriteAction } from "../../../shared/data";
+import { entityKey, useInvalidate, useWriteAction } from "../../../shared/data";
 import { madeEntries, markWatered, unwaterPlants } from "../../api/reminders-api";
 import table from "./water-action.de.json";
 
@@ -49,15 +49,20 @@ export function useWaterWrite(
         return r;
       },
       t("watered", { name: specimen.name }),
+      entityKey("specimen", specimen.id, "water"),
     );
   const undoWater = () => {
     const date = writtenOn.current;
     if (date === null) return;
-    void restore.run(async (tok, opts) => {
-      const r = await unwaterPlants(api, tok, { specimenIds: [specimen.id], date }, opts);
-      removed.current = r.ok ? ((r.value as { removed?: number }).removed ?? 0) : 0;
-      return r;
-    }, t("restored"));
+    void restore.run(
+      async (tok, opts) => {
+        const r = await unwaterPlants(api, tok, { specimenIds: [specimen.id], date }, opts);
+        removed.current = r.ok ? ((r.value as { removed?: number }).removed ?? 0) : 0;
+        return r;
+      },
+      t("restored"),
+      entityKey("specimen", specimen.id, `unwater:${date}`),
+    );
   };
   return { held: undo.held.some((h) => h.key === specimen.id), write, restore, water, undoWater };
 }

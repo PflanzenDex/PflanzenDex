@@ -3,7 +3,14 @@ import { useAnnounce } from "@/shared/platform/announcer/context";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useUndo, type Held, type Undo } from "@/shared/feedback/undo-row/use-undo";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useInvalidate, useWriteAction, type WriteOptions } from "../../../shared/data";
+import {
+  accountKey,
+  entityKey,
+  useInvalidate,
+  useWriteAction,
+  type KeyScope,
+  type WriteOptions,
+} from "../../../shared/data";
 import { WATERING_KEY } from "../../api/due-count/due-count";
 import {
   madeEntries,
@@ -20,6 +27,15 @@ export interface WaterEntry {
   readonly row: WateringDueRow;
   readonly index: number;
 }
+
+/**
+ * The repeat-guard key of a watering write (US-QS-03). One plant is its target, so the water and the undo of that plant
+ * are opposite actions on one target; a bulk write belongs to the account.
+ */
+const waterKey = (specimenIds: readonly string[], action: string): KeyScope =>
+  specimenIds.length === 1 && specimenIds[0] !== undefined
+    ? entityKey("specimen", specimenIds[0], action)
+    : accountKey(`${action}:${specimenIds.join(",")}`);
 
 /** The undo of a bulk write, shown below the list where its button was (US-QS-32). */
 export interface BulkUndo {
@@ -138,7 +154,9 @@ export function useDueWrite(api: string, token: () => Promise<string | undefined
     if (pending.current !== null || restoring.current !== null) return;
     setResult(null);
     if (isOnline()) pending.current = { entries, bulk: entries.length > 1 };
-    void write.run((tok, opts) => sendWater(api, tok, { entries, made }, opts), ui("done"));
+    const specimenIds = entries.map((e) => e.row.specimenId);
+    const key = waterKey(specimenIds, "water");
+    void write.run((tok, opts) => sendWater(api, tok, { entries, made }, opts), ui("done"), key);
   };
   const undoPlant = (group: string) => {
     const date = dates.current.get(group);
@@ -148,6 +166,7 @@ export function useDueWrite(api: string, token: () => Promise<string | undefined
     void restore.run(
       (tok, opts) => sendUndo(api, tok, { input: { specimenIds, date }, removed }, opts),
       ui("restored"),
+      waterKey(specimenIds, `unwater:${date}`),
     );
   };
   return {

@@ -4,6 +4,7 @@ import {
   useInvalidate,
   useRepeatKey,
   type ApiError,
+  type KeyScope,
   type WriteOptions,
 } from "../../../shared/data";
 import { requestDeletion, type DeletionState } from "../../privacy-api";
@@ -36,14 +37,15 @@ export function useDeletionAction(props: {
       options: WriteOptions,
     ) => ReturnType<typeof requestDeletion>,
     done: string,
+    scope: KeyScope,
   ) => {
     if (busy.current) return false;
     busy.current = true;
     setRunning(true);
     const t = await props.token();
-    // One held key per request: a lost answer repeats the same request under its key (US-QS-03).
+    // The key belongs to the request and its opposite (US-QS-03): a cancel frees the held request key of the account.
     const r = t
-      ? await keys.run((key) => action(props.api, t, { key }), done)
+      ? await keys.run((key) => action(props.api, t, { key }), scope)
       : { ok: false as const, error: SIGN_IN };
     busy.current = false;
     setRunning(false);

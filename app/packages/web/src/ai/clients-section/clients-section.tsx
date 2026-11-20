@@ -4,7 +4,7 @@ import { Button } from "@/shared/ui/button/button";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { Select } from "@/shared/ui/fields/select/select";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
+import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import { allowAgain, loadConnections, revokeConnection, setRights } from "../api/connections-api";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";
@@ -22,14 +22,8 @@ const SHORT: Record<AiRights, string> = { read: "Lesen", drafts: "Entwürfe", wr
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" });
-
 type Run = ReturnType<typeof useWriteAction>["run"];
-interface RowProps {
-  api: string;
-  row: AiConnection;
-  busy: boolean;
-  run: Run;
-}
+type RowProps = { api: string; row: AiConnection; busy: boolean; run: Run };
 
 /** A request for a higher right: only the keeper's tap allows it (step-up, never silently). */
 function Request({ api, row, busy, run }: RowProps) {
@@ -52,6 +46,7 @@ function Request({ api, row, busy, run }: RowProps) {
           void run(
             (t, o) => setRights(api, t, { id: row.id, rights: wanted }, o),
             "Das Recht ist erlaubt.",
+            entityKey("client", row.id, `rights:${wanted}`),
           )
         }
       >
@@ -76,6 +71,7 @@ function Controls({ api, row, busy, run }: RowProps) {
             void run(
               (t, o) => setRights(api, t, { id: row.id, rights }, o),
               "Das Recht ist geändert.",
+              entityKey("client", row.id, `rights:${rights}`),
             );
           }}
         >
@@ -90,7 +86,11 @@ function Controls({ api, row, busy, run }: RowProps) {
         disabled={busy}
         aria-label={`${name} trennen`}
         onClick={() =>
-          void run((t, o) => revokeConnection(api, t, row.id, o), "Der KI-Client ist getrennt.")
+          void run(
+            (t, o) => revokeConnection(api, t, row.id, o),
+            "Der KI-Client ist getrennt.",
+            entityKey("client", row.id, "revoke"),
+          )
         }
       >
         Trennen
@@ -125,6 +125,7 @@ function Connection(props: RowProps) {
             void run(
               (t, o) => allowAgain(api, t, row.id, o),
               "Der KI-Client ist wieder zugelassen.",
+              entityKey("client", row.id, "allow-again"),
             )
           }
         >

@@ -9,7 +9,7 @@ import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-secti
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useWriteAction } from "../../../../../../shared/data";
+import { accountKey, useWriteAction } from "../../../../../../shared/data";
 import { addToWishlist } from "../../../../../api/friends-api";
 import { FriendCard } from "../friend-card/friend-card";
 import table from "../../../../../social.de.json";
@@ -121,6 +121,7 @@ export function FriendCards(props: {
                 void wish.run(
                   (t, opts) => addToWishlist(props.api, t, card.speciesLatin ?? "", opts),
                   tx("friendCollection.wishAdded", { name: card.speciesLatin ?? "" }),
+                  accountKey(`wish:add:${card.speciesLatin ?? ""}`),
                 )
               }
             />

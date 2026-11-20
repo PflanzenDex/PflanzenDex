@@ -3,6 +3,8 @@ import {
   call,
   createWrite,
   currentTimeZone,
+  entityKey,
+  type KeyScope,
   type Response,
   type WriteOptions,
 } from "../../../shared/data";
@@ -63,6 +65,10 @@ export async function repotSpecimen(
  * Sets the location of a specimen from the own locations (US-PHA-03, BES-08 "Standort fehlt"). The location is chosen
  * from a list, never typed. The repeat-guard key is created per call.
  */
+/** The repeat-guard key of a locate write (US-QS-03): the plant, and the place it is set to. */
+export const locateKey = (specimenId: string, locationId: string): KeyScope =>
+  entityKey("specimen", specimenId, `locate:${locationId}`);
+
 export async function setSpecimenLocation(
   api: string,
   token: string,

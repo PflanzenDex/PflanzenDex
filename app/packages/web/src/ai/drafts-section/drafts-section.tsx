@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
+import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import { adoptDraft, discardDraft, loadDrafts, type AiDraftRow } from "../api/connections-api";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";
@@ -77,7 +77,11 @@ function Draft(props: {
             disabled={busy}
             aria-label={`${title(row)} übernehmen`}
             onClick={() =>
-              void run((t, opts) => adoptDraft(api, t, row.id, opts), "Der Entwurf ist übernommen.")
+              void run(
+                (t, opts) => adoptDraft(api, t, row.id, opts),
+                "Der Entwurf ist übernommen.",
+                entityKey("draft", row.id, "adopt"),
+              )
             }
           >
             Übernehmen
@@ -91,6 +95,7 @@ function Draft(props: {
               void run(
                 (t, opts) => discardDraft(api, t, row.id, opts),
                 "Der Entwurf ist verworfen.",
+                entityKey("draft", row.id, "discard"),
               )
             }
           >

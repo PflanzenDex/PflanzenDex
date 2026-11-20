@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Species, SpeciesSearch } from "@pflanzendex/core";
 import {
+  accountKey,
   SIGN_IN,
   useInvalidate,
   useRequest,
@@ -62,7 +63,10 @@ export function useSend(api: string, token: Token, onSaved: (id: string) => void
   return async (input: Record<string, unknown>): Promise<ApiError | null> => {
     const t = await token();
     const r = t
-      ? await keys.run((key) => propose(api, t, input, { key }))
+      ? await keys.run(
+          (key) => propose(api, t, input, { key }),
+          accountKey(`propose:${JSON.stringify(input)}`),
+        )
       : { ok: false as const, error: SIGN_IN };
     if (!r.ok) return r.error;
     searchChanged();

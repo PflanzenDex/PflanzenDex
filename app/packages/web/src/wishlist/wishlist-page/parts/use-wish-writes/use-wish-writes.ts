@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useWriteAction } from "../../../../shared/data";
+import { accountKey, useWriteAction } from "../../../../shared/data";
 import { useCandidateWrite } from "../../../actions/actions";
 import { useRepair } from "../../../hints/duplicate-wishes/duplicate-wishes";
 import { createWish, type WishInput } from "../../../wishlist-api";
@@ -25,11 +25,15 @@ export function useWishWrites(
       : candidate;
   const send = async (input: WishInput): Promise<boolean> => {
     let saved = false;
-    await write.run(async (t, opts) => {
-      const r = await createWish(api, t, input, opts);
-      saved = r.ok;
-      return r;
-    }, `Wunsch „${input.name}“ gespeichert.`);
+    await write.run(
+      async (t, opts) => {
+        const r = await createWish(api, t, input, opts);
+        saved = r.ok;
+        return r;
+      },
+      `Wunsch „${input.name}“ gespeichert.`,
+      accountKey(`wish:create:${JSON.stringify(input)}`),
+    );
     if (saved) setLast("write");
     return saved;
   };

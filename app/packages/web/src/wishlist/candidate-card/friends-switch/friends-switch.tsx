@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useRequest, useInvalidate, useWriteAction } from "../../../shared/data";
+import { entityKey, useRequest, useInvalidate, useWriteAction } from "../../../shared/data";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { errorText } from "@/shared/lib/error-text";
 import { loadVisibleToFriends, setWishVisibleToFriends } from "../../wishlist-api";
@@ -46,6 +46,7 @@ export default function FriendsSwitch(props: {
             visible
               ? `„${title}“ ist jetzt für bestätigte Freunde als gesucht sichtbar.`
               : `„${title}“ ist wieder privat.`,
+            entityKey("wish", wishId, `visible:${visible}`),
           );
         }}
       >

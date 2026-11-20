@@ -3,7 +3,7 @@ import { WISH_LIMITS, type CandidateList, type DuplicateWish } from "@pflanzende
 import { Button } from "@/shared/ui/button/button";
 import { Input } from "@/shared/ui/fields/input/input";
 import { Label } from "@/shared/ui/display/label/label";
-import { useWriteAction, type Response } from "../../../shared/data";
+import { entityKey, useWriteAction, type Response } from "../../../shared/data";
 import { removeDuplicateWish, renameWish } from "../../wishlist-api";
 
 type Token = () => Promise<string | undefined>;
@@ -23,11 +23,16 @@ export function useRepair(api: string, token: Token, onWritten: () => void, onRu
       void write.run(
         async (t, opts) => finish(await renameWish(api, t, { wishId: w.id, name }, opts)),
         "",
+        entityKey("wish", w.id, `rename:${name}`),
       );
     },
     remove: (w: DuplicateWish) => {
       onRun();
-      void write.run(async (t, opts) => finish(await removeDuplicateWish(api, t, w.id, opts)), "");
+      void write.run(
+        async (t, opts) => finish(await removeDuplicateWish(api, t, w.id, opts)),
+        "",
+        entityKey("wish", w.id, "remove"),
+      );
     },
     done,
     running: write.running,

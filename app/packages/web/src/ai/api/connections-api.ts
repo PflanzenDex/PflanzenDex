@@ -1,5 +1,11 @@
 import type { AiConnection, AiRights } from "@pflanzendex/core";
-import { call, createWrite, type Response, type WriteOptions } from "../../shared/data";
+import {
+  call,
+  createWrite,
+  newRepeatKey,
+  type Response,
+  type WriteOptions,
+} from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -90,12 +96,15 @@ export const createTask = (
   options: WriteOptions,
 ) => createWrite(api, token, options)("POST", "/ai/tasks", target);
 
-/** The ready-made prompt of a task before it is created; a repeat of the same preview carries the key of its action (US-QS-03). */
+/**
+ * The ready-made prompt of a task before it is created. It changes nothing, so each send gets a key of its own unless the
+ * caller passes one (US-QS-03): a changed reference is never refused as a repeat of the last preview.
+ */
 export const previewTask = (
   api: string,
   token: string,
   target: { type: AiTaskType; reference: string },
-  options: WriteOptions,
+  options: WriteOptions = { key: newRepeatKey() },
 ) =>
   call<{ prompt: string }>(options.fetchFn ?? fetch, `${api}/ai/tasks/preview`, token, {
     method: "POST",

@@ -3,7 +3,13 @@ import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-secti
 import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { SIGN_IN, type ApiError, type Request, useRepeatKey } from "../../../shared/data";
+import {
+  accountKey,
+  SIGN_IN,
+  type ApiError,
+  type Request,
+  useRepeatKey,
+} from "../../../shared/data";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
 import { TreatmentForm } from "../treatment-form/treatment-form";
 import { TreatmentFormSkeleton } from "../treatments-page/treatments-page.skeleton";
@@ -35,7 +41,10 @@ export function usePlanning(api: string, token: Token, onPlanned: (message: stri
       setRunning(true);
       const t = await token();
       const r = t
-        ? await keys.run((key) => planTreatments(api, t, input, { key }))
+        ? await keys.run(
+            (key) => planTreatments(api, t, input, { key }),
+            accountKey(`plan:${JSON.stringify(input)}`),
+          )
         : { ok: false as const, error: SIGN_IN };
       busy.current = false;
       setRunning(false);

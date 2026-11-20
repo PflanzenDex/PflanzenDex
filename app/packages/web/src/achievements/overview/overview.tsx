@@ -10,7 +10,7 @@ import {
   type PagedGroup,
 } from "@/shared/patterns/responsive/paged-groups/paged-groups";
 import { errorText } from "@/shared/lib/error-text";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
+import { accountKey, LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import {
   loadAchievements,
   markSeen,
@@ -80,6 +80,7 @@ function NewNotice(props: { api: string; token: Token; ids: string[] }) {
   const { api, token, ids } = props;
   const reload = useInvalidate(["achievements"]);
   const write = useWriteAction(token, reload);
+  const seen = accountKey(`seen:${ids.join(",")}`);
   return (
     <div
       role="status"
@@ -93,7 +94,7 @@ function NewNotice(props: { api: string; token: Token; ids: string[] }) {
         variant="outline"
         pending={write.running}
         pendingLabel="Wird gespeichert …"
-        onClick={() => void write.run((t, opts) => markSeen(api, t, ids, opts), "")}
+        onClick={() => void write.run((t, opts) => markSeen(api, t, ids, opts), "", seen)}
       >
         Als gesehen markieren
       </Button>

@@ -9,7 +9,7 @@ import {
   type Response,
   type WriteOptions,
 } from "../api";
-import { useRepeatKey } from "./repeat-key";
+import { entityKey, useRepeatKey, type KeyScope, type RepeatEntity } from "./repeat-key";
 import table from "./write-action.de.json";
 
 export { WRITE_SUCCEEDED };
@@ -63,7 +63,7 @@ export function useWriteAction(
   const announcer = useAnnounce();
 
   const run = useCallback(
-    async (send: WriteSend, success: string, scope = "") => {
+    async (send: WriteSend, success: string, scope: KeyScope) => {
       if (busy.current) return;
       busy.current = true;
       const key = keys.take(scope);
@@ -97,3 +97,12 @@ export function useWriteAction(
 
   return { running, message, error, run };
 }
+
+/**
+ * The runner of the writes about one entity: each action of the entity is keyed to it (US-QS-03), so a page that writes
+ * one plant or one item calls `run(send, success, action)` with the action only.
+ */
+export const entityRun =
+  (write: ReturnType<typeof useWriteAction>, entity: RepeatEntity, id: string) =>
+  (send: WriteSend, success: string, action: string) =>
+    void write.run(send, success, entityKey(entity, id, action));

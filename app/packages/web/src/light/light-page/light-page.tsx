@@ -2,7 +2,10 @@ import { useCallback, useMemo, useState } from "react";
 import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import {
+  accountKey,
+  entityKey,
   SIGN_IN as KERNEL_SIGN_IN,
+  type KeyScope,
   useQueryClient,
   useRepeatKey,
   useReload,
@@ -40,8 +43,8 @@ async function derive(api: string, token: Token, a: DerivationRequest) {
 /** Where a result of a write goes: `said` to the announcer (`useSay`), `shown` to a toast that stays until FX-09. */
 type Notify = { said: (message: string) => void; shown: (message: string) => void };
 
-/** One write's options: its body, and where its result goes (the announcer by default). */
-type WriteOptions = { body?: unknown; notify?: (message: string) => void };
+/** One write's options: its body, where its result goes (the announcer by default) and its repeat-guard key (US-QS-03). */
+type WriteOptions = { body?: unknown; notify?: (message: string) => void; scope: KeyScope };
 
 /** Where the results of this page's writes go (US-QS-32): said by the announcer, a toast only where the row leaves. */
 function useNotify(): Notify {
@@ -60,15 +63,12 @@ function buildActions(
     method: "POST" | "PUT" | "DELETE",
     path: string,
     message: string,
-    { body, notify: to = notify.said }: WriteOptions = {},
+    { body, notify: to = notify.said, scope }: WriteOptions,
   ) => {
     const t = await token();
     if (!t) return SIGN_IN;
-    // One held key per target and action (US-QS-03): a lost answer repeats the same write, another target never does.
-    const r = await keys.run(
-      (key) => createWrite(api, t, { key })(method, path, body),
-      `${method} ${path}`,
-    );
+    // The key belongs to the write's target and action (US-QS-03): the zone or location and the body that is sent.
+    const r = await keys.run((key) => createWrite(api, t, { key })(method, path, body), scope);
     if (!r.ok) return r.error;
     setLastError(undefined);
     await load();
@@ -76,22 +76,40 @@ function buildActions(
     return null;
   };
   return {
-    zoneCreate: (e) => write("POST", "/light-zones", "Lichtzone angelegt.", { body: e }),
+    zoneCreate: (e) =>
+      write("POST", "/light-zones", "Lichtzone angelegt.", {
+        body: e,
+        scope: accountKey(`zone:create:${JSON.stringify(e)}`),
+      }),
     zoneUpdate: (id, e) =>
-      write("PUT", `/light-zones/${id}`, "Lichtzone gespeichert.", { body: e }),
+      write("PUT", `/light-zones/${id}`, "Lichtzone gespeichert.", {
+        body: e,
+        scope: entityKey("zone", id, `update:${JSON.stringify(e)}`),
+      }),
     // The zone leaves the list: its result stays a toast until the in-place row of FX-09 (SG-FEED-03).
     zoneDelete: (id) =>
-      write("DELETE", `/light-zones/${id}`, "Lichtzone gelöscht.", { notify: notify.shown }),
+      write("DELETE", `/light-zones/${id}`, "Lichtzone gelöscht.", {
+        notify: notify.shown,
+        scope: entityKey("zone", id, "delete"),
+      }),
     defaults: async () => {
       const f = await write("POST", "/light-zones/defaults", "Standard-Zonen übernommen.", {
         body: {},
+        scope: accountKey("zone:defaults"),
       });
       setLastError(f ?? undefined);
       return f;
     },
-    locationCreate: (e) => write("POST", "/locations", "Standort angelegt.", { body: e }),
+    locationCreate: (e) =>
+      write("POST", "/locations", "Standort angelegt.", {
+        body: e,
+        scope: accountKey(`location:create:${JSON.stringify(e)}`),
+      }),
     locationUpdate: (id, e) =>
-      write("PUT", `/locations/${id}`, "Standort gespeichert.", { body: e }),
+      write("PUT", `/locations/${id}`, "Standort gespeichert.", {
+        body: e,
+        scope: entityKey("location", id, `update:${JSON.stringify(e)}`),
+      }),
     zoneDerive: (a) => derive(api, token, a),
   };
 }

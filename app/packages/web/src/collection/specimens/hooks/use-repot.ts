@@ -1,4 +1,4 @@
-import { useRepeatKey } from "@/shared/data";
+import { entityKey, useRepeatKey } from "@/shared/data";
 import { useCallback, useState } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -41,7 +41,7 @@ export function useRepot(api: string, token: Token, after: () => void, say: Say)
             },
             { key },
           ),
-        open.id,
+        entityKey("specimen", open.id, `repot:${date}:${potId ?? ""}`),
       );
       if (!r.ok) return r.error;
       say(t(open.status === PLANT_STATUS ? "done.plant" : "done.cutting", { name: open.name }));

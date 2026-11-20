@@ -6,7 +6,13 @@ import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/
 import { dateText } from "@/shared/lib/format";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { currentTimeZone, useInvalidate, useWriteAction } from "../../../shared/data";
+import {
+  accountKey,
+  currentTimeZone,
+  entityKey,
+  useInvalidate,
+  useWriteAction,
+} from "../../../shared/data";
 import type { RhythmPauseItem } from "../../achievements-api";
 import { addRhythmPause, removeRhythmPause } from "./pause-api";
 import { isPauseTooLong, lastPauseDay } from "./pause-limit";
@@ -84,19 +90,37 @@ const UntilField = forwardRef<
 });
 UntilField.displayName = "UntilField";
 
+/** The writes of the pauses (US-ACH-04, US-QS-03): a new pause, and the removal of one. */
+function usePauseWrites(api: string, token: Token) {
+  const write = useWriteAction(token, useInvalidate(["achievements"]));
+  const add = (from: string, until: string) =>
+    void write.run(
+      (t, o) => addRhythmPause(api, t, { from, until }, o),
+      "Urlaub eingetragen.",
+      accountKey(`pause:add:${from}:${until}`),
+    );
+  const remove = (id: string) =>
+    void write.run(
+      (t, o) => removeRhythmPause(api, t, id, o),
+      "Urlaub entfernt.",
+      entityKey("pause", id, "remove"),
+    );
+  return { write, add, remove };
+}
+
 /**
  * Explicit pauses of the care rhythm (US-ACH-04): holiday or illness, up to 4 weeks each. Tasks due inside a pause
  * are neutral, nothing is lost. A refusal (too long, end before start) stays visible with its reason (P-10).
  */
-// A pause is set from today on, and the keeper changes both days (US-ACH-04, US-QS-32: prefilled with today).
 export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmPauseItem[] }) {
   const { api, token, pauses } = props;
+  // A pause is set from today on, and the keeper changes both days (US-ACH-04, US-QS-32: prefilled with today).
   const today = localToday(new Date(), currentTimeZone());
   const [from, setFrom] = useState(today);
   const [until, setUntil] = useState(today);
   const [untilLeft, setUntilLeft] = useState(false);
   const untilRef = useRef<HTMLInputElement>(null);
-  const write = useWriteAction(token, useInvalidate(["achievements"]));
+  const { write, add, remove } = usePauseWrites(api, token);
   const stop = stopMessageOf(from, until, untilLeft, write.error?.code === TOO_LONG);
   const submit = () => {
     if (!isHandedDate(from) || !isHandedDate(until)) return;
@@ -106,7 +130,7 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
       untilRef.current?.focus();
       return;
     }
-    void write.run((t, o) => addRhythmPause(api, t, { from, until }, o), "Urlaub eingetragen.");
+    add(from, until);
   };
   return (
     <div className="flex min-w-0 flex-col gap-3 text-sm">
@@ -131,12 +155,7 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
           Urlaub eintragen
         </Button>
       </div>
-      <PauseList
-        pauses={pauses}
-        remove={(id) =>
-          void write.run((t, o) => removeRhythmPause(api, t, id, o), "Urlaub entfernt.")
-        }
-      />
+      <PauseList pauses={pauses} remove={remove} />
       {write.error && write.error.code !== TOO_LONG && (
         <p role="alert" className="mt-2 text-destructive">
           {errorText(write.error.code)}

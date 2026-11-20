@@ -2,7 +2,13 @@
 import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createWrite, useWriteAction, type WriteOptions, type WriteSend } from "@/shared/data";
+import {
+  createWrite,
+  useWriteAction,
+  type KeyScope,
+  type WriteOptions,
+  type WriteSend,
+} from "@/shared/data";
 import { AnnouncerProvider } from "./announcer";
 import { deliverBuffered } from "./outbox";
 
@@ -39,12 +45,18 @@ const lost = () => new TypeError("Failed to fetch");
 const refusedWith = (code: string) =>
   new Response(JSON.stringify({ error: { code, text: "raw" } }), { status: 403 });
 
+/** The action of the test page's save: one target (the page), one action (US-QS-03). */
+const page: KeyScope = { target: "page", action: "save" };
+
 /** One tap that writes, shown the way a page does: a button that runs the action. */
 function Page(props: { send: WriteSend; after: () => void }) {
   const write = useWriteAction(async () => "token", props.after);
   return (
     <>
-      <button type="button" onClick={() => void write.run(props.send, "Gespeichert: Monstera.")}>
+      <button
+        type="button"
+        onClick={() => void write.run(props.send, "Gespeichert: Monstera.", page)}
+      >
         Speichern
       </button>
       <p>{write.running ? "läuft" : "bereit"}</p>
@@ -148,7 +160,7 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(measure(9), "Gespeichert."));
+    await act(async () => result.current.run(measure(9), "Gespeichert.", page));
     expect(fetchFn).toHaveBeenCalledTimes(1);
     expect(result.current.message).toBe("Gespeichert.");
   });
@@ -189,7 +201,7 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(measure(9), "Gespeichert."));
+    await act(async () => result.current.run(measure(9), "Gespeichert.", page));
     expect(fetchFn).not.toHaveBeenCalled();
     expect(result.current.error?.code).toBe("network.not_reachable");
   });
@@ -255,7 +267,7 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
 
   it("US-QS-03 a retry by the user after a lost answer sends the same key: one record", async () => {
     online(true);
-    const server = serverLosing(1);
+    const server = serverLosing(1, true);
     const save = measureOn(server, 9);
     const { result } = renderHook(() =>
       useWriteAction(
@@ -263,9 +275,9 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(save, "Gespeichert."));
+    await act(async () => result.current.run(save, "Gespeichert.", page));
     expect(result.current.error?.code).toBe("network.not_reachable");
-    await act(async () => result.current.run(save, "Gespeichert."));
+    await act(async () => result.current.run(save, "Gespeichert.", page));
     expect(result.current.error).toBeNull();
     expect(server.keys).toHaveLength(2);
     expect(server.keys[1]).toBe(server.keys[0]);
@@ -274,7 +286,7 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
 
   it("US-QS-03 a second tap after a confirmed write is a new write with a key of its own", async () => {
     online(true);
-    const server = serverLosing(0);
+    const server = serverLosing(0, true);
     const save = measureOn(server, 9);
     const { result } = renderHook(() =>
       useWriteAction(
@@ -282,33 +294,35 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(save, "Gespeichert."));
-    await act(async () => result.current.run(save, "Gespeichert."));
+    await act(async () => result.current.run(save, "Gespeichert.", page));
+    await act(async () => result.current.run(save, "Gespeichert.", page));
     expect(server.keys[1]).not.toBe(server.keys[0]);
     expect(server.records.size).toBe(2);
   });
 
-  it("US-QS-03 a lost answer on one row is not repeated by a tap on another row: the other row gets a key of its own, the first row's retap reuses its key", async () => {
+  it("US-QS-03 a lost answer on row A, a tap on row B, then a retap on A: B gets a key of its own, A's retap repeats A's key", async () => {
     online(true);
-    const server = serverLosing(1);
+    const server = serverLosing(1, true);
+    const rowA: KeyScope = { target: "row-a", action: "save" };
+    const rowB: KeyScope = { target: "row-b", action: "save" };
     const { result } = renderHook(() =>
       useWriteAction(
         async () => "token",
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(measureOn(server, 1), "a", "row-a"));
+    await act(async () => result.current.run(measureOn(server, 1), "a", rowA));
     expect(result.current.error?.code).toBe("network.not_reachable");
-    await act(async () => result.current.run(measureOn(server, 2), "b", "row-b"));
+    await act(async () => result.current.run(measureOn(server, 2), "b", rowB));
     expect(server.keys[1]).not.toBe(server.keys[0]);
     expect(result.current.error).toBeNull();
-    await act(async () => result.current.run(measureOn(server, 1), "a", "row-a"));
+    await act(async () => result.current.run(measureOn(server, 1), "a", rowA));
     expect(server.keys[2]).toBe(server.keys[0]);
     expect(result.current.error).toBeNull();
     expect(server.records.size).toBe(2);
   });
 
-  it("US-QS-03 a retry with an edited form keeps the key: the server refuses it as idempotency.key_conflict, the error stays on the page", async () => {
+  it("US-QS-03 a retry with an edited form is another action: it gets a key of its own and is applied, not refused", async () => {
     online(true);
     const server = serverLosing(1, true);
     const { result } = renderHook(() =>
@@ -317,11 +331,36 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(measureOn(server, 9), "a"));
+    // The action names its input (the value), so the edited value is another write.
+    await act(async () =>
+      result.current.run(measureOn(server, 9), "a", { target: "specimen:e1", action: "measure:9" }),
+    );
     expect(result.current.error?.code).toBe("network.not_reachable");
-    await act(async () => result.current.run(measureOn(server, 10), "b"));
-    expect(server.keys[1]).toBe(server.keys[0]);
-    expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    await act(async () =>
+      result.current.run(measureOn(server, 10), "b", {
+        target: "specimen:e1",
+        action: "measure:10",
+      }),
+    );
+    expect(server.keys[1]).not.toBe(server.keys[0]);
+    expect(result.current.error).toBeNull();
+    expect(server.records.size).toBe(2);
+  });
+
+  it("US-QS-03 the server refuses a key that comes back with another body: idempotency.key_conflict is the answer, nothing is replayed", async () => {
+    const server = serverLosing(0, true);
+    await createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "same" })(
+      "POST",
+      "/measurements",
+      { value: 1 },
+    );
+    const again = await createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "same" })(
+      "POST",
+      "/measurements",
+      { value: 2 },
+    );
+    expect(again.ok).toBe(false);
+    expect(!again.ok && again.error.code).toBe("idempotency.key_conflict");
   });
 
   it("US-QS-03 a refused write is definitive: its identical retry gets a new key", async () => {
@@ -334,8 +373,8 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(save, "Gespeichert."));
-    await act(async () => result.current.run(save, "Gespeichert."));
+    await act(async () => result.current.run(save, "Gespeichert.", page));
+    await act(async () => result.current.run(save, "Gespeichert.", page));
     const keys = fetchFn.mock.calls.map(
       ([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"],
     );
@@ -384,28 +423,6 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
     ); // a new action: a new write
     expect(server.keys[2]).not.toBe(server.keys[0]);
     expect([...server.records.values()].at(-1)).toMatchObject({ body: { share: true } });
-  });
-
-  it("US-QS-03 the same across two paths: archive lost, restore succeeds, archive again is applied", async () => {
-    const server = serverLosing(1);
-    await createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "archive" })(
-      "POST",
-      "/specimens/e1/archive",
-      { timeZone: "Europe/Berlin" },
-    );
-    await createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "restore" })(
-      "POST",
-      "/specimens/e1/restore",
-    );
-    await createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "archive-again" })(
-      "POST",
-      "/specimens/e1/archive",
-      { timeZone: "Europe/Berlin" },
-    );
-    expect(server.keys[2]).not.toBe(server.keys[0]);
-    expect([...server.records.values()].at(-1)).toMatchObject({
-      url: "http://api/specimens/e1/archive",
-    });
   });
 
   it("US-QS-03 two writes whose answers were lost: delivering the older one leaves the newer one's key in place", async () => {

@@ -81,7 +81,7 @@ describe("US-WAC-01 client of the measure API", () => {
         value: 12.5,
         quality: "healthy",
       },
-      { fetchFn, key: "test-key" },
+      { key: "test-key" },
     );
     expect(r).toMatchObject({ ok: true, value: { value: 12.5 } });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
@@ -106,7 +106,7 @@ describe("US-WAC-01 client of the measure API", () => {
           value: 12.5,
           quality: "healthy",
         },
-        { fetchFn, key: "test-key" },
+        { key: "test-key" },
       );
     } finally {
       setProfileTimeZone(null);
@@ -125,7 +125,7 @@ describe("US-WAC-01 client of the measure API", () => {
         value: 1,
         quality: "healthy",
       },
-      { fetchFn, key: "test-key" },
+      { key: "test-key" },
     );
     expect(r).toMatchObject({ ok: false, error: { code: "specimen.not_found" } });
   });

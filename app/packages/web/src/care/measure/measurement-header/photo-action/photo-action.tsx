@@ -1,4 +1,4 @@
-import { useRepeatKey } from "@/shared/data";
+import { entityKey, useRepeatKey } from "@/shared/data";
 import { useState } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
@@ -28,8 +28,11 @@ function usePhotoUpload(props: {
   const send = async (file: File, replace: boolean) => {
     const token = await access.token();
     if (!token) return;
-    const r = await keys.run((key) =>
-      uploadPhoto({ api: access.api, token }, specimenId, { file, date, replace }, key),
+    // The action names the file: another file after a lost answer is another write, with a key of its own.
+    const photo = `photo:${date}:${replace}:${file.name}:${file.size}:${file.lastModified}`;
+    const r = await keys.run(
+      (key) => uploadPhoto({ api: access.api, token }, specimenId, { file, date, replace }, key),
+      entityKey("specimen", specimenId, photo),
     );
     setInputKey((k) => k + 1);
     if (r.ok) {

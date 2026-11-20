@@ -4,7 +4,7 @@ import { Input } from "@/shared/ui/fields/input/input";
 import { Select } from "@/shared/ui/fields/select/select";
 import { copyText } from "@/shared/platform/browser/clipboard";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useWriteAction, useRepeatKey } from "../../../shared/data";
+import { accountKey, useWriteAction } from "../../../shared/data";
 import { createTask, previewTask, type AiTaskType } from "../../api/connections-api";
 import { HOWTO_LAYER, StepButton } from "../../clients-section/connect-step/connect-step";
 import table from "../../ai.de.json";
@@ -113,14 +113,6 @@ function Messages(props: { error: string | null; status: string | null }) {
 }
 
 /** The form for a new task, with the text of the task shown and copyable without a connected client (US-KI-08). */
-/** The preview of a task under its held key (US-QS-03): a repeat of the same preview carries that key. */
-const previewHeld = (
-  keys: ReturnType<typeof useRepeatKey>,
-  api: string,
-  t: string,
-  input: { type: AiTaskType; reference: string },
-) => keys.run((key) => previewTask(api, t, input, { key }));
-
 export function NewTask(props: {
   api: string;
   token: Token;
@@ -133,11 +125,10 @@ export function NewTask(props: {
   const [notice, setNotice] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const write = useWriteAction(props.token, props.onCreated);
-  const previewKeys = useRepeatKey();
 
   const preview = async () => {
     const t = await props.token();
-    const r = t ? await previewHeld(previewKeys, props.api, t, { type, reference }) : null;
+    const r = t ? await previewTask(props.api, t, { type, reference }) : null;
     setNotice(null);
     setProblem(r && !r.ok ? r.error.text : null);
     setText(r?.ok ? r.value.prompt : null);
@@ -168,6 +159,7 @@ export function NewTask(props: {
             void write.run(
               (t, opts) => createTask(props.api, t, { type, reference }, opts),
               "Der Auftrag ist angelegt.",
+              accountKey(`task:${type}:${reference}`),
             )
           }
         >

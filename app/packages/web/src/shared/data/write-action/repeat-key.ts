@@ -1,37 +1,105 @@
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { isUnanswered, newRepeatKey, type Response } from "../api";
 
 /**
- * The repeat-guard keys of user actions (US-QS-03). `take` gives the key of an action: the key that a lost answer left in
- * its scope, or a new one. `settle` keeps the key after a lost answer, so the next tap of the same action repeats the same
- * write, and drops it after a success or a refusal, so the next action is a new write. `run` takes, sends and settles in
- * one step. `drop` ends an action without an answer (a buffered write is answered on delivery, and the buffer holds its key).
- *
- * The key belongs to the action, not to the hook: a hook that serves many rows or items passes the row or item id (and
- * the action, when one row has several) as `scope`, so a lost answer on one row never sends another row's write under
- * its key. The default scope is the whole hook, for a hook that serves one action. No other code decides whether two
- * writes are the same.
+ * The action a repeat-guard key belongs to (US-QS-03). `target` is the row or item the write is about (the account for a
+ * single-target form, a constant with a comment there). `action` is the operation with the input that decides the body:
+ * for a decide or answer flow, also the chosen value (yes or no, accept or decline, the rights value). A repeat of the
+ * same action carries the same key; another action on the same target gets a key of its own.
+ */
+export type KeyScope = { readonly target: string; readonly action: string };
+
+/**
+ * The entities that take repeat-guarded writes. The target of a write about one entity is its prefix and its id
+ * (`specimen:<id>`, see `entityKey`), so the ids of two tables never collide. The account has no id (`accountKey`).
+ */
+export type RepeatEntity =
+  | "specimen"
+  | "wish"
+  | "equipment-wish"
+  | "pause"
+  | "lamp"
+  | "equipment"
+  | "sensor"
+  | "zone"
+  | "location"
+  | "species"
+  | "offer"
+  | "swap"
+  | "client"
+  | "draft"
+  | "task"
+  | "treatment"
+  | "friend"
+  | "case";
+
+/**
+ * The repeat-guard key of an action on one entity (US-QS-03): the target is the entity and its id, the action names the
+ * operation and the input that decides the body (the rights value, the step, the location).
+ */
+export const entityKey = (entity: RepeatEntity, id: string, action: string): KeyScope => ({
+  target: `${entity}:${id}`,
+  action,
+});
+
+/**
+ * The repeat-guard key of an action on the whole account (its profile, its settings, its deletion). Its target is
+ * `account`: a success on any account write frees the keys of the other account writes that are still held (`settle`).
+ */
+export const accountKey = (action: string): KeyScope => ({ target: "account", action });
+
+/**
+ * The keys held after a lost answer, per target and per action. Module level: every hook that writes a target shares
+ * them, so a success on that target frees them all (see `settle`). Cleared on sign-out (`forgetRepeatKeys`).
+ */
+const held = new Map<string, Map<string, string>>();
+
+/** The key of an action: the one a lost answer left, or a new one. */
+const take = (scope: KeyScope): string =>
+  held.get(scope.target)?.get(scope.action) ?? newRepeatKey();
+
+/**
+ * Settles the answer of an action. A lost answer keeps its key for the next tap of the same action. A success frees every
+ * held key of its target: the keeper moved on, and replaying an older write would swallow the newer one (archive,
+ * restore, archive). A refusal frees the key of its own action only.
+ */
+const settle = (key: string, r: Response<unknown, unknown>, scope: KeyScope): void => {
+  if (r.ok) {
+    held.delete(scope.target);
+    return;
+  }
+  if (isUnanswered(r.error)) {
+    let actions = held.get(scope.target);
+    if (!actions) held.set(scope.target, (actions = new Map()));
+    actions.set(scope.action, key);
+    return;
+  }
+  held.get(scope.target)?.delete(scope.action);
+};
+
+/** Frees every held key, on sign-out or an account change: a key of another account must never be repeated. */
+export const forgetRepeatKeys = (): void => held.clear();
+
+/**
+ * The repeat-guard keys of user actions (US-QS-03). `run` takes the key of the action, sends with it and settles the answer
+ * in one step. `take` and `settle` are for the cases where the send happens in between (a buffered write, a multi-step
+ * action). The scope is required: a call site names its target and the input that decides its body.
  */
 export function useRepeatKey() {
-  const held = useRef<Map<string, string>>(new Map());
-  return useMemo(() => {
-    const take = (scope = ""): string => held.current.get(scope) ?? newRepeatKey();
-    const settle = (key: string, r: Response<unknown, unknown>, scope = ""): void => {
-      if (!r.ok && isUnanswered(r.error)) held.current.set(scope, key);
-      else held.current.delete(scope);
-    };
-    const drop = (scope = ""): void => {
-      held.current.delete(scope);
-    };
-    const run = async <T, D = unknown>(
-      send: (key: string) => Promise<Response<T, D>>,
-      scope = "",
-    ): Promise<Response<T, D>> => {
-      const key = take(scope);
-      const r = await send(key);
-      settle(key, r, scope);
-      return r;
-    };
-    return { take, settle, drop, run };
-  }, []);
+  return useMemo(
+    () => ({
+      take,
+      settle,
+      run: async <T, D = unknown>(
+        send: (key: string) => Promise<Response<T, D>>,
+        scope: KeyScope,
+      ): Promise<Response<T, D>> => {
+        const key = take(scope);
+        const r = await send(key);
+        settle(key, r, scope);
+        return r;
+      },
+    }),
+    [],
+  );
 }

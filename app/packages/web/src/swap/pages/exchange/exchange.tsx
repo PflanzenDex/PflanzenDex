@@ -12,7 +12,7 @@ import { Button } from "@/shared/ui/button/button";
 import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { errorText } from "@/shared/lib/error-text";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadExchange, withdrawOffer, type ExchangeData } from "../../api/offers-api";
 import { SwapRequests } from "../../parts/swap-requests/swap-requests";
 import { FriendOffers } from "../../parts/friend-offers/friend-offers";
@@ -102,6 +102,7 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
             void withdraw.run(
               (t, opts) => withdrawOffer(api, t, o.id, opts),
               t("exchange.withdrawn", { name: o.specimenName ?? t("exchange.plant") }),
+              entityKey("offer", o.id, "withdraw"),
             )
           }
         />

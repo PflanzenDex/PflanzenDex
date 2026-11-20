@@ -3,7 +3,7 @@ import { Button } from "@/shared/ui/button/button";
 import { Select } from "@/shared/ui/fields/select/select";
 import { refusalText } from "@/shared/lib/error-text";
 import { BUSY_LOOK, cn } from "@/shared/lib/utils";
-import { SIGN_IN, type ApiError, useRepeatKey } from "../../../../shared/data";
+import { accountKey, SIGN_IN, type ApiError, useRepeatKey } from "../../../../shared/data";
 import { saveKeeperStyle, type KeeperStyle, type KeeperStyleState } from "../keeper-style-api";
 
 type Token = () => Promise<string | undefined>;
@@ -44,7 +44,10 @@ export function useSaveStyle(
     setSaving(true);
     const t = await props.token();
     const r = t
-      ? await keys.run((key) => saveKeeperStyle(props.api, t, style, { key }))
+      ? await keys.run(
+          (key) => saveKeeperStyle(props.api, t, style, { key }),
+          accountKey(`style:${style}`),
+        )
       : { ok: false as const, error: SIGN_IN };
     busy.current = false;
     setSaving(false);

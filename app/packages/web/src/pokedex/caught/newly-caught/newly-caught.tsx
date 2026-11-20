@@ -3,7 +3,7 @@ import { newlyCaught } from "@pflanzendex/core";
 import { useCallback, useEffect, useRef } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { errorText } from "@/shared/lib/error-text";
-import { useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
+import { accountKey, useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
 import { loadSeen, markSeen } from "../seen-api";
 
 const SEEN_KEY = ["pokedex", "seen"] as const;
@@ -40,6 +40,7 @@ export function NewlyCaught(props: {
           opts,
         ),
       "",
+      accountKey(`seen:${caught.map((c) => c.species).join(",")}`),
     );
   }, [missing, api, caught, write]);
 
@@ -63,7 +64,13 @@ export function NewlyCaught(props: {
         variant="outline"
         pending={write.running}
         pendingLabel="Wird gespeichert …"
-        onClick={() => void write.run((t, opts) => markSeen(api, t, names, opts), "")}
+        onClick={() =>
+          void write.run(
+            (t, opts) => markSeen(api, t, names, opts),
+            "",
+            accountKey(`seen:${names.join(",")}`),
+          )
+        }
       >
         Als gesehen markieren
       </Button>

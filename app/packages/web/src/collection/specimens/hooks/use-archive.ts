@@ -1,4 +1,4 @@
-import { useRepeatKey } from "@/shared/data";
+import { entityKey, useRepeatKey } from "@/shared/data";
 import { useCallback, useState } from "react";
 import type { ApiError } from "../../../shared/data";
 import { refusalText } from "@/shared/lib/error-text";
@@ -28,7 +28,7 @@ export function useArchive(api: string, token: Token, after: () => void, say: Sa
       if (!tok || !open) return SIGN_IN;
       const r = await keys.run(
         (key) => archiveSpecimen(api, tok, { id: open.id, reason }, { key }),
-        `${open.id}:archive`,
+        entityKey("specimen", open.id, `archive:${reason}`),
       );
       if (!r.ok) return r.error;
       // The row leaves the list: visible result until the in-place row of FX-09 (SG-FEED-03).
@@ -44,7 +44,10 @@ export function useArchive(api: string, token: Token, after: () => void, say: Sa
     async (e: SpecimenName) => {
       const tok = await token();
       const r = tok
-        ? await keys.run((key) => restoreSpecimen(api, tok, e.id, { key }), `${e.id}:restore`)
+        ? await keys.run(
+            (key) => restoreSpecimen(api, tok, e.id, { key }),
+            entityKey("specimen", e.id, "restore"),
+          )
         : { ok: false as const, error: SIGN_IN };
       if (!r.ok) say(refusalText(r.error), "error");
       // The row leaves the archive: visible result until the in-place row of FX-09 (SG-FEED-03).

@@ -1,7 +1,13 @@
 import { useCallback, useState } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { errorText } from "@/shared/lib/error-text";
-import { useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
+import {
+  accountKey,
+  entityKey,
+  useInvalidate,
+  useRequest,
+  useWriteAction,
+} from "../../../shared/data";
 import { createOffer, loadPreview, shareSpecimen, type OwnSpecimenRow } from "../../api/offers-api";
 import { OfferFields, type OfferFieldValues } from "./offer-fields/offer-fields";
 import { OfferNotices } from "./offer-notices/offer-notices";
@@ -56,11 +62,13 @@ function useOfferForm(
   const ready = p !== undefined && p.shared && !p.offered && (!p.health.treatmentOpen || confirm);
   const submit = async () => {
     let created = false;
-    await write.run(async (t, opts) => {
-      const r = await createOffer(api, t, offerBody(fields, confirm), opts);
+    const body = offerBody(fields, confirm);
+    const send: Parameters<typeof write.run>[0] = async (t, opts) => {
+      const r = await createOffer(api, t, body, opts);
       created = r.ok;
       return r;
-    }, CREATED);
+    };
+    await write.run(send, CREATED, accountKey(`offer:create:${JSON.stringify(body)}`));
     setConfirm(false);
     // A form in a layer ends on success: the host closes the layer and confirms with a toast (issue 1696, D10).
     if (created) onCreated?.(CREATED);
@@ -69,6 +77,7 @@ function useOfferForm(
     void write.run(
       (t, opts) => shareSpecimen(api, t, fields.specimenId, opts),
       "Freigegeben: Freunde sehen diese Pflanze ab jetzt.",
+      entityKey("specimen", fields.specimenId, "share"),
     );
   return {
     fields,

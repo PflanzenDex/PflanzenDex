@@ -1,4 +1,4 @@
-import { useRepeatKey } from "@/shared/data";
+import { entityKey, useRepeatKey } from "@/shared/data";
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
 import { LoadFrame, type Response } from "../../shared/data";
@@ -15,29 +15,26 @@ const SIGN_IN_NEEDED = {
   error: { code: "access.not_signed_in", text: t("page.signIn") },
 };
 
-/** Decide and undo of a suggestion, each under its held key per species (US-QS-03): a lost answer repeats under that key. */
+/**
+ * Decide and undo of a suggestion (US-QS-03). The species is the target; the decision and the undo are its actions, so a
+ * lost answer repeats under the key of its own action and a success on the species frees the other.
+ */
 function useSuggestionWrites(api: string, token: () => Promise<string | undefined>) {
   const keys = useRepeatKey();
-  // One held key per species and kind of answer: a lost answer is repeated under the same key (US-QS-03).
   const decide = useCallback(
-    async (species: string, decision: "yes" | "no") => {
-      const key = keys.take(species);
-      const r = await signedIn(token, (t) =>
-        decideSuggestion(api, t, { species, decision }, { key }),
-      );
-      keys.settle(key, r, species);
-      return r;
-    },
+    (species: string, decision: "yes" | "no") =>
+      keys.run(
+        (key) => signedIn(token, (t) => decideSuggestion(api, t, { species, decision }, { key })),
+        entityKey("species", species, `decide:${decision}`),
+      ),
     [api, token, keys],
   );
   const undo = useCallback(
-    async (species: string) => {
-      const scope = `${species}:undo`;
-      const key = keys.take(scope);
-      const r = await signedIn(token, (t) => undoSuggestionDecision(api, t, species, { key }));
-      keys.settle(key, r, scope);
-      return r;
-    },
+    (species: string) =>
+      keys.run(
+        (key) => signedIn(token, (t) => undoSuggestionDecision(api, t, species, { key })),
+        entityKey("species", species, "undo"),
+      ),
     [api, token, keys],
   );
   return { decide, undo };

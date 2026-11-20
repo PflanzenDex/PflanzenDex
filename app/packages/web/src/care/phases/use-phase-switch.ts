@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useWriteAction } from "../../shared/data";
+import { accountKey, useWriteAction } from "../../shared/data";
 import { confirmPhaseSwitch } from "../shared/api/care-phases-api";
 
 /**
@@ -16,7 +16,11 @@ export function usePhaseSwitch(
   const { run, ...state } = useWriteAction(token, after, say);
   const confirm = useCallback(
     (specimenIds: readonly string[], success: string) =>
-      run((t, opts) => confirmPhaseSwitch(api, t, specimenIds, opts), success),
+      run(
+        (t, opts) => confirmPhaseSwitch(api, t, specimenIds, opts),
+        success,
+        accountKey(`switch:${specimenIds.join(",")}`),
+      ),
     [api, run],
   );
   return { ...state, confirm };

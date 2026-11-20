@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
-import { LoadFrame, type Response, useRepeatKey } from "../../../shared/data";
+import { entityKey, LoadFrame, type Response, useRepeatKey } from "../../../shared/data";
 import {
   answerYes,
   loadMatchDeck,
@@ -21,7 +21,7 @@ const SIGN_IN_NEEDED = {
 
 /** The writes of the deck, each with a fresh token; without a token they answer "sign in" (P-10). */
 function useWrites(api: string, token: Token) {
-  // One held key per offer and answer (US-QS-03): a lost answer on one card never repeats another card's write.
+  // One held key per offer and action (US-QS-03): a lost answer on one card never repeats another card's write.
   const keys = useRepeatKey();
   const yes = useCallback(
     async (offerId: string, counter: string | null): ReturnType<typeof answerYes> => {
@@ -29,7 +29,7 @@ function useWrites(api: string, token: Token) {
       return t
         ? keys.run(
             (key) => answerYes(api, t, { offerId, counterSpecimenId: counter }, { key }),
-            `${offerId}:yes`,
+            entityKey("offer", offerId, `yes:${counter}`),
           )
         : (SIGN_IN_NEEDED as Response<never>);
     },
@@ -39,7 +39,10 @@ function useWrites(api: string, token: Token) {
     async (offerId: string, a: "no" | "later") => {
       const t = await token();
       return t
-        ? keys.run((key) => saveAnswer(api, t, { offerId, answer: a }, { key }), `${offerId}:${a}`)
+        ? keys.run(
+            (key) => saveAnswer(api, t, { offerId, answer: a }, { key }),
+            entityKey("offer", offerId, `answer:${a}`),
+          )
         : (SIGN_IN_NEEDED as Response<never>);
     },
     [api, token],
@@ -48,7 +51,10 @@ function useWrites(api: string, token: Token) {
     async (offerId: string) => {
       const t = await token();
       return t
-        ? keys.run((key) => undoAnswer(api, t, offerId, { key }), `${offerId}:undo`)
+        ? keys.run(
+            (key) => undoAnswer(api, t, offerId, { key }),
+            entityKey("offer", offerId, "undo"),
+          )
         : (SIGN_IN_NEEDED as Response<never>);
     },
     [api, token],

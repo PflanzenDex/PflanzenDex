@@ -1,4 +1,4 @@
-import { useRepeatKey } from "@/shared/data";
+import { accountKey, useRepeatKey } from "@/shared/data";
 import { useEffect, useState } from "react";
 import { FIRST_PLANT_GUIDE, UNLOCK_FUNCTIONS, type OnboardingCounts } from "@pflanzendex/core";
 import { useUnlocks } from "../../unlock";
@@ -65,8 +65,9 @@ export function useGuideEnd(api: string, token: Token, hints: HintState | "faile
   const store = async () => {
     const t = await token();
     const r = t
-      ? await keys.run((key) =>
-          saveHint(api, t, { occasion: FIRST_PLANT_GUIDE, state: "dismissed" }, { key }),
+      ? await keys.run(
+          (key) => saveHint(api, t, { occasion: FIRST_PLANT_GUIDE, state: "dismissed" }, { key }),
+          accountKey(`guide-end:${FIRST_PLANT_GUIDE}`),
         )
       : null;
     setFailed(r === null ? NOT_SIGNED_IN : r.ok ? null : r.error);

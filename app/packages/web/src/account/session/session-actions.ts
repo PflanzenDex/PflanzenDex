@@ -1,6 +1,12 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { User, UserManager } from "oidc-client-ts";
-import { setProfileTimeZone, type ApiError, newRepeatKey, isUnanswered } from "../../shared/data";
+import {
+  setProfileTimeZone,
+  type ApiError,
+  newRepeatKey,
+  isUnanswered,
+  forgetRepeatKeys,
+} from "../../shared/data";
 import { SIGN_OUT_UNREACHABLE, signOutEverywhere } from "../api/account-api";
 import { here, hereState } from "../api/sign-in-client";
 import { texts } from "../../shared/lib/text-rules/texts";
@@ -43,6 +49,8 @@ export function endSession(
   mgr: UserManager,
   then?: "after_logout" | "after_switch",
 ): Promise<void> {
+  // Sign-out and account switch both end the session: the held repeat-guard keys of the account go too (US-QS-03).
+  forgetRepeatKeys();
   // On the way to a sign-in form nobody signed out: the marker would stay in the tab and show "Du bist abgemeldet.".
   window.sessionStorage.setItem(then ? REGISTER : MARKER, then ?? "1");
   // The session ends here, so this tab no longer knows of a live one.

@@ -9,6 +9,7 @@ import { RequestState } from "@/shared/patterns/states/request-state/request-sta
 import { setSpecimenLocation } from "../../../../../collection";
 import {
   createWrite,
+  entityKey,
   useQueryClient,
   type QueryClient,
   useRepeatKey,
@@ -69,7 +70,7 @@ async function placeSpecimen(
   if (!t) return { ok: false as const, error: { code: "access.not_signed_in" } };
   const set = await keys.run(
     (key) => setSpecimenLocation(p.api, t, { id: p.specimenId, locationId: chosen.id }, { key }),
-    p.specimenId,
+    entityKey("specimen", p.specimenId, `locate:${chosen.id}`),
   );
   if (!set.ok || chosen.lightZoneId !== null || !zoneId) return set;
   const named = await keys.run(
@@ -79,7 +80,7 @@ async function placeSpecimen(
         kind: chosen.kind,
         lightZoneId: zoneId,
       }),
-    `${chosen.id}:name`,
+    entityKey("location", chosen.id, `zone:${zoneId}`),
   );
   // The location now stands under a light zone: the shared copies of the light data are asked again (issue 1244).
   if (named.ok) await refreshLight(client);

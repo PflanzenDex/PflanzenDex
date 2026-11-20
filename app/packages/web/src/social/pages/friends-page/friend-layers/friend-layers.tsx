@@ -3,7 +3,7 @@ import { FeedBlock } from "../../../feed/feed-block/feed-block";
 import { FriendsBanner } from "../../../feed/friends-banner/friends-banner";
 import { FriendList } from "../../../parts/friend-list/friend-list";
 import { nameOf, RequestList } from "../../../parts/request-list/request-list";
-import { useWriteAction } from "../../../../shared/data";
+import { entityKey, useWriteAction } from "../../../../shared/data";
 import { Layer } from "./layer/layer";
 import { Outcome } from "./outcome/outcome";
 import { SharingSection } from "./sharing-section/sharing-section";
@@ -39,6 +39,7 @@ export function ListLayers(props: {
                     ),
                   })
                 : tx("friends.declined"),
+              entityKey("friend", id, `answer:${decision}`),
             )
           }
         />

@@ -1,4 +1,4 @@
-import { useRepeatKey } from "@/shared/data";
+import { entityKey, useRepeatKey } from "@/shared/data";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
@@ -40,7 +40,7 @@ function useLink(api: string, token: Token, setNotice: (n: Notice) => void) {
       const r = t
         ? await keys.run(
             (key) => linkWishSpecimen(api, t, { wishId: w.id, specimenId: specimen.id }, { key }),
-            w.id,
+            entityKey("wish", w.id, `link:${specimen.id}`),
           )
         : null;
       setNotice(

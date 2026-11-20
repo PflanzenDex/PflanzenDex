@@ -8,6 +8,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { isOnline } from "@/shared/platform/browser/network";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import {
+  entityKey,
   useInvalidate,
   useQueryClient,
   useWriteAction,
@@ -133,6 +134,7 @@ export function useEndFriendship(props: {
     void ending.run(
       (t, opts) => endFriendship(api, t, friendId, opts),
       tx("friends.ended", { name }),
+      entityKey("friend", friendId, "end"),
     );
     if (offline) navigate(PATHS.friends, { replace: true });
   };

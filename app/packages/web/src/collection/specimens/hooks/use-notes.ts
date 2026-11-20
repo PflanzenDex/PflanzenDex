@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { useReload, type ApiError, useRepeatKey } from "../../../shared/data";
+import { entityKey, useReload, type ApiError, useRepeatKey } from "../../../shared/data";
 import { setSpecimenNotes } from "../model/specimens-api";
 import { SIGN_IN } from "./use-collection";
 import table from "../../plants-screen/plant-layers/plant-layer/plant-notes/plant-notes.de.json";
@@ -31,7 +31,7 @@ export function useNotes(access: PhotoAccess, plant: { id: string; name: string 
         if (!credential) return SIGN_IN;
         const r = await keys.run(
           (key) => setSpecimenNotes(api, credential, { id, notes }, { key }),
-          id,
+          entityKey("specimen", id, `notes:${notes}`),
         );
         if (!r.ok) return r.error;
         await reload();

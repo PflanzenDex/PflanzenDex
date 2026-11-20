@@ -1,0 +1,245 @@
+// @vitest-environment jsdom
+import { act, cleanup, renderHook } from "@testing-library/react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  accountKey,
+  createQueryClient,
+  createWrite,
+  entityKey,
+  forgetRepeatKeys,
+  useClearOnSignOut,
+  type KeyScope,
+  type WriteOptions,
+} from "../index";
+import { useWriteAction } from "./use-write-action";
+
+afterEach(() => {
+  cleanup();
+  forgetRepeatKeys();
+  vi.restoreAllMocks();
+});
+
+/**
+ * A server that keeps one record per Idempotency-Key and applies each new key once, as the API does: a key that comes back
+ * with the same request is answered with the stored answer, with another request it is refused (`idempotency.key_conflict`).
+ * The first `lost` answers are lost on the way back: the write is applied, the client sees a network error. `applied` lists
+ * the writes that changed something, so a replay shows as a missing entry.
+ */
+function keyServer(lost = 0) {
+  const records = new Map<string, string>();
+  const keys: string[] = [];
+  const applied: string[] = [];
+  let left = lost;
+  const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
+    const key = (init?.headers as Record<string, string>)["Idempotency-Key"] ?? "";
+    const request = `${init?.method} ${String(url)} ${String(init?.body ?? "")}`;
+    keys.push(key);
+    const seen = records.get(key);
+    if (seen !== undefined && seen !== request)
+      return new Response(
+        JSON.stringify({ error: { code: "idempotency.key_conflict", text: "x" } }),
+        { status: 409 },
+      );
+    if (seen === undefined) {
+      records.set(key, request);
+      applied.push(`${init?.method} ${String(url).replace("http://api", "")}`);
+    }
+    if (left > 0) {
+      left -= 1;
+      throw new TypeError("Failed to fetch");
+    }
+    return new Response("{}", { status: 201 });
+  });
+  return { fetchFn, keys, applied };
+}
+
+/** A write of the tests: one request through the write layer with the options of the action (US-QS-03). */
+const send =
+  (fetchFn: typeof fetch, method: "POST" | "PUT" | "DELETE", path: string, body?: unknown) =>
+  (t: string, options: WriteOptions) =>
+    createWrite<unknown>("http://api", t, { ...options, fetchFn })(method, path, body);
+
+/** Runs one action of a page; the answer is the write's own. */
+function tap(
+  hook: ReturnType<typeof useWriteAction>,
+  run: ReturnType<typeof send>,
+  scope: KeyScope,
+) {
+  return act(async () => hook.run(run, "Gespeichert.", scope));
+}
+
+describe("US-QS-03 · the repeat-guard key of an action, held per target", () => {
+  it("US-QS-03 archive, restore, archive: a success on the specimen frees the lost archive's key, the third archive really archives", async () => {
+    const server = keyServer(1);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const archive = send(server.fetchFn, "POST", "/specimens/e1/archive", { reason: "x" });
+    const restore = send(server.fetchFn, "POST", "/specimens/e1/restore");
+    const target = entityKey("specimen", "e1", "archive:x");
+    await tap(result.current, archive, target);
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await tap(result.current, restore, entityKey("specimen", "e1", "restore"));
+    expect(result.current.error).toBeNull();
+    await tap(result.current, archive, target);
+    expect(result.current.error).toBeNull();
+    expect(server.applied).toEqual([
+      "POST /specimens/e1/archive",
+      "POST /specimens/e1/restore",
+      "POST /specimens/e1/archive",
+    ]);
+  });
+
+  it("US-QS-03 water, undo, water again across two hooks: the second water is a write of its own", async () => {
+    const server = keyServer(1);
+    const water = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const undo = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const plant = (action: string): KeyScope => entityKey("specimen", "e2", action);
+    await tap(
+      water.result.current,
+      send(server.fetchFn, "POST", "/care/water", { ids: ["e2"] }),
+      plant("water"),
+    );
+    expect(water.result.current.error?.code).toBe("network.not_reachable");
+    await tap(
+      undo.result.current,
+      send(server.fetchFn, "DELETE", "/care/water/e2"),
+      plant("unwater:2026-11-20"),
+    );
+    expect(undo.result.current.error).toBeNull();
+    await tap(
+      water.result.current,
+      send(server.fetchFn, "POST", "/care/water", { ids: ["e2"] }),
+      plant("water"),
+    );
+    expect(water.result.current.error).toBeNull();
+    expect(server.applied).toEqual([
+      "POST /care/water",
+      "DELETE /care/water/e2",
+      "POST /care/water",
+    ]);
+  });
+
+  it("US-QS-03 deletion request, cancel, request again: the cancel frees the lost request's key, the second request is applied", async () => {
+    const server = keyServer(1);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const request = send(server.fetchFn, "POST", "/account/deletion", { confirm: true });
+    const cancel = send(server.fetchFn, "DELETE", "/account/deletion");
+    await tap(result.current, request, accountKey("deletion:request"));
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await tap(result.current, cancel, accountKey("deletion:cancel"));
+    await tap(result.current, request, accountKey("deletion:request"));
+    expect(result.current.error).toBeNull();
+    expect(server.applied).toEqual([
+      "POST /account/deletion",
+      "DELETE /account/deletion",
+      "POST /account/deletion",
+    ]);
+  });
+
+  it("US-QS-03 a refusal frees only its own action: a lost archive keeps its key when a restore is refused", async () => {
+    const server = keyServer(1);
+    const refusing = vi.fn<typeof fetch>(
+      async () =>
+        new Response(JSON.stringify({ error: { code: "input.invalid", text: "x" } }), {
+          status: 400,
+        }),
+    );
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const archive = send(server.fetchFn, "POST", "/specimens/e3/archive", { reason: "x" });
+    await tap(result.current, archive, entityKey("specimen", "e3", "archive:x"));
+    await tap(
+      result.current,
+      send(refusing, "POST", "/specimens/e3/restore"),
+      entityKey("specimen", "e3", "restore"),
+    );
+    expect(result.current.error?.code).toBe("input.invalid");
+    await tap(result.current, archive, entityKey("specimen", "e3", "archive:x"));
+    expect(server.keys[1]).toBe(server.keys[0]);
+    expect(server.applied).toEqual(["POST /specimens/e3/archive"]);
+  });
+
+  it("US-QS-03 a lost answer on row A, then row B, then a retap of A: B gets a key of its own, A reuses its key", async () => {
+    const server = keyServer(1);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const write = (id: string) =>
+      send(server.fetchFn, "POST", `/specimens/${id}/measurements`, { value: 1 });
+    await tap(result.current, write("a"), entityKey("specimen", "a", "measure:1"));
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await tap(result.current, write("b"), entityKey("specimen", "b", "measure:1"));
+    expect(server.keys[1]).not.toBe(server.keys[0]);
+    expect(result.current.error).toBeNull();
+    await tap(result.current, write("a"), entityKey("specimen", "a", "measure:1"));
+    expect(server.keys[2]).toBe(server.keys[0]);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("US-QS-03 forgetRepeatKeys: a lost answer's key is not repeated after it is forgotten", async () => {
+    const server = keyServer(1);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const save = send(server.fetchFn, "POST", "/measurements", { value: 1 });
+    const scope = entityKey("specimen", "e4", "measure:1");
+    await tap(result.current, save, scope);
+    forgetRepeatKeys();
+    await tap(result.current, save, scope);
+    expect(server.keys[1]).not.toBe(server.keys[0]);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("US-QS-03 the end of the signed-in state (sign-out) clears the held keys: the next account gets fresh keys", async () => {
+    const server = keyServer(1);
+    const queries = createQueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queries}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const save = send(server.fetchFn, "POST", "/measurements", { value: 1 });
+    const scope = entityKey("specimen", "e5", "measure:1");
+    await tap(result.current, save, scope);
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    renderHook(() => useClearOnSignOut(false), { wrapper });
+    await tap(result.current, save, scope);
+    expect(server.keys[1]).not.toBe(server.keys[0]);
+    expect(result.current.error).toBeNull();
+  });
+});

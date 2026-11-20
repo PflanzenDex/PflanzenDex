@@ -48,7 +48,7 @@ export async function recordMeasurement(
   options: WriteOptions,
 ): Promise<Response<MeasurementRow>> {
   const timeZone = currentTimeZone();
-  const r = await createWrite(access.api, access.token, options)(
+  const r = await createWrite(access.api, access.token, { ...options, fetchFn: access.fetchFn })(
     "POST",
     `/specimens/${encodeURIComponent(specimenId)}/measurements`,
     { ...input, timeZone },

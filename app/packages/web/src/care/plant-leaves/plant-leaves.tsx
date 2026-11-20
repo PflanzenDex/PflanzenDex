@@ -8,6 +8,7 @@ import {
   type LeafRow as Leaf,
 } from "@pflanzendex/core";
 import {
+  entityKey,
   LoadFrame,
   SIGN_IN,
   currentTimeZone,
@@ -67,22 +68,28 @@ function useLeafWrites(api: string, token: Token, specimenId: string, onDone: ()
         access: { api: string; token: string },
         opts: WriteOptions,
       ) => Promise<Response<unknown>>,
-      scope: string,
+      action: string,
     ) => {
       const current = await token();
       if (!current) return SIGN_IN;
       setBusy(true);
-      const r = await keys.run((key) => write({ api, token: current }, { key }), scope);
+      const r = await keys.run(
+        (key) => write({ api, token: current }, { key }),
+        entityKey("specimen", specimenId, action),
+      );
       setBusy(false);
       if (r.ok) onDone();
       return r.ok ? null : r.error;
     },
-    [api, token, onDone, keys],
+    [api, token, specimenId, onDone, keys],
   );
   return {
     busy,
     send: (input: LeafInput): Promise<ApiError | null> =>
-      run((access, opts) => recordLeaf(access, specimenId, input, opts), "send"),
+      run(
+        (access, opts) => recordLeaf(access, specimenId, input, opts),
+        `send:${JSON.stringify(input)}`,
+      ),
     remove: (leafId: string): Promise<ApiError | null> =>
       run((access, opts) => removeLeaf(access, specimenId, leafId, opts), `remove:${leafId}`),
   };

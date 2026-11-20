@@ -6,7 +6,7 @@ import { Button } from "@/shared/ui/button/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { errorText } from "@/shared/lib/error-text";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import {
   loadFriendOffers,
   requestOffer,
@@ -135,6 +135,7 @@ function Offers(props: {
               void write.run(
                 (t, opts) => requestOffer({ api, token: t }, o.offerId, input, opts),
                 t("friends.sent", { title: title(o) }),
+                entityKey("offer", o.offerId, `request:${JSON.stringify(input)}`),
               )
             }
           />

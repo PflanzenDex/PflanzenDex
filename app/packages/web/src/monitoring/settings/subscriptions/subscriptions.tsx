@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Button } from "@/shared/ui/button/button";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { accountKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadSubscriptions, removeSubscription } from "../../api/reminders-api";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../monitoring.de.json";
@@ -48,6 +48,7 @@ function List(props: { api: string; token: Token; endpoints: readonly string[] }
                   void write.run(
                     (t, opts) => removeSubscription(props.api, t, endpoint, opts),
                     "Browser abgemeldet.",
+                    accountKey(`unsubscribe:${endpoint}`),
                   )
                 }
               >
