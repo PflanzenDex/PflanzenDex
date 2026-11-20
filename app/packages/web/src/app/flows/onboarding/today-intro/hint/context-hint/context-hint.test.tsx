@@ -68,7 +68,7 @@ describe("US-ONB-07 hints of the other occasions", () => {
     );
     expect((await screen.findByRole("status")).textContent).toContain(HINT_TEXTS.first_measurement);
     await userEvent.tab();
-    expect(document.activeElement?.textContent).toBe("Hinweis schließen");
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("Hinweis schließen");
     await userEvent.keyboard("{Enter}");
     await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
   });
@@ -101,5 +101,16 @@ describe("US-ONB-07 hints of the other occasions", () => {
       "first_measurement",
     ]);
     expect(hintOccasionsOf(summary({ total: 2, anyMeasured: true }))).toEqual([]);
+  });
+
+  it("US-ONB-07 · SG-ONB-02 the hint closes with an icon named 'Hinweis schließen', with no text beside the hint", async () => {
+    server("first_measurement");
+    render(
+      <ContextHint api="http://api" token={async () => "tok"} applicable={["first_measurement"]} />,
+    );
+    await screen.findByRole("status");
+    const close = screen.getByRole("button", { name: "Hinweis schließen" });
+    expect(close.querySelector("svg")).not.toBeNull();
+    expect(close.textContent).toBe("");
   });
 });
