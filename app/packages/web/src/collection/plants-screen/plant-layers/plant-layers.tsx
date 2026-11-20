@@ -126,6 +126,7 @@ export function PlantLayers(props: LayerProps) {
           card={shownPlant}
           photoAccess={props.photoAccess}
           slots={props.slots}
+          hintOccasions={props.hintOccasions}
           locations={props.locations}
           onLocate={props.onLocate}
           onManage={props.onManage}

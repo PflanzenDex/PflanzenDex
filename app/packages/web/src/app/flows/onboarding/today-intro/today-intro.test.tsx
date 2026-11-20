@@ -6,9 +6,11 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HINT_MAX_WORDS } from "@pflanzendex/core";
 import { useInvalidate } from "../../../../shared/data";
-import { HINT_TEXTS } from "./hint/hint-texts";
-import { HintNote } from "./hint";
+import hintTable from "./hint/hint.de.json";
 import { TodayIntro } from "./today-intro";
+
+/** The one note of Heute (US-ONB-07): its text as the keeper reads it, the link phrase included. */
+const FUNCTION_NOTE = "Neu unter „Was die App kann“.";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -512,25 +514,96 @@ describe("US-ONB-03 the style question after the first plant", () => {
 });
 
 describe("US-ONB-07 calm hints on Heute", () => {
-  it("US-QS-18 · US-ONB-07 the introduction still shows on Heute: a due hint is a short note without modal; it is recorded as shown and 'Hinweis schließen' dismisses it for good", async () => {
-    const w = world({ cards: [{ id: "e1" }], hint: "first_plant_saved" });
+  it("US-QS-18 · US-ONB-07 the introduction still shows on Heute: a due function note is a short note without modal, recorded as shown, and 'Hinweis schließen' dismisses it for good", async () => {
+    const w = world({ cards: [{ id: "e1" }], hint: "function_unlocked" });
     fakeServer(w);
     view();
     const note = await screen.findByRole("status", { name: "Hinweis" });
-    expect(note.textContent).toContain("Deine erste Pflanze ist da.");
+    expect(note.textContent).toBe(FUNCTION_NOTE);
     expect(screen.queryByRole("dialog")).toBeNull();
     await vi.waitFor(() =>
       expect(w.writes.map((x) => `${x.path}:${String(x.body["state"])}`)).toContain(
-        "/onboarding/hints/first_plant_saved:shown",
+        "/onboarding/hints/function_unlocked:shown",
       ),
     );
-    // looking for something is never held back: the tasks stay, the note comes above them
+    // looking for something is never held back: the tasks stay, the note comes after them
     const tasks = screen.getByText("Aufgaben des Tages");
-    expect(note.compareDocumentPosition(tasks) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(tasks.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
     await vi.waitFor(() => expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull());
     expect(w.writes.map((x) => `${x.path}:${String(x.body["state"])}`)).toContain(
-      "/onboarding/hints/first_plant_saved:dismissed",
+      "/onboarding/hints/function_unlocked:dismissed",
+    );
+  });
+
+  it("US-QS-32 · SG-ONB-02 Heute shows no hint above its tasks or its title for first_plant_saved: that hint now stands under Messen in the plant layer", async () => {
+    const w = world({ cards: [{ id: "e1" }], hint: "first_plant_saved" });
+    fakeServer(w);
+    view();
+    expect(await tasksShown()).toBeTruthy();
+    await settle();
+    expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull();
+    expect(w.writes.map((x) => `${x.path}:${String(x.body["state"])}`)).not.toContain(
+      "/onboarding/hints/first_plant_saved:shown",
+    );
+  });
+
+  it("US-QS-32 · US-ONB-07 Heute asks only for the function occasion: the plant occasions are not on its list", async () => {
+    const w = world({ cards: [{ id: "e1" }] });
+    fakeServer(w);
+    const asked = vi.fn();
+    const serve = fetch;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url, init) => {
+        const u = new URL(String(url));
+        if (u.pathname === "/onboarding/hints") asked(u.searchParams.get("applicable"));
+        return serve(url, init);
+      }),
+    );
+    view();
+    await tasksShown();
+    await vi.waitFor(() => expect(asked).toHaveBeenCalled());
+    const list = String(asked.mock.calls[0]?.[0] ?? "");
+    expect(list).not.toContain("first_plant_saved");
+    expect(list).not.toContain("plant_without_place");
+    expect(list).not.toContain("first_measurement");
+  });
+
+  it("US-QS-32 · US-ONB-07 the function note is the last thing on Heute, after the tiles, and it still shows when nothing is locked any more", async () => {
+    const w = world({ cards: [{ id: "e1" }], hint: "function_unlocked" });
+    fakeServer(w);
+    render(
+      <MemoryRouter>
+        <TodayIntro
+          lookup={LOOKUP}
+          api="http://api"
+          token={token}
+          onOpen={open}
+          fallback={<p role="status">Heute wird geladen …</p>}
+        >
+          {/* The tiles of the day (the locked-functions tile is one of them only while something is locked). */}
+          <ul aria-label="Kacheln">
+            <li>Behandlungen</li>
+          </ul>
+          <p>Aufgaben des Tages</p>
+        </TodayIntro>
+      </MemoryRouter>,
+    );
+    const note = await screen.findByRole("status", { name: "Hinweis" });
+    const tiles = screen.getByRole("list", { name: "Kacheln" });
+    expect(tiles.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(note.nextElementSibling).toBeNull();
+    expect(note.parentElement?.lastElementChild).toBe(note);
+  });
+
+  it("US-QS-32 · SG-COPY-02 the function note names its place in a link to 'Was die App kann'", async () => {
+    fakeServer(world({ cards: [{ id: "e1" }], hint: "function_unlocked" }));
+    view();
+    const link = await screen.findByRole("link", { name: "„Was die App kann“" });
+    expect(link.getAttribute("href")).toBe("/account/functions");
+    expect((await screen.findByRole("status", { name: "Hinweis" })).textContent).toBe(
+      FUNCTION_NOTE,
     );
   });
 
@@ -542,7 +615,7 @@ describe("US-ONB-07 calm hints on Heute", () => {
   });
 
   it("US-ONB-07 a hint that cannot be saved stays and says so, nothing disappears silently (P-10)", async () => {
-    const w = world({ cards: [{ id: "e1" }], hint: "first_plant_saved" });
+    const w = world({ cards: [{ id: "e1" }], hint: "function_unlocked" });
     fakeServer(w);
     view();
     await screen.findByRole("status", { name: "Hinweis" });
@@ -556,7 +629,7 @@ describe("US-ONB-07 calm hints on Heute", () => {
   });
 
   it("US-ONB-07 the hint texts have at most 12 words and name no level, rank or pressure", () => {
-    for (const text of Object.values(HINT_TEXTS)) {
+    for (const text of [hintTable.firstPlantSaved, hintTable.firstMeasurement, FUNCTION_NOTE]) {
       expect(text.split(/\s+/).length).toBeLessThanOrEqual(HINT_MAX_WORDS);
       expect(text).not.toMatch(/Level|Rang|Stufe|nur noch|schnell/i);
     }
@@ -590,33 +663,9 @@ describe("US-QS-16 · US-ACC-03 the onboarding parts of Heute", () => {
     expect(tasksHidden()).toBe(true);
     release();
     expect(await tasksShown()).toBeTruthy();
-    expect(await screen.findByText(HINT_TEXTS.function_unlocked)).toBeTruthy();
-  });
-
-  it("US-QS-32 · issue 2230 a due note waits for its code, so the note never lands above the tasks later", async () => {
-    fakeServer(
-      world({ zones: [], cards: [{ id: "e1" }], hint: "function_unlocked", guideEnded: true }),
+    expect((await screen.findByRole("status", { name: "Hinweis" })).textContent).toBe(
+      FUNCTION_NOTE,
     );
-    const original = HintNote.load;
-    let release!: () => void;
-    const code = new Promise<void>((done) => (release = done));
-    const load = vi.spyOn(HintNote, "load").mockImplementation(async () => {
-      await code;
-      return original();
-    });
-    const loaded = vi.spyOn(HintNote, "loaded").mockReturnValue(null);
-    try {
-      view();
-      await vi.waitFor(() => expect(paths()).toContain("/onboarding/hints"));
-      await vi.waitFor(() => expect(load).toHaveBeenCalled());
-      expect(tasksHidden()).toBe(true);
-      release();
-      expect(await tasksShown()).toBeTruthy();
-      expect(screen.getByText(HINT_TEXTS.function_unlocked)).toBeTruthy();
-    } finally {
-      load.mockRestore();
-      loaded.mockRestore();
-    }
   });
 
   it("US-QS-32 · issue 2230 · P-10 a keeper whose hints cannot be asked still sees the tasks: the answer ends as failed", async () => {

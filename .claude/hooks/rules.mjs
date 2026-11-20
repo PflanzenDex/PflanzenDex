@@ -2,6 +2,7 @@
 // Hooks support the gates; the gates themselves live in CI and the rulesets (D-02).
 import { HOOKS_PATH_REASON, changesHooksPath } from "./hooks-path.mjs";
 import { HARD_RESET_FLAG, mainCheckoutRefusal } from "./main-checkout.mjs";
+import { ParseError, tokenize } from "./shell-words.mjs";
 
 // Files that define gates, thresholds or exception lists. Agents may only change them after a human confirms (US-QG-07).
 const GATE_FILES = [
@@ -202,11 +203,611 @@ export function namesRecord(text) {
   return RECORD_NAME.test(text.replace(/["'\\]/g, ""));
 }
 
+// Secret env files (US-QG-07, issue 2354). A .env file holds values no agent reads: the admin password of the local Keycloak,
+// the test database port of a worktree, the deploy values. A make target reads them itself, so no agent reads one, neither with
+// Read or Grep nor with a shell command. A file is secret when its name is `.env` or starts with `.env.` (`.env.worktree`,
+// `.env.local`) in any folder, except `.env.example`, which holds only the variable names. `.envrc` and `foo.env` are no such
+// files. The check reads names and command text, never a file; its limits are listed at envReadBash.
+export const ENV_READ_REASON =
+  "Reading .env files is not allowed for agents (US-QG-07, issue 2354). The variable names are in `.env.example`; a make target reads the values itself (for example `make dev` or `make e2e`), so run the make target instead.";
+// A search that would read the .env files: a recursive grep without --exclude='.env*', an rg with hidden files (US-QG-07, issue 2354).
+export const RECURSIVE_SEARCH_REASON =
+  "A recursive search, or a search of hidden files, reads .env files too (US-QG-07, issue 2354). Use the Grep tool, which searches without the secret files, or add --exclude='.env*' to grep. The variable names are in `.env.example`.";
+
+// The name of a path: its last segment, without trailing slashes.
+const baseName = (p) => p.replace(/\/+$/, "").split("/").pop();
+
+/** Whether a path names a secret env file (US-QG-07, issue 2354): `.env` or `.env.*` but not `.env.example`, in any folder. */
+export function isSecretEnvPath(p) {
+  if (typeof p !== "string") return false;
+  const name = baseName(p).toLowerCase();
+  return name === ".env" || (name.startsWith(".env.") && name !== ".env.example");
+}
+
+// A name pattern can name a secret too (`.env*`, `.e?v`, `.[e]nv`, `.{env,x}`). Like the shell and ripgrep it reaches a dotfile
+// only through a leading literal dot (or a class holding one): `*env` and `?env` name no dotfile. For the rest, a product of the
+// pattern and the names `.env` and `.env.<anything>` shows whether some name matches both. The alphabet is the characters of the
+// pattern plus these neutral ones. A pattern that matches only `.env.example` (`.env.exampl[e]`) counts as secret: a false refusal.
+const NEUTRAL_CHARS = ".env_x0a9Az!#$%&'()+,-;<=>@[]^`{|}~";
+
+// The tokens of a name pattern: a literal, `?`, a bracket class or `*`. A backslash quotes the next character.
+function globTokens(pattern) {
+  const tokens = [];
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if (c === "*") tokens.push({ kind: "star" });
+    else if (c === "?") tokens.push({ kind: "any" });
+    else if (c === "\\" && i + 1 < pattern.length) tokens.push({ kind: "lit", c: pattern[++i] });
+    else {
+      const cls = c === "[" ? bracketClass(pattern, i) : null;
+      if (cls) {
+        tokens.push(cls.token);
+        i = cls.end;
+      } else tokens.push({ kind: "lit", c });
+    }
+  }
+  return tokens;
+}
+
+// A bracket class that opens at `start`: `[!a-z]`, `[]x]`. Null when no `]` closes it; the `[` is then a literal.
+function bracketClass(pattern, start) {
+  let j = start + 1;
+  const neg = pattern[j] === "!" || pattern[j] === "^";
+  if (neg) j++;
+  const first = j;
+  if (pattern[j] === "]") j++;
+  const close = pattern.indexOf("]", j);
+  if (close < 0) return null;
+  const body = pattern.slice(first, close);
+  const ranges = [];
+  for (let k = 0; k < body.length; k++) {
+    if (body[k + 1] === "-" && k + 2 < body.length) {
+      ranges.push([body[k], body[k + 2]]);
+      k += 2;
+    } else ranges.push([body[k], body[k]]);
+  }
+  return { token: { kind: "class", neg, ranges }, end: close };
+}
+
+// Whether a character matches a token that is not a star. Case does not matter: macOS folders are case-insensitive.
+function matchesToken(token, ch) {
+  const lower = ch.toLowerCase();
+  if (token.kind === "any") return true;
+  if (token.kind === "lit") return token.c.toLowerCase() === lower;
+  const hit = token.ranges.some(([lo, hi]) =>
+    [ch, lower, ch.toUpperCase()].some((x) => x >= lo && x <= hi),
+  );
+  return token.neg ? !hit : hit;
+}
+
+// The automaton of the names `.env` (state 4) and `.env.<anything>` (state 5): states 0 to 3 read `.env`, -1 is no such name.
+function secretStep(state, ch) {
+  const c = ch.toLowerCase();
+  if (state === 5) return 5;
+  if (state === 4) return c === "." ? 5 : -1;
+  return c === ".env"[state] ? state + 1 : -1;
+}
+
+// Whether some name matches the pattern and is `.env` or `.env.<anything>`: breadth first over the pairs (position in the pattern,
+// state of the automaton). A star moves on without a character, or takes one and stays.
+function secretReachable(tokens) {
+  const literals = tokens.flatMap((t) =>
+    t.kind === "lit" ? [t.c] : t.kind === "class" ? t.ranges.flat() : [],
+  );
+  const alphabet = [...new Set([...NEUTRAL_CHARS, ...literals])];
+  const seen = new Set(["0,0"]);
+  const queue = [[0, 0]];
+  while (queue.length > 0) {
+    const [p, s] = queue.shift();
+    if (p === tokens.length && (s === 4 || s === 5)) return true;
+    const moves = [];
+    if (p < tokens.length && tokens[p].kind === "star") {
+      moves.push([p + 1, s]);
+      for (const ch of alphabet) if (secretStep(s, ch) >= 0) moves.push([p, secretStep(s, ch)]);
+    } else if (p < tokens.length) {
+      for (const ch of alphabet)
+        if (matchesToken(tokens[p], ch) && secretStep(s, ch) >= 0)
+          moves.push([p + 1, secretStep(s, ch)]);
+    }
+    for (const [np, ns] of moves) {
+      const key = `${np},${ns}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        queue.push([np, ns]);
+      }
+    }
+  }
+  return false;
+}
+
+/** Whether a file name or a name pattern can name a secret env file (US-QG-07, issue 2354). A plain name is judged by isSecretEnvPath. */
+export function globCanNameSecret(name) {
+  if (!/[*?[]/.test(name)) return isSecretEnvPath(name);
+  const tokens = globTokens(name);
+  const [first] = tokens;
+  if (!first || first.kind === "star" || first.kind === "any" || !matchesToken(first, "."))
+    return false;
+  return secretReachable(tokens);
+}
+
+// `a..z` in braces: the letters from a to z (only single letters; numbers never make a name `.env` alone).
+function letterRange(body) {
+  const m = /^([A-Za-z])\.\.([A-Za-z])$/.exec(body);
+  if (!m) return null;
+  const lo = Math.min(m[1].charCodeAt(0), m[2].charCodeAt(0));
+  const hi = Math.max(m[1].charCodeAt(0), m[2].charCodeAt(0));
+  return Array.from({ length: hi - lo + 1 }, (_, k) => String.fromCharCode(lo + k));
+}
+
+// Brace expansion (`.{env,x}`, `.{e..e}nv`): each alternative is a name of its own. More than MAX_EXPANSIONS alternatives is
+// refused as unreadable (ParseError, which envReadBash and envReadRefusal turn into a refusal).
+const MAX_EXPANSIONS = 512;
+function expandBraces(text, count = { n: 0 }) {
+  const m = /\{([^{}]*)\}/.exec(text);
+  if (!m) return [text];
+  const before = text.slice(0, m.index);
+  const after = text.slice(m.index + m[0].length);
+  const alts = m[1].includes(",") ? m[1].split(",") : letterRange(m[1]);
+  if (alts === null) return expandBraces(after, count).map((tail) => `${before}${m[0]}${tail}`);
+  const out = [];
+  for (const alt of alts) {
+    for (const s of expandBraces(`${before}${alt}${after}`, count)) {
+      if (++count.n > MAX_EXPANSIONS) throw new ParseError("too many brace expansions");
+      out.push(s);
+    }
+  }
+  return out;
+}
+
+// The names a word of a command may stand for: each brace alternative, split at `=`, `:` and `@` (`--env-file=.env`,
+// `HEAD:.env`, `-F body=@.env`), each reduced to its last path segment. A name with a space is text (a commit message, a body).
+const namesOf = (value) =>
+  expandBraces(value)
+    .flatMap((v) => v.split(/[=:@]/))
+    .map(baseName);
+const namesEnvFile = (value) =>
+  namesOf(value).some((name) => !/\s/.test(name) && globCanNameSecret(name));
+
+// Text that names a .env file where the text is code (a script, a shell's input, a substitution): `.env` standing alone, as in
+// `'.env'`, `< .env` or `1r.env` in a sed program. `.env.example` and `.envrc` do not match. `process.env` does match (a false refusal).
+const ENV_IN_TEXT = /\.env(?![\w-])(?!\.example(?![\w-]))/i;
+
+// Heredocs: `<<WORD`, `<<-WORD`, `<<'WORD'` and the lines up to a line WORD. The body is taken out of the command, and the head keeps
+// its rest of line (`cat <<EOF | bash`). A body without its end line stays in the text. Each body comes with its line: what runs it.
+function splitHeredocs(text) {
+  const bodies = [];
+  // The delimiter may be quoted (`'PR-BODY'`), backslash-quoted (`\EOF`) and contain a dash; `<<-` strips tabs of the end line.
+  const open = /<<(-?)[ \t]*(\\?['"]?)([^\s'"\\<>|&;()`$]+)['"]?([^\n]*)\n/g;
+  let out = "";
+  let pos = 0;
+  for (let m = open.exec(text); m !== null; m = open.exec(text)) {
+    const [head, dash, quote, delim, rest] = m;
+    const bodyStart = m.index + head.length;
+    let found = null;
+    for (let start = bodyStart; start <= text.length;) {
+      let end = text.indexOf("\n", start);
+      if (end < 0) end = text.length;
+      const line = text.slice(start, end);
+      if ((dash ? line.replace(/^\t+/, "") : line) === delim) {
+        found = { bodyEnd: start, end };
+        break;
+      }
+      if (end >= text.length) break;
+      start = end + 1;
+    }
+    if (found === null) continue;
+    const lineStart = text.lastIndexOf("\n", m.index - 1) + 1;
+    bodies.push({
+      body: text.slice(bodyStart, found.bodyEnd),
+      quoted: quote !== "",
+      line: text.slice(lineStart, bodyStart),
+    });
+    out += `${text.slice(pos, m.index)}<<heredoc${rest}\n`;
+    pos = found.end;
+    open.lastIndex = found.end;
+  }
+  return { text: out + text.slice(pos), bodies };
+}
+
+// What runs the body of a heredoc, judged from its line: a shell (code judged as commands), a script program (judged as text
+// that names a .env file), or nothing (text, such as a commit message or a PR body). The whole line counts: `cat <<EOF | bash`.
+function codeKind(line) {
+  const words = line.split(/[\s;&|()`$<>"']+/);
+  if (words.some((w) => SHELLS.has(w) || w === "eval" || w === "source")) return "shell";
+  if (words.some((w) => SCRIPTS.has(w))) return "script";
+  return "text";
+}
+
+const SHELLS = new Set(["sh", "bash", "zsh", "dash", "ksh"]);
+// Programs that run code given as text (a script, an inline program, their input): their arguments are judged as code.
+const SCRIPTS = new Set([
+  "sed",
+  "awk",
+  "gawk",
+  "perl",
+  "python",
+  "python3",
+  "node",
+  "ruby",
+  "php",
+  "lua",
+]);
+// Commands that read no file content: a name among their arguments is only a name (US-QG-07, issue 2354).
+const NON_READING = new Set([
+  "ls",
+  "test",
+  "[",
+  "[[",
+  "echo",
+  "printf",
+  "rm",
+  "touch",
+  "mkdir",
+  "stat",
+]);
+const GREP_NAMES = new Set(["grep", "egrep", "fgrep"]);
+// find's exec actions run a command on every file it finds; its listing actions write the names into a file.
+const EXEC_ACTIONS = new Set(["-exec", "-execdir", "-ok", "-okdir"]);
+const LISTING_FILES = new Set(["-fprint", "-fprint0", "-fls", "-fprintf"]);
+// Excludes that keep the secret files out of a recursive grep (`--exclude='.env*'`, or every dotfile).
+const EXCLUDES_ENV = new Set([".env*", ".*"]);
+// git subcommands that show no file content, so a .env name among their paths is no read.
+const READ_FREE_GIT = new Set(["check-ignore", "ls-files", "status"]);
+// Words in front of a command that run the command after them. Their options and numbers are skipped with them.
+const WRAPPERS = new Set([
+  "sudo",
+  "doas",
+  "env",
+  "command",
+  "builtin",
+  "exec",
+  "nohup",
+  "time",
+  "nice",
+  "ionice",
+  "xargs",
+  "timeout",
+  "stdbuf",
+]);
+// Shell words that open a compound command (`{ cat x; }`, `if cat x; then`). They run nothing themselves.
+const COMPOUND = new Set([
+  "{",
+  "}",
+  "!",
+  "if",
+  "then",
+  "else",
+  "elif",
+  "fi",
+  "do",
+  "done",
+  "while",
+  "until",
+]);
+const ASSIGNMENT = /^[A-Za-z_]\w*=/;
+const INLINE_CODE = /^-[a-zA-Z]*c[a-zA-Z]*$/; // bash -c, -lc, -ec
+const MAX_DEPTH = 8;
+
+// The pipelines of a token list: the simple commands joined by `|` (or `|&`) form one pipeline. The words and the redirection targets
+// of a command are its own. The operators `&&`, `||`, `;`, `&`, a newline and the parentheses end a pipeline, so each simple command is
+// judged with the text of its own pipeline only (US-QG-07, issue 2354).
+function pipelines(tokens) {
+  const list = [];
+  let pipe = [];
+  let cur = { words: [], redirs: [] };
+  const endCommand = () => {
+    if (cur.words.length > 0 || cur.redirs.length > 0) pipe.push(cur);
+    cur = { words: [], redirs: [] };
+  };
+  const endPipeline = () => {
+    endCommand();
+    if (pipe.length > 0) list.push(pipe);
+    pipe = [];
+  };
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (t.redir) {
+      const target = tokens[i + 1];
+      if (target && target.op === undefined && !target.redir) {
+        cur.redirs.push(target);
+        i++;
+      }
+    } else if (t.op === "|" || t.op === "|&") endCommand();
+    else if (t.op !== undefined) endPipeline();
+    else cur.words.push(t);
+  }
+  endPipeline();
+  return list;
+}
+
+// The command name of a word: its value, unless the word holds an expansion, a variable or a substitution. A glob character is no
+// expansion here: `[` is the test command.
+const commandName = (w) => (w.subst.length === 0 && !w.value.includes("$") ? w.value : "");
+
+const ANSI_ESCAPES = {
+  n: "\n",
+  t: "\t",
+  r: "\r",
+  a: "\x07",
+  b: "\b",
+  e: "\x1b",
+  E: "\x1b",
+  f: "\f",
+  v: "\v",
+  "\\": "\\",
+  "'": "'",
+  '"': '"',
+  "?": "?",
+};
+// The text of an ANSI-C quote body (`$'…'`): \n, \t, \xHH, \NNN, \uHHHH, \UHHHHHHHH, \cX and the simple escapes. An unknown escape
+// stays as written.
+function decodeAnsiC(body) {
+  return body.replace(
+    /\\(x[0-9a-fA-F]{1,2}|[0-7]{1,3}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|c.|[\s\S])/g,
+    (_, e) => {
+      if (/^x[0-9a-fA-F]/.test(e)) return String.fromCharCode(parseInt(e.slice(1), 16));
+      if (/^[uU][0-9a-fA-F]/.test(e)) return String.fromCodePoint(parseInt(e.slice(1), 16));
+      if (/^[0-7]/.test(e)) return String.fromCharCode(parseInt(e, 8));
+      if (/^c./.test(e)) return String.fromCharCode(e.charCodeAt(1) & 0x1f);
+      return ANSI_ESCAPES[e] ?? `\\${e}`;
+    },
+  );
+}
+
+// The texts a word may stand for. The tokenizer keeps a `$'…'` quote as text with its escapes, and a word with `$` is dynamic: the
+// word without its `$` signs (a locale quote `$"…"` is a plain quote) and the decoded text of its escapes count as well (US-QG-07).
+const wordTexts = (w) => {
+  if (!w.dynamic) return [w.value];
+  const bare = w.value.replace(/\$/g, "");
+  return [w.value, bare, decodeAnsiC(bare)];
+};
+const wordNames = (w) => wordTexts(w).some((t) => namesEnvFile(t));
+const wordInText = (w) => wordTexts(w).some((t) => ENV_IN_TEXT.test(t));
+
+// A pipeline whose xargs runs a command that may read: the names come from the other commands of the pipeline, so a secret name among
+// their words makes the xargs a read of .env files (`find . -name '.env*' -print0 | xargs -0 cat`, US-QG-07, issue 2354).
+function xargsReadsNames(pipe) {
+  for (const stage of pipe) {
+    const k = stage.words.findIndex((w) => w.value === "xargs");
+    if (k < 0) continue;
+    const runs = stage.words.slice(k + 1).find((w) => !w.value.startsWith("-"));
+    if (!runs || NON_READING.has(commandName(runs))) continue;
+    if (pipe.some((other) => other !== stage && other.words.some(wordNames))) {
+      return ENV_READ_REASON;
+    }
+  }
+  return null;
+}
+
+// Whether a find names only files that cannot be secret: a -name or -iname that cannot name one, not negated, with no -o alternative.
+function safeNames(args) {
+  if (args.some((a) => a.value === "-o" || a.value === "-or")) return false;
+  return args.some(
+    (a, k) =>
+      (a.value === "-name" || a.value === "-iname") &&
+      args[k + 1] !== undefined &&
+      !globCanNameSecret(args[k + 1].value) &&
+      !["-not", "!"].includes(args[k - 1]?.value),
+  );
+}
+
+// find lists names, which reads no content, so only what it runs and writes is judged. An exec action runs its command on every file
+// it finds: when that command may read (not NON_READING), the find must name only files that cannot be secret. The listing actions
+// write the names into a file, which must not be a .env file.
+function findRefusal(args, pipeText, depth) {
+  for (let i = 0; i < args.length; i++) {
+    const v = args[i].value;
+    if (EXEC_ACTIONS.has(v)) {
+      let stop = i + 1;
+      while (stop < args.length && args[stop].value !== ";" && args[stop].value !== "+") stop++;
+      const run = args.slice(i + 1, stop);
+      if (run.length > 0) {
+        const reason = judgeSimple({ words: run, redirs: [] }, pipeText, depth + 1);
+        if (reason) return reason;
+        if (!NON_READING.has(commandName(run[0])) && !safeNames(args)) return ENV_READ_REASON;
+      }
+      i = stop;
+    } else if (LISTING_FILES.has(v)) {
+      if (args[i + 1] && wordNames(args[i + 1])) return ENV_READ_REASON;
+      i++;
+    }
+  }
+  return null;
+}
+
+// An argument that is the value of --exclude (`--exclude=X` or `--exclude X`): grep's exclude patterns are no files to read.
+const isExcludeArg = (args, k) =>
+  args[k].value.startsWith("--exclude=") || args[k - 1]?.value === "--exclude";
+
+// The search commands that read hidden files (US-QG-07, issue 2354). A recursive grep reads every file of a folder, the .env files too,
+// unless --exclude names them. An rg reads hidden files with --hidden, -. or two u flags (-uu, -uuu).
+function searchRefusal(name, args) {
+  if (GREP_NAMES.has(name)) {
+    // `-d recurse` reads the folders recursively in every spelling: `-drecurse`, `--directories=recurse`, `--directories recurse`.
+    const recursesDirectories = args.some(
+      (a, k) =>
+        /^(?:-d|--d[a-z-]*=?)recurse$/.test(a.value) ||
+        (/^(?:-d|--d[a-z-]*)$/.test(a.value) && args[k + 1]?.value === "recurse"),
+    );
+    const recursive =
+      recursesDirectories ||
+      args.some(
+        (a) =>
+          a.value === "--recursive" ||
+          a.value === "--dereference-recursive" ||
+          /^-[A-Za-z]*[rR]/.test(a.value),
+      );
+    if (!recursive) return null;
+    const excluded = args.some((a, k) =>
+      a.value.startsWith("--exclude=")
+        ? EXCLUDES_ENV.has(a.value.slice("--exclude=".length))
+        : a.value === "--exclude" && EXCLUDES_ENV.has(args[k + 1]?.value),
+    );
+    return excluded ? null : RECURSIVE_SEARCH_REASON;
+  }
+  // The u flags count across separate flags and the long form: one -u drops .gitignore only, two (-uu, -u -u, --unrestricted twice)
+  // also search hidden files.
+  const unrestricted = args.reduce((count, a) => {
+    if (a.value === "--unrestricted") return count + 1;
+    if (/^-[A-Za-z]+$/.test(a.value)) return count + (a.value.match(/u/g) ?? []).length;
+    return count;
+  }, 0);
+  const hidden =
+    unrestricted >= 2 ||
+    args.some((a) => a.value === "--hidden" || /^-[A-Za-z]*\.[A-Za-z]*$/.test(a.value));
+  return hidden ? RECURSIVE_SEARCH_REASON : null;
+}
+
+// The subcommand of a git command, skipping the options that take a value (`git -C dir status`).
+function gitSubcommand(args) {
+  for (let i = 0; i < args.length; i++) {
+    const v = args[i].value;
+    if (["-C", "-c", "--git-dir", "--work-tree"].includes(v)) i++;
+    else if (!v.startsWith("-")) return v;
+  }
+  return null;
+}
+
+// The reason one simple command may not run because it reads a .env file, or null (US-QG-07, issue 2354). Its substitutions are
+// judged first; a redirection naming a secret file is refused whatever the command; then the command word decides what the
+// arguments are (see the lists above).
+function judgeSimple(cmd, pipeText, depth) {
+  for (const word of [...cmd.words, ...cmd.redirs]) {
+    for (const inner of word.subst) {
+      const reason = judgeShell(inner, depth + 1);
+      if (reason) return reason;
+      if (ENV_IN_TEXT.test(inner)) return ENV_READ_REASON;
+    }
+  }
+  // The shell opens a redirection's file before the command runs: `< .env` reads it, `> .env` overwrites it.
+  if (cmd.redirs.some(wordNames)) return ENV_READ_REASON;
+  const words = cmd.words;
+  let i = 0;
+  while (i < words.length) {
+    const w = words[i];
+    if (ASSIGNMENT.test(w.value)) {
+      if (wordNames(w)) return ENV_READ_REASON;
+      i++;
+    } else if (!w.dynamic && COMPOUND.has(w.value)) {
+      i++;
+    } else if (!w.dynamic && WRAPPERS.has(w.value)) {
+      i++;
+      while (i < words.length && /^(-|\d+(\.\d+)?[smhd]?$)/.test(words[i].value)) i++;
+    } else break;
+  }
+  const [head, ...args] = words.slice(i);
+  if (!head) return null;
+  // A .env file run as a command (`./.env`) is read by the shell.
+  if (wordNames(head)) return ENV_READ_REASON;
+  const name = commandName(head);
+  if (NON_READING.has(name)) return null;
+  if (name === "git" && READ_FREE_GIT.has(gitSubcommand(args))) return null;
+  if (name === "find") return findRefusal(args, pipeText, depth);
+  if (name === "eval") return judgeShell(args.map((a) => a.value).join(" "), depth + 1);
+  if (SHELLS.has(name)) {
+    const c = args.findIndex((a) => INLINE_CODE.test(a.value));
+    if (c >= 0) {
+      // The words after the code are its positional parameters ($0, $1 ...): a name among them is a file the code can read.
+      if (args.slice(c + 2).some(wordNames)) return ENV_READ_REASON;
+      return args[c + 1] ? judgeShell(args[c + 1].value, depth + 1) : null;
+    }
+  }
+  if (GREP_NAMES.has(name) || name === "rg") {
+    const reason = searchRefusal(name, args);
+    if (reason) return reason;
+  }
+  if (SHELLS.has(name) || SCRIPTS.has(name)) {
+    if (args.some((a) => wordInText(a) || wordNames(a))) return ENV_READ_REASON;
+    // No file or program argument: the code comes from the input (a pipe, a heredoc), so the text of the pipeline is read as code.
+    if (args.every((a) => a.value.startsWith("-")) && ENV_IN_TEXT.test(pipeText)) {
+      return ENV_READ_REASON;
+    }
+    return null;
+  }
+  // A grep's --exclude pattern names files to leave out, not files to read.
+  const operands = GREP_NAMES.has(name) ? args.filter((a, k) => !isExcludeArg(args, k)) : args;
+  return operands.some(wordNames) ? ENV_READ_REASON : null;
+}
+
+// The reason a text of commands may not run because it reads a .env file, or null. Throws ParseError when it cannot be read.
+function judgeShell(text, depth) {
+  if (depth > MAX_DEPTH) throw new ParseError("nested too deep");
+  for (const pipe of pipelines(tokenize(text))) {
+    const xargs = xargsReadsNames(pipe);
+    if (xargs) return xargs;
+    const pipeText = pipe.map((cmd) => cmd.words.map((w) => w.value).join(" ")).join(" | ");
+    for (const cmd of pipe) {
+      const reason = judgeSimple(cmd, pipeText, depth);
+      if (reason) return reason;
+    }
+  }
+  return null;
+}
+
+// The reason a Bash command may not run because it reads a .env file, or null (US-QG-07, issue 2354). The check reads the command
+// the way a shell splits its words, pipeline by pipeline. Heredoc bodies are text, unless a shell or a script runs them (then they are
+// judged as code; a text body with `$(` or a backtick is judged as code too). A substitution is judged as a command. A shell with `-c`
+// is judged on its string and on its positional arguments, `eval` on its words, a shell or script without a file argument on its input.
+// A find that runs a reader is judged by its -name tests; a recursive grep and an rg with hidden files are refused (searchRefusal).
+// A text that cannot be read (an unclosed quote) is refused when it names a .env file. Not seen, so not refused: a name built at run
+// time (a variable, a splice of words), a script written to disk and run later, a list of names read from a pipe that no find names
+// (`ls -a | xargs cat`), `git grep --untracked`, `docker compose config` (it loads the .env of its folder), and a git alias that starts
+// with `!` (`git -c alias.x='!cat .env' x`).
+export function envReadBash(raw) {
+  try {
+    const { text, bodies } = splitHeredocs(raw);
+    for (const { body, quoted, line } of bodies) {
+      const kind = codeKind(line);
+      if (kind === "shell") {
+        const reason = judgeShell(body, 1);
+        if (reason) return reason;
+      } else if (kind === "script") {
+        if (ENV_IN_TEXT.test(body)) return ENV_READ_REASON;
+      } else if (!quoted && /\$\(|`/.test(body) && ENV_IN_TEXT.test(body)) {
+        return ENV_READ_REASON;
+      }
+    }
+    return judgeShell(text, 0);
+  } catch (error) {
+    if (error instanceof ParseError) return ENV_IN_TEXT.test(raw) ? ENV_READ_REASON : null;
+    throw error;
+  }
+}
+
+// The refusal of a Read or Grep call that reads a secret env file (US-QG-07, issue 2354), or null. Grep's pattern is text and is not
+// judged; its path and its glob are. The Grep tool splits a glob on spaces and then on commas, after brace expansion, and searches
+// hidden files too; a Grep without a path or glob searches the whole tree, where the Read deny rules of settings.json keep the secret
+// files out (Grep turns them into exclusions).
+export function envReadRefusal(toolName, toolInput = {}) {
+  if (toolName === "Read") return isSecretEnvPath(toolInput.file_path) ? ENV_READ_REASON : null;
+  if (toolName === "Grep") {
+    if (isSecretEnvPath(toolInput.path)) return ENV_READ_REASON;
+    try {
+      const glob = typeof toolInput.glob === "string" ? toolInput.glob : "";
+      const parts = expandBraces(glob).flatMap((g) => g.split(/[\s,]+/));
+      if (parts.some((g) => globCanNameSecret(baseName(g)))) return ENV_READ_REASON;
+    } catch (error) {
+      if (error instanceof ParseError) return ENV_READ_REASON;
+      throw error;
+    }
+  }
+  return null;
+}
+
 // `where` tells the main checkout guard where the command runs (see main-checkout.mjs); without it, a reset or clean
 // is refused, because the place is not known (US-QG-07). The record check reads the raw text: stripText would drop a quoted
 // name, so it runs first.
 export function judgeCommand(rawCommand, where = {}) {
   if (namesRecord(rawCommand)) return { decision: "deny", reason: RECORD_REASON };
+  // A command that reads a secret .env file is refused first, whatever else it does (US-QG-07, issue 2354).
+  let envReason = null;
+  try {
+    envReason = envReadBash(rawCommand);
+  } catch {
+    // A check that cannot finish refuses the command, never passes it (US-QG-07, issue 2354).
+    envReason = ENV_READ_REASON;
+  }
+  if (envReason) return { decision: "deny", reason: envReason };
   const command = stripText(rawCommand);
   for (const [pattern, reason] of FORBIDDEN_COMMANDS)
     if (pattern.test(command)) return { decision: "deny", reason };

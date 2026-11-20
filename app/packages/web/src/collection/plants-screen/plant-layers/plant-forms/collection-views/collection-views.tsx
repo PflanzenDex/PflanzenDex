@@ -1,5 +1,4 @@
 import { type Dispatch, type ReactNode, type SetStateAction } from "react";
-import type { Specimen } from "@pflanzendex/core";
 import { CreateWithSiblings } from "../../../../collection-page/create-with-siblings/create-with-siblings";
 import type { Props } from "../../../../collection-page/collection-props";
 import { ArchiveForm } from "../../../../archived/archived-form/archived-form";
@@ -9,7 +8,6 @@ import type { useCreate } from "../../../../specimens/create/use-create";
 import { MarkerForm } from "../../../../markers/marker/marker-form/marker-form";
 import { CatchDateForm } from "../../../../markers/catch-date/catch-date-field/catch-date-field";
 import { LightZoneForm } from "../../../../markers/locate/light-zone-form/light-zone-form";
-import { ListHint } from "../../../../collection-page/hint-occasions/hint-occasions";
 import { PlantsScreen } from "../../../plants-screen";
 import { useListActions, type ListActions } from "../../../../specimens/hooks/use-list-actions";
 import type { CardPages } from "../../../../specimens/cards/use-card-pages";
@@ -128,33 +126,18 @@ export function Views(p: {
       </DelayedSkeleton>
     );
   }
-  return (
-    <List
-      data={data}
-      plants={p.plants}
-      created={create.created}
-      actions={p.actions}
-      props={props}
-    />
-  );
+  return <List data={data} plants={p.plants} actions={p.actions} props={props} />;
 }
 
 const hasOpenForm = (a: ListActions): boolean =>
   Boolean(a.archived.open || a.potted.open || a.marked.open || a.caught.open || a.zoned.open);
 
-function List(p: {
-  data: Loaded;
-  plants: CardPages;
-  created: Specimen | null;
-  actions: ListActions;
-  props: Props;
-}) {
+function List(p: { data: Loaded; plants: CardPages; actions: ListActions; props: Props }) {
   const { data, plants } = p;
   const { api, token } = p.props;
   const { handlers } = useListActions(api, token, p.actions);
   return (
     <>
-      {p.created === null && <ListHint summary={data.summary} render={p.props.renderHint} />}
       <PlantsScreen
         cards={plants.cards}
         plants={plants}

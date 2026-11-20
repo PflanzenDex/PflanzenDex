@@ -275,3 +275,64 @@ describe("US-QS-32 a decision without an answer shows the text of its request (i
     expect(screen.queryByText(GENERIC_ERROR_TEXT)).toBeNull();
   });
 });
+
+describe("US-QS-32 · SG-TYPE-04 at 200 % text the deck scrolls as a whole", () => {
+  /** Renders the deck at a 200 % root text size (32 px), as the keeper's setting gives it (US-QS-21, WCAG 1.4.4). */
+  function renderAt200(extra: Partial<SuggestionDeck> = {}) {
+    const size = vi
+      .spyOn(window, "getComputedStyle")
+      .mockReturnValue({ fontSize: "32px" } as CSSStyleDeclaration);
+    const view = render(
+      <DeckView
+        deck={{ ...deck, ...extra }}
+        onDecide={saveOk}
+        onUndo={undoOk}
+        onNewDeck={() => undefined}
+      />,
+    );
+    size.mockRestore();
+    return view;
+  }
+
+  it("US-QS-32 · SG-TYPE-04 no element between the card and the deck holds a scroll region of its own", () => {
+    const { container } = renderAt200();
+    const card = screen.getByRole("article");
+    expect(card.className).not.toMatch(/overflow-(y-)?(auto|scroll)/);
+    for (let el = card.parentElement; el && el !== container; el = el.parentElement)
+      expect(el.className).not.toMatch(/overflow-(y-)?(auto|scroll)/);
+  });
+
+  it("US-QS-32 · SG-TYPE-04 the card underneath takes its own height too at large text, as the front card does", () => {
+    const { container } = renderAt200({
+      suggestions: [suggestion("Ficus lyrata"), suggestion("Aloe vera")],
+    });
+    const under = container.querySelector<HTMLElement>('[data-level="1"] article');
+    expect(under?.className).toContain("flex-none");
+    expect(under?.className).not.toContain("overflow-y-auto");
+    expect(under?.className).not.toContain("flex-1");
+  });
+
+  it("US-QS-32 · SG-TYPE-04 at the normal size the card underneath fills its frame like the front card", () => {
+    const { container } = render(
+      <DeckView
+        deck={{ ...deck, suggestions: [suggestion("Ficus lyrata"), suggestion("Aloe vera")] }}
+        onDecide={saveOk}
+        onUndo={undoOk}
+        onNewDeck={() => undefined}
+      />,
+    );
+    const under = container.querySelector<HTMLElement>('[data-level="1"] article');
+    expect(under?.className).toContain("flex-1");
+    expect(under?.className).toContain("overflow-y-auto");
+  });
+
+  it("US-QS-32 · SG-TYPE-04 the decision buttons come after the card in the flow, not under it", () => {
+    renderAt200();
+    const card = screen.getByRole("article");
+    for (const name of ["Kein Interesse", "Später", "Wünschen"]) {
+      const button = screen.getByRole("button", { name });
+      expect(card.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(card.contains(button)).toBe(false);
+    }
+  });
+});

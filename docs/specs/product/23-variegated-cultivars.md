@@ -177,7 +177,7 @@ Acceptance criteria:
 
 ## Dependencies and build order
 
-Release R2, as placed in `16-releases-and-decisions.md` on 2026-11-05. Priority P2 by the rule of thumb in `CLAUDE.md` for R2 and R3; the owner may overrule per ticket.
+Release R2, as placed in `16-releases-and-decisions.md` on 2026-11-05. Priority P2 by the rule of thumb in `docs/guides/operations/parallel-work.md` for R2 and R3; the owner may overrule per ticket.
 
 | Order | Story     | Release | Depends on                               | Why here                                                    |
 | ----- | --------- | ------- | ---------------------------------------- | ----------------------------------------------------------- |

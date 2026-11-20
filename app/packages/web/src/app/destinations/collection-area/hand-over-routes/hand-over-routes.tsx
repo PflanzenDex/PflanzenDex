@@ -3,7 +3,7 @@ import type { Species, Specimen } from "@pflanzendex/core";
 import { CareProfileSection, CareProfileSectionSkeleton } from "@/collection";
 import { loadSpecies, searchSpecies, SpeciesPage } from "@/catalog";
 import type { WishToPlant } from "@/wishlist";
-import { AddPlant, ContextHint } from "@/app/flows";
+import { AddPlant } from "@/app/flows";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { AreaSection } from "../../area-parts/area-section/area-section";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -100,7 +100,6 @@ export function handOverRoutes(api: string, token: Token, h: HandOver, open: (id
           onCompleted={h.onCreated}
           onOpenSpecies={open}
           onCreateSpecimen={h.startFromWish}
-          renderHint={(a) => <ContextHint api={api} token={token} applicable={a} />}
         />
       }
     />,

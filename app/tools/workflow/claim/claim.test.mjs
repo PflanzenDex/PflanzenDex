@@ -3,6 +3,7 @@
 // origin would show (#1487).
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { claim, ClaimRefused, timeoutsOf } from "./claim.mjs";
 import { PreflightFailed } from "./claim-preflight.mjs";
 import { PUSH_LIMIT } from "./lib/claim-client.mjs";
@@ -81,6 +82,7 @@ function fake(options = {}) {
     board,
   } = { ...DEFAULTS, ...options };
   const calls = [];
+  const drafts = []; // the body text of every draft PR the claim opened (US-DEV-08)
   const limits = []; // every call with the limit option it was given (undefined for the default)
   let views = 0;
   let undoFailuresLeft = undoFails;
@@ -188,9 +190,12 @@ function fake(options = {}) {
     ],
     [
       `gh api -X POST repos/${REPO}/pulls`,
-      prFails
-        ? fail("gh down")
-        : () => JSON.stringify({ html_url: "https://github.com/o/r/pull/9" }),
+      (line) => {
+        // The draft body travels as a file (-F body=@<file>); the file is removed after the call, so it is read here.
+        drafts.push(readFileSync(line.match(/body=@(\S+)/)[1], "utf8"));
+        if (prFails) throw new Error("gh down");
+        return JSON.stringify({ html_url: "https://github.com/o/r/pull/9" });
+      },
     ],
     ["git rev-parse", () => "tree\n"],
     ["git commit-tree", () => "abc123\n"],
@@ -216,6 +221,7 @@ function fake(options = {}) {
   return {
     calls,
     limits,
+    drafts,
     async run(cmd, args, options = {}) {
       const line = `${cmd} ${args.join(" ")}`;
       calls.push(line);
@@ -231,7 +237,7 @@ const quiet = { log() {}, retryDelayMs: 0 };
 test("US-DEV-08: a free story is assigned, set In Progress, pushed and opened as draft PR", async () => {
   const client = fake();
   const result = await claim(client, 62, quiet);
-  assert.equal(result.branch, "feat/bes-06-delete-specimen");
+  assert.equal(result.branch, "feat/issue-62-delete-specimen");
   const all = client.calls.join("\n");
   assert.match(
     all,
@@ -247,10 +253,10 @@ test("US-DEV-08: a free story is assigned, set In Progress, pushed and opened as
     ),
   );
   assert.doesNotMatch(all, /gh project (item-add|item-edit)/);
-  assert.match(all, /git push origin abc123:refs\/heads\/feat\/bes-06-delete-specimen/);
+  assert.match(all, /git push origin abc123:refs\/heads\/feat\/issue-62-delete-specimen/);
   assert.match(
     all,
-    /-X POST repos\/PflanzenDex\/PflanzenDex\/pulls .*-f head=feat\/bes-06-delete-specimen -f base=dev -F draft=true/,
+    /-X POST repos\/PflanzenDex\/PflanzenDex\/pulls .*-f head=feat\/issue-62-delete-specimen -f base=dev -F draft=true/,
   );
   assert.doesNotMatch(all, /--no-verify|--force/);
 });
@@ -291,14 +297,76 @@ test("US-DEV-08: a PR that closes the issue refuses the claim and names the PR",
   await assert.rejects(claim(fake({ prs }), 62, quiet), /PR #5/);
 });
 
-test("US-DEV-08: an origin branch with the story ID refuses the claim", async () => {
-  const branches = "sha1\trefs/heads/feat/bes-06-konrad\n";
-  await assert.rejects(claim(fake({ branches }), 62, quiet), /origin\/feat\/bes-06-konrad/);
+test("US-DEV-08: an origin branch with the issue number refuses the claim", async () => {
+  const branches = "sha1\trefs/heads/feat/issue-62-konrad\n";
+  await assert.rejects(claim(fake({ branches }), 62, quiet), /origin\/feat\/issue-62-konrad/);
 });
 
 test("US-DEV-08: the exact branch name already on origin refuses the claim", async () => {
-  const branches = "sha1\trefs/heads/feat/bes-06-delete-specimen\n";
+  const branches = "sha1\trefs/heads/feat/issue-62-delete-specimen\n";
   await assert.rejects(claim(fake({ branches }), 62, quiet), ClaimRefused);
+});
+
+test("US-DEV-08: the draft PR body starts with Refs #n, carries the Closes hint and never closes the issue by itself", async () => {
+  const client = fake();
+  await claim(client, 62, quiet);
+  assert.equal(client.drafts.length, 1);
+  assert.match(client.drafts[0], /^Refs #62\n/);
+  assert.match(client.drafts[0], /Closes #<n>/, "the hint to switch to Closes");
+  assert.doesNotMatch(client.drafts[0], /Closes #\d/);
+});
+
+test("US-DEV-08: a merged PR that only refers to the issue (Refs #n) does not refuse the claim; its note is logged before the writes", async () => {
+  const logs = [];
+  const prs = [
+    {
+      number: 2180,
+      title: "feat(bes): first part (US-BES-06)",
+      body: "Refs #62",
+      state: "CLOSED",
+      mergedAt: "2026-11-01T00:00:00Z",
+    },
+  ];
+  const result = await claim(fake({ prs }), 62, { log: (l) => logs.push(l), retryDelayMs: 0 });
+  assert.equal(result.branch, "feat/issue-62-delete-specimen");
+  const note = logs.indexOf(
+    "claim: note: PR #2180 (merged) refers to it (Refs #62): feat(bes): first part (US-BES-06)",
+  );
+  assert.ok(note >= 0, "the note is logged");
+  assert.ok(
+    note < logs.findIndex((l) => l.startsWith("claim: assigning #62")),
+    "the note comes before the writes",
+  );
+});
+
+test("US-DEV-08: a merged PR that closes the issue refuses the claim, and ALLOW_PRIOR_WORK=1 waives it", async () => {
+  const prs = [
+    {
+      number: 6,
+      title: "feat(bes): x",
+      body: "Closes #62",
+      state: "CLOSED",
+      mergedAt: "2026-11-01T00:00:00Z",
+    },
+  ];
+  await assert.rejects(claim(fake({ prs }), 62, quiet), /PR #6 \(merged\)/);
+  const result = await claim(fake({ prs }), 62, { ...quiet, env: { ALLOW_PRIOR_WORK: "1" } });
+  assert.equal(result.branch, "feat/issue-62-delete-specimen");
+});
+
+test("US-DEV-08: an open PR and a live branch that carry only a shared story ID do not refuse the claim", async () => {
+  const prs = [
+    {
+      number: 5,
+      title: "feat(bes): x (US-BES-06)",
+      body: "Refs #99",
+      state: "OPEN",
+      headRefName: "feat/bes-06-other",
+    },
+  ];
+  const branches = "sha1\trefs/heads/feat/bes-06-old\n";
+  const result = await claim(fake({ prs, branches }), 62, quiet);
+  assert.equal(result.branch, "feat/issue-62-delete-specimen");
 });
 
 // Every refusal of the claim check, once with the branches from the remote-tracking refs and once with ls-remote (#1487).
@@ -345,14 +413,14 @@ for (const trackedRefs of [true, false]) {
     /PR #6 \(merged\)/,
   );
   refused(
-    "branch with the story ID",
-    { branches: "sha1\trefs/heads/feat/bes-06-konrad\n" },
-    /origin\/feat\/bes-06-konrad/,
+    "branch with the issue number",
+    { branches: "sha1\trefs/heads/feat/issue-62-konrad\n" },
+    /origin\/feat\/issue-62-konrad/,
   );
   refused(
     "exact branch name",
-    { branches: "sha1\trefs/heads/feat/bes-06-delete-specimen\n" },
-    /branch origin\/feat\/bes-06-delete-specimen exists/,
+    { branches: "sha1\trefs/heads/feat/issue-62-delete-specimen\n" },
+    /branch origin\/feat\/issue-62-delete-specimen exists/,
   );
   refused(
     "needs-triage label",
@@ -364,7 +432,7 @@ for (const trackedRefs of [true, false]) {
 test("US-DEV-08: the branches of a standard fetch come from the remote-tracking refs, the main and dev branches excluded", async () => {
   const client = fake({ trackedRefs: true, branches: "sha1\trefs/heads/feat/xyz-01-a\n" });
   const result = await claim(client, 62, quiet);
-  assert.equal(result.branch, "feat/bes-06-delete-specimen");
+  assert.equal(result.branch, "feat/issue-62-delete-specimen");
   assert.ok(client.calls.some((c) => c.startsWith("git for-each-ref")));
 });
 
@@ -373,7 +441,7 @@ test("US-DEV-08: losing the race for the assignee steps back and deletes its own
   await assert.rejects(claim(client, 62, quiet), /claimed #62 first/);
   assert.ok(client.calls.some((c) => /-X DELETE .*assignees/.test(c)));
   assert.ok(
-    client.calls.some((c) => /git push origin --delete feat\/bes-06-delete-specimen/.test(c)),
+    client.calls.some((c) => /git push origin --delete feat\/issue-62-delete-specimen/.test(c)),
   );
   assert.ok(!client.calls.some((c) => PULLS_POST.test(c)));
 });
@@ -396,7 +464,7 @@ test("US-DEV-08: a push whose answer was lost is undone, because origin shows ou
   const client = fake({ pushApplies: true });
   await assert.rejects(claim(client, 62, quiet), /connection reset after the push/);
   assert.ok(
-    client.calls.some((c) => /git push origin --delete feat\/bes-06-delete-specimen/.test(c)),
+    client.calls.some((c) => /git push origin --delete feat\/issue-62-delete-specimen/.test(c)),
   );
   assert.ok(!client.calls.some((c) => /-X POST/.test(c)), "nothing was assigned");
 });
@@ -406,13 +474,13 @@ test("US-DEV-08: an assignee answer lost after GitHub applied it is undone", asy
   await assert.rejects(claim(client, 62, quiet), /connection reset/);
   assert.ok(client.calls.some((c) => /-X DELETE repos\/.*\/issues\/62\/assignees/.test(c)));
   assert.ok(
-    client.calls.some((c) => /git push origin --delete feat\/bes-06-delete-specimen/.test(c)),
+    client.calls.some((c) => /git push origin --delete feat\/issue-62-delete-specimen/.test(c)),
   );
 });
 
 test("US-DEV-08: a branch that origin holds with another commit is never deleted by an undo", async () => {
-  const client = fake({ branches: "other999\trefs/heads/feat/bes-06-delete-specimen\n" });
-  const note = await deleteClaimBranch(client, "feat/bes-06-delete-specimen", "abc123");
+  const client = fake({ branches: "other999\trefs/heads/feat/issue-62-delete-specimen\n" });
+  const note = await deleteClaimBranch(client, "feat/issue-62-delete-specimen", "abc123");
   assert.match(note, /left alone/);
   assert.ok(!client.calls.some((c) => /--delete/.test(c)));
 });
@@ -422,7 +490,7 @@ test("US-DEV-08: a failing PR creation rolls back assignee, status and branch", 
   await assert.rejects(claim(client, 62, quiet), /gh down/);
   const all = client.calls.join("\n");
   assert.match(all, /-X DELETE repos\/PflanzenDex\/PflanzenDex\/issues\/62\/assignees/);
-  assert.match(all, /git push origin --delete feat\/bes-06-delete-specimen/);
+  assert.match(all, /git push origin --delete feat\/issue-62-delete-specimen/);
   assert.ok(
     client.calls.some(
       (c) => c.includes("updateProjectV2ItemFieldValue") && c.includes("-f option=T"),
@@ -457,7 +525,7 @@ test("US-DEV-08: an undo step that keeps failing prints the command to run by ha
 test("US-DEV-08: after a claim is undone, the same claim runs again", async () => {
   await assert.rejects(claim(fake({ prFails: true }), 62, quiet), /gh down/);
   const result = await claim(fake(), 62, quiet);
-  assert.equal(result.branch, "feat/bes-06-delete-specimen");
+  assert.equal(result.branch, "feat/issue-62-delete-specimen");
 });
 
 test("US-DEV-08: each step of a claim is announced before it runs, so a hung call is visible", async () => {
@@ -466,7 +534,7 @@ test("US-DEV-08: each step of a claim is announced before it runs, so a hung cal
   for (const step of [
     "claim: fetching origin",
     "claim: reading #62",
-    "claim: pushing origin/feat/bes-06-delete-specimen",
+    "claim: pushing origin/feat/issue-62-delete-specimen",
     "claim: assigning #62",
     "claim: setting the project status",
     "claim: opening the draft PR",
@@ -495,7 +563,7 @@ test("US-DEV-08: the status of an issue already on the board is set on its item,
 test("US-DEV-08: a re-run after a half claim of the caller continues", async () => {
   const mine = { ...issue, assignees: [{ login: "max" }] };
   const result = await claim(fake({ issues: [mine] }), 62, quiet);
-  assert.equal(result.branch, "feat/bes-06-delete-specimen");
+  assert.equal(result.branch, "feat/issue-62-delete-specimen");
 });
 
 test("FR-DEV-10: a needs-triage issue is refused by make claim and nothing is written", async () => {
@@ -510,7 +578,7 @@ test("FR-DEV-10: a needs-triage issue is refused by make claim and nothing is wr
 
 test("US-DEV-08: a half claim of the caller with a branch on origin is still refused", async () => {
   const mine = { ...issue, assignees: [{ login: "max" }] };
-  const branches = "sha1\trefs/heads/feat/bes-06-delete-specimen\n";
+  const branches = "sha1\trefs/heads/feat/issue-62-delete-specimen\n";
   await assert.rejects(claim(fake({ issues: [mine], branches }), 62, quiet), ClaimRefused);
 });
 
@@ -554,13 +622,13 @@ test("US-DEV-05: no warning when the priority is set; a failed lookup is reporte
 test("US-DEV-08: the branch type comes from the board type, not from the issue labels", async () => {
   const board = { items: [{ id: "I", content: { number: 62 }, typ: "Bug" }] };
   const result = await claim(fake({ board }), 62, quiet);
-  assert.equal(result.branch, "fix/bes-06-delete-specimen");
+  assert.equal(result.branch, "fix/issue-62-delete-specimen");
 });
 
 test("US-DEV-08: a board that cannot be read is reported and the labels decide (P-10)", async () => {
   const lines = [];
   const result = await claim(fake(), 62, { log: (l) => lines.push(l), retryDelayMs: 0 });
-  assert.equal(result.branch, "feat/bes-06-delete-specimen");
+  assert.equal(result.branch, "feat/issue-62-delete-specimen");
   assert.ok(lines.some((l) => /could not read the board type of #62/.test(l)));
 });
 
@@ -570,7 +638,7 @@ test("US-DEV-08: the claim's push runs under the push limit; every other call of
   const limited = client.limits.filter((c) => c.limit !== undefined);
   assert.deepEqual(limited, [
     {
-      line: "git push origin abc123:refs/heads/feat/bes-06-delete-specimen",
+      line: "git push origin abc123:refs/heads/feat/issue-62-delete-specimen",
       limit: PUSH_LIMIT,
     },
   ]);
