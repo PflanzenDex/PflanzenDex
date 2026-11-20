@@ -31,6 +31,7 @@
       "Read(**/.env)",
       "Read(**/.env.local)",
       "Read(**/.env.*.local)",
+      "Read(**/.env.worktree)",
       "Edit(**/.env)",
       "Edit(**/.env.local)",
       "Edit(**/.env.*.local)"
@@ -54,6 +55,16 @@
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" guard-bash",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" guard-read",
             "timeout": 10
           }
         ]
