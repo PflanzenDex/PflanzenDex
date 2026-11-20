@@ -264,7 +264,7 @@ function heldProfileApi(profile: Profile = PROFILE) {
   };
 }
 
-/** A group with its own "Speichern": the edit that makes its form dirty, and the value that the edit sends. */
+/** A group with its own "Sichern": the edit that makes its form dirty, and the value that the edit sends. */
 type GroupEdit = {
   group: string;
   sheet: string;
@@ -307,16 +307,16 @@ const GROUP_EDITS: readonly GroupEdit[] = [
   },
 ];
 
-describe("US-QS-32 · a group's Speichern keeps the keyboard focus while it saves (PF-045)", () => {
+describe("US-QS-32 · a group's Sichern keeps the keyboard focus while it saves (PF-045)", () => {
   it.each(GROUP_EDITS)(
-    "US-QS-32 · $group: Speichern keeps the focus while the save is held and after it is saved",
+    "US-QS-32 · $group: Sichern keeps the focus while the save is held and after it is saved",
     async ({ sheet, field, edit, sent, expected }) => {
       const api = heldProfileApi();
       const user = userEvent.setup();
       renderWithAnnouncer(sheet);
       const input = await screen.findByLabelText<HTMLInputElement>(field);
       await edit(user, input);
-      const save = screen.getByRole("button", { name: "Speichern" });
+      const save = screen.getByRole("button", { name: "Sichern" });
 
       save.focus();
       await user.keyboard("{Enter}");
@@ -325,7 +325,7 @@ describe("US-QS-32 · a group's Speichern keeps the keyboard focus while it save
       expect(document.activeElement).toBe(save);
 
       await api.answerNext();
-      await vi.waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
+      await vi.waitFor(() => expect(announced()).toBe("Einstellungen gesichert."));
       await renderingUpdate();
       expect(document.activeElement).toBe(save);
       expect(api.puts.map(sent)).toEqual([expected]);
@@ -333,14 +333,14 @@ describe("US-QS-32 · a group's Speichern keeps the keyboard focus while it save
   );
 
   it.each(GROUP_EDITS)(
-    "US-QS-32 · $group: a second Enter on Speichern or in the field while the save is held sends nothing",
+    "US-QS-32 · $group: a second Enter on Sichern or in the field while the save is held sends nothing",
     async ({ sheet, field, edit }) => {
       const api = heldProfileApi();
       const user = userEvent.setup();
       renderWithAnnouncer(sheet);
       const input = await screen.findByLabelText<HTMLInputElement>(field);
       await edit(user, input);
-      const save = screen.getByRole("button", { name: "Speichern" });
+      const save = screen.getByRole("button", { name: "Sichern" });
 
       save.focus();
       await user.keyboard("{Enter}");
@@ -358,7 +358,7 @@ describe("US-QS-32 · a group's Speichern keeps the keyboard focus while it save
       expect(api.puts).toHaveLength(1);
 
       await api.answerNext();
-      await vi.waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
+      await vi.waitFor(() => expect(announced()).toBe("Einstellungen gesichert."));
       expect(api.puts).toHaveLength(1);
     },
   );
@@ -371,13 +371,13 @@ describe("US-QS-32 · a group's Speichern keeps the keyboard focus while it save
       field: "Mindestzahl offener Wünsche je Zone",
     },
   ])(
-    "US-QS-32 · $group: Enter on Speichern with nothing changed sends nothing and says nothing",
+    "US-QS-32 · $group: Enter on Sichern with nothing changed sends nothing and says nothing",
     async ({ sheet, field }) => {
       const api = heldProfileApi();
       const user = userEvent.setup();
       renderWithAnnouncer(sheet);
       await screen.findByLabelText(field);
-      const save = screen.getByRole("button", { name: "Speichern" });
+      const save = screen.getByRole("button", { name: "Sichern" });
 
       save.focus();
       expect(document.activeElement).toBe(save);
@@ -388,32 +388,32 @@ describe("US-QS-32 · a group's Speichern keeps the keyboard focus while it save
     },
   );
 
-  it("US-QS-32 · Licht: Enter on Speichern with nothing changed still answers that nothing changed, and sends nothing", async () => {
+  it("US-QS-32 · Licht: Enter on Sichern with nothing changed still answers that nothing changed, and sends nothing", async () => {
     const api = heldProfileApi();
     const user = userEvent.setup();
     renderWithAnnouncer("light");
     await screen.findByLabelText("Sehr nah ab");
-    const save = screen.getByRole("button", { name: "Speichern" });
+    const save = screen.getByRole("button", { name: "Sichern" });
 
     save.focus();
     await user.keyboard("{Enter}");
     await vi.waitFor(() =>
-      expect(announced()).toBe("Keine Änderung: Die Werte sind schon gespeichert."),
+      expect(announced()).toBe("Keine Änderung: Die Werte sind schon gesichert."),
     );
     expect(api.puts).toHaveLength(0);
   });
 
-  it("US-QS-32 · Profil without a stored time zone: Enter on Speichern with the device's zone sends the save", async () => {
+  it("US-QS-32 · Profil without a stored time zone: Enter on Sichern with the device's zone sends the save", async () => {
     const api = heldProfileApi({ ...PROFILE, timeZone: null });
     const user = userEvent.setup();
     renderWithAnnouncer("profile");
     await screen.findByLabelText("Anzeigename");
-    const save = screen.getByRole("button", { name: "Speichern" });
+    const save = screen.getByRole("button", { name: "Sichern" });
 
     save.focus();
     await user.keyboard("{Enter}");
     await vi.waitFor(() => expect(api.puts).toHaveLength(1));
     await api.answerNext();
-    await vi.waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
+    await vi.waitFor(() => expect(announced()).toBe("Einstellungen gesichert."));
   });
 });
