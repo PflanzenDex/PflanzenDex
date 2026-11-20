@@ -7,6 +7,8 @@
 //   4. the PR changes no gate file (workflows, rulesets, hooks, thresholds, `.claude/`, this script): a human decides
 //   5. the PR grows no baseline (app/config/gates/baselines/, US-QG-07): the merge base and the head are compared; a
 //      baseline that only shrinks merges, and a version that cannot be read refuses the PR
+// After a successful squash merge the test database of the merged branch's linked worktree is removed (US-DEV-08,
+// issue 2325; dropMergedTestDb in worktree/local-database.mjs). Without git, make or docker that step is silent.
 import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -16,6 +18,7 @@ import { isGateFile } from "../../../.claude/hooks/rules.mjs";
 import { realClient } from "./claim/lib/claim-client.mjs";
 import { mergeProblems } from "./actions/ci-reuse/ci-wait.mjs";
 import { isEntryPoint } from "../check/shared/entry-point.mjs";
+import { dropMergedTestDb } from "./worktree/local-database.mjs";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const ID = /\b(?:US|FR|DM)-[A-Z]+-\d+\b|\bNFR-\d+\b/g;
@@ -146,7 +149,8 @@ async function main(number) {
     return 2;
   }
   // baseRefOid is not a `gh pr view` field on every gh release (2.45 refuses it), so the base commit comes from the REST API.
-  const fields = "state,isDraft,baseRefName,headRefOid,title,body,files,statusCheckRollup";
+  const fields =
+    "state,isDraft,baseRefName,headRefName,headRefOid,title,body,files,statusCheckRollup";
   const pr = JSON.parse(gh("pr", "view", number, "--json", fields));
   pr.baseRefOid = gh("api", `repos/{owner}/{repo}/pulls/${number}`, "--jq", ".base.sha").trim();
   const changes = baselineChanges(pr, {
@@ -165,6 +169,8 @@ async function main(number) {
   }
   gh("pr", "merge", number, "--squash", "--delete-branch");
   console.log(`merge-pr: PR #${number} merged into dev (squash).`);
+  const removed = dropMergedTestDb(pr.headRefName, REPO_ROOT);
+  if (removed) console.log(removed);
   return 0;
 }
 
