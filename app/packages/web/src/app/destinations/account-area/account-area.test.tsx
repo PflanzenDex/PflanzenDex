@@ -5,6 +5,10 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider, type FeatureStates } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import {
+  AppBarSlotProvider,
+  useAppBarSlot,
+} from "@/shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot";
 import { AccountArea } from "./account-area";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
@@ -95,6 +99,17 @@ function fakeServer(status = 200, calmMode = false) {
   return puts;
 }
 
+/** The top bar of the shell in miniature: the brand until a page claims it, then the page's header (GlobalHeader). */
+function TestBar() {
+  const bar = useAppBarSlot();
+  return (
+    <header>
+      {bar?.claimed ? null : <span>Marke</span>}
+      <div data-app-bar-slot="" ref={bar?.setElement} />
+    </header>
+  );
+}
+
 function Address() {
   const { pathname, hash } = useLocation();
   return <p data-testid="address">{pathname + hash}</p>;
@@ -175,12 +190,13 @@ describe("US-QS-17 Konto with its sections as views", () => {
     await screen.findByRole("region", { name: "Erinnerungen" });
   });
 
-  it("US-MON-08 the section Erinnerungen names its quiet window Erinnerungspause, not Ruhezeit (issue 897)", async () => {
+  it("US-MON-08 · US-QS-32 the section Erinnerungen names its two pauses by their effect: Ruhezeit and Erinnerungen aussetzen (F-0287)", async () => {
     fakeServer();
     show("/account/reminders");
     const region = await screen.findByRole("region", { name: "Erinnerungen" });
-    expect(await within(region).findByText("Uhrzeit, Erinnerungspause und Messung")).toBeTruthy();
-    expect(region.textContent).not.toContain("Ruhezeit");
+    expect(await within(region).findByText("Uhrzeit, Ruhezeit und Messung")).toBeTruthy();
+    expect(within(region).getByText("Je Anlass bis zu einem Datum")).toBeTruthy();
+    expect(region.textContent).not.toMatch(/Erinnerungspause|Pausen je Anlass|einem Tag/);
   });
 
   it("US-QS-17 · US-ACC-01 the section Profil shows name and e-mail and no sign-out that skips the confirmation (issue 1098)", async () => {
@@ -190,7 +206,7 @@ describe("US-QS-17 Konto with its sections as views", () => {
     const profileSection = screen.getByRole("region", { name: "Profil" });
     expect(await within(profileSection).findByText("Hallo, Lena")).toBeTruthy();
     expect(within(profileSection).getByText("lena@example.test")).toBeTruthy();
-    // The one way out is "Abmelden…" in the index, which asks first; nothing signs out with a single tap.
+    // The one way out is "Abmelden …" in the index, which asks first; nothing signs out with a single tap.
     expect(within(profileSection).queryByRole("button", { name: /abmelden/i })).toBeNull();
     expect(screen.queryByRole("button", { name: "Abmelden" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Auf allen Geräten abmelden" })).toBeNull();
@@ -210,7 +226,7 @@ describe("US-QS-17 Konto with its sections as views", () => {
     fakeServer();
     const signOut = vi.fn();
     show("/account", { signOut, error: "Abmelden hat nicht geklappt: Prüfe deine Verbindung." });
-    await userEvent.click(screen.getByRole("button", { name: "Abmelden…" }));
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("alert").textContent).toContain("Abmelden hat nicht geklappt");
     expect(within(dialog).getByRole("button", { name: "Abmelden" })).toBeTruthy();
@@ -224,8 +240,8 @@ describe("US-QS-17 Konto with its sections as views", () => {
     await userEvent.clear(name);
     await userEvent.type(name, "Lena L");
     await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
-    expect(puts).toHaveLength(1);
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(screen.queryByRole("status")).toBeNull();
     expect(puts[0]?.["displayName"]).toBe("Lena L");
   });
 
@@ -265,10 +281,10 @@ describe("US-QS-17 Konto with its sections as views", () => {
     expect(link.getAttribute("href")).toBe("/collection?view=plants&manage=locations");
   });
 
-  it("US-QS-17 · US-QS-05 the section Was wird gemessen? names what is recorded about the use", async () => {
+  it("US-QS-17 · US-QS-05 the section Nutzungsdaten names what is recorded about the use", async () => {
     fakeServer();
     show("/account/measured");
-    const section = within(screen.getByRole("region", { name: "Was wird gemessen?" }));
+    const section = within(screen.getByRole("region", { name: "Nutzungsdaten" }));
     expect(await section.findByText(/Keine Klickzählung und keine Nutzungsanalyse/)).toBeTruthy();
     expect(section.getByText(/wann du zuletzt aktiv warst/)).toBeTruthy();
     expect(section.getByText(/nur die Zahl der aktiven Konten/)).toBeTruthy();
@@ -489,6 +505,33 @@ describe("US-QS-14 · US-QS-17 Konto has exactly one h1 on every width", () => {
     );
   });
 
+  it("US-QS-32 on a phone the section Einstellungen puts its h1 and its way back into the top bar, the content keeps none (issue 2231)", async () => {
+    setViewportWidth(390);
+    fakeServer();
+    const { container } = render(
+      <MemoryRouter initialEntries={["/account/settings"]}>
+        <AppBarSlotProvider>
+          <TestBar />
+          <main>
+            <AccountArea
+              api="http://api"
+              token={async () => "tok"}
+              account={account}
+              onSignOut={() => undefined}
+              onEverywhereSignOut={() => undefined}
+            />
+          </main>
+        </AppBarSlotProvider>
+      </MemoryRouter>,
+    );
+    const bar = container.querySelector("[data-app-bar-slot]") as HTMLElement;
+    await within(bar).findByRole("heading", { level: 1, name: "Einstellungen" });
+    expect(within(bar).getByRole("link", { name: "Zurück zu Konto" })).toBeTruthy();
+    expect(screen.queryByText("Marke")).toBeNull();
+    expect(container.querySelector("main h1")).toBeNull();
+    expect(headings1()).toEqual(["Einstellungen"]);
+  });
+
   it("US-QS-14 the index on a phone keeps the one h1 Konto", async () => {
     setViewportWidth(390);
     fakeServer();
@@ -537,20 +580,22 @@ describe("US-ONB-09 the keeper's switch achievement_views hides the section Erfo
     fakeServer();
     showWith("/account/achievements", { achievement_views: false });
     await waitFor(() => expect(screen.getByTestId("address").textContent).toBe("/account"));
-    expect(screen.queryByRole("heading", { level: 1, name: "Erfolge" })).toBeNull();
+    expect(screen.queryByRole("heading", { level: 1, name: "Erfolge und Rückblick" })).toBeNull();
   });
 
   it("US-ONB-09 with achievement_views off the former anchor /account#erfolge does not land on the section", async () => {
     fakeServer();
     showWith("/account#erfolge", { achievement_views: false });
     await waitFor(() => expect(screen.getByTestId("address").textContent).toBe("/account"));
-    expect(screen.queryByRole("heading", { level: 1, name: "Erfolge" })).toBeNull();
+    expect(screen.queryByRole("heading", { level: 1, name: "Erfolge und Rückblick" })).toBeNull();
   });
 
   it("US-ONB-09 with achievement_views on the address /account/achievements opens the section Erfolge", async () => {
     fakeServer();
     showWith("/account/achievements", { achievement_views: true });
-    expect(await screen.findByRole("heading", { level: 1, name: "Erfolge" })).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Erfolge und Rückblick" }),
+    ).toBeTruthy();
     expect(screen.getByTestId("address").textContent).toBe("/account/achievements");
   });
 

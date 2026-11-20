@@ -191,3 +191,59 @@ describe("US-LIC-01 P-08: a species without a light value is unknown in every de
     expect(effectiveZone(row, ctx)).toBeNull();
   });
 });
+
+describe("US-LIC-01 light overview: my care-profile zone first, unknown need named (P-08, P-09)", () => {
+  // A stub of the care profile reader for one account: only the zone of each profile matters here.
+  const profiles = (rows: readonly { speciesId: string; lightZoneId: string | null }[]) => ({
+    list: async () =>
+      rows.map((r) => ({
+        growthLocationId: null,
+        dormancyLocationId: null,
+        dormancyFrom: null,
+        dormancyUntil: null,
+        wateringGrowthDays: null,
+        wateringDormancyDays: null,
+        ownHints: null,
+        ...r,
+      })),
+  });
+  const zoneIdOf = async (name: string) =>
+    (await light.zoneAdapter().list("anna")).find((z) => z.name === name)?.id ?? null;
+
+  it("US-LIC-01: Given a care-profile zone, when the overview is read, then it comes before the zone derived from the lux need", async () => {
+    await plant("anna", SP_MID); // derived: Lampe 2
+    const profileZone = await zoneIdOf("Lampe 4");
+    const rows = (
+      await lightOverview(
+        { ...deps(), profiles: profiles([{ speciesId: SP_MID, lightZoneId: profileZone }]) },
+        "anna",
+      )
+    ).rows;
+    expect(rows[0]).toMatchObject({ zone: { name: "Lampe 4" }, lightNeedUnknown: false });
+  });
+
+  it("US-LIC-01: Given a species without lux need, when the overview is read, then it stays listed last with zone unknown and the next step (P-10)", async () => {
+    await plant("anna", SP_UNKNOWN);
+    await plant("anna", SP_LOW);
+    const rows = await overview("anna");
+    expect(rows.map((r) => r.speciesName)).toEqual(["Low", "Unknown"]);
+    expect(rows[1]).toMatchObject({
+      lightDemandLux: null,
+      position: null,
+      zone: null,
+      lightNeedUnknown: true,
+    });
+  });
+
+  it("US-LIC-01: Given a care-profile zone for a species without lux need, when the overview is read, then that zone applies and no next step is named", async () => {
+    await plant("anna", SP_UNKNOWN);
+    const profileZone = await zoneIdOf("Lampe 2");
+    const rows = (
+      await lightOverview(
+        { ...deps(), profiles: profiles([{ speciesId: SP_UNKNOWN, lightZoneId: profileZone }]) },
+        "anna",
+      )
+    ).rows;
+    expect(rows[0]).toMatchObject({ zone: { name: "Lampe 2" }, lightNeedUnknown: false });
+  });
+});

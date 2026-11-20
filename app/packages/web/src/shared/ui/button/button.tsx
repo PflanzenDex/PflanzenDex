@@ -2,6 +2,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
+import { NetworkReason, useNetworkGate } from "./network-gate/network-gate";
 
 /** Button looks (US-QS-07, DS-34, DS-35). Sizes are by role; every size keeps a 44 px hit area on touch (DS-15). */
 const buttonVariants = cva(
@@ -11,7 +12,7 @@ const buttonVariants = cva(
     // Forced colors replace the fill; the border keeps the button's boundary visible (US-QS-12, WCAG 1.4.11).
     "forced-colors:border forced-colors:border-[color:ButtonText] " +
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background " +
-    "disabled:pointer-events-none disabled:opacity-50",
+    "disabled:pointer-events-none disabled:opacity-50 aria-disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -19,10 +20,16 @@ const buttonVariants = cva(
         // The quiet fill keeps its boundary in the field boundary colour (US-QS-14, WCAG 1.4.11): --input reaches 3:1 on background, card, warning, secondary and muted.
         secondary:
           "border border-input bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        // Green marks intent (ADR 0017): the outline carries the primary colour, its border reaches 6:1 (WCAG 1.4.11).
+        // Tinted: the secondary action of a group or card (SG-BTN-01): accent fill, dark green text, no border.
+        tinted: "bg-accent text-accent-foreground hover:bg-accent/80",
+        // Plain: a tertiary action (SG-BTN-01): green text only; the hover fill is the accent.
+        plain: "text-primary hover:bg-accent hover:text-accent-foreground",
+        // A destructive action that does not confirm anything (SG-BTN-03): red text, labelled with verb and object.
+        "destructive-plain": "text-destructive hover:bg-destructive/10",
+        // Deprecated alias (SG-BTN-01, FX-39 of issue 1853): there is no outline button. It looks like `tinted` until the
+        // remaining call sites move to `tinted` or `plain`; do not use it in new code.
+        outline: "bg-accent text-accent-foreground hover:bg-accent/80",
         // Ghost stays neutral, because tabs, segments, navigation and accordions build on it.
-        outline:
-          "border border-primary bg-transparent text-primary hover:bg-accent hover:text-accent-foreground",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         link: "text-primary underline-offset-4 hover:underline",
@@ -33,6 +40,9 @@ const buttonVariants = cva(
         lg: "min-h-[48px] rounded-pill px-6 text-base",
         icon: "min-h-[44px] min-w-[44px] rounded-control",
         touch: "min-h-[48px] w-full rounded-pill px-4 sm:w-auto",
+        // A full-width row of a grouped list (US-QS-32, SG-SHAPE-03): square, because the group clips its corners; the
+        // class merge does not know the pill radius, so the row size leaves it out instead of overriding it.
+        row: "h-auto min-h-11 w-full justify-start gap-3 rounded-none px-4 py-3 text-left text-base font-normal",
       },
     },
     defaultVariants: { variant: "default", size: "default" },
@@ -43,7 +53,7 @@ type ButtonVariants = VariantProps<typeof buttonVariants>;
 
 type ButtonBaseProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "aria-label"> &
   Pick<ButtonVariants, "variant"> & {
-    /** Renders the single child element instead of a `<button>` (for links). */
+    /** Renders the single child element instead of a `<button>` (for links). Not with `needsNetwork` (see below). */
     asChild?: boolean;
     /** Shows a spinner, sets `aria-busy` and blocks clicks while an action runs. Not combined with `asChild`. */
     pending?: boolean;
@@ -52,14 +62,41 @@ type ButtonBaseProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "aria
     "aria-label"?: string;
   };
 
+/**
+ * `needsNetwork` (US-QS-30, SG-BTN-05): a control that writes at once cannot wait for the network. Offline it stays
+ * focusable and is shown inactive (`aria-disabled`), its press does nothing, and the reason stands next to it, or once
+ * below its group in a `NetworkSlot`. A write that `useWriteAction` buffers (US-QS-03) does not set it: it stays active
+ * and is sent later. It cannot be combined with `asChild`: the child's own press would run past the gate (thrown).
+ */
+type NetworkNeed = { needsNetwork?: boolean | undefined };
+
 /** Icon-only buttons have no visible text, so the accessible name is required by type (DS-17). */
 export type ButtonProps = ButtonBaseProps &
+  NetworkNeed &
   (
     | { size?: Exclude<ButtonVariants["size"], "icon">; "aria-label"?: string }
     | { size: "icon"; "aria-label": string }
   );
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+/** The spinner of a pending button, with its text for assistive technology (DS-50). */
+function PendingSign(props: { label: string }) {
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none"
+      />
+      <span className="sr-only">{props.label}</span>
+    </>
+  );
+}
+
+type ControlProps = ButtonBaseProps & {
+  size?: ButtonVariants["size"] | undefined;
+};
+
+/** The `<button>` (or the child of `asChild`) with its look and states; the attributes that a gate sets come last. */
+const ButtonControl = React.forwardRef<HTMLButtonElement, ControlProps>(
   (
     {
       className,
@@ -67,8 +104,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       size,
       asChild = false,
       pending = false,
-      pendingLabel = "Lädt…",
+      pendingLabel = "Lädt …",
       disabled,
+      onClick,
+      "aria-describedby": describedBy,
+      "aria-disabled": ariaDisabled,
       children,
       ...props
     },
@@ -77,7 +117,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const classes = cn(buttonVariants({ variant, size }), className);
     if (asChild) {
       return (
-        <Slot ref={ref} className={classes} aria-busy={pending || undefined} {...props}>
+        <Slot
+          ref={ref}
+          className={classes}
+          aria-busy={pending || undefined}
+          {...props}
+          aria-disabled={ariaDisabled}
+          aria-describedby={describedBy}
+          onClick={onClick}
+        >
           {children}
         </Slot>
       );
@@ -89,18 +137,46 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || pending}
         aria-busy={pending || undefined}
         {...props}
+        aria-disabled={ariaDisabled}
+        aria-describedby={describedBy}
+        onClick={onClick}
       >
-        {pending ? (
-          <>
-            <span
-              aria-hidden="true"
-              className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none"
-            />
-            <span className="sr-only">{pendingLabel}</span>
-          </>
-        ) : null}
+        {pending ? <PendingSign label={pendingLabel} /> : null}
         {children}
       </button>
+    );
+  },
+);
+ButtonControl.displayName = "ButtonControl";
+
+/** A control that writes at once: the gate is set here, so a plain `Button` never subscribes to the network state. */
+const NetworkButton = React.forwardRef<HTMLButtonElement, ControlProps>(
+  ({ onClick, "aria-describedby": describedBy, ...props }, ref) => {
+    const gate = useNetworkGate(describedBy, onClick);
+    return (
+      <>
+        <ButtonControl
+          ref={ref}
+          {...props}
+          onClick={gate.press}
+          aria-describedby={gate.describedBy}
+          aria-disabled={gate.offline || props["aria-disabled"] || undefined}
+        />
+        {gate.inline ? <NetworkReason id={gate.reasonId} /> : null}
+      </>
+    );
+  },
+);
+NetworkButton.displayName = "NetworkButton";
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ needsNetwork, ...props }, ref) => {
+    if (needsNetwork && props.asChild)
+      throw new Error("Button: needsNetwork cannot be combined with asChild (US-QS-30)");
+    return needsNetwork ? (
+      <NetworkButton ref={ref} {...props} />
+    ) : (
+      <ButtonControl ref={ref} {...props} />
     );
   },
 );

@@ -1,8 +1,10 @@
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
 import { zoneLabel } from "@pflanzendex/core";
 import { Pager, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { LightNeedAction } from "../../shared/ui/light-need-action/light-need-action";
 import table from "../../light.de.json";
 
 const t = texts(table);
@@ -12,9 +14,13 @@ const PAGE_SIZE = 4;
 
 const lux = new Intl.NumberFormat("de-DE");
 
-/** One species: its name, zone and lux need, and where it stands; unknown values say so (P-08). */
+/**
+ * One species: its name, zone and lux need, and where it stands; unknown values say so (P-08). An unknown lux need names
+ * the next step on the row itself (P-09).
+ */
 function Row({ r }: { r: LightOverviewRow }) {
-  const zone = r.zone ? zoneLabel(r.zone.name) : t("overview.zoneUnknown");
+  // The zone is one part of a line joined by " · " (US-QS-32): the cutting light reads "Zone 1 (Stecklingslicht)".
+  const zone = r.zone ? zoneLabel(r.zone.name, { inLine: true }) : t("overview.zoneUnknown");
   const need = r.lightDemandLux === null ? t("overview.unknown") : lux.format(r.lightDemandLux);
   return (
     <div className="grid min-w-0 gap-0.5 break-words rounded-lg border border-border p-3 text-sm">
@@ -23,6 +29,11 @@ function Row({ r }: { r: LightOverviewRow }) {
         {t("overview.facts", { zone, lux: need })}
       </span>
       {r.position ? <span>{r.position.description}</span> : null}
+      {r.lightNeedUnknown ? (
+        <span className="pt-1">
+          <LightNeedAction speciesId={r.speciesId} speciesName={r.speciesName} />
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -30,26 +41,24 @@ function Row({ r }: { r: LightOverviewRow }) {
 /**
  * US-LIC-03: species by light hunger with position recommendations. In the layer the species are compact rows paged by
  * its free height instead of a table that scrolls the layer (US-QS-15, issue 1155); a species with an unknown lux need
- * has no position, and the next step for those is said once above the list (P-09).
+ * has no position and stays last, with its next step on the row (P-09, P-10).
  */
-export function LightOverviewView(props: { data: LightOverview; onOpenCollection: () => void }) {
-  const { data, onOpenCollection } = props;
-  const anyUnknown = data.rows.some((r) => r.position === null);
+export function LightOverviewView(props: { data: LightOverview }) {
+  const { data } = props;
   return (
     <section aria-labelledby="overview" className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
       <h2 id="overview" className="text-xl font-semibold">
         {t("overview.title")}
       </h2>
       {data.rows.length === 0 ? (
-        <EmptyState
-          title={t("overview.none.title")}
-          description={t("overview.none.description")}
-          action={{ label: t("overview.none.action"), onClick: onOpenCollection }}
+        // One line and the step that fills it: the add-plant form, not the collection (F-0189, SG-COPY-02)
+        <EmptySection
+          text={t("overview.none.line")}
+          action={{ label: t("overview.none.action"), href: ADD_PLANT_PATH }}
         />
       ) : (
         <>
           <p className="text-sm text-muted-foreground">{t("overview.intro")}</p>
-          {anyUnknown ? <p className="text-sm font-semibold">{t("overview.unknownNext")}</p> : null}
           <Pager
             items={data.rows}
             pageSize={PAGE_SIZE}

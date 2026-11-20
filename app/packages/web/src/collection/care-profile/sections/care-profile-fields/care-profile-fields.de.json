@@ -1,0 +1,10 @@
+{
+  "from": "von",
+  "until": "bis",
+  "month": "Monat",
+  "day": "Tag",
+  "restPart": "Ruhephase {when} ({part}) für „{species}“",
+  "forSpecies": "{label} für „{species}“",
+  "daysLabel": "{label} (Tage)",
+  "catalogWord": "Katalog gilt"
+}

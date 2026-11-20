@@ -42,6 +42,7 @@ const cardFrom = (e: Specimen): SpecimenCard => ({
   location: e.locationId === "s1" ? "Regal Süd" : null,
   lightZone: null,
   lightZoneSource: null,
+  lightNeedUnknown: false,
   caughtAt: e.caughtAt,
   photo: null,
   lastMeasurement: null,
@@ -70,7 +71,8 @@ function fakeServer(opts: ServerOptions = {}) {
         key: (init.headers as Record<string, string>)["Idempotency-Key"],
       });
       if (opts.create) return opts.create();
-      const fresh = specimen({ id: "e2", name: "Bogenhanf – rot", marker: "rot" });
+      // An id many() never produces, so the list keys stay unique (#1627).
+      const fresh = specimen({ id: "new-1", name: "Bogenhanf – rot", marker: "rot" });
       specimens.push(fresh);
       return response(201, fresh);
     }
@@ -212,11 +214,11 @@ describe("US-BES-02 Seite Sammlung", () => {
     expect(onSpeciesChoose).toHaveBeenCalledOnce();
   });
 
-  it("US-ONB-01 Weitere Pflanze opens the quick flow, not the species choice", async () => {
+  it("US-ONB-01 Pflanze anlegen (the plus) opens the quick flow, not the species choice", async () => {
     fakeServer({ specimens: [specimen()] });
     const [onAdd, onSpeciesChoose] = [vi.fn(), vi.fn()];
     render(page({ onAdd, onSpeciesChoose }));
-    await userEvent.click(await screen.findByRole("button", { name: "Weitere Pflanze" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
     expect(onAdd).toHaveBeenCalledOnce();
     expect(onSpeciesChoose).not.toHaveBeenCalled();
   });
@@ -239,12 +241,49 @@ describe("US-BES-02 Seite Sammlung", () => {
   });
 });
 
+/** The classes of every padded ancestor of an element: a page frame (px-4, py-6) around it, if there is one (US-QS-32). */
+function paddedAncestors(el: HTMLElement): string[] {
+  const found: string[] = [];
+  for (let node = el.parentElement; node; node = node.parentElement) {
+    if (/(^|\s)px-4(\s|$)/.test(node.className) || /(^|\s)py-6(\s|$)/.test(node.className))
+      found.push(node.className);
+  }
+  return found;
+}
+
+describe("US-QS-32 the page hosted by Sammlung has no frame of its own", () => {
+  it("US-QS-32 with a host the list group sits without a padded frame, so it starts at the destination's gutter", async () => {
+    fakeServer({ specimens: [specimen({ locationId: "s1" })] });
+    render(page({ host: { onCaption: vi.fn(), onFullView: vi.fn() } }));
+    const list = await screen.findByRole("list", { name: "Pflanzen" });
+    expect(paddedAncestors(list)).toEqual([]);
+  });
+
+  it("US-QS-32 with a host the loading skeleton has no padded frame either, so it lines up with the list", async () => {
+    fakeServer({ specimens: [specimen({ locationId: "s1" })] });
+    delayLoads();
+    render(page({ host: { onCaption: vi.fn(), onFullView: vi.fn() } }));
+    const status = await screen.findByRole("status");
+    expect(status.textContent).toContain("Sammlung wird geladen");
+    expect(paddedAncestors(status)).toEqual([]);
+  });
+
+  it("US-QS-32 without a host the page keeps its own frame (PageFrame: px-4 and py-6 around the list)", async () => {
+    fakeServer({ specimens: [specimen({ locationId: "s1" })] });
+    render(page());
+    const list = await screen.findByRole("list", { name: "Pflanzen" });
+    const frames = paddedAncestors(list);
+    expect(frames.some((c) => /(^|\s)px-4(\s|$)/.test(c) && /(^|\s)py-6(\s|$)/.test(c))).toBe(true);
+  });
+});
+
 describe("US-BES-06 cards on the collection page", () => {
   it("shows measurement, note (collapsible), photo link and treatment from the cards API", async () => {
     const card: SpecimenCard = {
       ...cardFrom(specimen({ locationId: "s1" })),
       lightZone: "Zone 3",
       lightZoneSource: "location",
+      lightNeedUnknown: false,
       photo: { url: "/specimens/e1/measurements/m1/photo", date: "2026-09-28" },
       lastMeasurement: {
         date: "2026-10-01",
@@ -298,7 +337,7 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
   it("US-BES-06 · FR-BES-23 a plant beyond the first server page is reachable through the Pager; the next page loads by itself", async () => {
     const { fetchFn } = fakeServer({ specimens: many(150) });
     render(page({}, "/?from=144"));
-    expect(await screen.findByRole("button", { name: /^Pflanze 150 / })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Pflanze 150(\s|$)/ })).toBeTruthy();
     expect(screen.getByText("Seite 25 von 25")).toBeTruthy();
     expect(cardCalls(fetchFn).some((u) => u.searchParams.has("after"))).toBe(true);
   });
@@ -322,7 +361,7 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
     );
     expect(screen.getByText("Seite 25 von 25")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    expect(await screen.findByRole("button", { name: /^Pflanze 150 / })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Pflanze 150(\s|$)/ })).toBeTruthy();
     const cursors = cardCalls(fetchFn)
       .map((u) => u.searchParams.get("after"))
       .filter((after): after is string => after !== null);

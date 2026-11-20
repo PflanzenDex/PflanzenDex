@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { Select } from "@/shared/ui/fields/select/select";
 import { refusalText } from "@/shared/lib/error-text";
-import { cn } from "@/shared/lib/utils";
+import { BUSY_LOOK, cn } from "@/shared/lib/utils";
 import { SIGN_IN, type ApiError } from "../../../../shared/data";
 import { saveKeeperStyle, type KeeperStyle, type KeeperStyleState } from "../keeper-style-api";
 
@@ -63,29 +63,33 @@ export function Refusal(props: { error: ApiError | null }) {
   );
 }
 
-/** The profile choice: a select with the two answers; the hint under it names what the current answer means. */
+/**
+ * The profile choice: a select with the two answers. The hint of the current answer sits behind the parent's "Mehr erfahren".
+ * While a pick saves (`busy`) the select stays focusable and says so with `aria-disabled`: a control that becomes disabled
+ * loses the focus (US-QS-32, issue 2317). A pick meanwhile is not taken, and React keeps the stored style on the select.
+ */
 export function StyleSelect(props: {
   value: KeeperStyle;
-  disabled: boolean;
+  busy: boolean;
   onPick: (s: KeeperStyle) => void;
 }) {
-  const current = KEEPER_STYLE_CHOICES.find((c) => c.style === props.value);
   return (
-    <>
-      <Select
-        aria-label="Wie nutzt du die App?"
-        value={props.value}
-        disabled={props.disabled}
-        onChange={(e) => props.onPick(e.target.value === "many" ? "many" : "few")}
-      >
-        {KEEPER_STYLE_CHOICES.map((c) => (
-          <option key={c.style} value={c.style}>
-            {c.label}
-          </option>
-        ))}
-      </Select>
-      <p className="mt-1 text-sm text-muted-foreground">{current?.hint}</p>
-    </>
+    <Select
+      aria-label="Wie nutzt du die App?"
+      className={BUSY_LOOK}
+      value={props.value}
+      aria-disabled={props.busy || undefined}
+      onChange={(e) => {
+        if (props.busy) return;
+        props.onPick(e.target.value === "many" ? "many" : "few");
+      }}
+    >
+      {KEEPER_STYLE_CHOICES.map((c) => (
+        <option key={c.style} value={c.style}>
+          {c.label}
+        </option>
+      ))}
+    </Select>
   );
 }
 

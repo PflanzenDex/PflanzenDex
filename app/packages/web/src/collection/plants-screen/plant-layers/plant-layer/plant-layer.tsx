@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { Menu, type MenuItem } from "@/shared/patterns/display/panels/menu/menu";
@@ -6,26 +6,33 @@ import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Measurement } from "../../../specimens/cards/specimen-card/specimen-card";
-import { plantLayerId } from "../../rows/plant-tile/plant-tile";
-import type { Handlers, LayerProps, SlotRender } from "../layer-ids";
+import {
+  PLANT_LOCATION_TAB,
+  PLANT_TAB_PARAM,
+  plantLayerId,
+} from "@/shared/patterns/navigation/navigation/navigation";
+import type { Handlers, LayerProps, SlotFallback, SlotRender } from "../layer-ids";
 import table from "../plant-layers.de.json";
 import { PlantCareTab } from "./plant-care-tab/plant-care-tab";
 import { PlantLocation } from "./plant-location/plant-location";
 import { Chips, MeasureButton, PlantOverview } from "./plant-overview/plant-overview";
+import type { SlotPart } from "./plant-layer.skeleton";
+import { Slot } from "./plant-layer.slot";
 
 const t = texts(table);
-const TAB_PARAM = "tab";
 /** The status names of a plant and a cutting, compared as values (FR-QG-12); a cutting gets no repot plan (US-BES-04). */
 const PLANT_STATUS = "plant" as const;
 const CUTTING_STATUS = "cutting" as const;
-/** The tabs and their values in the address (`&tab=`); an absent or unknown value means the overview (US-QS-23). */
+/**
+ * The tabs and their values in the address (`&tab=`, `PLANT_TAB_PARAM`); an absent or unknown value means the overview
+ * (US-QS-23). The Standort value is shared with the care rows that open it (`PLANT_LOCATION_TAB`, US-QS-32).
+ */
 const TABS = [
   { value: "ueberblick", label: t("tabs.overview") },
   { value: "verlauf", label: t("tabs.history") },
   { value: "pflege", label: t("tabs.care") },
-  { value: "standort", label: t("tabs.location") },
+  { value: PLANT_LOCATION_TAB[PLANT_TAB_PARAM], label: t("tabs.location") },
 ] as const;
 
 /**
@@ -35,11 +42,11 @@ const TABS = [
 export function usePlantTab() {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
-  const raw = params.get(TAB_PARAM);
+  const raw = params.get(PLANT_TAB_PARAM);
   const tab = TABS.find((t) => t.value === raw)?.value ?? TABS[0].value;
   const choose = (value: string) => {
     const next = new URLSearchParams(params);
-    next.set(TAB_PARAM, value);
+    next.set(PLANT_TAB_PARAM, value);
     setParams(next, { replace: true, state: location.state });
   };
   return { tab, choose };
@@ -60,24 +67,6 @@ function moreItems(card: SpecimenCard, h: Handlers): MenuItem[] {
   ];
 }
 
-/** A part from another module, loaded when its tab opens; it says that it is loading (P-10). */
-function Slot(props: { render?: SlotRender | undefined; card: SpecimenCard; measure: () => void }) {
-  if (!props.render) return null;
-  return (
-    <Suspense
-      fallback={
-        <DelayedSkeleton>
-          <p role="status" className="text-sm text-muted-foreground">
-            {t("slot.loading")}
-          </p>
-        </DelayedSkeleton>
-      }
-    >
-      {props.render(props.card, { measure: props.measure })}
-    </Suspense>
-  );
-}
-
 type Props = Handlers &
   Pick<LayerProps, "slots" | "locations" | "onLocate" | "onManage"> & {
     card: SpecimenCard;
@@ -88,24 +77,28 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
   const { card } = p;
   const lightZone = p.onLightZone;
   const measure = () => p.onMeasure?.(card);
-  const slot = (render: SlotRender | undefined) => (
-    <Slot render={render} card={card} measure={measure} />
-  );
+  const slot = (
+    render: SlotRender | undefined,
+    part: SlotPart,
+    fallback?: SlotFallback | undefined,
+  ) => <Slot render={render} part={part} fallback={fallback} card={card} measure={measure} />;
   const content: Record<(typeof TABS)[number]["value"], ReactNode> = {
     ueberblick: (
       <PlantOverview
         card={card}
         access={p.photoAccess}
-        growth={p.slots?.growth ? slot(p.slots.growth) : undefined}
-        water={p.slots?.water ? slot(p.slots.water) : undefined}
+        growth={
+          p.slots?.growth ? slot(p.slots.growth, "growth", p.slots.growthFallback) : undefined
+        }
+        water={p.slots?.water ? slot(p.slots.water, "water") : undefined}
         onTreat={() => tab.choose("pflege")}
       />
     ),
-    verlauf: p.slots?.history ? slot(p.slots.history) : <Measurement card={card} />,
+    verlauf: p.slots?.history ? slot(p.slots.history, "history") : <Measurement card={card} />,
     pflege: (
       <PlantCareTab
         card={card}
-        care={slot(p.slots?.care)}
+        care={slot(p.slots?.care, "care")}
         repot={
           card.status === PLANT_STATUS && p.onRepot
             ? { access: p.photoAccess, onRepot: () => p.onRepot?.(card) }

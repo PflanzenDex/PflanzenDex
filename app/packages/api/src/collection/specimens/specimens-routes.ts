@@ -3,12 +3,6 @@ import {
   NO_MEASUREMENTS,
   NO_MEASURED,
   NO_PROVENANCE,
-  NO_TARGET_LOCATION,
-  specimenCreate,
-  specimenCorrectCatchDate,
-  specimenRepotWithPot,
-  EQUIPMENT_KEEPER_SWITCH,
-  keeperOffOf,
   specimenLoad,
   specimenList,
   specimenNotes,
@@ -22,8 +16,6 @@ import {
 } from "@pflanzendex/core";
 import {
   CareProfilePostgres,
-  KeeperSwitchPostgres,
-  PotRepotPostgres,
   SpeciesPostgres,
   SpecimenPostgres,
   SpecimenNotesPostgres,
@@ -43,6 +35,7 @@ import { repotPlanRoutes } from "../repot/repot-plan-routes";
 import { repotSignRoutes } from "../repot/repot-routes";
 import { markerRoutes } from "../markers/marker-routes";
 import { locationRoutes } from "../markers/location-routes";
+import { specimenOperations } from "../markers/specimen-operations";
 import { derivedRoutes } from "../insights/derived-routes";
 import { cardRoutes } from "../cards/cards-routes";
 import { importRoutes } from "../bulk/import-routes";
@@ -90,20 +83,6 @@ export const cardsDependencies = (
 });
 
 /**
- * The repot with its pot (US-BES-04, US-BES-19): one unit of work, so the repot and the placement commit or roll back
- * together (`PotRepotPostgres`). With the equipment switch off a pot is refused (P-12).
- */
-function specimenRepotWithPotOf(pool: Pool, clock: () => Date) {
-  const switches = new KeeperSwitchPostgres(pool);
-  return specimenRepotWithPot({
-    unit: new PotRepotPostgres(pool),
-    clock,
-    keeperOff: async (userId) =>
-      keeperOffOf(await switches.list(userId)).has(EQUIPMENT_KEEPER_SWITCH),
-  });
-}
-
-/**
  * Specimens (US-BES-02, US-BES-04, US-BES-07, US-PHA-03). Writing goes only through `specimen.create`, `.correct_catch_date`, `.repot`, `.archive`, `.restore` and `.set_location` (P-03, with
  * `Idempotency-Key`); lists and cards show no archived specimens, `/specimens/archived` does. Reading returns only
  * specimens of the own account, a foreign or unknown specimen looks the same: 404 (P-04).
@@ -112,14 +91,9 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
   const specimens = new SpecimenPostgres(pool);
   const deps = { idempotency: new IdempotencyPostgres(pool) };
   const clock = opt.clock ?? (() => new Date());
-  const create = specimenCreate({
-    specimens,
-    species: new SpeciesPostgres(pool),
-    targetLocation: opt.targetLocation ?? NO_TARGET_LOCATION,
-    clock,
-  });
-  const repot = specimenRepotWithPotOf(pool, clock);
-  const correct = specimenCorrectCatchDate({ specimens, clock });
+  // The same operations the AI client's write tools run (KI-R10, FR-KI-14).
+  const ops = specimenOperations(pool, { clock, targetLocation: opt.targetLocation });
+  const { create, repot, correctCatchDate: correct } = ops;
   const notes = new SpecimenNotesPostgres(pool);
   const setNotes = specimenSetNotes({ specimens: notes });
   const cardsDeps = cardsDependencies(pool, specimens, opt);
@@ -139,15 +113,15 @@ export function specimenRoutes(pool: Pool, opt: SpecimenOptions = {}): Hono<Auth
     return c.json({ count: n.active, archived: n.archived });
   });
   // Archive, archive and restore (US-BES-07); before `/specimens/:id`.
-  routes.route("/", archivedRoutes(pool, clock));
+  routes.route("/", archivedRoutes(pool, clock, ops));
   // US-BES-19: tick or clear one repot observation of a plant (P-03, `Idempotency-Key`); before `/specimens/:id`.
   routes.route("/", repotSignRoutes(pool, clock));
   // US-BES-19: the repot plan (read) and the placement into a pot (P-03); before `/specimens/:id`.
   routes.route("/", repotPlanRoutes(pool, clock));
   // US-BES-03: give a specimen a marker or change it.
-  routes.route("/", markerRoutes(pool));
+  routes.route("/", markerRoutes(pool, ops));
   // US-PHA-03: set the location of a specimen (BES-08 "location missing").
-  routes.route("/", locationRoutes(pool));
+  routes.route("/", locationRoutes(pool, ops));
   // Distribution (US-LIC-02) and hints (US-BES-08); before `/specimens/:id`.
   routes.route("/", derivedRoutes(pool));
   // US-BES-18: the keeper's own detail carries the private notes; the other reads of a specimen (lists, cards, friends,

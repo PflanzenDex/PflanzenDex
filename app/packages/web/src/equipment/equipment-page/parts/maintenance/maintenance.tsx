@@ -4,11 +4,13 @@ import { Button } from "@/shared/ui/button/button";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 import { currentTimeZone } from "../../../../shared/data";
 import type { EquipmentRow } from "../../../equipment-api";
 import type { MaintenanceInput } from "../../../upkeep-api";
 import { wholeNumber } from "../../../lamp-light/parse";
-import { keepTogether } from "@/shared/lib/format";
+import { dateText, keepTogether, summaryDate } from "@/shared/lib/format";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";
 const UNKNOWN = "unbekannt";
@@ -40,6 +42,7 @@ function toInput(f: Record<"since" | "interval" | "value" | "source", string>) {
 }
 
 function Values({ item }: { item: EquipmentRow }) {
+  const today = localToday(new Date(), currentTimeZone());
   const lifetime =
     item.lifetimeValue === null
       ? UNKNOWN
@@ -47,7 +50,7 @@ function Values({ item }: { item: EquipmentRow }) {
   return (
     <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm tabular-nums">
       <dt>In Betrieb seit</dt>
-      <dd className="m-0">{item.inOperationSince ?? UNKNOWN}</dd>
+      <dd className="m-0">{item.inOperationSince ? dateText(item.inOperationSince) : UNKNOWN}</dd>
       <dt>Prüfintervall</dt>
       <dd className="m-0">
         {item.checkIntervalDays === null
@@ -55,7 +58,9 @@ function Values({ item }: { item: EquipmentRow }) {
           : keepTogether(`alle ${item.checkIntervalDays} Tage`)}
       </dd>
       <dt>Zuletzt geprüft</dt>
-      <dd className="m-0">{item.lastCheckedOn ?? "noch nie"}</dd>
+      <dd className="m-0">
+        {item.lastCheckedOn ? summaryDate(item.lastCheckedOn, today) : "noch nie"}
+      </dd>
       <dt>Lebensdauer</dt>
       <dd className="m-0 break-words">{lifetime}</dd>
     </dl>
@@ -71,6 +76,8 @@ function MaintenanceForm(props: { item: EquipmentRow; actions: MaintenanceAction
   const [problem, setProblem] = useState<string | null>(null);
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
+    // A typed text that is no day: its field shows the message on leaving it (US-QS-32), nothing is saved.
+    if (!isHandedDate(since)) return;
     const checked = toInput({ since, interval, value, source });
     if ("problem" in checked) return setProblem(checked.problem);
     setProblem(null);
@@ -88,10 +95,11 @@ function MaintenanceForm(props: { item: EquipmentRow; actions: MaintenanceAction
           <DateField value={since} onChange={(e) => setSince(e.target.value)} />
         </label>
         <label className={LABEL}>
-          Prüfintervall in Tagen (optional)
+          Prüfintervall (optional)
           <Input
             inputMode="numeric"
             value={interval}
+            suffix="Tage"
             onChange={(e) => setInterval(e.target.value)}
           />
         </label>
@@ -126,7 +134,7 @@ export function Maintenance(props: { item: EquipmentRow; actions: MaintenanceAct
   if (item.status === null) return null;
   return (
     <details className="mt-2 text-sm">
-      <summary className="cursor-pointer">Betrieb und Wartung</summary>
+      <DisclosureSummary>Betrieb und Wartung</DisclosureSummary>
       <div className="mt-2 flex flex-col gap-2">
         <Values item={item} />
         <Button

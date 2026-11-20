@@ -91,16 +91,17 @@ describe("US-QS-09 · every view has a unique German title (2.4.2)", () => {
 
 describe("US-QS-09 · every view has one main heading and the regions (1.3.1, 2.4.6)", () => {
   it.each(VIEWS)(
-    "US-QS-09 the view %s has exactly one h1 in main, plus header and navigation",
+    "US-QS-09 the view %s has exactly one h1, in main or in the top bar below md (US-QS-32), plus header and navigation",
     async (_view, path) => {
       renderAt(path);
       const main = screen.getByRole("main");
       // The skeleton shows only after its delay (US-QS-14, DS-57, issue 1697), so the page has settled when it has its one
-      // h1 and no status: waiting for "no status" alone would pass before the delay has run.
+      // h1 and no status: waiting for "no status" alone would pass before the delay has run. A page header below md sits
+      // in the top bar (SG-HEAD-01), so the one h1 is counted over the whole page.
       await waitFor(
         () => {
           expect(within(main).queryByRole("status")).toBeNull();
-          expect(within(main).getAllByRole("heading", { level: 1 })).toHaveLength(1);
+          expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
         },
         { timeout: 4000 },
       );
@@ -161,7 +162,7 @@ describe("US-QS-09 · a view with nothing to do says so and names the next step 
     renderAt("/hints", empty);
     const layer = await screen.findByRole("dialog", { name: "Fehlt noch" });
     expect(
-      await within(layer).findByRole("heading", { level: 3, name: "Keine Hinweise" }),
+      await within(layer).findByRole("heading", { level: 3, name: "Nichts fehlt" }),
     ).toBeTruthy();
     expect(within(layer).getByRole("button", { name: "Zur Sammlung" })).toBeTruthy();
     // The page behind keeps its one main heading.

@@ -63,3 +63,6 @@ export const specimenRestore = (deps: Pick<ArchiveDependencies, "specimens">) =>
       return typeof r === "string" ? failed(appError(ERROR[r])) : ok(r);
     },
   });
+
+// The checks of the operation, so the AI tools derive their input schema from them (US-KI-14, FR-KI-17).
+export { schemaRestore as specimenRestoreSchema };

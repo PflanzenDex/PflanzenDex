@@ -8,6 +8,8 @@ import { Planning, usePlanning } from "../planning/planning";
 import { loadTreatableSpecimens } from "../../shared/api/treatments-api";
 import { Button } from "@/shared/ui/button/button";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import type { EmptyStateAction } from "@/shared/patterns/elements/empty-state/empty-state";
+import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 
 type Token = () => Promise<string | undefined>;
 type View = "open" | "done";
@@ -43,6 +45,21 @@ export function TreatmentsPage(props: {
   return <TreatmentsList {...page} />;
 }
 
+/**
+ * The step of the empty open list, only where the screen does not show it yet (SG-STATE-01, owner 2026-11-16, issue
+ * 2233): in the layer "Behandlung planen" stands below the list, so the line carries "Pflanze anlegen" only without a
+ * plant; on the page the planning section carries "Pflanze anlegen" without a plant, so the line names a step only with
+ * one.
+ */
+function emptyStep(
+  host: boolean,
+  canPlan: boolean,
+  plan: () => void,
+): EmptyStateAction | undefined {
+  if (host) return canPlan ? undefined : { label: "Pflanze anlegen", href: ADD_PLANT_PATH };
+  return canPlan ? { label: "Behandlung planen", onClick: plan } : undefined;
+}
+
 function TreatmentsList(props: { api: string; token: Token; host?: boolean; onPlan?: () => void }) {
   const { api, token } = props;
   const host = props.host === true;
@@ -56,9 +73,7 @@ function TreatmentsList(props: { api: string; token: Token; host?: boolean; onPl
   const specimens = request.value ?? [];
   const canPlan = specimens.length > 0;
   const plan = host ? () => props.onPlan?.() : () => firstField.current?.focus();
-  const next = canPlan
-    ? { label: "Behandlung planen", onClick: plan }
-    : { label: "Zur Sammlung", href: "/collection" };
+  const next = emptyStep(host, canPlan, plan);
   if (host)
     return (
       <div className="flex min-w-0 flex-col gap-4">

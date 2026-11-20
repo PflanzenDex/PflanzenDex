@@ -34,6 +34,14 @@ export const KEYBOARD_SHORTCUT_MODES = ["plain", "modifier", "disabled"] as cons
 export type KeyboardShortcutMode = (typeof KEYBOARD_SHORTCUT_MODES)[number];
 export const KEYBOARD_SHORTCUT_DEFAULT: KeyboardShortcutMode = "plain";
 
+/**
+ * Motion of the app (US-QS-33): `system` follows the device (`prefers-reduced-motion`, starting value), `reduced` is
+ * "Bewegung aus" on every device of the keeper. No value forces motion on against the device (decided by the PO).
+ */
+export const MOTION_SETTINGS = ["system", "reduced"] as const;
+export type MotionSetting = (typeof MOTION_SETTINGS)[number];
+export const MOTION_DEFAULT: MotionSetting = "system";
+
 /** Limit of the display name in characters (assumption, starting value). */
 export const DISPLAY_NAME_LIMITS = { min: 1, max: 80 } as const;
 
@@ -68,6 +76,8 @@ export interface AccountProfile {
   readonly positionThresholds: readonly number[] | null;
   /** How the keyboard shortcuts are taken (US-QS-11); `plain` until changed. */
   readonly keyboardShortcuts: KeyboardShortcutMode;
+  /** Motion of the app (US-QS-33); `system` until changed. */
+  readonly motion: MotionSetting;
 }
 
 /**
@@ -76,7 +86,7 @@ export interface AccountProfile {
  */
 export type ProfileChanges = Omit<
   AccountProfile,
-  "replenishBuffer" | "rarityConsent" | "positionThresholds" | "keyboardShortcuts"
+  "replenishBuffer" | "rarityConsent" | "positionThresholds" | "keyboardShortcuts" | "motion"
 > & {
   readonly replenishBuffer: number | null;
   /** `null` keeps the stored consent. */
@@ -85,6 +95,8 @@ export type ProfileChanges = Omit<
   readonly positionThresholds: readonly number[] | null;
   /** `null` keeps the stored mode, so an older client cannot switch the shortcuts back on or off. */
   readonly keyboardShortcuts: KeyboardShortcutMode | null;
+  /** `null` keeps the stored motion choice (US-QS-33), so an older client cannot switch motion back on. */
+  readonly motion: MotionSetting | null;
 };
 
 /** Port for persistence; the adapter lives in `db` (AB-1) and runs as the account of the caller (P-04). */
@@ -139,11 +151,14 @@ const thresholdsField = (field: string) => (value: unknown) => {
   return ok ? (value as readonly number[]) : bad;
 };
 
-/** One of the three modes of `KEYBOARD_SHORTCUT_MODES`; anything else is refused, never mapped silently (P-10). */
-const modeField = (field: string) => (value: unknown) =>
-  (KEYBOARD_SHORTCUT_MODES as readonly unknown[]).includes(value)
-    ? (value as KeyboardShortcutMode)
-    : ({ field, code: "input.invalid" } as ErrorDetail);
+/** One value of a fixed set (shortcut mode, motion); anything else is refused, never mapped silently (P-10). */
+const oneOf =
+  <V extends string>(values: readonly V[]) =>
+  (field: string) =>
+  (value: unknown) =>
+    (values as readonly unknown[]).includes(value)
+      ? (value as V)
+      : ({ field, code: "input.invalid" } as ErrorDetail);
 
 const schema = shape({
   displayName: orNull(textField("displayName", DISPLAY_NAME_LIMITS)),
@@ -154,7 +169,8 @@ const schema = shape({
   replenishBuffer: orNull(bufferField("replenishBuffer")),
   rarityConsent: orNull(flag("rarityConsent")),
   positionThresholds: orNull(thresholdsField("positionThresholds")),
-  keyboardShortcuts: orNull(modeField("keyboardShortcuts")),
+  keyboardShortcuts: orNull(oneOf(KEYBOARD_SHORTCUT_MODES)("keyboardShortcuts")),
+  motion: orNull(oneOf(MOTION_SETTINGS)("motion")),
 });
 
 export interface ProfileDependencies {
@@ -164,8 +180,8 @@ export interface ProfileDependencies {
 /**
  * Saves the profile as a whole (US-ACC-02, P-03): display name (free, not unique; `null` or left out keeps the stored
  * name, so a name can be changed but never removed), the buffer of the wishlist warning (whole number 0 to 10, `null` or left out keeps the stored value), the position thresholds of the light overview (US-LIC-03: four whole lux values, descending; `null` or left out keeps the stored ones), time zone (IANA name, validated
- * against the time zone database), the two global switches, the switch per notification occasion and the keyboard shortcut
- * mode (US-QS-11, `null` or left out keeps the stored one). Only the own
+ * against the time zone database), the two global switches, the switch per notification occasion, the keyboard shortcut
+ * mode (US-QS-11) and the motion choice (US-QS-33; both `null` or left out keep the stored one). Only the own
  * account can be written; the account is the one of the caller, never part of the input (P-04). Writing the same
  * values twice changes nothing. An account without a data row yet answers `access.denied`.
  */

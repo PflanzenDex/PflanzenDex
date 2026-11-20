@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { Check, CircleDot, Clock, Minus, type LucideIcon } from "lucide-react";
 import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { dateText } from "@/shared/lib/format";
 import { useRequest } from "../../shared/data";
@@ -7,13 +8,19 @@ import { loadRhythm, type RhythmWeekState } from "../achievements-api";
 
 type Token = () => Promise<string | undefined>;
 
-/** Symbol and word per state: never colour alone (NFR-13). A week with open tasks is no loss, only "offen" (FR-ACH-06). */
-const WEEK: Record<RhythmWeekState, { mark: string; word: string }> = {
-  on_time: { mark: "✓", word: "pünktlich" },
-  open: { mark: "•", word: "offen" },
-  pending: { mark: "…", word: "läuft noch" },
-  none: { mark: "–", word: "nichts fällig" },
+/**
+ * Icon and word per state: never colour alone (NFR-13), and no text glyph as the mark (SG-ICON-01, issue 1919). A week with
+ * open tasks is no loss, only "offen" (FR-ACH-06).
+ */
+const WEEK: Record<RhythmWeekState, { icon: LucideIcon; word: string }> = {
+  on_time: { icon: Check, word: "pünktlich" },
+  open: { icon: CircleDot, word: "offen" },
+  pending: { icon: Clock, word: "läuft noch" },
+  none: { icon: Minus, word: "nichts fällig" },
 };
+
+/** The legend under the grid, in the order of the states: each icon with its word (SG-COLOR-05, F-0295). */
+const LEGEND: readonly RhythmWeekState[] = ["on_time", "open", "pending", "none"];
 
 const weeks = (n: number): string => (n === 1 ? "1 Woche" : `${n} Wochen`);
 
@@ -55,24 +62,41 @@ function RhythmText(props: {
 
 /**
  * The last 12 weeks, six per row (US-ACH-04), twelve once the layer is 28 rem wide: a pane beside the list keeps six
- * (a container query, issue 1640). Each week says its state in words too.
+ * (a container query, issue 1640). Each week shows its state as an icon, and a legend line under the grid names the
+ * icons; the week's name for screen readers says the state in words too.
  */
 function RhythmWeeks(props: { weeks: readonly { start: string; state: RhythmWeekState }[] }) {
   return (
-    <ol
-      aria-label="Die letzten 12 Wochen"
-      className="m-0 grid list-none grid-cols-6 gap-1 p-0 @md:grid-cols-12"
-    >
-      {props.weeks.map((w) => (
-        <li
-          key={w.start}
-          className="flex h-10 items-center justify-center rounded border border-border text-sm"
-        >
-          <span aria-hidden="true">{WEEK[w.state].mark}</span>
-          <span className="sr-only">{`Woche vom ${dateText(w.start)}: ${WEEK[w.state].word}`}</span>
-        </li>
-      ))}
-    </ol>
+    <>
+      <ol
+        aria-label="Die letzten 12 Wochen"
+        className="m-0 grid list-none grid-cols-6 gap-1 p-0 @md:grid-cols-12"
+      >
+        {props.weeks.map((w) => {
+          const { icon: Icon, word } = WEEK[w.state];
+          return (
+            <li
+              key={w.start}
+              className="flex h-10 items-center justify-center rounded border border-border"
+            >
+              <Icon aria-hidden="true" className="size-5" />
+              <span className="sr-only">{`Woche vom ${dateText(w.start)}: ${word}`}</span>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="m-0 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
+        {LEGEND.map((state) => {
+          const { icon: Icon, word } = WEEK[state];
+          return (
+            <span key={state} className="inline-flex items-center gap-1">
+              <Icon aria-hidden="true" className="size-4 shrink-0" />
+              {word}
+            </span>
+          );
+        })}
+      </p>
+    </>
   );
 }
 
@@ -108,7 +132,11 @@ export function CareRhythmSection(props: { api: string; token: Token }) {
           <RhythmWeeks weeks={v.weeks} />
         </div>
       </LayerPart>
-      <LayerPart id="pause" title="Pause eintragen" value="Urlaub oder Krankheit, bis 4 Wochen">
+      <LayerPart
+        id="pause"
+        title="Urlaub eintragen"
+        value="Bis 4 Wochen, zählt nicht gegen deinen Pflegerhythmus"
+      >
         <RhythmPauses api={api} token={token} pauses={v.pauses ?? []} />
       </LayerPart>
     </>

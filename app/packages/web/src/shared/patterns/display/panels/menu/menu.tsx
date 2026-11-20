@@ -50,7 +50,9 @@ function MenuRow(props: { item: MenuItem; onChoose: () => void }) {
         item.onSelect();
       }}
       className={cn(
-        "justify-start rounded-control px-3 text-left",
+        // The text wraps and the row grows with it: at 200 % text no entry is cut (US-QS-32, F-0209). A row keeps the
+        // Button's min-height, not a fixed one, and `whitespace-normal` holds even under an inherited nowrap.
+        "justify-start whitespace-normal rounded-control px-3 text-left",
         item.destructive && "text-destructive hover:text-destructive",
       )}
     >
@@ -64,14 +66,17 @@ function MenuRow(props: { item: MenuItem; onChoose: () => void }) {
  * `menuitem` buttons with roving focus. Enter, Space, a click or ArrowDown on the trigger opens it on the first item;
  * Up, Down, Home and End move; choosing runs the action and returns focus to the trigger; Escape does the same
  * without an action; Tab leaves and closes. Only for secondary actions: the main action stays a visible button.
+ *
+ * US-QS-32 (F-0209, F-0356): the menu stays at least 16 px inside both window edges, its width is at most 100vw minus
+ * 32 px and its entries wrap instead of being cut. Escape and a press outside close the menu only, not a dialog, sheet
+ * or layer pane around it (`usePopup`).
  */
 export function Menu(props: MenuProps) {
-  const { open, setOpen, close, rootRef, triggerRef } = usePopup();
+  const { open, setOpen, close, rootRef, triggerRef, panelRef } = usePopup();
   const id = React.useId();
-  const menuRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    if (open) menuRef.current?.querySelector<HTMLElement>(ITEM)?.focus();
-  }, [open]);
+    if (open) panelRef.current?.querySelector<HTMLElement>(ITEM)?.focus();
+  }, [open, panelRef]);
 
   return (
     <div ref={rootRef} className={cn("relative inline-block", props.className)}>
@@ -95,7 +100,7 @@ export function Menu(props: MenuProps) {
       </Button>
       {open ? (
         <div
-          ref={menuRef}
+          ref={panelRef}
           id={id}
           role="menu"
           aria-label={props.label}
@@ -103,7 +108,8 @@ export function Menu(props: MenuProps) {
           className={cn(
             popupPanelClass,
             popupAlignClass(props.align ?? "end"),
-            "grid min-w-48 gap-1",
+            // A rem minimum grows with the text size and would exceed the window at 200 %; the px cap keeps it inside.
+            "grid min-w-[min(12rem,calc(100vw-32px))] gap-1",
           )}
         >
           {props.items.map((item) => (

@@ -21,7 +21,10 @@ const listed = () => {
 
 describe("US-KI-07 MCP draft schemas list every field", () => {
   it("US-KI-07 every draft type the interface accepts has a content branch in propose_draft", () => {
-    const accepted = Object.keys(draftTypes({} as Pool, { schema: () => null } as never));
+    // The drafts of the write tools (US-KI-14) arrive through those tools, not through propose_draft.
+    const accepted = Object.keys(
+      draftTypes({} as Pool, { schema: () => null } as never, {} as never),
+    );
     expect(Object.keys(listed()).sort()).toEqual(accepted.sort());
   });
 

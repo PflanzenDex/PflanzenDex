@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "../pokedex-page/pokedex-page";
+import { pokedexReadAnswer } from "../pokedex-page/pokedex-reads-fake";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>
@@ -39,26 +40,31 @@ const lyrata = species("Ficus lyrata", {
 });
 const aloe = species("Aloe vera", { caughtDate: { date: null, source: "unknown" } });
 const token = async () => "tok";
-const open = async (onOpenSpecies?: (id: string) => void) => {
+/** The fetch of the Pokédex page for these caught species (the reads are in `pokedexReadAnswer`). */
+const stubPokedex = (caught: readonly { species: string }[]) =>
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () =>
+    vi.fn<typeof fetch>(async (url) =>
       Promise.resolve(
-        new Response(JSON.stringify({ ownership: { caught: [lyrata, aloe], unidentified: [] } }), {
-          status: 200,
-        }),
+        new Response(
+          JSON.stringify(pokedexReadAnswer(new URL(String(url)).pathname, caught) ?? {}),
+          {
+            status: 200,
+          },
+        ),
       ),
     ),
   );
+const open = async (onOpenSpecies?: (id: string) => void) => {
+  stubPokedex([lyrata, aloe]);
   view(
     <PokedexPage api="http://api" token={token} {...(onOpenSpecies ? { onOpenSpecies } : {})} />,
   );
-  await screen.findByRole("heading", { level: 1, name: "Pokédex" });
+  await screen.findByRole("heading", { level: 1, name: "Arten" });
 };
+// The entry's name is its German name where known, so the scientific name is found anywhere in the accessible name.
 const card = (name: string) =>
-  screen.getByRole("button", {
-    name: (accessible) => accessible.startsWith(`${name} `) || accessible === name,
-  });
+  screen.getByRole("button", { name: (accessible) => accessible.includes(name) });
 const detail = () => screen.getByRole("region", { name: /Details/ });
 
 afterEach(() => {
@@ -74,7 +80,7 @@ describe("US-POK-09 view details of a species", () => {
     const d = within(detail());
     expect(d.getByText("Ficus lyrata")).toBeTruthy();
     expect(d.getByText(/Gattung: Ficus/)).toBeTruthy();
-    expect(d.getByText(/Familie: Moraceae \(Maulbeergewächse\)/)).toBeTruthy();
+    expect(d.getByText(/Familie: Maulbeergewächse \(Moraceae\)/)).toBeTruthy();
     expect(d.getByText(/Status: gefangen/)).toBeTruthy();
     expect(d.getByText(/3 Pflanzen/)).toBeTruthy();
     expect(d.getByText("'Bambino'")).toBeTruthy();
@@ -99,24 +105,7 @@ describe("US-POK-09 view details of a species", () => {
   });
 
   it("US-POK-09 a source address with credentials links without them, they never reach the page (P-05)", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        Promise.resolve(
-          new Response(
-            JSON.stringify({
-              ownership: {
-                caught: [
-                  species("Aloe vera", { source: "https://nutzer:geheim@example.org/aloe" }),
-                ],
-                unidentified: [],
-              },
-            }),
-            { status: 200 },
-          ),
-        ),
-      ),
-    );
+    stubPokedex([species("Aloe vera", { source: "https://nutzer:geheim@example.org/aloe" })]);
     view(<PokedexPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Aloe vera/ }));
     const link = within(detail()).getByRole("link", { name: /Quelle/ });
@@ -125,22 +114,7 @@ describe("US-POK-09 view details of a species", () => {
   });
 
   it("US-POK-09 a source that is not an http(s) link is shown as plain text, never as a link", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        Promise.resolve(
-          new Response(
-            JSON.stringify({
-              ownership: {
-                caught: [species("Aloe vera", { source: "javascript:alert(1)" })],
-                unidentified: [],
-              },
-            }),
-            { status: 200 },
-          ),
-        ),
-      ),
-    );
+    stubPokedex([species("Aloe vera", { source: "javascript:alert(1)" })]);
     view(<PokedexPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Aloe vera/ }));
     const d = within(detail());
@@ -194,29 +168,41 @@ describe("US-POK-09 view details of a species", () => {
   });
 });
 
+describe("US-QS-32 the species sheet names a species the SG-TYPE-08 way (F-0119)", () => {
+  it("US-QS-32 with a German name the body shows the scientific name in italics once, under the German title", async () => {
+    await open();
+    await userEvent.click(card("Ficus lyrata"));
+    const d = within(detail());
+    const latin = d.getByText("Ficus lyrata");
+    expect(latin.tagName).toBe("I");
+    expect(d.getAllByText("Ficus lyrata")).toHaveLength(1);
+    expect(screen.getByRole("dialog", { name: "Geigenfeige" })).toBeTruthy();
+  });
+
+  it("US-QS-32 without a German name the sheet title holds the scientific name, and the body does not repeat it", async () => {
+    await open();
+    await userEvent.click(card("Aloe vera"));
+    expect(screen.getByRole("dialog", { name: "Aloe vera" })).toBeTruthy();
+    expect(within(detail()).queryByText("Aloe vera")).toBeNull();
+  });
+});
+
 describe("US-POK-09 · US-QS-22 the layer of a species is in the address", () => {
   it("US-POK-09 · US-QS-22 an address with the layer of a species opens its details", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        Promise.resolve(
-          new Response(
-            JSON.stringify({ ownership: { caught: [lyrata, aloe], unidentified: [] } }),
-            { status: 200 },
-          ),
-        ),
-      ),
-    );
+    stubPokedex([lyrata, aloe]);
     view(<PokedexPage api="http://api" token={token} />, "/?sheet=species-Aloe vera");
     expect((await screen.findByRole("region", { name: /Details/ })).textContent).toContain(
       "Gattung: Aloe",
     );
   });
 
-  it("US-POK-09 every entry shows a visible tap marker (chevron), not only the hover state", async () => {
+  it("US-POK-09 · US-QS-32 · SG-ICON-01 every entry shows a visible tap marker (a lucide chevron icon), not only the hover state", async () => {
     await open();
-    const marker = card("Ficus lyrata").closest("li")?.querySelector("[data-chevron]");
-    expect(marker?.className).toContain("after:content-['›']");
+    // The chevron of the object row (GroupedRow, SG-LIST-03): an icon after the placeholder, never text.
+    const marker = card("Ficus lyrata").closest("li")?.querySelector("svg.lucide-chevron-right");
+    expect(marker?.tagName.toLowerCase()).toBe("svg");
+    expect(marker?.getAttribute("class")).toContain("size-4");
+    expect(marker?.getAttribute("class")).not.toContain("after:content");
     expect(marker?.textContent).toBe("");
     expect(marker?.getAttribute("aria-hidden")).toBe("true");
   });

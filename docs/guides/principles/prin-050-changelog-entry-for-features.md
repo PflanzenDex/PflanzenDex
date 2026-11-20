@@ -15,7 +15,7 @@ Number of pull requests with the type `feat` or `fix` in the title that add no n
 
 ## Checked by
 
-`app/tools/check/release/check-changelog.mjs`, the fragment folder `app/packages/web/src/news/unreleased/`, the shared rules `app/packages/web/src/app/destinations/account-area/whats-new/news-lines.mjs`.
+`app/tools/check/delivery/release/check-changelog.mjs`, the fragment folder `app/packages/web/src/news/unreleased/`, the shared rules `app/packages/web/src/app/destinations/account-area/whats-new/news-lines.mjs`.
 
 ## Gate
 
@@ -23,4 +23,4 @@ Number of pull requests with the type `feat` or `fix` in the title that add no n
 
 ## Evidence
 
-Tests in `app/tools/check/release/check-changelog.test.mjs` (QG-U3, US-DEV-06), the release rules in `news-lines.test.ts` and `tools/repo/news-release.test.mjs`. The job reads the type from the pull request title, so the title format itself is checked by the commit-message entry (PRIN-009). Drafts are skipped until they are marked ready.
+Tests in `app/tools/check/delivery/release/check-changelog.test.mjs` (QG-U3, US-DEV-06), the release rules in `news-lines.test.ts` and `tools/repo/news-release.test.mjs`. The job reads the type from the pull request title, so the title format itself is checked by the commit-message entry (PRIN-009). Drafts are skipped until they are marked ready.

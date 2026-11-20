@@ -1,18 +1,26 @@
-import { useState, type MutableRefObject } from "react";
+import { useId, useState, type MutableRefObject } from "react";
 import type { ControllerRenderProps, Control } from "react-hook-form";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { FormField, FormItem, FormMessage } from "@/shared/ui/fields/form/form";
 import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
 import { Select } from "@/shared/ui/fields/select/select";
+import { Label } from "@/shared/ui/display/label/label";
 import { Pager, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { texts } from "@/shared/lib/text-rules/texts";
 import type { TreatableSpecimen } from "../../../../shared/api/treatments-api";
 import type { TreatmentFields } from "../../../../shared/schemas";
+import table from "../plan-layer.de.json";
+
+const ui = texts(table);
 
 /** The value of the location filter for plants without a location (P-08); no real location has this name. */
 const UNKNOWN_PLACE = "__unknown__";
-/** Plants per page of the choice (starting values, assumption; US-QS-15): four on a phone, six from 768 px. */
-const PICK_PAGE_SIZE = { phone: 4, md: 6 } as const;
+/**
+ * Plants per page of the choice (starting values, assumption; US-QS-15): three on a phone (owner decision 2026-11-20,
+ * FX-24: the layer fits 360 x 640), six from 768 px.
+ */
+const PICK_PAGE_SIZE = { phone: 3, md: 6 } as const;
 
 type Field = ControllerRenderProps<TreatmentFields, "specimenIds">;
 
@@ -32,7 +40,11 @@ function shownPlants(
   );
 }
 
-/** The search field and the location filter in one row; "Standort unbekannt" appears only when some plant has none. */
+/**
+ * The search field on its own full-width line at the top, the location filter below it as a labelled field (US-QS-32,
+ * issue 1960). "Standort unbekannt" appears only when some plant has none. Below 480 px both stack at full width, so
+ * "Alle Standorte" is never cut; from 480 px they share one row.
+ */
 function PickFilters(props: {
   specimens: readonly TreatableSpecimen[];
   query: string;
@@ -41,36 +53,36 @@ function PickFilters(props: {
   onPlace: (place: string) => void;
 }) {
   const { specimens, place } = props;
+  const placeId = useId();
   const places = [...new Set(specimens.flatMap((s) => (s.location ? [s.location] : [])))].sort(
     (a, b) => a.localeCompare(b, "de"),
   );
   return (
-    <div className="flex min-w-0 gap-2">
+    // Below 480 px both stack at full width; from 480 px the search and the location share one row (issue 1960).
+    <div className="flex min-w-0 flex-col gap-3 min-[480px]:flex-row min-[480px]:items-end">
       <SearchInput
-        aria-label="Pflanze suchen"
-        placeholder="Pflanze suchen"
+        aria-label={ui("pick.search")}
+        placeholder={ui("pick.searchPlaceholder")}
         autoComplete="off"
         value={props.query}
         onChange={(e) => props.onQuery(e.target.value)}
         onClear={() => props.onQuery("")}
-        className="min-w-0 flex-1"
+        className="w-full min-[480px]:min-w-0 min-[480px]:flex-1"
       />
-      <Select
-        aria-label="Standort"
-        value={place}
-        onChange={(e) => props.onPlace(e.target.value)}
-        className="w-36 shrink-0"
-      >
-        <option value="">Alle Standorte</option>
-        {places.map((name) => (
-          <option key={name} value={name}>
-            {name}
-          </option>
-        ))}
-        {specimens.some((s) => !s.location) && (
-          <option value={UNKNOWN_PLACE}>Standort unbekannt</option>
-        )}
-      </Select>
+      <div className="flex min-w-0 flex-col gap-1 min-[480px]:w-44 min-[480px]:shrink-0">
+        <Label htmlFor={placeId}>{ui("pick.place")}</Label>
+        <Select id={placeId} value={place} onChange={(e) => props.onPlace(e.target.value)}>
+          <option value="">{ui("pick.allPlaces")}</option>
+          {places.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+          {specimens.some((s) => !s.location) && (
+            <option value={UNKNOWN_PLACE}>{ui("pick.unknownPlace")}</option>
+          )}
+        </Select>
+      </div>
     </div>
   );
 }
@@ -90,16 +102,12 @@ function PickList(props: {
       field.value.includes(id) ? field.value.filter((x) => x !== id) : [...field.value, id],
     );
   if (props.shown.length === 0)
-    return (
-      <p className="text-sm text-muted-foreground">
-        Keine Pflanze passt. Ändere die Suche oder den Standort.
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground">{ui("pick.none")}</p>;
   return (
     <Pager
       items={props.shown}
       pageSize={props.pageSize}
-      label="Pflanzen"
+      label={ui("pick.label")}
       param={LAYER_PARAM}
       resetKey={props.resetKey}
       getKey={(s) => s.id}
@@ -116,7 +124,7 @@ function PickList(props: {
         >
           {s.name}
           <span className="block text-sm text-muted-foreground">
-            {s.location ?? "Standort unbekannt"}
+            {s.location ?? ui("pick.unknownPlace")}
           </span>
         </Checkbox>
       )}
@@ -161,7 +169,9 @@ export function SpecimenPicker(props: {
             resetKey={`${query}|${place}`}
             {...(props.focusRef ? { focusRef: props.focusRef } : {})}
           />
-          <FormMessage />
+          <div className="min-h-5">
+            <FormMessage />
+          </div>
         </FormItem>
       )}
     />

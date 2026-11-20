@@ -1,0 +1,5 @@
+{
+  "notLoaded": "Nicht geladen",
+  "retry": "Erneut versuchen",
+  "retryFor": "Erneut versuchen: {name}"
+}

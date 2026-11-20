@@ -362,20 +362,14 @@ test("US-DEV-13 the Makefile passes the inputs as raw command-line values, so ma
     assert.doesNotMatch(recipe, /\$\((PR|ISSUE|TITLE|BODY)\)|["`]/, recipe);
 });
 
-test("US-DEV-13 .claude/settings.json allows the seven read and write targets and no gh api or sed -i", () => {
+test("US-DEV-13 .claude/settings.json allows every make target (issue 2210) and no gh api or sed -i", () => {
   const settings = JSON.parse(readFileSync(new URL(".claude/settings.json", ROOT), "utf8"));
   const allow = settings.permissions.allow;
-  for (const rule of [
-    "Bash(grep:*)",
-    "Bash(rg:*)",
-    "Bash(sed -n:*)",
-    "Bash(make pr-state PR=*)",
-    "Bash(make issue-read ISSUE=*)",
-    "Bash(make pr-text PR=*)",
-    "Bash(make issue-comment ISSUE=*)",
-  ]) {
-    assert.ok(allow.includes(rule), `${rule} is not allowed`);
-  }
+  assert.ok(allow.includes("Bash(make *)"), "Bash(make *) is not allowed");
+  assert.ok(
+    !allow.some((r) => /^Bash\(make \S/.test(r) && r !== "Bash(make *)"),
+    "a single make rule is left next to Bash(make *)",
+  );
   assert.equal(new Set(allow).size, allow.length, "a rule is listed twice");
   assert.ok(!allow.some((r) => /gh api|sed -i|sed:\*/.test(r)), "gh api or sed -i is allowed");
   assert.ok(settings.permissions.deny.includes("Bash(gh pr merge:*)"), "deny rule missing");
@@ -457,13 +451,10 @@ test("US-DEV-13 auto-merge refuses a value that is not a whole number before any
   assert.equal(existsSync(marker), false, "the value was run as a shell command");
 });
 
-test("US-DEV-02 .claude/settings.json denies sed -i and rg --pre, and allows make auto-merge for a PR number", () => {
+test("US-DEV-02 .claude/settings.json denies sed -i and rg --pre, and allows make auto-merge through Bash(make *)", () => {
   const settings = JSON.parse(readFileSync(new URL(".claude/settings.json", ROOT), "utf8"));
   for (const rule of ["Bash(sed -n -i:*)", "Bash(rg --pre:*)"]) {
     assert.ok(settings.permissions.deny.includes(rule), `${rule} is not denied`);
   }
-  assert.ok(
-    settings.permissions.allow.includes("Bash(make auto-merge PR=*)"),
-    "make auto-merge is not allowed",
-  );
+  assert.ok(settings.permissions.allow.includes("Bash(make *)"), "make auto-merge is not allowed");
 });

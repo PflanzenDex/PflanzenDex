@@ -73,3 +73,82 @@ describe("US-QS-14 issue 1697 · the inbox show their shaped skeleton once", () 
       table["inbox.loading"],
     ));
 });
+
+describe("US-QS-32 the inbox entries are rows to the place of their step", () => {
+  const STEP = "Behandle die Pflanze und hake den Termin als erledigt ab.";
+  const entry = (id: string, text: string, occasion: string, nextAction: string) => ({
+    id: `t:${id}`,
+    occasion,
+    text,
+    nextAction,
+  });
+
+  it("US-QS-32 an entry is one link named by its text, to the Heute treatments where its step is ticked off", async () => {
+    show([
+      {
+        id: "1",
+        localDate: "2026-10-09",
+        status: "delivered",
+        attempts: 1,
+        lastError: null,
+        items: [
+          entry("a", "„Flamingoblume“: Trauermücken – überfällig seit 3 Tagen.", "treatment", STEP),
+        ],
+      },
+    ]);
+    const link = await screen.findByRole("link", { name: /Flamingoblume/ });
+    expect(link.getAttribute("href")).toBe("/today?sheet=treatments");
+    expect(link.querySelector("svg.lucide-chevron-right")).not.toBeNull();
+  });
+
+  it("US-QS-32 the step is said once under the day's group, not under every entry", async () => {
+    show([
+      {
+        id: "1",
+        localDate: "2026-10-09",
+        status: "delivered",
+        attempts: 1,
+        lastError: null,
+        items: [
+          entry("a", "„Flamingoblume“: Trauermücken.", "treatment", STEP),
+          entry("b", "„Aloe“: Umtopfen fällig.", "treatment", STEP),
+        ],
+      },
+    ]);
+    await screen.findAllByRole("link", { name: /Flamingoblume|Aloe/ });
+    expect(screen.getAllByText(STEP)).toHaveLength(1);
+    expect(screen.getAllByRole("link")).toHaveLength(2);
+  });
+
+  it("US-QS-32 an entry of another topic opens the place of that topic (watering to Heute, phase to the Sammlung)", async () => {
+    show([
+      {
+        id: "1",
+        localDate: "2026-10-09",
+        status: "delivered",
+        attempts: 1,
+        lastError: null,
+        items: [
+          entry(
+            "w",
+            "„Farn“: Gießen fällig.",
+            "watering",
+            "Gieße die Pflanze und trage sie als gegossen ein.",
+          ),
+          entry("p", "„Kakteen“ steht nicht am Soll-Standort.", "phase", "Stelle die Pflanze um."),
+        ],
+      },
+    ]);
+    expect((await screen.findByRole("link", { name: /Farn/ })).getAttribute("href")).toBe(
+      "/today?sheet=watering",
+    );
+    expect(screen.getByRole("link", { name: /Kakteen/ }).getAttribute("href")).toBe(
+      "/collection?view=plants&group=phase",
+    );
+    // Each occasion names its own step once, under its own group (P-09, #2016): no step is listed under every line.
+    expect(screen.getAllByText("Gieße die Pflanze und trage sie als gegossen ein.")).toHaveLength(
+      1,
+    );
+    expect(screen.getAllByText("Stelle die Pflanze um.")).toHaveLength(1);
+  });
+});

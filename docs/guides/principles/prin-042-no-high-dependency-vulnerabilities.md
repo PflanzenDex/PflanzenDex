@@ -15,7 +15,7 @@ Number of high or critical npm advisories without an entry in the allowlist, and
 
 ## Checked by
 
-`app/tools/check/supply/check-audit.mjs`, `app/config/gates/audit-allowlist.json`.
+`app/tools/check/delivery/supply/check-audit.mjs`, `app/config/gates/audit-allowlist.json`.
 
 ## Gate
 
@@ -23,4 +23,4 @@ Number of high or critical npm advisories without an entry in the allowlist, and
 
 ## Evidence
 
-Tests in `app/tools/check/supply/check-audit.test.mjs`. Limits: the full audit does not run on pull requests into `dev`; the nightly suite runs `make audit` and opens an issue on failure. The dependency review sees only the dependencies a pull request adds or changes.
+Tests in `app/tools/check/delivery/supply/check-audit.test.mjs`. Limits: the full audit does not run on pull requests into `dev`; the nightly suite runs `make audit` and opens an issue on failure. The dependency review sees only the dependencies a pull request adds or changes.

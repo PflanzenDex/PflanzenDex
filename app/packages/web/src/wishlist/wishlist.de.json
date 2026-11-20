@@ -4,6 +4,7 @@
   "page.caption.one": "1 offener Wunsch",
   "page.caption.other": "{count} offene Wünsche",
   "candidates.label": "Offene Kandidaten",
+  "candidates.emptyTitle": "Keine offenen Kandidaten",
   "controls.create": "Wunsch erfassen",
   "controls.hints": "Hinweise ({count})",
   "controls.bought": "Gekauft ({count})",
@@ -34,5 +35,17 @@
   "picture.source": "Quelle: {source}",
   "picture.sourceLicense": "Quelle: {source} · Lizenz: {license}",
   "large.title": "Bild von {title}",
-  "large.close": "Schließen"
+  "large.close": "Schließen",
+  "pick.label": "Art suchen",
+  "pick.hint": "Tippe einen Namen und wähle eine Art.",
+  "pick.chosen": "Gewählt: {name}",
+  "pick.noHit": "Keine Art für „{query}“ gefunden.",
+  "pick.own": "Als eigenen Wunsch übernehmen",
+  "pick.propose": "Art vorschlagen",
+  "pick.failed": "Suche nicht möglich.",
+  "pick.retry": "Erneut versuchen",
+  "pick.hits": "Treffer",
+  "form.section": "Wunsch erfassen",
+  "form.saving": "Speichert …",
+  "form.save": "Wunsch speichern"
 }

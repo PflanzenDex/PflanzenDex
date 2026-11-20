@@ -411,6 +411,21 @@ describe("AppShell offline banner (US-QS-14, P-09, P-10)", () => {
     state.mockRestore();
   });
 
+  it("US-QS-30 the offline note says what is sent later and what waits for the network (owner decision 2026-11-14)", () => {
+    const state = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    at("/", <AppShell items={make(3)}>Inhalt</AppShell>);
+    try {
+      expect(
+        screen.getByText(
+          "Manches wird gesendet, sobald du wieder online bist. Anderes geht erst wieder mit Verbindung.",
+        ),
+      ).toBeTruthy();
+      expect(document.body.textContent).not.toMatch(/Änderungen sind erst wieder online möglich/);
+    } finally {
+      state.mockRestore();
+    }
+  });
+
   it("US-QS-14 shows no banner while the device is online", () => {
     at("/", <AppShell items={make(3)}>Inhalt</AppShell>);
     expect(screen.queryByText("Du bist offline")).toBeNull();

@@ -79,17 +79,39 @@ describe("US-BES-05 page of the difficulty overview", () => {
     expect(entries[1]?.textContent).toContain("Schwer");
   });
 
+  it("US-QS-32 · SG-ICON-01 every comparison entry ends with a chevron icon, not the glyph ›, and its name stays the visible text", async () => {
+    fakeServer(() => response(200, { rows: [row()] }));
+    view(<DifficultyPage api="http://api" token={token} />);
+    const entry = await screen.findByRole("button", {
+      name: /^Vergleichswerte: Bogenhanf Dracaena trifasciata/,
+    });
+    expect(entry.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+    expect(entry.querySelector("svg")?.getAttribute("class")).toContain("size-5");
+    expect(entry.textContent).not.toContain("›");
+  });
+
+  it("US-QS-32 the entry's label names the German and the scientific name in the order the row shows them (WCAG 2.5.3)", async () => {
+    fakeServer(() => response(200, { rows: [row()] }));
+    view(<DifficultyPage api="http://api" token={token} />);
+    const entry = await screen.findByRole("button", {
+      name: /^Vergleichswerte: Bogenhanf Dracaena trifasciata/,
+    });
+    // The whole visible text, title and meta line, is part of the label (axe label-content-name-mismatch).
+    const parts = Array.from(entry.querySelectorAll(":scope > span > span"), (n) => n.textContent);
+    expect(entry.getAttribute("aria-label")).toBe(`Vergleichswerte: ${parts.join(" ")}`);
+  });
+
   it("US-BES-05 · US-QS-22 the layer of a species shows all columns of the comparison", async () => {
     fakeServer(() => response(200, { rows: [row()] }));
     view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
     const values = await valuesOf("Bogenhanf");
     expect([...values.entries()]).toEqual([
-      ["Botanischer Name", "Dracaena trifasciata"],
+      ["Lateinischer Name", "Dracaena trifasciata"],
       ["Lichtzone", "Zone 2"],
       ["Gießregel", "alle 10 Tage"],
       ["Substrat", "Humus"],
       ["Schnitt", "selten"],
-      ["Erfolgskriterium", "Neue Blätter wachsen aufrecht."],
+      ["Erfolgskriterien", "Neue Blätter wachsen aufrecht."],
       ["Schwierigkeit", "Leicht"],
     ]);
   });
@@ -108,11 +130,37 @@ describe("US-BES-05 page of the difficulty overview", () => {
     expect(values.has("Lichtzone")).toBe(false);
     expect(values.has("Substrat")).toBe(false);
     const layer = screen.getByRole("dialog", { name: "Bogenhanf" });
-    expect(within(layer).getByText("4 Angaben fehlen")).toBeTruthy();
+    expect(within(layer).getByText("4 Vergleichswerte fehlen")).toBeTruthy();
     expect(within(layer).getByRole("link", { name: "Artprofil öffnen" }).getAttribute("href")).toBe(
       "/discover/species/sp1",
     );
     expect(screen.queryByText(/unbekannt/)).toBeNull();
+  });
+
+  it("US-LIC-01 · P-09 an unknown lux need names Lichtbedarf eintragen instead of the profile link", async () => {
+    fakeServer(() =>
+      response(200, {
+        rows: [
+          row({
+            difficulty: 2,
+            zone: null,
+            zoneSource: null,
+            lightNeedUnknown: true,
+            wateringHint: null,
+            substrate: null,
+            pruning: null,
+          }),
+        ],
+      }),
+    );
+    view(<DifficultyPage api="http://api" token={token} />, "/?sheet=compare-sp1");
+    const layer = await screen.findByRole("dialog", { name: "Bogenhanf" });
+    expect(
+      within(layer)
+        .getByRole("link", { name: "Lichtbedarf eintragen für „Bogenhanf“" })
+        .getAttribute("href"),
+    ).toBe("/discover/species/sp1?sheet=care");
+    expect(within(layer).queryByRole("link", { name: "Artprofil öffnen" })).toBeNull();
   });
 
   it("US-BES-05 keeps the order delivered by the server", async () => {
@@ -225,8 +273,8 @@ describe("US-QS-24 the comparison folds unknown values", () => {
     const entries = within(
       await screen.findByRole("list", { name: "Artenvergleich" }),
     ).getAllByRole("listitem");
-    expect(entries[0]?.textContent).toContain("Leicht · 1 Angabe fehlt");
-    expect(entries[1]?.textContent).toContain("1 Angabe fehlt");
+    expect(entries[0]?.textContent).toContain("Leicht · 1\u00a0Vergleichswert fehlt");
+    expect(entries[1]?.textContent).toContain("1\u00a0Vergleichswert fehlt");
     expect(screen.queryByText(/unbekannt/)).toBeNull();
   });
 
@@ -281,7 +329,7 @@ describe("US-QS-24 the comparison folds unknown values", () => {
     expect(values.has("Substrat")).toBe(false);
     expect(values.has("Lichtzone")).toBe(false);
     const layer = screen.getByRole("dialog", { name: "Bogenhanf" });
-    expect(within(layer).getByText("3 Angaben fehlen")).toBeTruthy();
+    expect(within(layer).getByText("3 Vergleichswerte fehlen")).toBeTruthy();
   });
 
   it("US-QS-24 the layer of a species with nothing unknown shows no fold line", async () => {
@@ -335,7 +383,9 @@ describe("US-QS-22 the comparison fits one screen", () => {
     view(<DifficultyPage api="http://api" token={token} />);
     await screen.findByRole("list", { name: "Artenvergleich" });
     expect(screen.queryByRole("table")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Vergleichswerte: Bogenhanf" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: /^Vergleichswerte: Bogenhanf Dracaena trifasciata/ }),
+    );
     expect(await screen.findByRole("dialog", { name: "Bogenhanf" })).toBeTruthy();
   });
 });
@@ -351,5 +401,34 @@ describe("US-QS-14 · US-BES-05 the comparison hosted by the Sammlung", () => {
     expect(onCaption).toHaveBeenLastCalledWith("2 Arten im Vergleich");
     shown.unmount();
     expect(onCaption).toHaveBeenLastCalledWith(null);
+  });
+});
+
+describe("US-QS-32 the comparison names a species the SG-TYPE-08 way (F-0121)", () => {
+  it("US-QS-32 the entry leads with the German name, upright; the botanical name is italic on the meta line before the values", async () => {
+    fakeServer(() => response(200, { rows: [row()] }));
+    view(<DifficultyPage api="http://api" token={token} />);
+    const entry = await screen.findByRole("button", {
+      name: /^Vergleichswerte: Bogenhanf Dracaena trifasciata/,
+    });
+    const german = within(entry).getByText("Bogenhanf");
+    expect(german.closest("i")).toBeNull();
+    const latin = within(entry).getByText("Dracaena trifasciata");
+    expect(latin.tagName).toBe("I");
+    expect(latin.parentElement?.textContent).toBe("Dracaena trifasciata · Leicht · Zone 2");
+  });
+
+  it("US-QS-32 without a German name the botanical name is the one italic title, not repeated", async () => {
+    fakeServer(() =>
+      response(200, {
+        rows: [row({ speciesName: "Dracaena trifasciata" })],
+      }),
+    );
+    view(<DifficultyPage api="http://api" token={token} />);
+    const entry = await screen.findByRole("button", {
+      name: /^Vergleichswerte: Dracaena trifasciata/,
+    });
+    expect(within(entry).getAllByText("Dracaena trifasciata")).toHaveLength(1);
+    expect(within(entry).getByText("Dracaena trifasciata").tagName).toBe("I");
   });
 });

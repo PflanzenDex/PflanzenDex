@@ -20,6 +20,7 @@ export const CARD: SpecimenCard = {
   location: "Regal Süd",
   lightZone: "Zone 3",
   lightZoneSource: "location",
+  lightNeedUnknown: false,
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: null,
@@ -73,12 +74,15 @@ export function fakeRepotServer(
     card?: Partial<SpecimenCard>;
     planFails?: boolean;
     signRefusal?: Refusal;
+    /** Only the first observation write is refused; the next one (a retry) is written (US-QS-32). */
+    signRefusalOnce?: boolean;
     repotRefusal?: Refusal;
   } = {},
 ): Post[] {
   let plan: RepotPlanView = { ...PLAN, ...opt.plan };
   const card: SpecimenCard = { ...CARD, ...opt.card };
   const posts: Post[] = [];
+  let signRefused = false;
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url, init) => {
@@ -88,7 +92,10 @@ export function fakeRepotServer(
         const body = JSON.parse(String(init.body)) as Record<string, unknown>;
         posts.push({ path, body });
         if (path === "/specimens/e1/repot-signs") {
-          if (opt.signRefusal) return json(opt.signRefusal.status, opt.signRefusal.body);
+          if (opt.signRefusal && (!opt.signRefusalOnce || !signRefused)) {
+            signRefused = true;
+            return json(opt.signRefusal.status, opt.signRefusal.body);
+          }
           plan = withSign(plan, body["sign"] as RepotSign, body["ticked"] === true);
           return json(200, { specimenId: "e1", signs: [] });
         }

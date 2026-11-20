@@ -2,27 +2,20 @@ import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router";
 import { useFeature } from "@/shared/data";
-import { cn } from "@/shared/lib/utils";
+import { BUSY_LOOK, cn } from "@/shared/lib/utils";
+import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
+import { RetryFailedLoad } from "@/shared/patterns/states/request-state/failed-value/failed-value";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import {
   accountAddress,
   type AccountSection,
 } from "@/shared/patterns/navigation/navigation/navigation";
 import type { Account } from "@/account";
-import { SECTIONS, rowId } from "../account-model/account-model";
-import { useAccountValues, type Values } from "./account-values";
-
-/** The rows of the index: every section that is on for the account; the profile has its own row above them. */
-function rowsOf(values: Values, ai: boolean | undefined, hasOverview: boolean) {
-  return SECTIONS.filter(
-    (s) =>
-      s.key !== "profile" &&
-      (s.key !== "achievements" || values.achievementsShown) &&
-      (s.key !== "aiClients" || ai) &&
-      (s.key !== "functions" || hasOverview),
-  );
-}
+import { rowId } from "../account-model/account-model";
+import { rowsOf, useAccountValues } from "./account-values";
+import { InstallRow } from "./install-row/install-row";
+import { EverywhereError } from "./everywhere-error/everywhere-error";
 
 type Token = () => Promise<string | undefined>;
 
@@ -31,7 +24,6 @@ const ROW =
 /** The rows bleed into the gutter by their bar and padding, so avatar and titles line up with the heading (issue 1099). */
 const LIST = "-mx-[calc(0.75rem+4px)] my-0 flex list-none flex-col gap-0 p-0";
 const CURRENT = "border-primary bg-accent font-semibold text-accent-foreground hover:bg-accent";
-const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground";
 
 function Row(props: {
   to: AccountSection;
@@ -58,34 +50,47 @@ function SignOutRow(props: {
   onEverywhereSignOut: () => void;
   /** The error of the last try (US-ACC-01): the dialog stays open, so the person can press again. */
   error?: string;
+  /** The error of a failed "Auf allen Geräten abmelden": its retry repeats that sign-out (US-QS-32). */
+  everywhereError?: string;
+  /** "Auf allen Geräten abmelden" runs: the control is busy and a press does nothing (US-ACC-01). */
+  busy?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      {/* The same row as the sections, with its chevron, so it reads as an action of the list and not as plain text (issue 1045). */}
+      {/* A row that acts in place opens a confirmation, no view, so it has no chevron (US-QS-32, F-0098, SG-TOUCH-02). */}
       <Button
         type="button"
         variant="ghost"
         className={cn(ROW, "h-auto justify-start font-normal")}
         onClick={() => setOpen(true)}
       >
-        Abmelden…
-        <ChevronRight
-          aria-hidden="true"
-          className="ml-auto size-4 shrink-0 text-muted-foreground"
-        />
+        Abmelden …
       </Button>
       <ResponsiveModal title="Abmelden?" closeLabel="Schließen" open={open} onOpenChange={setOpen}>
         <div className="flex flex-col gap-3">
-          {props.error && (
-            <p role="alert" className={NOTICE}>
-              {props.error}
-            </p>
+          {props.error && <Banner variant="error">{props.error}</Banner>}
+          {props.everywhereError && (
+            <EverywhereError
+              text={props.everywhereError}
+              busy={props.busy}
+              onRetry={props.onEverywhereSignOut}
+            />
           )}
           <Button type="button" size="touch" onClick={props.onSignOut}>
             Abmelden
           </Button>
-          <Button type="button" variant="outline" size="touch" onClick={props.onEverywhereSignOut}>
+          <Button
+            type="button"
+            variant="outline"
+            size="touch"
+            aria-disabled={props.busy || undefined}
+            aria-busy={props.busy || undefined}
+            className={BUSY_LOOK}
+            onClick={() => {
+              if (!props.busy) props.onEverywhereSignOut();
+            }}
+          >
             Auf allen Geräten abmelden
           </Button>
           <Button type="button" variant="ghost" size="touch" onClick={() => setOpen(false)}>
@@ -97,13 +102,16 @@ function SignOutRow(props: {
   );
 }
 
-/**
- * The index of "Konto" (US-QS-17): the profile row, one row per section with its name and current value, and
- * "Abmelden…". Each row opens its section as a view of its own. The current section is marked by `aria-current`, a
- * bar and bold text, not by colour alone. Sections that are off (calm mode, the keeper's switch of the achievements,
- * function "ai", no overview) have no row.
- */
-export function AccountIndex(props: {
+/** The last list item: "Abmelden …" with its confirmation dialog (US-QS-17, US-ACC-01). */
+function SignOutItem(props: React.ComponentProps<typeof SignOutRow>) {
+  return (
+    <li>
+      <SignOutRow {...props} />
+    </li>
+  );
+}
+
+type IndexProps = {
   api: string;
   token: Token;
   account: Account;
@@ -114,7 +122,18 @@ export function AccountIndex(props: {
   onEverywhereSignOut: () => void;
   /** The error of a failed sign-out (US-ACC-01), shown in its dialog. */
   error?: string;
-}) {
+  everywhereError?: string;
+  /** "Auf allen Geräten abmelden" runs (US-ACC-01): busy until its answer. */
+  everywhereBusy?: boolean;
+};
+
+/**
+ * The index of "Konto" (US-QS-17): the profile row, one row per section with its name and current value, and
+ * "Abmelden …". Each row opens its section as a view of its own. The current section is marked by `aria-current`, a
+ * bar and bold text, not by colour alone. Sections that are off (calm mode, the keeper's switch of the achievements,
+ * function "ai", no overview) have no row.
+ */
+export function AccountIndex(props: IndexProps) {
   const ai = useFeature("ai");
   const values = useAccountValues(props.api, props.token);
   const rows = rowsOf(values, ai, props.hasOverview);
@@ -140,6 +159,7 @@ export function AccountIndex(props: {
         </li>
         {rows.map((s) => {
           const value = values[s.key];
+          const retry = values.retries[s.key];
           return (
             <li key={s.key}>
               <Row to={s.key} id={rowId(s.key)} current={props.current === s.key}>
@@ -150,16 +170,23 @@ export function AccountIndex(props: {
                   )}
                 </span>
               </Row>
+              {/* A failed section offers its retry beside its row; the link itself holds no control (US-QS-32). */}
+              {retry ? (
+                <div className="px-3 pb-2">
+                  <RetryFailedLoad name={s.title} onRetry={retry} />
+                </div>
+              ) : null}
             </li>
           );
         })}
-        <li>
-          <SignOutRow
-            onSignOut={props.onSignOut}
-            onEverywhereSignOut={props.onEverywhereSignOut}
-            {...(props.error ? { error: props.error } : {})}
-          />
-        </li>
+        <InstallRow />
+        <SignOutItem
+          onSignOut={props.onSignOut}
+          onEverywhereSignOut={props.onEverywhereSignOut}
+          {...(props.error ? { error: props.error } : {})}
+          {...(props.everywhereError ? { everywhereError: props.everywhereError } : {})}
+          busy={props.everywhereBusy ?? false}
+        />
       </ul>
     </nav>
   );

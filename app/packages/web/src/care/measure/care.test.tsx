@@ -2,11 +2,11 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { cleanup, render as mount, screen } from "@testing-library/react";
-import { createQueryClient } from "../../shared/data";
+import { createQueryClient, deviceTimeZone, setProfileTimeZone } from "../../shared/data";
 import { renderToString as render } from "react-dom/server";
 import { ToastProvider } from "../../shared/patterns/states/toast/toast-provider/toast-provider";
-import type { MeasurementView, MeasurementRow } from "@pflanzendex/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { localToday, type MeasurementView, type MeasurementRow } from "@pflanzendex/core";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { measurementSchema, toMeasurementInput } from "../shared/schemas";
 import { MeasurementFacts, MeasurementHeader } from "./measurement-header/measurement-header";
 import { MeasureForm } from "./measure-form/measure-form";
@@ -90,6 +90,21 @@ describe("US-WAC-01 client of the measure API", () => {
     expect(body["timeZone"]).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
   });
 
+  it("US-WAC-01 the request names the profile's time zone once one is chosen, not the device's (US-ACC-02)", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => response(201, measurement()));
+    setProfileTimeZone("Pacific/Kiritimati");
+    try {
+      await recordMeasurement({ api: "http://api", token: "tok", fetchFn }, "e1", {
+        value: 12.5,
+        quality: "healthy",
+      });
+    } finally {
+      setProfileTimeZone(null);
+    }
+    const body = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
+    expect(body["timeZone"]).toBe("Pacific/Kiritimati");
+  });
+
   it("an error of the API stays an error with code and text", async () => {
     const error = { code: "specimen.not_found", text: "Die Pflanze gibt es nicht." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(404, { error }));
@@ -134,9 +149,68 @@ describe("US-WAC-01 checking the input before sending", () => {
   it("rejects an unknown quality", () => {
     expect(checkInput(fields({ quality: "super" })).ok).toBe(false);
   });
+
+  it("US-WAC-01 an emptied date is refused with a text and is never sent as a missing date (P-10)", () => {
+    const r = checkInput(fields({ date: "" }));
+    expect(r.ok).toBe(false);
+    expect(!r.ok && r.text).toMatch(/Datum/);
+  });
+});
+
+describe("US-WAC-01 default date in the profile's time zone (NFR-08, US-ACC-02)", () => {
+  // 9 November 2026, 23:30 UTC: a different calendar day in UTC-11 (Samoa) and UTC+14 (Kiribati) than at the instant.
+  const NOW = new Date("2026-11-09T23:30:00Z");
+  const formDate = (iso: string) => {
+    const [y, m, d] = iso.split("-");
+    return `${d}.${m}.${y}`;
+  };
+  afterEach(() => {
+    setProfileTimeZone(null);
+    vi.useRealTimers();
+  });
+
+  it("US-WAC-01 the form's date is today in the profile's zone, even when the device's zone has another day", () => {
+    const device = deviceTimeZone();
+    // A zone whose day differs from the device's exists at every instant: one of the two is a day ahead or behind.
+    const profile = ["Pacific/Pago_Pago", "Pacific/Kiritimati"].find(
+      (zone) => localToday(NOW, zone) !== localToday(NOW, device),
+    );
+    expect(profile).toBeDefined();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
+    setProfileTimeZone(profile ?? null);
+    const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
+    expect(html).toContain(`value="${formDate(localToday(NOW, profile ?? ""))}"`);
+    expect(html).not.toContain(`value="${formDate(localToday(NOW, device))}"`);
+  });
+
+  it("US-WAC-01 without a chosen zone the form's date is today in the device's zone", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
+    const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
+    expect(html).toContain(`value="${formDate(localToday(NOW, deviceTimeZone()))}"`);
+  });
 });
 
 describe("US-WAC-01 Ansicht „Messen“", () => {
+  // The keeper's today is fixed: the fact line says "am 03.10.2026" beyond 7 days (US-QS-32).
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-15T12:00:00Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("US-QS-32 the fact line reads 'vor 6 Tagen' within 7 days and the value keeps its unit", () => {
+    vi.setSystemTime(new Date("2026-10-09T12:00:00Z"));
+    const m = measurement();
+    const page = render(<MeasurementHeader view={view({ measurements: [m], last: m })} />);
+    expect(page).toContain("Letzte Messung");
+    expect(page).toContain("12,5\u00a0cm vor 6\u00a0Tagen");
+    expect(page).not.toContain("am 03.10.2026");
+  });
+
   it('shows "Was messen?", last measurement and last rating', () => {
     const m = measurement({ quality: "etiolated" });
     const html = renderToString(
@@ -171,7 +245,7 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(page).not.toContain("Was messen?");
     const facts = renderToString(<MeasurementFacts view={v} />);
     expect(facts).toContain("Was messen?");
-    expect(facts).toContain("Letzte Bewertung");
+    expect(facts).toContain("Letzte Qualität");
   });
 
   it("FR-WAC-05 a cutting is marked as Steckling in the growth view, a plant is not", () => {
@@ -222,8 +296,9 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     );
     expect(html).toMatch(/<option value="healthy" selected[^>]*>Gesund<\/option>/);
     expect(html).toMatch(/<option value="etiolated"[^>]*>Vergeilt\/dünn<\/option>/);
-    expect(html).toMatch(/<details(?![^>]*\sopen)[^>]*>\s*<summary[^>]*>Wie erkennen\?<\/summary>/);
-    expect(html).toContain("Vergeilung-Anzeichen dieser Art: Rosette streckt sich.");
+    // The summary holds the text and then the decorative chevron icon (US-QS-32 · SG-ICON-01); it stays closed.
+    expect(html).toMatch(/<details(?![^>]*\sopen)[^>]*>\s*<summary[^>]*>Wie erkennen\?<svg/);
+    expect(html).toContain("Vergeilungsanzeichen dieser Art: Rosette streckt sich.");
   });
 
   it("US-WAC-02 without etiolation signs (or from an older server) the form shows no disclosure", () => {
@@ -255,7 +330,9 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     );
     expect(await screen.findByRole("status")).toBeTruthy();
     const html = container.innerHTML;
-    expect(html).toContain("Messen: Bogenhanf");
+    // The title is "Messen" and the plant name is the line under it (US-QS-32).
+    expect(html).toContain(">Messen<");
+    expect(html).toContain("Bogenhanf");
     expect(html).toContain("Messungen werden geladen");
     expect(html).toContain("Zurück zur Sammlung");
   });

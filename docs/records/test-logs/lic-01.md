@@ -77,3 +77,27 @@ Default zones of the account in this run (button "Standard-Lampen übernehmen"):
 - Wording of the reason for a species that is moved up (see 2): optional improvement.
 - The override in the care profile (US-BES-09) and the specimen's own light zone are not built; the spec status of US-LIC-01 stays 🟨 for that reason, this protocol changes nothing about the status.
 - The browser test could get the stay-at-default and two-step cases of this protocol; they are cheap to automate.
+
+## 7. Correction and re-check, 2026-11-09 (issue #65)
+
+The owner decisions of 2026-11-09 (last comment of issue #65) changed the behaviour that sections 3 and 6 describe. The protocol above was true on 2026-10-03 and is not edited; this section corrects its stale lines:
+
+- Lines 57-58 ("the override of the zone in the care profile (US-BES-09) does not exist yet"): stale. The keeper's zone per species is set in the care profile (`PUT /care-profiles/:speciesId`, the field "Lichtzone für <Art>" in the species profile layer `?sheet=care`); it applies to the card, the distribution, the light overview and the comparison.
+- Line 59 ("the species form requires the lux demand, so the state cannot be created through the UI"): stale. The proposal form makes the lux demand optional; an empty field stays unknown. The state can be created through the UI, and its next step is shown on the card, in the distribution, in the light overview, in the comparison and in the care profile.
+- Line 78 ("the override in the care profile and the specimen's own light zone are not built; the spec status of US-LIC-01 stays 🟨"): stale. Both exist. US-LIC-01 is ✅ as of 2026-11-09; the criteria and the state note are in `docs/specs/product/03-light-and-locations.md`.
+
+What changed on 2026-11-09 (branch `feat/lic-01-art-der-richtigen-lichtzone`): migration `0116` (a soft leaf is unknown unless answered, no longer `false`); the proposal form offers "Unbekannt" for the soft leaf and stores it as unknown; the light overview takes my care-profile zone first; "Lichtbedarf eintragen" appears on the card, in the distribution (once, as an inline link at the end of its line; the line names the species without lux need), in the light overview (per row), in the comparison and in the care profile (where it moves the focus to the zone choice); the 30 % rule is marked as an assumption.
+
+Automated checks run on 2026-11-09 (exit codes in brackets):
+
+- `make gates` [0]: 24 steps, 0 failed, after the last code change.
+- core `vitest run` [0]: 185 files, 2331 tests (derivation with unknown soft leaf, light overview with the care-profile zone, distribution, card, comparison, care profile, gap list, proposal).
+- db `soft-leaf-migration.test.ts` [0]: 5 tests; migration 0116 runs on a scratch database migrated to 0115 with a stored `false`, a stored `true` and a default row.
+- api `light-overview.test.ts` [0]: 9 tests, one new case (the care-profile zone first, the unknown need named until then).
+- db and api files that read the changed fields [0]: 150 + 43 tests (species, fill, corrections, MCP draft, light), 303 + 20 tests (gap list, query count, corrections).
+- web `vitest run` [0]: 299 files, 3527 tests (before the last move of the zone field; the files it touches were run again: 21 and 23 tests, [0]).
+- `make one-screen SCREEN=<id>` [0] for `species-compare`, `species-profile-care`, `discover-view-catalog-sheet-propose`, `collection-view-plants`, `collection-plant-location` and `collection-view-plants-manage-locations-sheet-reference`: 37 of 37 checks each; no baseline written. The seeded accounts have no species without lux need, so the new link itself is not in these screen runs.
+- `make ds-snapshots-check` [0].
+- `make one-screen SCREEN=collection-view-plants-sheet-zones`: failed at 360x640 with the first version of the distribution (inner 643 px of 518 px, 1.24); after the fix the screen fits at all sizes and passes [0] (37 of 37). The fix is the commit "fix(lic): the distribution sheet fits 360x640 again".
+
+Not done on 2026-11-09: a walk through the next step in the real app (click path with a real sign-in, the keyboard path, a screen reader, 200 % text, forced colours), `make a11y-routes`, and the browser test `e2e/tests/light.spec.ts`. The unknown-need states are covered by the automated tests of core, API and web, not by a run of the real app with a species that lacks its lux need.

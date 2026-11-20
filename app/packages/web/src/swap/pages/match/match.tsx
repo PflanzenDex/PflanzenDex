@@ -46,8 +46,8 @@ function useWrites(api: string, token: Token) {
 }
 
 /**
- * The match deck (US-TAU-01, epic TAU): open offers of friends that match the own wishlist, one card at a time with "Ja",
- * "Nein" and "Später" or a swipe; Nein and Später are stored privately (US-TAU-02). A second view on the data of the exchange (US-SOZ-09), no new way to reach strangers.
+ * The match deck (US-TAU-01, epic TAU): open offers of friends that match the own wishlist, one card at a time with "Anfragen",
+ * "Ablehnen" and "Später" or a swipe; Ablehnen and Später are stored privately (US-TAU-02). A second view on the data of the exchange (US-SOZ-09), no new way to reach strangers.
  * Private by default (P-05); no ranking, no score (FR-TAU-06).
  */
 export function MatchPage(props: { api: string; token: Token; calm?: boolean }) {
@@ -62,9 +62,6 @@ export function MatchPage(props: { api: string; token: Token; calm?: boolean }) 
         title="Passende Angebote"
         back={{ label: "Zurück zur Tauschbörse", to: EXCHANGE_PATH }}
       >
-        <p className="text-muted-foreground [@media(max-height:700px)]:hidden">
-          Angebote deiner Freunde, deren Art auf deiner Wunschliste steht, eins nach dem anderen.
-        </p>
         <LoadFrame
           queryKey={KEY}
           token={token}
@@ -78,6 +75,7 @@ export function MatchPage(props: { api: string; token: Token; calm?: boolean }) 
               cards={deck.cards}
               entries={deck.entries}
               empty={deck.empty ?? null}
+              requested={deck.requested ?? 0}
               calm={props.calm ?? false}
               onYes={yes}
               onAnswer={answer}

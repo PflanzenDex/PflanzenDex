@@ -10,8 +10,12 @@ import {
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { Input } from "@/shared/ui/fields/input/input";
 import { POSITION_THRESHOLD_DEFAULTS as DEFAULTS } from "@pflanzendex/core";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { OCCASIONS, type Occasion } from "../api/account-api";
 import { formatLux, parseLux, type ProfileFields as Fields } from "../schemas";
+import table from "./settings-fields.de.json";
+
+const ui = texts(table);
 
 export const OCCASION_TEXT: Record<Occasion, string> = {
   phase: "Pflegephasen",
@@ -20,7 +24,7 @@ export const OCCASION_TEXT: Record<Occasion, string> = {
   watering: "Gießen",
   swap: "Tausch",
   friends: "Freunde",
-  equipment: "Equipment-Prüfung",
+  equipment: "Geräte-Prüfung",
 };
 
 const zones = (): string[] => {
@@ -42,9 +46,7 @@ export function BufferField({ control }: FieldProps) {
           <FormControl>
             <Input {...field} inputMode="numeric" autoComplete="off" />
           </FormControl>
-          <MoreHelp more="Die Wunschliste warnt, wenn eine Zone 2 bis 4 weniger offene Wünsche hat. Ganze Zahl von 0 bis 10, 2 ist die Vorgabe; 0 schaltet die Warnung aus.">
-            Die Wunschliste warnt bei zu wenigen offenen Wünschen.
-          </MoreHelp>
+          <MoreHelp more={ui("bufferMore")}>Warnt bei zu wenigen offenen Wünschen.</MoreHelp>
           <FormMessage />
         </FormItem>
       )}

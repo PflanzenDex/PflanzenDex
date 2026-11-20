@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { currentTimeZone, setProfileTimeZone } from "../../shared/data";
 import {
   ShortcutProvider,
@@ -34,6 +35,7 @@ const PROFILE = {
   positionThresholds: null,
   rarityConsent: false,
   keyboardShortcuts: "plain" as const,
+  motion: "system" as const,
 };
 
 type Put = { body: Record<string, unknown>; key: string | undefined };
@@ -62,12 +64,18 @@ function fakeServer(
 }
 /** The settings; with `sheet` the address names the layer that is open (`?sheet=<group>`). */
 const at = (sheet?: string) => `/${sheet ? `?sheet=${sheet}` : ""}`;
+// The app shell mounts the announcer above the page; a switch says its save through it (US-QS-32).
 const show = (sheet?: string) =>
   render(
-    <MemoryRouter initialEntries={[at(sheet)]}>
-      <SettingsPage api="http://api" token={token} />
-    </MemoryRouter>,
+    <AnnouncerProvider>
+      <MemoryRouter initialEntries={[at(sheet)]}>
+        <SettingsPage api="http://api" token={token} />
+      </MemoryRouter>
+    </AnnouncerProvider>,
   );
+/** What the announcer says (its polite live region, `sr-only`). */
+const announced = () =>
+  document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]')?.textContent ?? "";
 
 beforeAll(() => setViewportWidth(1024));
 
@@ -78,13 +86,16 @@ afterEach(() => {
 });
 
 describe("US-ACC-02 settings page: display name", () => {
-  it("US-ACC-02 shows the saved profile and keeps Save disabled until something changes", async () => {
+  it("US-ACC-02 shows the saved profile and keeps Save inactive until something changes", async () => {
     fakeServer();
     delayLoads();
     show("profile");
     expect((await screen.findByRole("status")).textContent).toContain("werden geladen");
     expect((await screen.findByLabelText<HTMLInputElement>("Anzeigename")).value).toBe("Anna");
-    expect(screen.getByRole("button", { name: "Speichern" }).hasAttribute("disabled")).toBe(true);
+    // Inactive, not disabled: a focused button that turns disabled loses the focus (US-QS-32, PF-045).
+    const save = screen.getByRole("button", { name: "Speichern" });
+    expect(save.hasAttribute("disabled")).toBe(false);
+    expect(save.getAttribute("aria-disabled")).toBe("true");
   });
 
   it("US-ACC-02 saves a free display name with an Idempotency-Key and confirms it", async () => {
@@ -95,13 +106,13 @@ describe("US-ACC-02 settings page: display name", () => {
     await user.clear(name);
     await user.type(name, "Anna Beispiel");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
     expect(puts).toHaveLength(1);
     expect(puts[0]?.key).toBeTruthy();
     expect(puts[0]?.body["displayName"]).toBe("Anna Beispiel");
   });
 
-  it("US-ACC-02 a cleared display name is sent as empty text so the server refuses it and the field is marked", async () => {
+  it("US-QS-32 · F-0085 a cleared display name is refused on the client: its message shows at the field and nothing is sent", async () => {
     const puts = fakeServer(PROFILE, () =>
       response(400, {
         error: {
@@ -117,10 +128,10 @@ describe("US-ACC-02 settings page: display name", () => {
     await user.clear(name);
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     const alert = await screen.findByRole("alert");
-    expect(puts[0]?.body["displayName"]).toBe("");
+    expect(alert.textContent).toBe("Gib einen Namen ein.");
     expect(name.getAttribute("aria-invalid")).toBe("true");
     expect(name.getAttribute("aria-describedby")).toContain(alert.id);
-    expect(screen.getByText(/darf aber nicht leer sein/)).toBeTruthy();
+    expect(puts).toEqual([]);
   });
 });
 
@@ -144,7 +155,7 @@ describe("US-ACC-02 settings page: time zone", () => {
     await user.clear(zone);
     await user.type(zone, "America/New_York");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await screen.findByRole("status");
+    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
     expect(currentTimeZone()).toBe("America/New_York");
   });
 
@@ -154,7 +165,7 @@ describe("US-ACC-02 settings page: time zone", () => {
     show("profile");
     await user.clear(await screen.findByLabelText("Zeitzone"));
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await screen.findByRole("status");
+    await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body["timeZone"]).toBeNull();
   });
 
@@ -174,7 +185,9 @@ describe("US-ACC-02 settings page: time zone", () => {
     await user.clear(zone);
     await user.type(zone, "Mars/Olympus");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Die Eingabe ist ungültig");
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Wähle eine Zeitzone aus der Liste.",
+    );
     expect(zone.getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByLabelText("Anzeigename").getAttribute("aria-invalid")).not.toBe("true");
     expect((zone as HTMLInputElement).value).toBe("Mars/Olympus");
@@ -245,7 +258,7 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     const user = userEvent.setup();
     show("notifications");
     await user.click(await screen.findByRole("checkbox", { name: "Behandlungen" }));
-    await screen.findByRole("status");
+    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
     expect(puts).toHaveLength(1);
     expect(puts[0]?.body["notifications"]).toEqual({ ...PROFILE.notifications, treatment: false });
     await user.click(screen.getByRole("checkbox", { name: "Tausch" }));
@@ -267,7 +280,7 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
       "Gießen",
       "Tausch",
       "Freunde",
-      "Equipment-Prüfung",
+      "Geräte-Prüfung",
     ])
       expect(await screen.findByRole("checkbox", { name })).toBeTruthy();
   });
@@ -292,7 +305,7 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     });
     expect((box as HTMLInputElement).checked).toBe(false);
     await user.click(box);
-    await screen.findByRole("status");
+    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
     expect(puts[0]?.body).toMatchObject({ rarityConsent: true });
   });
 
@@ -397,7 +410,8 @@ describe("US-ACC-02 · DS-48 states and primitives", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     await screen.findAllByRole("alert");
     expect(document.body.textContent).not.toContain("RAW SERVER TEXT");
-    expect(document.body.textContent).toContain("Die Eingabe ist ungültig");
+    expect(document.body.textContent).toContain("Gib einen Namen ein, höchstens 80 Zeichen.");
+    expect(document.body.textContent).not.toContain("Die Eingabe ist ungültig");
   });
 
   it("US-ACC-02 · DS-48 editing a refused field takes its error away", async () => {
@@ -439,7 +453,7 @@ describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
     await user.clear(input);
     await user.type(input, "5");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
     expect(puts[0]?.body["replenishBuffer"]).toBe(5);
   });
 
@@ -504,8 +518,8 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     const save = screen.getByRole("button", { name: "Speichern" });
     expect(save.hasAttribute("disabled")).toBe(false);
     await user.click(save);
-    expect((await screen.findByRole("status")).textContent).toBe(
-      "Keine Änderung: Die Werte sind schon gespeichert.",
+    await waitFor(() =>
+      expect(announced()).toBe("Keine Änderung: Die Werte sind schon gespeichert."),
     );
     expect(puts).toHaveLength(0);
   });
@@ -522,7 +536,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     await user.clear(fourth);
     await user.type(fourth, "3.000");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
     expect(puts[0]?.body["positionThresholds"]).toEqual([50000, 16000, 8000, 3000]);
     expect(await values()).toEqual(["50.000", "16.000", "8.000", "3.000"]);
   });
@@ -532,7 +546,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     const user = userEvent.setup();
     show("privacy");
     await user.click(await screen.findByRole("checkbox", { name: "Alles privat" }));
-    await screen.findByRole("status");
+    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
     expect(puts[0]?.body["positionThresholds"]).toBeNull();
   });
 
@@ -553,7 +567,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
       await user.click(screen.getByRole("button", { name: "Speichern" }));
       expect(await screen.findByText(message)).toBeTruthy();
       expect(input.getAttribute("aria-invalid")).toBe("true");
-      expect(screen.getByText("Bitte prüfe die markierten Felder.")).toBeTruthy();
+      expect(screen.getByText("Prüfe die markierten Felder.")).toBeTruthy();
       expect(puts).toHaveLength(0);
     },
   );
@@ -624,7 +638,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     fakeServer();
     show();
     expect((await row("Profil")).textContent).toContain("Anna · Europe/\u200bBerlin");
-    expect((await row("Benachrichtigungen")).textContent).toContain("7 von 7 an");
+    expect((await row("Benachrichtigungen")).textContent).toContain("noch nicht eingerichtet");
     expect((await row("Datenschutz und Empfehlungen")).textContent).toContain("Standard");
     expect((await row("Wie nutzt du die App?")).textContent).toContain("ein paar Pflanzen");
     expect((await row("Wunschliste")).textContent).toContain("mind. 2 je Zone");
@@ -632,10 +646,32 @@ describe("US-QS-17 settings as a list of groups", () => {
     expect(screen.queryByLabelText("Anzeigename")).toBeNull();
   });
 
-  it("US-QS-17 · P-08 an unknown name or time zone reads 'unbekannt'", async () => {
+  it("US-QS-32 · F-0315 an unknown name and an unsaved zone read Name unbekannt and Zeitzone vom Gerät, never a bare unbekannt", async () => {
     fakeServer({ ...PROFILE, displayName: null, timeZone: null });
-    show();
-    expect((await row("Profil")).textContent).toContain("unbekannt · unbekannt");
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+      timeZone: "Europe/Berlin",
+    } as Intl.ResolvedDateTimeFormatOptions);
+    try {
+      show();
+      const text = (await row("Profil")).textContent ?? "";
+      expect(text).toContain("Name unbekannt · Zeitzone vom Gerät");
+      expect(text).not.toMatch(/(^|[^ ])unbekannt · /);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("US-QS-32 · F-0315 without a saved zone and without a device zone the row reads Zeitzone unbekannt", async () => {
+    fakeServer({ ...PROFILE, timeZone: null });
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+      timeZone: undefined,
+    } as unknown as Intl.ResolvedDateTimeFormatOptions);
+    try {
+      show();
+      expect((await row("Profil")).textContent).toContain("Anna · Zeitzone unbekannt");
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it("US-QS-17 summarises what is on in the privacy group and own light thresholds", async () => {
@@ -651,27 +687,58 @@ describe("US-QS-17 settings as a list of groups", () => {
       "alles privat · Seltenheit zählt mit",
     );
     expect((await row("Licht")).textContent).toContain("eigene Schwellen");
-    expect((await row("Benachrichtigungen")).textContent).toContain("6 von 7 an");
+    expect((await row("Benachrichtigungen")).textContent).toContain("noch nicht eingerichtet");
   });
 
-  it("US-QS-17 · P-10 a failing style load reads 'unbekannt' in its row only", async () => {
+  it("US-QS-32 the row Benachrichtigungen says noch nicht eingerichtet and counts no switch, also with every switch off", async () => {
+    fakeServer({
+      ...PROFILE,
+      notifications: {
+        phase: false,
+        treatment: false,
+        measurement: false,
+        watering: false,
+        swap: false,
+        friends: false,
+        equipment: false,
+      },
+    });
+    show();
+    const text = (await row("Benachrichtigungen")).textContent ?? "";
+    expect(text).toContain("noch nicht eingerichtet");
+    expect(text).not.toMatch(/von \d+ an/);
+  });
+
+  it("US-QS-32 · P-08 a failing style load reads Nicht geladen beside its row, with a retry that loads it again, never unbekannt", async () => {
     fakeServer();
     const ok = globalThis.fetch;
+    let failing = true;
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async (url, init) =>
-        new URL(String(url)).pathname === "/onboarding/style" ? response(500, {}) : ok(url, init),
+        new URL(String(url)).pathname === "/onboarding/style" && failing
+          ? response(500, {})
+          : ok(url, init),
       ),
     );
     show();
-    await waitFor(
-      () =>
-        expect(screen.getByRole("button", { name: /^Wie nutzt/ }).textContent).toContain(
-          "unbekannt",
-        ),
-      { timeout: 4000 },
-    );
+    const retry = await screen.findByRole("button", {
+      name: "Erneut versuchen: Wie nutzt du die App?",
+    });
+    const rowText = screen.getByRole("button", { name: /^Wie nutzt/ }).textContent ?? "";
+    expect(rowText).toContain("Nicht geladen");
+    expect(rowText).not.toContain("unbekannt");
     expect((await row("Profil")).textContent).toContain("Anna");
+    failing = false;
+    await userEvent.click(retry);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /^Wie nutzt/ }).textContent).toContain(
+        "ein paar Pflanzen",
+      ),
+    );
+    expect(
+      screen.queryByRole("button", { name: "Erneut versuchen: Wie nutzt du die App?" }),
+    ).toBeNull();
   });
 
   it.each([
@@ -721,7 +788,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     await user.type(name, "Berta");
     expect(puts).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
     expect(puts).toHaveLength(1);
     expect((await row("Profil")).textContent).toContain("Berta · Europe/\u200bBerlin");
   });
@@ -734,7 +801,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     await user.clear(input);
     await user.type(input, "4");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await screen.findByRole("status");
+    await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body).toMatchObject({
       replenishBuffer: 4,
       displayName: null,
@@ -785,25 +852,32 @@ describe("US-QS-11 settings: keyboard shortcuts", () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     showWithProvider();
-    await user.click(await screen.findByRole("button", { name: "Alt und Umschalt" }));
+    await user.selectOptions(
+      await screen.findByRole("combobox", { name: "Tastenkürzel" }),
+      "Alt und Umschalt",
+    );
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body["keyboardShortcuts"]).toBe("modifier");
     expect(puts[0]?.body["notifications"]).toEqual(PROFILE.notifications);
     expect(screen.getByTestId("mode").textContent).toBe("modifier");
-    expect(
-      screen.getByRole("button", { name: "Alt und Umschalt" }).getAttribute("aria-pressed"),
-    ).toBe("true");
+    await waitFor(() =>
+      expect(
+        (screen.getByRole("combobox", { name: "Tastenkürzel" }) as HTMLSelectElement).value,
+      ).toBe("modifier"),
+    );
   });
 
   it("US-QS-11 the choice 'Aus' turns every shortcut off; choosing the stored one again sends nothing", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     showWithProvider();
-    await user.click(await screen.findByRole("button", { name: "Aus" }));
+    const field = await screen.findByRole("combobox", { name: "Tastenkürzel" });
+    await user.selectOptions(field, "Aus");
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body["keyboardShortcuts"]).toBe("disabled");
     expect(screen.getByTestId("mode").textContent).toBe("disabled");
-    await user.click(screen.getByRole("button", { name: "Aus" }));
+    await waitFor(() => expect((field as HTMLSelectElement).value).toBe("disabled"));
+    await user.selectOptions(field, "Aus");
     expect(puts).toHaveLength(1);
   });
 
@@ -819,9 +893,92 @@ describe("US-QS-11 settings: keyboard shortcuts", () => {
     );
     const user = userEvent.setup();
     showWithProvider();
-    await user.click(await screen.findByRole("button", { name: "Aus" }));
+    await user.selectOptions(await screen.findByRole("combobox", { name: "Tastenkürzel" }), "Aus");
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(screen.getByTestId("mode").textContent).toBe("plain");
+  });
+});
+
+describe("US-QS-33 settings: motion", () => {
+  const root = document.documentElement;
+  afterEach(() => {
+    delete root.dataset.motion;
+    window.localStorage.clear();
+  });
+  const showStyle = () =>
+    render(
+      <MemoryRouter initialEntries={["/?sheet=style"]}>
+        <SettingsPage api="http://api" token={token} />
+      </MemoryRouter>,
+    );
+
+  it("US-QS-33 the layer 'Wie nutzt du die App?' offers 'Bewegung' with 'Wie auf dem Gerät' (default) and 'Bewegung aus' and one line of help", async () => {
+    fakeServer();
+    showStyle();
+    const field = (await screen.findByRole("combobox", { name: "Bewegung" })) as HTMLSelectElement;
+    expect([...field.options].map((o) => o.text)).toEqual(["Wie auf dem Gerät", "Bewegung aus"]);
+    expect(field.value).toBe("system");
+    expect(
+      screen.getByText(
+        "Aus: Ansichten, Karten und Ebenen wechseln ohne Animation. Alles bleibt erreichbar.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("US-QS-33 'Bewegung aus' saves with the profile and applies at once on the open screen, without a reload", async () => {
+    const puts = fakeServer();
+    const user = userEvent.setup();
+    showStyle();
+    const field = await screen.findByRole("combobox", { name: "Bewegung" });
+    await user.selectOptions(field, "Bewegung aus");
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts[0]?.body["motion"]).toBe("reduced");
+    expect(puts[0]?.body["keyboardShortcuts"]).toBe("plain");
+    await waitFor(() => expect(root.dataset.motion).toBe("reduced"));
+    await user.selectOptions(field, "Wie auf dem Gerät");
+    await waitFor(() => expect(puts).toHaveLength(2));
+    await waitFor(() => expect(root.dataset.motion).toBeUndefined());
+  });
+
+  it("US-QS-33 · P-10 a refused save keeps the old value and shows the German text of the error code", async () => {
+    const puts = fakeServer(PROFILE, () =>
+      response(400, {
+        error: {
+          code: "input.invalid",
+          text: "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
+          details: [{ field: "motion", code: "input.invalid" }],
+        },
+      }),
+    );
+    const user = userEvent.setup();
+    showStyle();
+    const field = (await screen.findByRole("combobox", { name: "Bewegung" })) as HTMLSelectElement;
+    await user.selectOptions(field, "Bewegung aus");
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(root.dataset.motion).toBeUndefined();
+    await waitFor(() => expect(field.value).toBe("system"));
+  });
+});
+
+describe("US-QS-32 settings: one line of hint, the rest behind Mehr erfahren (SG-COPY-05)", () => {
+  it("US-QS-32 the Wunschliste warning says its one line; the zones and the default sit behind Mehr erfahren", async () => {
+    fakeServer();
+    show("wishlist");
+    await screen.findByLabelText(/Mindestzahl offener Wünsche/);
+    const line = screen.getByText("Warnt bei zu wenigen offenen Wünschen.");
+    expect(line.closest("details")).toBeNull();
+    const more = line.closest("div")?.querySelector("details");
+    expect(more?.textContent).toContain("Gilt je Zone 2 bis 4.");
+    expect(more?.textContent).not.toContain("Warnt bei zu wenigen offenen Wünschen.");
+  });
+
+  it("US-QS-32 the notification group says in one line that reminders need a setup", async () => {
+    fakeServer();
+    show("notifications");
+    await screen.findByRole("checkbox", { name: "Tausch" });
+    expect(screen.getByText("Erinnerungen nur, wenn eingerichtet.")).toBeTruthy();
+    expect(document.body.textContent).not.toContain("werden erst verschickt");
   });
 });

@@ -76,6 +76,10 @@ afterAll(async () => {
       [subjects],
     );
     await admin.query(
+      "delete from care_profile where account_id in (select id from account where subject = any($1))",
+      [subjects],
+    );
+    await admin.query(
       `delete from species where id in (select object_id from review_case
          where account_id in (select id from account where subject = any($1)))`,
       [subjects],
@@ -236,5 +240,50 @@ describe("US-LIC-03: adjustable thresholds (FR-LIC-05)", () => {
     await specimen(sub, "P", await newSpecies(sub, "Thr", 20000, 2));
     expect((await save(sub, [1000, 2000, 3000, 4000])).status).toBe(400);
     expect((await lightOverview(sub)).body.rows[0].position.category).toBe("very_close");
+  });
+});
+
+describe("US-LIC-01: light overview of a species without lux need (P-08, P-09)", () => {
+  it("US-LIC-01: Given a species without lux need, when the overview is read, then the zone is unknown with the next step; my care-profile zone then applies", async () => {
+    const sub = `lic1-${randomUUID()}`;
+    subjects.push(sub);
+    await call(sub, "POST", "/light-zones/defaults", {});
+    const zones = (await call(sub, "GET", "/light-zones")).body["zones"] as {
+      id: string;
+      name: string;
+      sortOrder: number;
+    }[];
+    const second = [...zones].sort((a, b) => a.sortOrder - b.sortOrder)[1];
+    const created = await call(sub, "POST", "/species", {
+      latinName: "Ignotus need",
+      difficulty: 2,
+      growthMeasure: "rosette_diameter",
+      etiolationSigns: "Rosette streckt sich.",
+      successCriteria: "Dichte, flache Rosette.",
+    });
+    expect(created.status).toBe(201);
+    const speciesId = created.body["id"] as string;
+    await specimen(sub, "Ohne Bedarf", speciesId);
+
+    const before = await lightOverview(sub);
+    expect(before.body.rows).toEqual([
+      expect.objectContaining({
+        speciesId,
+        lightDemandLux: null,
+        position: null,
+        zone: null,
+        lightNeedUnknown: true,
+      }),
+    ]);
+
+    const set = await call(sub, "PUT", `/care-profiles/${speciesId}`, {
+      lightZoneId: second?.id,
+    });
+    expect(set.status).toBe(200);
+    const after = await lightOverview(sub);
+    expect(after.body.rows[0]).toMatchObject({
+      zone: { id: second?.id },
+      lightNeedUnknown: false,
+    });
   });
 });

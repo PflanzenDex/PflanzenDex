@@ -96,4 +96,32 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
     await userEvent.tab({ shift: true });
     expect(dialog.contains(document.activeElement)).toBe(true);
   });
+
+  it("US-QS-32 · SG-COLOR-07 the backdrop takes the scrim class, never the foreground, so it stays dark in dark mode", async () => {
+    render(<Example />);
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    await screen.findByRole("dialog");
+    const backdrop = document.querySelector(".fixed.inset-0.z-50");
+    expect(backdrop).not.toBeNull();
+    expect(backdrop?.classList.contains("bg-scrim")).toBe(true);
+    expect(backdrop?.className).not.toContain("bg-foreground");
+  });
+  it("US-QS-32 a close that the parent refuses (typed input unsaved) snaps the dragged sheet back to its place", async () => {
+    function Controlled({ refusals }: { refusals: number }) {
+      return (
+        <Sheet open onOpenChange={() => undefined}>
+          <SheetContent title="Notiz" closeRefusals={refusals}>
+            <button>Eins</button>
+          </SheetContent>
+        </Sheet>
+      );
+    }
+    const { rerender } = render(<Controlled refusals={0} />);
+    const sheet = await screen.findByRole("dialog", { name: "Notiz" });
+    // Vaul writes the drag into the inline transform of the sheet and of its overlay.
+    sheet.style.transform = "translate3d(0, 120px, 0)";
+    rerender(<Controlled refusals={1} />);
+    await waitFor(() => expect(sheet.style.transform).toBe("translate3d(0px, 0px, 0px)"));
+    expect(sheet.style.transition).toContain("transform");
+  });
 });

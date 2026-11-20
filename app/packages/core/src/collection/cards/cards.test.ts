@@ -15,6 +15,7 @@ import { SpeciesStub, InMemorySpecimens, testSpecies } from "../shared/test-help
 
 const SPECIES = "11111111-1111-4111-8111-111111111111";
 const INVISIBLE = "99999999-9999-4999-8999-999999999999";
+const NEED_UNKNOWN = "44444444-4444-4444-8444-444444444444"; // no lux need, no default level (US-LIC-01)
 const TODAY = "2026-10-03";
 const light = new InMemoryLight();
 let specimens: InMemorySpecimens;
@@ -23,7 +24,17 @@ let shelf: string;
 let box: string;
 let foreignShelf: string;
 
-const species = new SpeciesStub([{ species: testSpecies(SPECIES) }]);
+const species = new SpeciesStub([
+  { species: testSpecies(SPECIES) },
+  {
+    species: testSpecies(NEED_UNKNOWN, {
+      latinName: "Ignotus need",
+      germanName: null,
+      lightDemandLux: null,
+      standardLevel: null,
+    }),
+  },
+]);
 const dependencies = (extra: Partial<CardsDependencies> = {}): CardsDependencies => ({
   specimens,
   species,
@@ -374,5 +385,25 @@ describe("US-SOZ-13 card: where a specimen came from", () => {
     await create("anna", "Eigene");
     const [card] = await specimenCards(dependencies(), "anna", TODAY);
     expect(card?.provenance).toBeNull();
+  });
+});
+
+describe("US-LIC-01 card: the next step when the light need is unknown (P-08, P-09)", () => {
+  it("US-LIC-01: Given a species without lux need and no zone of its own, when the card is read, then the zone is unknown and the next step is named", async () => {
+    await create("anna", "Ohne Bedarf", { speciesId: NEED_UNKNOWN, locationId: box });
+    const [card] = await specimenCards(dependencies(), "anna", TODAY);
+    expect(card).toMatchObject({ lightZone: null, lightNeedUnknown: true });
+  });
+
+  it("US-LIC-01: Given a location with a zone, when the card of a species without lux need is read, then no next step is named", async () => {
+    await create("anna", "Am Regal", { speciesId: NEED_UNKNOWN, locationId: shelf });
+    const [card] = await specimenCards(dependencies(), "anna", TODAY);
+    expect(card).toMatchObject({ lightZone: "Zone 3", lightNeedUnknown: false });
+  });
+
+  it("US-LIC-01: Given a species with a lux need and no zone, when the card is read, then no next step is named (the zone is unknown for another reason)", async () => {
+    await create("anna", "Mit Bedarf", { locationId: box });
+    const [card] = await specimenCards(dependencies(), "anna", TODAY);
+    expect(card).toMatchObject({ lightZone: null, lightNeedUnknown: false });
   });
 });

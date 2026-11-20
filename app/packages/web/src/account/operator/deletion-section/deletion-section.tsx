@@ -1,7 +1,7 @@
 import { useCallback, type ReactNode } from "react";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { cn } from "@/shared/lib/utils";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { LoadFrame, useRequest, type Request } from "../../../shared/data";
 import { loadDeletions, type DeletionEntry, type DeletionsView } from "../../api/access-api";
 import { OperatorRow } from "../operator-parts/operator-parts";
@@ -11,8 +11,13 @@ import table from "./deletion-section.de.json";
 
 const t = texts(table);
 
-/** The row "Fristen" on the overview: the counts of the card (P-09). */
+/** No deadline near or passed and no identity removal open: the row and the sheet decide it the same way. */
+const nothingOpen = (view: DeletionsView): boolean =>
+  view.near.length === 0 && view.past.length === 0 && view.identityRemovals.length === 0;
+
+/** The row "Löschfristen" on the overview: the counts of the card (P-09). */
 export function deadlineSummary(view: DeletionsView): string {
+  if (nothingOpen(view)) return t("row.none");
   return t("row.summary", {
     near: view.near.length,
     past: view.past.length,
@@ -50,7 +55,7 @@ function Dates(props: {
 }
 
 /**
- * The card "Fristen" (US-ACC-04, issue 1673): the near and passed deadlines, and the identity removals still open. Dates
+ * The topic "Löschfristen" (US-ACC-04, issue 1673): the near and passed deadlines, and the identity removals still open. Dates
  * in UTC, the subject and the times only, never an account (P-05). Nothing to do is said in words (P-09).
  */
 export function DeletionBody(props: {
@@ -59,8 +64,7 @@ export function DeletionBody(props: {
   onMark: (entryId: string) => void;
 }) {
   const { view } = props;
-  if (view.near.length === 0 && view.past.length === 0 && view.identityRemovals.length === 0)
-    return <EmptyState title={t("all.title")} description={t("all.description")} />;
+  if (nothingOpen(view)) return <p className="m-0">{t("all.none")}</p>;
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">{t("help", { days: view.warningDays })}</p>
@@ -107,19 +111,51 @@ export function DeletionSection(props: {
   );
 }
 
+/** The words of the skeleton, transparent; with `bar` on the skeleton's bars that break like the text. */
+function DeadlineWords({ bar }: { bar: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "select-none text-transparent",
+        bar &&
+          "rounded-control bg-muted [-webkit-box-decoration-break:clone] [box-decoration-break:clone] animate-pulse motion-reduce:animate-none",
+      )}
+    >
+      {t("row.none")}
+    </span>
+  );
+}
+
 /**
- * The value of the row "Fristen": the counts once they are there. While they load it shows the loading text after the
- * short delay of a skeleton (DS-57), so a fast load shows nothing; a failure is named in one line, and the layer offers
- * the retry (P-09, P-10).
+ * The value of "Löschfristen" while its counts load (SG-STATE-02, F-0338, issue 2038): the words of the common answer
+ * ("Keine Frist offen") transparent, so the row has that line's height from the first frame and shows no number (P-08);
+ * after the delay of DS-57 they stand on skeleton bars. The loading text is for assistive technology. The summary of
+ * counts above zero is one line too (owner answer 2026-11-16), so the row keeps its height when they arrive.
+ */
+function DeadlineSkeleton() {
+  return (
+    <span data-deadline-skeleton="">
+      <DelayedSkeleton before={<DeadlineWords bar={false} />}>
+        <DeadlineWords bar />
+      </DelayedSkeleton>
+      <span className="sr-only">{t("row.loading")}</span>
+    </span>
+  );
+}
+
+/**
+ * The value of the row "Löschfristen": the counts once they are there, their skeleton while they load (SG-STATE-02); a
+ * failure is named in one line, and the layer offers the retry (P-09, P-10).
  */
 function deadlineValue(r: Request<DeletionsView>): ReactNode {
   if (r.value !== undefined) return deadlineSummary(r.value);
   if (r.status === "error") return t("row.failed");
-  return <DelayedSkeleton>{t("row.loading")}</DelayedSkeleton>;
+  return <DeadlineSkeleton />;
 }
 
 /**
- * The row "Fristen" on the overview, loaded with the same query as the card. It is one button in every state: only its
+ * The row "Löschfristen" on the overview, loaded with the same query as the card. It is one button in every state: only its
  * value waits for the counts, so a press that starts on the row while they load ends on that same row (issue 1722).
  */
 export function DeadlineRow(props: { api: string; token: Token }) {

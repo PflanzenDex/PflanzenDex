@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import {
   SIGN_IN as KERNEL_SIGN_IN,
@@ -36,17 +36,30 @@ async function derive(api: string, token: Token, a: DerivationRequest) {
   return { ok: false as const, error: SIGN_IN };
 }
 
+/** Where a result of a write goes: `said` to the announcer (`useSay`), `shown` to a toast that stays until FX-09. */
+type Notify = { said: (message: string) => void; shown: (message: string) => void };
+
+/** One write's options: its body, and where its result goes (the announcer by default). */
+type WriteOptions = { body?: unknown; notify?: (message: string) => void };
+
+/** Where the results of this page's writes go (US-QS-32): said by the announcer, a toast only where the row leaves. */
+function useNotify(): Notify {
+  const say = useSay();
+  const toast = useToast();
+  return useMemo(() => ({ said: say, shown: (message) => toast.show({ message }) }), [say, toast]);
+}
+
 function buildActions(
   { api, token }: { api: string; token: Token },
   load: () => Promise<void>,
   setLastError: (f: ApiError | undefined) => void,
-  saved: (message: string) => void,
+  notify: Notify,
 ): LightActions {
   const write = async (
     method: "POST" | "PUT" | "DELETE",
     path: string,
     message: string,
-    body?: unknown,
+    { body, notify: to = notify.said }: WriteOptions = {},
   ) => {
     const t = await token();
     if (!t) return SIGN_IN;
@@ -54,20 +67,26 @@ function buildActions(
     if (!r.ok) return r.error;
     setLastError(undefined);
     await load();
-    saved(message);
+    to(message);
     return null;
   };
   return {
-    zoneCreate: (e) => write("POST", "/light-zones", "Lichtzone angelegt.", e),
-    zoneUpdate: (id, e) => write("PUT", `/light-zones/${id}`, "Lichtzone gespeichert.", e),
-    zoneDelete: (id) => write("DELETE", `/light-zones/${id}`, "Lichtzone gelöscht."),
+    zoneCreate: (e) => write("POST", "/light-zones", "Lichtzone angelegt.", { body: e }),
+    zoneUpdate: (id, e) =>
+      write("PUT", `/light-zones/${id}`, "Lichtzone gespeichert.", { body: e }),
+    // The zone leaves the list: its result stays a toast until the in-place row of FX-09 (SG-FEED-03).
+    zoneDelete: (id) =>
+      write("DELETE", `/light-zones/${id}`, "Lichtzone gelöscht.", { notify: notify.shown }),
     defaults: async () => {
-      const f = await write("POST", "/light-zones/defaults", "Standard-Zonen übernommen.", {});
+      const f = await write("POST", "/light-zones/defaults", "Standard-Zonen übernommen.", {
+        body: {},
+      });
       setLastError(f ?? undefined);
       return f;
     },
-    locationCreate: (e) => write("POST", "/locations", "Standort angelegt.", e),
-    locationUpdate: (id, e) => write("PUT", `/locations/${id}`, "Standort gespeichert.", e),
+    locationCreate: (e) => write("POST", "/locations", "Standort angelegt.", { body: e }),
+    locationUpdate: (id, e) =>
+      write("PUT", `/locations/${id}`, "Standort gespeichert.", { body: e }),
     zoneDerive: (a) => derive(api, token, a),
   };
 }
@@ -76,13 +95,12 @@ function buildActions(
 export function LightPage(props: {
   api: string;
   token: () => Promise<string | undefined>;
-  onOpenCollection: () => void;
   /** Inside the Sammlung the frame above names the page (`FullView`, issue 1031): no second h1 from here. */
   hosted?: boolean;
 }) {
   const [lastError, setLastError] = useState<ApiError | undefined>();
   const { api, token } = props;
-  const toast = useToast();
+  const notify = useNotify();
 
   const client = useQueryClient();
   const loadAll = useCallback(
@@ -108,8 +126,8 @@ export function LightPage(props: {
   const load = useCallback(() => reload(), [reload]);
 
   const actions = useMemo(
-    () => buildActions({ api, token }, load, setLastError, (message) => toast.show({ message })),
-    [api, token, load, toast],
+    () => buildActions({ api, token }, load, setLastError, notify),
+    [api, token, load, notify],
   );
 
   const loading = "Standorte und Lichtzonen werden geladen …";
@@ -128,7 +146,6 @@ export function LightPage(props: {
           data={z.data}
           actions={actions}
           overview={z.overview}
-          onOpenCollection={props.onOpenCollection}
           onRetry={() => void load()}
           {...(props.hosted ? { hosted: true } : {})}
           {...(lastError ? { error: lastError } : {})}

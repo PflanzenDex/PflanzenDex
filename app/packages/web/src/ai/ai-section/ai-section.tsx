@@ -1,6 +1,7 @@
 import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { AiClientsSection } from "../clients-section/clients-section";
 import { HowTo } from "../clients-section/how-to/how-to";
+import { HOWTO_LAYER, NEW_TASK_LAYER } from "../clients-section/connect-step/connect-step";
 import { LogSection } from "../log-section/log-section";
 import { NewTaskPart, TasksSection } from "../tasks-section/tasks-section";
 import { DraftsSection } from "../drafts-section/drafts-section";
@@ -16,7 +17,7 @@ export function AiSection(props: { api: string; token: Token }) {
   return (
     <div className="grid min-w-0 gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
       <LayerPart
-        id="howto"
+        id={HOWTO_LAYER}
         title="So verbindest du einen KI-Client"
         value="Adresse und drei Schritte"
       >
@@ -29,7 +30,7 @@ export function AiSection(props: { api: string; token: Token }) {
       >
         <AiClientsSection {...props} />
       </LayerPart>
-      <LayerPart id="new-task" title="Neuer Auftrag" value="Text für deinen KI-Client">
+      <LayerPart id={NEW_TASK_LAYER} title="Neuer Auftrag" value="Text für deinen KI-Client">
         <NewTaskPart {...props} />
       </LayerPart>
       <LayerPart id="tasks" title="Aufträge" value="Status und Text der Aufträge">

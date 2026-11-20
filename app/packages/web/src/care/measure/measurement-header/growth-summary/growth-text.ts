@@ -16,7 +16,7 @@ export interface GrowthLines {
 }
 
 export const ETIOLATED_TEXT =
-  "Wuchs vergeilt/dünn — trotz Rate kein Erfolgssignal, siehe Erfolgskriterien";
+  "Wuchs vergeilt/dünn — trotz Wachstum kein Erfolgssignal, siehe Erfolgskriterien";
 
 /** What the view says about rate and trend; "unknown" where the data does not reach (P-08). */
 export function growthLines(g: GrowthTrend): GrowthLines {
@@ -28,9 +28,9 @@ export function growthLines(g: GrowthTrend): GrowthLines {
 
 function rateAndTrend(g: GrowthTrend): GrowthLines {
   if (g.count === 0) return { rate: "noch keine Messung", trend: "" };
-  if (g.count === 1) return { rate: "1 Messung — noch keine Rate", trend: "" };
+  if (g.count === 1) return { rate: "noch nicht berechenbar (1 Messung)", trend: "" };
   if (g.ratePerYear === null)
-    return { rate: "noch keine Rate: die Messungen liegen am selben Tag", trend: "" };
+    return { rate: "noch nicht berechenbar: die Messungen liegen am selben Tag", trend: "" };
   const rate = rateText(g.ratePerYear);
   if (g.trend) return { rate, trend: TREND_TEXT[g.trend] };
   if (g.count === 2) return { rate, trend: "ab der 3. Messung siehst du hier einen Trend" };

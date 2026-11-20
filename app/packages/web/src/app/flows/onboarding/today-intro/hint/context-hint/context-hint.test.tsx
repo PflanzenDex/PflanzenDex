@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 describe("US-ONB-07 hints of the other occasions", () => {
-  it("US-ONB-07 plant_without_place: the note shows at the list, is recorded as shown and 'Okay' dismisses it per account", async () => {
+  it("US-ONB-07 plant_without_place: the note shows at the list, is recorded as shown and 'Hinweis schließen' dismisses it per account", async () => {
     const calls = server("plant_without_place");
     render(
       <ContextHint
@@ -43,7 +43,7 @@ describe("US-ONB-07 hints of the other occasions", () => {
     expect(await screen.findByText(HINT_TEXTS.plant_without_place)).toBeTruthy();
     expect(calls[0]).toContain("applicable=plant_without_place");
     await waitFor(() => expect(calls).toContain("PUT /onboarding/hints/plant_without_place"));
-    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
     await waitFor(() => expect(screen.queryByText(HINT_TEXTS.plant_without_place)).toBeNull());
   });
 
@@ -68,7 +68,7 @@ describe("US-ONB-07 hints of the other occasions", () => {
     );
     expect((await screen.findByRole("status")).textContent).toContain(HINT_TEXTS.first_measurement);
     await userEvent.tab();
-    expect(document.activeElement?.textContent).toBe("Okay");
+    expect(document.activeElement?.textContent).toBe("Hinweis schließen");
     await userEvent.keyboard("{Enter}");
     await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
   });

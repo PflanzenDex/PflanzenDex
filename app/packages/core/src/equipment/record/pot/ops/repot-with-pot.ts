@@ -84,3 +84,6 @@ export const specimenRepotWithPot = (deps: RepotWithPotDependencies) =>
       );
     },
   });
+
+// The checks of the operation, so the AI tools derive their input schema from them (US-KI-14, FR-KI-17).
+export { schema as specimenRepotWithPotSchema };

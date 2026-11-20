@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { Check } from "lucide-react";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Button, buttonVariants } from "@/shared/ui/button/button";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -39,7 +40,7 @@ export function ViewLayer<G extends string>(props: {
                 className="justify-start"
                 onClick={() => props.onGroup(o.value)}
               >
-                {selected ? <span aria-hidden="true">✓</span> : null}
+                {selected ? <Check aria-hidden="true" className="size-5 shrink-0" /> : null}
                 {o.label}
               </Button>
             );

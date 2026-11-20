@@ -1,7 +1,10 @@
 import type { Pool } from "pg";
 import { withAccount } from "../../kernel/index.ts";
 
-const INSTANT = `to_char(seen_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
+/** An instant column or expression as UTC ISO 8601 with microseconds: the format of `seenAt`, `markSeen` and `now`. */
+const instant = (expr: string) =>
+  `to_char(${expr} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
+const INSTANT = instant("seen_at");
 
 /**
  * Adapter for the "seen" state of "Neu bei Freunden" (US-SOZ-06). Every call runs as the account of the caller under the
@@ -16,6 +19,15 @@ export class FeedSeenPostgres {
       c.query<{ seenAt: string }>(`select ${INSTANT} as "seenAt" from feed_seen`),
     );
     return r.rows[0]?.seenAt ?? null;
+  }
+
+  /**
+   * The database's current instant: the clock that stamps visible_since and clamps markSeen, so the banner's `asOf` and
+   * the shares it compares with come from one clock (US-SOZ-06). No account data is read, so no account is set.
+   */
+  async now(): Promise<string> {
+    const r = await this.pool.query<{ now: string }>(`select ${instant("now()")} as "now"`);
+    return (r.rows[0] as { now: string }).now;
   }
 
   /**

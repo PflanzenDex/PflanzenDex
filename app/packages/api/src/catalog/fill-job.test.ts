@@ -138,7 +138,8 @@ describe("US-BES-12 the fill job on the database", () => {
     expect(prov.rows).toEqual([
       { field: "botanical_story", source: "wikipedia", license: "CC-BY-SA-4.0", version: 2 },
       { field: "family_latin", source: "gbif", license: "CC0-1.0", version: 2 },
-      { field: "german_name", source: "wikidata", license: "CC0-1.0", version: 2 },
+      // The German article ranks before the Wikidata label for the German name (issue 1851).
+      { field: "german_name", source: "wikipedia", license: "CC-BY-SA-4.0", version: 2 },
     ]);
     // Second run: nothing left to ask for this species, so no further request leaves (repeatable, US-QS-03).
     const asked = requests.length;

@@ -2,11 +2,13 @@
 import type { OperatorOverview } from "@pflanzendex/core";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { BrowserRouter, MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseAmount } from "../../schemas";
 import { OperatorPage } from "./operator-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 
 const token = async () => "tok";
 const json = (status: number, body: unknown) =>
@@ -104,8 +106,8 @@ describe("US-ACC-05 operator area: counts, no content", () => {
   it("US-ACC-05 shows accounts and active users, and the cost per user as unknown (P-08)", async () => {
     const facts = await numbers();
     expect(fact(facts, "Konten")).toBe("12");
-    expect(fact(facts, "Aktive Nutzer (letzte 30 Tage)")).toBe("5");
-    expect(fact(facts, "Kosten pro Nutzer")).toMatch(/^unbekannt/);
+    expect(fact(facts, "Aktive Konten (letzte 30 Tage)")).toBe("5");
+    expect(fact(facts, "Kosten pro aktivem Konto")).toMatch(/^unbekannt/);
     expect(facts.textContent).not.toMatch(/€|EUR|\$/);
   });
 
@@ -140,13 +142,27 @@ describe("US-ACC-05 operator area: counts, no content", () => {
 });
 
 describe("US-ACC-05 monthly cost and cost per user", () => {
-  it("US-ACC-05 without a figure: cost per user unknown with what to do (P-08, P-09)", async () => {
+  it("US-ACC-05 without a figure: cost per user is unbekannt and Kosten eintragen opens the cost layer (P-08, P-09)", async () => {
     const facts = await numbers();
-    expect(fact(facts, "Monatliche Kosten")).toBe("nicht eingetragen");
-    expect(fact(facts, "Kosten pro Nutzer")).toBe("unbekannt: trage die Kosten eines Monats ein");
+    expect(fact(facts, "Kosten pro aktivem Konto")).toBe("unbekanntKosten eintragen");
+    expect(within(facts).getByText("unbekannt")).toBeTruthy();
+    expect(within(facts).getByRole("button", { name: "Kosten eintragen" })).toBeTruthy();
+    // The monthly cost is shown once, in its own overview row (US-QS-15), not in the sheet.
+    expect(within(facts).queryByText("Monatliche Kosten")).toBeNull();
+    expect(within(facts).queryByText("nicht eingetragen")).toBeNull();
   });
 
-  it("US-ACC-05 with a figure: amount per user with month and 'manuell eingetragen'", async () => {
+  it("US-ACC-05 Kosten eintragen replaces the sheet Zahlen with the layer Monatliche Kosten and its form (US-QS-15)", async () => {
+    const facts = await numbers();
+    await userEvent.click(within(facts).getByRole("button", { name: "Kosten eintragen" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: "Monatliche Kosten" })).toBeTruthy();
+    expect(within(dialog).getByLabelText("Betrag")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Zahlen" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Zahlen" })).toBeNull();
+  });
+
+  it("US-ACC-05 with a figure: amount per user with month and 'manuell eingetragen', and no Kosten eintragen", async () => {
     current = overview({
       cost: { amountCents: 4999, currency: "EUR", month: "2026-09" },
       costPerUser: {
@@ -158,10 +174,11 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
       },
     });
     const facts = await numbers();
-    expect(fact(facts, "Monatliche Kosten")).toMatch(/^49,99\s€ \(September 2026\)$/);
-    expect(fact(facts, "Kosten pro Nutzer")).toMatch(
+    expect(fact(facts, "Kosten pro aktivem Konto")).toMatch(
       /^10,00\s€ \(September 2026, manuell eingetragen\)$/,
     );
+    expect(within(facts).queryByRole("button", { name: "Kosten eintragen" })).toBeNull();
+    expect(within(facts).queryByText("Monatliche Kosten")).toBeNull();
   });
 
   it("US-ACC-05 a figure without active users: cost per user unknown with the reason", async () => {
@@ -171,7 +188,9 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
       costPerUser: { known: false, reason: "no_active_accounts" },
     });
     const facts = await numbers();
-    expect(fact(facts, "Kosten pro Nutzer")).toBe("unbekannt: es gibt noch keine aktiven Nutzer");
+    expect(fact(facts, "Kosten pro aktivem Konto")).toBe(
+      "unbekannt: es gibt noch keine aktiven Konten",
+    );
   });
 
   it("US-QS-24 US-ACC-05 the cost form has no heading that repeats the layer title and its save button sits in a sticky footer", async () => {
@@ -424,6 +443,157 @@ describe("US-ACC-05 invitation codes", () => {
   });
 });
 
+describe("US-ACC-05 US-QS-32 the new code: one line, share or copy (fixture code only)", () => {
+  const created = {
+    id: "i9",
+    code: "ABCD-EFGH-JKMN-PQRS-TVWX-YZ01",
+    expiresAt: "2026-10-11T10:00:00.000Z",
+  };
+  const listed = {
+    id: "i9",
+    createdAt: "2026-10-04T10:00:00.000Z",
+    expiresAt: "2026-10-11T10:00:00.000Z",
+    redeemedAt: null,
+  };
+  const copied = "Kopiert";
+  const hand = "Kopieren nicht möglich. Markiere den Code und kopiere ihn von Hand.";
+
+  /**
+   * Creates a code in the layer and returns its box and the clipboard write to watch. The write is watched after the
+   * first user event: user-event puts its clipboard stub on navigator then, and the spy replaces its writeText.
+   */
+  const createCode = async (writeFails = false) => {
+    serve(async (path, init) => {
+      if (path !== "/operator/invitations" || init.method !== "POST") return json(404, {});
+      // As the server does: the reload after a create lists the new code, so the empty list's action is gone.
+      current = overview({ invitations: [{ ...listed, status: "open" as const }] });
+      return json(201, created);
+    });
+    await open();
+    const dialog = await topic(/^Einladungscodes/);
+    const write = vi.spyOn(navigator.clipboard, "writeText");
+    if (writeFails) write.mockRejectedValue(new Error("denied"));
+    else write.mockResolvedValue(undefined);
+    await userEvent.setup().click(screen.getByRole("button", { name: "Code erstellen" }));
+    const box = await screen.findByRole("region", { name: "Neuer Einladungscode" });
+    return { dialog, box, write };
+  };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    Reflect.deleteProperty(navigator, "share");
+  });
+
+  it("US-ACC-05 US-QS-32 after creating a code the layer has one filled button, Code teilen and Code kopieren", async () => {
+    const { dialog, box } = await createCode();
+    expect(within(box).getByRole("button", { name: "Code teilen" }).className).toContain(
+      "bg-secondary",
+    );
+    expect(within(box).getByRole("button", { name: "Code kopieren" }).className).not.toContain(
+      "bg-secondary",
+    );
+    const filled = within(dialog)
+      .getAllByRole("button")
+      .filter((b) => b.className.split(" ").includes("bg-primary"));
+    expect(filled.map((b) => b.textContent)).toEqual(["Code erstellen"]);
+  });
+
+  it("US-ACC-05 US-QS-32 the code is one line in 16 px monospace that scrolls on its own, and stays selectable", async () => {
+    const { box } = await createCode();
+    const code = within(box).getByText(created.code);
+    expect(code.className.split(" ")).toEqual(
+      expect.arrayContaining(["font-mono", "text-base", "whitespace-nowrap", "select-all"]),
+    );
+    expect(code.closest('[role="region"]')?.className).toContain("overflow-x-auto");
+  });
+
+  it("US-ACC-05 US-QS-32 Code teilen shares only the code through the share sheet", async () => {
+    const share = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "share", { configurable: true, value: share });
+    const { box, write } = await createCode();
+    await userEvent.click(within(box).getByRole("button", { name: "Code teilen" }));
+    expect(share).toHaveBeenCalledWith({ text: created.code });
+    expect(write).not.toHaveBeenCalled();
+    expect(within(box).queryByRole("button", { name: copied })).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 without the Web Share API Code teilen copies the code and the copy button reads Kopiert", async () => {
+    const { box, write } = await createCode();
+    await userEvent.click(within(box).getByRole("button", { name: "Code teilen" }));
+    expect(write).toHaveBeenCalledWith(created.code);
+    expect(await within(box).findByRole("button", { name: copied })).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 Code kopieren copies the code and then reads Kopiert", async () => {
+    const { box, write } = await createCode();
+    await userEvent.click(within(box).getByRole("button", { name: "Code kopieren" }));
+    expect(write).toHaveBeenCalledWith(created.code);
+    expect(await within(box).findByRole("button", { name: copied })).toBeTruthy();
+    expect(within(box).queryByText(hand)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 a failing copy shows the hand-copy line and no fake success", async () => {
+    const { box } = await createCode(true);
+    await userEvent.click(within(box).getByRole("button", { name: "Code kopieren" }));
+    expect(await within(box).findByText(hand)).toBeTruthy();
+    expect(within(box).queryByRole("button", { name: copied })).toBeNull();
+    expect(within(box).getByRole("button", { name: "Code kopieren" })).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 a share sheet the keeper closes changes nothing", async () => {
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: async () => {
+        throw Object.assign(new Error("closed"), { name: "AbortError" });
+      },
+    });
+    const { box, write } = await createCode();
+    await userEvent.click(within(box).getByRole("button", { name: "Code teilen" }));
+    expect(write).not.toHaveBeenCalled();
+    expect(within(box).queryByRole("button", { name: copied })).toBeNull();
+    expect(within(box).queryByText(hand)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 a share sheet that refuses for another reason falls back to copying the code", async () => {
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: async () => {
+        throw Object.assign(new Error("not allowed"), { name: "NotAllowedError" });
+      },
+    });
+    const { box, write } = await createCode();
+    await userEvent.click(within(box).getByRole("button", { name: "Code teilen" }));
+    expect(write).toHaveBeenCalledWith(created.code);
+    expect(await within(box).findByRole("button", { name: copied })).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 the copied code is announced politely through the shared live region", async () => {
+    serve(async (path, init) =>
+      path === "/operator/invitations" && init.method === "POST"
+        ? json(201, created)
+        : json(404, {}),
+    );
+    render(
+      <MemoryRouter>
+        <AnnouncerProvider>
+          <OperatorPage api="http://api" token={token} />
+        </AnnouncerProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole("button", { name: /^Zahlen/ });
+    await topic(/^Einladungscodes/);
+    vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue(undefined);
+    await userEvent.click(screen.getByRole("button", { name: "Code erstellen" }));
+    const box = await screen.findByRole("region", { name: "Neuer Einladungscode" });
+    await userEvent.click(within(box).getByRole("button", { name: "Code kopieren" }));
+    await waitFor(() =>
+      expect(document.querySelector('[aria-live="polite"]')?.textContent).toContain(
+        "Der Code liegt in der Zwischenablage.",
+      ),
+    );
+  });
+});
+
 describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
   it("US-QS-15 each row names its topic and shows its current value, and opens its layer", async () => {
     current = overview({ cost: { amountCents: 4999, currency: "EUR", month: "2026-09" } });
@@ -496,11 +666,14 @@ describe("US-ACC-05 · DS-52 to DS-49 states and primitives", () => {
     expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
   });
 
-  it("US-ACC-05 · DS-26 the empty invitation list offers the next action: it takes the operator to the validity field", async () => {
+  it("US-QS-32 · SG-BTN-02 the codes layer has one filled button, and an empty list names its next step in words (P-09)", async () => {
     await open();
-    await topic(/^Einladungscodes/);
-    await userEvent.setup().click(screen.getByRole("button", { name: "Gültigkeit wählen" }));
-    expect(document.activeElement).toBe(screen.getByLabelText("Gültig für (Tage)"));
+    const layer = await topic(/^Einladungscodes/);
+    const filled = within(layer)
+      .getAllByRole("button")
+      .filter((b) => b.className.split(/\s+/).includes("bg-primary"));
+    expect(filled.map((b) => b.textContent)).toEqual(["Code erstellen"]);
+    expect(within(layer).getByText(/Erstelle oben einen Code\./)).toBeTruthy();
   });
 
   it("US-ACC-05 · DS-49 a refusal shows the German text of its error code, never the raw server text", async () => {
@@ -574,7 +747,7 @@ describe("US-QS-14 operator page keeps the focus while and after a save (SC 2.4.
     });
 });
 
-describe("US-ACC-04 operator page: the card Fristen", () => {
+describe("US-ACC-04 operator page: the topic Löschfristen", () => {
   it("US-ACC-04 marking an identity removal posts once and confirms it in words (issue 1673)", async () => {
     const identity = {
       kind: "identity",
@@ -591,7 +764,7 @@ describe("US-ACC-04 operator page: the card Fristen", () => {
     );
     deletions = { warningDays: 7, near: [], past: [], identityRemovals: [identity] };
     await open();
-    await topic(/^Fristen/);
+    await topic(/^Löschfristen/);
     await userEvent.click(
       await screen.findByRole("button", { name: "Als entfernt markieren, Kennung sub-1" }),
     );
@@ -601,35 +774,237 @@ describe("US-ACC-04 operator page: the card Fristen", () => {
     ]);
   });
 
-  it("US-ACC-04 a tap on the row Fristen while its counts still load opens the layer, which shows them once they arrive (issue 1722)", async () => {
+  it("US-ACC-04 a tap on the row Löschfristen while its counts still load opens the layer, which shows them once they arrive (issue 1722)", async () => {
     let answer: () => void = () => undefined;
     deletionsGate = new Promise<void>((resolve) => {
       answer = resolve;
     });
     await open();
-    // The row shows its loading text while the counts are on their way (DS-57: after the short delay).
-    const row = await screen.findByRole("button", { name: /Fristen werden geladen/ });
+    // The row names its loading for assistive technology while the counts are on their way (SG-STATE-02).
+    const row = await screen.findByRole("button", { name: /Löschfristen werden geladen/ });
     await userEvent.click(row);
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByRole("heading", { name: "Fristen" })).toBeTruthy();
+    expect(within(dialog).getByRole("heading", { name: "Löschfristen" })).toBeTruthy();
     answer();
-    expect(await within(dialog).findByText("Keine offenen Löschungen")).toBeTruthy();
+    expect(await within(dialog).findByText("Nichts zu tun.")).toBeTruthy();
     expect(screen.getByRole("dialog")).toBe(dialog);
   });
 
-  it("US-ACC-04 a press on the row Fristen that starts while its counts load and ends after they arrive still opens the layer (issue 1722)", async () => {
+  it("US-QS-32 · SG-STATE-02 while its counts load the row Löschfristen keeps the line of its common answer, no number (F-0338, issue 2038)", async () => {
     let answer: () => void = () => undefined;
     deletionsGate = new Promise<void>((resolve) => {
       answer = resolve;
     });
     await open();
-    const row = await screen.findByRole("button", { name: /Fristen werden geladen/ });
+    const row = await screen.findByRole("button", { name: /Löschfristen werden geladen/ });
+    const shape = row.querySelector("[data-deadline-skeleton] [aria-hidden='true']");
+    expect(shape?.textContent).toBe("Keine Frist offen");
+    expect(shape?.textContent).not.toMatch(/\d/);
+    expect(shape?.className).toContain("text-transparent");
+    answer();
+    expect(await screen.findByRole("button", { name: /Keine Frist offen/ })).toBe(row);
+  });
+
+  it("US-ACC-04 a press on the row Löschfristen that starts while its counts load and ends after they arrive still opens the layer (issue 1722)", async () => {
+    let answer: () => void = () => undefined;
+    deletionsGate = new Promise<void>((resolve) => {
+      answer = resolve;
+    });
+    await open();
+    const row = await screen.findByRole("button", { name: /Löschfristen werden geladen/ });
     fireEvent.pointerDown(row);
     answer();
     // The counts arrive while the press is still on the row; the row must stay the one the press started on.
-    expect(await screen.findByRole("button", { name: /0 nahe/ })).toBe(row);
+    expect(await screen.findByRole("button", { name: /Keine Frist offen/ })).toBe(row);
     fireEvent.pointerUp(row);
     fireEvent.click(row);
     expect(await screen.findByRole("dialog")).toBeTruthy();
+  });
+});
+
+describe("US-ACC-05 US-QS-32 the cost and codes layers ask before they discard typed input (SG-FORM-06)", () => {
+  const created = {
+    id: "i9",
+    code: "ABCD-EFGH-JKMN-PQRS-TVWX-YZ01",
+    expiresAt: "2026-10-11T10:00:00.000Z",
+  };
+  const question = { name: "Eingabe verwerfen?" };
+  const costLayer = { name: "Monatliche Kosten" };
+  const codesLayer = { name: "Einladungscodes" };
+
+  beforeEach(() => setViewportWidth(360));
+
+  /** The page on the browser history, so that Back is a real history step (US-QS-15, US-QS-32). */
+  const openOnBrowser = async () => {
+    window.history.replaceState(null, "", "/betreiber");
+    render(
+      <BrowserRouter>
+        <OperatorPage api="http://api" token={token} />
+      </BrowserRouter>,
+    );
+    await screen.findByRole("heading", { name: "Betreiber" });
+    await screen.findByRole("button", { name: /^Zahlen/ });
+  };
+
+  /** Opens the cost layer and types an amount into it, which is not saved. */
+  const typeAmount = async (amount: string) => {
+    const layer = await topic(/^Monatliche Kosten/);
+    await userEvent.type(within(layer).getByLabelText("Betrag"), amount);
+    return layer;
+  };
+
+  const askedQuestion = () => screen.findByRole("dialog", question);
+  const noQuestion = () => waitFor(() => expect(screen.queryByRole("dialog", question)).toBeNull());
+
+  it("US-ACC-05 US-QS-32 Escape with a changed amount asks Eingabe verwerfen?; Weiter bearbeiten keeps the amount and the layer", async () => {
+    await open();
+    await typeAmount("12,50");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      within(await askedQuestion()).getByRole("button", { name: "Weiter bearbeiten" }),
+    );
+    await noQuestion();
+    expect(screen.getByRole("dialog", costLayer)).toBeTruthy();
+    expect((screen.getByLabelText("Betrag") as HTMLInputElement).value).toBe("12,50");
+  });
+
+  it("US-ACC-05 US-QS-32 Escape with a changed amount, then Verwerfen, closes the cost layer", async () => {
+    await open();
+    await typeAmount("12,50");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      within(await askedQuestion()).getByRole("button", { name: "Eingabe verwerfen" }),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog", costLayer)).toBeNull());
+    expect(screen.queryByRole("dialog", question)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 the close control of the cost layer from md asks while the amount is changed", async () => {
+    setViewportWidth(800);
+    await open();
+    const layer = await typeAmount("12,50");
+    await userEvent.click(within(layer).getByRole("button", { name: "Schließen" }));
+    expect(await askedQuestion()).toBeTruthy();
+    expect(screen.getByLabelText("Betrag")).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 an outside tap on the scrim of the cost sheet asks while the amount is changed", async () => {
+    await open();
+    await typeAmount("12,50");
+    const scrim = document.querySelector<HTMLElement>(".bg-scrim");
+    expect(scrim).not.toBeNull();
+    await userEvent.click(scrim as HTMLElement);
+    expect(await askedQuestion()).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 an outside tap on the scrim closes an unchanged cost sheet at once, with no question", async () => {
+    await open();
+    await topic(/^Monatliche Kosten/);
+    const scrim = document.querySelector<HTMLElement>(".bg-scrim");
+    expect(scrim).not.toBeNull();
+    await userEvent.click(scrim as HTMLElement);
+    await waitFor(() => expect(screen.queryByRole("dialog", costLayer)).toBeNull());
+    expect(screen.queryByRole("dialog", question)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 Back with a changed amount asks; Verwerfen lands on the list, its address without ?sheet", async () => {
+    await openOnBrowser();
+    await typeAmount("12,50");
+    window.history.back();
+    const ask = await askedQuestion();
+    expect(window.location.search).toContain("sheet=kosten");
+    await userEvent.click(within(ask).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() => expect(window.location.search).toBe(""));
+    expect(screen.queryByRole("dialog", costLayer)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 an unchanged cost layer closes at once on Escape, with no question", async () => {
+    await open();
+    await topic(/^Monatliche Kosten/);
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", costLayer)).toBeNull());
+    expect(screen.queryByRole("dialog", question)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 an unchanged cost layer closes at once on Back, with no question", async () => {
+    await openOnBrowser();
+    await topic(/^Monatliche Kosten/);
+    window.history.back();
+    await waitFor(() => expect(window.location.search).toBe(""));
+    expect(screen.queryByRole("dialog", costLayer)).toBeNull();
+    expect(screen.queryByRole("dialog", question)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 after a saved cost the layer is clean: Escape closes it without a question", async () => {
+    serve((path, init) =>
+      path === "/operator/cost" && init.method === "PUT"
+        ? json(200, JSON.parse(String(init.body)))
+        : json(404, {}),
+    );
+    await open();
+    await typeAmount("12,50");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      within(await askedQuestion()).getByRole("button", { name: "Weiter bearbeiten" }),
+    );
+    await noQuestion();
+    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    expect(await screen.findByText("Monatliche Kosten gespeichert.")).toBeTruthy();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", costLayer)).toBeNull());
+    expect(screen.queryByRole("dialog", question)).toBeNull();
+  });
+
+  it("US-ACC-05 US-QS-32 a refused cost save keeps the amount unsaved, so Escape still asks", async () => {
+    serve(() =>
+      json(400, {
+        error: {
+          code: "operator_cost.month_in_future",
+          text: "Dieser Monat liegt in der Zukunft. Trage die Kosten eines Monats ein, der schon begonnen hat.",
+        },
+      }),
+    );
+    await open();
+    await typeAmount("10");
+    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/Zukunft/);
+    await userEvent.keyboard("{Escape}");
+    expect(await askedQuestion()).toBeTruthy();
+  });
+
+  it("US-ACC-05 US-QS-32 the validity field of the codes layer asks on Escape after a changed value", async () => {
+    await open();
+    const layer = await topic(/^Einladungscodes/);
+    const days = within(layer).getByLabelText("Gültig für (Tage)");
+    await userEvent.clear(days);
+    await userEvent.type(days, "3");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      within(await askedQuestion()).getByRole("button", { name: "Eingabe verwerfen" }),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog", codesLayer)).toBeNull());
+  });
+
+  it("US-ACC-05 US-QS-32 after a created code the codes layer is clean: Escape closes it without a question", async () => {
+    serve(async (path, init) =>
+      path === "/operator/invitations" && init.method === "POST"
+        ? json(201, created)
+        : json(404, {}),
+    );
+    await open();
+    const layer = await topic(/^Einladungscodes/);
+    const days = within(layer).getByLabelText("Gültig für (Tage)");
+    await userEvent.clear(days);
+    await userEvent.type(days, "3");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      within(await askedQuestion()).getByRole("button", { name: "Weiter bearbeiten" }),
+    );
+    await noQuestion();
+    await userEvent.click(screen.getByRole("button", { name: "Code erstellen" }));
+    await screen.findByRole("region", { name: "Neuer Einladungscode" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", codesLayer)).toBeNull());
+    expect(screen.queryByRole("dialog", question)).toBeNull();
   });
 });

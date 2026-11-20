@@ -1,87 +1,95 @@
-import { zoneLabel } from "@pflanzendex/core";
-import type { SpecimenCard } from "@pflanzendex/core";
-import { cva } from "class-variance-authority";
-import { Button } from "@/shared/ui/button/button";
-import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { useInView } from "@/shared/platform/visibility/use-in-view";
+import { zoneLabel, type SpecimenCard } from "@pflanzendex/core";
+import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import { ObjectRow } from "@/shared/lists/object-row/object-row";
+import { useObjectPhoto } from "@/shared/lists/object-row/use-object-photo";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { plantLayerId } from "@/shared/patterns/navigation/navigation/navigation";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { UNKNOWN } from "../../../specimens/model/text";
+import table from "./plant-tile.de.json";
 
-/** The layer of one plant is named after the plant: `?sheet=plant-<id>` (US-QS-19). */
-export const plantLayerId = (id: string): string => `plant-${id}`;
+const ui = texts(table);
 
 /** The one state a tile shows (US-QS-19): an open treatment first, then the quality of the last measurement. */
 export function tileState(card: SpecimenCard): { text: string; attention: boolean } {
-  if (card.treatment) return { text: "Behandeln", attention: true };
+  if (card.treatment) return { text: ui("treatment"), attention: true };
   const quality = card.lastMeasurement?.quality;
-  if (quality === "etiolated") return { text: "Vergeilt/dünn", attention: true };
-  if (quality === "healthy") return { text: "Gesund", attention: false };
+  if (quality === "etiolated") return { text: ui("etiolated"), attention: true };
+  if (quality === "healthy") return { text: ui("healthy"), attention: false };
   return { text: UNKNOWN, attention: false };
 }
 
-/** The zone as text without the source: the tile has room for the name only; unknown stays "unbekannt" (P-08). */
-export const tileZone = (card: SpecimenCard): string =>
-  card.lightZone ? zoneLabel(card.lightZone) : UNKNOWN;
+/**
+ * The species of a plant, for a card that does not carry the species name: the name without the marker it ends in (DM-BES-03).
+ * A name that does not end in its marker stays whole, so nothing disappears (P-10).
+ */
+function speciesOf(card: SpecimenCard): string {
+  if (card.speciesName !== null) return card.speciesName;
+  const suffix = card.marker ? ` – ${card.marker}` : null;
+  return suffix !== null && card.name.endsWith(suffix)
+    ? card.name.slice(0, -suffix.length)
+    : card.name;
+}
 
-/** Attention is marked by the warning tokens and the word, never by colour alone (DS-38). */
-const stateMark = cva("w-fit max-w-full truncate rounded-sm px-1 text-xs font-semibold", {
-  variants: {
-    attention: { true: "border-b-2 border-warning-border bg-warning text-warning-foreground" },
-  },
-  defaultVariants: { attention: false },
-});
+/**
+ * The title and the meta line of a plant row (US-QS-32, owner answer Q-68, SG-LIST-07). A plant with its own name (its
+ * marker) shows that name as the title and its species in the meta line; a plant without one shows its name as the
+ * title, which is the species name derived by DM-BES-03, and no species again. The zone is the meta line; an unknown zone
+ * carries its label (owner answer Q08, P-08).
+ */
+export function tileLines(card: SpecimenCard): { title: string; meta: string } {
+  const zone = card.lightZone ? zoneLabel(card.lightZone) : ui("zoneUnknown");
+  if (card.marker) return { title: card.marker, meta: `${speciesOf(card)} · ${zone}` };
+  return { title: card.name, meta: zone };
+}
 
-/** The 56 px picture of a tile (NFR-12): the thumbnail, requested once the tile is near the viewport. */
-function Face({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
-  const [ref, inView] = useInView<HTMLSpanElement>();
-  const state = useStoredPhoto(access, card.photo?.url, { size: "thumb", enabled: inView });
-  const initial = card.name.trim().charAt(0).toUpperCase() || "?";
-  return typeof state === "string" ? (
-    <img src={state} alt="" className="size-14 shrink-0 rounded-md object-cover" />
-  ) : (
-    <span
-      ref={ref}
-      aria-hidden="true"
-      data-initial={initial}
-      className="grid size-14 shrink-0 place-items-center rounded-md text-xl font-semibold text-muted-foreground after:content-[attr(data-initial)]"
+/**
+ * The attention word leads the meta line (US-QS-32): a trailing badge would take the width the name needs at a large text
+ * size, so the word stands first, in the warning tokens with its word (SG-COLOR-04, DS-38).
+ */
+const ATTENTION =
+  "rounded-sm border-b-2 border-warning-border bg-warning px-1 font-semibold text-warning-foreground";
+
+/**
+ * A plant in the list "Alle" (US-PHA-01, US-QS-19, US-QS-32): one `ObjectRow` with the photo's thumbnail (the drawn
+ * placeholder while there is none), the title of `tileLines`, and the meta line led by the state that needs attention
+ * (an open treatment, etiolated growth). Choosing the row opens the plant in its layer (`?sheet=plant-<id>`); the photo
+ * is asked once the row is near the viewport (NFR-12).
+ */
+export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
+  const { openLayer, open } = useLayer(plantLayerId(card.id));
+  const [ref, src] = useObjectPhoto(access, card.photo?.url);
+  const { title, meta } = tileLines(card);
+  const state = tileState(card);
+  return (
+    <ObjectRow
+      rootRef={ref}
+      src={src}
+      title={title}
+      meta={
+        state.attention ? (
+          <>
+            <span className={ATTENTION}>{state.text}</span>
+            {" · "}
+            {meta}
+          </>
+        ) : (
+          meta
+        )
+      }
+      haspopup="dialog"
+      expanded={open}
+      chevron={false}
+      onClick={(event) => openLayer(event.currentTarget)}
     />
   );
 }
 
 /**
- * A compact plant tile (US-QS-19): photo or the initial of the name, the name, the light zone as text and one state.
- * Name and zone keep one line each and end in "…" when they are longer than the tile, never breaking inside a word;
- * the full text stays the accessible name and the layer shows it (owner decision 2026-11-01, issue 1108). Choosing
- * it opens the plant in its layer (`?sheet=plant-<id>`). Takes the card and the photo access only. A tile too narrow
- * for picture and text side by side, as at 200 % text on a phone, stacks them, so the name keeps the full width and
- * pots of one species stay apart by their marker (owner decision 2026-11-05, issue 1304).
+ * A plant row while its page loads (SG-STATE-02, F-0124): the row's box, so a list that loads shows the shape of its rows
+ * instead of an empty frame. Never a number in it (P-08).
  */
-export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
-  const { openLayer, open } = useLayer(plantLayerId(card.id));
-  const state = tileState(card);
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      aria-haspopup="dialog"
-      aria-expanded={open}
-      onClick={(event) => openLayer(event.currentTarget)}
-      className="@container h-auto w-full min-w-0 justify-start whitespace-normal rounded-card bg-secondary px-2 py-1.5 text-left font-normal text-secondary-foreground hover:bg-secondary/80"
-    >
-      <span className="flex w-full min-w-0 items-center gap-2 @max-[7.5rem]:flex-col @max-[7.5rem]:items-start">
-        <Face card={card} access={access} />
-        <span className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)] gap-0.5">
-          <span className="truncate font-semibold">{card.name}</span>{" "}
-          <span className="truncate text-xs text-muted-foreground">{tileZone(card)}</span>{" "}
-          <span
-            data-attention={state.attention}
-            className={stateMark({ attention: state.attention })}
-          >
-            {state.text}
-          </span>
-        </span>
-      </span>
-    </Button>
-  );
+export function PlantTileSkeleton() {
+  return <Skeleton className="h-20 w-full rounded-lg" />;
 }

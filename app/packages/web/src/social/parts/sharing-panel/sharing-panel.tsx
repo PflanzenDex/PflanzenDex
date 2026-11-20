@@ -4,6 +4,12 @@ import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { Button } from "@/shared/ui/button/button";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
+import table from "../../social.de.json";
+
+const tx = texts(table);
 
 type Specimen = Pick<SpecimenRow, "id" | "speciesId" | "name" | "status">;
 
@@ -12,7 +18,10 @@ const PAGE_SIZE = 5;
 /** On a short phone (at most 700 px high) a page holds fewer switches. */
 const SHORT_PAGE_SIZE = 3;
 
-/** What the row "Was Freunde sehen" shows as the current choice: all private, or how many specimens are shared. */
+/**
+ * What the row "Was Freunde sehen" shows as the current choice: how many specimens are shared, "0 von 2" included.
+ * "Alles privat" names only the switch in "Einstellungen" (SG-COPY-03, F-0249).
+ */
 export function sharingChoice(
   specimens: readonly Specimen[],
   shared: readonly SharingRow[],
@@ -21,7 +30,7 @@ export function sharingChoice(
   if (active.length === 0) return "Noch keine Pflanzen";
   const ids = new Set(shared.map((r) => r.specimenId));
   const count = active.filter((s) => ids.has(s.id)).length;
-  return count === 0 ? "Alles privat" : `${count} von ${active.length} Pflanzen geteilt`;
+  return `${count} von ${active.length} Pflanzen geteilt`;
 }
 
 /** The species part of a specimen name (`Species – marker`, DM-BES-03): the marker is never needed here. */
@@ -74,7 +83,7 @@ function BulkBar(props: { count: number; busy: boolean; onSetAll: (share: boolea
       >
         <p>
           {ask
-            ? `Alle ${props.count} Pflanzen für Freunde freigeben? Freunde sehen dann Art, Anzahl und Fangdatum.`
+            ? `Alle ${props.count} Pflanzen für Freunde freigeben? Freunde sehen dann nur ${tx("shared.fields")}.`
             : `Die Freigabe aller ${props.count} Pflanzen zurückziehen?`}
         </p>
         <span className="flex flex-wrap gap-2">
@@ -139,10 +148,10 @@ export function SharingPanel(props: {
     <section aria-label="Was Freunde sehen" className="flex min-w-0 flex-col gap-3">
       <p className="text-muted-foreground">Alles ist privat, bis du es freigibst.</p>
       {rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-3">
-          Du hast noch keine Pflanzen, die du freigeben könntest. Lege zuerst unter „Sammlung“ ein
-          Pflanze an.
-        </p>
+        <EmptySection
+          text={tx("sharing.none")}
+          action={{ label: tx("sharing.addPlant"), href: ADD_PLANT_PATH }}
+        />
       ) : (
         <>
           <BulkBar count={rows.length} busy={props.busy} onSetAll={props.onSetAll} />

@@ -77,6 +77,7 @@ const show = (id = "e1", on = true) =>
         <Routes>
           <Route path="/label/:id" element={<PotLabelPage api={API} token={TOKEN} />} />
           <Route path="/collection" element={<Address />} />
+          <Route path="/collection/new" element={<Address />} />
         </Routes>
       </FeaturesProvider>
     </MemoryRouter>,
@@ -85,6 +86,7 @@ const show = (id = "e1", on = true) =>
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe("US-BES-17 a scanned pot label opens the plant with quick actions", () => {
@@ -137,7 +139,7 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
     const user = userEvent.setup();
     show();
     await user.click(await screen.findByRole("button", { name: "Messen" }));
-    expect(await screen.findByRole("heading", { name: "Messen: Aloe vera" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Messen" })).toBeTruthy();
     // The form waits for the measurement view (its skeleton shows until then).
     expect(await screen.findByLabelText(/Messwert/)).toBeTruthy();
     expect(await screen.findByRole("button", { name: "Messung speichern" })).toBeTruthy();
@@ -147,33 +149,135 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
     server({});
     const { container: foreign } = show("fremd");
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Pflanze nicht gefunden" }),
+      await screen.findByRole("heading", { level: 1, name: "Etikett ohne Pflanze" }),
     ).toBeTruthy();
     const foreignHtml = foreign.innerHTML;
     expect(screen.queryByRole("button", { name: "Gegossen" })).toBeNull();
     cleanup();
     const { container: unknownLabel } = show("unbekannt");
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Pflanze nicht gefunden" }),
+      await screen.findByRole("heading", { level: 1, name: "Etikett ohne Pflanze" }),
     ).toBeTruthy();
     expect(unknownLabel.innerHTML).toBe(foreignHtml);
     expect(within(unknownLabel).queryByText(/fremd|unbekannt/)).toBeNull();
   });
 
-  it("US-BES-17 an archived plant says it is archived and offers no quick actions (P-09, P-10)", async () => {
+  it("US-QS-32 the not-found label says what it means in one line, with its own mark and the way on (SG-STATE-03, SG-COPY-06)", async () => {
+    server({});
+    const { container } = show("unbekannt");
+    await screen.findByRole("heading", { level: 1, name: "Etikett ohne Pflanze" });
+    expect(screen.getByText(table["notFoundCause"])).toBeTruthy();
+    expect(table["notFoundCause"]).toBe(
+      "Zu diesem Etikett gibt es in deinem Konto keine Pflanze. Vielleicht wurde sie gelöscht, oder das Etikett gehört zu einem anderen Konto.",
+    );
+    expect(container.querySelector("svg.lucide-tag")).not.toBeNull();
+    expect(container.querySelector("svg.lucide-sprout")).toBeNull();
+    expect(container.querySelector("svg.lucide-circle-alert")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("US-QS-32 the not-found label offers Pflanze anlegen filled and Zur Sammlung plain, and both lead on", async () => {
+    server({});
+    const user = userEvent.setup();
+    show("unbekannt");
+    const create = await screen.findByRole("button", { name: "Pflanze anlegen" });
+    expect(create.className.split(/\s+/)).toContain("bg-primary");
+    const plain = screen.getByRole("button", { name: "Zur Sammlung" });
+    expect(plain.className.split(/\s+/)).toContain("text-primary");
+    await user.click(create);
+    expect((await screen.findByTestId("address")).textContent).toBe("/collection/new");
+  });
+
+  it("US-QS-32 Zur Sammlung on the not-found label leads to the collection", async () => {
+    server({});
+    const user = userEvent.setup();
+    show("unbekannt");
+    await user.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
+    expect((await screen.findByTestId("address")).textContent).toBe("/collection");
+  });
+
+  it("US-QS-32 the scanned label is one screen (DS-61): its frame fits the window and scrolls inside, also for the not-found view", async () => {
+    server({});
+    const { container } = show("unbekannt");
+    await screen.findByRole("heading", { level: 1, name: "Etikett ohne Pflanze" });
+    const frame = container.querySelector("[data-fit-screen][data-fit-fill]");
+    expect(frame).not.toBeNull();
+    expect(frame?.className).toContain("min-h-0");
+  });
+
+  it("US-QS-32 an archived plant opens read-only: Archiviert am on top, its reason and catch date, and Pflanze wiederherstellen as its one tinted action", async () => {
     server({
       "GET /specimens/e1": () =>
         json(
           200,
-          specimen({ status: "archived", archivedAt: "2026-10-01", archivedReason: "verschenkt" }),
+          specimen({
+            status: "archived",
+            archivedAt: "2026-10-01",
+            archivedReason: "verschenkt",
+            caughtAt: "2026-03-04",
+          }),
         ),
     });
     show();
     expect(await screen.findByRole("heading", { level: 1, name: "Aloe vera" })).toBeTruthy();
-    expect(screen.getByText(ERROR_TEXTS["specimen.archived"])).toBeTruthy();
+    expect(screen.getByText("Archiviert am 01.10.2026")).toBeTruthy();
+    expect(screen.getByText("Grund: verschenkt")).toBeTruthy();
+    expect(screen.getByText("Fangdatum: 04.03.2026")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Gegossen" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Messen" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Zur Sammlung" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Zur Sammlung" })).toBeNull();
+    const restore = screen.getByRole("button", { name: "Pflanze wiederherstellen" });
+    expect(restore.className.split(/\s+/)).toContain("bg-accent");
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+  });
+
+  it("US-QS-32 an archived plant with no catch date says Fangdatum: unbekannt (P-08)", async () => {
+    server({
+      "GET /specimens/e1": () =>
+        json(200, specimen({ status: "archived", archivedAt: "2026-10-01", archivedReason: "x" })),
+    });
+    show();
+    expect(await screen.findByText("Fangdatum: unbekannt")).toBeTruthy();
+  });
+
+  it("US-QS-32 Pflanze wiederherstellen restores the plant, and the label then shows the active plant", async () => {
+    let restored = false;
+    const calls = server({
+      "GET /specimens/e1": () =>
+        restored
+          ? json(200, specimen())
+          : json(
+              200,
+              specimen({ status: "archived", archivedAt: "2026-10-01", archivedReason: "x" }),
+            ),
+      "POST /specimens/e1/restore": () => {
+        restored = true;
+        return json(200, specimen());
+      },
+    });
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: "Pflanze wiederherstellen" }));
+    expect(await screen.findByRole("button", { name: "Gegossen" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Pflanze wiederherstellen" })).toBeNull();
+    expect(
+      calls.filter((c) => c.method === "POST" && c.path === "/specimens/e1/restore"),
+    ).toHaveLength(1);
+  });
+
+  it("US-QS-32 a refused restore shows the German text of its code, never the raw server text (P-10)", async () => {
+    server({
+      "GET /specimens/e1": () =>
+        json(200, specimen({ status: "archived", archivedAt: "2026-10-01", archivedReason: "x" })),
+      "POST /specimens/e1/restore": () =>
+        json(409, { error: { code: "specimen.not_found", text: "raw server text" } }),
+    });
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: "Pflanze wiederherstellen" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe(ERROR_TEXTS["specimen.not_found"]);
+    expect(alert.textContent).not.toContain("raw server text");
   });
 
   it("US-BES-17 with the keeper switch for pot labels off the scan opens the plant's normal view without quick actions (P-12)", async () => {
@@ -203,12 +307,36 @@ describe("US-MON-09 Gedüngt on a scanned pot label", () => {
   });
 
   it("US-MON-09 the label shows the date of the latest fertilizing", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-15T12:00:00Z"));
     server({
       "GET /specimens/e1": () => json(200, specimen()),
       "GET /specimens/e1/fertilizing": () => json(200, { lastFertilizedOn: "2026-11-02" }),
     });
     show();
     expect(await screen.findByText("Zuletzt gedüngt: 02.11.2026")).toBeTruthy();
+  });
+
+  it("US-QS-32 the label says 'Zuletzt gedüngt: heute' on the day of the fertilizing", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-02T12:00:00Z"));
+    server({
+      "GET /specimens/e1": () => json(200, specimen()),
+      "GET /specimens/e1/fertilizing": () => json(200, { lastFertilizedOn: "2026-11-02" }),
+    });
+    show();
+    expect(await screen.findByText("Zuletzt gedüngt: heute")).toBeTruthy();
+  });
+
+  it("US-QS-32 the label says 'Zuletzt gedüngt: vor 3 Tagen' within 7 days", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-05T12:00:00Z"));
+    server({
+      "GET /specimens/e1": () => json(200, specimen()),
+      "GET /specimens/e1/fertilizing": () => json(200, { lastFertilizedOn: "2026-11-02" }),
+    });
+    show();
+    expect(await screen.findByText("Zuletzt gedüngt: vor 3 Tagen")).toBeTruthy();
   });
 
   it("US-MON-09 the label says 'noch nie' while no fertilizing is logged (P-08, P-09)", async () => {

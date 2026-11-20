@@ -66,19 +66,19 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | -------------------------------- | ------- | ------ | ------- | ------ | ------------------------- | ---------------------- | ------- |
 | ACC Accounts                     | 6       | 2      | 3       | 1      | 2 · 0 · 4                 | 0                      | 6       |
 | BES Collection                   | 19      | 2      | 17      | 0      | 2 · 8 · 15                | 8                      | 11      |
-| LIC Light and locations          | 5       | 4      | 1       | 0      | 0 · 5 · 1                 | 4                      | 1       |
-| PHA Care phases                  | 4       | 2      | 2       | 0      | 1 · 0 · 5                 | 4                      | 0       |
-| WAC Growth/photos                | 7       | 4      | 3       | 0      | 5 · 0 · 1                 | 6                      | 1       |
+| LIC Light and locations          | 5       | 5      | 0       | 0      | 1 · 5 · 0                 | 4                      | 1       |
+| PHA Care phases                  | 4       | 3      | 1       | 0      | 1 · 0 · 5                 | 4                      | 0       |
+| WAC Growth/photos                | 7       | 5      | 2       | 0      | 5 · 0 · 1                 | 6                      | 1       |
 | BEH Treatments                   | 4       | 4      | 0       | 0      | 4 · 0 · 2                 | 4                      | 0       |
 | WUN Wishlist                     | 6       | 1      | 5       | 0      | 2 · 0 · 5                 | 5                      | 1       |
 | POK Pokédex                      | 12      | 2      | 10      | 0      | 0 · 0 · 11                | 10                     | 2       |
 | MON Reminders/sensors            | 9       | 0      | 7       | 2      | 0 · 0 · 8                 | 0                      | 9       |
 | SOZ Social                       | 13      | 3      | 10      | 0      | 1 · 0 · 10                | 0                      | 13      |
 | EQU Equipment                    | 12      | 0      | 11      | 1      | 0 · 0 · 10                | 0                      | 12      |
-| KI AI access                     | 17      | 2      | 10      | 5      | 1 · 4 · 18                | 3                      | 14      |
-| QS Cross-cutting                 | 25      | 0      | 24      | 1      | 0 · 0 · 0                 | 6                      | 19      |
+| KI AI access                     | 17      | 3      | 10      | 4      | 1 · 5 · 17                | 3                      | 14      |
+| QS Cross-cutting                 | 33      | 0      | 29      | 4      | 0 · 0 · 0                 | 6                      | 27      |
 | MIG Migration (dropped)          | 0       | 0      | 0       | 0      | 0 · 0 · 0                 | 0                      | 0       |
-| ENT Discover                     | 9       | 0      | 8       | 1      | 0 · 0 · 9                 | 0                      | 9       |
+| ENT Discover                     | 11      | 0      | 9       | 2      | 0 · 0 · 9                 | 0                      | 11      |
 | QG Quality gates                 | 10      | 2      | 8       | 0      | 15 · 10 · 2               | 0                      | 10      |
 | DEV Development process          | 13      | 3      | 10      | 0      | 1 · 3 · 6                 | 0                      | 13      |
 | ACH Achievements                 | 8       | 7      | 1       | 0      | 0 · 0 · 0                 | 0                      | 8       |
@@ -87,7 +87,7 @@ The table is generated from the spec files: `node app/tools/dev/agent/spec-statu
 | VAR Variegated cultivars         | 8       | 0      | 0       | 8      | 0 · 0 · 9                 | 0                      | 8       |
 | SUB Substrate                    | 10      | 0      | 0       | 10     | 0 · 0 · 9                 | 0                      | 10      |
 | DEAL Shop offers and sale alerts | 6       | 0      | 0       | 6      | 0 · 0 · 10                | 0                      | 6       |
-| **Total**                        | **219** | **44** | **140** | **35** |                           | **50**                 | **169** |
+| **Total**                        | **229** | **48** | **143** | **38** |                           | **50**                 | **179** |
 
 <!-- spec-status:end -->
 

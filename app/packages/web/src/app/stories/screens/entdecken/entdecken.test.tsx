@@ -14,7 +14,7 @@ describe("US-QS-14 · page story Entdecken", () => {
 
   it("US-QS-14 · the suggestions mode shows the first card of the deck", async () => {
     await SuggestionsPhone.run();
-    expect(await screen.findByText("Vorschlag 1 von 2")).toBeTruthy();
+    expect(await screen.findByText("Karte 1 von 2")).toBeTruthy();
     // The next card underneath repeats the heading, hidden from assistive tech (US-ENT-01): only the front card counts.
     expect(screen.getByRole("heading", { name: "Warum diese Art?" })).toBeTruthy();
   });

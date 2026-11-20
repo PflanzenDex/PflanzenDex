@@ -1,10 +1,9 @@
 {
-  "title": "Verlauf: {name}",
+  "title": "Messverlauf: {name}",
   "parts.label": "Teile des Verlaufs",
   "part.overview": "Überblick",
   "part.curve": "Kurve",
   "part.entries": "Messungen",
-  "empty.title": "Noch keine Messung",
-  "empty.description": "Trage oben den ersten Messwert ein.",
-  "empty.action": "Messwert eintragen"
+  "empty.line": "Noch keine Messung.",
+  "empty.action": "Messung erfassen"
 }

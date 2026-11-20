@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrate, openOwnerPool, openFixturePool } from "@pflanzendex/db";
+import type { MeasurementSource } from "@pflanzendex/core";
 import { createApp, type AppOptions } from "../app";
 
 type TokenVerifier = NonNullable<AppOptions["reviewer"]>;
@@ -139,5 +140,40 @@ describe("US-PHA-01 care phases through the API", () => {
   it("US-PHA-01 another account does not see the specimens (P-04)", async () => {
     const r = await call(subB, "GET", "/care-phases?timeZone=UTC");
     expect(r).toMatchObject({ status: 200, body: { phases: [] } });
+  });
+});
+
+describe("US-QS-32 the phase rows carry the marker, the species name and the photo of their plant", () => {
+  it("US-QS-32 a row names the marker, the species name and the address of the plant's most recent photo, and no photo where there is none (P-08)", async () => {
+    const using = await newSpecies(subA, `Foto${run}`, {
+      dormancyFrom: "11-01",
+      dormancyUntil: "03-15",
+    });
+    const id = (await specimen(subA, using)).body["id"] as string;
+    const photos: MeasurementSource = {
+      forSpecimens: async (_userId, ids) =>
+        new Map(
+          ids
+            .filter((x) => x === id)
+            .map((x) => [
+              x,
+              {
+                last: { date: "2026-10-01", value: 12, quality: "healthy", note: null },
+                photo: { url: `/specimens/${x}/measurements/m1/photo`, date: "2026-10-01" },
+              },
+            ]),
+        ),
+    };
+    const withPhotos = createApp({ reviewer, pool, clock: () => NOW, measurements: photos });
+    const res = await withPhotos.request("/care-phases?timeZone=UTC", {
+      headers: { authorization: `Bearer valid:${subA}` },
+    });
+    const body = (await res.json()) as { phases: Array<Record<string, unknown>> };
+    const row = body.phases.find((p) => p["specimenId"] === id);
+    expect(row).toMatchObject({
+      marker: null,
+      speciesName: `Foto${run}`,
+      photo: { url: `/specimens/${id}/measurements/m1/photo` },
+    });
   });
 });

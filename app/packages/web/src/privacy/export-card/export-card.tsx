@@ -55,7 +55,7 @@ export function ExportCard(props: { api: string; token: Token }) {
       }
     >
       <div className="flex min-w-0 flex-col gap-3">
-        <MoreHelp more="Du bekommst ein ZIP-Archiv mit allen deinen Daten: Pflanzen, Messungen, Behandlungen, Wünsche, Equipment, Einstellungen, Freigaben, deine Seite der Freundschaften und Tausche sowie die KI-Verbindungen. Die Datei data.json ist ein offenes Format, deine Fotos liegen im Ordner photos. Gleiche Daten ergeben dieselbe Datei. Zugangsdaten für Push-Mitteilungen sind nicht enthalten.">
+        <MoreHelp more="Du bekommst ein ZIP-Archiv mit allen deinen Daten: Pflanzen, Messungen, Behandlungen, Wünsche, Geräte, Einstellungen, Freigaben, deine Seite der Freundschaften und Tausche sowie die KI-Verbindungen. Die Datei data.json ist ein offenes Format, deine Fotos liegen im Ordner photos. Gleiche Daten ergeben dieselbe Datei. Zugangsdaten für Push-Mitteilungen sind nicht enthalten.">
           Ein ZIP-Archiv mit allen deinen Daten, deine Fotos liegen im Ordner photos.
         </MoreHelp>
         {error && (

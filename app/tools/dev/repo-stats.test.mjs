@@ -156,6 +156,13 @@ function prFixture(t) {
     lessonsCheck,
     readFileSync(fileURLToPath(new URL(`../../../${lessonsCheck}`, import.meta.url)), "utf8"),
   );
+  // pr-lessons imports the entry-point helper from the shared folder (US-QG-02): the checkout needs it too.
+  const helper = "app/tools/check/shared/entry-point.mjs";
+  write(
+    dir,
+    helper,
+    readFileSync(fileURLToPath(new URL(`../../../${helper}`, import.meta.url)), "utf8"),
+  );
   git(dir, "add", "-A");
   git(dir, "commit", "-q", "-m", "lessons check");
   git(origin, "init", "-q", "--bare");

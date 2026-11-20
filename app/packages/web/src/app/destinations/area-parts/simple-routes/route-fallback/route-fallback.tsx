@@ -7,12 +7,16 @@ import {
 } from "@/shared/patterns/navigation/navigation/navigation";
 import { readStored } from "@/shared/platform/browser/storage";
 import { TodaySkeleton } from "@/today";
-import { ProfileRouteSkeleton } from "@/catalog";
-import { FriendCollectionRouteSkeleton, FriendsRouteSkeleton } from "@/social";
+import {
+  FriendCollectionRouteSkeleton,
+  FriendsRouteSkeleton,
+  ProfileRouteSkeleton,
+} from "./route-skeletons/route-skeletons";
 import { ExchangeRouteSkeleton, MatchRouteSkeleton } from "@/swap";
 import { AccountRouteSkeleton } from "@/app/destinations/account-area/account-area.skeleton";
 import { sectionOf } from "@/app/destinations/account-area/account-model/account-model";
 import { CollectionRouteSkeleton } from "@/app/destinations/collection-area/collection-area.skeleton";
+import { OperatorRouteSkeleton } from "./operator-route-skeleton/operator-route-skeleton";
 import { DiscoverRouteSkeleton } from "@/app/destinations/discover-area/discover-area.skeleton";
 import {
   DISCOVER_VIEW_KEY,
@@ -45,7 +49,8 @@ export function routeFallbackOf(
   search: string,
   state: FallbackState,
 ): ReactNode | undefined {
-  if (pathname === PATHS.today) return <TodaySkeleton />;
+  // The root address redirects to "Heute" (US-QS-16): the same skeleton, so the redirect changes nothing on screen (issue 2230).
+  if (pathname === PATHS.today || pathname === "/") return <TodaySkeleton />;
   if (pathname === PATHS.discover)
     return (
       <DiscoverRouteSkeleton
@@ -58,6 +63,7 @@ export function routeFallbackOf(
         shape={sammlungShapeOf(search, readStored(VIEW_KEY) ?? null, state.offered)}
       />
     );
+  if (pathname === PATHS.operator) return <OperatorRouteSkeleton />;
   if (pathname === PATHS.friends) return <FriendsRouteSkeleton />;
   // The exchange and the match deck are addresses of their own below "Freunde": they come before the friend's collection.
   if (pathname === EXCHANGE_PATH) return <ExchangeRouteSkeleton />;

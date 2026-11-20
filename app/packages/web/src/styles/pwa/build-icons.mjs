@@ -2,12 +2,12 @@
 // US-QS-07 · The icon set of the installable web app. One motif (motifs/<name>.svg) and two brand colours of the tokens
 // (styles/tokens.css: --primary is the tile, --primary-foreground the motif) generate every icon file:
 //   public/favicon.svg, favicon-32.png, icons/ (any 192 and 512, maskable 512, monochrome 512, Apple touch 180)
-//   the favicon of the login theme (config/dev/keycloak-theme/…/img/favicon.ico: 16, 32 and 48 px)
+//   the login theme's favicons (config/dev/keycloak-theme/…/img/: favicon.ico with 16, 32 and 48 px, favicon.svg)
 // Usage: npm run icons -w @pflanzendex/web              the motif of DEFAULT_MOTIF
 //        npm run icons -w @pflanzendex/web -- sprout    another motif: the swap is this one step
 // The motif is scaled and centred by its bounding box, so every motif has the same visual size. The manifest
 // (public/manifest.webmanifest) is written by hand; pwa.test.ts checks its colours against the tokens.
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
@@ -161,9 +161,12 @@ async function main() {
     sizes.map(async (size) => ({ size, png: await png(any, size) })),
   );
   writeFileSync(path.join(KEYCLOAK_IMG, "favicon.ico"), ico(images));
+  writeFileSync(path.join(KEYCLOAK_IMG, "favicon.svg"), any);
   console.log(
     `icons: motif "${requested}", tile ${TILE}, motif colour ${GLYPH}, written to ${PUBLIC}`,
   );
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) await main();
+// eslint-disable-next-line security/detect-non-literal-fs-filename -- argv[1] is the path this file was started with: compared, never read
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
+  await main();

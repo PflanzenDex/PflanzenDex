@@ -1,11 +1,18 @@
-export { mayShareWithFriends, accountFromClaims } from "./account";
-export type { AccountData } from "./account";
+export {
+  mayShareWithFriends,
+  accountFromClaims,
+  sessionsNotConfigured,
+  signOutEverywhere,
+} from "./account";
+export type { AccountData, IdentitySessions, SignOutDependencies } from "./account";
 export {
   accountUpdateProfile,
   defaultNotifications,
   DISPLAY_NAME_LIMITS,
   KEYBOARD_SHORTCUT_DEFAULT,
   KEYBOARD_SHORTCUT_MODES,
+  MOTION_DEFAULT,
+  MOTION_SETTINGS,
   NOTIFICATION_OCCASIONS,
   REPLENISH_BUFFER_LIMITS,
   POSITION_THRESHOLD_LIMITS,
@@ -13,6 +20,7 @@ export {
 export type {
   AccountProfile,
   KeyboardShortcutMode,
+  MotionSetting,
   NotificationOccasion,
   NotificationSwitches,
   ProfileDependencies,

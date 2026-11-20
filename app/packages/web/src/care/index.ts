@@ -31,3 +31,9 @@ export const PlantCare = lazyPage(() =>
 export { OpenTreatmentsSkeleton } from "./treatments/open-treatments/open-treatments.skeleton";
 // The skeleton of the care phases, the mode's skeleton of "Sammlung" grouped by phase (US-QS-14, issue 1727).
 export { CarePhasesSkeleton } from "./phases/care-phases-page/care-phases-page.skeleton";
+// The growth line while its chunk loads, in the height of the loaded line: the fallback of the growth slot (US-QS-32, issue 2318).
+export { PlantGrowthSkeleton } from "./plant-detail/plant-growth/plant-growth.skeleton";
+// The open treatments as a count, the same request and key as the layer: the app icon's number (US-QS-29).
+export { useOpenCount } from "./shared/api/open-count/open-count";
+// The query key of the open treatments and the treatments of the account: a write of them changes "Heute" (SG-FEED-01).
+export { TREATMENTS } from "./shared/api/query-keys";

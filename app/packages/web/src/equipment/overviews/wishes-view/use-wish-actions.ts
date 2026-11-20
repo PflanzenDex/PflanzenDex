@@ -28,7 +28,7 @@ export function useWishActions(
         const r = await createEquipmentWish(api, t, input);
         saved = r.ok;
         return r;
-      }, `Equipment-Wunsch „${input.name}“ gespeichert.`);
+      }, `Geräte-Wunsch „${input.name}“ gespeichert.`);
       return saved;
     },
     onBuy: (wish) =>
@@ -36,7 +36,7 @@ export function useWishActions(
         const r = await buyEquipmentWish(api, t, wish.id);
         if (r.ok) onPrefill(r.value.prefill);
         return r;
-      }, `„${wish.name}“ ist als gekauft vermerkt. Erfasse es jetzt als Equipment.`),
+      }, `„${wish.name}“ ist als gekauft vermerkt. Erfasse es jetzt als Gerät.`),
     onDiscard: (wish) =>
       void write.run(
         (t) => discardEquipmentWish(api, t, wish.id),

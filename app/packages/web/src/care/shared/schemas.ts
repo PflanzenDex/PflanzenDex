@@ -5,16 +5,22 @@ import {
   TREATMENT_LIMITS,
 } from "@pflanzendex/core";
 import { z } from "zod";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { requiredDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 import type { MeasurementInput } from "./api/measurements-api";
 import type { TreatmentInput } from "./api/treatments-api";
+import table from "./shared.de.json";
+
+const ui = texts(table);
 
 /**
  * The form to record a measurement (US-WAC-01, DS-47): fast feedback per field in German, so a typo does not occupy
- * the server first. The server operation validates again (P-03). The date stays a `YYYY-MM-DD` string; an empty one
- * means today on the server.
+ * the server first. The server operation validates again (P-03). The date stays a `YYYY-MM-DD` string. An emptied
+ * date (or a typed one that is no real day, which the date field hands on as typed) is refused here (P-10): the server
+ * would otherwise take a missing date for today without a word.
  */
 const NUMBER = /^\d+[.,]?\d*$/;
-const NUMBER_ERROR = "Bitte gib eine Zahl ab 0 an, zum Beispiel 12,5.";
+const NUMBER_ERROR = "Gib eine Zahl ab 0 an, zum Beispiel 12,5.";
 const STEP_ERROR = "Miss in Schritten von 0,5 cm, zum Beispiel 12 oder 12,5.";
 
 export const measurementSchema = z.object({
@@ -26,19 +32,19 @@ export const measurementSchema = z.object({
     if (value > MEASUREMENT_LIMITS.value.max) return issue(NUMBER_ERROR);
     if (!Number.isInteger(value / MEASUREMENT_LIMITS.step)) issue(STEP_ERROR);
   }),
-  date: z.string(),
-  quality: z.enum(QUALITIES, { error: "Bitte wähle die Qualität: gesund oder vergeilt/dünn." }),
+  date: requiredDate(ui("dateMissing")),
+  quality: z.enum(QUALITIES, { error: "Wähle die Qualität: gesund oder vergeilt/dünn." }),
   note: z.string(),
 });
 export type MeasurementFields = z.infer<typeof measurementSchema>;
 
-/** The input to send; the fields passed the schema, so the number is valid. */
+/** The input to send; the fields passed the schema, so the number and the date are valid. */
 export function toMeasurementInput(f: MeasurementFields): MeasurementInput {
   const note = f.note.trim();
   return {
     value: Number(f.value.trim().replace(",", ".")),
     quality: f.quality,
-    ...(f.date ? { date: f.date } : {}),
+    date: f.date,
     ...(note ? { note } : {}),
   };
 }
@@ -64,10 +70,10 @@ const INTERVAL = TREATMENT_LIMITS.courseInterval;
  */
 export const treatmentSchema = z
   .object({
-    specimenIds: z.array(z.string()).min(1, "Wähle mindestens eine Pflanze, das behandelt wird."),
-    reason: z.string().trim().min(1, "Bitte nenne einen Grund, zum Beispiel Wollläuse."),
+    specimenIds: z.array(z.string()).min(1, ui("plantsMissing")),
+    reason: z.string().trim().min(1, "Nenne einen Grund, zum Beispiel Wollläuse."),
     agent: z.string(),
-    date: z.string().min(1, "Bitte wähle ein Datum für den ersten Termin."),
+    date: requiredDate("Wähle ein Datum für den ersten Termin."),
     isCourse: z.boolean(),
     count: z.string(),
     intervalDays: z.string(),

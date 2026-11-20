@@ -67,16 +67,18 @@ export function accountRoutes(pool: Pool, features: FeatureAccess): Hono<AuthEnv
     const own = await ensureRow(pool, id, data);
     // Only a hint for the UI (shows the review list and the operator area); the operations check the role again
     // (US-BES-10, US-ACC-05, P-04).
-    // The keyboard shortcut mode rides along in the same statement (US-QS-11): the shell needs it on every page, and the
-    // row rule gives only the own row.
+    // The keyboard shortcut mode (US-QS-11) and the motion choice (US-QS-33) ride along in the same statement: the shell
+    // needs them on every page, and the row rule gives only the own row.
     const roles = await withAccount(pool, id, async (db) => {
       const r = await db.query<{
         reviewer: boolean;
         operator: boolean;
         keyboard_shortcuts: string | null;
+        motion: string | null;
       }>(
         `select is_reviewer() as reviewer, is_operator() as operator,
-                (select keyboard_shortcuts from account_data) as keyboard_shortcuts`,
+                (select keyboard_shortcuts from account_data) as keyboard_shortcuts,
+                (select motion from account_data) as motion`,
       );
       return r.rows[0];
     });
@@ -91,6 +93,8 @@ export function accountRoutes(pool: Pool, features: FeatureAccess): Hono<AuthEnv
       operator: roles?.operator === true,
       // How the keyboard shortcuts are taken (US-QS-11): `plain` until the keeper changes it.
       keyboardShortcuts: roles?.keyboard_shortcuts ?? "plain",
+      // Motion of the app (US-QS-33): the shell applies it before the first view; `system` until changed.
+      motion: roles?.motion ?? "system",
       // Which function groups are switched on for this account (US-DEV-06): the web hides what is off.
       features: await features.states(id),
     });

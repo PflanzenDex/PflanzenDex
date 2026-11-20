@@ -168,7 +168,7 @@
     "id": "account-measured",
     "account": "test2",
     "path": "/account/measured",
-    "title": "Was wird gemessen?"
+    "title": "Nutzungsdaten"
   },
   {
     "id": "account-functions",
@@ -195,7 +195,7 @@
     "steps": [
       {
         "role": "button",
-        "name": "Abmelden…",
+        "name": "Abmelden …",
         "nth": 0
       }
     ],
@@ -325,7 +325,7 @@
     "account": "test2",
     "path": "/collection?view=equipment&sheet=new",
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Neues Equipment"
+    "title": "Neues Gerät"
   },
   {
     "id": "collection-view-species-sheet-cards",
@@ -387,11 +387,11 @@
     "steps": [
       {
         "role": "button",
-        "name": "Zone 2 ändern"
+        "re": "^Zone 2\\b"
       }
     ],
     "layerFile": "light/zones/zone-layer/zone-layer.tsx",
-    "title": "Lichtzone bearbeiten"
+    "title": "Lichtzone ändern"
   },
   {
     "id": "collection-view-plants-manage-locations-sheet-hints",
@@ -405,7 +405,7 @@
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&sheet=reference",
     "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
-    "title": "Lichthunger und Einstufung"
+    "title": "Lichtbedarf und Einstufung"
   },
   {
     "id": "collection-view-plants-group-location",
@@ -582,11 +582,11 @@
     "steps": [
       {
         "role": "button",
-        "name": "Bad ändern"
+        "re": "^Bad\\b"
       }
     ],
     "layerFile": "light/zones/location-layer/location-layer.tsx",
-    "title": "Standort bearbeiten"
+    "title": "Standort ändern"
   },
   {
     "id": "collection-view-plants-manage-locations-list-locations-sheet-hints",
@@ -600,7 +600,7 @@
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&list=locations&sheet=reference",
     "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
-    "title": "Lichthunger und Einstufung"
+    "title": "Lichtbedarf und Einstufung"
   },
   {
     "id": "today-sheet-hints",
@@ -695,7 +695,7 @@
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items",
     "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
-    "title": "Equipment"
+    "title": "Geräte"
   },
   {
     "id": "collection-view-equipment-sheet-costs",
@@ -730,7 +730,7 @@
     "account": "test2",
     "path": "/collection?view=equipment&sheet=wishes",
     "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
-    "title": "Equipment-Wünsche"
+    "title": "Geräte-Wünsche"
   },
   {
     "id": "friends-sheet-friends",
@@ -769,7 +769,7 @@
     "id": "account-achievements",
     "account": "test2",
     "path": "/account/achievements",
-    "title": "Erfolge"
+    "title": "Erfolge und Rückblick"
   },
   {
     "id": "account-reminders",
@@ -942,7 +942,7 @@
     "account": "test2",
     "path": "/label/unbekannt",
     "route": "/label/:id",
-    "title": "Pflanze nicht gefunden"
+    "title": "Etikett ohne Pflanze"
   },
   {
     "id": "operator-sheet-zahlen",
@@ -970,7 +970,7 @@
     "account": "test3",
     "path": "/operator?sheet=fristen",
     "layerFile": "account/operator/operator-page/operator-page.tsx",
-    "title": "Betreiber: Fristen"
+    "title": "Betreiber: Löschfristen"
   },
   {
     "id": "operator-sheet-registrierung",
@@ -1063,7 +1063,7 @@
     "account": "test2",
     "path": "/account/achievements?sheet=pause",
     "layerFile": "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx",
-    "title": "Pause eintragen"
+    "title": "Urlaub eintragen"
   },
   {
     "id": "today-tasks",
@@ -1193,7 +1193,7 @@
       }
     ],
     "layerFile": "care/measure/measure-page/course-layer/course-layer.tsx",
-    "title": "Verlauf: Pflanze"
+    "title": "Messverlauf: Pflanze"
   },
   {
     "id": "collection-equipment-item",
@@ -1205,7 +1205,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-substrate-aroid-mix",
@@ -1218,7 +1218,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-sensor-bodenfeuchte",
@@ -1231,7 +1231,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-fertilizer-fluessigduenger",
@@ -1244,7 +1244,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-lamp-growbox",
@@ -1257,7 +1257,7 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-substrate-kakteenerde",
@@ -1270,23 +1270,10 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "collection-equipment-item-plant-agent-neemoel",
-    "account": "test2",
-    "path": "/collection?view=equipment&sheet=items",
-    "steps": [
-      {
-        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
-        "nth": 5
-      }
-    ],
-    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
-  },
-  {
-    "id": "collection-equipment-item-lamp-pflanzenlampe-led",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items&lpage=2",
     "steps": [
@@ -1296,10 +1283,10 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
-    "id": "collection-equipment-item-lamp-regallampe",
+    "id": "collection-equipment-item-lamp-pflanzenlampe-led",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items&lpage=2",
     "steps": [
@@ -1309,10 +1296,10 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
-    "id": "collection-equipment-item-lamp-stecklingslampe",
+    "id": "collection-equipment-item-lamp-regallampe",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items&lpage=2",
     "steps": [
@@ -1322,10 +1309,10 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
   },
   {
-    "id": "collection-equipment-item-timer-zeitschaltuhr",
+    "id": "collection-equipment-item-lamp-stecklingslampe",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items&lpage=2",
     "steps": [
@@ -1335,7 +1322,20 @@
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
-    "title": "Equipment-Eintrag"
+    "title": "Geräte-Eintrag"
+  },
+  {
+    "id": "collection-equipment-item-timer-zeitschaltuhr",
+    "account": "test2",
+    "path": "/collection?view=equipment&sheet=items&lpage=2",
+    "steps": [
+      {
+        "css": "[role=dialog] ul button, [data-layer-pane] ul button",
+        "nth": 4
+      }
+    ],
+    "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
+    "title": "Geräte-Eintrag"
   },
   {
     "id": "review-case",
@@ -1396,6 +1396,27 @@
     ],
     "layerFile": "social/pages/friend-collection/friend-collection.tsx",
     "title": "Geräte von Clara",
+    "route": "/friends/:friendId"
+  },
+  {
+    "id": "friend-end",
+    "account": "test2",
+    "path": "/friends?sheet=friends",
+    "steps": [
+      {
+        "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
+      },
+      {
+        "role": "button",
+        "name": "Mehr"
+      },
+      {
+        "role": "menuitem",
+        "name": "Freundschaft beenden"
+      }
+    ],
+    "layerFile": "social/pages/friend-collection/parts/friend-end/friend-end.tsx",
+    "title": "Freundschaft beenden",
     "route": "/friends/:friendId"
   },
   {

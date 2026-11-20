@@ -9,7 +9,7 @@ const ROWS = [
   { id: "search", keys: "/", label: "Suche öffnen" },
   { id: "today", keys: "h", label: "Heute öffnen" },
   { id: "collection", keys: "s", label: "Sammlung öffnen" },
-  { id: "species", keys: "p", label: "Pokédex öffnen" },
+  { id: "species", keys: "p", label: "Arten öffnen" },
   { id: "wishlist", keys: "w", label: "Wunschliste öffnen" },
 ];
 

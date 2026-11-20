@@ -147,4 +147,12 @@ describe("US-SOZ-06 visible since and the seen state in the database", () => {
       await admin.query("delete from account where id = any($1)", [[x, y]]);
     }
   });
+
+  it("US-SOZ-06 now() is the database's clock in the format of seenAt, so asOf and visible_since come from one clock", async () => {
+    const seen = new FeedSeenPostgres(pool);
+    const got = await seen.now();
+    expect(got).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/);
+    const { rows } = await pool.query<{ t: Date }>("select now() as t");
+    expect(Math.abs(new Date(got).getTime() - (rows[0]?.t.getTime() ?? NaN))).toBeLessThan(5_000);
+  });
 });

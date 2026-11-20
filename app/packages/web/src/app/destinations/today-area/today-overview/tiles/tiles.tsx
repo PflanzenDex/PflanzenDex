@@ -1,10 +1,15 @@
 import { Suspense } from "react";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { texts } from "@/shared/lib/text-rules/texts";
-import { todayTexts } from "@/today";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import type { DrawTile, TodayTile } from "../../today-area";
+import table from "./tiles.de.json";
 
-const t = texts(todayTexts);
+const t = texts(table);
+const plural = plurals(table);
+
+/** The count that picks the form of the treatments label: only a loaded count counts; while it loads or failed the plural stands (US-QS-32). */
+const treatmentsCount = (category: CategoryCount): number | undefined =>
+  category.status === "ready" ? category.count : undefined;
 
 /** What a category tile and the summary need of one list (US-QS-18). */
 export type CategoryCount = {
@@ -14,10 +19,11 @@ export type CategoryCount = {
 
 /**
  * The look of a tile that opens a layer: the control radius (size `sm`), not a pill, so the longest label ("Behandlungen") keeps clear of the
- * rounded edge in a 104 px tile at 360 px (issue 1092).
+ * rounded edge in a 104 px tile at 360 px (issue 1092). Neutral like every count (US-QS-32, SG-COLOR-02): the card colour and
+ * foreground text, no green outline.
  */
 const TILE =
-  "h-auto min-h-14 w-full flex-col items-center justify-center gap-0 px-1 py-1 text-center";
+  "h-auto min-h-14 w-full flex-col items-center justify-center gap-0 border-transparent bg-card px-1 py-1 text-center text-foreground hover:bg-muted hover:text-foreground";
 /**
  * The category tiles: three in a row while a tile holds its label (6.5 rem, 104 px at normal text, starting value); at a
  * larger text size the tiles stack, one per row, so no label runs into its neighbour (issue 1019). The `minmax` is a rem
@@ -32,12 +38,22 @@ export function CategoryTile(props: { id: string; label: string; category: Categ
     <li>
       <LayerOpener id={props.id} size="sm" className={TILE}>
         {category.status === "ready" ? (
-          <span className="text-lg font-semibold tabular-nums">{category.count}</span>
+          // Zero reads as nothing to work through, not as a number to tap (SG-LIST-05): regular and muted.
+          <span
+            className={
+              category.count === 0
+                ? "text-lg tabular-nums text-muted-foreground"
+                : "text-lg font-semibold tabular-nums"
+            }
+          >
+            {category.count}
+          </span>
         ) : category.status === "error" ? (
           <span className="text-sm">{t("tiles.failed")}</span>
         ) : (
           <span className="text-sm text-muted-foreground">{t("tiles.loading")}</span>
         )}
+        {/* A space between count and label: the accessible name reads "1 Behandlung" (US-QS-32, F-0071); the flex column shows none. */}{" "}
         <span className="text-sm">{props.label}</span>
       </LayerOpener>
     </li>
@@ -60,7 +76,11 @@ export function Tiles(props: {
   return (
     <ul className={TILE_GRID} aria-label={t("tiles.label")}>
       {!props.treatmentFirst && (
-        <CategoryTile id="treatments" label={t("tiles.treatments")} category={props.treatments} />
+        <CategoryTile
+          id="treatments"
+          label={plural.word("tiles.treatments", treatmentsCount(props.treatments))}
+          category={props.treatments}
+        />
       )}
       <CategoryTile id="watering" label={t("tiles.watering")} category={props.watering} />
       <CategoryTile id="hints" label={t("tiles.hints")} category={props.hints} />

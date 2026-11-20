@@ -37,7 +37,7 @@ function server(body: unknown) {
 }
 
 /** The area's tile (a layer opener, named by its count and label) and the layer, as "Heute" draws them. */
-function today(onOpen = () => undefined) {
+function today() {
   return render(
     <QueryClientProvider client={createQueryClient()}>
       <AnnouncerProvider>
@@ -52,7 +52,7 @@ function today(onOpen = () => undefined) {
                 <LayerOpener id={layer}>{`${count} ${label}`}</LayerOpener>
               )}
             />
-            <AnniversaryLayer api="http://api" token={token} onOpen={onOpen} />
+            <AnniversaryLayer api="http://api" token={token} />
           </main>
         </MemoryRouter>
       </AnnouncerProvider>
@@ -73,11 +73,30 @@ describe("US-ACH-06 anniversaries as a tile on Heute (issue 1662)", () => {
     expect(await screen.findByRole("dialog", { name: "Jubiläen" })).toBeTruthy();
     expect(screen.getByText("„Aloe“ ist 1 Jahr bei dir.")).toBeTruthy();
     expect(screen.getByText("„Farn“ ist ein halbes Jahr bei dir.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Zur Sammlung: Aloe" })).toBeTruthy();
+    // US-QS-32: the whole row is the plant's link, with no "Zur Sammlung" button beside it.
+    const plant = screen.getByRole("link", { name: /„Aloe“ ist 1 Jahr bei dir/ });
+    expect(plant.getAttribute("href")).toBe("/collection?view=plants&sheet=plant-s1");
+    expect(screen.queryByRole("button", { name: /Zur Sammlung/ })).toBeNull();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await new Promise((r) => setTimeout(r, 400));
     expect(document.activeElement).toBe(opener);
+  });
+
+  it("US-ACH-06 names the tile by its count: 1 Jubiläum, 2 Jubiläen (US-QS-32, issue 2163)", async () => {
+    setViewportWidth(360);
+    server({ calmMode: false, items: [item()] });
+    const one = today();
+    expect(await screen.findByRole("button", { name: "1 Jubiläum" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "1 Jubiläen" })).toBeNull();
+    one.unmount();
+    cleanup();
+    server({
+      calmMode: false,
+      items: [item(), item({ specimenId: "s2", name: "Farn", months: 6 })],
+    });
+    today();
+    expect(await screen.findByRole("button", { name: "2 Jubiläen" })).toBeTruthy();
   });
 
   it("US-ACH-06 shows no tile without anniversaries and none in calm mode (issue 1662)", async () => {
@@ -87,7 +106,7 @@ describe("US-ACH-06 anniversaries as a tile on Heute (issue 1662)", () => {
       const view = today();
       await waitFor(() => expect(reads).toHaveBeenCalled());
       await new Promise((r) => setTimeout(r, 100));
-      expect(screen.queryByRole("button", { name: /Jubiläen/ })).toBeNull();
+      expect(screen.queryByRole("button", { name: /Jubiläum|Jubiläen/ })).toBeNull();
       view.unmount();
       cleanup();
     }

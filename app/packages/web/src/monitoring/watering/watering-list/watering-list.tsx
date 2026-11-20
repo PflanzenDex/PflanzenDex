@@ -1,126 +1,35 @@
-import { useCallback, useState, type ReactNode } from "react";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
-import { Button } from "@/shared/ui/button/button";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
-import { keepTogether } from "@/shared/lib/format";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { useCallback, type ReactNode } from "react";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import type { PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { placeHeld } from "@/shared/feedback/undo-row/use-undo";
+import { LoadFrame } from "../../../shared/data";
 import { DueCountOf, WATERING_KEY, type DueCount } from "../../api/due-count/due-count";
-import { loadWateringDue, markWatered, type WateringDueRow } from "../../api/reminders-api";
+import { loadWateringDue, type WateringDueRow } from "../../api/reminders-api";
 import { WateringListSkeleton } from "./watering-list.skeleton";
+import { Rows } from "./due-rows/due-rows";
+import { useDueWrite } from "./use-due-write";
 import table from "./watering-list.de.json";
 
 const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
-const KEY = WATERING_KEY;
-
-/** Rows per page (starting value, assumption; US-QS-18). */
-const PAGE_SIZE = 3;
-
-const sinceText = (d: WateringDueRow) =>
-  d.lastWateredOn === null
-    ? ui("since.never")
-    : keepTogether(ui("since.days", { days: d.daysSince }));
-
-function Row(props: {
-  row: WateringDueRow;
-  checked: boolean;
-  busy: boolean;
-  onToggle: () => void;
-  onWater: () => void;
-}) {
-  const r = props.row;
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3">
-      <Checkbox checked={props.checked} onChange={props.onToggle} rowClassName="min-w-0 flex-1">
-        <span>
-          <span className="font-medium">{r.name}</span>
-          <span className="block text-sm tabular-nums text-muted-foreground">
-            {sinceText(r)},{" "}
-            {ui("interval", { days: keepTogether(ui("days", { count: r.intervalDays })) })}
-          </span>
-        </span>
-      </Checkbox>
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={props.busy}
-        aria-label={ui("waterOne", { name: r.name })}
-        onClick={props.onWater}
-      >
-        {ui("water")}
-      </Button>
-    </div>
-  );
-}
-
-function Rows(props: { api: string; token: Token; rows: readonly WateringDueRow[] }) {
-  const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
-  const again = useInvalidate(KEY);
-  const write = useWriteAction(props.token, again);
-  const toggle = (id: string) =>
-    setChosen((c) => {
-      const next = new Set(c);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
-  const water = (ids: readonly string[]) => {
-    setChosen(new Set());
-    void write.run((t) => markWatered(props.api, t, ids), ui("done"));
-  };
-  const picked = props.rows.filter((r) => chosen.has(r.specimenId)).map((r) => r.specimenId);
-  return (
-    <div className="flex flex-col gap-3">
-      <Pager
-        items={props.rows}
-        pageSize={PAGE_SIZE}
-        label={ui("pager")}
-        getKey={(r) => r.specimenId}
-        renderItem={(r) => (
-          <Row
-            row={r}
-            checked={chosen.has(r.specimenId)}
-            busy={write.running}
-            onToggle={() => toggle(r.specimenId)}
-            onWater={() => water([r.specimenId])}
-          />
-        )}
-      />
-      <Button
-        size="touch"
-        className="self-start"
-        disabled={write.running || picked.length < 2}
-        onClick={() => water(picked)}
-      >
-        {picked.length < 2 ? ui("pickMore") : ui("pickedCount", { count: picked.length })}
-      </Button>
-      {write.error && (
-        <p role="alert" className="rounded-lg border border-destructive p-3">
-          {write.error.text}
-        </p>
-      )}
-      {write.message && (
-        <p role="status" className="rounded-lg border border-border p-3">
-          {write.message}
-        </p>
-      )}
-    </div>
-  );
-}
 
 /**
  * The plants that are due to be watered today (US-MON-05): last watering plus the interval of the current phase. The
  * intervals are the keeper's own entries in the care profile; without one a plant is not listed (nothing is invented,
- * P-08), and the empty state says where to set it (P-09). "Gegossen" writes today's entry; several can be marked and
- * entered in one step.
+ * P-08), and the empty state is one line. "Gegossen" writes today's entry; several can be marked and entered in one step.
  */
 export function WateringList(props: {
   api: string;
   token: Token;
   /** With `count` the list renders nothing of its own and hands the due count to it (US-QS-18). */
   count?: (due: DueCount) => ReactNode;
+  /**
+   * The address part of its pages: a list in a layer passes `LAYER_PARAM`, so it does not share `from` with the screen
+   * behind it (US-QS-18, issue 2070). Alone on its screen it keeps the default.
+   */
+  param?: PagerPart;
 }) {
   if (props.count)
     return (
@@ -128,26 +37,55 @@ export function WateringList(props: {
         {props.count}
       </DueCountOf>
     );
-  return <DueList api={props.api} token={props.token} />;
+  return (
+    <DueList api={props.api} token={props.token} {...(props.param ? { param: props.param } : {})} />
+  );
 }
 
-function DueList(props: { api: string; token: Token }) {
+/**
+ * The list with its write. The result of "Gegossen" is a line of reserved height above the list (F-0075, SG-FEED-01): it
+ * stays when the last plant is marked and the list shows its empty state, and the announcer says the same text once (the
+ * line carries no role). A write that made the entries stays in place with its undo instead (SG-FEED-03, US-QS-32). A
+ * refusal is the alert below the list (P-10, SG-FEED-02).
+ */
+function DueList(props: { api: string; token: Token; param?: PagerPart }) {
   const load = useCallback((t: string) => loadWateringDue(props.api, t), [props.api]);
+  const due = useDueWrite(props.api, props.token);
+  const heldBy = new Map(due.held.map((h) => [h.key, h] as const));
   return (
-    <LoadFrame
-      queryKey={KEY}
-      token={props.token}
-      load={load}
-      loadingText={ui("loading")}
-      loadingFallback={<WateringListSkeleton label={ui("loading")} />}
-    >
-      {(rows) =>
-        rows.length === 0 ? (
-          <EmptyState level={3} title={ui("none.title")} description={ui("none.description")} />
-        ) : (
-          <Rows api={props.api} token={props.token} rows={rows} />
-        )
-      }
-    </LoadFrame>
+    // No gap around the reserved line: it costs one text line and nothing more, so the sheet still fits (QG-U8).
+    <div className="flex flex-col">
+      <p className="min-h-[1lh] text-sm">{due.result}</p>
+      <LoadFrame
+        queryKey={WATERING_KEY}
+        token={props.token}
+        load={load}
+        loadingText={ui("loading")}
+        loadingFallback={<WateringListSkeleton label={ui("loading")} />}
+      >
+        {(rows: readonly WateringDueRow[]) => {
+          const shown = placeHeld(rows, due.held, (r) => r.specimenId);
+          return shown.length === 0 ? (
+            // The line only: a link to the collection was no real next step (owner decision 2026-11-16, issue 2240).
+            <EmptySection text={ui("none.line")} />
+          ) : (
+            <Rows
+              rows={shown}
+              held={heldBy}
+              busy={due.running}
+              water={due.water}
+              undoPlant={due.undoPlant}
+              bulk={due.bulk}
+              {...(props.param ? { param: props.param } : {})}
+            />
+          );
+        }}
+      </LoadFrame>
+      {due.failure && (
+        <p role="alert" className="mt-3 rounded-lg border border-destructive p-3">
+          {due.failure.text}
+        </p>
+      )}
+    </div>
   );
 }

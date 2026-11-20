@@ -14,13 +14,11 @@ describe("US-POK-02 refusal of a hybrid sign or addition lands on the Latin name
 });
 
 describe("US-LIC-01 the proposal form carries the soft-leaf flag", () => {
-  it("left empty the flag stays out of the input (the server default is false, P-08)", () => {
-    expect(toProposalInput({ ...EMPTY_PROPOSAL, latinName: "Ficus" })).not.toHaveProperty(
-      "softLeaf",
-    );
+  it("US-LIC-01: Given an empty answer, when the proposal is sent, then the soft leaf is unknown (null), never a false (P-08)", () => {
+    expect(toProposalInput({ ...EMPTY_PROPOSAL, latinName: "Ficus" }).softLeaf).toBeNull();
   });
 
-  it("sends a boolean for an explicit Ja or Nein", () => {
+  it("US-LIC-01: Given an explicit Ja or Nein, when the proposal is sent, then it is a boolean", () => {
     expect(toProposalInput({ ...EMPTY_PROPOSAL, softLeaf: "yes" }).softLeaf).toBe(true);
     expect(toProposalInput({ ...EMPTY_PROPOSAL, softLeaf: "no" }).softLeaf).toBe(false);
   });

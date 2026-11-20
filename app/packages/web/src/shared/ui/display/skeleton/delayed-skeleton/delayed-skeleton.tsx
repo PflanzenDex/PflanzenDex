@@ -16,26 +16,89 @@ export const SKELETON_DELAY_MS = 200;
  */
 export const STATUS_HOLD_MS = 300;
 
+/** The acts that can end the app start: a press, a click (a screen reader's activation too) or a key on a control. */
+const START_ACTS = ["pointerdown", "click", "keydown"] as const;
+
+/** What a page change starts from: a link, a button or another control (a tap on the drawn start frame is none). */
+const CONTROL =
+  "a[href], button, input, select, textarea, summary, [role='button'], [role='link'], [tabindex]:not([tabindex='-1'])";
+
+/** True during the app start (SG-STATE-02, owner answer Q-27): see `beginAppStart`. */
+let starting = false;
+/** True while the app puts its own address back (`runWithoutEndingStart`): the popstate of that is no act of the keeper. */
+let puttingBack = false;
+
 /**
- * Renders its children, the skeleton of a part, only once the wait has lasted `delayMs` (US-QS-14, DS-57). Used as a
- * Suspense fallback it mounts while the part waits and unmounts with it, so the timer ends with the wait. It never holds
- * the skeleton once shown: the skeleton goes as soon as the part arrives.
+ * Starts the app start (SG-STATE-02, owner answer Q-27, issue 1876): until the keeper first acts on a control (a press, a
+ * click or a key on a link, a button, a field), goes back or forward, or leaves the page, every skeleton shows at once,
+ * without the delay of DS-57, so the start is one loading picture from the first paint to the content. A tap or a scroll
+ * on the drawn start frame acts on nothing, so it keeps the picture. A page change inside the app follows such an act, so
+ * the delay applies to it again. The entry calls it once before the first render; it returns the end, which tests call.
+ * Without it (tests, stories) every skeleton waits for the delay.
+ */
+export function beginAppStart(target: Window = window) {
+  starting = true;
+  const act = (event: Event) => {
+    const on = event.target;
+    if (on instanceof Element && on.closest(CONTROL)) end();
+  };
+  const hidden = () => {
+    if (target.document.visibilityState === "hidden") end();
+  };
+  // Back or forward ends the start; a popstate the app puts back itself (`runWithoutEndingStart`) does not (issue 2244).
+  const back = () => {
+    if (!puttingBack) end();
+  };
+  function end() {
+    starting = false;
+    for (const type of START_ACTS) target.removeEventListener(type, act, true);
+    target.removeEventListener("popstate", back, true);
+    target.document.removeEventListener("visibilitychange", hidden);
+  }
+  for (const type of START_ACTS) target.addEventListener(type, act, true);
+  target.addEventListener("popstate", back, true);
+  target.document.addEventListener("visibilitychange", hidden);
+  return end;
+}
+
+/**
+ * Runs `put`, a change of the address that the app makes itself: the sign-in return puts the address of the person back
+ * (US-BES-17, issue 1823). The popstate it dispatches, with which the router reads the address again, is no page change of
+ * the keeper, so it does not end the app start: the skeletons that mount after it would wait for their delay and leave main
+ * empty meanwhile (issue 2244). A back or forward of the keeper still ends the start.
+ */
+export function runWithoutEndingStart(put: () => void): void {
+  puttingBack = true;
+  try {
+    put();
+  } finally {
+    puttingBack = false;
+  }
+}
+
+/**
+ * Renders its children, the skeleton of a part, only once the wait has lasted `delayMs` (US-QS-14, DS-57); during the app
+ * start at once (`beginAppStart`, SG-STATE-02). Until then it renders `before`, nothing by default: a box that keeps the
+ * part's place without drawing it (SG-STATE-02). Used as a Suspense fallback it mounts while the part waits and unmounts
+ * with it, so the timer ends with the wait. It never holds the skeleton once shown: it goes as soon as the part arrives.
  */
 export function DelayedSkeleton({
   delayMs = SKELETON_DELAY_MS,
+  before = null,
   children,
 }: {
   delayMs?: number;
+  before?: ReactNode;
   children: ReactNode;
 }) {
   const outerDue = useContext(DueContext);
-  const [due, setDue] = useState(delayMs <= 0 || outerDue);
+  const [due, setDue] = useState(() => delayMs <= 0 || outerDue || starting);
   useEffect(() => {
     if (due) return;
     const id = window.setTimeout(() => setDue(true), delayMs);
     return () => window.clearTimeout(id);
   }, [delayMs, due]);
-  return due ? <DueContext.Provider value>{children}</DueContext.Provider> : null;
+  return due ? <DueContext.Provider value>{children}</DueContext.Provider> : before;
 }
 
 type LoaderPhase = "idle" | "waiting" | "shown" | "over";

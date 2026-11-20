@@ -29,14 +29,14 @@ describe("US-ONB-05 lock texts", () => {
       reasons: [{ kind: "specimens", needed: 5, have: 2 }],
       ways: [{ kind: "add_specimens", missing: 3 }],
     });
-    expect(lockLine(e)).toBe("Tauschen: lege noch 3 Pflanzen an");
+    expect(lockLine(e)).toBe("Tauschbörse: lege noch 3 Pflanzen an");
     expect(lockMark(e)).toBe("Noch gesperrt");
     const none = locked({
       id: "swapping",
       reasons: [{ kind: "specimens", needed: 3, have: 0 }],
       ways: [{ kind: "add_specimens", missing: 3 }],
     });
-    expect(lockLine(none)).toBe("Tauschen: lege 3 Pflanzen an");
+    expect(lockLine(none)).toBe("Tauschbörse: lege 3 Pflanzen an");
   });
 
   it("US-ONB-05 joins several ways with oder, one day in the singular", () => {

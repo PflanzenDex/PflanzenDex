@@ -2,6 +2,7 @@ import type { EmptyReason, MatchCard as Card, MatchEntry } from "@pflanzendex/co
 import type { ReactNode, Ref } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
@@ -44,8 +45,8 @@ function End(props: {
         title={
           // Calm mode: no counters (US-TAU-07, US-ACH-08).
           props.calm
-            ? "Für jetzt durch."
-            : `Für jetzt durch. ${s.requested} angefragt, ${later} für später, ${countOf(s, "no")} abgelehnt.`
+            ? "Für jetzt durch"
+            : `Für jetzt durch: ${s.requested} angefragt, ${later} für später, ${countOf(s, "no")} abgelehnt`
         }
         description={
           later > 0
@@ -56,7 +57,7 @@ function End(props: {
         action={
           later > 0
             ? { label: "Später-Karten ansehen", onClick: () => dispatch({ type: "again" }) }
-            : { label: "Anfragen ansehen", href: EXCHANGE_PATH }
+            : { label: "Anfragen ansehen", href: `${EXCHANGE_PATH}?part=requests` }
         }
       />
       {s.last !== null && <UndoButton onClick={props.undo} />}
@@ -114,10 +115,10 @@ function Current(props: {
       )}
       {s.error !== null && <Banner variant="error">{s.error}</Banner>}
       {s.last !== null && <UndoButton onClick={props.undo} />}
-      <p className="m-0 text-center text-sm text-muted-foreground">
-        „Ja“ fragt das Angebot an, „Nein“ und „Später“ bleiben bei dir gespeichert. Der Freund
-        erfährt davon nichts. Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen.
-      </p>
+      {/* One line above the buttons (SG-COPY-05, US-QS-32, F-0279); the rest sits behind Mehr erfahren. */}
+      <MoreHelp className="text-center" more={t("deck.askMore")}>
+        {c.ownerName ?? t("deck.friendFallback")} erfährt nur von einer Anfrage.
+      </MoreHelp>
       <Actions card={c} busy={props.busy} onAnswer={props.answer} />
       {props.lists}
     </div>
@@ -125,7 +126,7 @@ function Current(props: {
 }
 
 /**
- * The match deck, one card at a time (US-TAU-01). "Ja" asks for the offer (US-TAU-03); "Nein" and "Später" are stored
+ * The match deck, one card at a time (US-TAU-01). "Anfragen" asks for the offer (US-TAU-03); "Ablehnen" and "Später" are stored
  * privately (US-TAU-02); every answer stays findable in the lists below the card, an ended offer is marked, and only the
  * keeper removes an entry (US-TAU-06).
  */
@@ -134,6 +135,8 @@ export function MatchDeck(props: {
   entries: readonly MatchEntry[];
   /** Why there is no card, from the server (US-TAU-07). */
   empty?: EmptyReason | null;
+  /** My open requests on matching offers, from the server, so the summary survives a reload (US-TAU-02). */
+  requested?: number;
   /** Calm mode: no counters (US-TAU-07, US-ACH-08). */
   calm?: boolean;
   onYes: OnYes;

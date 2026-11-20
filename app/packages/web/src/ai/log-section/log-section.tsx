@@ -11,7 +11,12 @@ const ui = texts(table);
 type Token = () => Promise<string | undefined>;
 
 function Entries({ rows }: { rows: readonly AiLogEntry[] }) {
-  if (rows.length === 0) return <p className="m-0">Dein KI-Client hat noch nichts getan.</p>;
+  if (rows.length === 0)
+    return (
+      <p className="m-0">
+        Noch nichts geschehen. Hier steht, was dein KI-Client in deinem Konto liest und ändert.
+      </p>
+    );
   return (
     <Pager
       items={rows}

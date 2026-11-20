@@ -11,10 +11,14 @@ import { Field } from "@/shared/ui/fields/form/field/field";
 import { Input } from "@/shared/ui/fields/input/input";
 import { Select } from "@/shared/ui/fields/select/select";
 import { Textarea } from "@/shared/ui/fields/textarea/textarea";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { Row } from "./care-profile-row/care-profile-row";
+import table from "./care-profile-fields.de.json";
+import type { CareProfileFields as Fields } from "../../../specimens/model/schemas";
 
 export { Row };
-import type { CareProfileFields as Fields } from "../../../specimens/model/schemas";
+
+const t = texts(table);
 
 export const MONTHS = [
   "Januar",
@@ -36,7 +40,8 @@ export const dayText = (tag: string) => `${tag.slice(3, 5)}.${tag.slice(0, 2)}.`
 
 /**
  * One field of the profile: the catalog value above and my deviation below (US-BES-09), with the reset to the
- * catalog next to it. A field without deviation has nothing to reset.
+ * catalog next to it. A field without deviation has nothing to reset. The visible label names the field only; the
+ * accessible name adds the species, because the heading of the card names it (US-QS-32, SG-FORM-01).
  */
 
 type Key = keyof Fields;
@@ -46,13 +51,23 @@ export function Choice(props: {
   control: Control<Fields>;
   name: Key;
   label: string;
+  species: string;
   items: readonly (LightLocation | LightZone)[];
+  /** Keeps the element, so the next step of an unknown light need can move the focus to it (US-LIC-01). */
+  selectRef?: { current: HTMLSelectElement | null };
 }) {
   return (
     <Field control={props.control} name={props.name} label={props.label}>
       {(field) => (
-        <Select {...field}>
-          <option value="">Katalog gilt</option>
+        <Select
+          {...field}
+          aria-label={t("forSpecies", { label: props.label, species: props.species })}
+          ref={(element) => {
+            field.ref(element);
+            if (props.selectRef) props.selectRef.current = element;
+          }}
+        >
+          <option value="">{t("catalogWord")}</option>
           {props.items.map((i) => (
             <option key={i.id} value={i.id}>
               {i.name}
@@ -64,82 +79,32 @@ export function Choice(props: {
   );
 }
 
-const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
-
-/** One select of the dormancy period: month or day, no typing, no impossible dates by format. */
-function PartSelect(props: {
+/** Watering interval in days (1 to 365); empty means no deviation. */
+export function DaysInput(props: {
   control: Control<Fields>;
   name: Key;
   label: string;
-  empty: string;
-  options: readonly { value: string; text: string }[];
-}) {
-  return (
-    <FormField
-      control={props.control}
-      name={props.name}
-      render={({ field }) => (
-        <FormItem className="min-w-0">
-          <FormLabel>{props.label}</FormLabel>
-          <FormControl>
-            <Select {...field}>
-              <option value="">{props.empty}</option>
-              {props.options.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.text}
-                </option>
-              ))}
-            </Select>
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-}
-
-const MONTH_OPTIONS = MONTHS.map((text, i) => ({ value: String(i + 1), text }));
-const DAY_OPTIONS = DAYS.map((d) => ({ value: d, text: d }));
-
-/** Month and day of one end of the dormancy period as two selects. */
-export function MonthDay(props: {
-  control: Control<Fields>;
-  label: string;
   species: string;
-  month: Key;
-  day: Key;
 }) {
+  const visible = t("daysLabel", { label: props.label });
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-      <PartSelect
-        control={props.control}
-        name={props.month}
-        label={`${props.label} (Monat) für „${props.species}“`}
-        empty="Monat"
-        options={MONTH_OPTIONS}
-      />
-      <PartSelect
-        control={props.control}
-        name={props.day}
-        label={`${props.label} (Tag) für „${props.species}“`}
-        empty="Tag"
-        options={DAY_OPTIONS}
-      />
-    </div>
-  );
-}
-
-/** Watering interval in days (1 to 365); empty means no deviation. */
-export function DaysInput(props: { control: Control<Fields>; name: Key; label: string }) {
-  return (
-    <Field control={props.control} name={props.name} label={props.label}>
-      {(field) => <Input {...field} type="number" inputMode="numeric" min={1} max={365} />}
+    <Field control={props.control} name={props.name} label={visible}>
+      {(field) => (
+        <Input
+          {...field}
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={365}
+          aria-label={t("forSpecies", { label: visible, species: props.species })}
+        />
+      )}
     </Field>
   );
 }
 
 /** Own free-text hints (DM-BES-04). */
-export function HintsInput(props: { control: Control<Fields>; label: string }) {
+export function HintsInput(props: { control: Control<Fields>; label: string; species: string }) {
   return (
     <FormField
       control={props.control}
@@ -148,7 +113,12 @@ export function HintsInput(props: { control: Control<Fields>; label: string }) {
         <FormItem>
           <FormLabel>{props.label}</FormLabel>
           <FormControl>
-            <Textarea {...field} rows={3} maxLength={1000} />
+            <Textarea
+              {...field}
+              rows={3}
+              maxLength={1000}
+              aria-label={t("forSpecies", { label: props.label, species: props.species })}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>

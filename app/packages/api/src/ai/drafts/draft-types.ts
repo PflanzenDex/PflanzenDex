@@ -9,6 +9,7 @@ import {
   wishCreate,
   type DiscoverSource,
   type DraftTypes,
+  type SpecimenWriteSource,
 } from "@pflanzendex/core";
 import {
   IdempotencyPostgres,
@@ -29,8 +30,14 @@ import type { Pool } from "pg";
  * - `photo_assessment`: quality and note for the photo of a measurement (US-KI-04), adopted through `measurement.assess`
  *   with `Assessed_By: AI suggestion accepted`; the code writes only after the keeper adopts it.
  * - `wish`: a wish candidate (US-KI-05, US-WUN-04), adopted through `wish.create` like the wishlist form.
+ * - one type per write tool of the specimens (US-KI-14), named after the tool: a connection with "create drafts" only
+ *   leaves its write as a draft, adopted through the very operation the tool would have run (`specimens`).
  */
-export function draftTypes(pool: Pool, discover: DiscoverSource): DraftTypes {
+export function draftTypes(
+  pool: Pool,
+  discover: DiscoverSource,
+  specimens: SpecimenWriteSource,
+): DraftTypes {
   const wishes = new WishesPostgres(pool);
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const create = wishCreate({ wishes });
@@ -42,7 +49,11 @@ export function draftTypes(pool: Pool, discover: DiscoverSource): DraftTypes {
   });
   // The client never sets who rated: adopting a draft always means "AI suggestion accepted".
   const asSuggestion = (content: unknown) => ({ ...(content as object), aiSuggestion: true });
+  const specimenTypes = Object.fromEntries(
+    Object.entries(specimens).map(([type, w]) => [type, { schema: w.schema, adopt: w.run }]),
+  );
   return {
+    ...specimenTypes,
     species: {
       // Incomplete profiles are not stored: the schema of the form decides; statements need a source (US-KI-03).
       schema: (input) => {

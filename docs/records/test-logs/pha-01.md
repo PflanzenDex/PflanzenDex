@@ -92,3 +92,14 @@ So the phase follows the local calendar date of the device (NFR-08), not the UTC
 - Automate the flow with specimens in the browser test (species with dormancy, one archived, the time zone case with `timezoneId`): the by-hand run above shows it works and which waits are needed.
 - The spec status of US-PHA-01 stays 🟨 (target location per phase and the dormancy period on the specimen are missing); this protocol changes nothing about the status.
 - The footer contrast (#249) is not part of this protocol.
+
+## 7. Update 2026-11-09 (issue #70, draft PR #1787)
+
+Sections 0 to 6 describe the state of 2026-10-03 and stay as they were. Where they say otherwise, this update holds:
+
+- **Automated browser flow:** `app/packages/e2e/tests/care-phases.spec.ts`, test "US-PHA-01 the phase list shows each plant with its expected phase and target location; cuttings and archived plants are not listed", on the phone (Pixel 7) and on desktop. It creates in the UI the two locations, three species (a catalog dormancy around today, a catalog dormancy from today+3 to today-3, and a dormancy that only the care profile holds), the plants, the target locations and the profile dormancy in the editor, a cutting and an archived plant, then reads the grouping "Nach Pflegephase". The browser runs in Europe/Berlin (`timezoneId`), and the dormancy windows are placed around today: the server reads the system clock, so the browser clock cannot pin the date.
+- **Target location per phase exists:** it comes from the keeper's care profile (US-BES-09). Sections 3 and 6 are out of date on that point; the positive case is checked by the automated test. The dormancy period on the specimen itself is not part of this story: it is R2, issue #1786 (owner decision 2026-11-09).
+- **Defect found by the flow:** the plant's own phase part (tab "Pflege") and the grouping cached their data under the same query key `["care", "phases"]` with different shapes. After a plant's phase was shown, opening the grouping crashed with "Die Seite konnte nicht geladen werden." (TypeError reading `length`). The plant's part now uses its own key below that prefix. Regression test: `app/packages/web/src/care/plant-detail/plant-phase/plant-phase.test.tsx` (red before the fix, green after).
+- **axe:** the automated test runs axe on the list state (blocking on serious and critical) and it passed on both viewports in this run.
+- **Status:** US-PHA-01 is ✅ in `docs/specs/product/04-care-phases.md`, with the criteria named for the care profile.
+- **Still open:** the screenshots of 2026-10-03 are not replaced; the by-hand keyboard and screen reader checks of section 5 were not repeated; the time zone of the account profile is not set in the automated flow (the device zone is used).

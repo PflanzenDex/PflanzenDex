@@ -5,7 +5,7 @@ type FetchFn = typeof fetch;
 
 export interface MeasurementInput {
   value: number;
-  /** `YYYY-MM-DD`; without a statement today in the device's time zone applies. */
+  /** `YYYY-MM-DD`; the form always sends one. Without it the server takes today in the time zone of the request. */
   date?: string;
   quality: Quality;
   note?: string;

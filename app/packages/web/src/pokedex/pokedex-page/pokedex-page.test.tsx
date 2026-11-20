@@ -76,7 +76,7 @@ describe("US-POK-06 page of the caught species", () => {
     delayLoads();
     view(<PokedexPage api="http://api" token={token} />);
     expect((await screen.findByRole("status")).textContent).toContain("geladen");
-    expect(await screen.findByRole("heading", { level: 1, name: "Pokédex" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { level: 1, name: "Arten" })).toBeTruthy();
     const entries = within(screen.getByRole("list", { name: "Gefangene Arten" })).getAllByRole(
       "listitem",
     );
@@ -95,39 +95,100 @@ describe("US-POK-06 page of the caught species", () => {
     expect(within(layer).getByText("2 Pflanzen")).toBeTruthy();
   });
 
-  it("US-POK-06 · US-QS-22 the progress row names the rank and the caught species in one line", async () => {
+  it("US-POK-06 · US-QS-22 · US-QS-32 the progress row names the rank only; the count is in the caption and the layer", async () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />);
-    const row = await screen.findByRole("button", { name: /· 2 gefangen/ });
+    const row = await screen.findByRole("button", { name: "Keimling – Fortschritt" });
     // Without the tree the total is unknown: one line, no invented total; the layer says why (P-08, US-QS-22).
-    expect(row.textContent).toBe("Keimling · 2 gefangen");
+    expect(row.textContent).toBe("Keimling – Fortschritt");
+    expect(row.textContent).not.toMatch(/\d/);
     expect(row.textContent).not.toMatch(/\d+ von \d+ Arten/);
     await userEvent.click(row);
     expect(await screen.findByText(/Der Baum der Arten ist noch nicht aufgebaut/)).toBeTruthy();
   });
 
-  it("US-POK-06 one caught species reads '1 gefangen' in the progress row", async () => {
+  it("US-POK-06 one caught species: the rank button names the rank without a count (US-QS-32)", async () => {
     fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />);
-    expect(await screen.findByRole("button", { name: /· 1 gefangen/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Keimling – Fortschritt" })).toBeTruthy();
   });
 
-  it("US-POK-06 an unidentified specimen is named with the action that fixes it (P-09, P-10)", async () => {
+  it("US-QS-32 the caption under Sammlung names the species with the noun: '1 Art gefangen', 'n Arten gefangen'", async () => {
+    const onCaption = vi.fn();
+    fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified: [] } }));
+    const { unmount } = view(<PokedexPage api="http://api" token={token} host={{ onCaption }} />);
+    await screen.findByRole("button", { name: "Keimling – Fortschritt" });
+    expect(onCaption).toHaveBeenLastCalledWith("1 Art gefangen");
+    unmount();
+    fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
+    view(<PokedexPage api="http://api" token={token} host={{ onCaption }} />);
+    await screen.findByRole("button", { name: "Keimling – Fortschritt" });
+    expect(onCaption).toHaveBeenLastCalledWith("2 Arten gefangen");
+  });
+
+  it("US-QS-32 an uncounted plant is one row that opens the plant, and the explanation with its next action is said once (P-09, P-10)", async () => {
     fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified } }));
     view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
-    expect(await screen.findByText(riddle.text)).toBeTruthy();
-    expect(screen.getByText("Bestimme die Art, dann zählt sie.")).toBeTruthy();
+    const row = await screen.findByRole("link", { name: /Amaryllis/ });
+    expect(row.getAttribute("href")).toBe("/collection?view=plants&sheet=plant-e1");
+    // The Latin name as it is stored, with no "Gattung" label (P-08); the next action is in the shared explanation.
+    expect(row.textContent).toBe("Amaryllis Hippeastrum");
+    expect(row.querySelector("svg.lucide-chevron-right")).not.toBeNull();
+    expect(screen.queryByText(riddle.text)).toBeNull();
+    expect(
+      screen.getAllByText(
+        /Diese Pflanzen haben noch keine bestimmte Art und zählen noch nicht\. Bestimme die Art, dann zählt sie\./,
+      ),
+    ).toHaveLength(1);
     expect(screen.getByRole("dialog", { name: "Noch nicht gezählt" })).toBeTruthy();
   });
 
-  it("US-POK-06 · P-10 the progress row says how many specimens do not count yet and the layer leads to them", async () => {
+  it("US-QS-32 an uncounted plant whose species cannot be read says so instead of naming a genus (P-08)", async () => {
+    const unreadable = { ...riddle, latinName: null, text: "x" };
+    fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified: [unreadable] } }));
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
+    const row = await screen.findByRole("link", { name: /Amaryllis/ });
+    expect(row.textContent).toContain("Art nicht lesbar");
+    expect(row.textContent).not.toContain("Gattung");
+  });
+
+  it("US-QS-32 rows whose next action differs each say their own; the shared explanation holds only what is common (P-09)", async () => {
+    const second = {
+      specimenId: "e2",
+      specimenName: "Kaktus",
+      latinName: null,
+      text: "x",
+      nextAction: "Lege die Art fest.",
+    };
+    fakeServer(() =>
+      response(200, { ownership: { caught: [lemon], unidentified: [riddle, second] } }),
+    );
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
+    const first = await screen.findByRole("link", { name: /Amaryllis/ });
+    expect(first.textContent).toBe("Amaryllis Hippeastrum · Bestimme die Art, dann zählt sie.");
+    const other = screen.getByRole("link", { name: /Kaktus/ });
+    expect(other.textContent).toBe("Kaktus Art nicht lesbar · Lege die Art fest.");
+    expect(
+      screen.getByText("Diese Pflanzen haben noch keine bestimmte Art und zählen noch nicht."),
+    ).toBeTruthy();
+  });
+
+  it("US-POK-06 · P-09 the layer of the uncounted plants opened by address without any says that all of them count (issue 1653, F24)", async () => {
+    fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified: [] } }));
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
+    const layer = await screen.findByRole("dialog", { name: "Noch nicht gezählt" });
+    expect(layer.textContent).toContain("Jede deiner Pflanzen zählt schon als gefangene Art.");
+  });
+
+  it("US-POK-06 · P-10 the row says how many specimens do not count yet, outside the rank button, and the layer leads to them", async () => {
     fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified } }));
     view(<PokedexPage api="http://api" token={token} />);
-    const row = await screen.findByRole("button", { name: /· 1 gefangen/ });
-    expect(row.textContent).toContain("1 Pflanze zählt noch nicht");
+    const row = await screen.findByRole("button", { name: "Keimling – Fortschritt" });
+    expect(screen.getByText("1 Pflanze zählt noch nicht")).toBeTruthy();
+    expect(row.textContent).not.toMatch(/Pflanze zählt/);
     await userEvent.click(row);
     await userEvent.click(await screen.findByRole("button", { name: "Noch nicht gezählt (1)" }));
-    expect(await screen.findByText(riddle.text)).toBeTruthy();
+    expect(await screen.findByRole("link", { name: /Amaryllis/ })).toBeTruthy();
   });
 
   it("US-POK-06 without caught species it says what to do next (P-09)", async () => {
@@ -140,7 +201,7 @@ describe("US-POK-06 page of the caught species", () => {
       "/collection",
     );
     expect(screen.queryByRole("list", { name: "Gefangene Arten" })).toBeNull();
-    expect(screen.getByRole("button", { name: /· 0 gefangen/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Keimling – Fortschritt" })).toBeTruthy();
   });
 
   it("US-POK-06 without sign-in the request to sign in comes and nothing is queried", async () => {
@@ -215,10 +276,10 @@ describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () =
       () => response(200, { tree: { species: tree } }),
     );
     view(<PokedexPage api="http://api" token={token} />);
-    const row = await screen.findByRole("button", { name: /Keimling · 2 von 5 Arten/ });
+    const row = await screen.findByRole("button", { name: "Keimling – Fortschritt" });
     await userEvent.click(row);
     const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
-    expect(within(layer).getByText("2 / 5 Arten gefangen (40 %)")).toBeTruthy();
+    expect(within(layer).getByText("2 von 5 Arten gefangen (40 %)")).toBeTruthy();
     expect(within(layer).getByText("2 von 3 Ordnungen entdeckt")).toBeTruthy();
     expect(within(layer).getByText("Noch 3 bis „Setzling“")).toBeTruthy();
     expect(within(layer).queryByText(/noch nicht aufgebaut/)).toBeNull();
@@ -234,7 +295,11 @@ describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () =
     expect(within(milestones).getByText("Cactaceae: Vollständig")).toBeTruthy();
     await userEvent.click(within(milestones).getByRole("button", { name: "Weiter" }));
     expect(await within(milestones).findByText("Citrus: Vollständig")).toBeTruthy();
-    expect(within(milestones).getByText("Noch 1: Bitterorange (Citrus aurantium)")).toBeTruthy();
+    // The German name leads, the scientific name is italic in brackets (US-QS-32, SG-TYPE-08).
+    const remaining = within(milestones)
+      .getAllByText(/^Noch 1:/)
+      .find((el) => el.textContent === "Noch 1: Bitterorange (Citrus aurantium)");
+    expect(remaining?.querySelector("i")?.textContent).toBe("Citrus aurantium");
   });
 
   it("US-POK-10 the rank and N count the caught species of the tree; a caught species outside it is named as not counted yet (owner decision 2026-11-07)", async () => {
@@ -244,9 +309,9 @@ describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () =
       () => response(200, { tree: { species: tree } }),
     );
     view(<PokedexPage api="http://api" token={token} />);
-    await userEvent.click(await screen.findByRole("button", { name: /Keimling · 2 von 5 Arten/ }));
+    await userEvent.click(await screen.findByRole("button", { name: "Keimling – Fortschritt" }));
     const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
-    expect(within(layer).getByText("2 / 5 Arten gefangen (40 %)")).toBeTruthy();
+    expect(within(layer).getByText("2 von 5 Arten gefangen (40 %)")).toBeTruthy();
     expect(
       within(layer).getByText(
         "1 gefangene Art zählt noch nicht, weil sie nicht im Baum der Arten steht.",
@@ -279,7 +344,7 @@ describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () =
       () => response(500, serverError),
     );
     view(<PokedexPage api="http://api" token={token} />);
-    const row = await screen.findByRole("button", { name: /· 2 gefangen/ });
+    const row = await screen.findByRole("button", { name: "Keimling – Fortschritt" });
     await userEvent.click(row);
     const layer = await screen.findByRole("dialog", { name: "Fortschritt" });
     expect((await within(layer).findByRole("alert")).textContent).toContain(
@@ -294,8 +359,8 @@ describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () =
       () => response(200, { tree: { species: tree } }),
     );
     view(<PokedexPage api="http://api" token={token} />);
-    await userEvent.click(await screen.findByRole("button", { name: /Keimling · 2 von 5 Arten/ }));
-    expect(await screen.findByText("2 / 5 Arten gefangen (40 %)")).toBeTruthy();
+    await userEvent.click(await screen.findByRole("button", { name: "Keimling – Fortschritt" }));
+    expect(await screen.findByText("2 von 5 Arten gefangen (40 %)")).toBeTruthy();
     expect(treeCalls(fetchFn)).toBe(1);
   });
 });
@@ -364,7 +429,7 @@ describe("US-POK-12 newly caught species on the page", () => {
   it("US-POK-12 a failing seen state does not break the page and shows no banner", async () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />);
-    expect(await screen.findByRole("heading", { level: 1, name: "Pokédex" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { level: 1, name: "Arten" })).toBeTruthy();
     expect(screen.queryByText(/Neu gefangen/)).toBeNull();
   });
 });
@@ -415,18 +480,20 @@ describe("US-QS-22 the species fit one screen", () => {
     await screen.findByRole("list", { name: "Gefangene Arten" });
     expect(screen.queryByRole("button", { name: "Fehlend" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Artenarm" })).toBeNull();
-    expect(screen.getByRole("button", { name: /· 2 gefangen/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Keimling – Fortschritt" })).toBeTruthy();
   });
 });
 
 describe("US-QS-22 neutral species entries", () => {
-  it("US-QS-22 a species entry has a neutral border and a chevron, no primary outline (ADR 0017)", async () => {
+  it("US-QS-22 · US-QS-32 · SG-ICON-01 a species entry is a flat object row with a chevron icon and no primary outline (ADR 0017)", async () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />);
     const entry = (await screen.findAllByRole("button", { name: /^Opuntia microdasys/ }))[0];
-    expect(entry?.className).toContain("border-border");
+    // An object row is flat: its group draws the card, the row has no outline of its own (FX-35 step 5).
     expect(entry?.className).not.toMatch(/border-primary|text-primary/);
-    expect(entry?.querySelector("[data-chevron]")).toBeTruthy();
+    expect(entry?.querySelector("svg.lucide-chevron-right")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
   });
 });
 

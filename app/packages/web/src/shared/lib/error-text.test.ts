@@ -12,6 +12,7 @@ describe("error-text (US-QS-07 · DS-49, FR-QG-11)", () => {
     expect(errorText(undefined)).toBe(GENERIC_ERROR_TEXT);
     expect(errorText("toString")).toBe(GENERIC_ERROR_TEXT);
     expect(GENERIC_ERROR_TEXT).toMatch(/[Ff]ehler/);
+    expect(GENERIC_ERROR_TEXT).not.toContain("Bitte");
   });
 
   it("US-QS-07 · DS-49 puts a detail code on its field and the main code on the form", () => {

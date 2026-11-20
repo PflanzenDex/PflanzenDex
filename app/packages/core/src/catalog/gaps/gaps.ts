@@ -7,12 +7,14 @@ import type { ReviewStore } from "../types";
 /**
  * Catalog fields that may be unknown ("unbekannt", P-08). The others are required on creation (DM-BES-01). Difficulty,
  * default level and lux demand may be unknown since #1003, growth measure, etiolation signs and success criteria since
- * #1005: no open source fills them, so their next step is research.
+ * #1005, the soft-leaf flag since US-LIC-01 (owner decision 2026-11-09): no open source fills them, so their next step
+ * is research.
  */
 export const GAP_FIELDS = [
   "difficulty",
   "standardLevel",
   "lightDemandLux",
+  "softLeaf",
   "germanName",
   "englishName",
   "familyGerman",
@@ -48,7 +50,7 @@ export interface GapCheck {
 export interface GapSpecies {
   readonly id: string;
   readonly latinName: string;
-  readonly values: Readonly<Record<GapField, string | number | null>>;
+  readonly values: Readonly<Record<GapField, string | number | boolean | null>>;
   readonly checks: readonly GapCheck[];
 }
 

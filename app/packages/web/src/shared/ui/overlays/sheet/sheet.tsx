@@ -147,7 +147,7 @@ const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>((props,
             className="fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 rounded-card border border-destructive bg-background p-6 text-center text-foreground shadow-elevation-2"
           >
             <p className="text-base font-semibold">{t("sheet.loadFailed")}</p>
-            <Button variant="outline" onClick={retry}>
+            <Button variant="tinted" onClick={retry}>
               {t("sheet.retry")}
             </Button>
             <Button variant="ghost" onClick={() => setOpen(false)}>

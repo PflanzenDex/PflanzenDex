@@ -65,9 +65,11 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- An operation delivers the cleaned photo of the measurement to the client (only photos of the own account). The client suggests `quality` and a short note as a draft (US-WAC-06, US-KI-09).
-- Only what is visible is assessed; no estimation of height, substrate moisture or roots. If the basis is missing, the note stays empty.
+- An operation delivers the cleaned photo of the measurement to the client (only photos of the own account). The client suggests `quality` and a short note as a draft (US-WAC-06, US-KI-09). The keeper accepts or discards the draft; there is no step to change it (owner decision 2026-11-10). Accepting stores `Assessed_By: AI suggestion accepted`.
+- Only what is visible is assessed; no estimation of height, substrate moisture or roots. If the basis is missing, the note stays empty. This is an instruction to the client in the descriptions of the tool and of the draft, not a check of the code.
 - A client with image understanding is a precondition. Without it the keeper assesses themselves (US-WAC-02).
+
+State of implementation: built ahead of its release R4 (`16`). The tool `get_measurement_photo` (`research-tools.ts`, route `/mcp/measurements/:id/photo`, `aiMeasurementPhoto` in core `ai/results/photo.ts`) hands the cleaned photo of a measurement of the own account to a client with the read right and logs the call without content; a foreign or unknown measurement looks like a missing one (P-04). The client delivers a draft of type `photo_assessment` (measurement id, `quality`, note; `draft-content.ts`). "Übernehmen" in the inbox "Entwürfe" runs `measurement.assess` with the AI flag (`draft-types.ts`, `assess.ts`): quality and note are set, the value stays, `Assessed_By` becomes `AI suggestion accepted` (`ai_adopted` in the code); a measurement without a photo, a foreign one or an archived specimen is refused and nothing is written. "Verwerfen" writes nothing. The task type `photo_assessment` ("Foto beurteilen", reference: measurement id) asks the client for it (US-KI-08). The visible-only rule stands in the descriptions of the tool and of the draft ("Judge only what is visible."); nothing enforces or tests it. Tests: `assess.test.ts`, `measurements.test.ts` (db), `access.test.ts`, `mcp-routes.test.ts`. The status stays 🟨. **Missing:** a run with a real client with image understanding (E-04; the tests use a fake client) and the entry point in the measure view (US-WAC-06).
 
 ### US-KI-05 · Research via the AI client (wishlist, equipment, catalog) · 🟨 (prototype ✅)
 
@@ -101,6 +103,8 @@ Acceptance criteria:
 - List "Connected AI clients": name, rights, connected since, last use. Revocation takes effect immediately; a revoked or expired access is rejected.
 - A connection belongs to exactly one account (KI-R6). Instructions for connecting (copy link, example flows) are in the app.
 
+State of implementation (issue 2022, FX-81): every empty sheet of "KI-Clients" offers its next step ("KI-Client verbinden", or "Auftrag anlegen" where a client is connected), and the log says that it lists what the client reads and changes; the status stays 🟨.
+
 ### US-KI-08 · Tasks from the app to the AI client · 🟨 new
 
 As a **plant keeper** I want to trigger something in the app that my AI client handles (path B).
@@ -122,7 +126,7 @@ As a **plant keeper** I want to review every AI result before it counts (KI-R3).
 Acceptance criteria:
 
 - Inbox "Drafts" in the app (and in "Hints", P-10): per draft type, reference, source, connection, time and, where there is a previous value, the change compared to the current state.
-- Per draft: adopt, change and adopt, discard. Adopting runs through the same validating operation as the form (date local, `Assessed_By: AI suggestion accepted`).
+- Per draft: adopt or discard; there is no step to change a draft (owner decision 2026-11-10: after adopting, the keeper edits the result as usual). Adopting runs through the same validating operation as the form (date local, `Assessed_By: AI suggestion accepted`).
 - A draft is never adopted automatically. Unprocessed drafts expire and remain viewable as discarded.
 
 ### US-KI-10 · Log of AI actions and undo · 🟨 new
@@ -157,7 +161,7 @@ Acceptance criteria:
 - Given a species that already exists, when the client proposes it again, then the error names the existing species with its id (`species.duplicate` with the id in the details) so the client can use it instead.
 - Tenant isolation (P-04, FR-KI-23): given two accounts A and B, when a connection of A searches, lists or resolves a name, then nothing of B appears, not even B's species proposals or B's location names; an id of B answers `not_found`, never `access.denied` (no existence leak).
 
-### US-KI-12 · Read every other area · 🟨 new
+### US-KI-12 · Read every other area · ✅ new
 
 As a **plant keeper** I want my AI client to answer questions about every area of my plants, not only "what is due today".
 
@@ -180,7 +184,7 @@ Acceptance criteria:
 - Given a name, when the client asks the discovery to check it (dry check without writing), then it gets the normalized name or the same error code the proposal would return (`catalog.name_addition`, `catalog.name_hybrid`, …) with the reason.
 - The discovery contains no account data; it is the same for every account.
 
-### US-KI-14 · Keep the collection through the AI client · ⬜ new
+### US-KI-14 · Keep the collection through the AI client · 🟨 new
 
 As a **plant keeper** I want my AI client to enter what I tell it about my plants (US-KI-01) for every collection function, not only as a draft.
 
@@ -275,7 +279,7 @@ Acceptance criteria:
 | FR-KI-11 | Rate limits per connection; the operator sees usage and load per connection, no content (NFR-16, NFR-18).                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ⬜     |
 | FR-KI-12 | Every released operation has exactly one class: `read`, `draft`, `write (reversible)` or `never released` (FR-KI-10). `write` covers only reversible operations (e.g. watered, location, measurement, tick off treatment). The assignment is in one place; a test checks that every operation has a class and the class matches the scope. From US-KI-16 a fifth class `confirm` covers destructive operations (FR-KI-18).                                                                                                                                      | ⬜     |
 | FR-KI-13 | The authorization of the interface uses the sign-in service (E-03) as authorization server; the app builds none of its own. There are no long-lived personal access tokens (E-04).                                                                                                                                                                                                                                                                                                                                                                              | ⬜     |
-| FR-KI-14 | **One path (KI-R10):** every operation of the app is either released through the interface or listed as human-only (FR-KI-22); a coverage test fails when an app operation has no class. Every tool calls the same validating operation as the app route, with the same rights checks, error codes and idempotency; no tool writes on its own.                                                                                                                                                                                                                  | ⬜     |
+| FR-KI-14 | **One path (KI-R10):** every operation of the app is either released through the interface or listed as human-only (FR-KI-22); a coverage test fails when an app operation has no class. Every tool calls the same validating operation as the app route, with the same rights checks, error codes and idempotency; no tool writes on its own.                                                                                                                                                                                                                  | 🟨     |
 | FR-KI-15 | **Names instead of IDs:** every tool argument that references an entity of the account (species, specimen, location, light zone, wish, equipment, treatment) accepts the id or the readable name. One hit is used; several hits return the candidates and nothing is done (KI-R4) and say when more match than they list (`more`, without a count); a partial name whose species search was cut never counts as one hit; none returns `not_found` with up to 5 nearest names (starting value). Resolution runs only within the account and the visible catalog. | 🟨     |
 | FR-KI-16 | **Lists are complete or say so:** list tools are paged with a stable order, a page size of at most 100 (starting value) and the total count; a cut list names the next page, never ends silently (P-10).                                                                                                                                                                                                                                                                                                                                                        | 🟨     |
 | FR-KI-17 | **Rules are discoverable and cannot drift:** the rule discovery (US-KI-13) is derived from the checks of the operations (schemas, enumerations, limits, naming rule, error codes, classes); a test fails when a check and its description differ.                                                                                                                                                                                                                                                                                                               | ✅     |

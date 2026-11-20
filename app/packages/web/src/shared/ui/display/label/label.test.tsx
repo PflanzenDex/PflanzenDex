@@ -29,17 +29,28 @@ describe("Label (US-QS-07, DS-36)", () => {
     expect(ref.current?.className).not.toContain("text-sm");
   });
 
-  it("US-QS-07 · DS-38 a required label marks the field in text and hides the asterisk from screen readers", () => {
+  it("US-QS-32 · SG-FORM-01 an optional label says '(optional)' after its text", () => {
     render(
       <>
-        <Label htmlFor="r" required>
-          Art
+        <Label htmlFor="o" optional>
+          Durchmesser
         </Label>
+        <input id="o" />
+      </>,
+    );
+    expect(screen.getByLabelText("Durchmesser (optional)")).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-FORM-01 a required label says nothing: no asterisk and no 'optional'", () => {
+    render(
+      <>
+        <Label htmlFor="r">Art</Label>
         <input id="r" required />
       </>,
     );
-    expect((screen.getByLabelText(/^Art/) as HTMLInputElement).required).toBe(true);
-    expect(screen.getByText("*").getAttribute("aria-hidden")).toBe("true");
+    expect(screen.getByLabelText("Art")).toBeTruthy();
+    expect(screen.queryByText("*")).toBeNull();
+    expect(screen.queryByText(/optional/)).toBeNull();
   });
 
   it("US-QS-07 · DS-39 dims itself next to a disabled control", () => {

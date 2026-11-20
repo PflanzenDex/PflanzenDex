@@ -49,7 +49,10 @@ function answerOf(def: AreaRead, value: object, input: Input) {
   const { [def.list]: all, ...rest } = value as Record<string, unknown>;
   const list = Array.isArray(all) ? (all as readonly unknown[]) : [];
   const page = pageOf(list, { offset: input.offset ?? null, limit: input.limit ?? null });
-  return { ...rest, ...page, dataFields: def.data.map((f) => `items[].${f}`) };
+  // A field beside the list (a key of the rest, e.g. `specimens[].name`) keeps its path; every other is the items'.
+  const beside = (f: string) => (f.split(/[.[]/)[0] ?? f) in rest;
+  const marked = def.data.map((f) => (beside(f) ? f : `items[].${f}`));
+  return { ...rest, ...page, dataFields: marked };
 }
 
 async function specimenOf(deps: AreaReadDependencies, userId: string, ref: string | undefined) {

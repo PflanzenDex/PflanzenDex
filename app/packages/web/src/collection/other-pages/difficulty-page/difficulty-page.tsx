@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
+import { ChevronRight } from "lucide-react";
 import type { DifficultyOverview, DifficultyRow } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { profileAddress } from "@/shared/patterns/navigation/navigation/navigation";
@@ -16,11 +17,13 @@ import {
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
 import { Button } from "@/shared/ui/button/button";
 import { SPECIES_ENTRY_ROW } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { SpeciesName, germanNameOf } from "@/shared/species-name/species-name";
+import { LightNeedAction } from "@/light";
 import { LoadFrame } from "../../../shared/data";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
 import { PageFrame, Plain, Quiet, TITLE } from "../../specimens/cards/parts/parts";
-import { ENTRY_FACTS, entryLine, factsOf } from "./difficulty-page.values";
+import { ENTRY_FACTS, entryLine, factsOf, missingValuesText } from "./difficulty-page.values";
 
 /** The layer of one species of the comparison: `?sheet=compare-<id>` (US-QS-22). */
 const layerId = (r: DifficultyRow): string => `compare-${r.speciesId}`;
@@ -84,36 +87,47 @@ function UnreadableNote({ count }: { count: number }) {
 
 function Entry({ row, hidden }: { row: DifficultyRow; hidden: readonly string[] }) {
   const { openLayer, open } = useLayer(layerId(row));
+  // The label holds the row's visible text in its order: the title, then the meta line (WCAG 2.5.3, US-QS-32).
+  const german = germanNameOf(row.botanicalName, row.speciesName);
+  const line = entryLine(row, hidden);
+  const meta = [german === null ? null : row.botanicalName, line].filter(Boolean).join(" · ");
+  const named = [german ?? row.botanicalName, meta].filter(Boolean).join(" ");
   return (
     <Button
       type="button"
       variant="outline"
       aria-haspopup="dialog"
       aria-expanded={open}
-      aria-label={`Vergleichswerte: ${row.speciesName}`}
+      aria-label={`Vergleichswerte: ${named}`}
       className={SPECIES_ENTRY_ROW}
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <span className="grid min-w-0 gap-0 break-words">
-        <span className="font-semibold">{row.speciesName}</span>
-        <span className="text-sm font-normal text-muted-foreground">{entryLine(row, hidden)}</span>
+        {/* `speciesName` is the German name, or the botanical name where there is none: SpeciesName takes that as none (US-QS-32, F-0121). */}
+        <SpeciesName scientific={row.botanicalName} german={row.speciesName} meta={line} />
       </span>
-      <span className="text-2xl leading-none text-muted-foreground" aria-hidden="true">
-        ›
-      </span>
+      <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
     </Button>
   );
 }
 
-/** All values of one species; the unknown ones fold into one line with the next step (US-QS-24). */
+/**
+ * All values of one species; the unknown ones fold into one line with the next step (US-QS-24). An unknown light need
+ * names "Lichtbedarf eintragen" instead of the profile (US-LIC-01, P-09).
+ */
 function Values({ row }: { row: DifficultyRow }) {
   return (
     <FactGrid
       facts={factsOf(row)}
+      countText={missingValuesText}
       next={
-        <Button asChild variant="outline" size="sm">
-          <Link to={profileAddress(row.speciesId)}>Artprofil öffnen</Link>
-        </Button>
+        row.lightNeedUnknown ? (
+          <LightNeedAction speciesId={row.speciesId} speciesName={row.speciesName} />
+        ) : (
+          <Button asChild variant="outline" size="sm">
+            <Link to={profileAddress(row.speciesId)}>Artprofil öffnen</Link>
+          </Button>
+        )
       }
     />
   );

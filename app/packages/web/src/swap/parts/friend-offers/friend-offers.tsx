@@ -3,6 +3,8 @@ import type { ExchangeOffer } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { Button } from "@/shared/ui/button/button";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { errorText } from "@/shared/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import {
@@ -54,7 +56,7 @@ function Card(props: {
       <span className="mt-1 flex flex-wrap items-center gap-2">
         {o.lack === true && <Badge variant="default">{t("friends.lack")}</Badge>}
         {o.onWishlist && <Badge variant="outline">{t("friends.onWishlist")}</Badge>}
-        {o.requested && <Badge variant="secondary">{t("friends.requested")}</Badge>}
+        {o.requested && <Badge variant="default">{t("friends.requested")}</Badge>}
       </span>
       {!o.requested && !props.open && (
         <div className="mt-1">
@@ -97,7 +99,12 @@ function Offers(props: {
     if (write.message) setOpenId(null);
   }, [write.message]);
   if (data.offers.length === 0)
-    return <p className="rounded-lg border border-dashed border-border p-3">{t("friends.none")}</p>;
+    return (
+      <EmptySection
+        text={t("friends.none")}
+        action={{ label: t("friends.addFriend"), href: `${PATHS.friends}?sheet=add` }}
+      />
+    );
   return (
     <>
       {write.message && (

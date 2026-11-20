@@ -8,17 +8,18 @@ import { Card } from "./card";
 afterEach(cleanup);
 
 describe("Card (US-QS-07, DS-34)", () => {
-  it("US-QS-07 a plain card is a container with Greenhouse radius and elevation and no role", () => {
+  it("US-QS-32 a card in the flow is a flat container: Greenhouse radius, card colour, no shadow and no role (SG-SHAPE-05)", () => {
     render(<Card data-testid="c">Gießen am Montag</Card>);
     const card = screen.getByTestId("c");
     expect(card.tagName).toBe("DIV");
     expect(card.className).toContain("rounded-card");
-    expect(card.className).toContain("shadow-elevation-1");
+    expect(card.className).toContain("bg-card");
+    expect(card.className).not.toMatch(/shadow/);
     expect(screen.queryByRole("link")).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("US-QS-14 a nested card is flat and tinted, so a card inside the page card has no second shadow", () => {
+  it("US-QS-14 · US-QS-32 a nested card is flat and tinted, so a card inside the page card has no shadow and no second tint", () => {
     render(
       <Card nested data-testid="c">
         Hinweis
@@ -26,8 +27,7 @@ describe("Card (US-QS-07, DS-34)", () => {
     );
     const card = screen.getByTestId("c");
     expect(card.className).toContain("bg-secondary");
-    expect(card.className).toContain("shadow-none");
-    expect(card.className).not.toContain("shadow-elevation-1");
+    expect(card.className).not.toMatch(/shadow/);
     expect(card.className).not.toContain("bg-card");
   });
 
@@ -82,11 +82,19 @@ describe("Card (US-QS-07, DS-34)", () => {
     expect(document.activeElement).toBe(screen.getByRole("link", { name: "B" }));
   });
 
-  it("US-QS-07 the hover lift is a shadow change that stops under reduced motion", () => {
+  it("US-QS-32 the hover of an interactive card is a neutral fill change, never a shadow, and stops under reduced motion", () => {
     render(<Card href="/x">X</Card>);
     const cls = screen.getByRole("link").className;
-    expect(cls).toContain("hover:shadow-elevation-2");
+    expect(cls).toContain("hover:bg-muted");
+    expect(cls).not.toMatch(/shadow/);
     expect(cls).toContain("motion-reduce:transition-none");
+  });
+
+  it("US-QS-32 a button card keeps the neutral hover fill and no shadow", () => {
+    render(<Card onClick={() => undefined}>Pflanze öffnen</Card>);
+    const cls = screen.getByRole("button", { name: "Pflanze öffnen" }).className;
+    expect(cls).toContain("hover:bg-muted");
+    expect(cls).not.toMatch(/shadow/);
   });
 
   it("US-QS-07 · DS-36 forwards ref, native props and puts caller classes last", () => {

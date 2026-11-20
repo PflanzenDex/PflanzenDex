@@ -3,11 +3,34 @@ import {
   EmptyState,
   type EmptyStateAction,
 } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import type { Response } from "../../api";
 import { useRequest } from "../request/use-request";
 import type { QueryKey } from "@tanstack/react-query";
+
+/** The words of an empty place: its title, and an optional description and next step. */
+type EmptyText = {
+  title: string;
+  description?: string;
+  action?: EmptyStateAction;
+  /** An empty section of a tab, sheet or page: `title` is its one line and there is no illustration (SG-STATE-01). */
+  section?: boolean;
+};
+
+/** A page-level empty state, or one line for a section (US-QS-32, SG-STATE-01). */
+function EmptyPlace({ place }: { place: EmptyText }) {
+  const action = place.action ? { action: place.action } : {};
+  if (place.section) return <EmptySection text={place.title} {...action} />;
+  return (
+    <EmptyState
+      title={place.title}
+      {...(place.description ? { description: place.description } : {})}
+      {...action}
+    />
+  );
+}
 
 /**
  * Loads one thing for a page on the data layer and shows what the user needs while it is not there (DS-09, DS-26):
@@ -32,12 +55,7 @@ export function LoadFrame<T>(props: {
    */
   loadingStatus?: ReactNode;
   /** Optional empty state for a view that has nothing to show without rows. */
-  empty?: {
-    isEmpty: (value: T) => boolean;
-    title: string;
-    description?: string;
-    action?: EmptyStateAction;
-  };
+  empty?: EmptyText & { isEmpty: (value: T) => boolean };
   /** Page level only: the main heading shown when the load fails (US-QS-09). */
   heading?: string;
   children: (value: T) => ReactNode;
@@ -62,15 +80,7 @@ export function LoadFrame<T>(props: {
           <PlantLoader label={props.loadingText} size="lg" className="mx-auto my-8 flex" />
         )
       }
-      empty={
-        empty ? (
-          <EmptyState
-            title={empty.title}
-            {...(empty.description ? { description: empty.description } : {})}
-            {...(empty.action ? { action: empty.action } : {})}
-          />
-        ) : null
-      }
+      empty={empty ? <EmptyPlace place={empty} /> : null}
       offline={r.offline}
       {...(props.heading ? { heading: props.heading } : {})}
     >

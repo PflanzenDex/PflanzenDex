@@ -12,7 +12,6 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 import {
   APP,
   apiRoutes,
@@ -20,6 +19,7 @@ import {
   routeKey,
   sharedComponents,
 } from "./reference-sources.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const ROOT = path.resolve(APP, "..");
 export const APP_DOC = "docs/guides/reference/app.md";
@@ -139,5 +139,4 @@ function main(argv) {
   return 0;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href)
-  process.exit(main(process.argv.slice(2)));
+if (isEntryPoint(import.meta.url)) process.exit(main(process.argv.slice(2)));

@@ -102,12 +102,15 @@ function Done(props: { done: Outcome; onCreateSpecimen?: (w: WishToPlant) => voi
 export function CreateSpecimenButton(props: {
   wish: WishToPlant;
   onCreate: (w: WishToPlant) => void;
+  /** The filled next step after a purchase; a row of the bought list is tinted (SG-BTN-02). */
+  variant?: "default" | "tinted";
   /** Names the wish in the accessible name when several buttons stand next to each other. */
   named?: boolean;
 }) {
   return (
     <Button
       type="button"
+      variant={props.variant}
       size="touch"
       className="mt-2"
       aria-label={props.named ? `Pflanze anlegen: ${props.wish.title}` : "Pflanze anlegen"}
@@ -171,7 +174,7 @@ export function PathNotes(props: {
             Wunsch mit der Pflanze verknüpft.
           </p>
           <div>
-            <Button type="button" variant="outline" size="touch" onClick={onDrop}>
+            <Button type="button" variant="plain" size="touch" onClick={onDrop}>
               Verknüpfung abbrechen
             </Button>
           </div>
@@ -185,7 +188,7 @@ export function PathNotes(props: {
           <p>{notice.text}</p>
           {notice.retry && (
             <div>
-              <Button type="button" variant="outline" size="touch" onClick={notice.retry}>
+              <Button type="button" variant="tinted" size="touch" onClick={notice.retry}>
                 Erneut verknüpfen
               </Button>
             </div>

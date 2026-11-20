@@ -185,8 +185,8 @@ describe("US-QS-14 the destination Entdecken with its switch Vorschläge | Katal
   });
 });
 
-describe("US-ONB-09 the keeper's switch of the wishlist hides the suggestions with Ja and Nein", () => {
-  /** One suggestion on the deck: a card with its buttons Nein, Später and Ja. */
+describe("US-ONB-09 the keeper's switch of the wishlist hides the suggestions with Wünschen and Kein Interesse", () => {
+  /** One suggestion on the deck: a card with its buttons Kein Interesse, Später and Wünschen. */
   const deckWithCard = {
     deck: 1,
     suggestions: [
@@ -207,23 +207,23 @@ describe("US-ONB-09 the keeper's switch of the wishlist hides the suggestions wi
     zoneFilter: null,
   };
 
-  it("US-ONB-09 with wishlist off Entdecken offers the catalog only: no Vorschläge, no Ja and no Nein, and no suggestion is asked", async () => {
+  it("US-ONB-09 with wishlist off Entdecken offers the catalog only: no Vorschläge, no Wünschen and no Kein Interesse, and no suggestion is asked", async () => {
     stubServer(deckWithCard);
     renderAt("/discover?view=suggestions", { wishlist: false });
     await catalogShown();
     expect(screen.queryByRole("button", { name: "Vorschläge" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Ja" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Nein" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Wünschen" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Kein Interesse" })).toBeNull();
     const asked = vi.mocked(fetch).mock.calls.map(([u]) => new URL(String(u)).pathname);
     expect(asked).not.toContain("/discover/suggestions");
   });
 
-  it("US-ONB-09 with wishlist on Entdecken shows the card with Nein and Ja", async () => {
+  it("US-ONB-09 with wishlist on Entdecken shows the card with Kein Interesse and Wünschen", async () => {
     stubServer(deckWithCard);
     renderAt("/discover", { wishlist: true });
     expect(await screen.findByRole("article")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Nein" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Ja" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Kein Interesse" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Wünschen" })).toBeTruthy();
   });
 
   it("US-ONB-09 with discover off Entdecken offers the catalog only, as before", async () => {
@@ -273,5 +273,67 @@ describe("US-QS-14 issue 1697 · Entdecken shows its shaped skeleton once", () =
     renderAt("/discover?view=catalog");
     await catalogShown();
     expect(loadingStatuses()).toHaveLength(0);
+  });
+});
+
+/** A deck with one card of the species, to tell two decks apart on screen (US-ENT-01). */
+function deckOfOne(species: string, germanName: string) {
+  return {
+    deck: 1,
+    suggestions: [
+      {
+        species,
+        germanName,
+        summary: "Eine robuste Zimmerpflanze.",
+        family: "Asparagaceae",
+        lightZone: 3,
+        difficulty: 2,
+        imageUrl: "https://upload.example/card.jpg",
+        sourceUrl: "https://de.wikipedia.org/wiki/Aspidistra",
+        attributes: { humidity: null, minTemperature: null, toxicToPets: null, growthSize: null },
+        reasons: ["Diese Art hast du noch nicht gefangen."],
+      },
+    ],
+    empty: null,
+    zoneFilter: null,
+  };
+}
+
+describe("US-ENT-01 issue 1652 · Vorschläge keep the last deck while they refetch", () => {
+  it("US-ENT-01 issue 1652 · back from Katalog the last deck is on screen at once while the refetch runs, then the new deck replaces it", async () => {
+    let decks = 0;
+    let answerSecond: () => void = () => undefined;
+    const second = new Promise<void>((done) => {
+      answerSecond = done;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/discover/suggestions") {
+          decks += 1;
+          if (decks === 1) return response(200, deckOfOne("Aspidistra elatior", "Schusterpalme"));
+          // The refetch answers only when the test lets it: the old deck must be on screen meanwhile.
+          await second;
+          return response(200, deckOfOne("Ficus lyrata", "Geigenfeige"));
+        }
+        if (path === "/species") return response(200, { species: [] });
+        return response(200, {});
+      }),
+    );
+    renderAt("/discover");
+    expect(await screen.findByRole("heading", { name: "Aspidistra elatior" })).toBeTruthy();
+    await userEvent.click(radio("Katalog"));
+    await catalogShown();
+    await userEvent.click(radio("Vorschläge"));
+    // Back on Vorschläge: the last deck is there at once, with no loading status (DS-09, DS-11, DS-57).
+    expect(screen.getByRole("heading", { name: "Aspidistra elatior" })).toBeTruthy();
+    expect(loadingStatuses()).toHaveLength(0);
+    await waitFor(() => expect(decks).toBe(2));
+    expect(screen.getByRole("heading", { name: "Aspidistra elatior" })).toBeTruthy();
+    expect(loadingStatuses()).toHaveLength(0);
+    answerSecond();
+    expect(await screen.findByRole("heading", { name: "Ficus lyrata" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Aspidistra elatior" })).toBeNull();
   });
 });

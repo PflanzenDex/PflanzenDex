@@ -1,6 +1,6 @@
 import { useLocation, useSearchParams } from "react-router";
 import type { MeasurementView } from "@pflanzendex/core";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -41,10 +41,10 @@ function usePart(): [Part, (value: Part) => void] {
 }
 
 /**
- * The course of a specimen as its own layer "Verlauf" (US-WAC-01, US-QS-15): the segment "Überblick | Kurve |
+ * The course of a specimen as its own layer "Messverlauf" (US-WAC-01, US-QS-15): the segment "Überblick | Kurve |
  * Messungen" (the facts, the growth chart and the measurements with their photos). Without a measurement the layer
- * shows the facts and one empty state with the action that closes the layer and hands the keeper back to the form
- * (`onAdd`), so the empty state appears once.
+ * shows the facts and one line with the action that closes the layer and hands the keeper back to the form, so the
+ * empty place appears once (US-QS-32, SG-STATE-01).
  */
 export function CourseLayer(props: {
   id: string;
@@ -62,9 +62,8 @@ export function CourseLayer(props: {
       {view.measurements.length === 0 ? (
         <div className="flex flex-col gap-6">
           <MeasurementFacts view={view} />
-          <EmptyState
-            title={t("empty.title")}
-            description={t("empty.description")}
+          <EmptySection
+            text={t("empty.line")}
             action={{ label: t("empty.action"), onClick: closeLayer }}
           />
         </div>

@@ -21,6 +21,12 @@ export interface FriendOffer {
 export type SwapStatus =
   "requested" | "accepted" | "handed_over" | "declined" | "canceled" | "withdrawn";
 
+/** The offered specimen of a swap: its name and whether it is still archived (US-BES-07, P-05). */
+export interface OfferedSpecimen {
+  readonly name: string;
+  readonly archived: boolean;
+}
+
 /** One side of a swap as its owner sees it (DM-SOZ-03). */
 export interface SwapSide {
   readonly swapId: string;
@@ -28,6 +34,10 @@ export interface SwapSide {
   readonly otherId: string | null;
   readonly otherName: string | null;
   readonly offerId: string;
+  /** The offered specimen's name, set by the requests overview on the giver's side of a plant (`null` = none, P-05); absent elsewhere. */
+  readonly specimenName?: string | null;
+  /** Whether that specimen is still archived, set with `specimenName` (US-BES-07); absent elsewhere. */
+  readonly specimenArchived?: boolean;
   readonly speciesLatin: string | null;
   readonly speciesGerman: string | null;
   readonly type: OfferType;
@@ -84,6 +94,8 @@ export interface ExchangeStore {
   ): Promise<{ readonly outcome: RequestOutcome; readonly swapId: string | null }>;
   /** The caller's own side of every swap, newest first. */
   list(userId: string): Promise<readonly SwapSide[]>;
+  /** The offered specimen of each giver's accepted or handed-over plant, by swap ID (P-05); a gone specimen is absent. */
+  offeredNames(userId: string): Promise<ReadonlyMap<string, OfferedSpecimen>>;
   /** Answers or changes a swap; both sides change together, nothing is written on a refusal. */
   answer(
     userId: string,

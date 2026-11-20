@@ -86,7 +86,8 @@
 }
 
 /* One screen (US-QS-15, DS-61, NFR-13): the page is the viewport. At a large text size the form column (.pdx-content)
-   scrolls inside its own region and the page does not; the band above it keeps its height. */
+   scrolls inside its own region and the page does not. On a phone the band above it (.pdx-side) is at most 36 % of the
+   window height (starting value, assumption) and scrolls inside itself beyond that (owner decision 2026-11-14). */
 .pdx-page {
   height: 100dvh;
   display: grid;
@@ -95,38 +96,53 @@
   align-content: start;
 }
 
-/* Left panel on a wide screen, band above the form on a phone. */
+/* Left panel on a wide screen, band above the form on a phone. On a phone the band is at most 36 % of the window height
+   and scrolls inside itself (the same rule as the band of the web app, AuthFrame). Start at the top, not centred: a
+   centred overflow would cut off the top, which the scroll cannot reach. */
 .pdx-side {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 8px;
   padding: 3px 16px;
   background: var(--muted);
   min-width: 0;
+  max-height: 36dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The band is a tab stop only while it scrolls (issue 2124, the script after it in template.ftl sets the tabindex): its ring
+   is inset, a ring outside would be cut off by its scroll area. */
+.pdx-side:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
 }
 
 .pdx-drawing {
   display: block;
   width: auto;
-  height: 64px;
+  height: 48px;
   max-width: 100%;
   color: var(--primary);
 }
 
+/* The three value lines show on every screen (owner decision Q-156, 2026-11-14): on a phone in the band under the drawing,
+   at the size of the app's phone frame (14 px, a 48 px drawing), so the sign-in and registration forms below still fit
+   360 x 640 at 100 % text (US-QS-14); the wide screen below sets the larger size. */
 .pdx-values {
-  display: none;
+  display: block;
   margin: 0;
   padding: 0;
   list-style: none;
   color: var(--muted-foreground);
-  font-size: 1.125rem;
-  line-height: 1.4;
+  font-size: 0.875rem;
+  line-height: 1.3;
 }
 
 .pdx-values li + li {
-  margin-top: 12px;
+  margin-top: 4px;
 }
 
 .pdx-content {
@@ -538,6 +554,19 @@ a {
   color: var(--foreground);
 }
 
+/* Long words wrap inside the column, an e-mail address at 200 % text too (US-QS-32, F-0330). */
+.instruction,
+.pf-v5-c-alert__title,
+.kc-feedback-text,
+#kc-info.pdx-info-above {
+  overflow-wrap: anywhere;
+}
+
+/* The explanation of the reset page stands above its field, with a gap to it (US-QS-32, F-0321). The id rule of #kc-info resets the margin, so the id is named too. */
+#kc-info.pdx-info-above {
+  margin: 0 0 16px;
+}
+
 /* Forced colours (WCAG 1.4.11, 2.4.7): the system colours carry the boundaries and the focus. */
 @media (forced-colors: active) {
   .pf-v5-c-form-control {
@@ -574,6 +603,7 @@ a {
   .pdx-side {
     justify-content: center;
     justify-content: safe center;
+    max-height: none;
     padding: 48px;
     gap: 32px;
     overflow-y: auto;
@@ -589,6 +619,12 @@ a {
   .pdx-values {
     display: block;
     max-width: 440px;
+    font-size: 1.125rem;
+    line-height: 1.4;
+  }
+
+  .pdx-values li + li {
+    margin-top: 12px;
   }
 
   .pdx-content {

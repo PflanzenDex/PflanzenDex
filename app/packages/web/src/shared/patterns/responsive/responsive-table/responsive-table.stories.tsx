@@ -35,7 +35,7 @@ const args: ComponentProps<typeof ResponsiveTable<Row>> = {
   rowAction: {
     label: "Aktion",
     render: (r) => (
-      <Button variant="outline" size="sm" aria-label={`${r.name} öffnen`}>
+      <Button variant="plain" size="sm" aria-label={`${r.name} öffnen`}>
         Öffnen
       </Button>
     ),

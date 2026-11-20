@@ -32,7 +32,7 @@ export type AchievementStep = {
 };
 export type AchievementItem = {
   id: string;
-  /** Earned and not yet acknowledged with "Okay" (US-ACH-03). */
+  /** Earned and not yet acknowledged with "Als gesehen markieren" (US-ACH-03). */
   isNew: boolean;
   earnedOn: string | null;
   specimenId: string | null;
@@ -85,7 +85,7 @@ export function loadNews(
   );
 }
 
-/** Marks achievements as seen (US-ACH-03): "Okay" in the overview, and the silent creation of the state. */
+/** Marks achievements as seen (US-ACH-03): "Als gesehen markieren" in the overview, and the silent creation of the state. */
 export async function markSeen(
   api: string,
   token: string,

@@ -8,7 +8,7 @@ import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import type { ApiError } from "../../../shared/data";
 import { CareProfileCard } from "../sections/care-profile-card/care-profile-card";
 import { KeptProfileCard } from "../sections/kept-profile-card/kept-profile-card";
-import { NextAction, PROFILE_GRID, Status, Warning } from "../../specimens/cards/parts/parts";
+import { NextAction, PROFILE_GRID, Status, ErrorNotice } from "../../specimens/cards/parts/parts";
 import { refusalText } from "@/shared/lib/error-text";
 
 export interface ProfileData {
@@ -28,9 +28,9 @@ export function ProfileList(props: {
     <div className="@container">
       {write.message && <Status>{write.message}</Status>}
       {write.error && (
-        <Warning>
+        <ErrorNotice>
           <p>{refusalText(write.error)}</p>
-        </Warning>
+        </ErrorNotice>
       )}
       {data.locations.length === 0 && (
         <div className="mb-3">
@@ -42,7 +42,7 @@ export function ProfileList(props: {
       )}
       {data.entries.length === 0 ? (
         <EmptyState
-          title="Du hast noch keine Pflanze dieser Art."
+          title="Du hast noch keine Pflanze dieser Art"
           description="Lege zuerst mit „Diese Art wählen“ eine Pflanze an, dann kannst du hier das Pflegeprofil der Art anpassen."
         />
       ) : (

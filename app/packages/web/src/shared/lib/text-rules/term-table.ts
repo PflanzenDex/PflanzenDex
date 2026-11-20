@@ -11,6 +11,9 @@ export const RETIRED_WORDS: ReadonlyArray<{ concept: string; use: string; patter
     pattern: /\b(?:Exemplaren|Exemplare|Exemplars|Exemplar)\b/,
   },
   { concept: "Wishlist", use: "Wunschliste", pattern: /\bWunschzettel\b|\bWunsch-Liste\b/ },
+  { concept: "Equipment area", use: "Geräte", pattern: /\bEquipment\b|\bAusrüstung\b/ },
+  { concept: "AI connection", use: "Anbindung (MCP)", pattern: /\bConnector\b/ },
+  { concept: "Species profile", use: "Artprofil", pattern: /\bArtenprofil\b/ },
   { concept: "Light zone", use: "Zone <n> (Zone 1 · Stecklingslicht)", pattern: /\bLampe [1-9]\b/ },
 ];
 

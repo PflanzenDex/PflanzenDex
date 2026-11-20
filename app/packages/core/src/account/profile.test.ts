@@ -6,6 +6,8 @@ import {
   defaultNotifications,
   KEYBOARD_SHORTCUT_DEFAULT,
   KEYBOARD_SHORTCUT_MODES,
+  MOTION_DEFAULT,
+  MOTION_SETTINGS,
   REPLENISH_BUFFER_LIMITS,
 } from "./index";
 import { InMemoryProfiles } from "./test-helpers";
@@ -356,5 +358,43 @@ describe("US-QS-11 · the keyboard shortcut mode is an account setting", () => {
     await save(valid({ keyboardShortcuts: "disabled" }));
     expect(profiles.rows.get("ben")?.keyboardShortcuts).toBe("modifier");
     expect(profiles.rows.get("anna")?.keyboardShortcuts).toBe("disabled");
+  });
+});
+
+describe("US-QS-33 · the motion choice is an account setting", () => {
+  it("US-QS-33 is system (Wie auf dem Gerät) until the keeper changes it, and the set is system and reduced", () => {
+    expect(MOTION_DEFAULT).toBe("system");
+    expect(MOTION_SETTINGS).toEqual(["system", "reduced"]);
+    expect(profiles.rows.get("anna")?.motion).toBe("system");
+  });
+
+  it.each(MOTION_SETTINGS)("US-QS-33 saves %s through account.update_profile", async (motion) => {
+    const r = await save(valid({ motion }));
+    expect(r.ok && r.value.motion).toBe(motion);
+    expect(profiles.rows.get("anna")?.motion).toBe(motion);
+  });
+
+  it.each(["off", "Reduced", "device", "on", "", 0, false, {}, []])(
+    "US-QS-33 refuses %j with input.invalid naming motion, nothing is written (P-10)",
+    async (motion) => {
+      const r = await save(valid({ motion }));
+      expect(!r.ok && r.error.details).toEqual([{ field: "motion", code: "input.invalid" }]);
+      expect(profiles.writes).toBe(0);
+    },
+  );
+
+  it.each([null, undefined])(
+    "US-QS-33 %s keeps the stored choice, so an older client cannot switch motion back on",
+    async (v) => {
+      await save(valid({ motion: "reduced" }));
+      const r = await save(valid({ motion: v, timeZone: "UTC" }));
+      expect(r.ok && r.value).toMatchObject({ motion: "reduced", timeZone: "UTC" });
+    },
+  );
+
+  it("US-QS-33 changes only the own account", async () => {
+    await save(valid({ motion: "reduced" }), "ben");
+    expect(profiles.rows.get("ben")?.motion).toBe("reduced");
+    expect(profiles.rows.get("anna")?.motion).toBe("system");
   });
 });

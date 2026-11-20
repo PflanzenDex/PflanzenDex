@@ -7,6 +7,11 @@ import {
   dragReading,
   flyPose,
   gestureDirection,
+  EXIT_MS,
+  MIN_FLIGHT_MS,
+  flightMs,
+  throwDirection,
+  throwPose,
 } from "./swipe-gesture";
 
 /** A card 300 px wide: the threshold is 120 px (starting value, assumption). */
@@ -75,5 +80,30 @@ describe("US-ENT-01 the drag shows direction and strength before the release", (
     expect(flyPose("right", viewport).x).toBeGreaterThan(0);
     expect(flyPose("up", viewport).y).toBeLessThan(0);
     expect(flyPose("down", viewport).y).toBeGreaterThan(0);
+  });
+});
+
+describe("US-ENT-10 a thrown card leaves along the line and speed of the release", () => {
+  const screen = { width: 400, height: 800 };
+  it("US-ENT-10 a throw to the upper right leaves to the upper right, off the screen, and still decides Yes", () => {
+    const t = { dx: 150, dy: -100, speed: 1 };
+    const pose = throwPose(t, screen);
+    expect(pose.x).toBeGreaterThanOrEqual(screen.width);
+    expect(pose.y).toBeLessThan(0);
+    expect(pose.y / pose.x).toBeCloseTo(-100 / 150);
+    expect(throwDirection(t)).toBe("right");
+  });
+
+  it("US-ENT-10 the dominant direction decides: left No, up or down Later", () => {
+    expect(throwDirection({ dx: -150, dy: 100, speed: 0 })).toBe("left");
+    expect(throwDirection({ dx: 30, dy: -200, speed: 0 })).toBe("up");
+    expect(throwDirection({ dx: -30, dy: 200, speed: 0 })).toBe("down");
+  });
+
+  it("US-ENT-10 a fast flick leaves quicker than a slow drag, never quicker than the shortest flight", () => {
+    expect(flightMs({ dx: 200, dy: 0, speed: 0.2 }, screen)).toBe(EXIT_MS);
+    const flick = flightMs({ dx: 60, dy: 0, speed: 3 }, screen);
+    expect(flick).toBeLessThan(EXIT_MS);
+    expect(flick).toBeGreaterThanOrEqual(MIN_FLIGHT_MS);
   });
 });

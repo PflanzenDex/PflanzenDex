@@ -33,10 +33,14 @@ export const LEGACY_ACCOUNT_ANCHORS: Readonly<Record<string, AccountSection>> = 
 export const SECTIONS: readonly { key: AccountSection; title: string; loading: string }[] = [
   { key: "profile", title: "Profil", loading: "Profil wird geladen …" },
   { key: "settings", title: "Einstellungen", loading: "Einstellungen werden geladen …" },
-  { key: "achievements", title: "Erfolge", loading: "Erfolge werden geladen …" },
+  {
+    key: "achievements",
+    title: "Erfolge und Rückblick",
+    loading: "Erfolge und Rückblick werden geladen …",
+  },
   { key: "reminders", title: "Erinnerungen", loading: "Erinnerungen werden geladen …" },
   { key: "aiClients", title: "KI-Clients", loading: "KI-Clients werden geladen …" },
-  { key: "measured", title: "Was wird gemessen?", loading: "Wird geladen …" },
+  { key: "measured", title: "Nutzungsdaten", loading: "Wird geladen …" },
   { key: "functions", title: "Was die App kann", loading: "Funktionen werden geladen …" },
   { key: "news", title: t("section.title"), loading: t("section.loading") },
   { key: "data", title: "Meine Daten", loading: "Meine Daten werden geladen …" },

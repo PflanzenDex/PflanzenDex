@@ -6,9 +6,11 @@ import {
   missingText,
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
 import { Badge } from "@/shared/ui/display/badge/badge";
+import { SpeciesName } from "@/shared/species-name/species-name";
 import { cn } from "@/shared/lib/utils";
 import { catchText } from "./catch-text";
 import { appRarityLine, rarityLines, type CardLine } from "./rarity-note/rarity-note";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 const stars = (n: number) => "★".repeat(n) + "☆".repeat(3 - n);
 
@@ -106,9 +108,9 @@ function Lines(props: { lines: readonly CardLine[] }) {
       {folded.length > 0 ? (
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
           <details className="min-w-0">
-            <summary className="inline-flex min-h-[44px] cursor-pointer items-center rounded-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <DisclosureSummary className="inline-flex w-auto gap-2 rounded-sm tabular-nums">
               {missingText(folded.length)}
-            </summary>
+            </DisclosureSummary>
             <span className="grid gap-1 pb-1 text-foreground">
               {folded.map((l) => (
                 <Fragment key={l.key}>{l.node}</Fragment>
@@ -168,10 +170,7 @@ export function CollectorCard(props: { card: Card }) {
     >
       <Picture card={c} />
       <span className="text-sm text-muted-foreground">{`#${String(c.number).padStart(3, "0")}`}</span>
-      <span className="font-semibold">{c.species}</span>
-      {c.germanName !== null && (
-        <span title={c.germanNameFull ?? c.germanName}>{c.germanName}</span>
-      )}
+      <SpeciesName scientific={c.species} german={c.germanName} tooltip={c.germanNameFull} />
       {/* Two lines on a short screen; the full text is in the species profile (issue 1154). */}
       <span className="text-sm [@media(max-height:700px)]:line-clamp-2">
         {c.summary ?? "Keine Beschreibung vorhanden."}
@@ -183,7 +182,7 @@ export function CollectorCard(props: { card: Card }) {
         <Badge variant={caught ? "default" : "outline"}>
           {c.caughtDate === null ? "noch nicht gefangen" : catchText(c.caughtDate)}
         </Badge>
-        {c.speciesPoor && <Badge variant="warning">Artenarm</Badge>}
+        {c.speciesPoor && <Badge variant="default">Artenarm</Badge>}
       </span>
       {c.specimenCount > 1 && (
         <span className="text-muted-foreground">{`${c.specimenCount} Pflanzen`}</span>

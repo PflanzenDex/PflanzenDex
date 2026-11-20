@@ -3,8 +3,8 @@ import { withAccount } from "../kernel/index.ts";
 import { readGrouped } from "./group-rows.ts";
 
 // The shapes are the types of `core` (type-only import through its public entry, AB-2).
-import type { TreatmentRow, TreatmentValues } from "@pflanzendex/core";
-export type { TreatmentRow, TreatmentValues };
+import type { CompleteOutcome, TreatmentRow, TreatmentValues } from "@pflanzendex/core";
+export type { CompleteOutcome, TreatmentRow, TreatmentValues };
 
 // Dates come back as text (the driver would build a `Date` in the server's time zone, NFR-08).
 const COLUMNS = `id, specimen_id as "specimenId", reason, agent, to_char(due_at, 'YYYY-MM-DD') as "dueAt", done,
@@ -67,16 +67,48 @@ export class TreatmentsPostgres {
    * faster, the update waits for the row, finds nothing to change and the stored row comes back with its first done
    * date, so a repeat is harmless (idempotent, US-BEH-03).
    */
-  async complete(userId: string, id: string, doneAt: string): Promise<TreatmentRow | "unknown"> {
+  async complete(userId: string, id: string, doneAt: string): Promise<CompleteOutcome | "unknown"> {
     const r = await withAccount(this.pool, userId, async (c) => {
       const updated = await c.query<TreatmentRow>(
         `update treatment set done = true, done_at = $2 where id = $1 and not done returning ${COLUMNS}`,
         [id, doneAt],
       );
-      if (updated.rows.length > 0) return updated;
-      return c.query<TreatmentRow>(`select ${COLUMNS} from treatment where id = $1`, [id]);
+      if (updated.rows.length > 0) return { row: updated.rows[0], changed: true };
+      const stored = await c.query<TreatmentRow>(`select ${COLUMNS} from treatment where id = $1`, [
+        id,
+      ]);
+      return { row: stored.rows[0], changed: false };
     });
-    return r.rows[0] ?? "unknown";
+    return r.row ? { ...r.row, changed: r.changed } : "unknown";
+  }
+
+  /**
+   * Clears done and the done date of one treatment (US-QS-32, the undo of "Erledigt"). The table keeps both together
+   * (`done = (done_at is not null)`). An open treatment comes back unchanged; a foreign or unknown ID is `unknown`.
+   */
+  /**
+   * Clears done and the done date of one treatment, only while its done date is `doneOn` (US-QS-32, the undo of "Erledigt"):
+   * the UPDATE is the check, so a row that moved on is not overwritten. An open treatment answers its row; a foreign or
+   * unknown ID is `unknown`; a tick-off of another day is `not_reopenable`.
+   */
+  async reopen(
+    userId: string,
+    id: string,
+    doneOn: string,
+  ): Promise<TreatmentRow | "unknown" | "not_reopenable"> {
+    return withAccount(this.pool, userId, async (c) => {
+      const updated = await c.query<TreatmentRow>(
+        `update treatment set done = false, done_at = null where id = $1 and done and done_at = $2 returning ${COLUMNS}`,
+        [id, doneOn],
+      );
+      if (updated.rows.length > 0) return updated.rows[0] as TreatmentRow;
+      const stored = await c.query<TreatmentRow>(`select ${COLUMNS} from treatment where id = $1`, [
+        id,
+      ]);
+      const row = stored.rows[0];
+      if (!row) return "unknown";
+      return row.done ? "not_reopenable" : row;
+    });
   }
 
   /** Done treatments of one specimen, latest done date first (history, US-BEH-03). */

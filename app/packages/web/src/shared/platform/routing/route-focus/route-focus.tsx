@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { useLocation, useNavigationType } from "react-router";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { OLD_PARTS, PAGER_PARTS } from "@/shared/patterns/responsive/pager/paging/address";
+import { takeQuiet } from "./quiet-steps";
+import { claimedTitle } from "./view-start";
 
 const load = () => import("./focus-moves").then((m) => m.createFocusMover());
 
@@ -38,6 +40,24 @@ function layerOpener(nav: {
 }
 
 /**
+ * Whether an arrival from `left` moves no focus and says no title: the same entry, a `keepFocus` step, the same view, or
+ * a step the app takes over its own history (a settle, issue 2165). Every change of entry takes the entry off the quiet
+ * list, even one that is quiet for another reason, so a listed entry cannot silence a later change from it. The effect
+ * runs again without a change of entry; then nothing is taken.
+ */
+function staysPut(nav: {
+  left: string;
+  key: string;
+  keepFocus: boolean;
+  sameView: boolean;
+}): boolean {
+  const { left, key, keepFocus, sameView } = nav;
+  if (left === key) return true;
+  const quiet = takeQuiet(left);
+  return quiet || keepFocus || sameView;
+}
+
+/**
  * Moves the focus once the mover has loaded (a chunk of its own, DS-08). A key or tap before that is the person taking
  * over, too (issue 1362). Returns the cleanup of the effect.
  */
@@ -71,7 +91,7 @@ function moveWhenLoaded(move: {
  * Orientation on a view change (US-QS-09, WCAG 2.4.2, 2.4.3): sets the page title (`titleOf` returns it whole), and once the new view has
  * loaded moves the focus to its main heading and announces the title politely (through the shared announcer, US-QS-10). Going back restores the focus to the
  * control that opened the view. It never moves the focus on the first load, so Tab still reaches the skip link first
- * (US-QS-08), also when the app redirects to its first view (issue 1423). A navigation with the state `keepFocus`, and one that only opens or closes a layer or turns the page of a list, only sets the title: the layer and the pager own their focus (US-QS-15). Render it inside the main region; it renders nothing itself.
+ * (US-QS-08), also when the app redirects to its first view (issue 1423). A navigation with the state `keepFocus`, and one that only opens or closes a layer or turns the page of a list, only sets the title: the layer and the pager own their focus (US-QS-15). A step that the app takes over its own history (`quietFrom`, issue 2165) is no view change either. Render it inside the main region; it renders nothing itself.
  */
 export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string }) {
   const { pathname, search, key, state } = useLocation();
@@ -109,7 +129,9 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
   }, []);
 
   useEffect(() => {
-    document.title = title;
+    // A route that shows a page of its own (the not-found view) has claimed its title: that one counts for the address now.
+    const shownTitle = claimedTitle() ?? title;
+    document.title = shownTitle;
     const left = previous.current;
     const sameView = view.current === here;
     // A redirect of the app (`<Navigate replace>`: the root address or an old one) before the person has navigated on
@@ -122,14 +144,14 @@ export function RouteFocus({ titleOf }: { titleOf: (pathname: string) => string 
     viewPath.current = pathname;
     const opener = layerOpener({ left, key, type, keepFocus, sameView });
     if (opener !== null) void mover.current?.then((m) => m.remember(opener));
-    if (left === null || left === key || keepFocus || sameView) return;
-    if (arrival) return void announcer?.announce(title);
+    if (left === null || staysPut({ left, key, keepFocus, sameView })) return;
+    if (arrival) return void announcer?.announce(shownTitle);
     return moveWhenLoaded({
       mover: mover.current,
       left,
       key,
       type,
-      announce: () => announcer?.announce(title),
+      announce: () => announcer?.announce(shownTitle),
     });
   }, [key, type, title, announcer, keepFocus, here]);
 

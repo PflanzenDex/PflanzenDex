@@ -1,11 +1,18 @@
+import { zoneLabel } from "@pflanzendex/core";
+
 const count = (n: number) => (n === 1 ? "1 Pflanze" : `${n} Pflanzen`);
 
 /**
  * The heading of a group: the place, its zone and the number of plants (FR-BES-23: the full count of the server). The zone
- * reads "Zone unbekannt" when it is `null` (P-08); `undefined` means the zone is not loaded yet, so it is left out.
+ * reads "Zone unbekannt" when it is `null` (P-08); `undefined` means the zone is not loaded yet, so it is left out. The zone
+ * is one part of a line joined by " · ", so the cutting light reads with brackets (US-QS-32).
  */
 export function groupTitle(place: string, zone: string | null | undefined, n: number): string {
-  return [place, ...(zone === undefined ? [] : [zone ?? "Zone unbekannt"]), count(n)].join(" · ");
+  const zoneText =
+    zone === undefined
+      ? []
+      : [zone === null ? "Zone unbekannt" : zoneLabel(zone, { inLine: true })];
+  return [place, ...zoneText, count(n)].join(" · ");
 }
 
 /** The place name of a group; the plants without a known place form "Standort unbekannt" (P-08, P-10). */

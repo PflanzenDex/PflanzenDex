@@ -45,7 +45,7 @@ export function Collapsible(props: CollapsibleProps) {
           aria-expanded={open}
           aria-controls={`${base}-region`}
           onClick={toggle}
-          className="h-auto w-full justify-between rounded-card px-4 py-3 text-left text-base"
+          className="h-auto min-h-11 w-full justify-between rounded-card px-4 py-3 text-left text-base"
         >
           {props.title}
           <ChevronDown

@@ -10,13 +10,10 @@ import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LayerSheet, useExitValue } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-groups";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
-import {
-  SPECIES_LIST,
-  SpeciesPager,
-  SpeciesRow,
-  speciesLayerId,
-} from "../pokedex-cards/pokedex-cards";
+import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
+import { SpeciesPager, SpeciesRow, speciesLayerId } from "../pokedex-cards/pokedex-cards";
 import { SpeciesDetail } from "../pokedex-detail/pokedex-detail";
+import { germanNameOf } from "@/shared/species-name/species-name";
 import { Controls, FILTER_LAYER, FilterPanel } from "../pokedex-controls/pokedex-controls";
 
 const plural = (n: number) => `${n} ${n === 1 ? "Art" : "Arten"}`;
@@ -79,7 +76,7 @@ export function Browse(props: {
       {shownChosen ? (
         <LayerSheet
           id={speciesLayerId(shownChosen.species)}
-          title={shownChosen.germanName ?? shownChosen.species}
+          title={germanNameOf(shownChosen.species, shownChosen.germanName) ?? shownChosen.species}
         >
           <SpeciesDetail species={shownChosen} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
         </LayerSheet>
@@ -91,7 +88,7 @@ export function Browse(props: {
 function NothingCaught() {
   return (
     <EmptyState
-      title="Noch keine Art gefangen."
+      title="Noch keine Art gefangen"
       description="Lege eine Pflanze mit bestimmter Art an, dann zählt sie."
       action={{ label: "Pflanze anlegen", href: "/collection" }}
     />
@@ -101,7 +98,7 @@ function NothingCaught() {
 function NoHit(props: { onReset: () => void }) {
   return (
     <EmptyState
-      title="Keine Art gefunden."
+      title="Keine Art gefunden"
       description="Ändere die Suche oder den Filter."
       action={{ label: "Suche zurücksetzen", onClick: props.onReset }}
     />
@@ -134,7 +131,7 @@ function Families(props: { result: ReturnType<typeof browsePokedex> }) {
       pageSize={size}
       fit
       getKey={(c) => c.species}
-      listClassName={SPECIES_LIST}
+      listClassName={OBJECT_GROUP}
       renderItem={(c) => <SpeciesRow c={c} />}
       intro={(g) => (
         <p className="m-0 text-sm text-muted-foreground">

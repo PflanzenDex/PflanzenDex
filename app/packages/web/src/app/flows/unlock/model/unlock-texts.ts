@@ -33,9 +33,9 @@ export const FUNCTION_NAMES: Record<UnlockFunctionId, string> = {
   pokedex: "Pokédex",
   wishlist: "Wunschliste",
   discover: "Vorschläge entdecken",
-  equipment: "Ausrüstung",
+  equipment: "Geräte",
   friends: "Freunde",
-  swapping: "Tauschen",
+  swapping: "Tauschbörse",
   ai_access: "KI-Zugang",
   care_rhythm: "Pflegerhythmus",
   anniversaries: "Jahrestage",
@@ -59,7 +59,7 @@ export const FUNCTION_EMPTY: Record<UnlockFunctionId, string> = {
   pokedex: "Dein Pokédex ist noch leer.",
   wishlist: "Deine Wunschliste ist noch leer.",
   discover: "Die Vorschläge kennen noch wenig von dir.",
-  equipment: "Du hast noch keine Ausrüstung eingetragen.",
+  equipment: "Du hast noch kein Gerät eingetragen.",
   friends: "Du hast noch keine Freunde: Freunde einladen.",
   swapping: "Du hast noch keine Freunde zum Tauschen: Freunde einladen.",
   ai_access: "Du hast noch keinen KI-Zugang eingerichtet.",
@@ -120,7 +120,7 @@ export function waysText(entry: UnlockEntry): string {
   return entry.ways.map((w, i) => wayText(w, entry.reasons[i])).join(" oder ");
 }
 
-/** "Tauschen: lege 3 Pflanzen an" / "Jahresrückblick: noch 112 Tage" (US-ONB-05). */
+/** "Tauschbörse: lege 3 Pflanzen an" / "Jahresrückblick: noch 112 Tage" (US-ONB-05). */
 export const lockLine = (entry: UnlockEntry): string =>
   `${functionName(entry.id)}: ${waysText(entry)}`;
 

@@ -3,6 +3,7 @@
   "enabled": true,
   "displayName": "PflanzenDéx",
   "loginTheme": "pflanzendex",
+  "emailTheme": "pflanzendex",
   "sslRequired": "external",
   "registrationAllowed": true,
   "registrationEmailAsUsername": false,

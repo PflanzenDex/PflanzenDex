@@ -4,13 +4,20 @@ import { buttonVariants } from "@/shared/ui/button/button";
 
 const tokens = readFileSync(new URL("../../../styles/tokens.css", import.meta.url), "utf8");
 
-/** The body of the top-level block that starts with `head`, or null when it is missing or nested in another block. */
-function topLevelBlock(css: string, head: string): string | null {
-  const start = css.indexOf(head);
-  if (start < 0) return null;
+/** Brace depth at `start`, comments left out. */
+function depthAt(css: string, start: number): number {
   const before = css.slice(0, start).replace(/\/\*[\s\S]*?\*\//g, "");
-  const depth = (before.match(/\{/g) ?? []).length - (before.match(/\}/g) ?? []).length;
-  if (depth !== 0) return null;
+  return (before.match(/\{/g) ?? []).length - (before.match(/\}/g) ?? []).length;
+}
+
+/**
+ * The body of the first top-level block that starts with `head`, or null when it is missing or only nested in another
+ * block (the `motion-reduce` variant nests the same media query, US-QS-33).
+ */
+function topLevelBlock(css: string, head: string): string | null {
+  let start = css.indexOf(head);
+  while (start >= 0 && depthAt(css, start) !== 0) start = css.indexOf(head, start + 1);
+  if (start < 0) return null;
   const open = css.indexOf("{", start);
   let level = 0;
   for (let i = open; i < css.length; i += 1) {

@@ -1,18 +1,19 @@
 import type { CreatedInvitation, InvitationRecord, InvitationStatus } from "@pflanzendex/core";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronRight } from "lucide-react";
 import { useRef, type ReactNode } from "react";
-import { useForm } from "react-hook-form";
-import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { layerOpenerId, useLayer } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { Button } from "@/shared/ui/button/button";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { BUSY_LOOK } from "@/shared/lib/utils";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { instantText } from "../../api/access-api";
-import { BUSY_LOOK } from "../operator-cost/operator-cost";
-import { TextField } from "@/shared/ui/fields/input/input";
-import { DAYS, invitationDaysSchema, type InvitationDaysFields } from "../../schemas";
+import partsTable from "./operator-parts.de.json";
+import { InvitationForm } from "./invitation-form/invitation-form";
+import { NewCode } from "./new-code/new-code";
+
+const t = texts(partsTable);
 
 const STATUS_TEXT: Record<InvitationStatus, string> = {
   open: "offen",
@@ -26,7 +27,7 @@ export const INVITATIONS_PAGE_SIZE = 5;
 /**
  * One topic of the operator area on the overview (US-QS-15): its name, its current value and the layer it opens
  * (`?sheet=<id>`). The value wraps instead of being cut off, so it stays readable at 200 % text. A value that loads (the
- * counts of "Fristen") is a node, so the row stays the same button while it waits.
+ * counts of "Löschfristen") is a node, so the row stays the same button while it waits.
  */
 export function OperatorRow(props: { id: string; title: string; value: ReactNode }) {
   const { open, openLayer } = useLayer(props.id);
@@ -50,6 +51,26 @@ export function OperatorRow(props: { id: string; title: string; value: ReactNode
   );
 }
 
+/**
+ * The plain button under "Kosten pro aktivem Konto" when no figure is entered: it opens the layer that enters one and replaces
+ * the sheet "Zahlen" with it (US-QS-15). The sheet's layer id is the opener's id, so Back returns the focus here.
+ */
+export function EnterCostButton() {
+  const { openLayer } = useLayer("kosten");
+  return (
+    <Button
+      id={layerOpenerId("kosten")}
+      type="button"
+      variant="link"
+      aria-haspopup="dialog"
+      className="px-0"
+      onClick={(event) => openLayer(event.currentTarget)}
+    >
+      {t("cost.enter")}
+    </Button>
+  );
+}
+
 /** The mode in words (not only a switch state) and the one action that changes it. The heading is the layer's. */
 export function ModeSection(props: {
   invitationOnly: boolean;
@@ -67,7 +88,7 @@ export function ModeSection(props: {
       </MoreHelp>
       <Button
         type="button"
-        variant="outline"
+        variant="tinted"
         size="touch"
         aria-disabled={props.running || undefined}
         aria-busy={props.running || undefined}
@@ -80,98 +101,26 @@ export function ModeSection(props: {
   );
 }
 
-/**
- * The days field and the button; a value outside the limits is refused before anything is sent. `focusRef` receives
- * the days field so a neighbour (the empty list) can move the focus there.
- */
-export function InvitationForm(props: {
-  running: boolean;
-  onCreate: (days: number) => void;
-  focusRef?: React.MutableRefObject<HTMLInputElement | null>;
-}) {
-  const form = useForm<InvitationDaysFields>({
-    resolver: zodResolver(invitationDaysSchema),
-    defaultValues: { days: String(DAYS.default) },
-  });
-  const submit = form.handleSubmit((v) => props.onCreate(Number(v.days)));
-  return (
-    <Form {...form}>
-      <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
-        <TextField
-          control={form.control}
-          name="days"
-          label="Gültig für (Tage)"
-          focusRef={props.focusRef}
-          type="number"
-          inputMode="numeric"
-          min={DAYS.min}
-          max={DAYS.max}
-        />
-        <Button
-          type="submit"
-          size="touch"
-          aria-disabled={props.running || undefined}
-          aria-busy={props.running || undefined}
-          className={BUSY_LOOK}
-        >
-          Code erstellen
-        </Button>
-      </FormRoot>
-    </Form>
-  );
-}
-
 /** The days field, the new code and the list, all in the layer of the codes: the empty list sends the operator to the field (P-09). */
 export function InvitationsArea(props: {
   running: boolean;
   created: CreatedInvitation | null;
   invitations: readonly InvitationRecord[];
-  onCreate: (days: number) => void;
+  onCreate: (days: number) => Promise<boolean>;
 }) {
   const field = useRef<HTMLInputElement | null>(null);
   return (
     <div className="flex flex-col gap-4">
       <InvitationForm running={props.running} onCreate={props.onCreate} focusRef={field} />
       {props.created && <NewCode created={props.created} />}
-      <InvitationList invitations={props.invitations} onStart={() => field.current?.focus()} />
+      <InvitationList invitations={props.invitations} />
     </div>
   );
 }
 
-/** The code is shown exactly once; afterwards only its hash exists on the server. */
-export function NewCode(props: { created: CreatedInvitation }) {
-  const { created } = props;
-  return (
-    <section
-      aria-label="Neuer Einladungscode"
-      className="flex flex-col gap-2 rounded-lg border-2 border-primary px-3 py-2"
-    >
-      <p>
-        <code className="select-all text-xl tracking-widest [overflow-wrap:anywhere]">
-          {created.code}
-        </code>
-      </p>
-      <p className="rounded-lg border border-border p-3">
-        Gültig bis {instantText(created.expiresAt)}. Der Code wird nur jetzt angezeigt: Gib ihn
-        weiter oder notiere ihn, später kannst du ihn nicht mehr ansehen.
-      </p>
-    </section>
-  );
-}
-
 /** The invitations in pages of whole entries (`?lfrom=n` in the layer, US-QS-15); the newest first, as the server sends them. */
-export function InvitationList(props: {
-  invitations: readonly InvitationRecord[];
-  onStart: () => void;
-}) {
-  if (props.invitations.length === 0)
-    return (
-      <EmptyState
-        title="Noch keine Einladung erstellt."
-        description="Erstelle oben einen Code."
-        action={{ label: "Gültigkeit wählen", onClick: props.onStart }}
-      />
-    );
+export function InvitationList(props: { invitations: readonly InvitationRecord[] }) {
+  if (props.invitations.length === 0) return <EmptySection text={t("invitations.none")} />;
   return (
     <Pager
       items={props.invitations}

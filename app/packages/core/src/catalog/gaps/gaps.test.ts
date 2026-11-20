@@ -40,6 +40,15 @@ describe("US-BES-13 gap list", () => {
     ]);
   });
 
+  it("US-LIC-01 DM-BES-01 P-08: an unknown soft-leaf flag is a gap whose next step is research; false is not a gap", () => {
+    const list = buildGapList([
+      species({ id: "a", values: { ...known, softLeaf: null } }),
+      species({ id: "b", values: { ...known, softLeaf: false } }),
+    ]);
+    expect(list.species).toBe(1);
+    expect(list.entries[0]?.gaps).toEqual([{ field: "softLeaf", nextStep: "research" }]);
+  });
+
   it("US-BES-13 P-08: an unknown growth measure, etiolation signs or success criteria is a gap with next step research (#1005)", () => {
     const list = buildGapList([
       species({

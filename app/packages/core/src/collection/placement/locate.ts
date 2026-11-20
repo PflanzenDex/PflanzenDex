@@ -64,3 +64,6 @@ export const specimenSetLightZone = (deps: SpecimenLightZoneDependencies) =>
       return typeof r === "string" ? failed(appError(LIGHT_ZONE_ERROR[r])) : ok(r);
     },
   });
+
+// The checks of the operation, so the AI tools derive their input schema from them (US-KI-14, FR-KI-17).
+export { schema as specimenSetLocationSchema, zoneSchema as specimenSetLightZoneSchema };

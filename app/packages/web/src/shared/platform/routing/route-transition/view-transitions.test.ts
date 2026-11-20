@@ -86,3 +86,14 @@ describe("US-QS-14 · route transition (progressive enhancement, ADR 0011 decisi
     }
   });
 });
+
+describe("US-QS-33 · 'Bewegung aus' stops the route transition like the device setting", () => {
+  it("US-QS-33 with the account choice 'Bewegung aus' no transition starts, also when the device does not ask for it", () => {
+    const started = setup({ supported: true, reduced: false });
+    document.documentElement.dataset.motion = "reduced";
+    const apply = vi.fn();
+    expect(createTransitions().run(a, b, apply)).toBe(false);
+    expect(started).not.toHaveBeenCalled();
+    delete document.documentElement.dataset.motion;
+  });
+});

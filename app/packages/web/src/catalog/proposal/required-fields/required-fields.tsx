@@ -1,9 +1,13 @@
 import type { Control } from "react-hook-form";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { AreaField, ChoiceField, TextField } from "../field-controls/field-controls";
 import type { ProposalFields } from "../../shared/schemas";
 import { DIFFICULTY, GROWTH } from "../../shared/text";
+import table from "./required-fields.de.json";
 
-const LEVELS = [2, 3, 4].map((s): [string, string] => [String(s), `Stufe ${s}`]);
+const t = texts(table);
+
+const LEVELS = [2, 3, 4].map((s): [string, string] => [String(s), `Zone ${s}`]);
 
 function LightFields({ control }: { control: Control<ProposalFields> }) {
   return (
@@ -13,13 +17,15 @@ function LightFields({ control }: { control: Control<ProposalFields> }) {
           control={control}
           name="difficulty"
           label="Schwierigkeit"
+          optional
           emptyLabel="Unbekannt"
           options={Object.entries(DIFFICULTY)}
         />
         <ChoiceField
           control={control}
           name="standardLevel"
-          label="Standard-Stufe (Lichtzone)"
+          label="Standard-Lichtzone"
+          optional
           emptyLabel="Unbekannt"
           options={LEVELS}
         />
@@ -27,7 +33,9 @@ function LightFields({ control }: { control: Control<ProposalFields> }) {
       <TextField
         control={control}
         name="lightDemandLux"
-        label="Lichtbedarf für maximales Wachstum (Lux)"
+        label="Lichtbedarf für maximales Wachstum"
+        optional
+        suffix="lx"
         help="Nur mit Beleg in „Quelle“; leer bleibt der Wert unbekannt."
         type="number"
         inputMode="numeric"
@@ -39,12 +47,13 @@ function LightFields({ control }: { control: Control<ProposalFields> }) {
         control={control}
         name="softLeaf"
         label="Weichblättrige C3-Pflanze (sonnenliebend)"
-        emptyLabel="Nein (Standard)"
+        optional
+        emptyLabel="Unbekannt"
         options={[
           ["no", "Nein"],
           ["yes", "Ja"],
         ]}
-        help="Bei „Ja“ steigt die Art nie automatisch in die stärkere Zone auf; leer gilt „Nein“."
+        help="Bei „Ja“ steigt die Art nie automatisch in die stärkere Zone auf; leer bleibt der Wert unbekannt."
       />
     </>
   );
@@ -83,9 +92,10 @@ export function TextStepFields({ control }: { control: Control<ProposalFields> }
       <AreaField
         control={control}
         name="etiolationSigns"
-        label="Vergeilung-Anzeichen"
+        label="Vergeilungsanzeichen"
         required
         wide
+        help={t("etiolationSigns.hint")}
         rows={2}
         maxLength={1000}
       />
@@ -95,6 +105,7 @@ export function TextStepFields({ control }: { control: Control<ProposalFields> }
         label="Erfolgskriterien"
         required
         wide
+        help={t("successCriteria.hint")}
         rows={2}
         maxLength={1000}
       />

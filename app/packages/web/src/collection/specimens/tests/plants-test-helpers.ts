@@ -32,24 +32,30 @@ export function summaryOf(cards: readonly SpecimenCard[]): SpecimenSummary {
   };
 }
 
-/** Opens the layer of a plant by choosing its tile (US-QS-19); the card with its actions is inside the layer. */
+/**
+ * Opens the layer of a plant by choosing its row (US-QS-19). A row is named by its visible content (US-QS-32): its title
+ * (the plant's own name, its marker where it has one, else its name) and then its meta line. A full name `Species – marker`
+ * opens the row of its marker, and the row name starts with that title.
+ */
 export async function openPlant(name: string): Promise<void> {
+  const title = name.includes(" – ") ? name.slice(name.indexOf(" – ") + " – ".length) : name;
   await userEvent.click(
     await screen.findByRole("button", {
       name: (accessible) =>
-        accessible.startsWith(`${name} `) && !accessible.startsWith(`${name} – `),
+        accessible === title ||
+        (accessible.startsWith(`${title} `) && !accessible.startsWith(`${title} – `)),
     }),
   );
 }
 
 /** The rarer actions sit in the menu "Mehr" of the plant layer (US-QS-23); the others are buttons of a tab. */
-const MENU = new Set(["Eingetopft", "Kennzeichen ändern", "Fangdatum korrigieren", "Archivieren"]);
-const MENU_ITEM: Record<string, string> = {
-  Eingetopft: "Eingetopft",
-  "Kennzeichen ändern": "Kennzeichen",
-  "Fangdatum korrigieren": "Fangdatum",
-  Archivieren: "Archivieren",
-};
+const MENU = new Set([
+  "Umtopfen eintragen",
+  "Eintopfen eintragen",
+  "Kennzeichen ändern",
+  "Fangdatum ändern",
+  "Pflanze archivieren",
+]);
 
 /** Opens a tab of the open plant layer (US-QS-23). */
 export async function openTab(name: string): Promise<void> {
@@ -57,7 +63,7 @@ export async function openTab(name: string): Promise<void> {
 }
 
 /**
- * Finds an action of a plant such as "Archivieren: Bogenhanf": the plant is named after the colon and its layer is
+ * Finds an action of a plant such as "Pflanze archivieren: Bogenhanf": the plant is named after the colon and its layer is
  * opened first. A rare action is a menu item of "Mehr" (opened here), "Lichtzone ändern" is on the tab "Standort", and
  * "Messen" is the primary action of the overview (US-QS-23).
  */
@@ -68,11 +74,10 @@ export async function findCardButton(label: string): Promise<HTMLElement> {
   ];
   if (!screen.queryByRole("tab", { name: "Überblick" })) await openPlant(name);
   if (MENU.has(action)) {
-    const item = MENU_ITEM[action] ?? action;
-    if (!screen.queryByRole("menuitem", { name: item })) {
+    if (!screen.queryByRole("menuitem", { name: action })) {
       await userEvent.click(await screen.findByRole("button", { name: "Mehr" }));
     }
-    return screen.findByRole("menuitem", { name: item });
+    return screen.findByRole("menuitem", { name: action });
   }
   if (action === "Lichtzone ändern") await openTab("Standort");
   return screen.findByRole("button", { name: label });

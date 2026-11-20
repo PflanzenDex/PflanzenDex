@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { AREA_NAMES, InMemoryObjectStore, NO_FEATURES } from "@pflanzendex/core";
+import { AREA_NAMES, InMemoryObjectStore, NO_FEATURES, SPECIMEN_WRITES } from "@pflanzendex/core";
 import { migrate, openFixturePool, openOwnerPool } from "@pflanzendex/db";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -276,6 +276,7 @@ describe("US-KI-07 FR-KI-06 the protocol", () => {
       "list_measurements",
       "list_locations",
       "list_light_zones",
+      ...SPECIMEN_WRITES,
       "describe_rules",
       "check_species_name",
       ...AREA_NAMES,

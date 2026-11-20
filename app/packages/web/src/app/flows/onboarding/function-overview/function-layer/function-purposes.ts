@@ -21,7 +21,7 @@ export const FUNCTION_PURPOSES: Record<UnlockFunctionId, string> = {
   pokedex: "Zeigt, welche Arten du schon hast, und was dir noch fehlt.",
   wishlist: "Merke dir Arten, die du gern hättest.",
   discover: "Schlägt dir Arten aus dem Katalog vor, die du auf die Wunschliste legen kannst.",
-  equipment: "Verwalte deine Ausrüstung und sieh, wann etwas nachgekauft werden sollte.",
+  equipment: "Verwalte deine Geräte und sieh, wann etwas nachgekauft werden sollte.",
   friends: "Lade Freunde ein und sieh, was sie dir freigegeben haben.",
   swapping: "Tausche Pflanzen und Stecklinge mit deinen Freunden.",
   ai_access: "Gib einem KI-Assistenten Zugang, der mit deinen Daten arbeiten darf.",

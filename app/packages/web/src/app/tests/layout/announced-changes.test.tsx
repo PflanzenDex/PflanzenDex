@@ -19,6 +19,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   location: "Regal Süd",
   lightZone: "Zone 3",
   lightZoneSource: "location",
+  lightNeedUnknown: false,
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: null,
@@ -51,15 +52,15 @@ describe("US-QS-10 · a form with errors guides to the fix (3.3.1, 3.3.3, DS-38)
     const alerts = await screen.findAllByRole("alert");
     expect(alerts.length).toBeGreaterThan(1);
     for (const alert of alerts) {
-      // Each message starts with what to do ("Bitte gib …", "Bitte wähle …", "Bitte beschreibe …") and names the field.
-      expect(alert.textContent).toMatch(/^Bitte (gib|wähle|beschreibe|nenne)/);
+      // Each message starts with what to do ("Gib …", "Wähle …", "Beschreibe …") and names the field.
+      expect(alert.textContent).toMatch(/^(Gib|Wähle|Beschreibe|Nenne) /);
       const field = document.getElementById(
         (alert.id ?? "").replace(/-message$/, "-control"),
       ) as HTMLElement | null;
       expect(field?.getAttribute("aria-invalid")).toBe("true");
       expect((field?.getAttribute("aria-describedby") ?? "").split(" ")).toContain(alert.id);
     }
-    expect(alerts[0]?.textContent).toBe("Bitte gib den lateinischen Namen an.");
+    expect(alerts[0]?.textContent).toBe("Gib den lateinischen Namen an.");
   });
 });
 

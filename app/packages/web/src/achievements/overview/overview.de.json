@@ -1,0 +1,5 @@
+{
+  "earned": "Erreicht",
+  "open": "Noch offen",
+  "count": "{earned} von {total}"
+}

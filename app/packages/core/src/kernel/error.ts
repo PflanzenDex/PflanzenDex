@@ -57,6 +57,7 @@ export const ERROR_TEXTS = {
   "measurement.photo_exists":
     "Zu dieser Messung gibt es schon ein Foto. Bestätige, dass es ersetzt werden soll; bis dahin bleibt das alte Foto unverändert.",
   "treatment.not_found": "Diese Behandlung gibt es nicht.",
+  "treatment.not_reopenable": "Nur heute erledigte Behandlungen lassen sich wieder öffnen.",
   "friend.unknown_code":
     "Diesen Freundescode gibt es nicht. Prüfe die Eingabe oder bitte um einen neuen Code.",
   "friend.code_used": "Dieser Freundescode wurde schon benutzt. Bitte um einen neuen Code.",

@@ -2,7 +2,7 @@
 import { cleanup, configure, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The sign-in service is a foreign system: UserManager is replaced, app and modules run for real.
 const mgr = vi.hoisted(() => ({ getUser: vi.fn() }));
@@ -19,6 +19,8 @@ vi.mock("oidc-client-ts", () => ({
     getUser = mgr.getUser;
     removeUser = vi.fn(async () => undefined);
     signinRedirect = vi.fn(async () => undefined);
+    // The sign-in manager of the app wraps this method for the shared renewal (issue 2274, api/renewal.ts).
+    signinSilent = vi.fn(async () => undefined);
     signoutRedirect = vi.fn(async () => undefined);
   },
 }));
@@ -32,6 +34,27 @@ import { NO_CARDS_PAGE, NO_CARDS_SUMMARY } from "../../../collection/specimens/t
 // the catalog search with the wish name; the wish is linked to the specimen it became ("bought → specimen").
 // The way loads its parts on demand (DS-08); on a busy machine (coverage run) a chunk can take longer than one second.
 configure({ asyncUtilTimeout: 5000 });
+
+// The parts of the way are lazy chunks (DS-08): the signed-in shell and its routes, the areas it opens, the wishlist with
+// its bought sheet (a phone sheet, so its own chunk too), the add-plant flow and the catalog. They load first (#444, the
+// pattern of collection-area.test.tsx), so the waits in `open` depend on the data only (issue 2136).
+beforeAll(async () => {
+  await Promise.all([
+    import("@/app/frame/app/signed-in-frame/signed-in-frame"),
+    import("@/app/frame/app/signed-in-frame/app-badge/app-badge"),
+    import("@/app/routes"),
+    import("@/app/destinations/today-area/today-area"),
+    import("@/app/destinations/collection-area/collection-area"),
+    import("@/app/destinations/discover-area/discover-area"),
+    import("@/collection/collection-page/collection-page"),
+    import("@/catalog/species-page/species-page"),
+    import("@/wishlist/wishlist-page/wishlist-page"),
+    import("@/wishlist/actions/actions"),
+    import("@/social/pages/friends-page/friends-page"),
+    import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"),
+    import("@/app/flows/add-plant/add-plant"),
+  ]);
+}, 30_000);
 
 const response = (status: number, body: unknown = {}) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactNode } from "react";
-import { useForm } from "react-hook-form";
 import type { SpeciesHit } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -13,6 +12,7 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
@@ -38,7 +38,7 @@ function Empty(props: { searchText: string; onPropose: () => void }) {
   const text = props.searchText.trim();
   return (
     <EmptyState
-      title={text ? `Keine Art zu „${text}“ gefunden.` : "Der gemeinsame Katalog ist noch leer."}
+      title={text ? `Keine Art zu „${text}“ gefunden` : "Der gemeinsame Katalog ist noch leer"}
       description={
         text
           ? "Prüfe die Schreibweise oder schlage die Art vor. Findest du ohne Suchtext auch nichts, ist der Katalog noch leer."
@@ -52,7 +52,7 @@ function Empty(props: { searchText: string; onPropose: () => void }) {
 function NoMatch(props: { onClear: () => void }) {
   return (
     <EmptyState
-      title="Keine Art passt zu den Filtern."
+      title="Keine Art passt zu den Filtern"
       description="Nimm einen Filter heraus, dann siehst du mehr Arten."
       action={{ label: "Filter zurücksetzen", onClick: props.onClear }}
     />
@@ -60,7 +60,7 @@ function NoMatch(props: { onClear: () => void }) {
 }
 
 function SearchField(props: { searchText: string; onSearch: (text: string) => void }) {
-  const form = useForm<SearchFields>({
+  const form = useFieldForm<SearchFields>({
     resolver: zodResolver(searchSchema),
     defaultValues: { search: props.searchText },
   });

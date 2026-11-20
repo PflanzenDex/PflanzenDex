@@ -264,8 +264,7 @@ test("US-QG-07: the moved check scripts, their libraries and the layout config s
     assert.equal(isGateFile(f), true, f);
   }
   for (const f of [
-    "app/tools/check/docs/check-links.test.mjs",
-    "app/tools/check/code/layout/layout-rules.test.mjs",
+    "app/tools/check/docs/check-links.fixtures.json",
     "app/tools/workflow/claim/claim.mjs",
     "app/tools/workflow/board.mjs",
     "app/tools/dev/repo-stats.mjs",
@@ -307,13 +306,55 @@ test("US-QG-07: the news logic behind the changelog check is a gate file; its ty
   }
 });
 
+// The gate tests are the tests of gate and check code (owner decision 2026-11-16, issue 2222).
+const GATE_TESTS = [
+  ".claude/hooks/rules.test.mjs",
+  ".claude/hooks/worktree.test.mjs",
+  ".claude/hooks/any.selftest.mjs",
+  "app/tools/check/x.test.mjs",
+  "app/tools/check/docs/check-links.test.mjs",
+  "app/tools/check/code/layout/layout-rules.test.mjs",
+  "app/tools/check/code/conformance/check-conformance.selftest.mjs",
+  "app/tools/check/docs/agents/pr/owner-merge-label.test.mjs",
+  "tools/lint/heavy-lock.test.mjs",
+  "app/tools/workflow/merge-pr.test.mjs",
+  "app/tools/workflow/actions/ci-reuse/ci-reuse.test.mjs",
+  "app/tools/workflow/actions/ci-reuse/verdict/quarantine.test.mjs",
+  "app/tools/workflow/actions/ci-reuse/gate-review/gate-review.test.mjs",
+  "app/tools/workflow/actions/ci-reuse/gate-review/gate-direction.test.mjs",
+];
+
+// App tests and the tests of product and process tooling: agents merge them.
+const NO_GATE_TESTS = [
+  "app/tools/keycloak/theme.test.mjs",
+  "app/tools/keycloak/realm.test.mjs",
+  "app/packages/api/src/ai/reads/areas.test.ts",
+  "app/packages/core/src/index.test.ts",
+  "app/packages/web/src/app/destinations/account-area/whats-new/news-lines.test.ts",
+  "app/packages/e2e/support/display/one-screen/judge.test.ts",
+  "app/tools/dev/repo-stats.test.mjs",
+  "app/tools/dev/tests/commitlint.test.mjs",
+  "app/tools/layout-fix/layout-fix.test.mjs",
+  "app/tools/workflow/board.test.mjs",
+  "app/tools/workflow/claim/claim.test.mjs",
+  "app/tools/workflow/worktree/worktree-env.test.mjs",
+  "app/tools/workflow/actions/issue/issue.test.mjs",
+  "app/tools/workflow/actions/deploy/deploy.test.mjs",
+  "app/tools/workflow/merge-pr/other.test.mjs",
+  "tools/repo/pr-ready.test.mjs",
+  "tools/release/data-state-notes.test.mjs",
+];
+
+test("US-QG-07: the gate tests are the tests of gate and check code; app tests and product tooling tests are no gate files", () => {
+  for (const f of GATE_TESTS) assert.equal(isGateFile(f), true, f);
+  for (const f of NO_GATE_TESTS) {
+    assert.equal(isGateFile(f), false, f);
+    assert.equal(asksBeforeEdit(f), false, f);
+  }
+});
+
 test("US-QG-07: a gate test stays a gate file for make merge but asks no question in the hook; the code it tests still asks", () => {
-  for (const f of [
-    ".claude/hooks/rules.test.mjs",
-    ".claude/hooks/worktree.test.mjs",
-    ".claude/hooks/any.selftest.mjs",
-    "app/tools/workflow/merge-pr.test.mjs",
-  ]) {
+  for (const f of GATE_TESTS) {
     assert.equal(isGateFile(f), true, f);
     assert.equal(asksBeforeEdit(f), false, f);
   }

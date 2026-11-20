@@ -35,6 +35,7 @@ const entry = (
   activeSpecimens: 2,
   wateringHint: "Alle zwei Wochen gießen",
   deviates,
+  lightNeedUnknown: false,
   mergedInto: null,
   notice: null,
   profile: {
@@ -129,6 +130,18 @@ describe("US-BES-09 client of the care profile API", () => {
 });
 
 describe("US-BES-09 the care profile page shows the catalog value and my deviation side by side", () => {
+  it("US-LIC-01 · P-09 an unknown lux need names Lichtbedarf eintragen, which moves the focus to the zone choice", async () => {
+    fakeServer({ entries: [{ ...entry({ lightZone: none() }), lightNeedUnknown: true }] });
+    open();
+    await screen.findByRole("heading", { name: "Bogenhanf" });
+    // The zone choice is on the second page of the card (US-BES-09).
+    await next();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Lichtbedarf eintragen für „Bogenhanf“" }),
+    );
+    expect(document.activeElement).toBe(screen.getByLabelText("Lichtzone für „Bogenhanf“"));
+  });
+
   it("US-BES-09 shows per species the catalog values and what I can deviate in, and says it is private", async () => {
     fakeServer({ entries: [entry()] });
     open();
@@ -303,6 +316,44 @@ describe("US-BES-09 change my deviation", () => {
     await userEvent.click(screen.getByRole("button", { name: "Speichern: Bogenhanf" }));
     await screen.findByText(SAVED);
     expect(sent(fetchFn)).toEqual([{ dormancyFrom: "10-15", dormancyUntil: "02-28" }]);
+  });
+
+  it("US-QS-32 the rest period is one group Ruhephase with two pickers, von and bis (SG-CTRL-03)", async () => {
+    fakeServer({ entries: [entry()] });
+    open();
+    await next(2);
+    const rest = await screen.findByRole("group", { name: "Ruhephase" });
+    expect(within(rest).getByRole("group", { name: "von" })).toBeTruthy();
+    expect(within(rest).getByRole("group", { name: "bis" })).toBeTruthy();
+  });
+
+  it("US-QS-32 February offers 29 days and April 30; a day past the end of a shorter month moves to its last day", async () => {
+    fakeServer({ entries: [entry()] });
+    open();
+    await next(2);
+    const month = await screen.findByLabelText("Ruhephase von (Monat) für „Bogenhanf“");
+    const day = screen.getByLabelText("Ruhephase von (Tag) für „Bogenhanf“") as HTMLSelectElement;
+    await userEvent.selectOptions(day, "31");
+    expect(within(day).getAllByRole("option")).toHaveLength(32);
+    await userEvent.selectOptions(month, "2");
+    expect(within(day).getAllByRole("option")).toHaveLength(30);
+    expect(day.value).toBe("29");
+    await userEvent.selectOptions(month, "4");
+    expect(within(day).getAllByRole("option")).toHaveLength(31);
+    expect(day.value).toBe("29");
+  });
+
+  it("US-QS-32 no visible label of the care profile repeats the species; the accessible names keep it", async () => {
+    fakeServer({ entries: [entry()] });
+    open();
+    await next(2);
+    await screen.findByRole("group", { name: "Ruhephase" });
+    const visible = Array.from(document.querySelectorAll("label, legend")).map(
+      (el) => el.textContent ?? "",
+    );
+    expect(visible.length).toBeGreaterThan(0);
+    expect(visible.filter((text) => text.includes("für „"))).toEqual([]);
+    expect(screen.getByLabelText("Ruhephase bis (Monat) für „Bogenhanf“")).toBeTruthy();
   });
 
   it("US-BES-09 half a dormancy period is not sent: the page says what is missing", async () => {

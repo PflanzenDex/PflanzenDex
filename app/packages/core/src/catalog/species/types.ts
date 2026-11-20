@@ -39,8 +39,11 @@ export interface SpeciesValues {
   readonly difficulty: number | null;
   readonly standardLevel: number | null;
   readonly lightDemandLux: number | null;
-  /** C3 plant with a soft leaf ("sun-loving"): the zone derivation never promotes it automatically (US-LIC-01). */
-  readonly softLeaf: boolean;
+  /**
+   * C3 plant with a soft leaf ("sun-loving"): the zone derivation never promotes it automatically (US-LIC-01).
+   * `null` = unknown (DM-BES-01, P-08); the soft-leaf rule does not apply then.
+   */
+  readonly softLeaf: boolean | null;
   /** Month-day `MM-DD`; both or none. */
   readonly dormancyFrom: string | null;
   readonly dormancyUntil: string | null;

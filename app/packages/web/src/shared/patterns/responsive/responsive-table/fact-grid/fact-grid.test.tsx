@@ -29,6 +29,21 @@ describe("US-QS-24 FactGrid", () => {
     expect(screen.queryByText("unbekannt")).toBeNull();
   });
 
+  it("US-QS-32 F-0228 the value breaks only inside a word longer than the column, never break-all", () => {
+    const { container } = render(
+      <FactGrid facts={[{ label: "Modell", value: "Hersteller-Modell-X" }]} />,
+    );
+    const dl = container.querySelector("dl") as HTMLElement;
+    // The list keeps `anywhere` (it lowers the min-content of the auto label column, issue 1019); the value cell breaks
+    // only inside a word longer than the column.
+    expect(dl.className.split(" ")).toContain("[overflow-wrap:anywhere]");
+    expect(dl.className.split(" ")).toContain("grid-cols-1");
+    const value = dl.querySelector("dd") as HTMLElement;
+    expect(value.className.split(" ")).toContain("[overflow-wrap:break-word]");
+    expect(value.className).not.toContain("break-all");
+    expect(dl.className).not.toContain("break-all");
+  });
+
   it("US-QS-24 folds the unknown facts into one line with the count and the German plural", () => {
     render(<FactGrid facts={facts} />);
     expect(screen.getByText("2 Angaben fehlen")).toBeTruthy();
@@ -45,7 +60,7 @@ describe("US-QS-24 FactGrid", () => {
       />,
     );
     expect(screen.getByText("1 Angabe fehlt")).toBeTruthy();
-    expect(missingText(12)).toBe("12 Angaben fehlen");
+    expect(missingText(12)).toBe("12\u00a0Angaben fehlen");
   });
 
   it("US-QS-24 the names of the missing facts open behind the count", () => {
@@ -57,10 +72,24 @@ describe("US-QS-24 FactGrid", () => {
   it("US-QS-24 the summary says what it opens to a screen reader and has the token focus ring", () => {
     const { container } = render(<FactGrid facts={facts} />);
     const summary = container.querySelector("summary") as HTMLElement;
-    expect(summary.textContent).toBe("2 Angaben fehlen (Namen anzeigen)");
+    expect(summary.textContent).toBe("2\u00a0Angaben fehlen (Namen anzeigen)");
     expect(summary.className).toContain("focus-visible:ring-2");
     expect(summary.className).toContain("focus-visible:ring-ring");
     expect(summary.className).toContain("focus-visible:ring-offset-background");
+  });
+
+  it("US-QS-32 · SG-ICON-01 the fold's summary keeps 8 px between its text and its chevron (gap-2)", () => {
+    const { container } = render(<FactGrid facts={facts} />);
+    const tokens = (container.querySelector("summary")?.getAttribute("class") ?? "").split(" ");
+    expect(tokens).toContain("inline-flex");
+    expect(tokens).toContain("gap-2");
+  });
+
+  it("US-QS-32 · SG-TOUCH-01 the fold line keeps 8 px between its wrapped parts (gap-y-2, DS-16)", () => {
+    const { container } = render(<FactGrid facts={facts} />);
+    const fold = container.querySelector("summary")?.closest("div.flex") as HTMLElement;
+    expect(fold.className.split(" ")).toContain("gap-y-2");
+    expect(fold.className.split(" ")).not.toContain("gap-y-1");
   });
 
   it("US-QS-24 the next step is the action of the caller and it fires", async () => {
@@ -69,7 +98,7 @@ describe("US-QS-24 FactGrid", () => {
       <FactGrid
         facts={facts}
         next={
-          <Button type="button" variant="outline" onClick={onNext}>
+          <Button type="button" variant="tinted" onClick={onNext}>
             Ergänzen
           </Button>
         }

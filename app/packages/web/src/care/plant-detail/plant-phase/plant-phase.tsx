@@ -1,8 +1,11 @@
 import { useCallback } from "react";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
+import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { careProfileLayerId } from "../../../collection";
 import { LoadFrame, useInvalidate, useQueryClient } from "../../../shared/data";
 import { sharedLocations } from "../../../light";
 import { loadCarePhases } from "../../shared/api/care-phases-api";
+import { PHASE_TEXT } from "../../shared/text";
 import { Entry } from "../../phases/phases-list/entry/entry";
 import { switchedText } from "../../phases/phase-groups";
 import { usePhaseSwitch } from "../../phases/use-phase-switch";
@@ -21,7 +24,7 @@ const Loading = ({ text }: { text: string }) => (
 
 type Phase = { row: PhasesRow | null; locations: readonly LightLocation[] };
 
-/** The care phase of this plant with "Jetzt umgestellt" (US-PHA-01, US-PHA-03); an unknown phase says so (P-08). */
+/** The care phase of this plant with "Umstellen" (US-PHA-01, US-PHA-03); an unknown phase says so (P-08). */
 export function PhaseOfPlant(props: { api: string; token: Token; specimenId: string }) {
   const { api, token, specimenId } = props;
   const again = useInvalidate(["care", "phases"]);
@@ -41,8 +44,10 @@ export function PhaseOfPlant(props: { api: string; token: Token; specimenId: str
     <>
       {move.message ? <StatusNote>{move.message}</StatusNote> : null}
       {move.error ? <RefusalAlert error={move.error} /> : null}
+      {/* Its own key below the prefix of the grouping's key: the grouping reads the list of rows under ["care", "phases"],
+          this part one row; a shared key handed the grouping the wrong shape (US-PHA-01). The prefix still refreshes both. */}
       <LoadFrame
-        queryKey={["care", "phases"]}
+        queryKey={["care", "phases", "plant", specimenId]}
         token={token}
         load={load}
         loadingText={ui("loading")}
@@ -50,17 +55,28 @@ export function PhaseOfPlant(props: { api: string; token: Token; specimenId: str
       >
         {(data: Phase) =>
           data.row ? (
-            <Entry
-              bare
-              row={data.row}
-              locations={data.locations}
-              busy={move.running}
-              onConfirm={(ids) =>
-                void move.confirm(ids, switchedText([data.row as PhasesRow], data.locations))
-              }
-            />
+            <div className="flex flex-col gap-2">
+              {/* The phase of today is named here: the plant's own row has no section label that would say it. */}
+              <p className="m-0 text-sm font-semibold">
+                {ui("today", { phase: PHASE_TEXT[data.row.phase] })}
+              </p>
+              <Entry
+                bare
+                opens={false}
+                row={data.row}
+                locations={data.locations}
+                busy={move.running}
+                onConfirm={(ids) =>
+                  void move.confirm(ids, switchedText([data.row as PhasesRow], data.locations))
+                }
+              />
+            </div>
           ) : (
-            <p className="text-sm text-muted-foreground">{ui("unknown")}</p>
+            <div className="flex flex-col items-start gap-1">
+              <p className="m-0 text-sm text-muted-foreground">{ui("unknown")}</p>
+              {/* The layer of the own care profile, as the Pflegeprofil part opens it (US-QS-32). */}
+              <LayerOpener id={careProfileLayerId(specimenId)}>{ui("enterDormancy")}</LayerOpener>
+            </div>
           )
         }
       </LoadFrame>

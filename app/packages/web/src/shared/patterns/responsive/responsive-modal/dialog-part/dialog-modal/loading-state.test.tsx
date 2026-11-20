@@ -3,6 +3,7 @@ import * as React from "react";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { captureExpectedErrors } from "@/shared/testing/test-setup/expected-errors";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
 import { DialogPart } from "../dialog-part";
@@ -55,6 +56,7 @@ afterEach(() => {
   chunk.hold = null;
   chunk.fail = false;
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe("NFR-12 · DS-08 a first open says that the window is loading", () => {
@@ -405,6 +407,7 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     const ResponsiveModal = await freshResponsiveModal();
     setViewportWidth(1024);
     chunk.fail = true;
+    const errors = captureExpectedErrors("Failed to fetch dynamically imported module");
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
         <button>Speichern</button>
@@ -416,6 +419,7 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     expect(alert.textContent).not.toContain("Failed to fetch");
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Schließen" })).toBeTruthy();
+    errors.expectBoundaryLogged();
     const failedAttempts = chunk.attempts;
     chunk.fail = false;
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
@@ -428,6 +432,7 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     const ResponsiveModal = await freshResponsiveModal();
     setViewportWidth(360);
     chunk.fail = true;
+    const errors = captureExpectedErrors("Failed to fetch dynamically imported module");
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
         <button>Speichern</button>
@@ -439,6 +444,7 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     expect(alert.textContent).not.toContain("Failed to fetch");
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Schließen" })).toBeTruthy();
+    errors.expectBoundaryLogged();
     const failedAttempts = chunk.attempts;
     chunk.fail = false;
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
@@ -451,6 +457,7 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     const ResponsiveModal = await freshResponsiveModal();
     setViewportWidth(360);
     chunk.fail = true;
+    const errors = captureExpectedErrors("Failed to fetch dynamically imported module");
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
         <button>Speichern</button>
@@ -458,6 +465,7 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     );
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
     const cls = (await screen.findByRole("alert")).className;
+    errors.expectBoundaryLogged();
     for (const token of [
       "fixed",
       "left-1/2",

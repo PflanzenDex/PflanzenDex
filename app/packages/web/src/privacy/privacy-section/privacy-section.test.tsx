@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PrivacySection } from "./privacy-section";
 
 beforeAll(() => {
@@ -81,10 +82,13 @@ afterEach(() => {
   saved.mockClear();
 });
 
+// The section sits in the frame of the account area (US-QS-15), so a layer opens in its pane.
 const show = () =>
   render(
     <MemoryRouter>
-      <PrivacySection api="http://api" token={token} />
+      <LayerHost>
+        <PrivacySection api="http://api" token={token} />
+      </LayerHost>
     </MemoryRouter>,
   );
 const exportRow = () => screen.findByRole("button", { name: /^Meine Daten herunterladen/ });
@@ -107,6 +111,50 @@ describe("US-QS-17 Meine Daten as two rows", () => {
     expect(grid.parentElement?.className.split(" ")).toContain("@container");
     expect(grid.className.split(" ")).toContain("@lg:grid-cols-2");
     expect(grid.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+  });
+});
+
+describe("US-QS-32 · SG-BTN-03 the deletion is a red plain button below the export", () => {
+  it("US-QS-32 · SG-BTN-03 the delete control of Meine Daten reads 'Konto löschen' without '?', is red and follows the export row", async () => {
+    fakeServer();
+    show();
+    const remove = await deleteRow();
+    expect(remove.textContent).toBe("Konto löschen");
+    // The opener of the deletion layer: Back returns the focus here when the page remounts (issue 1363).
+    expect(remove.id).toBe("delete-opener");
+    expect(remove.className.split(/\s+/)).toContain("text-destructive");
+    expect(remove.className.split(/\s+/).some((c) => /^bg-/.test(c))).toBe(false);
+    const exportButton = await exportRow();
+    expect(
+      exportButton.compareDocumentPosition(remove) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+  });
+});
+
+describe("US-QS-32 · P-08 a failed read of the deletion state", () => {
+  it("US-QS-32 the row says Nicht geladen with its retry instead of unbekannt, and the retry reads the state again", async () => {
+    fakeServer();
+    let reads = 0;
+    const real = vi.mocked(fetch).getMockImplementation();
+    if (!real) throw new Error("fetch is not stubbed");
+    vi.mocked(fetch).mockImplementation(async (url, init) => {
+      if (
+        new URL(String(url)).pathname === "/account/deletion" &&
+        (init?.method ?? "GET") === "GET"
+      ) {
+        reads += 1;
+        if (reads === 1)
+          return json(500, { error: { code: "system.database_unavailable", text: "x" } });
+      }
+      return real(url, init);
+    });
+    show();
+    const remove = await deleteRow();
+    expect(await screen.findByText("Nicht geladen")).toBeTruthy();
+    expect(remove.parentElement?.textContent).not.toContain("unbekannt");
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen: Konto löschen" }));
+    expect(await screen.findByText("Noch nichts vorgemerkt")).toBeTruthy();
+    expect(reads).toBe(2);
   });
 });
 

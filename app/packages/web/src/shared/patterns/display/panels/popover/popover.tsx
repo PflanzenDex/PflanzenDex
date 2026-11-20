@@ -18,20 +18,22 @@ export type PopoverProps = {
  * into the panel on open; Escape, a press outside or tabbing out closes it, and Escape returns focus to the trigger.
  * Not for essential content or tooltips (QG-U5: no hover-only information): the panel opens on click and key only.
  * It sits below the trigger and does not flip at the viewport edge; keep it short.
+ *
+ * US-QS-32 (F-0209, F-0356): the panel is moved sideways to stay 16 px inside both window edges and is at most 100vw minus
+ * 32 px wide; Escape and a press outside close the popover only, not a dialog, sheet or layer pane around it (`usePopup`).
  */
 export function Popover(props: PopoverProps) {
-  const { open, setOpen, rootRef, triggerRef } = usePopup();
+  const { open, setOpen, rootRef, triggerRef, panelRef } = usePopup();
   const id = React.useId();
-  const panelRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     if (open) panelRef.current?.focus();
-  }, [open]);
+  }, [open, panelRef]);
   return (
     <div ref={rootRef} className={cn("relative inline-block", props.className)}>
       <Button
         ref={triggerRef}
         type="button"
-        variant="outline"
+        variant="tinted"
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-controls={open ? id : undefined}

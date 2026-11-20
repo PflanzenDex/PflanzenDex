@@ -6,14 +6,16 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../../shared/data";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RemindersSection } from "../../reminders-section/reminders-section";
+import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "../../monitoring.de.json";
 import { SettingsFormSkeleton } from "./settings-form.skeleton";
 
 beforeAll(() => {
   // jsdom has no matchMedia; a wide screen shows the layers as panes (US-QS-15), so the footers are in the page.
+  // A fine pointer keeps the typed date field (US-QS-32): only the width answers true.
   window.matchMedia = ((query: string) => ({
-    matches: true,
+    matches: !/pointer:\s*coarse/.test(query),
     media: query,
     addEventListener: () => undefined,
     removeEventListener: () => undefined,
@@ -52,12 +54,14 @@ function fakeServer(saved: unknown = SAVED) {
   return puts;
 }
 
-/** The section with one layer open by its address (`?sheet=`), as a link or a Back would open it. */
+/** The section with one layer open by its address (`?sheet=`), as a link or a Back would open it, in the account frame (US-QS-15). */
 const show = (at: string) =>
   render(
     <QueryClientProvider client={createQueryClient()}>
       <MemoryRouter initialEntries={[at]}>
-        <RemindersSection api="http://api" token={token} />
+        <LayerHost>
+          <RemindersSection api="http://api" token={token} />
+        </LayerHost>
       </MemoryRouter>
     </QueryClientProvider>,
   );

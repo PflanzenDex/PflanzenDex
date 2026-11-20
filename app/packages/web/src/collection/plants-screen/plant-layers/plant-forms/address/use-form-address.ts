@@ -1,5 +1,8 @@
 import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router";
+import { BELOW, belowOf } from "@/shared/patterns/responsive/layer-sheet/use-layer";
+import { quietFrom } from "@/shared/platform/routing/route-focus/quiet-steps";
+import { walkOverGuard } from "@/shared/patterns/responsive/layer-sheet/use-layer.history";
 import {
   FORM_PARAM,
   FROM_APP,
@@ -7,12 +10,32 @@ import {
   PLANT_PARAM,
   SHEET_PARAM,
   formOf,
-  guardState,
+  listSearch,
   stateFlag,
   type FormAddress,
   type FormKind,
 } from "./form-address";
-import { useLatest, useOrdering, usePopGuard, type Latest, type Refs } from "./use-form-history";
+import {
+  isHeldForm,
+  pushGuard,
+  useKeepNamed,
+  useLatest,
+  useOrdering,
+  usePopGuard,
+  type Latest,
+  type Refs,
+} from "./use-form-history";
+
+/**
+ * Closes the form from the guard entry above it (US-QS-15, issue 2158): the guard becomes a plain entry of the list the form
+ * closes to, and the step back reaches that list over the form's own entry (`walkOverGuard`). The guard is read from
+ * `refs.guarded` by the caller, since the router may not show the guard entry yet.
+ */
+function closeOverGuard(c: Latest, refs: Refs): void {
+  const { pathname, hash, search } = c.location;
+  const below = refs.named.current?.below ?? { pathname, search: listSearch(search) };
+  walkOverGuard(c.navigate, { ...below, hash });
+}
 
 /** The handlers that close a form, and the question "Eingabe verwerfen?" (US-QS-15). */
 function useCloseActions(
@@ -24,11 +47,19 @@ function useCloseActions(
   const closeNow = useCallback(
     (text?: string) => {
       const c = latest.current;
+      // Read before the refs are cleared: the guard entry is on the history at once, while the latest render may not show it
+      // yet (issue 2158).
+      const overGuard = refs.guarded.current;
       refs.dirty.current = false;
       refs.guarded.current = false;
       setAsking(false);
       if (text !== undefined) setNotice(text);
-      if (!c.current) return;
+      // A held form is on screen too (issue 2145): its close walks back from its entry, as a shown form (issue 2154).
+      if (!c.current && !c.held) return;
+      if (overGuard) {
+        closeOverGuard(c, refs);
+        return;
+      }
       refs.leaving.current = true;
       void c.navigate(-1);
     },
@@ -64,9 +95,13 @@ function useFormInput(
       setNotice(null);
       // A form opened from a layer replaces that layer's entry, so its close is one step back to the list.
       const replaces = new URLSearchParams(c.location.search).has(SHEET_PARAM);
+      // The entry below the form is the list, or, when the form replaces a layer, the entry below that layer (issue 2145).
+      const below = replaces
+        ? belowOf(c.location.state)
+        : { pathname: c.location.pathname, search: c.location.search };
       void c.navigate(
         { pathname: c.location.pathname, search: `?${next}`, hash: c.location.hash },
-        { replace: replaces, state: { [FROM_APP]: true } },
+        { replace: replaces, state: { [FROM_APP]: true, [BELOW]: below } },
       );
     },
     [latest, setNotice],
@@ -77,15 +112,19 @@ function useFormInput(
     refs.dirty.current = true;
     if (refs.guarded.current) return;
     refs.guarded.current = true;
-    const { pathname, hash, search } = c.location;
-    void c.navigate({ pathname, search, hash }, { state: guardState(c.location.state) });
+    pushGuard(c, refs);
   }, [latest, refs]);
   const settle = useCallback(() => {
     if (!refs.dirty.current) return;
     refs.dirty.current = false;
     if (!refs.guarded.current) return;
     refs.guarded.current = false;
-    void latest.current.navigate(-1);
+    // Two steps back, over the guard entry and the form's own entry, to the entry below the form: `usePopGuard` pushes the
+    // form again there, so no guard entry stays ahead of it (issue 2165). A plain step back would leave the guard ahead.
+    refs.settling.current = true;
+    // The focus stays where the save left it: the steps of the settle are the app's, not the person's (issue 2165).
+    quietFrom(latest.current.location.key);
+    void latest.current.navigate(-2);
   }, [latest, refs]);
   return { open, typed, settle };
 }
@@ -103,13 +142,21 @@ export function useFormAddress(enabled: boolean): FormAddress {
     dirty: { current: false },
     guarded: { current: false },
     leaving: { current: false },
+    named: { current: null },
+    settling: { current: false },
   }));
-  const latest = useLatest({ location, current, navigate, type });
+  // A Back that passes the form with unsaved input holds it on screen until its question is answered (issue 2145).
+  const landed = { pathname: location.pathname, search: location.search };
+  const held = isHeldForm({ enabled, current, type, state: location.state, landed, refs });
+  // The form the render shows: the one the address names, or the one a held render keeps.
+  const shown = current ?? (held ? refs.named.current : null);
+  const latest = useLatest({ location, current, held, navigate, type });
+  useKeepNamed(refs, location, current);
   useOrdering(latest, fromApp, location.key, current !== null);
   usePopGuard(latest, refs, setAsking, location.key);
   return {
-    kind: current?.kind ?? null,
-    plantId: current?.plantId ?? null,
+    kind: shown?.kind ?? null,
+    plantId: shown?.plantId ?? null,
     ...useFormInput(latest, refs, setNotice),
     ...useCloseActions(latest, refs, setAsking, setNotice),
     asking,

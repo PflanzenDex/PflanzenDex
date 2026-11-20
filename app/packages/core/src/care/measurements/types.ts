@@ -81,7 +81,7 @@ export interface MeasurementStore {
   create(userId: string, values: MeasurementValues): Promise<MeasurementRow | "specimen_unknown">;
 }
 
-/** The "Measure" view of a specimen (US-WAC-01). Rate and trend follow with US-WAC-03. */
+/** The "Measure" view of a specimen (US-WAC-01); rate and trend are derived in `growth` (US-WAC-03, US-WAC-04). */
 export interface MeasurementView {
   readonly specimenId: string;
   /** Plant or cutting (FR-WAC-05): cuttings are measured too and are marked as such. */

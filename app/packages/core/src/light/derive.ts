@@ -10,9 +10,20 @@ export interface DerivationInput {
   readonly lightDemandLux: number | null;
   /** Default level 2–4 of the preset (catalog); `null` = unknown (P-08). */
   readonly standardLevel: number | null;
-  /** C3 plant with a soft leaf ("sun-loving"): is not promoted automatically. */
-  readonly softLeaf: boolean;
+  /**
+   * C3 plant with a soft leaf ("sun-loving"): is not promoted automatically. `null` = unknown (DM-BES-01, P-08): the
+   * rule does not apply, exactly as for `false`.
+   */
+  readonly softLeaf: boolean | null;
 }
+
+/**
+ * The light need of a species is unknown without its lux need or its default level (US-LIC-01, P-08). Then the zone
+ * is "unknown" and the next step is "Lichtbedarf eintragen" wherever the zone is shown.
+ */
+export const lightNeedUnknown = (
+  input: Pick<DerivationInput, "lightDemandLux" | "standardLevel">,
+): boolean => input.lightDemandLux === null || input.standardLevel === null;
 
 export type DerivationReason =
   "standard" | "promoted" | "need_to_low_for_higher_zone" | "soft_leaf" | "top_zone";
@@ -65,7 +76,7 @@ function nextStep(
   current: LightZone,
   next: LightZone,
 ): "promoted" | "soft_leaf" | "need_to_low_for_higher_zone" {
-  if (input.softLeaf) return "soft_leaf";
+  if (input.softLeaf === true) return "soft_leaf";
   const fits =
     reached(need, current.luxCeiling, PROMOTE_FROM) && reached(need, next.luxCeiling, GAP_MAX);
   return fits ? "promoted" : "need_to_low_for_higher_zone";

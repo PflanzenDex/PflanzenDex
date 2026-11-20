@@ -10,10 +10,15 @@ type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-ex
 let pool: Pool;
 let admin: Pool;
 let app: ReturnType<typeof createApp>;
-const tag = randomUUID()
-  .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
-  .replace(/-/g, "")
-  .slice(0, 10);
+// #2193: no "n" and no "r" in the alphabet, so a tag never spells an account label ("anna", "bernd").
+const DIGIT_LETTERS = "ghijklmqst";
+/** The fixture tag of a UUID: ten characters, each one the image of one hex digit (#2193). */
+const tagOf = (uuid: string) =>
+  uuid
+    .replace(/[0-9]/g, (z) => DIGIT_LETTERS[Number(z)] ?? "x")
+    .replace(/-/g, "")
+    .slice(0, 10);
+const tag = tagOf(randomUUID());
 const subA = `ki11-${randomUUID()}`;
 const subB = `ki11-${randomUUID()}`;
 const CLIENT = "https://claude.ai/oauth/mcp-oauth-client-metadata";
@@ -272,6 +277,9 @@ describe("US-KI-11 tenant isolation per tool (P-04, FR-KI-23)", () => {
     const byName = await tool(subB, "get_species", { species: `Kiread${tag}anna vera` });
     expect(byName.body["error"].code).toBe("species.not_found");
     expect(JSON.stringify(byName.body)).not.toContain("anna");
+    // No id of A's species among the nearest names (#2193).
+    const nearest = byName.body["error"].data["nearest"] as string[];
+    expect(JSON.stringify(nearest)).not.toContain(A.species["id"]);
   });
 
   it("US-KI-11 list_specimens, get_specimen, list_measurements: none of A's rows; A's ids are not_found", async () => {
@@ -288,14 +296,39 @@ describe("US-KI-11 tenant isolation per tool (P-04, FR-KI-23)", () => {
   });
 
   it("US-KI-11 list_locations, list_light_zones and name resolution: none of A's names", async () => {
+    const place = await tool(subB, "list_specimens", { timeZone: TZ, location: "Regal anna" });
+    const zone = await tool(subB, "list_specimens", { timeZone: TZ, lightZone: "Hell anna" });
     const text = JSON.stringify([
       await tool(subB, "list_locations"),
       await tool(subB, "list_light_zones"),
-      await tool(subB, "list_specimens", { timeZone: TZ, location: "Regal anna" }),
-      await tool(subB, "list_specimens", { timeZone: TZ, lightZone: "Hell anna" }),
+      place,
+      zone,
     ]);
     expect(text).not.toContain("anna");
     expect(text).toContain("Regal bernd");
+    // The refusals name as nearest only B's own locations and zones, never A's (#2193).
+    const namesOf = async (sub: string, name: string) =>
+      ((await tool(sub, name)).body["items"] as Json[]).map((i) => i["name"] as string);
+    const [bPlaces, bZones, aPlaces, aZones] = await Promise.all([
+      namesOf(subB, "list_locations"),
+      namesOf(subB, "list_light_zones"),
+      namesOf(subA, "list_locations"),
+      namesOf(subA, "list_light_zones"),
+    ]);
+    expect(place.body["error"]).toMatchObject({ code: "location.not_found" });
+    expect(zone.body["error"]).toMatchObject({ code: "light_zone.not_found" });
+    const placeNearest = place.body["error"]["data"]["nearest"] as string[];
+    const zoneNearest = zone.body["error"]["data"]["nearest"] as string[];
+    expect(placeNearest.length).toBeGreaterThan(0);
+    expect(zoneNearest.length).toBeGreaterThan(0);
+    for (const name of placeNearest) {
+      expect(bPlaces).toContain(name);
+      expect(aPlaces).not.toContain(name);
+    }
+    for (const name of zoneNearest) {
+      expect(bZones).toContain(name);
+      expect(aZones).not.toContain(name);
+    }
   });
 });
 
@@ -343,5 +376,18 @@ describe("FR-BES-24 the AI search says when its list is cut", () => {
     const r = await tool(subA, "get_species", { species: `Zz${tag}` });
     expect(r.error).toBe(false);
     expect(r.body["species"]).toMatchObject({ id: targetId, latinName: `Zz${tag}` });
+  });
+});
+
+// #2193: the fixture tag must never spell an account label; the guard of areas.test.ts for this file's tag.
+describe("US-KI-11 the fixture tag (#2193)", () => {
+  it("US-KI-11 the fixture tag can never spell an account label (#2193)", () => {
+    // The tag's letters are the digit letters and the hex letters a-f. A label with a letter outside them cannot occur.
+    const alphabet = new Set(DIGIT_LETTERS + "abcdef");
+    for (const label of ["anna", "bernd"])
+      expect(
+        [...label].some((letter) => !alphabet.has(letter)),
+        `"${label}" cannot occur: one of its letters is outside the tag alphabet`,
+      ).toBe(true);
   });
 });

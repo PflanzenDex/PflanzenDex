@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { FIRST_PLANT_GUIDE, UNLOCK_FUNCTIONS, type OnboardingCounts } from "@pflanzendex/core";
 import { useUnlocks } from "../../unlock";
+import type { ApiError } from "../../../../shared/data";
 import { loadHints, saveHint, type HintState } from "./hint/hint-api";
+import { HintNote } from "./hint";
 
 type Token = () => Promise<string | undefined>;
 
@@ -32,11 +34,15 @@ export function useHints(api: string, token: Token, counts: OnboardingCounts | u
   useEffect(() => {
     if (key === null) return;
     let current = true;
-    void (async () => {
+    // A token that cannot be read or a request that throws ends as "failed" too (P-10): the state never stays null, because
+    // the intro holds the tasks while it is null (issue 2230).
+    const answer = (async () => {
       const t = await token();
-      const r = t ? await loadHints(api, t, key ? key.split(",") : []) : null;
+      return t ? loadHints(api, t, key ? key.split(",") : []) : null;
+    })().catch(() => null);
+    void answer.then((r) => {
       if (current) setState(r?.ok ? r.value : "failed");
-    })();
+    });
     return () => {
       current = false;
     };
@@ -44,18 +50,45 @@ export function useHints(api: string, token: Token, counts: OnboardingCounts | u
   return [state, setState] as const;
 }
 
-/** Leaving the guide (finished, skipped or ended) is stored per account: switching tabs or devices must not bring it back. */
+/** Without a token the end cannot be sent; the keeper is asked to sign in again (P-10). */
+const NOT_SIGNED_IN: ApiError = { code: "access.not_signed_in", text: "" };
+
+/**
+ * Leaving the guide (finished, skipped or ended) is stored per account: switching tabs or devices must not bring it back.
+ * An end that is not stored is not dropped (P-10): `failed` keeps its refusal until `retry` stores the end (issue 1803).
+ */
 export function useGuideEnd(api: string, token: Token, hints: HintState | "failed" | null) {
   const [endedHere, setEndedHere] = useState(false);
-  const leave = () => {
-    setEndedHere(true);
-    void (async () => {
-      const t = await token();
-      if (t) await saveHint(api, t, FIRST_PLANT_GUIDE, "dismissed");
-    })();
+  const [failed, setFailed] = useState<ApiError | null>(null);
+  const store = async () => {
+    const t = await token();
+    const r = t ? await saveHint(api, t, FIRST_PLANT_GUIDE, "dismissed") : null;
+    setFailed(r === null ? NOT_SIGNED_IN : r.ok ? null : r.error);
   };
-  return [
-    endedHere || (typeof hints === "object" && hints !== null && hints.guideEnded),
-    leave,
-  ] as const;
+  return {
+    ended: endedHere || (typeof hints === "object" && hints !== null && hints.guideEnded),
+    failed,
+    leave: () => {
+      setEndedHere(true);
+      void store();
+    },
+    retry: () => void store(),
+  };
+}
+
+/** The code of a due note is in hand before Heute shows (issue 2230): a lazy note would arrive after the tasks. */
+export function useNoteCode(note: "first_plant_saved" | "function_unlocked" | null): boolean {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (note === null) return;
+    let alive = true;
+    const done = () => {
+      if (alive) setReady(true);
+    };
+    void HintNote.load().then(done, done);
+    return () => {
+      alive = false;
+    };
+  }, [note]);
+  return note === null || ready || HintNote.loaded() !== null;
 }

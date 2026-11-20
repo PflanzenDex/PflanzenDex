@@ -1,9 +1,30 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from "react-router";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import type { SharedSpecimen } from "@pflanzendex/core";
+import { createQueryClient } from "../../../shared/data";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { collectionTitle, FriendCollectionPage } from "./friend-collection";
+import table from "../../social.de.json";
+
+/**
+ * The word of each whitelisted field the friend's collection cards show (QG-D2, P-05). A new field in `SharedSpecimen`
+ * fails the type check here until it is decided: the repot day stays out, the cards do not show it (it reaches friends as
+ * the feed event "Eingetopft", US-SOZ-05).
+ */
+const COLLECTION_WORDS: Record<
+  Exclude<keyof SharedSpecimen, "id" | "photoShared" | "repottedAt">,
+  string
+> = {
+  speciesLatin: "Art",
+  speciesGerman: "Art",
+  name: "Name",
+  caughtAt: "Fangdatum",
+  isCutting: "Stecklinge",
+};
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -50,6 +71,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("US-QS-32 F-0265 the line names only whitelisted fields, each by its word (QG-D2, P-05)", () => {
+  it("US-QS-32 F-0265 every word of the line is one of the fields the friend shares, and no field outside the whitelist", () => {
+    const line = table["collection.shares"];
+    for (const word of Object.values(COLLECTION_WORDS)) expect(line).toContain(word);
+    expect(line).not.toMatch(/Anzahl|Standort|Messwert|Behandlung|Preis|Wertung|Vergleich/);
+  });
+});
+
 describe("US-SOZ-07 a friend's shared collection", () => {
   it("US-SOZ-07 shows a card per species with count, date and 'you have it', unknown stays unknown (P-08)", async () => {
     const fetchFn = show({ friend: { name: "Anna" }, cards: CARDS });
@@ -67,6 +96,19 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     expect(unknown?.textContent).toContain("Vergleich unbekannt");
   });
 
+  it("US-QS-32 · SG-COLOR-04 both ownership badges are neutral states, not amber or primary; the unknown one is outlined", async () => {
+    show({ friend: { name: "Anna" }, cards: CARDS });
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    const have = screen.getByText("Du hast sie", { exact: true }).className;
+    const lack = screen.getByText("Du hast sie nicht", { exact: true }).className;
+    for (const look of [have, lack]) {
+      expect(look).toContain("bg-secondary");
+      expect(look).not.toContain("bg-warning");
+      expect(look).not.toContain("bg-primary");
+    }
+    expect(screen.getByText("Vergleich unbekannt").className).toContain("bg-card");
+  });
+
   it("US-SOZ-07 · US-QS-20 the heading names the friend in the genitive, the cards are paged", async () => {
     const many = Array.from({ length: 8 }, (_, n) => card({ speciesLatin: `Art ${n}` }));
     show({ friend: { name: "Clara" }, cards: many });
@@ -78,16 +120,16 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     expect(collectionTitle(null)).toBe("Sammlung eines Freundes");
   });
 
-  it("US-SOZ-07 the filters 'Ich habe nicht' and 'Wir haben beide' narrow the cards", async () => {
+  it("US-SOZ-07 · US-QS-32 the filters 'Fehlen dir' and 'Hast du auch' narrow the cards", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Anna" });
-    await userEvent.click(screen.getByRole("button", { name: "Ich habe nicht" }));
+    await userEvent.click(screen.getByRole("button", { name: "Fehlen dir" }));
     const lack = within(screen.getByRole("list", { name: "Sammlung von Anna" })).getAllByRole(
       "listitem",
     );
     expect(lack).toHaveLength(1);
     expect(lack[0]?.textContent).toContain("Aloe vera");
-    await userEvent.click(screen.getByRole("button", { name: "Wir haben beide" }));
+    await userEvent.click(screen.getByRole("button", { name: "Hast du auch" }));
     const both = within(screen.getByRole("list", { name: "Sammlung von Anna" })).getAllByRole(
       "listitem",
     );
@@ -102,19 +144,45 @@ describe("US-SOZ-07 a friend's shared collection", () => {
   it("US-SOZ-07 a filter without result and a friend who shares nothing say what to do next (P-09)", async () => {
     show({ friend: { name: "Anna" }, cards: [card()] });
     await screen.findByRole("list", { name: "Sammlung von Anna" });
-    await userEvent.click(screen.getByRole("button", { name: "Ich habe nicht" }));
+    await userEvent.click(screen.getByRole("button", { name: "Fehlen dir" }));
     expect(screen.getByText(/Du hast schon alle Arten/)).toBeTruthy();
     expect(screen.getByText(/Wähle „Alle“/)).toBeTruthy();
     cleanup();
     show({ friend: { name: "Anna" }, cards: [] });
-    expect(await screen.findByText(/Anna hat noch nichts freigegeben/)).toBeTruthy();
+    expect(await screen.findByText(/Anna teilt noch nichts\./)).toBeTruthy();
+    // The one step: the sharing layer of the friends page (US-QS-32, SG-STATE-01).
+    expect(screen.getByRole("link", { name: "Selbst etwas teilen" }).getAttribute("href")).toBe(
+      "/friends?sheet=sharing",
+    );
     expect(screen.queryByRole("list", { name: /Sammlung von/ })).toBeNull();
+    // A friend who shares nothing gets no line about what is shared (US-QS-32, F-0265). The line starts with "Geteilt:".
+    expect(document.body.textContent).not.toContain("Geteilt:");
+  });
+
+  it("US-QS-32 F-0265 the line names only the shared fields; the title already names the friend", async () => {
+    show({ friend: { name: "Anna" }, cards: [card()] });
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    expect(screen.getByText("Geteilt: Art, Name, Fangdatum und Stecklinge.")).toBeTruthy();
+    expect(screen.queryByText(/Anna teilt/)).toBeNull();
+    expect(document.body.textContent).not.toContain("ohne Wertung");
+  });
+
+  it("US-QS-32 F-0265 a long display name stays out of the line, so the line does not wrap at 360 px", async () => {
+    const name = "Maximiliane-Friederike von Hohenzollern";
+    show({ friend: { name }, cards: [card()] });
+    await screen.findByRole("list", { name: `Sammlung von ${name}` });
+    const line = screen.getByText("Geteilt: Art, Name, Fangdatum und Stecklinge.");
+    expect(line.textContent).not.toContain(name);
+    expect(line.textContent).not.toContain("Maximiliane");
+    // The name is in the title once, the line names only the shared fields.
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(collectionTitle(name));
   });
 
   it("US-SOZ-07 facts only: no rank, no score, no comparison between friends; the way back is offered", async () => {
     show({ friend: { name: null }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Name unbekannt" });
-    expect(screen.getByText(/keine Wertung und keinen Vergleich/)).toBeTruthy();
+    // One line naming only what the friend shares (US-QS-32, F-0265); no rank, no comparison.
+    expect(screen.getByText("Geteilt: Art, Name, Fangdatum und Stecklinge.")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
       "/friends",
     );
@@ -187,24 +255,58 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     const [lamp, timer] = within(list).getAllByRole("listitem");
     expect(lamp?.textContent).toContain("Lampe Alpha");
     expect(lamp?.textContent).toContain("GL-9");
-    expect(lamp?.textContent).toMatch(/bis 15\.000 lx/);
+    expect(lamp?.textContent).toMatch(/bis 15\.000\u00a0lx/);
     expect(lamp?.textContent).toContain("sehr hell");
     expect(lamp?.textContent).not.toMatch(/Preis|Kaufdatum|Seriennummer/);
     expect(timer?.textContent).toContain("Modell");
     expect(timer?.textContent).toContain("unbekannt");
   });
 
+  it("US-QS-32 the light level of a friend's lamp keeps number and unit together, and its facts stack in a narrow box (F-0367)", async () => {
+    show(
+      { friend: { name: "Anna" }, cards: CARDS },
+      200,
+      {
+        friend: { name: "Anna" },
+        devices: [
+          {
+            id: "d1",
+            type: "Lamp",
+            name: "Lampe Alpha",
+            model: "GL-9",
+            luxCeiling: 5000,
+            note: null,
+          },
+        ],
+      },
+      "/?sheet=equipment",
+    );
+    const list = await screen.findByRole("list", { name: "Geräte von Anna" });
+    const [lamp] = within(list).getAllByRole("listitem");
+    expect(lamp?.textContent).toContain("bis 5.000\u00a0lx");
+    const facts = lamp?.querySelector("dl");
+    expect(facts?.className.split(" ")).toContain("grid-cols-1");
+    expect(facts?.className).toContain("@min-[12rem]:grid-cols-[auto_minmax(0,1fr)]");
+    expect(lamp?.firstElementChild?.className.split(" ")).toContain("@container");
+  });
+
   it("US-EQU-12 a friend who shares no device says what to do next (P-09)", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS }, 200, NO_DEVICES, "/?sheet=equipment");
-    expect(await screen.findByText(/Anna hat noch kein Gerät freigegeben/)).toBeTruthy();
+    expect(await screen.findByText(/Anna teilt keine Geräte\./)).toBeTruthy();
+  });
+
+  it("US-QS-32 the devices of a friend name the layer once: its title is the only heading 'Geräte von …' (issue 1981)", async () => {
+    show({ friend: { name: "Anna" }, cards: CARDS }, 200, NO_DEVICES, "/?sheet=equipment");
+    await screen.findByText(/Anna teilt keine Geräte\./);
+    expect(screen.getAllByRole("heading", { name: "Geräte von Anna" })).toHaveLength(1);
   });
 
   it("US-QS-20 the devices open from 'Geräte', not stacked below the cards", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS });
     await screen.findByRole("list", { name: "Sammlung von Anna" });
-    expect(screen.queryByText(/Anna hat noch kein Gerät freigegeben/)).toBeNull();
+    expect(screen.queryByText(/Anna teilt keine Geräte\./)).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Geräte" }));
-    expect(await screen.findByText(/Anna hat noch kein Gerät freigegeben/)).toBeTruthy();
+    expect(await screen.findByText(/Anna teilt keine Geräte\./)).toBeTruthy();
   });
 });
 
@@ -233,5 +335,169 @@ describe("US-QS-14 · US-QS-15 a friend's collection is a sub-page with one page
   it("US-QS-15 the frame is one screen, so at a large text size only the content region scrolls (DS-61)", () => {
     show({ friend: { name: "Anna" }, cards: CARDS });
     expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
+  });
+});
+
+describe("US-QS-32 ending a friendship is in the menu of the friend's collection (US-SOZ-03)", () => {
+  beforeAll(() => {
+    Element.prototype.setPointerCapture ??= () => undefined;
+    Element.prototype.releasePointerCapture ??= () => undefined;
+  });
+  // A test that stubs the network state must not leak it into the next test, even when it fails.
+  afterEach(() => vi.restoreAllMocks());
+
+  /** A fake server: the collection and the devices read, and the end of the friendship answers `endStatus`. */
+  function endServer(endStatus = 200) {
+    const calls: { path: string; method: string }[] = [];
+    const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      calls.push({ path, method: init?.method ?? "GET" });
+      if (init?.method === "POST" && path === "/friends/f1/end")
+        return endStatus === 200
+          ? response(200, { status: "ended" })
+          : response(endStatus, { error: { code: "friend.not_found", text: "raw" } });
+      if (path.includes("/equipment/friends/")) return response(200, NO_DEVICES);
+      return response(200, { friend: { name: "Anna" }, cards: CARDS });
+    });
+    vi.stubGlobal("fetch", fetchFn);
+    return { calls };
+  }
+
+  /**
+   * Where the keeper ends up: the friends page shows the outcome as the hint of its address (P-10). `data-navigation` says
+   * how it was entered: "REPLACE" means the friend's page is not in the history any more.
+   */
+  function Landing() {
+    const location = useLocation();
+    const how = useNavigationType();
+    return (
+      <p data-navigation={how}>
+        Freunde-Startseite {(location.state as { hint?: string } | null)?.hint ?? ""}
+      </p>
+    );
+  }
+
+  /** The page at the friend's address with its own query client (the cache is read back) and, optionally, the announcer. */
+  function showAt(
+    options: { client?: ReturnType<typeof createQueryClient>; announcer?: boolean } = {},
+  ) {
+    const client = options.client ?? createQueryClient();
+    const page = (
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={["/friends/f1"]}>
+          <Routes>
+            <Route
+              path="/friends/:friendId"
+              element={<FriendCollectionPage api="http://api" token={token} friendId="f1" />}
+            />
+            <Route path="/friends" element={<Landing />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    return {
+      client,
+      ...render(options.announcer ? <AnnouncerProvider>{page}</AnnouncerProvider> : page),
+    };
+  }
+
+  it("US-QS-32 the top bar's 'Mehr' holds 'Freundschaft beenden' as a red menu action, and the body has no end button", async () => {
+    endServer();
+    showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    expect(screen.queryByRole("button", { name: /Freundschaft beenden/ })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    const item = screen.getByRole("menuitem", { name: "Freundschaft beenden" });
+    expect(item.className).toContain("text-destructive");
+  });
+
+  it("US-QS-32 the menu opens a question first; 'Abbrechen' ends nothing (US-SOZ-03, P-10)", async () => {
+    const { calls } = endServer();
+    showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    expect(await screen.findByText(/alle Freigaben gelten dann nicht mehr/)).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    expect(screen.queryByText(/alle Freigaben gelten dann nicht mehr/)).toBeNull();
+    expect(calls.some((c) => c.method === "POST")).toBe(false);
+  });
+
+  it("US-QS-32 'Ja, beenden' ends the friendship and the friends page says so (US-SOZ-03, P-10)", async () => {
+    const { calls } = endServer();
+    showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    expect(
+      await screen.findByText(/Freunde-Startseite Freundschaft mit Anna beendet/),
+    ).toBeTruthy();
+    expect(calls.find((c) => c.method === "POST")?.path).toBe("/friends/f1/end");
+    // The friend's page is replaced, so Back never returns to it with the question (US-QS-32).
+    expect(document.querySelector("[data-navigation]")?.getAttribute("data-navigation")).toBe(
+      "REPLACE",
+    );
+  });
+
+  it("US-QS-32 a refused end keeps the question on screen with its error and does not leave the page (P-10)", async () => {
+    endServer(404);
+    showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(screen.getByText(/alle Freigaben gelten dann nicht mehr/)).toBeTruthy();
+    expect(screen.queryByText(/Freunde-Startseite/)).toBeNull();
+    expect(screen.queryByText("raw")).toBeNull();
+  });
+
+  it("US-QS-32 Abbrechen returns the focus to the 'Mehr' trigger, not to the menu item that unmounted (WCAG 2.4.3)", async () => {
+    endServer();
+    showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    const more = screen.getByRole("button", { name: "Mehr" });
+    await userEvent.click(more);
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Abbrechen" }));
+    await waitFor(() => expect(document.activeElement).toBe(more));
+  });
+
+  it("US-QS-32 a friendship ended offline leaves the page at once; the write waits in the buffer and says so (US-QS-10)", async () => {
+    const { calls } = endServer();
+    const online = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    showAt({ announcer: true });
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    // The question is gone with the page: the friends page is shown, and the buffered state is said as text.
+    expect(await screen.findByText(/Freunde-Startseite/)).toBeTruthy();
+    // The note on screen and the polite announcement say the same text (US-QS-10).
+    expect(
+      (
+        await screen.findAllByText(
+          /Du bist offline\. Wird gesendet, sobald du wieder online bist: Freundschaft mit Anna beendet/,
+        )
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(calls.some((c) => c.method === "POST")).toBe(false);
+    online.mockRestore();
+  });
+
+  it("US-QS-32 a friendship that has ended drops the friend's cached collection and devices, so none of it shows again (P-05)", async () => {
+    endServer();
+    const { client } = showAt();
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    client.setQueryData(["social", "friend-equipment", "f1"], NO_DEVICES);
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    expect(
+      await screen.findByText(/Freunde-Startseite Freundschaft mit Anna beendet/),
+    ).toBeTruthy();
+    expect(client.getQueryData(["social", "friend-collection", "f1"])).toBeUndefined();
+    expect(client.getQueryData(["social", "friend-equipment", "f1"])).toBeUndefined();
   });
 });

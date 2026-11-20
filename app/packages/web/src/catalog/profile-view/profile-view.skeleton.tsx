@@ -1,13 +1,12 @@
-import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
-import { PROFILE_CARD } from "./profile-card";
 
 /**
  * Placeholder with the layout of the species profile (DS-52, DS-53), as `SpeciesProfile` lays it out: the way back beside
  * the name, the photo and the badge, the action bar with its buttons, then the facts in a tab strip with their rows. The
  * boxes keep the heights of the loaded parts (44 px way back, 32 px title, 48 px photo, 48 px buttons, 52 px tab strip).
- * It shows after the delay of DS-57 (issue 1726): a profile that arrives sooner shows no skeleton and no status.
+ * It shows after the delay of DS-57 (issue 1726): a profile that arrives sooner shows no skeleton and no status. The route's
+ * fallback of the profile (`ProfileRouteSkeleton`) is in the app's route fallbacks (issue 2243).
  */
 export function ProfileSkeleton() {
   return (
@@ -40,25 +39,5 @@ export function ProfileSkeleton() {
         </div>
       </SkeletonGroup>
     </DelayedSkeleton>
-  );
-}
-
-/**
- * The route's fallback of the species profile (`/discover/species/:id`) until its chunk is there (issue 1727): the frame
- * and the card the profile is shown in, with the profile's own skeleton inside, so the card does not change size when the
- * page arrives. The card waits for the delay like every skeleton (DS-57), so a fast load draws no empty card. The profile
- * has no heading before its name is known, so the fallback has none either.
- */
-export function ProfileRouteSkeleton() {
-  return (
-    <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
-      <DelayedSkeleton>
-        <div className={PROFILE_CARD}>
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-            <ProfileSkeleton />
-          </div>
-        </div>
-      </DelayedSkeleton>
-    </LayerHost>
   );
 }

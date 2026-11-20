@@ -11,7 +11,10 @@ import {
   type PagerPart,
 } from "./paging/address";
 import {
+  EntryPlaceholders,
   PagingNote,
+  busyWhile,
+  placeholderCount,
   usePageAddress,
   usePagingMore,
   useFirstEntryWrite,
@@ -51,11 +54,10 @@ function useSwipe(page: number, pages: number, turn: (delta: 1 | -1) => void) {
 }
 
 /**
- * A disabled page button keeps its text and border neutral: the outline green at half opacity fell to about 1.8:1
- * (issue 1045). It is still disabled and shows no action (DS-39, DS-65).
+ * A disabled plain page button keeps its text neutral: the green at half opacity fell to about 1.8:1 (issue 1045). It stays
+ * disabled and shows no action (DS-39, SG-BTN-01).
  */
-const DISABLED_PAGE_BUTTON =
-  "disabled:border-border disabled:text-muted-foreground disabled:opacity-100";
+const DISABLED_PAGE_BUTTON = "disabled:text-muted-foreground disabled:opacity-100";
 
 /** "Zurück", the position and "Weiter" (US-QS-15). The caption never wraps: a page number and its count stay together (US-QS-24). */
 function PagerBar({
@@ -71,7 +73,7 @@ function PagerBar({
     <div className="flex flex-wrap items-center justify-between gap-2">
       <Button
         type="button"
-        variant="outline"
+        variant="plain"
         className={DISABLED_PAGE_BUTTON}
         disabled={page <= 1}
         onClick={() => turn(-1)}
@@ -87,7 +89,7 @@ function PagerBar({
       </p>
       <Button
         type="button"
-        variant="outline"
+        variant="plain"
         className={DISABLED_PAGE_BUTTON}
         disabled={page >= pages}
         onClick={() => turn(1)}
@@ -168,6 +170,9 @@ export function Pager<T>({
   useResetPage(resetKey, pagedIn(params, param), go);
   const turn = (delta: 1 | -1) => go(Math.max(0, first + delta * size));
   const swipe = useSwipe(page, pages, turn);
+  const shown = items.slice(first, first + size);
+  const room = Math.min(first + size, count) - first - shown.length;
+  const holes = placeholderCount(paging, missing, room);
 
   return (
     <div
@@ -179,11 +184,13 @@ export function Pager<T>({
         {...(fit ? { "data-page-fit": "" } : {})}
         style={fitted ? { minHeight: fitted.rowHeight } : undefined}
         aria-label={label}
+        {...busyWhile(holes)}
         className={cn("flex flex-col gap-2", fit && "min-h-0 flex-1 content-start", listClassName)}
       >
-        {items.slice(first, first + size).map((item, i) => (
+        {shown.map((item, i) => (
           <li key={getKey ? getKey(item, first + i) : first + i}>{renderItem(item, first + i)}</li>
         ))}
+        <EntryPlaceholders count={holes} from={first + shown.length} paging={paging} />
       </ul>
       {note ? <PagingNote paging={note} missing={missing} /> : null}
       {pages > 1 ? <PagerBar page={page} pages={pages} turn={turn} /> : null}

@@ -32,6 +32,8 @@ vi.mock("oidc-client-ts", () => ({
     getUser = mgr.getUser;
     removeUser = mgr.removeUser;
     signinRedirect = mgr.signinRedirect;
+    // The sign-in manager of the app wraps this method for the shared renewal (issue 2274, api/renewal.ts).
+    signinSilent = vi.fn(async () => undefined);
     signoutRedirect = mgr.signoutRedirect;
   },
 }));
@@ -39,12 +41,14 @@ vi.mock("oidc-client-ts", () => ({
 import { BrowserRouter, MemoryRouter } from "react-router";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { App } from "./app";
+import { MOTION_STORAGE_KEY, restoreMotion } from "@/shared/platform/device/motion/motion-setting";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
 import {
   answerCardRead,
   NO_CARDS_PAGE,
   NO_CARDS_SUMMARY,
 } from "../../../collection/specimens/tests/cards-fake";
+import { pokedexReadAnswer } from "../../../pokedex/pokedex-page/pokedex-reads-fake";
 
 /** The app runs inside a router; a memory router stands for the address bar. */
 const renderApp = (path = "/") =>
@@ -150,6 +154,31 @@ const PROFILE_SPECIES = {
   version: 1,
 };
 
+/**
+ * The reads the signed-in frame makes on every page (issue 1625), each answered without data: the list of "Heute", the
+ * account profile (no reminder switched on), the watering reminders, the treatments and the hints. The Pokédex reads and
+ * the lock states come from `pokedexReadAnswer`.
+ */
+const FRAME_READS: Record<string, unknown> = {
+  "/today": { date: "2026-10-03", upcoming: 0, items: [] },
+  "/account/profile": {
+    displayName: "Lena",
+    timeZone: "Europe/Berlin",
+    everythingPrivate: false,
+    noRecommendations: false,
+    notifications: {},
+    replenishBuffer: 2,
+    rarityConsent: false,
+    positionThresholds: null,
+  },
+  "/watering/due": { due: [] },
+  "/treatments": { treatments: [] },
+  "/specimens/hints": { hints: [] },
+};
+/** The body of a read every page of the frame makes, or `undefined`; `caught` are the species the Pokédex reads use. */
+const frameRead = (path: string, caught: readonly { species: string }[] = []): unknown =>
+  pokedexReadAnswer(path, caught) ?? FRAME_READS[path];
+
 /** The answers of the simple routes; the rest (account, wishlist) is decided in `fakeServer`. */
 const ANSWERS: Record<string, unknown> = {
   "/species": { species: [] },
@@ -161,8 +190,6 @@ const ANSWERS: Record<string, unknown> = {
   "/specimens/distribution": EMPTY_DISTRIBUTION,
   "/locations": { locations: [] },
   "/light-zones": { zones: [] },
-  "/today": { date: "2026-10-03", upcoming: 0, items: [] },
-  "/treatments": { treatments: [] },
   "/specimens": { specimens: [] },
   "/care-profiles": { entries: [] },
   "/care-phases": { phases: [] },
@@ -180,29 +207,21 @@ const ANSWERS: Record<string, unknown> = {
   "/equipment/wishes": { open: [], bought: [], discarded: [] },
   "/equipment/sharing": { shared: [] },
   "/equipment/recommendations": { recommendations: [] },
-  "/account/profile": {
-    displayName: "Lena",
-    timeZone: "Europe/Berlin",
-    everythingPrivate: false,
-    noRecommendations: false,
-    notifications: {},
-    replenishBuffer: 2,
-    rarityConsent: false,
-    positionThresholds: null,
-  },
   "/specimens/light-overview": { rows: [] },
   "/specimens/difficulty": { rows: [] },
 };
 
-function fakeServer(accountStatus = 200, plants = 0) {
+function fakeServer(accountStatus = 200, plants = 0, who: object = account) {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url) => {
       const path = new URL(String(url)).pathname;
-      if (path === "/account") return response(accountStatus, account);
+      if (path === "/account") return response(accountStatus, who);
       if (path === "/specimens/count") return response(200, { count: plants, archived: 0 });
       if (path in ANSWERS) return response(200, ANSWERS[path]);
       if (path in WISHLIST) return response(200, WISHLIST[path]);
+      const read = frameRead(path);
+      if (read !== undefined) return response(200, read);
       return response(404);
     }),
   );
@@ -257,20 +276,54 @@ describe("US-ACC-01 App", () => {
     expect(screen.queryByRole("navigation")).toBeNull();
   });
 
-  it("US-ACC-01 signed out, the welcome page offers 'Anderes Konto', which ends the session at the sign-in service", async () => {
+  it("US-ACC-01 signed out with a live session at the sign-in service, the welcome page offers 'Konto wechseln', which ends it there", async () => {
+    // The tab knows of the live session (US-QS-32): the switch shows only then.
+    window.sessionStorage.setItem("pflanzendex.live_session", "1");
     fakeServer();
     mgr.getUser.mockResolvedValue(null);
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Anderes Konto" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Konto wechseln" }));
     expect(mgr.signoutRedirect).toHaveBeenCalledOnce();
     expect(mgr.signinRedirect).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 signed out without a live session at the sign-in service, the welcome page offers no 'Konto wechseln' and no 'Du bist abgemeldet.'", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue(null);
+    renderApp();
+    await screen.findByRole("button", { name: "Konto anlegen" });
+    expect(screen.queryByRole("button", { name: "Konto wechseln" })).toBeNull();
+    expect(screen.queryByText("Du bist abgemeldet.")).toBeNull();
   });
 
   it('an error while loading the account offers "Erneut versuchen" and then loads the account', async () => {
     fakeServer(500);
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    expect((await screen.findByRole("alert")).textContent).toContain("nicht geladen werden");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Dein Konto konnte gerade nicht geladen werden.",
+    );
+    fakeServer();
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
+  });
+
+  it("US-QS-32 a keeper signed in on this device sees a failed account load inside both bars, and a retry that fails again says so", async () => {
+    window.localStorage.setItem(
+      "oidc.user:http://auth/realm:pflanzendex-web",
+      JSON.stringify({ access_token: "tok", expires_at: Math.floor(Date.now() / 1000) + 3600 }),
+    );
+    fakeServer(500);
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    const { container } = renderApp();
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Dein Konto konnte gerade nicht geladen werden.",
+    );
+    // The frame stays: the bottom bar is drawn, and the error sits in the page's main column.
+    expect(container.querySelector("[data-start-bar]")).not.toBeNull();
+    expect(screen.getByRole("main").contains(screen.getByRole("alert"))).toBe(true);
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Wieder nicht geladen.");
     fakeServer();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
@@ -292,6 +345,8 @@ describe("US-ACC-01 App", () => {
             : response(403, {
                 error: { code: "invitation.required", text: "Nur mit Einladungscode." },
               });
+        const read = frameRead(path);
+        if (read !== undefined) return response(200, read);
         return response(404);
       }),
     );
@@ -321,6 +376,8 @@ describe("US-ACC-01 App", () => {
             invitationOnly: false,
             invitations: [],
           });
+        const read = frameRead(path);
+        if (read !== undefined) return response(200, read);
         return response(404);
       }),
     );
@@ -330,9 +387,9 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("heading", { name: "Betreiber" })).toBeTruthy();
     // The numbers are the layer of their row on the overview (US-QS-15).
     await userEvent.click(await screen.findByRole("button", { name: /^Zahlen/ }));
-    expect((await screen.findByText("Kosten pro Nutzer")).nextElementSibling?.textContent).toMatch(
-      /^unbekannt/,
-    );
+    expect(
+      (await screen.findByText("Kosten pro aktivem Konto")).nextElementSibling?.textContent,
+    ).toMatch(/^unbekannt/);
   });
 
   it("US-QS-16 · US-ONB-01 signed in: starts on Heute with the first plant for a new account", async () => {
@@ -373,7 +430,8 @@ describe("US-ACC-01 App", () => {
 
     await userEvent.click(tab("Konto"));
     expect(await screen.findByRole("heading", { level: 1, name: "Konto" })).toBeTruthy();
-    expect(await screen.findByRole("link", { name: /Lena/ })).toBeTruthy();
+    // The profile row names the account by name and e-mail; the settings row also names it (once the profile is loaded).
+    expect(await screen.findByRole("link", { name: /lena@example\.test/ })).toBeTruthy();
     expect(screen.getByText("lena@example.test")).toBeTruthy();
   });
 
@@ -452,7 +510,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/wishlist");
     expect(await screen.findByRole("heading", { name: "Wunschliste" })).toBeTruthy();
-    expect(await screen.findByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
+    expect(await screen.findByText(/Erfasse einen Wunsch mit Ziel-Lichtzone\./)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Wünsche" }).getAttribute("aria-pressed")).toBe(
       "true",
     );
@@ -472,18 +530,16 @@ describe("US-ACC-01 App", () => {
     expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
   });
 
-  it("US-LIC-03 the empty light overview offers the way to the collection by switching the tab", async () => {
+  it("US-LIC-03 · US-QS-32 the empty light overview offers Pflanze anlegen, a link to the add-plant form", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/light");
     // The overview is a layer of the management (US-QS-19): it opens from its button first.
     await userEvent.click(
-      await screen.findByRole("button", { name: "Lichthunger und Einstufung" }),
+      await screen.findByRole("button", { name: "Lichtbedarf und Einstufung" }),
     );
-    await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
-    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
-    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
-    expect(screen.queryByRole("heading", { name: "Standorte" })).toBeNull();
+    const add = await screen.findByRole("link", { name: "Pflanze anlegen" });
+    expect(add.getAttribute("href")).toBe("/collection/new");
   });
 
   it('choosing a species in the catalog leads to the form "Pflanze anlegen"; back leads to the catalog (US-BES-02)', async () => {
@@ -512,6 +568,8 @@ describe("US-ACC-01 App", () => {
           successCriteria: "y",
           reviewStatus: "reviewed",
         };
+        const read = frameRead(path);
+        if (read !== undefined) return response(200, read);
         return response(
           200,
           path === "/species" ? { species: [{ ...species, hit: null }] } : species,
@@ -570,6 +628,8 @@ describe("US-ACC-01 App", () => {
           return answerCardRead(new URL(String(url)), []) ?? response(404, {});
         if (path === "/specimens/archived") return response(200, { archived: [] });
         if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
+        const read = frameRead(path, [caught]);
+        if (read !== undefined) return response(200, read);
         return response(
           200,
           path === "/species" ? { species: [{ ...species, hit: null }] } : species,
@@ -603,11 +663,16 @@ describe("US-ACC-01 App", () => {
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
   });
 
-  it("US-QS-07 · an unknown address lands on Heute", async () => {
+  it("US-QS-07 · US-QS-32 an unknown address shows the not-found view inside the frame, with both bars and its way on", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/gibt-es-nicht");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+    ).toBeTruthy();
+    expect(document.title).toBe("Seite nicht gefunden – PflanzenDéx");
+    await userEvent.click(screen.getByRole("button", { name: "Zu Heute" }));
     await waitFor(() => expectHeute());
   });
 
@@ -655,15 +720,12 @@ describe("US-QS-07 browser history", () => {
     await userEvent.click(tab("Sammlung"));
     await userEvent.click(tab("Konto"));
     expect(window.location.pathname).toBe("/account");
-    await act(async () => {
-      window.history.back();
-      await waitFor(() => expect(window.location.pathname).toBe("/collection"));
-    });
+    // waitFor stays outside act: it switches the act environment off while it polls (#1628).
+    act(() => window.history.back());
+    await waitFor(() => expect(window.location.pathname).toBe("/collection"));
     expect((await findTab("Sammlung")).getAttribute("aria-current")).toBe("page");
-    await act(async () => {
-      window.history.back();
-      await waitFor(() => expect(window.location.pathname).toBe("/today"));
-    });
+    act(() => window.history.back());
+    await waitFor(() => expect(window.location.pathname).toBe("/today"));
     await waitFor(() => expectHeute());
   });
 });
@@ -679,7 +741,7 @@ const LAYER_ADDRESSES: readonly (readonly [string, string, string])[] = [
   ["Sammlung: Lichtzonen", "/collection?view=plants&sheet=zones", "Sammlung"],
   ["Sammlung: Arten, Sammlerkarten", "/collection?view=species&sheet=cards", "Sammlung"],
   ["Sammlung: Wunschliste, Gekauft", "/collection?view=wishlist&sheet=bought", "Sammlung"],
-  ["Sammlung: Equipment", "/collection?view=equipment&sheet=items", "Sammlung"],
+  ["Sammlung: Geräte", "/collection?view=equipment&sheet=items", "Sammlung"],
   ["Entdecken: Filter", "/discover?view=catalog&sheet=filters", "Entdecken"],
   ["Entdecken: Art vorschlagen", "/discover?view=catalog&sheet=propose", "Entdecken"],
   ["Freunde: Neu bei Freunden", "/friends?sheet=news", "Freunde"],
@@ -742,4 +804,32 @@ describe("US-QS-15 a layer opens beside the content from 1024 px", () => {
     },
     20000,
   );
+});
+
+describe("US-QS-33 motion follows the account once it is known, the device before", () => {
+  const root = document.documentElement;
+  afterEach(() => {
+    delete root.dataset.motion;
+    window.localStorage.removeItem(MOTION_STORAGE_KEY);
+  });
+
+  it("US-QS-33 signed in, the account's 'Bewegung aus' applies to the whole app and is kept on this device", async () => {
+    fakeServer(200, 0, { ...account, motion: "reduced" });
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    renderApp();
+    await screen.findByRole("navigation", { name: "Hauptnavigation" });
+    expect(root.dataset.motion).toBe("reduced");
+    expect(window.localStorage.getItem(MOTION_STORAGE_KEY)).toBe("reduced");
+  });
+
+  it("US-QS-33 the sign-in page follows only the device, also when this device knows an earlier 'Bewegung aus'", async () => {
+    window.localStorage.setItem(MOTION_STORAGE_KEY, "reduced");
+    restoreMotion();
+    expect(root.dataset.motion).toBe("reduced");
+    fakeServer();
+    mgr.getUser.mockResolvedValue(null);
+    renderApp();
+    await screen.findByRole("button", { name: "Konto anlegen" });
+    expect(root.dataset.motion).toBeUndefined();
+  });
 });

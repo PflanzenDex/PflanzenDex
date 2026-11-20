@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { Anniversaries, anniversaryText } from "./anniversaries";
@@ -40,11 +40,13 @@ function server(list: { status: number; body: unknown }) {
   );
   return paths;
 }
-const show = (onOpen = () => undefined) =>
+const show = () =>
   render(
-    <QueryClientProvider client={createQueryClient()}>
-      <Anniversaries api="http://api" token={token} onOpen={onOpen} />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={createQueryClient()}>
+        <Anniversaries api="http://api" token={token} />
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
 
 describe("US-ACH-06 anniversaries on the Today list", () => {
@@ -57,15 +59,22 @@ describe("US-ACH-06 anniversaries on the Today list", () => {
 
   it("US-ACH-06 shows '<Specimen> is 1 year with you' with the first and the latest photo and a next step (P-09)", async () => {
     const paths = server({ status: 200, body: { calmMode: false, items: [item()] } });
-    const onOpen = vi.fn();
-    show(onOpen);
+    show();
     expect(await screen.findByText("„Aloe“ ist 1 Jahr bei dir.")).toBeTruthy();
     expect(screen.getByText(/Seit dem 10\.04\.2025/)).toBeTruthy();
     await waitFor(() => expect(screen.getAllByRole("img")).toHaveLength(2));
     expect(paths).toContain("/specimens/s1/measurements/m1/photo");
     expect(paths).toContain("/specimens/s1/measurements/m2/photo");
-    await userEvent.click(screen.getByRole("button", { name: /Aloe/ }));
-    expect(onOpen).toHaveBeenCalled();
+  });
+
+  it("US-QS-32 each anniversary row is one link to its plant, named by its visible text, with a chevron and no 'Zur Sammlung' (SG-NAV-04)", async () => {
+    server({ status: 200, body: { calmMode: false, items: [item()] } });
+    show();
+    const row = await screen.findByRole("link", { name: /„Aloe“ ist 1 Jahr bei dir/ });
+    expect(row.getAttribute("href")).toBe("/collection?view=plants&sheet=plant-s1");
+    expect(row.textContent).toContain("Jubiläum · Seit dem 10.04.2025.");
+    expect(row.querySelector("svg")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /Zur Sammlung/ })).toBeNull();
   });
 
   it("US-ACH-06 without a photo no image is shown", async () => {

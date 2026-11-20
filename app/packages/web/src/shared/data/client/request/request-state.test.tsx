@@ -92,7 +92,7 @@ describe("US-QS-07 · DS-09 RequestState", () => {
     expect(screen.queryByText("Inhalt")).toBeNull();
   });
 
-  it("US-QS-07 · DS-09 offline keeps the children and adds the note", () => {
+  it("US-QS-30 · DS-09 offline keeps the children and adds the note", () => {
     render(
       <RequestState status="ready" offline skeleton={null} onRetry={() => undefined}>
         <p>Inhalt</p>
@@ -135,7 +135,7 @@ describe("US-QS-07 · DS-09 LoadFrame on the data layer", () => {
     expect(load).not.toHaveBeenCalled();
   });
 
-  it("US-QS-07 · DS-09 offline after an earlier load shows the cached rows with the note", async () => {
+  it("US-QS-30 · DS-09 offline after an earlier load shows the cached rows with the note", async () => {
     const load = vi
       .fn<() => Promise<Response<string[]>>>()
       .mockResolvedValueOnce(ok(["Efeu"]))
@@ -158,7 +158,7 @@ describe("US-QS-07 · DS-09 LoadFrame on the data layer", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("US-QS-07 · DS-09 offline without cached data shows the error, not an empty list", async () => {
+  it("US-QS-30 · DS-09 offline without cached data shows the error, not an empty list", async () => {
     render(
       <Frame
         load={async () => fail("network.not_reachable", "Der Server ist nicht erreichbar.")}

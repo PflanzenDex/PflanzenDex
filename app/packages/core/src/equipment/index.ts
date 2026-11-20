@@ -13,6 +13,7 @@ export type {
   CostView,
   Need,
   NeedKind,
+  NeedTarget,
   NeedsDependencies,
   ProductEntry,
   ProductPrice,
@@ -24,6 +25,7 @@ export {
   equipmentPlacePot,
   placePlant,
   specimenRepotWithPot,
+  specimenRepotWithPotSchema,
 } from "./record/pot";
 export type {
   PlaceDependencies,

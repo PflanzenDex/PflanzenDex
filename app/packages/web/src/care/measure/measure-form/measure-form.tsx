@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import { localToday, MEASUREMENT_LIMITS, MEDIA_LIMITS } from "@pflanzendex/core";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
@@ -23,6 +23,7 @@ import {
   type MeasurementFields,
 } from "../../shared/schemas";
 import { QUALITY_NAME } from "../../shared/text";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 /** The id of the measure form; the sticky footer submits it through the `form` attribute (US-WAC-01). */
 const FORM_ID = "measure-form";
@@ -35,10 +36,8 @@ function EtiolationSigns({ signs }: { signs: string | null }) {
   if (!signs) return null;
   return (
     <details className="text-sm">
-      <summary className="flex min-h-[44px] cursor-pointer items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        Wie erkennen?
-      </summary>
-      <p>Vergeilung-Anzeichen dieser Art: {signs}</p>
+      <DisclosureSummary className="rounded-md">Wie erkennen?</DisclosureSummary>
+      <p>Vergeilungsanzeichen dieser Art: {signs}</p>
     </details>
   );
 }
@@ -50,12 +49,16 @@ function PhotoInput(props: {
   inputKey: number;
 }) {
   const id = "measure-photo";
+  const labelId = `${id}-label`;
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>Foto (optional)</Label>
+      <Label id={labelId} htmlFor={id}>
+        Foto (optional)
+      </Label>
       <FileField
         key={props.inputKey}
         id={id}
+        groupLabelledBy={labelId}
         accept={MEDIA_LIMITS.uploadTypes.join(",")}
         aria-describedby="measure-photo-hint"
         onChange={(e) => props.onPick(e.target.files?.[0] ?? null)}
@@ -129,10 +132,10 @@ function Fields(props: {
 
 /**
  * Input of a measurement (US-WAC-01): number in steps of 0.5 cm, quality (preset healthy, US-WAC-02) with the
- * etiolation signs of the species behind "Wie erkennen?", optional note. The date is
- * today according to the local date of the device and can be changed (back-filling); the future is blocked. The optional
- * photo (US-WAC-05) is sent after the measurement is saved. An invalid input focuses the first invalid field; a
- * refusal of the server stays visible with the text of its code and keeps the input (P-10).
+ * etiolation signs of the species behind "Wie erkennen?", optional note. The date is today in the profile's time zone
+ * (the device's as fallback) and can be changed (back-filling); the future is blocked, an emptied date is refused by
+ * the schema. The optional photo (US-WAC-05) is sent after the measurement is saved. An invalid input focuses the
+ * first invalid field; a refusal of the server stays visible with the text of its code and keeps the input (P-10).
  */
 export function MeasureForm(props: {
   unit: string;
@@ -145,7 +148,7 @@ export function MeasureForm(props: {
   photoStatus?: string | null;
 }) {
   const today = localToday(new Date(), currentTimeZone());
-  const form = useForm<MeasurementFields>({
+  const form = useFieldForm<MeasurementFields>({
     resolver: zodResolver(measurementSchema),
     defaultValues: measurementDefaults(today),
   });

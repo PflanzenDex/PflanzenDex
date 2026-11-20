@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readFileSync, realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 // Nightly load measurement (NFR-12, FR-QG-09, issue 1250): compares the result of measure.ts with the budgets in
@@ -115,4 +114,5 @@ function main(): void {
 }
 
 // Run as a script (not when the test imports it).
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
+// eslint-disable-next-line security/detect-non-literal-fs-filename -- argv[1] is the path this file was started with: compared, never read
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) main();

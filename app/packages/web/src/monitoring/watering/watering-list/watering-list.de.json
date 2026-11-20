@@ -1,15 +1,20 @@
 {
   "loading": "Gießliste wird geladen …",
-  "none.title": "Heute nichts zu gießen",
-  "none.description": "Fällig wird eine Pflanze nach dem Gießintervall, das du im Pflegeprofil ihrer Art einträgst. Ohne Intervall erinnert die App nicht ans Gießen.",
+  "none.line": "Heute nichts zu gießen.",
   "since.never": "noch nie als gegossen eingetragen",
   "since.days": "zuletzt vor {days} Tagen gegossen",
   "interval": "Intervall alle {days}",
   "water": "Gegossen",
   "waterOne": "{name} als gegossen eintragen",
   "pickMore": "Mehrere markieren, dann gemeinsam eintragen",
-  "pickedCount": "{count} als gegossen eintragen",
+  "pickedCount": "{count} eintragen",
   "pager": "Zu gießen",
   "done": "Als gegossen eingetragen.",
-  "days": "{count} Tage"
+  "days": "{count} Tage",
+  "wateredResult": "Gegossen",
+  "restored": "Rückgängig gemacht.",
+  "bulkResult": "{count} Pflanzen gegossen",
+  "bulkSubject": "{count} Pflanzen",
+  "bulkSaid": "{count} Pflanzen gegossen.",
+  "nothingToUndo": "Nichts mehr rückgängig zu machen – der Eintrag ist schon weg."
 }

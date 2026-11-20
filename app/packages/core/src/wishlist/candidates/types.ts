@@ -62,7 +62,7 @@ export interface ReplenishZone {
   readonly zoneNumber: number;
   readonly name: string;
   readonly open: number;
-  /** "Nachschub nötig: <zone> (N offene Kandidaten)". */
+  /** "<zone> braucht Nachschub (N offene Kandidaten)." */
   readonly text: string;
 }
 
@@ -83,7 +83,8 @@ export interface CandidateList {
   /** Zones 2 to 4 with their stock, for the form (target zone) and the overview. */
   readonly zones: readonly ZoneStock[];
   /** What the list says and what to do next (P-09). */
-  readonly hint: { readonly text: string; readonly nextAction: string };
+  /** `nextAction` is `null` when the first row already says what to do (F-0162). */
+  readonly hint: { readonly text: string; readonly nextAction: string | null };
   /** Open wishes that share a name with another wish (migration 0020); empty when there are none. */
   readonly duplicates: readonly DuplicateWish[];
   /** Says what is wrong and what to do (P-09); `null` when there are no duplicates. */

@@ -20,10 +20,15 @@ type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-ex
 let pool: Pool;
 let admin: Pool;
 let app: ReturnType<typeof createApp>;
-const tag = randomUUID()
-  .replace(/[0-9]/g, (z) => "ghijklmnop"[Number(z)] ?? "x")
-  .replace(/-/g, "")
-  .slice(0, 10);
+// #2193: no "n" and no "r" in the alphabet, so a tag never spells an account label ("anna", "bernd").
+const DIGIT_LETTERS = "ghijklmqst";
+/** The fixture tag of a UUID: ten characters, each one the image of one hex digit (#2193: see the test at the end). */
+const tagOf = (uuid: string) =>
+  uuid
+    .replace(/[0-9]/g, (z) => DIGIT_LETTERS[Number(z)] ?? "x")
+    .replace(/-/g, "")
+    .slice(0, 10);
+const tag = tagOf(randomUUID());
 const subA = `ki12-${randomUUID()}`;
 const subB = `ki12-${randomUUID()}`;
 const CLIENT = "https://claude.ai/oauth/mcp-oauth-client-metadata";
@@ -105,7 +110,7 @@ async function data(sub: string, who: string) {
     successCriteria: "Dichte, flache Rosette.",
   });
   const zone = await call(web(sub), "POST", "/light-zones", {
-    name: `Hell ${who}`,
+    name: `Hell ${tag} ${who}`,
     luxCeiling: 30000,
   });
   const location = await call(web(sub), "POST", "/locations", {
@@ -132,7 +137,37 @@ async function data(sub: string, who: string) {
     date: "2026-11-05",
   });
   await call(web(sub), "POST", "/wishes", { name: `Kiwish${tag}${who} alba` });
-  return { species: species.body, specimen };
+  const equipment = await equipmentOf(sub, who, zone.body["id"], specimen["id"]);
+  return { species: species.body, specimen, zone: zone.body, equipment };
+}
+
+/** One account's equipment (EQU): a measured lamp in its zone, a sensor at the specimen, a plant agent running low (a
+ * need), a timer with a check interval and never checked (due, overdue unknown, so the date of the run plays no role),
+ * and an equipment wish. Every name carries the account's tag. */
+async function equipmentOf(sub: string, who: string, zoneId: string, specimenId: string) {
+  const make = async (type: string, name: string, extra: Json = {}) =>
+    (await call(web(sub), "POST", "/equipment", { type, name: `${name} ${tag} ${who}`, ...extra }))
+      .body["equipment"]["id"] as string;
+  const lamp = await make("Lamp", "Lampe", { lightZoneId: zoneId, note: `Notiz ${tag} ${who}` });
+  await call(web(sub), "POST", `/equipment/${lamp}/measurements`, {
+    measuredOn: "2026-10-01",
+    lux: 12000,
+    method: `Luxmeter ${tag} ${who}`,
+  });
+  const sensor = await make("Sensor", "Sensor");
+  await call(web(sub), "POST", `/equipment/${sensor}/sensor-target`, { specimenId });
+  const agent = await make("Plant agent", "Mittel");
+  await call(web(sub), "POST", `/equipment/${agent}/supply`, { supply: "low" });
+  await call(web(sub), "POST", `/equipment/${agent}/agent-link`, {
+    agentLink: `Neem ${tag} ${who}`,
+  });
+  const timer = await make("Timer", "Timer");
+  await call(web(sub), "POST", `/equipment/${timer}/maintenance`, { checkIntervalDays: 30 });
+  const wish = await call(web(sub), "POST", "/equipment/wishes", {
+    equipmentType: "Lamp",
+    name: `Wunschlampe ${tag} ${who}`,
+  });
+  return [lamp, sensor, agent, timer, wish.body["wish"]["id"] as string];
 }
 let A: Awaited<ReturnType<typeof data>>;
 let B: Awaited<ReturnType<typeof data>>;
@@ -149,7 +184,14 @@ beforeAll(async () => {
 afterAll(async () => {
   const subs = [[subA, subB]];
   const mine = "(select id from account where subject = any($1))";
-  for (const table of ["treatment", "measurement", "wish", "specimen"])
+  for (const table of [
+    "lamp_measurement",
+    "equipment",
+    "treatment",
+    "measurement",
+    "wish",
+    "specimen",
+  ])
     await admin.query(`delete from ${table} where account_id in ${mine}`, subs);
   await admin.query(
     `delete from species where id in (select object_id from review_case where account_id in ${mine})`,
@@ -196,6 +238,21 @@ const SAME_AS_APP: readonly [string, Json, () => string, (b: Json) => unknown][]
   ["list_collection_hints", {}, () => "/specimens/hints", (b) => b["hints"]],
   ["list_my_corrections", {}, () => "/catalog/corrections/mine", (b) => b],
   ["list_unlocks", { timeZone: TZ }, () => `/onboarding/unlocks${q}`, (b) => b["functions"]],
+  ["list_equipment", {}, () => "/equipment", (b) => b["equipment"]],
+  ["list_equipment_lamps", {}, () => "/equipment/lamps", (b) => b["lamps"]],
+  ["list_equipment_sensors", {}, () => "/equipment/sensors", (b) => b["sensors"]],
+  ["list_equipment_agents", {}, () => "/equipment/agents", (b) => b["agents"]],
+  ["list_equipment_zones", {}, () => "/equipment/zones", (b) => b["zones"]],
+  ["list_equipment_needs", {}, () => "/equipment/needs", (b) => b["needs"]],
+  [
+    "list_equipment_checks_due",
+    { timeZone: TZ },
+    () => `/equipment/checks-due${q}`,
+    (b) => b["due"],
+  ],
+  ["list_equipment_wishes", {}, () => "/equipment/wishes", (b) => b["open"]],
+  ["list_bought_equipment_wishes", {}, () => "/equipment/wishes", (b) => b["bought"]],
+  ["list_discarded_equipment_wishes", {}, () => "/equipment/wishes", (b) => b["discarded"]],
 ];
 /** The tool's answer without the paging and data markers, in the shape of the app's answer. */
 function appShape(name: string, body: Json) {
@@ -228,6 +285,19 @@ describe("US-KI-12 every other area through the AI client", () => {
     },
   );
 
+  it.each(SAME_AS_APP.filter(([name]) => AREA_READS[name as keyof typeof AREA_READS].list))(
+    "US-KI-12 %s: no value of the app's answer beside the list is hidden by a paging field (P-01)",
+    async (name, _args, path) => {
+      const list = AREA_READS[name as keyof typeof AREA_READS].list ?? "";
+      const MARKERS = ["dataFields", "items", "total", "offset", "limit", "nextOffset"];
+      const body = (await call(web(subA), "GET", path())).body;
+      const beside = Object.keys(body).filter((k) => k !== list);
+      expect(beside.filter((k) => MARKERS.includes(k))).toEqual(
+        name === "list_equipment_lamps" ? ["limit"] : [],
+      );
+    },
+  );
+
   it("US-KI-12 the light distribution and the profile are the app's values; free texts are named as data", async () => {
     const r = (await tool(subA, "get_light_distribution")).body;
     expect(r["distribution"]).toEqual(
@@ -243,6 +313,56 @@ describe("US-KI-12 every other area through the AI client", () => {
     });
     const treatments = (await tool(subA, "list_open_treatments", { timeZone: TZ })).body;
     expect(treatments["dataFields"]).toContain("items[].reason");
+  });
+
+  it("US-KI-12 equipment: the tools show the own equipment with the app's values beside the list; free texts are data", async () => {
+    const tools = Object.fromEntries(
+      await Promise.all(
+        [
+          ["list_equipment", {}],
+          ["list_equipment_lamps", {}],
+          ["list_equipment_sensors", {}],
+          ["list_equipment_agents", {}],
+          ["list_equipment_zones", {}],
+          ["list_equipment_needs", {}],
+          ["list_equipment_checks_due", { timeZone: TZ }],
+          ["list_equipment_wishes", {}],
+        ].map(async ([name, args]) => [
+          name,
+          (await tool(subA, name as string, args as Json)).body,
+        ]),
+      ),
+    ) as Record<string, Json>;
+    const t = (name: string): Json => tools[name] ?? {};
+    const [lamp, sensor, agent, timer, wish] = A.equipment;
+    const ids = (items: Json[]) => items.map((i) => i["id"]);
+    expect(ids(t("list_equipment")["items"])).toEqual(
+      expect.arrayContaining(A.equipment.slice(0, 4)),
+    );
+    expect(ids(t("list_equipment_lamps")["items"])).toContain(lamp);
+    expect(ids(t("list_equipment_sensors")["items"])).toContain(sensor);
+    expect(ids(t("list_equipment_agents")["items"])).toContain(agent);
+    expect(ids(t("list_equipment_checks_due")["items"])).toContain(timer);
+    expect(ids(t("list_equipment_wishes")["items"])).toContain(wish);
+    expect(t("list_equipment_needs")["total"]).toBeGreaterThan(0);
+    const zone = (t("list_equipment_zones")["items"] as Json[]).find(
+      (z) => z["zoneId"] === A.zone["id"],
+    );
+    expect(ids(zone?.["lamps"] ?? [])).toContain(lamp);
+    const app = async (path: string) => (await call(web(subA), "GET", path)).body;
+    const sensors = await app("/equipment/sensors");
+    expect(t("list_equipment_sensors")["specimens"]).toEqual(sensors["specimens"]);
+    expect(t("list_equipment_sensors")["locations"]).toEqual(sensors["locations"]);
+    expect(t("list_equipment_zones")["unassigned"]).toEqual(
+      (await app("/equipment/zones"))["unassigned"],
+    );
+    expect(t("list_equipment_lamps")["deviationLimit"]).toEqual(
+      (await app("/equipment/lamps"))["limit"],
+    );
+    expect(t("list_equipment")["dataFields"]).toContain("items[].note");
+    expect(t("list_equipment_lamps")["dataFields"]).toContain("items[].measurements[].method");
+    expect(t("list_equipment_sensors")["dataFields"]).toContain("specimens[].name");
+    expect(t("list_equipment_wishes")["dataFields"]).toContain("items[].name");
   });
 
   it("US-KI-12 catalog gaps follow the app's rule: reviewers only (the same refusal)", async () => {
@@ -277,6 +397,9 @@ describe("US-KI-12 every other area through the AI client", () => {
       "list_offers",
       "list_swaps",
       "get_recommendations",
+      "get_equipment_sharing",
+      "get_friend_equipment",
+      "list_equipment_recommendations",
     ]) {
       const r = await tool(subA, name);
       expect(r.error).toBe(true);
@@ -296,6 +419,7 @@ describe("US-KI-12 every other area through the AI client", () => {
     app = createApp(options(NO_FEATURES));
     try {
       expect((await call(ai(subA), "GET", "/mcp/care-profiles")).status).toBe(404);
+      expect((await call(ai(subA), "GET", "/mcp/equipment")).status).toBe(404);
     } finally {
       app = before;
     }
@@ -320,6 +444,8 @@ describe("US-KI-12 tenant isolation per tool (P-04, FR-KI-23)", () => {
       expect(text).not.toContain(`${tag}anna`);
       expect(text).not.toContain(A.specimen["id"]);
       expect(text).not.toContain(A.species["id"]);
+      expect(text).not.toContain(A.zone["id"]);
+      for (const id of A.equipment) expect(text).not.toContain(id);
     },
   );
 
@@ -329,6 +455,15 @@ describe("US-KI-12 tenant isolation per tool (P-04, FR-KI-23)", () => {
         const r = await tool(subB, name, { specimen });
         expect(r.body["error"].code).toBe("specimen.not_found");
         expect(JSON.stringify(r.body)).not.toContain("anna");
+        // The nearest names come from B's own rows (#2193): none for an id, B's own specimen name for a name, no id of A's.
+        const nearest = r.body["error"].data["nearest"] as string[];
+        if (specimen === A.specimen["id"]) expect(nearest).toEqual([]);
+        else {
+          expect(nearest.length).toBeGreaterThan(0);
+          for (const label of nearest) expect([B.specimen["name"]]).toContain(label);
+        }
+        for (const id of [A.specimen["id"], A.species["id"], A.zone["id"]])
+          expect(JSON.stringify(nearest)).not.toContain(id);
       }
     const res = await call(ai(subB), "GET", `/mcp/treatments/history?specimen=${A.specimen["id"]}`);
     expect(res.status).toBe(404); // never 403: no existence leak
@@ -490,5 +625,19 @@ describe("US-ONB-09 the AI client and the keeper switches", () => {
     expect(entry?.["state"]).not.toBe("keeper_off");
     expect(entry).toEqual(beforeSwitch);
     expect(entry).toEqual(await appEntry(subS, WISH));
+  });
+});
+
+// #2193: the fixture tag must never spell an account label. A tag holding "anna" fails the bare name checks, because B's own
+// names hold the tag ("Bereich <tag> bernd").
+describe("US-KI-12 the fixture tag (#2193)", () => {
+  it("US-KI-12 the fixture tag can never spell an account label (#2193)", () => {
+    // The tag's letters are the digit letters and the hex letters a-f. A label with a letter outside them cannot occur.
+    const alphabet = new Set(DIGIT_LETTERS + "abcdef");
+    for (const label of ["anna", "bernd"])
+      expect(
+        [...label].some((letter) => !alphabet.has(letter)),
+        `"${label}" cannot occur: one of its letters is outside the tag alphabet`,
+      ).toBe(true);
   });
 });

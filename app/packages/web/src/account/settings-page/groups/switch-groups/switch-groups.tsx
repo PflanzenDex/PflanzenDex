@@ -1,74 +1,79 @@
 import { useState } from "react";
-import type { KeyboardShortcutMode } from "@pflanzendex/core";
+import type { KeyboardShortcutMode, MotionSetting } from "@pflanzendex/core";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { ChoiceRow, type Choice } from "./choice-row/choice-row";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
+import { applyMotion } from "@/shared/platform/device/motion/motion-setting";
 import table from "./switch-groups.de.json";
 import { useFeature, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
 import { refusalText } from "@/shared/lib/error-text";
-import { ALERT_CLASSES } from "@/shared/ui/fields/form/server-refusal";
+import { Banner } from "@/shared/patterns/states/banner/banner";
+import { useAnnounce } from "@/shared/platform/announcer/context";
 import { OCCASION_TEXT, visibleOccasions } from "../../../settings-fields/settings-fields";
 import type { ProfileSaver } from "../profile-saver";
+
+const t = texts(table);
 
 type Flag = "everythingPrivate" | "noRecommendations" | "rarityConsent";
 
 /**
- * A switch saves at once (US-QS-17): the whole stored profile with this one change goes out. The switch shows the
- * stored state, so a refused save leaves it where it was and says why by the error code's text (P-10).
+ * A switch saves at once (US-QS-17): the whole stored profile with this one change goes out. The switch itself is the
+ * result (SG-FEED-01): a refused save leaves it where it was and says why by the error code's text (P-10); a saved one
+ * is said to screen readers by the announcer, with no box in the page (SG-FEED-04, US-QS-32). While a save runs the
+ * switches are `aria-disabled`, not `disabled`: a focused control that becomes disabled loses the focus, and the second
+ * Space of the keeper would do nothing (US-QS-32, issue 2317). A press meanwhile sends nothing (the saver answers `null`
+ * while busy) and React restores the stored state of the box.
  */
 function useSwitchSave(saver: ProfileSaver, onSaved?: (profile: AccountProfile) => void) {
   const [error, setError] = useState<ApiError | null>(null);
-  const [saved, setSaved] = useState(false);
+  const announce = useAnnounce();
   const change = async (patch: Partial<AccountProfile>) => {
     const r = await saver.save({ ...saver.saved, ...patch });
     if (!r) return;
     setError(r.ok ? null : r.error);
-    setSaved(r.ok);
-    if (r.ok) onSaved?.(r.value);
+    if (r.ok) {
+      announce?.announce(t("saved"));
+      onSaved?.(r.value);
+    }
   };
-  return { error, saved, change };
+  return { error, change };
 }
 
-function Feedback(props: { error: ApiError | null; saved: boolean }) {
-  if (props.error)
-    return (
-      <p role="alert" className={ALERT_CLASSES}>
-        {refusalText(props.error)}
-      </p>
-    );
-  return props.saved ? (
-    <p role="status" className="rounded-lg border border-border p-3">
-      Gespeichert.
-    </p>
-  ) : null;
+function Feedback(props: { error: ApiError | null }) {
+  if (props.error) return <Banner variant="error">{refusalText(props.error)}</Banner>;
+  return null;
 }
 
 /** Group "Benachrichtigungen": a switch per occasion (US-ACC-02). */
 export function NotificationsGroup({ saver }: { saver: ProfileSaver }) {
   const social = useFeature("social");
-  const { error, saved, change } = useSwitchSave(saver);
+  const { error, change } = useSwitchSave(saver);
   return (
     <div className="flex flex-col gap-1">
-      {visibleOccasions(social).map((o) => (
-        <Checkbox
-          key={o}
-          name={`notifications.${o}`}
-          checked={saver.saved.notifications[o]}
-          disabled={saver.saving}
-          onChange={(e) =>
-            void change({ notifications: { ...saver.saved.notifications, [o]: e.target.checked } })
-          }
-        >
-          {OCCASION_TEXT[o]}
-        </Checkbox>
-      ))}
-      <p className="mt-1 text-sm text-muted-foreground">
-        Erinnerungen werden erst verschickt, wenn sie eingerichtet sind.
-      </p>
-      <Feedback error={error} saved={saved} />
+      <NetworkSlot>
+        {visibleOccasions(social).map((o) => (
+          <Checkbox
+            key={o}
+            name={`notifications.${o}`}
+            checked={saver.saved.notifications[o]}
+            aria-disabled={saver.saving || undefined}
+            needsNetwork
+            onChange={(e) =>
+              void change({
+                notifications: { ...saver.saved.notifications, [o]: e.target.checked },
+              })
+            }
+          >
+            {OCCASION_TEXT[o]}
+          </Checkbox>
+        ))}
+      </NetworkSlot>
+      <p className="mt-1 text-sm text-muted-foreground">Erinnerungen nur, wenn eingerichtet.</p>
+      <Feedback error={error} />
     </div>
   );
 }
@@ -81,26 +86,29 @@ const PRIVACY_SWITCHES: readonly { name: Flag; label: string }[] = [
 
 /** Group "Datenschutz und Empfehlungen": three switches, one line of help and the rest behind "Mehr erfahren". */
 export function PrivacyGroup({ saver }: { saver: ProfileSaver }) {
-  const { error, saved, change } = useSwitchSave(saver);
+  const { error, change } = useSwitchSave(saver);
   return (
     <div className="flex flex-col gap-1">
-      {PRIVACY_SWITCHES.map((s) => (
-        <Checkbox
-          key={s.name}
-          name={s.name}
-          checked={saver.saved[s.name]}
-          disabled={saver.saving}
-          onChange={(e) => void change({ [s.name]: e.target.checked })}
-        >
-          {s.label}
-        </Checkbox>
-      ))}
+      <NetworkSlot>
+        {PRIVACY_SWITCHES.map((s) => (
+          <Checkbox
+            key={s.name}
+            name={s.name}
+            checked={saver.saved[s.name]}
+            aria-disabled={saver.saving || undefined}
+            needsNetwork
+            onChange={(e) => void change({ [s.name]: e.target.checked })}
+          >
+            {s.label}
+          </Checkbox>
+        ))}
+      </NetworkSlot>
       <MoreHelp
         more={
           <>
             <p>
               „Alles privat“ setzt alle Freigaben aus, ohne sie zu löschen. Ohne Empfehlungen zeigt
-              die App keine Ausrüstungsvorschläge.
+              die App keine Gerätevorschläge.
             </p>
             <p>
               Die Seltenheit in PflanzenDéx zählt nur Konten, die hier zustimmen (Vorgabe: aus); es
@@ -111,14 +119,12 @@ export function PrivacyGroup({ saver }: { saver: ProfileSaver }) {
       >
         Du entscheidest, was geteilt und empfohlen wird.
       </MoreHelp>
-      <Feedback error={error} saved={saved} />
+      <Feedback error={error} />
     </div>
   );
 }
 
-const t = texts(table);
-
-const CHOICES: readonly { value: KeyboardShortcutMode; label: string }[] = [
+const CHOICES: readonly Choice<KeyboardShortcutMode>[] = [
   { value: "plain", label: t("shortcuts.plain") },
   { value: "modifier", label: t("shortcuts.modifier") },
   { value: "disabled", label: t("shortcuts.off") },
@@ -126,27 +132,51 @@ const CHOICES: readonly { value: KeyboardShortcutMode; label: string }[] = [
 
 /**
  * Group "Tastenkürzel" (US-QS-11): one choice of three. Einzeltasten (the starting value), Alt and Umschalt with the key,
- * or none. The choice saves at once and takes effect at once; the help says what each one does and that all of it is
- * also reachable with buttons.
+ * or none. The choice saves at once and takes effect at once; the help says that all of it is also reachable with
+ * buttons.
  */
 export function ShortcutsGroup({ saver }: { saver: ProfileSaver }) {
   const shortcuts = useShortcuts();
-  const { error, saved, change } = useSwitchSave(saver, (p) =>
-    shortcuts.setMode(p.keyboardShortcuts),
-  );
+  const { error, change } = useSwitchSave(saver, (p) => shortcuts.setMode(p.keyboardShortcuts));
   return (
-    <div className="flex flex-col gap-3">
-      <p className="m-0 font-semibold">{t("shortcuts.label")}</p>
-      <SegmentedControl
+    <div className="flex flex-col gap-1">
+      <ChoiceRow
+        name="keyboardShortcuts"
         label={t("shortcuts.label")}
+        help={t("shortcuts.help")}
         options={CHOICES}
+        needsNetwork
         value={saver.saved.keyboardShortcuts}
-        onChange={(mode) => {
-          if (mode !== saver.saved.keyboardShortcuts) void change({ keyboardShortcuts: mode });
-        }}
+        onPick={(keyboardShortcuts) => void change({ keyboardShortcuts })}
       />
-      <p className="m-0 text-sm text-muted-foreground">{t("shortcuts.help")}</p>
-      <Feedback error={error} saved={saved} />
+      <Feedback error={error} />
+    </div>
+  );
+}
+
+const MOTION_CHOICES: readonly Choice<MotionSetting>[] = [
+  { value: "system", label: t("motion.system") },
+  { value: "reduced", label: t("motion.reduced") },
+];
+
+/**
+ * Choice "Bewegung" (US-QS-33): "Wie auf dem Gerät" (the starting value) or "Bewegung aus". It saves at once with the
+ * profile and applies at once on the open screen; a refused save keeps the old value and says why (P-10).
+ */
+export function MotionGroup({ saver }: { saver: ProfileSaver }) {
+  const { error, change } = useSwitchSave(saver, (p) => applyMotion(p.motion));
+  return (
+    <div className="flex flex-col gap-1">
+      <ChoiceRow
+        name="motion"
+        label={t("motion.label")}
+        help={t("motion.help")}
+        options={MOTION_CHOICES}
+        needsNetwork
+        value={saver.saved.motion}
+        onPick={(motion) => void change({ motion })}
+      />
+      <Feedback error={error} />
     </div>
   );
 }

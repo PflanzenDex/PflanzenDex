@@ -6,6 +6,7 @@ import {
   longSeries,
   anniversary,
   locationWithoutZone,
+  plantWithoutLocationAndTarget,
   specimenWithoutLocation,
   treatmentDueToday,
 } from "./steps/care.ts";
@@ -46,6 +47,7 @@ export async function seedStates(pool: Pool, opt: StatesOptions): Promise<void> 
   await anniversary(ben);
   await locationWithoutZone(ben);
   await specimenWithoutLocation(clara);
+  await plantWithoutLocationAndTarget(ben);
   log(
     "States profile in place: roles, review cases, wishes, friends, swaps, equipment, measurements, care.",
   );

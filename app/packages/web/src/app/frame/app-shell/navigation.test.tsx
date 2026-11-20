@@ -4,10 +4,13 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./app-shell";
 import {
+  BAR_SHOW_CLASS,
   BRAND_HREF,
-  BRAND_LINK_LABEL,
   DISPLAY_NAME,
+  destinationHeading,
+  pageTitle,
 } from "../../../shared/patterns/navigation/nav-item";
+import { BRAND_LINK_LABEL } from "../../../shared/patterns/navigation/navigation/navigation";
 import {
   CATALOG_ADDRESS,
   DIFFICULTY_ADDRESS,
@@ -15,9 +18,7 @@ import {
   PHASES_ADDRESS,
   WISHLIST_MODE_ADDRESS,
   accountAddress,
-  destinationHeading,
   navItems,
-  pageTitle,
   PATHS,
   profileAddress,
   todayAddress,
@@ -47,7 +48,7 @@ describe("US-QS-07 · the offline bar", () => {
     delete (navigator as { onLine?: boolean }).onLine;
   });
 
-  it("US-QS-07 · the offline bar is an overlay outside the page and the state is announced (issue 1644, F8)", () => {
+  it("US-QS-30 · the offline bar is an overlay outside the page and the state is announced (issue 1644, F8)", () => {
     const shell = () => (
       <MemoryRouter initialEntries={["/"]}>
         <AppShell items={navItems({})}>
@@ -107,6 +108,36 @@ describe("US-DEV-06 navigation", () => {
     expect(link.textContent).toContain("Noch gesperrt");
   });
 
+  it("US-ONB-05 US-QS-14 in the bottom bar a locked destination carries a lock, not a second line of words (issue 1830)", () => {
+    const show = (mark: "Noch gesperrt" | "Bald") =>
+      render(
+        <MemoryRouter>
+          <AppShell items={navItems({ locks: { friends: mark } })}>
+            <p>Inhalt</p>
+          </AppShell>
+        </MemoryRouter>,
+      );
+    const locked = show("Noch gesperrt");
+    const bar = within(screen.getByRole("navigation", { name: "Navigation unten" }));
+    // The name still says it; the words are for assistive technology only, so the bar keeps one line of labels.
+    const link = bar.getByRole("link", { name: /^Freunde\s*, Noch gesperrt$/ });
+    const words = within(link).getByText(/Noch gesperrt/);
+    expect(words.classList).toContain("sr-only");
+    const mark = link.querySelector("[data-lock-mark]");
+    expect(mark?.getAttribute("data-lock-mark")).toBe("locked");
+    expect(mark?.getAttribute("aria-hidden")).toBe("true");
+    expect(mark?.querySelector("svg")).toBeTruthy();
+    // An open destination has no mark.
+    expect(bar.getByRole("link", { name: "Heute" }).querySelector("[data-lock-mark]")).toBeNull();
+    locked.unmount();
+    show("Bald");
+    const soon = within(screen.getByRole("navigation", { name: "Navigation unten" })).getByRole(
+      "link",
+      { name: /^Freunde\s*, Bald$/ },
+    );
+    expect(soon.querySelector("[data-lock-mark]")?.getAttribute("data-lock-mark")).toBe("soon");
+  });
+
   it("US-QS-14 Prüfliste and Betreiber belong to the group Verwaltung, no other destination has a group (issue 1093)", () => {
     const items = navItems({ reviewer: true, operator: true });
     expect(items.filter((i) => i.group).map((i) => [i.label, i.group])).toEqual([
@@ -152,10 +183,12 @@ describe("US-QS-07 · DS-25 navigation items", () => {
       </MemoryRouter>,
     );
     const bar = within(screen.getByRole("navigation", { name: "Navigation unten" }));
-    expect(bar.getAllByRole("link").length + bar.getAllByRole("button").length).toBeLessThanOrEqual(
-      5,
+    // The bar renders the slots of both text sizes and CSS hides one (issue 2249); the normal text size is counted here.
+    const shown = [...bar.getAllByRole("link"), ...bar.getAllByRole("button")].filter(
+      (el) => !el.classList.contains(BAR_SHOW_CLASS.large),
     );
-    expect(bar.getByRole("button", { name: "Mehr" })).toBeTruthy();
+    expect(shown.length).toBeLessThanOrEqual(5);
+    expect(bar.getAllByRole("button", { name: "Mehr" }).length).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -199,7 +232,7 @@ describe("US-QS-07 · DS-22 navigation icons", () => {
       </MemoryRouter>,
     );
     const bar = within(screen.getByRole("navigation", { name: "Navigation unten" }));
-    const slots = [...bar.getAllByRole("link"), bar.getByRole("button", { name: "Mehr" })];
+    const slots = [...bar.getAllByRole("link"), ...bar.getAllByRole("button", { name: "Mehr" })];
     for (const el of slots) {
       const svg = el.querySelector("svg");
       expect(svg, el.textContent ?? "").not.toBeNull();
@@ -281,6 +314,13 @@ describe("US-QS-14 · issue 1097 the heading of a destination while it loads", (
     ])
       expect(destinationHeading(other)).toBeNull();
   });
+
+  it("US-QS-14 · issue 1097 the heading equals the label of the entry, so the start frame and the page agree", () => {
+    for (const href of ["/today", "/collection", "/discover", "/friends"]) {
+      const entry = navItems({}).find((item) => item.href === href);
+      expect(destinationHeading(href)).toBe(entry?.label);
+    }
+  });
 });
 
 describe("US-QS-14 the destination Sammlung", () => {
@@ -340,7 +380,7 @@ describe("US-QS-14 the catalog is a mode of Entdecken, not a destination", () =>
 
   it("US-QS-14 a species profile lives below Entdecken, which stays the current destination, and has its own title", () => {
     expect(profileAddress("a 1")).toBe("/discover/species/a%201");
-    expect(viewTitle(profileAddress("a1"))).toBe(pageTitle("Artenprofil"));
+    expect(viewTitle(profileAddress("a1"))).toBe(pageTitle("Artprofil"));
     const nav = headerLinks(profileAddress("a1"), {});
     expect(nav.getByRole("link", { name: "Entdecken" }).getAttribute("aria-current")).toBe("page");
   });
@@ -471,5 +511,57 @@ describe("US-BES-17 print of the shell", () => {
     const root = screen.getByRole("link", { name: "Zum Inhalt springen" }).parentElement;
     expect(root?.className).toContain("md:flex-row");
     expect(root?.className).not.toContain("print:hidden");
+  });
+
+  it("US-QS-14 the reserve follows the bar when only its safe-area padding grows (issue 1818)", () => {
+    // A phone browser that goes edge to edge raises `env(safe-area-inset-bottom)` from 0 to 16 px: the bar grows by its
+    // bottom padding alone. Only an observer of the border box reports that; the content box keeps its size.
+    const observed: Array<{ target: Element; box: string | undefined }> = [];
+    let notify: () => void = () => {};
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: () => void) {
+          notify = callback;
+        }
+        observe(target: Element, options?: { box?: string }) {
+          observed.push({ target, box: options?.box });
+        }
+        disconnect() {}
+      },
+    );
+    let barHeight = 59;
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: Element,
+    ) {
+      const height = this.matches("nav[data-bottom-bar]") ? barHeight : 0;
+      return {
+        x: 0,
+        y: 0,
+        width: 360,
+        height,
+        top: 0,
+        left: 0,
+        right: 360,
+        bottom: height,
+      } as DOMRect;
+    });
+    render(
+      <MemoryRouter initialEntries={["/today"]}>
+        <AppShell items={navItems({})}>
+          <p>Inhalt</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    const main = screen.getByRole("main");
+    expect(main.style.getPropertyValue("--bar-reserve")).toBe("59px");
+    expect(observed.length).toBeGreaterThan(0);
+    expect(observed.some((o) => o.target.matches("nav[data-bottom-bar]"))).toBe(true);
+    expect(observed.every((o) => o.box === "border-box")).toBe(true);
+
+    barHeight = 75;
+    notify();
+    expect(main.style.getPropertyValue("--bar-reserve")).toBe("75px");
+    expect(document.documentElement.style.getPropertyValue("--bar-clearance")).toBe("83px");
   });
 });

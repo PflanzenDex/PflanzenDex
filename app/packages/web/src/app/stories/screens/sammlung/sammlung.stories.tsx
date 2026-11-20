@@ -1,4 +1,5 @@
 import type { Meta } from "@storybook/react-vite";
+import type { MeasurementView } from "@pflanzendex/core";
 import { CollectionArea } from "@/app/destinations/area-parts/lazy-areas";
 import { collectionEmpty, collectionMany, collectionRoutes } from "../../data/collection-data";
 import { API, token } from "../../harness/fake-api.fixtures";
@@ -19,7 +20,41 @@ const screen = (
 );
 const mode = (view: string) =>
   variants(screenStory({ path: `/collection?view=${view}`, routes: collectionRoutes, screen }));
-const plants = mode("plants");
+/** The measurements of "Aloe" (US-WAC-01): its plant layer reads them when a tile of the plants opens it (US-QS-26). */
+const aloeMeasurements: MeasurementView = {
+  specimenId: "a",
+  status: "plant",
+  growthMeasure: "rosette_diameter",
+  etiolationSigns: null,
+  measurements: [
+    {
+      id: "m-a-1",
+      specimenId: "a",
+      date: "2026-10-01",
+      value: 24,
+      quality: "healthy",
+      note: null,
+      ratedBy: "keeper",
+      photo: null,
+    },
+  ],
+  last: {
+    id: "m-a-1",
+    specimenId: "a",
+    date: "2026-10-01",
+    value: 24,
+    quality: "healthy",
+    note: null,
+    ratedBy: "keeper",
+    photo: null,
+  },
+  lastRating: "healthy",
+  growth: { count: 1, ratePerYear: null, trend: null, signal: null },
+};
+const plantRoutes = { ...collectionRoutes, "/specimens/a/measurements": aloeMeasurements };
+const plants = variants(
+  screenStory({ path: "/collection?view=plants", routes: plantRoutes, screen }),
+);
 const species = mode("species");
 const wishlist = mode("wishlist");
 

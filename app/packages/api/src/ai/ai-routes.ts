@@ -5,6 +5,7 @@ import {
   aiSetRights,
   type AppAreaReadSource,
   type CollectionReadSource,
+  type SpecimenWriteSource,
   type DiscoverSource,
   type PhotoSource,
   type SourceClient,
@@ -55,6 +56,8 @@ export interface AiPorts {
   photo: PhotoSource;
   discover: DiscoverSource;
   collection: CollectionReadSource;
+  /** The write tools of the specimens (US-KI-14), over the operations of the app's specimen routes. */
+  writes: SpecimenWriteSource;
   /** Every other area (US-KI-12), over the same functions as the app's routes. */
   areas: AppAreaReadSource;
   sources?: SourceClient;
@@ -112,7 +115,11 @@ export function aiAccessRoutes(
   const drafts = new DraftsPostgres(pool);
   routes.route(
     "/",
-    draftRoutes(pool, { drafts, types: draftTypes(pool, ports.discover), log }, clock),
+    draftRoutes(
+      pool,
+      { drafts, types: draftTypes(pool, ports.discover, ports.writes), log },
+      clock,
+    ),
   );
   const tasks = new TasksPostgres(pool);
   routes.route("/", taskRoutes(pool, { tasks, connections }, opt.resource, clock));
@@ -123,7 +130,7 @@ export function aiAccessRoutes(
       log,
       ...ports,
       drafts,
-      types: draftTypes(pool, ports.discover),
+      types: draftTypes(pool, ports.discover, ports.writes),
       tasks,
     }),
   );

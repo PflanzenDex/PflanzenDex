@@ -15,6 +15,7 @@ const CARD: SpecimenCard = {
   location: "Regal Süd",
   lightZone: "Zone 3",
   lightZoneSource: "location",
+  lightNeedUnknown: false,
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: null,
@@ -73,7 +74,7 @@ describe("PlantOverview (NFR-13, US-QS-23)", () => {
     );
     expect(screen.getByText("Trend: unbekannt")).toBeTruthy();
     expect(screen.getByText(/^Art: Ficus benjamina · Status: /)).toBeTruthy();
-    expect(screen.getByText("Zustand:", { exact: false })).toBeTruthy();
+    expect(screen.getByText("Qualität:", { exact: false })).toBeTruthy();
   });
 
   it("US-QS-23 the measure button names its plant", () => {

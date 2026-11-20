@@ -50,7 +50,8 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await store.setInvitationOnly(operator, false);
-  await pool.query("delete from invitation where created_by = any($1)", [people]);
+  // The table owner has no delete rule (#1616): the fixture pool cleans up.
+  await admin.query("delete from invitation where created_by = any($1)", [people]);
   await admin.query("delete from account where subject = any($1) or id = any($2)", [
     subjects,
     people,
@@ -102,17 +103,9 @@ describe("US-ACC-05 · only the operator creates invitations (database enforced)
     }
   });
 
-  it("US-ACC-05 row security is on for both tables, without any policy (defense in depth)", async () => {
-    const r = await pool.query<{ name: string; rls: boolean; rules: number }>(
-      `select c.relname as name, c.relrowsecurity as rls,
-              (select count(*)::int from pg_policy p where p.polrelid = c.oid) as rules
-         from pg_class c where c.relname in ('invitation', 'access_setting') order by 1`,
-    );
-    expect(r.rows).toEqual([
-      { name: "access_setting", rls: true, rules: 0 },
-      { name: "invitation", rls: true, rules: 0 },
-    ]);
-    // the definer functions still work with it
+  it("US-ACC-05 the definer functions still read both tables under forced row security (#1616)", async () => {
+    // A row hidden from the function would show as NULL here, not as the stored value.
+    expect((await pool.query("select invitation_required() as r")).rows[0].r).toBe(false);
     expect((await store.overview(operator, 30)).invitationOnly).toBe(false);
   });
 
@@ -135,6 +128,76 @@ describe("US-ACC-05 · only the operator creates invitations (database enforced)
     await expect(
       store.createInvitation(operator, { code: "short", expiresAt: inOneDay() }),
     ).rejects.toThrow();
+  });
+});
+
+describe("US-ACC-05 · row security binds the table owner too; the rules name the owner only (#1616)", () => {
+  it("US-ACC-05 both tables force row security, also for their owner (#1616)", async () => {
+    const r = await pool.query<{ name: string; rls: boolean; forced: boolean }>(
+      `select c.relname as name, c.relrowsecurity as rls, c.relforcerowsecurity as forced
+         from pg_class c where c.relname in ('invitation', 'access_setting') order by 1`,
+    );
+    expect(r.rows).toEqual([
+      { name: "access_setting", rls: true, forced: true },
+      { name: "invitation", rls: true, forced: true },
+    ]);
+  });
+
+  it("US-ACC-05 the rules name the table owner only and cover the statements the functions need (#1616)", async () => {
+    const r = await pool.query<{ table: string; cmd: string; owner_only: boolean }>(
+      `select tablename as "table", cmd, roles = array[current_user::name] as owner_only
+         from pg_policies where tablename in ('invitation', 'access_setting') order by 1, 2`,
+    );
+    expect(r.rows).toEqual([
+      { table: "access_setting", cmd: "SELECT", owner_only: true },
+      { table: "access_setting", cmd: "UPDATE", owner_only: true },
+      { table: "invitation", cmd: "INSERT", owner_only: true },
+      { table: "invitation", cmd: "SELECT", owner_only: true },
+      { table: "invitation", cmd: "UPDATE", owner_only: true },
+    ]);
+  });
+
+  it("US-ACC-05 an application role that holds a grant still sees no row of either table (#1616)", async () => {
+    await issue();
+    const client = await pool.connect();
+    try {
+      await client.query("begin");
+      await client.query("grant select on invitation, access_setting to pflanzendex_app");
+      await client.query("set local role pflanzendex_app");
+      const seen = await client.query<{ invitations: number; settings: number }>(
+        `select (select count(*) from invitation)::int as invitations,
+                (select count(*) from access_setting)::int as settings`,
+      );
+      expect(seen.rows[0]).toEqual({ invitations: 0, settings: 0 });
+    } finally {
+      await client.query("rollback");
+      client.release();
+    }
+    expect(
+      (await pool.query("select count(*)::int as n from invitation")).rows[0].n,
+    ).toBeGreaterThan(0);
+  });
+
+  it("US-ACC-05 nothing deletes an invitation or the mode row, not even the table owner (#1616)", async () => {
+    const created = await store.createInvitation(operator, {
+      code: newCode(),
+      expiresAt: inOneDay(),
+    });
+    // Inside a transaction that is rolled back: a red run must not remove the shared mode row.
+    const client = await pool.connect();
+    try {
+      await client.query("begin");
+      expect(
+        (await client.query("delete from invitation where id = $1", [created.id])).rowCount,
+      ).toBe(0);
+      expect((await client.query("delete from access_setting")).rowCount).toBe(0);
+      expect(
+        (await client.query("select 1 from invitation where id = $1", [created.id])).rowCount,
+      ).toBe(1);
+    } finally {
+      await client.query("rollback");
+      client.release();
+    }
   });
 });
 

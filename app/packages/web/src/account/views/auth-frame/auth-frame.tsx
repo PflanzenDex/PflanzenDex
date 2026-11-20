@@ -1,4 +1,8 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../views.de.json";
+
+const t = texts(table);
 
 /** The three value lines of the frame; the sign-in theme shows the same three (app/config/dev/keycloak-theme, US-QS-14). */
 const VALUE_LINES = [
@@ -22,7 +26,7 @@ function ShelfDrawing() {
       strokeLinejoin="round"
       aria-hidden="true"
       focusable="false"
-      className="h-16 w-auto max-w-full text-primary md:h-auto md:w-full md:max-w-[440px]"
+      className="h-12 w-auto max-w-full text-primary md:h-auto md:w-full md:max-w-[440px]"
     >
       <path d="M24 98 H376" strokeWidth={3} />
       <path d="M60 98 L54 112 M340 98 L346 112" />
@@ -51,19 +55,57 @@ function ShelfDrawing() {
 }
 
 /**
+ * Whether the band scrolls, that is, its content is taller than its box (issue 2124). A tab stop that scrolls nothing does
+ * nothing, so the band is one only while this holds. The band and its children are observed: a new window, a new text
+ * size or a change of the drawing or the lines measures again. Without ResizeObserver the band is measured once.
+ */
+function useScrolls(band: RefObject<HTMLElement | null>): boolean {
+  const [scrolls, setScrolls] = useState(false);
+  useLayoutEffect(() => {
+    const el = band.current;
+    if (!el) return;
+    // A state update with the value it already holds renders nothing, so every measure may set it.
+    const measure = () => setScrolls(el.scrollHeight > el.clientHeight);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    for (const child of Array.from(el.children)) observer.observe(child);
+    return () => observer.disconnect();
+  }, [band]);
+  return scrolls;
+}
+
+/**
  * The frame of the entry pages (US-QS-14): on a wide screen a calm panel with the drawing and the value lines on the
- * left and the content on the right; on a phone a band with the drawing above the content. The sign-in theme of the
- * Keycloak pages uses the same frame, the same tokens and the same German texts. Above 1920 px it keeps its 1920 px
- * layout, centred, like the app shell; its page colour makes the whole column the painted area (US-QS-14, issue 1160).
+ * left and the content on the right; on a phone a band with the drawing and the value lines above the content (owner
+ * decision Q-156, 2026-11-14: the value lines show on every screen). On a phone the band is at most 36 % of the window
+ * height (starting value, assumption) and scrolls inside itself beyond that, so at a large text size the content below
+ * stays on one screen (owner decision 2026-11-14, option a; one-screen gate, 200 % text). The band is a named region on
+ * every size (WCAG 4.1.2). It is a tab stop (WCAG 2.1.1) only while it scrolls, because a tab stop that scrolls nothing
+ * does nothing (issue 2124, owner decision 2026-11-14). The sign-in theme of the Keycloak pages uses the same frame, the
+ * same tokens and the same German texts. Above 1920 px it keeps its 1920 px layout, centred, like the app shell; its page
+ * colour makes the whole column the painted area (US-QS-14, issue 1160).
  */
 export function AuthFrame(props: { children: ReactNode }) {
+  const band = useRef<HTMLDivElement>(null);
+  const scrolls = useScrolls(band);
   return (
     <div className="mx-auto grid min-h-dvh w-full max-w-480 grid-cols-1 content-start bg-background md:grid-cols-2 md:content-stretch">
-      <div className="flex flex-col items-center justify-center gap-3 bg-muted px-4 py-1.5 md:gap-8 md:p-12">
+      {/*
+       * The focus ring is inset: a ring outside the box would be cut off by the scroll area of the band on a phone.
+       */}
+      <div
+        ref={band}
+        role="region"
+        aria-label={t("frame.region")}
+        tabIndex={scrolls ? 0 : undefined}
+        className="flex max-h-[36dvh] flex-col items-center justify-start gap-2 overflow-y-auto overscroll-contain bg-muted px-4 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:max-h-none md:justify-center md:gap-8 md:overflow-visible md:p-12"
+      >
         <ShelfDrawing />
-        <ul className="hidden list-none text-lg leading-snug text-muted-foreground md:block md:max-w-[440px]">
+        <ul className="list-none text-sm leading-[1.3] text-muted-foreground md:max-w-[440px] md:text-lg md:leading-snug">
           {VALUE_LINES.map((line, index) => (
-            <li key={line} className={index > 0 ? "mt-3" : undefined}>
+            <li key={line} className={index > 0 ? "mt-1 md:mt-3" : undefined}>
               {line}
             </li>
           ))}

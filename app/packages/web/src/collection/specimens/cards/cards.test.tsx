@@ -25,6 +25,7 @@ const card = (extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   location: "Regal Süd",
   lightZone: "Zone 3",
   lightZoneSource: "location",
+  lightNeedUnknown: false,
   caughtAt: "2026-09-01",
   photo: null,
   lastMeasurement: null,
@@ -242,6 +243,34 @@ describe("US-WAC-05 the latest photo on the card is private (P-05)", () => {
 });
 
 describe("US-BES-06 Karte: letzte Messung", () => {
+  // The keeper's today is fixed, so "vor N Tagen" and "am TT.MM.JJJJ" are known (US-QS-32).
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-15T12:00:00Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("US-QS-32 within 7 days the last measurement reads 'Gesund vor 6 Tagen'", () => {
+    vi.setSystemTime(new Date("2026-10-07T12:00:00Z"));
+    const h = html([
+      card({
+        lastMeasurement: { date: "2026-10-01", value: 12.5, quality: "healthy", note: null },
+      }),
+    ]);
+    expect(h).toContain(">Gesund</strong> vor 6\u00a0Tagen");
+    expect(h).not.toContain("am 01.10.2026");
+  });
+
+  it("US-QS-32 beyond 7 days the last measurement keeps 'am TT.MM.JJJJ'", () => {
+    const h = html([
+      card({
+        lastMeasurement: { date: "2026-10-01", value: 12.5, quality: "healthy", note: null },
+      }),
+    ]);
+    expect(h).toContain(">Gesund</strong> am 01.10.2026");
+  });
   it('without measurement: "noch keine Messung"', () => {
     expect(html([card()])).toContain("noch keine Messung");
   });
@@ -306,8 +335,8 @@ describe("US-BES-06 Karte: offene Behandlung", () => {
     dueDate: { kind, days, text },
   });
 
-  it('without open treatment: "keine offene Behandlung"', () => {
-    expect(html([card()])).toContain("keine offene Behandlung");
+  it('without open treatment: "Keine offene Behandlung."', () => {
+    expect(html([card()])).toContain("Keine offene Behandlung.");
   });
 
   it("shows reason and due date, overdue items are highlighted", () => {

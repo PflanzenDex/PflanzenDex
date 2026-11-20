@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useLayoutEffect, useState, type ReactNode } from "react";
 import { isNewAccount, type OnboardingCounts } from "@pflanzendex/core";
 import { loadSpecimenCount } from "../../../../collection";
 import { useFeature, useRequest, type Request } from "../../../../shared/data";
@@ -6,9 +6,10 @@ import { FriendsBanner } from "../../../../social";
 import { HintNote } from "./hint";
 import type { HintState } from "./hint/hint-api";
 import { FirstPlantGuide } from "./first-plant-guide/first-plant-guide";
+import { GuideEndNote } from "./first-plant-guide/guide-end-note/guide-end-note";
 import type { SpeciesLookup } from "../onboarding-wizard/species-step/species-step";
 import type { LinkTarget } from "../../../../shared/patterns/navigation/navigation/navigation";
-import { useGuideEnd, useHints } from "./use-hints";
+import { useGuideEnd, useHints, useNoteCode } from "./use-hints";
 
 type Token = () => Promise<string | undefined>;
 type Target = Extract<LinkTarget, "species" | "collection">;
@@ -33,16 +34,41 @@ function useCounts(api: string, token: Token): Request<OnboardingCounts> {
   });
 }
 
-/** Which part of the introduction shows now (issue 1244): nothing before the count, the guide in place of the tasks. */
-function stageOf(
-  pending: boolean,
-  counts: OnboardingCounts | undefined,
-  hints: HintState | "failed" | null,
-  ended: boolean,
-) {
-  const newAccount = counts !== undefined && isNewAccount(counts);
-  // Undecided: the count, or the hints a new account is judged by, are still loading.
-  const undecided = pending || (newAccount && hints === null);
+/**
+ * Whether this visit has an answer of the count (issue 1795). The count of an earlier visit is served from the cache at
+ * once, but it may predate a plant saved since, and a refresh that failed leaves it behind; neither is an answer. The
+ * answer stays once it came, so a later refresh does not take the guide away while it is open.
+ */
+function useAnswered(count: Request<OnboardingCounts>): boolean {
+  const fresh = count.status === "ready" && !count.offline && !count.refreshing;
+  const [seen, setSeen] = useState(false);
+  useLayoutEffect(() => {
+    if (fresh) setSeen(true);
+  }, [fresh]);
+  return seen || fresh;
+}
+
+/**
+ * Which part of the introduction shows now (issue 1244): nothing before the count, the guide in place of the tasks. A new
+ * account is judged by the count only once this visit has it (`answered`, issue 1795): until then a copy that says "new"
+ * waits while its refresh is on its way, and a copy that a failed refresh left behind shows the tasks.
+ */
+function stageOf(input: {
+  count: Request<OnboardingCounts>;
+  answered: boolean;
+  hints: HintState | "failed" | null;
+  ended: boolean;
+  /** The code of a due note is in hand (issue 2230). */
+  codeReady: boolean;
+}) {
+  const { count, answered, hints, ended, codeReady } = input;
+  const counts = count.value;
+  const copyNew = counts !== undefined && isNewAccount(counts);
+  const waiting = copyNew && !answered && count.refreshing;
+  const newAccount = copyNew && answered;
+  // Undecided: the count, the hints of an account with a count, or a due note's code is still loading (issue 2230).
+  const undecided =
+    count.status === "pending" || waiting || (counts !== undefined && hints === null) || !codeReady;
   const guide = newAccount && hints !== null && !ended;
   return {
     undecided,
@@ -121,9 +147,12 @@ export function TodayIntro(props: {
   const { api, token } = props;
   const social = useFeature("social");
   const r = useCounts(api, token);
+  const answered = useAnswered(r);
   const [hints, setHints] = useHints(api, token, r.value);
-  const [ended, leave] = useGuideEnd(api, token, hints);
-  const stage = stageOf(r.status === "pending", r.value, hints, ended);
+  const guide = useGuideEnd(api, token, hints);
+  const note = noteOf(hints);
+  const codeReady = useNoteCode(note);
+  const stage = stageOf({ count: r, answered, hints, ended: guide.ended, codeReady });
   return (
     <>
       {stage.undecided && props.fallback}
@@ -134,10 +163,11 @@ export function TodayIntro(props: {
           token={token}
           counts={COUNTS_KEY}
           onOpen={props.onOpen}
-          onLeave={leave}
+          onLeave={guide.leave}
         />
       )}
       <Shown shown={stage.intro}>
+        {guide.failed && <GuideEndNote error={guide.failed} onRetry={guide.retry} />}
         <Notes
           api={api}
           token={token}

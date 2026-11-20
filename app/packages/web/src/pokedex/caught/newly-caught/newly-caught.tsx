@@ -10,7 +10,7 @@ const SEEN_KEY = ["pokedex", "seen"] as const;
 
 /**
  * The banner "Neu gefangen: …" (US-POK-12): the caught species the keeper has not seen yet, derived as caught minus
- * the seen state the server holds per account (P-01, P-04). It stays until "Okay" writes the seen state. On the first
+ * the seen state the server holds per account (P-01, P-04). It stays until "Als gesehen markieren" writes the seen state. On the first
  * visit (no state yet) the state is created silently with the current caught species and no banner shows. A read error
  * never breaks the page: the banner is simply absent (the page itself has its own load error handling).
  */
@@ -64,7 +64,7 @@ export function NewlyCaught(props: {
         pendingLabel="Wird gespeichert …"
         onClick={() => void write.run((t) => markSeen(api, t, names), "")}
       >
-        Okay
+        Als gesehen markieren
       </Button>
     </section>
   );

@@ -1,6 +1,6 @@
 // Specimen cards (US-BES-06): a pure derivation from specimens, locations, zones and the ports for measurements and
 // treatments (P-01: computed, never stored). What is missing stays `null` and means "unknown" (P-08).
-import type { LightLocationStore, ZoneStore } from "../../light";
+import { lightNeedUnknown, type LightLocationStore, type ZoneStore } from "../../light";
 import type {
   TreatmentSource,
   SpecimenCard,
@@ -88,10 +88,25 @@ export async function specimenCards(
   return cardsOf(deps, userId, today, rows);
 }
 
+/** The species is known and its light need is unknown (US-LIC-01); an unreadable species is not asked. */
+const needUnknown = (species: Parameters<typeof lightNeedUnknown>[0] | null | undefined): boolean =>
+  species !== null && species !== undefined && lightNeedUnknown(species);
+
+/** The zone fields of a card: the effective zone, where it comes from and whether the light need is missing (US-LIC-01). */
+function zoneFields(z: SpecimenRow, context: ZoneContext) {
+  const zone = effectiveZone(z, context);
+  return {
+    lightZone: zone?.zone.name ?? null,
+    lightZoneSource: zone?.source ?? null,
+    lightNeedUnknown: zone === null && needUnknown(context.species.get(z.speciesId)),
+  };
+}
+
 /**
  * The cards of the given specimens of the account, in the given order (US-BES-06, NFR-12). The ports are asked for these
  * IDs only, so one page of the list never loads the rows of the other plants. The caller passes active specimens only.
  */
+
 export async function cardsOf(
   deps: CardsDependencies,
   userId: string,
@@ -122,7 +137,6 @@ export async function cardsOf(
   };
   const card = (z: SpecimenRow): SpecimenCard => {
     const location = locations.find((s) => s.id === z.locationId);
-    const zone = effectiveZone(z, context);
     return {
       id: z.id,
       name: z.name,
@@ -131,8 +145,7 @@ export async function cardsOf(
       speciesName: speciesNames.get(z.speciesId) ?? null,
       status: z.status,
       location: location?.name ?? null,
-      lightZone: zone?.zone.name ?? null,
-      lightZoneSource: zone?.source ?? null,
+      ...zoneFields(z, context),
       caughtAt: z.caughtAt,
       provenance: provenance.get(z.id) ?? null,
       ...measurementDisplay(measurements.get(z.id)),

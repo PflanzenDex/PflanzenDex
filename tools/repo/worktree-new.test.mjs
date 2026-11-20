@@ -13,6 +13,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -26,7 +27,8 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const FILES = [
   "tools/repo/worktree-new.sh",
   "app/tools/workflow/worktree/worktree-env.mjs",
-  "app/tools/check/supply/check-deps.mjs",
+  "app/tools/check/delivery/supply/check-deps.mjs",
+  "app/tools/check/shared/entry-point.mjs",
 ];
 const LOCK = '{"lockfileVersion":3}\n';
 const made = [];
@@ -57,7 +59,8 @@ function installed(app) {
 
 /** A main checkout with a bare origin that has `dev`, the script files and an installed node_modules (unless `withDeps` is false). */
 function fixture({ withDeps = true } = {}) {
-  const root = mkdtempSync(path.join(tmpdir(), "worktree-new-"));
+  // The real folder: git and the script name the checkout by its real path, and macOS links /var to /private/var (#2290).
+  const root = mkdtempSync(path.join(realpathSync(tmpdir()), "worktree-new-"));
   made.push(root);
   const origin = path.join(root, "origin.git");
   const main = path.join(root, "main");
@@ -146,7 +149,7 @@ test("US-DEV-08: the new worktree is ready to commit in: its dependencies are an
   assert.ok(makeCalls(log).includes(`-C ${dir} setup`));
   const check = spawnSync(
     "node",
-    [path.join(dir, "app", "tools", "check", "supply", "check-deps.mjs")],
+    [path.join(dir, "app", "tools", "check", "delivery", "supply", "check-deps.mjs")],
     {
       encoding: "utf8",
     },

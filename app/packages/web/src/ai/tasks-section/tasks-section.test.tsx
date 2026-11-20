@@ -1,11 +1,16 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { NewTaskPart, TasksSection } from "./tasks-section";
+
+/** The address of the router: the layer the last control opened (`?sheet=<id>`, US-QS-15). */
+function Address() {
+  return <output data-testid="address">{useLocation().search}</output>;
+}
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "../ai.de.json";
 import { TasksSkeleton } from "./tasks-section.skeleton";
@@ -59,6 +64,28 @@ const showNew = (list = false) =>
       </MemoryRouter>
     </QueryClientProvider>,
   );
+/** One section with the address shown, so a test can read the layer its control opened. */
+const showWithAddress = (section: "tasks" | "new-task") =>
+  render(
+    <QueryClientProvider client={createQueryClient()}>
+      <MemoryRouter>
+        {section === "tasks" ? (
+          <TasksSection api="http://api" token={token} />
+        ) : (
+          <NewTaskPart api="http://api" token={token} />
+        )}
+        <Address />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+/** The box of an empty state: its line is the heading, its one action the button inside (US-QS-07). */
+const emptyBox = async (line: string) =>
+  (await screen.findByRole("heading", { level: 3, name: line })).parentElement as HTMLElement;
+const actionsOf = (box: HTMLElement) =>
+  within(box)
+    .getAllByRole("button")
+    .map((b) => b.textContent);
+const address = () => screen.getByTestId("address").textContent;
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -120,10 +147,66 @@ describe("US-KI-08 tasks to the AI client", () => {
   });
 });
 
+describe("US-KI-08 FX-81 the empty sheets offer their next step", () => {
+  it("US-KI-08 FX-81 'Aufträge' without a task offers 'Auftrag anlegen' when a client is connected", async () => {
+    fakeServer([], true);
+    const user = userEvent.setup();
+    showWithAddress("tasks");
+    const box = await emptyBox("Keine Aufträge vorhanden");
+    expect(actionsOf(box)).toEqual(["Auftrag anlegen"]);
+    await user.click(within(box).getByRole("button", { name: "Auftrag anlegen" }));
+    expect(address()).toBe("?sheet=new-task");
+  });
+
+  it("US-KI-08 FX-81 'Aufträge' without a task and without a client offers 'KI-Client verbinden', which opens how-to", async () => {
+    fakeServer([], false);
+    const user = userEvent.setup();
+    showWithAddress("tasks");
+    const box = await emptyBox("Keine Aufträge vorhanden");
+    expect(actionsOf(box)).toEqual(["KI-Client verbinden"]);
+    await user.click(within(box).getByRole("button", { name: "KI-Client verbinden" }));
+    expect(address()).toBe("?sheet=howto");
+  });
+
+  it("US-KI-08 FX-81 'Neuer Auftrag' without a client offers 'KI-Client verbinden' above the disabled 'Auftrag anlegen'", async () => {
+    fakeServer([], false);
+    const user = userEvent.setup();
+    showWithAddress("new-task");
+    await screen.findByText(/kein KI-Client verbunden/);
+    const connect = screen.getByRole("button", { name: "KI-Client verbinden" });
+    const create = screen.getByRole("button", { name: "Auftrag anlegen" }) as HTMLButtonElement;
+    expect(create.disabled).toBe(true);
+    expect(connect.compareDocumentPosition(create) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await user.click(connect);
+    expect(address()).toBe("?sheet=howto");
+  });
+
+  it("US-KI-08 FX-81 'Neuer Auftrag' with a connected client offers no 'KI-Client verbinden'", async () => {
+    fakeServer([], true);
+    showWithAddress("new-task");
+    await screen.findByRole("button", { name: "Auftrag anlegen" });
+    expect(screen.queryByRole("button", { name: "KI-Client verbinden" })).toBeNull();
+  });
+});
+
 describe("US-QS-14 issue 1697 · the tasks show their shaped skeleton once", () => {
   it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
     expectOneLoadingStatus(
       <TasksSkeleton label={table["tasks.loading"]} />,
       table["tasks.loading"],
     ));
+});
+
+describe("US-QS-32 the tasks: one line of hint, the rest behind Mehr erfahren (SG-COPY-05, F-0302)", () => {
+  it("US-QS-32 F-0302 'Aufträge' says one line; the example, the draft and the 14 days sit behind Mehr erfahren", async () => {
+    fakeServer([row()]);
+    show();
+    const line = await screen.findByText("Ein Auftrag bittet deinen KI-Client um etwas.");
+    expect(line.closest("details")).toBeNull();
+    const more = line.parentElement?.querySelector("details");
+    expect(more?.textContent).toContain("Zum Beispiel ein Artprofil.");
+    expect(more?.textContent).toContain("Das Ergebnis kommt als Entwurf");
+    expect(more?.textContent).toContain("nach 14 Tagen");
+    expect(more?.textContent).not.toContain("Ein Auftrag bittet deinen KI-Client um etwas.");
+  });
 });

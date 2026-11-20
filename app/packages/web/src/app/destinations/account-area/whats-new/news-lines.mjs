@@ -1,5 +1,5 @@
 // US-DEV-06 (#1486): the changelog lines. Shared by the app (whats-new.ts), the release tool (tools/repo/news-release.mjs)
-// and the QG-U3 gate (tools/check/release/check-changelog.mjs), so the order and the fragment rule are defined once.
+// and the QG-U3 gate (tools/check/delivery/release/check-changelog.mjs), so the order and the fragment rule are defined once.
 // One fragment per PR lives in unreleased/; news.de.json keeps the lines that predate the fragments (unreleased) and each
 // released version (versions, newest first). Pure functions only: no file system, no network.
 

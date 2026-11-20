@@ -1,8 +1,9 @@
-import { specimenSetLightZone, specimenSetLocation, type ZoneUsage } from "@pflanzendex/core";
+import type { ZoneUsage } from "@pflanzendex/core";
 import { SpecimenPostgres, IdempotencyPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { body, write, type AuthEnv } from "../../kernel";
+import type { SpecimenOperations } from "./specimen-operations";
 
 /**
  * Set the location of a specimen to one of the own locations (US-PHA-03, the action behind the BES-08 hint "location
@@ -11,9 +12,8 @@ import { body, write, type AuthEnv } from "../../kernel";
  * specimen (US-LIC-02, US-BES-04) is set or cleared through `specimen.set_light_zone` the same way; a zone of another
  * account is `light_zone.not_found`.
  */
-export function locationRoutes(pool: Pool): Hono<AuthEnv> {
-  const setLocation = specimenSetLocation({ specimens: new SpecimenPostgres(pool) });
-  const setLightZone = specimenSetLightZone({ specimens: new SpecimenPostgres(pool) });
+export function locationRoutes(pool: Pool, ops: SpecimenOperations): Hono<AuthEnv> {
+  const { setLocation, setLightZone } = ops;
   const deps = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
   routes.post("/specimens/:id/location", async (c) =>

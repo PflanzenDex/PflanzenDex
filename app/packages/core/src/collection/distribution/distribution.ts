@@ -1,10 +1,17 @@
 // Distribution of the specimens over the light zones (US-LIC-02, FR-LIC-04): a pure derivation, never stored (P-01).
 // The same count will later serve the wishlist prioritization (specimen level, zones 2 to 4 only).
-import type { LightZone } from "../../light";
+import { lightNeedUnknown, type LightZone } from "../../light";
+import type { Species } from "../../catalog";
 import { cuttingLight } from "../placement/cutting-light";
 import { effectiveZone, zoneOverrides, type ZoneContext } from "../placement/effective-zone";
+import { speciesDisplayName } from "../shared/name";
 import { distributionHint } from "./distribution-hint";
-import type { NotCounted, Distribution, DistributionDependencies } from "./distribution-types";
+import type {
+  NotCounted,
+  Distribution,
+  DistributionDependencies,
+  LightNeedGap,
+} from "./distribution-types";
 import { isActive, type SpecimenRow } from "../shared/types";
 
 type Place = LightZone | "cuttingLight" | "archived" | "unknown";
@@ -27,6 +34,12 @@ const thinnestZones = (zones: readonly { zone: LightZone; count: number }[]): Li
   const smallest = Math.min(...zones.map((z) => z.count));
   return zones.filter((z) => z.count === smallest).map((z) => z.zone);
 };
+
+/** The species of a specimen whose zone is unknown because its lux need or default level is missing (US-LIC-01). */
+function needGap(species: Species | null | undefined): LightNeedGap | null {
+  if (!species || !lightNeedUnknown(species)) return null;
+  return { speciesId: species.id, speciesName: speciesDisplayName(species) };
+}
 
 /**
  * Distribution of the specimens of the account over zones 2 to 4. Only the data of the account flows in (P-04). What is
@@ -53,12 +66,16 @@ export async function zoneDistribution(
   };
   const count = new Map<string, number>();
   const rest = { cuttingLight: 0, archived: 0, zoneUnknown: 0 };
+  const needs = new Map<string, LightNeedGap>();
   for (const z of rows) {
     const place = placeFrom(z, context);
     if (place === "cuttingLight") rest.cuttingLight += 1;
     else if (place === "archived") rest.archived += 1;
-    else if (place === "unknown") rest.zoneUnknown += 1;
-    else count.set(place.id, (count.get(place.id) ?? 0) + 1);
+    else if (place === "unknown") {
+      rest.zoneUnknown += 1;
+      const gap = needGap(context.species.get(z.speciesId));
+      if (gap) needs.set(gap.speciesId, gap);
+    } else count.set(place.id, (count.get(place.id) ?? 0) + 1);
   }
   const counted = zones.slice(1).map((zone) => ({ zone, count: count.get(zone.id) ?? 0 }));
   const thinnest = thinnestZones(counted);
@@ -67,6 +84,9 @@ export async function zoneDistribution(
     zones: counted,
     thinnest,
     notCounted,
+    lightNeedUnknown: [...needs.values()].sort((a, b) =>
+      a.speciesName.localeCompare(b.speciesName, "de"),
+    ),
     hint: distributionHint(counted, thinnest),
   };
 }

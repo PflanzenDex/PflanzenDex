@@ -7,6 +7,7 @@ import {
   type SegmentedOption,
 } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { PageSubject } from "@/shared/patterns/navigation/page-header/page-header";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { refusalText } from "@/shared/lib/error-text";
 import { Button } from "@/shared/ui/button/button";
@@ -14,13 +15,14 @@ import {
   DelayedSkeleton,
   useHeldLoader,
 } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Quiet, Warning } from "../../../../specimens/cards/parts/parts";
+import { Quiet, ErrorNotice } from "../../../../specimens/cards/parts/parts";
 import { Observations } from "../../../../markers/repot/repot-plan/observations/observations";
 import {
   RepotPlanSection,
   signsLayerId,
   useRepotPlan,
 } from "../../../../markers/repot/repot-plan/repot-plan";
+import { CareProfileSectionSkeleton } from "../../../../care-profile-page/care-profile-page.skeleton";
 import table from "./plant-care-tab.de.json";
 
 const t = texts(table);
@@ -40,7 +42,7 @@ const PARTS = [
 const REPOT_PART = { value: "umtopfen", label: t("parts.repot") } as const;
 type Part = "behandlungen" | "profil" | "umtopfen";
 
-/** What the repot part needs: the access to the plan and the action of "Umgetopft" (US-BES-19). */
+/** What the repot part needs: the access to the plan and the action of "Umtopfen eintragen" (US-BES-19). */
 export type RepotPart = { access: PhotoAccess; onRepot: () => void };
 
 /** The layer of the own care profile of one plant's species (US-QS-23, US-BES-09). */
@@ -92,12 +94,11 @@ function ProfilePart({ card }: { card: SpecimenCard }) {
 export function CareProfileLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
   return (
     <LayerSheet id={careProfileLayerId(props.card.id)} title={t("profile.layerTitle")}>
+      {/* The profile's own shape while its chunk loads (US-QS-14): the layer does not move when the profile arrives. */}
       <Suspense
         fallback={
           <DelayedSkeleton>
-            <p role="status" className="text-sm text-muted-foreground">
-              {t("profile.loading")}
-            </p>
+            <CareProfileSectionSkeleton label={t("profile.loading")} />
           </DelayedSkeleton>
         }
       >
@@ -122,6 +123,8 @@ export function RepotSignsLayer(props: { card: SpecimenCard; access: PhotoAccess
   const loading = useHeldLoader(plan.status === "pending");
   return (
     <LayerSheet id={signsLayerId(props.card.id)} title={t("signs.layerTitle")}>
+      {/* The plant's name is the first line under the sheet title (SG-HEAD-01, US-QS-32). */}
+      <PageSubject>{props.card.name}</PageSubject>
       {loading ? (
         <DelayedSkeleton>
           <p role="status" className="text-sm text-muted-foreground">
@@ -130,13 +133,13 @@ export function RepotSignsLayer(props: { card: SpecimenCard; access: PhotoAccess
         </DelayedSkeleton>
       ) : null}
       {!loading && plan.status === "error" ? (
-        <Warning>
+        <ErrorNotice>
           <p>{t("signs.failed")}</p>
           {plan.error ? <p>{refusalText(plan.error)}</p> : null}
           <Button type="button" variant="outline" onClick={plan.retry}>
             {t("signs.retry")}
           </Button>
-        </Warning>
+        </ErrorNotice>
       ) : null}
       {!loading && plan.value !== undefined && !plan.value.hidden ? (
         <Observations

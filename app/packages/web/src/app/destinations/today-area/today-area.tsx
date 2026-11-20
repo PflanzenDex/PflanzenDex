@@ -5,10 +5,11 @@ import {
   LayerSheet,
   useLayer,
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { HintsPage } from "@/collection";
 import { PlanLayer, TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
-import { TodayPage, TodaySkeleton, type TodayDestination } from "@/today";
+import { OPENS, TodayPage, TodaySkeleton, type TodayDestination } from "@/today";
 import {
   HintsLayerSkeleton,
   TreatmentsLayerSkeleton,
@@ -20,6 +21,8 @@ import {
   type TodaySection,
 } from "@/shared/patterns/navigation/navigation/navigation";
 import { TodayOverview } from "./today-overview/today-overview";
+import { useTodayFollowsWrites } from "./today-follows-writes/today-follows-writes";
+import { WateringView, useWateringFilter } from "./watering-view/watering-view";
 
 type Token = () => Promise<string | undefined>;
 
@@ -34,16 +37,6 @@ export type TodayTile = {
   id: string;
   tile: (draw: DrawTile) => ReactNode;
   layer: ReactNode;
-};
-
-/** Where the actions of "Jetzt dran" lead (TE-07): treatments and hints open their layer, the rest are views. */
-const VIEW: Partial<Record<TodayDestination, LinkTarget>> = {
-  care_phases: "carePhases",
-  collection: "collection",
-  // Measuring and the wishlist live in the Sammlung (US-QS-14, US-QS-04).
-  measurements: "collection",
-  wishlist: "collection",
-  equipment: "collection",
 };
 
 /**
@@ -67,15 +60,14 @@ export function TodayArea(props: {
 }) {
   useFormerAnchors();
   usePreloadParts();
-  const treatments = useLayer("treatments");
-  const hints = useLayer("hints");
+  // The list follows every write that changes what it derives from, wherever it is made (SG-FEED-01).
+  useTodayFollowsWrites();
   // The layer `plan` is the planning layer of the treatments (`PlanLayer`, its address value is `plan`).
   const plan = useLayer("plan");
+  // The rows that open a layer of the page open it themselves (`TodayRow`, from the row's element); the others go to a view.
   const open = (d: TodayDestination) => {
-    if (d === "treatments") return treatments.openLayer();
-    if (d === "hints") return hints.openLayer();
-    const view = VIEW[d];
-    if (view) props.onOpen(view);
+    const to = OPENS[d];
+    if ("view" in to) props.onOpen(to.view);
   };
   return (
     <LayerHost className="min-h-0" contentClassName="gap-4" data-fit-screen="" data-fit-fill="">
@@ -129,7 +121,10 @@ function useFormerAnchors() {
   }, [hash, navigate]);
 }
 
-/** The overview of the day with the layers of its categories. */
+/**
+ * The overview of the day with the layers of its categories. With the address `?tasks=watering` the day is narrowed to the
+ * watering tasks: the page shows them with a notice and a way back to the whole day (US-QS-26).
+ */
 function Tasks(props: {
   api: string;
   token: Token;
@@ -140,19 +135,24 @@ function Tasks(props: {
   tiles?: readonly TodayTile[] | undefined;
 }) {
   const { api, token } = props;
+  const watering = useWateringFilter();
   // The counts come from the same requests and keys as the lists in the layers: both share one copy and a write
   // updates both. Each module hands its count over (`count`); the app nests them, the modules do not know each other.
   return (
     <>
-      <Suspense fallback={<TodaySkeleton />}>
-        <TodayOverview
-          api={api}
-          token={token}
-          onOpen={props.onOpen}
-          open={props.open}
-          {...(props.tiles ? { tiles: props.tiles } : {})}
-        />
-      </Suspense>
+      {watering ? (
+        <WateringView api={api} token={token} />
+      ) : (
+        <Suspense fallback={<TodaySkeleton />}>
+          <TodayOverview
+            api={api}
+            token={token}
+            onOpen={props.onOpen}
+            open={props.open}
+            {...(props.tiles ? { tiles: props.tiles } : {})}
+          />
+        </Suspense>
+      )}
       <LayerSheet id="treatments" title="Behandlungen">
         <InLayer skeleton={<TreatmentsLayerSkeleton />}>
           <TreatmentsPage api={api} token={token} host onPlan={props.plan} />
@@ -160,7 +160,7 @@ function Tasks(props: {
       </LayerSheet>
       <LayerSheet id="watering" title="Gießen">
         <InLayer skeleton={<WateringLayerSkeleton />}>
-          <WateringList api={api} token={token} />
+          <WateringList api={api} token={token} param={LAYER_PARAM} />
         </InLayer>
       </LayerSheet>
       <LayerSheet id="hints" title="Fehlt noch">

@@ -87,6 +87,8 @@ export interface SpecimenCard {
   readonly lightZone: string | null;
   /** Where the zone comes from; `null` when the zone is unknown. */
   readonly lightZoneSource: ZoneSource | null;
+  /** No zone at all and the lux need or default level of the species is unknown: "Lichtbedarf eintragen" (US-LIC-01). */
+  readonly lightNeedUnknown: boolean;
   readonly caughtAt: string | null;
   /** From whom the specimen was received in a swap; `null` for a specimen that is the keeper's own (US-SOZ-13). */
   readonly provenance: SpecimenProvenance | null;

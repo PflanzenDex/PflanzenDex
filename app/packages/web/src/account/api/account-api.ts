@@ -1,5 +1,5 @@
 import type { UserManagerSettings } from "oidc-client-ts";
-import { call, createWrite, type Response } from "../../shared/data";
+import { call, createWrite, withRepeatKey, type ApiError, type Response } from "../../shared/data";
 
 export type Account = {
   id: string;
@@ -16,6 +16,8 @@ export type Account = {
   features?: { social: boolean; ai: boolean; recommendations: boolean };
   /** How the keyboard shortcuts are taken (US-QS-11): all, only with Alt+Shift, or none; absent means none is known. */
   keyboardShortcuts?: "plain" | "modifier" | "disabled";
+  /** Motion of the app (US-QS-33): `system` follows the device, `reduced` is "Bewegung aus"; absent counts as `system`. */
+  motion?: "system" | "reduced";
 };
 
 export const OCCASIONS = [
@@ -44,6 +46,8 @@ export type AccountProfile = {
   positionThresholds: number[] | null;
   /** How the keyboard shortcuts are taken (US-QS-11): all of them, only with Alt+Shift, or none. */
   keyboardShortcuts: "plain" | "modifier" | "disabled";
+  /** Motion of the app (US-QS-33): follow the device, or "Bewegung aus". */
+  motion: "system" | "reduced";
 };
 
 type Environment = Record<string, string | undefined>;
@@ -116,12 +120,10 @@ export function addressFromState(origin: string, state: unknown): string | undef
 
 export const apiUrl = (env: Environment): string => env["VITE_API_URL"] ?? "http://localhost:3000";
 
-/** Whether the 403 means "registration needs an invitation code" (US-ACC-05), judged by the code, never by the text. */
-async function invitationRequired(res: globalThis.Response): Promise<boolean> {
-  const body = (await res.json().catch(() => ({}))) as { error?: { code?: string } };
-  return body.error?.code === "invitation.required";
-}
+/** The code of a refusal of the account load that the message table does not know (US-QS-32, P-10). */
+export const ACCOUNT_NOT_LOADABLE = "account.not_loadable";
 
+/** Loads the account; a refusal rejects with its error code (US-QS-32), no answer rejects as it is (see `session-failure.ts`). */
 export async function getAccount(
   api: string,
   token: string,
@@ -132,23 +134,49 @@ export async function getAccount(
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
   });
   if (res.status === 401) throw new Error("not_signed_in");
-  if (res.status === 403 && (await invitationRequired(res))) throw new Error("invitation_required");
-  if (!res.ok) throw new Error("account_not_loadable");
-  return (await res.json()) as Account;
+  if (res.ok) return (await res.json()) as Account;
+  const body = (await res.json().catch(() => ({}))) as { error?: { code?: string } };
+  if (res.status === 403 && body.error?.code === "invitation.required")
+    throw new Error("invitation_required");
+  throw new Error(body.error?.code ?? ACCOUNT_NOT_LOADABLE);
 }
 
-/** "Sign out on all devices": ends all sessions of the account at the sign-in service (account API). */
-export async function signOutEverywhere(
-  authority: string,
+/** The code of a sign-out that got no answer: offline, or no answer within the timeout (US-ACC-01). */
+export const SIGN_OUT_UNREACHABLE = "network.not_reachable";
+
+/**
+ * "Sign out on all devices" (US-ACC-01, issue 2065): the API ends every session of the keeper at the sign-in service. The
+ * browser does not call the sign-in service's account API: its token has no right there, and the refusal carries no CORS
+ * header. One POST with the repeat-guard key (a repeat of an open press reuses it) and the 15 s timeout, which stays above
+ * the API's 10 s budget for the sign-in service. It does not go through `createWrite`: a sign-out announces no write, since
+ * the observers would fetch again with the token that is being removed. A refusal comes back with its code and the server's
+ * text (none when the answer has no text); no answer comes back as `SIGN_OUT_UNREACHABLE`.
+ */
+export function signOutEverywhere(
+  api: string,
   token: string,
   fetchFn: FetchFn = fetch,
-): Promise<void> {
-  const res = await fetchFn(`${authority}/account/sessions`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
-  });
-  if (!res.ok) throw new Error("sign_out_failed");
+): Promise<Response<unknown>> {
+  return withRepeatKey<unknown>(
+    JSON.stringify([api, "POST", "/account/sessions/end"]),
+    async (key) => {
+      try {
+        const res = await fetchFn(`${api}/account/sessions/end`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Idempotency-Key": key },
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
+        });
+        const body = (await res.json().catch(() => ({}))) as { error?: ApiError };
+        if (res.ok) return { ok: true, value: body };
+        return {
+          ok: false,
+          error: body.error ?? { code: "account.sign_out_everywhere_failed", text: "" },
+        };
+      } catch {
+        return { ok: false, error: { code: SIGN_OUT_UNREACHABLE, text: "" } };
+      }
+    },
+  );
 }
 
 export const loadProfile = (
