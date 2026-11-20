@@ -11,6 +11,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { envValue } from "../../keycloak/dev-env.mjs";
 import { parsePort } from "../../keycloak/web-port.mjs";
+import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 // tools/workflow/worktree -> tools/workflow -> tools -> app -> worktree root
@@ -79,14 +80,22 @@ export function devPlan(ports, env = process.env) {
   };
 }
 
-/** True when nothing listens on the port. The servers bind to all addresses, so the check does too. */
-export function portFree(port) {
+/** True when the port can be bound on `host` (all addresses when undefined). */
+function bindable(port, host) {
   return new Promise((resolveFree) => {
     const server = createServer();
     server.once("error", () => resolveFree(false));
     server.once("listening", () => server.close(() => resolveFree(true)));
-    server.listen(port);
+    server.listen(port, host);
   });
+}
+
+/**
+ * True when nothing listens on the port. The servers bind to all addresses, so the check does too, and also to 127.0.0.1:
+ * macOS lets a bind to all addresses succeed while another process holds the port on 127.0.0.1 only.
+ */
+export async function portFree(port) {
+  return (await bindable(port)) && (await bindable(port, "127.0.0.1"));
 }
 
 /** The busy ports of a plan, named for the message ("API 55200"); empty when all are free. */
@@ -141,7 +150,7 @@ async function main() {
   return runConcurrently(plan.args, plan.variables);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main()
     .then((code) => process.exit(code))
     .catch((e) => {

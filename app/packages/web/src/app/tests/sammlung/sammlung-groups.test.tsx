@@ -42,11 +42,14 @@ const cards = [
 const phase = {
   specimenId: "e1",
   name: "Bogenhanf",
+  marker: null,
+  speciesName: "Bogenhanf",
   speciesId: "a1",
   phase: "dormancy",
   locationId: "s1",
   targetLocationId: null,
   nextChange: { date: "2027-03-16", phase: "growth", days: 120 },
+  photo: null,
 };
 
 /** The API as the page reads it: the card reads answer from `list` (FR-BES-23), `record` sees every request. */
@@ -68,6 +71,12 @@ function stubServer(list: readonly ReturnType<typeof card>[] = cards, record?: (
       if (path === "/care-phases") return response(200, { phases: [phase] });
       if (path === "/light-zones") return response(200, { zones: [] });
       if (path === "/hints") return response(200, { hints: [] });
+      // The wishlist reads are answered with a failure, so the page shows its state rather than an empty object (the
+      // fit check looks at the frame only): the fallback `{}` made the wishlist page read a missing list (flaky, #1915).
+      if (path.startsWith("/wishes"))
+        return response(503, {
+          error: { code: "network.not_reachable", text: "Nicht erreichbar." },
+        });
       if (path === "/specimens/light-overview") return response(200, { rows: [] });
       // The reads of the Pokédex (no caught species in these tests) and the lock states, nothing announced (issue 1625).
       const pokedex = pokedexReadAnswer(path, []);
@@ -100,6 +109,10 @@ const renderAt = (path: string) =>
     </MemoryRouter>,
   );
 
+/** The rows of the plant list ("Pflanzen"); the light-zone row above it is a list item of its own (F-0114). */
+const plantItems = () =>
+  within(screen.getByRole("list", { name: "Pflanzen" })).getAllByRole("listitem");
+
 const pressed = (name: string | RegExp) =>
   screen.getByRole("button", { name }).getAttribute("aria-pressed") === "true";
 
@@ -130,9 +143,9 @@ describe("US-QS-19 the first screen of the plants", () => {
     expect(await screen.findByText("4 Pflanzen")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
     expect(screen.getAllByRole("group", { name: "Ansicht der Sammlung" })).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Lichtzonen ansehen" })).toBeTruthy();
-    expect(screen.getAllByRole("listitem")).toHaveLength(4);
-    expect(screen.getByRole("button", { name: "Pflanze 2 unbekannt unbekannt" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Lichtzonen" })).toBeTruthy();
+    expect(plantItems()).toHaveLength(4);
+    expect(screen.getByRole("button", { name: /^Pflanze 2(\s|$)/ })).toBeTruthy();
     // No grouping control, no distribution card and no plant card on the page itself.
     expect(screen.queryByRole("group", { name: "Gruppierung der Pflanzen" })).toBeNull();
     expect(screen.queryByText("Noch kein Foto")).toBeNull();
@@ -167,19 +180,23 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=plants&sheet=view");
   });
 
-  it("US-QS-19 · US-LIC-01 grouped by location the groups are a row of choices with their count; unknown values are named", async () => {
+  it("US-QS-19 · US-LIC-01 · US-QS-32 · SG-ICON-01 grouped by location the groups are a row of choices with their count; the chosen one has a check icon; unknown values are named", async () => {
     renderAt("/collection?view=plants&group=location");
     const row = await screen.findByRole("group", { name: "Standort wählen" });
     expect(
       within(row)
         .getAllByRole("button")
-        .map((b) => b.textContent),
-    ).toEqual(["✓Flur (1)", "Wohnzimmer (2)", "Standort unbekannt (1)"]);
+        .map((b) => [b.textContent, b.querySelector("svg.lucide-check") !== null]),
+    ).toEqual([
+      ["Flur (1)", true],
+      ["Wohnzimmer (2)", false],
+      ["Standort unbekannt (1)", false],
+    ]);
     expect(screen.getByText("Flur · Zone unbekannt · 1 Pflanze")).toBeTruthy();
-    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    expect(plantItems()).toHaveLength(1);
     await userEvent.click(within(row).getByRole("button", { name: /Wohnzimmer/ }));
     expect(screen.getByText("Wohnzimmer · Zone 2 · 2 Pflanzen")).toBeTruthy();
-    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(plantItems()).toHaveLength(2);
     expect(screen.getByTestId("address").textContent).toBe(
       "/collection?view=plants&group=location&part=Wohnzimmer",
     );
@@ -209,12 +226,14 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
 
   it("US-QS-19 · US-PHA-01 grouped by care phase the phase of the plants shows with its count line", async () => {
     renderAt("/collection?view=plants&group=phase");
-    expect(await screen.findByText("Soll-Phase heute: Ruhephase")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ })).toBeTruthy();
     expect(await screen.findByText("1 Pflanze mit Pflegephase")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Ruhephase (1)" })).toBeTruthy();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    // US-QS-19: compact card, one line of facts and one line of places in the paged grouping.
-    expect(screen.getByText(/^Standort: .* · Soll-Standort: /)).toBeTruthy();
+    // US-QS-32: the plant row of the grouping: its one meta line names the next change, and a plant in place shows no place.
+    expect(screen.getByText("Nächster Wechsel zur Wachstumsphase: 16.03.2027")).toBeTruthy();
+    expect(screen.queryByText(/Soll-Phase/)).toBeNull();
+    expect(screen.queryByText(/Soll-Standort: /)).toBeNull();
     await openView();
     expect(pressed("Nach Pflegephase")).toBe(true);
   });

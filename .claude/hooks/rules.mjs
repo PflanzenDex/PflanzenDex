@@ -25,7 +25,7 @@ const GATE_FILES = [
   /^app\/\.prettier(rc\.json|ignore)$/,
   // Every non-test file under app/tools/check/ defines a gate: the check scripts and their libraries (rules, thresholds).
   /^app\/tools\/check\/(?:.+\/)?(?!.*\.(?:test|selftest)\.mjs$)[^/]+\.mjs$/,
-  /^app\/tools\/workflow\/merge-pr(\.test)?\.mjs$/,
+  /^app\/tools\/workflow\/merge-pr\.mjs$/,
   /^app\/config\/lint\/layout\.config\.mjs$/,
   // Thresholds and exception lists (US-QG-07, FR-QG-18): every JSON file directly in app/config/gates/ (coverage,
   // code limits, audit and conformance allowlists). The baselines in app/config/gates/baselines/ stay out of this list:
@@ -45,17 +45,37 @@ const GATE_FILES = [
   /^app\/packages\/web\/src\/app\/destinations\/account-area\/whats-new\/news-lines\.mjs$/,
 ];
 
-export function isGateFile(relativePath) {
-  return GATE_FILES.some((p) => p.test(relativePath));
-}
-
-// The gate test files: `*.test.mjs`, `*.test.ts`, `*.test.js` and `*.selftest.mjs` (US-QG-07). They stay gate files: merge-pr.mjs
-// refuses a PR that changes one, so a human sees it at the merge. An edit of one asks no question in the hook, because a test
-// changes no threshold or exception list (owner decision 2026-11-07).
+// A test file: `*.test.mjs`, `*.test.ts`, `*.test.js` or `*.selftest.mjs`.
 const GATE_TEST = /\.(?:test\.(?:mjs|ts|js)|selftest\.mjs)$/;
 
-// Whether an edit of this file asks a human in the hook (US-QG-07): a gate file that is not a gate test. guard-edit, after-edit
-// and the list a question names use it. merge-pr.mjs and gate-review.mjs keep isGateFile, which counts the tests too.
+// The gate tests are the tests of gate and check code, and only those (US-QG-07, owner decision 2026-11-16, issue 2222): a
+// test file in one of these places. Loosening such a test lets a weaker gate pass, so a human reviews it at the merge. The
+// places: the hooks; the check scripts (each non-test file there is a gate file); the gate shell scripts in tools/lint/;
+// make merge (merge-pr); and ci-reuse, which decides whether a CI job runs, what the CI verdict is (quarantine) and how a
+// gate pull request is read (gate-review). The tests of the product (app/packages/**) and of product and process tooling
+// (app/tools/keycloak, app/tools/dev, app/tools/layout-fix, the claim, board, worktree, issue, deploy, project-status and
+// retro tools, tools/repo and the other folders of tools/) are no gate tests: agents merge them.
+const GATE_TEST_PLACES = [
+  /^\.claude\/hooks\//,
+  /^app\/tools\/check\//,
+  /^tools\/lint\//,
+  /^app\/tools\/workflow\/merge-pr\.[^/]+$/,
+  /^app\/tools\/workflow\/actions\/ci-reuse\//,
+];
+
+function isGateTest(relativePath) {
+  return GATE_TEST.test(relativePath) && GATE_TEST_PLACES.some((p) => p.test(relativePath));
+}
+
+// The one list of gate files (US-QG-07): make merge (merge-pr.mjs), the owner-merge label (owner-merge-label.mjs), make
+// gate-review and make gate-plan all use it. It counts the gate tests; the hook asks before an edit by asksBeforeEdit.
+export function isGateFile(relativePath) {
+  return GATE_FILES.some((p) => p.test(relativePath)) || isGateTest(relativePath);
+}
+
+// Whether an edit of this file asks a human in the hook (US-QG-07): a gate file that is not a test. A gate test asks no
+// question, because a test changes no threshold or exception list (owner decision 2026-11-07); make merge refuses a PR that
+// changes one, so a human sees it at the merge. guard-edit, after-edit and the list a question names use it.
 export function asksBeforeEdit(relativePath) {
   return isGateFile(relativePath) && !GATE_TEST.test(relativePath);
 }

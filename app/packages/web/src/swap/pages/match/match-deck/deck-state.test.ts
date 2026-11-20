@@ -39,7 +39,7 @@ describe("US-TAU-02 deck state", () => {
     expect([s.pos, countOf(s, "no"), countOf(s, "later"), s.last]).toEqual([2, 1, 1, "later"]);
     s = deckReducer(s, { type: "undo" });
     expect([s.pos, countOf(s, "no"), countOf(s, "later"), s.last]).toEqual([1, 1, 0, null]);
-    s = deckReducer(s, { type: "yes", offerId: "b", requested: true, notice: "y" });
+    s = deckReducer(s, { type: "yes", offerId: "b", notice: "y" });
     expect([s.requested, s.last]).toEqual([1, null]);
     expect(deckReducer(s, { type: "undo" })).toBe(s);
   });
@@ -59,6 +59,18 @@ describe("US-TAU-02 deck state", () => {
     s = deckReducer(s, { type: "again" });
     expect([s.round.map((x) => x.offerId), s.pos, laterCards(s).length]).toEqual([["a"], 0, 1]);
     expect(deckReducer(s, { type: "confirm", on: true }).confirming).toBe(true);
+  });
+
+  it("US-TAU-02 P-10 a reload starts the count from the server, a Yes adds one and the next round keeps it", () => {
+    let s = initialDeck([c("a"), c("b")], [], 4);
+    expect(s.requested).toBe(4);
+    s = deckReducer(s, { type: "yes", offerId: "a", notice: "y" });
+    expect(s.requested).toBe(5);
+    // A Yes that finds the offer already requested counts too: the request exists now, so a reload would count it.
+    s = deckReducer(s, { type: "yes", offerId: "b", notice: "already" });
+    expect(s.requested).toBe(6);
+    expect(deckReducer(s, { type: "again" }).requested).toBe(6);
+    expect(initialDeck([c("a")]).requested).toBe(0);
   });
 
   it("P-08 a card without any name is called unknown", () => {

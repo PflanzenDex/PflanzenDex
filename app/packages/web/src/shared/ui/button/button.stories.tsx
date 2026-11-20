@@ -11,7 +11,16 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const variants = ["default", "secondary", "outline", "ghost", "destructive", "link"] as const;
+const variants = [
+  "default",
+  "secondary",
+  "tinted",
+  "plain",
+  "ghost",
+  "destructive",
+  "destructive-plain",
+  "link",
+] as const;
 const sizes = ["default", "sm", "lg", "touch"] as const;
 
 export const Default: Story = {};
@@ -79,7 +88,7 @@ export const Pending: Story = {
       <Button {...args} pending>
         Speichern
       </Button>
-      <Button {...args} variant="outline" pending pendingLabel="Wird gespeichert…">
+      <Button {...args} variant="tinted" pending pendingLabel="Wird gespeichert…">
         Speichern
       </Button>
     </div>
@@ -89,8 +98,18 @@ export const Pending: Story = {
 export const AsLink: Story = {
   render: (args) => (
     <div className="p-4">
-      <Button {...args} asChild variant="outline">
+      <Button {...args} asChild variant="tinted">
         <a href="#pflanzen">Zu den Pflanzen</a>
+      </Button>
+    </div>
+  ),
+};
+
+export const Row: Story = {
+  render: (args) => (
+    <div className="w-72 p-4">
+      <Button {...args} variant="ghost" size="row">
+        Zeile in einer Liste
       </Button>
     </div>
   ),

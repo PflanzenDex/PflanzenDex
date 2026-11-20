@@ -10,6 +10,7 @@ import { duplicate } from "./proposal/form";
 import { SearchResultsSkeleton } from "./search-view/search-view.skeleton";
 import { ProfileSkeleton } from "./profile-view/profile-view.skeleton";
 import { proposalSchema, toProposalInput, EMPTY_PROPOSAL } from "./shared/schemas";
+import { difficultyText } from "./shared/text";
 
 // React separates adjacent text parts with comments in server rendering; for text checks we remove them.
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
@@ -52,9 +53,25 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     const h = renderToString(<SpeciesProfile species={species} onChoose={vi.fn()} />);
     expect(h).toContain("Dracaena trifasciata");
     expect(h).toContain("Bogenhanf");
-    expect(h).toContain("Einfach");
+    expect(h).toContain("Leicht");
     expect(h).toContain("15.000\u00a0Lux");
     expect(h).toContain("Höhe");
+  });
+
+  it("US-QS-32 the difficulty reads Leicht, Mittel, Schwer, the same words as the comparison", () => {
+    expect([1, 2, 3].map((d) => difficultyText(d))).toEqual(["Leicht", "Mittel", "Schwer"]);
+    expect(difficultyText(null)).toBe("unbekannt");
+  });
+
+  it("US-QS-32 the family reads the German name first with the scientific name in brackets", async () => {
+    mount(
+      <SpeciesProfile
+        species={{ ...species, familyGerman: "Spargelgewächse" }}
+        onChoose={vi.fn()}
+      />,
+    );
+    await userEvent.click(screen.getByRole("tab", { name: "Herkunft" }));
+    expect(screen.getByText("Spargelgewächse (Asparagaceae)")).toBeTruthy();
   });
 
   it("US-QS-21 the profile has a header with the primary action first and three tabs; known facts are a grid, unknown ones are named (P-08, P-10)", () => {
@@ -64,7 +81,7 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     for (const tab of ["Steckbrief", "Pflege", "Herkunft"]) expect(h).toContain(`>${tab}<`);
     expect(h).toContain("<dl");
     // Unknown stays unknown: counted in one line with the names behind it, no empty row each, nothing filled in.
-    expect(h).toContain("3 Angaben fehlen");
+    expect(h).toContain("3\u00a0Angaben fehlen");
     expect(h).toContain("Englischer Name, Ruhephase, Standort-Hinweis");
     expect(h).not.toMatch(/Englischer Name<\/dt>/);
   });
@@ -89,9 +106,9 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
       />,
     );
     expect(h).toContain(
-      "Englischer Name, Schwierigkeit, Standard-Stufe, Lichtbedarf, Ruhephase, Standort-Hinweis",
+      "Englischer Name, Schwierigkeit, Standard-Lichtzone, Lichtbedarf, Ruhephase, Standort-Hinweis",
     );
-    expect(h).not.toContain("Einfach");
+    expect(h).not.toContain("Leicht");
   });
 
   it('US-BES-12 P-08: unknown growth measure, etiolation signs and success criteria read "unbekannt" (#1005)', () => {
@@ -111,7 +128,7 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     );
     return userEvent.click(screen.getByRole("tab", { name: "Pflege" })).then(() => {
       expect(screen.getByText("6 Angaben fehlen")).toBeTruthy();
-      expect(screen.getByText(/Vergeilung-Anzeichen, Erfolgskriterien/)).toBeTruthy();
+      expect(screen.getByText(/Vergeilungsanzeichen, Erfolgskriterien/)).toBeTruthy();
       cleanup();
     });
   });
@@ -169,11 +186,12 @@ describe('US-BES-01 form "Propose species" (path without AI)', () => {
     expect(h).toContain("leer bleibt der Wert unbekannt");
   });
 
-  it("takes the search text as the name and explains visibility and review", () => {
+  it("takes the search text as the name and says in one neutral line who sees the proposal (F-0246)", () => {
     const h = html();
     expect(h).toContain('value="Aloe"');
-    expect(h).toContain("Nur für dich sichtbar");
-    expect(h).toContain("Prüfliste");
+    expect(h).toContain("Nur du siehst die Art, bis sie geprüft ist.");
+    expect(h).not.toContain("Prüfliste");
+    expect(h).not.toContain("bg-warning");
   });
 
   it("US-QS-24 optional details are collapsed behind Mehr Angaben; numbers have input aids", () => {
@@ -243,7 +261,7 @@ describe("US-BES-01 · DS-48 proposal schema", () => {
 
   it("the dormancy needs both dates or none, as MM-DD", () => {
     expect(issues({ dormancyFrom: "11-15" })).toEqual([
-      "dormancyUntil: Beide Angaben zur Ruhephase gehören zusammen: Bitte gib auch das Ende an.",
+      "dormancyUntil: Beide Angaben zur Ruhephase gehören zusammen: Gib auch das Ende an.",
     ]);
     expect(issues({ dormancyFrom: "11-15", dormancyUntil: "02-28" })).toEqual([]);
     expect(issues({ dormancyFrom: "1115", dormancyUntil: "02-28" })).toHaveLength(1);

@@ -18,7 +18,7 @@ export function isPlainHttps(text: string): boolean {
  */
 export const wishSchema = z
   .object({
-    name: z.string().trim().min(WISH_LIMITS.name.min, "Bitte gib einen Namen an."),
+    name: z.string().trim().min(WISH_LIMITS.name.min, "Gib einen Namen ein."),
     german: z.string(),
     targetZoneId: z.string(),
     difficulty: z.string(),
@@ -35,11 +35,11 @@ export const wishSchema = z
         "Die Bild-Adresse muss mit https:// beginnen und darf keine Zugangsdaten enthalten.",
       );
     if (f.imageUrl !== "" && f.imageSource === "")
-      issue("imageSource", "Ein Bild gehört mit seiner Quelle zusammen: Bitte gib die Quelle an.");
+      issue("imageSource", "Ein Bild gehört mit seiner Quelle zusammen: Gib die Quelle an.");
     if (f.imageUrl === "" && f.imageSource !== "")
       issue(
         "imageUrl",
-        "Eine Quelle gehört zu einem Bild: Bitte gib die Bild-Adresse an oder lösche die Quelle.",
+        "Eine Quelle gehört zu einem Bild: Gib die Bild-Adresse an oder lösche die Quelle.",
       );
   });
 

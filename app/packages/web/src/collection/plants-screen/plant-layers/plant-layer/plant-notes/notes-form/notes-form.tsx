@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import { SPECIMEN_LIMITS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import {
@@ -12,11 +12,13 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { Textarea } from "@/shared/ui/fields/textarea/textarea";
+import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ApiError } from "@/shared/data";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Warning } from "../../../../../specimens/cards/parts/parts";
+import { ErrorNotice } from "../../../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../../../specimens/model/refusal";
 import { notesSchema, type NotesFields } from "../../../../../specimens/model/schemas";
 import table from "../plant-notes.de.json";
@@ -64,7 +66,7 @@ export function NotesForm(props: {
 }) {
   const { send, onSaved } = props;
   const [error, setError] = useState<ApiError | null>(null);
-  const form = useForm<NotesFields>({
+  const form = useFieldForm<NotesFields>({
     resolver: zodResolver(notesSchema),
     defaultValues: { notes: props.notes ?? "" },
   });
@@ -75,6 +77,8 @@ export function NotesForm(props: {
   );
   const { setFocus } = form;
   useEffect(() => setFocus("notes"), [setFocus]);
+  // Typed text that is not saved asks before the layer leaves it, a cancel included (US-QS-32, SG-FORM-06).
+  const { leave } = useUnsavedInput(form.formState.isDirty);
   const submit = form.handleSubmit(async (values) => {
     const refused = await send(values.notes);
     setError(refused);
@@ -90,11 +94,11 @@ export function NotesForm(props: {
       >
         <NotesField control={form.control} />
         {alertText !== null && (
-          <Warning>
+          <ErrorNotice>
             <p>{alertText}</p>
-          </Warning>
+          </ErrorNotice>
         )}
-        <Button type="button" variant="outline" onClick={props.onCancel}>
+        <Button type="button" variant="outline" onClick={() => leave(props.onCancel)}>
           {t("form.cancel")}
         </Button>
       </FormRoot>

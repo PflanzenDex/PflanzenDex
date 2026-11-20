@@ -255,6 +255,21 @@ describe("US-BES-03 rename: change the marker on the card", () => {
     render(page());
     await open();
     const heading = await screen.findByRole("heading", { name: "Kennzeichen ändern" });
-    expect(heading.className).toContain("break-words");
+    // The heading is the page header (PageHeader, US-QS-32): it breaks a long word inside its column.
+    expect(heading.className).toContain("[overflow-wrap:break-word]");
+    expect(heading.className).toContain("max-w-full");
+  });
+});
+
+describe("US-QS-32 the marker form is a full view: the task in the header, the plant's name as the subject", () => {
+  it("US-QS-32 one h1 with the task, the plant's name on the line under it, and a back control named after the Sammlung", async () => {
+    fakeServer([card("e1", null)]);
+    render(page());
+    await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf"));
+    const heading = await screen.findByRole("heading", { level: 1, name: "Kennzeichen ändern" });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(heading.closest("[data-page-header]")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
+    expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
   });
 });

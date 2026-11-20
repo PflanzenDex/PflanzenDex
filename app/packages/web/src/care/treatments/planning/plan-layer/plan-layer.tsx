@@ -1,9 +1,11 @@
 import { useCallback, useEffect } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { useInvalidate, useRequest, type ApiError } from "@/shared/data";
 import { OPEN_KEY, SPECIMENS_KEY } from "../../../shared/api/query-keys";
 import { RefusalAlert } from "../../../shared/notices/notices";
@@ -11,11 +13,13 @@ import { loadTreatableSpecimens, type TreatmentInput } from "../../../shared/api
 import { TreatmentFormSkeleton } from "../../treatments-page/treatments-page.skeleton";
 import { usePlanning } from "../planning";
 import { PLAN_FORM_ID, PlanForm } from "./plan-form/plan-form";
+import table from "./plan-layer.de.json";
 
 type Token = () => Promise<string | undefined>;
 /** The layer's address value, `?sheet=plan` (US-QS-18). */
 const PLAN_LAYER = "plan";
 const LOADING = "Pflanzen werden geladen …";
+const ui = texts(table);
 
 /** The form with the plants of the account; it loads only while the layer is open (a closed layer loads nothing). */
 function PlanBody(props: {
@@ -36,10 +40,9 @@ function PlanBody(props: {
       onRetry={request.retry}
       skeleton={<TreatmentFormSkeleton label={LOADING} />}
       empty={
-        <EmptyState
-          title="Du hast noch keine Pflanze."
-          description="Lege zuerst eine Pflanze in der Sammlung an."
-          action={{ label: "Zur Sammlung", href: "/collection" }}
+        <EmptySection
+          text={ui("empty.line")}
+          action={{ label: ui("empty.action"), href: ADD_PLANT_PATH }}
         />
       }
       offline={request.offline}
@@ -53,16 +56,17 @@ function PlanBody(props: {
 /**
  * "Behandlung planen" as a layer above the treatments (US-QS-18, A-04): plants with search, location filter and pages,
  * the term in a second view, and the save button in the footer, so it stays in view. A successful save closes the layer
- * (back to the layer Behandlungen) and confirms it as a toast; a refusal stays in the layer with its German text (P-10).
+ * (back to the layer Behandlungen), where the planned treatment shows, and says the result (US-QS-32); a refusal stays
+ * in the layer with its German text (P-10).
  */
 export function PlanLayer(props: { api: string; token: Token }) {
   const { api, token } = props;
   const { open, closeLayer } = useLayer(PLAN_LAYER);
-  const toast = useToast();
+  const say = useSay();
   const refreshOpen = useInvalidate(OPEN_KEY);
   const planning = usePlanning(api, token, (message) => {
     refreshOpen();
-    toast.show({ message });
+    say(message);
   });
   useEffect(() => {
     if (!open) planning.reset();
@@ -77,7 +81,13 @@ export function PlanLayer(props: { api: string; token: Token }) {
       id={PLAN_LAYER}
       title="Behandlung planen"
       primaryAction={
-        <Button type="submit" form={PLAN_FORM_ID} size="touch" disabled={planning.running}>
+        <Button
+          type="submit"
+          form={PLAN_FORM_ID}
+          size="touch"
+          disabled={planning.running}
+          needsNetwork
+        >
           Behandlung speichern
         </Button>
       }

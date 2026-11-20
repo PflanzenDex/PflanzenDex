@@ -93,6 +93,27 @@ describe("US-EQU-08 equipment wishes in the equipment page", () => {
     expect((within(form).getByLabelText(/Preis/) as HTMLInputElement).value).toBe("49,9");
   });
 
+  it("US-QS-32 · SG-BTN-02 with two open wishes the list has no filled button: Gekauft is tinted, Verwerfen plain", async () => {
+    fakeServer({
+      open: [wish({ id: "w1", name: "Growlight X" }), wish({ id: "w2", name: "Growlight Y" })],
+      bought: [],
+      discarded: [],
+    });
+    view();
+    const list = await screen.findByRole("list", { name: "Offene Geräte-Wünsche" });
+    expect(
+      within(list)
+        .getAllByRole("button")
+        .filter((b) => b.className.split(/\s+/).includes("bg-primary")),
+    ).toEqual([]);
+    expect(
+      screen.getByRole("button", { name: "Gekauft: Growlight X" }).className.split(/\s+/),
+    ).toContain("bg-accent");
+    const discard = screen.getByRole("button", { name: "Verwerfen: Growlight X" }).className;
+    expect(discard.split(/\s+/)).toContain("text-primary");
+    expect(discard.split(/\s+/).some((c) => /^bg-/.test(c))).toBe(false);
+  });
+
   it("US-EQU-08 an empty list says what to do next", async () => {
     fakeServer({ open: [], bought: [], discarded: [] });
     view();
@@ -108,7 +129,7 @@ describe("US-EQU-08 equipment wishes in the equipment page", () => {
     const form = await screen.findByRole("form", { name: "Geräte-Wunsch erfassen" });
     await user.selectOptions(within(form).getByLabelText("Art des Wunsches"), "Timer");
     await user.click(within(form).getByRole("button", { name: "Wunsch speichern" }));
-    expect(await within(form).findByText("Bitte gib einen Namen an.")).toBeTruthy();
+    expect(await within(form).findByText("Gib einen Namen ein.")).toBeTruthy();
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
     await user.type(within(form).getByLabelText("Name des Wunsches"), "Zeitschaltuhr");
     await user.click(within(form).getByRole("button", { name: "Wunsch speichern" }));

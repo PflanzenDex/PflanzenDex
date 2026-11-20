@@ -83,7 +83,7 @@ export async function uploadPhoto(
 /** Quick check before sending (the server checks again, P-03): type and size. `null` means fine. */
 export function photoProblem(file: File): string | null {
   if (!(MEDIA_LIMITS.uploadTypes as readonly string[]).includes(file.type))
-    return "Bitte wähle ein Foto als JPEG, PNG oder WebP.";
+    return "Wähle ein Foto als JPEG, PNG oder WebP.";
   if (file.size > MEDIA_LIMITS.uploadMaxBytes)
     return `Das Foto ist zu groß. Erlaubt sind bis zu ${MEDIA_LIMITS.uploadMaxBytes / 1024 / 1024} MB.`;
   return null;

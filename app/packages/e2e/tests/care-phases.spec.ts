@@ -51,7 +51,7 @@ async function closeCareProfile(page: Page, species: string): Promise<void> {
 
 /**
  * Sets the target location of the dormancy phase and, when given, the dormancy period in the editor of the care profile
- * (US-BES-09, FR-PHA-02). "Weiter" leads to the page of the dormancy period (the plant layer has "Weitere Pflanze"); the
+ * (US-BES-09, FR-PHA-02). "Weiter" leads to the page of the dormancy period (the plant layer has "Pflanze anlegen"); the
  * save button stays below all pages.
  */
 async function setProfile(
@@ -86,7 +86,7 @@ async function setProfile(
 async function archivePlant(page: Page, plant: string): Promise<void> {
   await openPlant(page, plant);
   await page.getByRole("button", { name: "Mehr" }).click();
-  await page.getByRole("menuitem", { name: "Archivieren" }).click();
+  await page.getByRole("menuitem", { name: "Pflanze archivieren" }).click();
   const form = page.getByRole("form", { name: "Pflanze archivieren" });
   await form.getByRole("button", { name: "Archivieren" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
@@ -110,31 +110,29 @@ async function expectPhases(
 ): Promise<void> {
   const { ruhe, profil, wachs } = names;
   const list = page.getByRole("list", { name: "Pflanzen mit Pflegephase" });
-  const card = (name: string) =>
-    page.getByRole("heading", { level: 3, name, exact: true }).locator("xpath=../..");
+  // The "Umstellen: <name>" button of a plant carries the same name: the row is the button without that label.
+  const row = (name: string) =>
+    page.getByRole("button", { name }).and(page.locator(":not([aria-label^='Umstellen'])"));
   await expect(page.getByRole("button", { name: /^Ruhephase \(2\)$/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Wachstumsphase \(1\)$/ })).toBeVisible();
-  // Dormancy today: the plant at Fensterbank stands off its target Keller; the profile species stands at it.
-  await expect(card(ruhe)).toContainText("Soll-Phase heute: Ruhephase");
-  await expect(card(ruhe)).toContainText(
-    "Standort: Fensterbank · Soll-Standort: Keller · Weicht ab",
-  );
-  await expect(card(ruhe)).toContainText("Nächster Wechsel zur Wachstumsphase");
-  await expect(card(profil)).toContainText("Soll-Phase heute: Ruhephase");
-  await expect(card(profil)).toContainText("Standort: Keller · Soll-Standort: Keller");
-  await expect(list.getByRole("heading", { level: 3 })).toHaveCount(2);
+  // Dormancy today: the plant at Fensterbank stands off its target Keller, so the row carries the one action that moves it
+  // (US-QS-32, SG-LIST-03). The row is named by the plant's title and names the target it has to move to.
+  await expect(row(ruhe)).toContainText("Soll-Standort: Keller");
+  await expect(row(ruhe)).not.toContainText("Soll-Phase");
+  await expect(page.getByRole("button", { name: `Umstellen: ${ruhe}` })).toBeVisible();
+  // The plant at its target shows no place (owner answer Q-82).
+  await expect(row(profil)).toContainText("Nächster Wechsel zur Wachstumsphase:");
+  await expect(row(profil)).not.toContainText("Standort");
+  await expect(list.getByRole("listitem")).toHaveCount(2);
   await axeReport(page, info, "carePhases-list", { blocking: true });
 
   // Growth today: no target location in the profile, so it is unknown and the view says what to do (P-08, P-09).
   await page.getByRole("button", { name: /^Wachstumsphase \(1\)$/ }).click();
-  await expect(list.getByRole("heading", { level: 3 })).toHaveCount(1);
-  await expect(list.getByRole("heading", { level: 3, name: /Steckling/ })).toHaveCount(0);
-  await expect(card(wachs)).toContainText("Soll-Phase heute: Wachstumsphase");
-  await expect(card(wachs)).toContainText("Standort: Fensterbank · Soll-Standort: unbekannt");
-  await expect(card(wachs)).toContainText(
-    "Wähle im Pflegeprofil der Art einen Soll-Standort für die Wachstumsphase.",
-  );
-  await expect(card(wachs)).toContainText("Nächster Wechsel zur Ruhephase");
+  await expect(list.getByRole("listitem")).toHaveCount(1);
+  await expect(row(wachs)).toContainText("Nächster Wechsel zur Ruhephase:");
+  await expect(
+    page.getByText("Wähle im Pflegeprofil der Art einen Soll-Standort für die Wachstumsphase."),
+  ).toBeVisible();
 }
 
 test.describe("US-PHA-01 Pflegephasen", () => {
@@ -145,9 +143,7 @@ test.describe("US-PHA-01 Pflegephasen", () => {
     await signIn(page, account);
     await openPhaseGrouping(page);
     await expect(page.getByRole("heading", { level: 2, name: "Pflegephasen" })).toBeVisible();
-    await expect(
-      page.getByText("Lege in der Sammlung eine Pflanze einer solchen Art an."),
-    ).toBeVisible();
+    await expect(page.getByText("Noch keine Pflanze hat eine Phase.")).toBeVisible();
     await axeReport(page, info, "carePhases-empty");
   });
 });
@@ -188,7 +184,8 @@ test.describe("US-PHA-01 Pflegephasen mit Pflanzen", () => {
     await createPlant(page, { location: "Fensterbank", marker: "Steckling", cutting: true });
     await chooseSpecies(page, ruhe);
     await createPlant(page, { location: "Fensterbank", marker: "alt" });
-    await archivePlant(page, `${ruhe} – alt`);
+    // The row of a plant with its own name shows the name as its title and the species after it (US-QS-32, #2266).
+    await archivePlant(page, `alt ${ruhe}`);
 
     await openPhaseGrouping(page);
     await expectPhases(page, info, { ruhe, profil, wachs });

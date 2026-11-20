@@ -21,7 +21,7 @@ export async function loadCarePhases(
 }
 
 /**
- * "Jetzt umgestellt" (US-PHA-03): the specimens move to the target location of today's phase. The server decides the
+ * "Umstellen" (US-PHA-03): the specimens move to the target location of today's phase. The server decides the
  * target (selected, never typed, FR-PHA-03); the profile's time zone (US-ACC-02; the device's as fallback) determines "today" (NFR-08). The repeat-guard key
  * is created per call.
  */
@@ -37,4 +37,25 @@ export async function confirmPhaseSwitch(
     timeZone,
   });
   return r.ok ? { ok: true, value: (r.value as { specimens: SwitchedSpecimen[] }).specimens } : r;
+}
+
+/**
+ * The undo of a bulk move (US-QS-32): each plant gets its earlier location back through the location write of
+ * `specimen.set_location` (P-03), one after the other. The first refusal stops the undo and is returned.
+ */
+export async function restorePhaseLocations(
+  api: string,
+  token: string,
+  moves: readonly { specimenId: string; locationId: string }[],
+  fetchFn: FetchFn = fetch,
+): Promise<Response<unknown>> {
+  for (const move of moves) {
+    const r = await createWrite(api, token, fetchFn)(
+      "POST",
+      `/specimens/${encodeURIComponent(move.specimenId)}/location`,
+      { locationId: move.locationId },
+    );
+    if (!r.ok) return r;
+  }
+  return { ok: true, value: null };
 }

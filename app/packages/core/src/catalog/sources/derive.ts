@@ -26,13 +26,18 @@ function family(by: By): Candidate[] {
   return pick("gbif", exact ? text(dig(gbif, "family")) : null);
 }
 
+/**
+ * The German name: the title of the German article first, then the Wikidata label. An article title is watched by its
+ * readers; a label of a little-read item can be wrong (issue 1851: "Krötenzwergmaus" on the item of Scindapsus pictus,
+ * whose German article is "Gefleckte Efeutute"). Differing values still mark the field disputed (FR-BES-17).
+ */
 function germanName(by: By, latinName: string): Candidate[] {
   const wd = by.wikidata;
   const label = text(dig(wd?.raw, "entities", wd?.sourceId ?? "", "labels", "de", "value"));
   const title = text(dig(by.wikipedia?.raw, "title"));
   const page = dig(by.wikipedia?.raw, "content_urls", "desktop", "page");
   const german = typeof page === "string" && page.startsWith("https://de.") && title !== latinName;
-  return [...pick("wikidata", label), ...pick("wikipedia", german ? title : null)];
+  return [...pick("wikipedia", german ? title : null), ...pick("wikidata", label)];
 }
 
 function story(by: By): Candidate[] {

@@ -6,22 +6,25 @@
 
 /** `--background` of each scheme in tokens.css (light on `:root`, dark under `prefers-color-scheme: dark`). */
 export const PAGE_BACKGROUND = { light: "#fafafa", dark: "#0b0b0c" } as const;
-/** `--foreground` of each scheme: the backdrop of a sheet or dialog is this colour (`bg-foreground/50`). */
-export const PAGE_FOREGROUND = { light: "#18181b", dark: "#f4f4f5" } as const;
-/** The opacity of the backdrop (`bg-foreground/50` in the sheet and dialog overlays). */
-export const BACKDROP_OPACITY = 0.5;
+/**
+ * The opacity of the scrim: black at this opacity is the backdrop of a sheet or dialog (`--scrim` in tokens.css, the
+ * sheet and dialog overlays use `bg-scrim`; US-QS-32, SG-COLOR-07). A starting value, assumption. The scrim is not the
+ * foreground: `--foreground` turns light in dark mode, and the page behind a sheet went light grey there (issue 1867).
+ */
+export const SCRIM_OPACITY = 0.45;
 
 type ColourScheme = keyof typeof PAGE_BACKGROUND;
 
 const channels = (hex: string) => [1, 3, 5].map((at) => Number.parseInt(hex.slice(at, at + 2), 16));
 const toHex = (value: number) => value.toString(16).padStart(2, "0");
 
-/** The page background under a backdrop: the foreground at the backdrop opacity, composited over it per sRGB channel. */
+/**
+ * The page background under a scrim: black at the scrim opacity, composited over the background per sRGB channel, so each
+ * channel keeps (1 - opacity) of its value. Black has no channel of its own, so only the background enters.
+ */
 export function dimmedPageColour(scheme: ColourScheme): string {
-  const top = channels(PAGE_FOREGROUND[scheme]);
-  const bottom = channels(PAGE_BACKGROUND[scheme]);
-  const mixed = top.map((value, i) =>
-    Math.round(BACKDROP_OPACITY * value + (1 - BACKDROP_OPACITY) * (bottom[i] ?? 0)),
+  const mixed = channels(PAGE_BACKGROUND[scheme]).map((value) =>
+    Math.round(value - SCRIM_OPACITY * value),
   );
   return `#${mixed.map(toHex).join("")}`;
 }

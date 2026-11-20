@@ -12,6 +12,7 @@ import {
   SECTIONS,
   today,
 } from "./check-principles.mjs";
+import { isEntryPoint } from "../shared/entry-point.mjs";
 
 export const WINDOW_MONTHS = 3;
 const REVIEWED = ["gated", "checked"];
@@ -63,7 +64,7 @@ export function reviewToMarkdown({ cutoff, now, total, rows }) {
   return [...head, ...table].join("\n");
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
   console.log(reviewToMarkdown(reviewRows(readRegister(root), today())));
 }

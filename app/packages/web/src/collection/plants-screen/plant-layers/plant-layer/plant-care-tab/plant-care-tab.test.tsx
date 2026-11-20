@@ -2,7 +2,7 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { CareProfileLayer } from "./plant-care-tab";
@@ -29,6 +29,16 @@ vi.mock("../../../../care-profile-page/care-profile-page", () => ({
     return <p>Pflegeprofil-Inhalt</p>;
   },
 }));
+
+// Both lazy parts of the layer are loaded before the test (#444, the pattern of collection-area.test.tsx). At this width
+// the layer is a sheet, and the sheet's own chunk shows the status "Fenster wird geladen …" while it loads, so without
+// this the first status on screen could be the sheet's (issue 2136).
+beforeAll(async () => {
+  await Promise.all([
+    import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"),
+    import("../../../../care-profile-page/care-profile-page"),
+  ]);
+}, 30_000);
 
 afterEach(cleanup);
 
@@ -65,9 +75,15 @@ describe("US-QS-14 issue 1784 · the care profile layer shows the shape of the p
       </MemoryRouter>,
     );
     expect(screen.queryByRole("status")).toBeNull();
-    const status = await screen.findByRole("status");
-    expect(status.textContent).toBe("Pflegeprofil wird geladen …");
-    expect(status.querySelectorAll(".animate-pulse").length).toBeGreaterThan(3);
+    // The profile's status is found by its own text: a status of another lazy part must not stand in for it.
+    const label = await screen.findByText("Pflegeprofil wird geladen …");
+    const status = label.closest<HTMLElement>('[role="status"]');
+    expect(status).not.toBeNull();
+    const shape = status as HTMLElement;
+    expect(shape.textContent).toBe("Pflegeprofil wird geladen …");
+    expect(shape.querySelectorAll(".animate-pulse").length).toBeGreaterThan(3);
+    // The profile's status is the only one on screen, as the first status was before this wait by text.
+    expect(screen.getAllByRole("status")).toEqual([shape]);
     await act(async () => gate.release());
     expect(await screen.findByText("Pflegeprofil-Inhalt")).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();

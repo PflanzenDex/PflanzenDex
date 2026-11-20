@@ -59,3 +59,17 @@ test("US-DEV-01: the imported test users are dev-only (@example.test), enabled a
     assert.ok(password.value.length >= 10, "meets the realm password policy length(10)");
   }
 });
+
+// US-QS-32 (F-0376): the realm selects the e-mail theme of the product. The deploy realm is imported on the first start only,
+// so the setup step of deploy/keycloak/mcp sets the value on a running realm too (its test is in mcp-realm.test.mjs).
+test("US-QS-32 · F-0376: the dev and the deploy realm select the e-mail theme pflanzendex, and the theme folder ships", () => {
+  const deploy = JSON.parse(
+    readFileSync(join(dev, "..", "deploy", "keycloak", "pflanzendex-realm.json"), "utf8"),
+  );
+  assert.equal(realm.emailTheme, "pflanzendex", "dev realm");
+  assert.equal(deploy.emailTheme, "pflanzendex", "deploy realm");
+  assert.ok(
+    existsSync(join(dev, "keycloak-theme", realm.emailTheme, "email", "theme.properties")),
+    "the e-mail theme folder exists",
+  );
+});

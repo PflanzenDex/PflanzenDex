@@ -1,5 +1,10 @@
+import { useId } from "react";
 import type { SensorView } from "@pflanzendex/core";
 import { Select } from "@/shared/ui/fields/select/select";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../equipment.de.json";
+
+const ui = texts(table);
 
 export interface SensorActions {
   busy: boolean;
@@ -23,55 +28,58 @@ const toTarget = (value: string): { specimenId: string | null; locationId: strin
 
 /**
  * The sensors and where each one sits (US-EQU-06): at a specimen, at a location or nowhere. The assignment is optional.
- * No sensor values are shown here; they are not part of equipment (FR-MON-07). The cards take their columns from the
- * width of the section, not the window: beside a 384 px pane the section is narrow and keeps one column
+ * The layer that holds this list titles it, so the view renders no heading of its own: the title shows once (issue 2168,
+ * SG-BASE-01). No sensor values are shown here; they are not part of equipment (FR-MON-07). The cards take their columns
+ * from the width of the section, not the window: beside a 384 px pane the section is narrow and keeps one column
  * (US-QS-15, issue 1640).
  */
 export function SensorsView(props: { view: SensorView; actions: SensorActions }) {
   const { view, actions } = props;
+  const ids = useId();
   if (view.sensors.length === 0) return null;
   return (
-    <section
-      aria-labelledby="equipment-sensors-title"
-      className="@container flex min-w-0 flex-col gap-3"
-    >
-      <h2 id="equipment-sensors-title" className="text-xl font-semibold">
-        Sensoren
-      </h2>
+    <section className="@container flex min-w-0 flex-col">
       <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 @lg:grid-cols-2 @3xl:grid-cols-3">
-        {view.sensors.map((s) => (
-          <li
-            key={s.id}
-            className="flex min-w-0 flex-col gap-2 rounded-lg border border-border p-3"
-          >
-            <span className="break-words font-semibold">{s.name}</span>
-            <label className="flex min-w-0 flex-col gap-1 text-sm">
-              Zugeordnet zu
-              <Select
-                aria-label={`Zuordnung von ${s.name}`}
-                value={valueOf(s.target)}
-                disabled={actions.busy}
-                onChange={(e) => actions.onTarget(s, toTarget(e.target.value))}
-              >
-                <option value="">Keinem (nicht zugeordnet)</option>
-                <optgroup label="Pflanzen">
-                  {view.specimens.map((x) => (
-                    <option key={x.id} value={`specimen:${x.id}`}>
-                      {x.name}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Standorte">
-                  {view.locations.map((x) => (
-                    <option key={x.id} value={`location:${x.id}`}>
-                      {x.name}
-                    </option>
-                  ))}
-                </optgroup>
-              </Select>
-            </label>
-          </li>
-        ))}
+        {view.sensors.map((s) => {
+          // The select is named by its visible text and the sensor's name (WCAG 2.5.3, issue 1942, F-0158).
+          const labelId = `${ids}-${s.id}-label`;
+          const nameId = `${ids}-${s.id}-name`;
+          return (
+            <li
+              key={s.id}
+              className="flex min-w-0 flex-col gap-2 rounded-lg border border-border p-3"
+            >
+              <span id={nameId} className="break-words font-semibold">
+                {s.name}
+              </span>
+              <label className="flex min-w-0 flex-col gap-1 text-sm">
+                <span id={labelId}>{ui("sensors.assign")}</span>
+                <Select
+                  aria-labelledby={`${labelId} ${nameId}`}
+                  value={valueOf(s.target)}
+                  disabled={actions.busy}
+                  onChange={(e) => actions.onTarget(s, toTarget(e.target.value))}
+                >
+                  <option value="">{ui("sensors.unassigned")}</option>
+                  <optgroup label={ui("sensors.groupPlants")}>
+                    {view.specimens.map((x) => (
+                      <option key={x.id} value={`specimen:${x.id}`}>
+                        {x.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label={ui("sensors.groupLocations")}>
+                    {view.locations.map((x) => (
+                      <option key={x.id} value={`location:${x.id}`}>
+                        {x.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                </Select>
+              </label>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

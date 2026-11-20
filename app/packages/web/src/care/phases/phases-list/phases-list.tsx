@@ -4,20 +4,32 @@ import {
   type PhaseStatus,
   type PhasesRow,
 } from "@pflanzendex/core";
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { Button } from "@/shared/ui/button/button";
+import { UndoRow } from "@/shared/feedback/undo-row/undo-row";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { LIST_CLASSES } from "../../shared/notices/notices";
 import { locationText } from "../../shared/text";
 import { switchGroups, switchedText } from "../phase-groups";
 import { Entry, type Confirm } from "./entry/entry";
+import table from "./phases-list.de.json";
 
 export type { Confirm };
+
+/** The undo of a bulk move that is held in place for its target location (US-QS-32): what its group shows instead of its button. */
+export type GroupUndo = (
+  targetLocationId: string,
+) => { busy: boolean; onUndo: () => void } | undefined;
+
+const ui = texts(table);
 
 export function Groups(props: {
   rows: readonly PhasesRow[];
   locations: readonly LightLocation[];
   busy: boolean;
   onConfirm: Confirm;
+  groupUndo?: GroupUndo | undefined;
 }) {
   const groups = switchGroups(props.rows);
   if (groups.length === 0) return null;
@@ -25,6 +37,17 @@ export function Groups(props: {
     <div className="flex flex-col gap-3">
       {groups.map((g) => {
         const place = locationText(props.locations, g.targetLocationId);
+        const undo = props.groupUndo?.(g.targetLocationId);
+        if (undo)
+          return (
+            <UndoRow
+              key={g.targetLocationId}
+              result={ui("movedResult")}
+              subject={ui("groupSubject", { count: g.rows.length, place })}
+              busy={undo.busy}
+              onUndo={undo.onUndo}
+            />
+          );
         return (
           <Button
             key={g.targetLocationId}
@@ -36,6 +59,7 @@ export function Groups(props: {
               props.onConfirm(
                 g.rows.map((z) => z.specimenId),
                 switchedText(g.rows, props.locations),
+                g.rows,
               )
             }
           >
@@ -104,15 +128,12 @@ export function PhasesList(props: {
   locations: readonly LightLocation[];
   busy?: boolean;
   onConfirm?: Confirm;
+  groupUndo?: GroupUndo | undefined;
 }) {
   const busy = props.busy ?? false;
   if (props.rows.length === 0)
     return (
-      <EmptyState
-        title="Noch keine Pflanze hat eine Phase."
-        description="Gelistet werden Pflanzen, deren Art einen Ruhephasen-Zeitraum hat. Lege in der Sammlung eine Pflanze einer solchen Art an."
-        action={{ label: "Zur Sammlung", href: "/collection" }}
-      />
+      <EmptySection text={ui("none")} action={{ label: ui("addPlant"), href: ADD_PLANT_PATH }} />
     );
   return (
     <section aria-labelledby="care-phases-title" className="flex flex-col gap-4">
@@ -122,6 +143,7 @@ export function PhasesList(props: {
           locations={props.locations}
           busy={busy}
           onConfirm={props.onConfirm}
+          groupUndo={props.groupUndo}
         />
       )}
       <Sections

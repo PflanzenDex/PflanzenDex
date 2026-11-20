@@ -3,6 +3,7 @@ import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { SpeciesName } from "@/shared/species-name/species-name";
 import { isPlainHttps } from "../schemas";
 import { Discard } from "./discard/discard";
 import { LazyFriendsSwitch } from "./lazy-friends-switch/lazy-friends-switch";
@@ -30,7 +31,7 @@ function CandidateText(props: { c: Candidate; rank: number; className?: string }
   const { c, rank, className } = props;
   return (
     <div className={cn("grid min-w-0 content-start gap-1", className)}>
-      <h2 className="text-lg font-semibold">{c.title}</h2>
+      <SpeciesName as="h2" titleClassName="text-lg" scientific={c.name} german={c.german} />
       <p className="w-fit rounded-full bg-muted px-3 py-0.5 text-sm font-semibold text-muted-foreground">
         {t("card.rank", { rank })}
       </p>

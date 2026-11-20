@@ -36,7 +36,7 @@ export interface DeletionEntry {
   readonly completedAt: string | null;
 }
 
-/** The card "Fristen" (US-ACC-04, issue 1673): near and passed deadlines, and the open identity removals. */
+/** The topic "Löschfristen" (US-ACC-04, issue 1673): near and passed deadlines, and the open identity removals. */
 export interface DeletionsView {
   readonly warningDays: number;
   readonly near: readonly DeletionEntry[];

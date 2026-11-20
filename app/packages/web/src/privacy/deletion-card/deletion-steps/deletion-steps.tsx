@@ -1,4 +1,5 @@
 import { Button } from "@/shared/ui/button/button";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { Input } from "@/shared/ui/fields/input/input";
 import { errorText } from "@/shared/lib/error-text";
 import { keepTogether } from "@/shared/lib/format";
@@ -66,9 +67,10 @@ function StepContent(props: {
         </p>
         <Button
           type="button"
-          variant="outline"
+          variant="tinted"
           className="self-start"
           disabled={act.running}
+          needsNetwork
           onClick={() =>
             void act.send(cancelDeletion, "Die Löschung ist zurückgenommen. Dein Konto bleibt.")
           }
@@ -144,21 +146,24 @@ export function DeletionFooter(props: {
     );
   return (
     <>
-      <Button
-        type="button"
-        variant="destructive"
-        className="w-full"
-        disabled={props.typed.trim() !== CONFIRM_WORD || act.running}
-        onClick={() => void act.send(requestDeletion, "Die Löschung ist vorgemerkt.")}
-      >
-        {act.running ? "Wird vorgemerkt …" : keepTogether("Konto in 7 Tagen löschen")}
-      </Button>
-      <Button type="button" variant="outline" className="w-full" onClick={() => props.onStep(1)}>
-        Zurück
-      </Button>
-      <Button type="button" variant="ghost" className="w-full" onClick={props.onClose}>
-        Abbrechen
-      </Button>
+      <NetworkSlot>
+        <Button
+          type="button"
+          variant="destructive"
+          className="w-full"
+          disabled={props.typed.trim() !== CONFIRM_WORD || act.running}
+          needsNetwork
+          onClick={() => void act.send(requestDeletion, "Die Löschung ist vorgemerkt.")}
+        >
+          {act.running ? "Wird vorgemerkt …" : keepTogether("Konto in 7 Tagen löschen")}
+        </Button>
+        <Button type="button" variant="plain" className="w-full" onClick={() => props.onStep(1)}>
+          Zurück
+        </Button>
+        <Button type="button" variant="ghost" className="w-full" onClick={props.onClose}>
+          Abbrechen
+        </Button>
+      </NetworkSlot>
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { ERROR_TEXTS } from "@pflanzendex/core";
 
 /** Shown for a code the web app does not know; raw server text is never displayed (P-10, FR-QG-11). */
-export const GENERIC_ERROR_TEXT = "Es ist ein Fehler aufgetreten. Bitte versuche es später erneut.";
+export const GENERIC_ERROR_TEXT = "Es ist ein Fehler aufgetreten. Versuche es später erneut.";
 
 /** German text for a stable error code `<domain>.<reason>`; unknown codes get the generic text (DS-49). */
 export function errorText(code: string | undefined): string {

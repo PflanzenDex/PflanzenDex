@@ -1,5 +1,6 @@
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
+import { germanNameOf } from "@/shared/species-name/species-name";
 import { Chips, catchText, countText } from "../pokedex-cards/pokedex-cards";
 
 /**
@@ -41,7 +42,7 @@ const family = (c: CaughtSpecies) =>
     ? "unbekannt"
     : c.familyGerman === null
       ? c.familyLatin
-      : `${c.familyLatin} (${c.familyGerman})`;
+      : `${c.familyGerman} (${c.familyLatin})`;
 
 /**
  * The details of one caught species (US-POK-09), the content of its layer (US-QS-22): "Schließen" and Escape belong to
@@ -61,7 +62,12 @@ export function SpeciesDetail(props: {
       <div className="grid min-h-24 place-items-center rounded-xl border border-dashed border-border bg-card text-muted-foreground">
         Noch kein Bild vorhanden.
       </div>
-      {c.germanName !== null && <p className="font-semibold">{c.species}</p>}
+      {/* The sheet title is the German name, or the scientific name when there is none: the body names the species only once more, in italics (US-QS-32). */}
+      {germanNameOf(c.species, c.germanName) !== null && (
+        <p className="text-sm text-muted-foreground">
+          <i>{c.species}</i>
+        </p>
+      )}
       <p>Kurztext: unbekannt</p>
       <p>{`Gattung: ${c.genus}`}</p>
       <p>{`Familie: ${family(c)}`}</p>

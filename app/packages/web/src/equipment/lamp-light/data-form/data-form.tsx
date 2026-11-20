@@ -22,7 +22,7 @@ export function DataForm(props: {
     const powerW = wholeNumber(power);
     const luxStatement = wholeNumber(statement);
     if (Number.isNaN(powerW) || Number.isNaN(luxStatement))
-      return setProblem("Bitte gib ganze Zahlen an oder lass das Feld leer.");
+      return setProblem("Gib ganze Zahlen an oder lass das Feld leer.");
     setProblem(null);
     props.onSend({ powerW, luxStatement });
   };
@@ -34,14 +34,20 @@ export function DataForm(props: {
     >
       <div className="grid grid-cols-2 gap-2">
         <label className={LABEL}>
-          Leistung in Watt (optional)
-          <Input inputMode="numeric" value={power} onChange={(e) => setPower(e.target.value)} />
+          Leistung (optional)
+          <Input
+            inputMode="numeric"
+            value={power}
+            suffix="W"
+            onChange={(e) => setPower(e.target.value)}
+          />
         </label>
         <label className={LABEL}>
-          Lichtstärke laut Hersteller in Lux (optional)
+          Lichtstärke laut Hersteller (optional)
           <Input
             inputMode="numeric"
             value={statement}
+            suffix="lx"
             onChange={(e) => setStatement(e.target.value)}
           />
         </label>

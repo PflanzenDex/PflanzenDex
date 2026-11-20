@@ -39,6 +39,7 @@ function DetailFields({ control }: { control: Control<ProposalFields> }) {
           control={control}
           name={name}
           label={label}
+          optional
           maxLength={200}
           autoComplete="off"
           {...(help ? { help } : {})}
@@ -48,6 +49,7 @@ function DetailFields({ control }: { control: Control<ProposalFields> }) {
         control={control}
         name="dormancyFrom"
         label="Ruhephase von (Monat-Tag)"
+        optional
         inputMode="numeric"
         placeholder="11-15"
       />
@@ -55,6 +57,7 @@ function DetailFields({ control }: { control: Control<ProposalFields> }) {
         control={control}
         name="dormancyUntil"
         label="Ruhephase bis (Monat-Tag)"
+        optional
         inputMode="numeric"
         placeholder="02-28"
         help="Beide Angaben zusammen oder keine."
@@ -63,6 +66,7 @@ function DetailFields({ control }: { control: Control<ProposalFields> }) {
         control={control}
         name="synonyms"
         label="Synonyme (eins pro Zeile)"
+        optional
         wide
         rows={2}
       />
@@ -70,6 +74,7 @@ function DetailFields({ control }: { control: Control<ProposalFields> }) {
         control={control}
         name="botanicalStory"
         label="Botanische Story"
+        optional
         wide
         rows={3}
         maxLength={1000}

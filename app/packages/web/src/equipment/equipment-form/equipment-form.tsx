@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type UseFormReturn } from "react-hook-form";
+import { type UseFormReturn } from "react-hook-form";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import { FormNotices } from "@/shared/patterns/elements/form-notices/form-notices";
+import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ApiError } from "../../shared/data";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { OPTIONAL_FIELDS, OptionalFields, RequiredFields, ZoneField } from "./fields/fields";
@@ -21,10 +22,16 @@ import {
 import type { EquipmentInput } from "../equipment-api";
 import type { EquipmentPrefill } from "../overviews/wishes-view/wishes-api";
 
+/**
+ * What the form takes over: "Gekauft" on an equipment wish (US-EQU-08) and, for a lamp that a need names, its light zone
+ * (US-EQU-07, US-QS-32). The zone is left out by the wish, so it stays empty there (P-08).
+ */
+export type EquipmentFill = EquipmentPrefill & { readonly lightZoneId?: string | null };
+
 /** "Gekauft" on an equipment wish fills the form with what the wish knows (US-EQU-08); the rest stays empty (P-08). */
 function usePrefill(
   form: UseFormReturn<EquipmentFields>,
-  prefill: EquipmentPrefill | null | undefined,
+  prefill: EquipmentFill | null | undefined,
 ) {
   useEffect(() => {
     if (!prefill) return;
@@ -34,6 +41,7 @@ function usePrefill(
       name: prefill.name,
       productId: prefill.productId ?? "",
       priceEur: prefill.priceEur === null ? "" : String(prefill.priceEur).replace(".", ","),
+      lightZoneId: prefill.lightZoneId ?? "",
     });
   }, [prefill, form]);
 }
@@ -55,19 +63,21 @@ function SaveBar({ pending }: { pending: boolean }) {
 export function EquipmentForm(props: {
   zones: readonly { zoneId: string; name: string }[];
   /** Set by "Gekauft" on an equipment wish: fills type, name, product id and price (US-EQU-08). */
-  prefill?: EquipmentPrefill | null;
+  prefill?: EquipmentFill | null;
   running: boolean;
   message: string | null;
   error: ApiError | null;
   /** Resolves true when the equipment was saved, so the form can be emptied. */
   onSend: (input: EquipmentInput) => Promise<boolean>;
 }) {
-  const form = useForm<EquipmentFields>({
+  const form = useFieldForm<EquipmentFields>({
     resolver: zodResolver(equipmentSchema),
     defaultValues: EMPTY_FIELDS,
   });
   const { alertText, alertRef } = useServerRefusal(props.error, form.setError, fieldsOfRefusal);
   usePrefill(form, props.prefill);
+  // Typed input that is not saved asks before the layer closes (US-QS-32).
+  useUnsavedInput(form.formState.isDirty);
   const refused = Object.keys(form.formState.errors).length > 0;
   const pending = props.running || form.formState.isSubmitting;
   const submit = form.handleSubmit(async (values) => {

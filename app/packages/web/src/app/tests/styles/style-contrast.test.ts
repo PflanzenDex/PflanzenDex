@@ -84,8 +84,11 @@ function resolve(scheme: Map<string, string>, name: string): Rgb {
   return toSrgb(value);
 }
 
-/** Tokens that are not colours (US-QS-14): elevation (shadows) and motion (durations). */
-const NOT_COLORS = /^(radius|elevation-|motion-)/;
+/**
+ * Tokens that are not colours (US-QS-14): elevation (shadows) and motion (durations). The scrim (US-QS-32, SG-COLOR-07) is
+ * translucent black like the shadows: the backdrop of a sheet or dialog, with no text on it. `toSrgb` reads no alpha.
+ */
+const NOT_COLORS = /^(radius|elevation-|motion-|scrim$)/;
 const colorTokens = [...lightDecl.keys()].filter((n) => !NOT_COLORS.test(n));
 
 /** Text pairs (4.5:1): foreground token on surface token. */

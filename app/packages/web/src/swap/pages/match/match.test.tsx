@@ -43,6 +43,8 @@ const entry = (n: number, answer: "no" | "later", state = "open") => ({
 
 /** The reason the server gives for an empty deck (US-TAU-07); reset after each test. */
 let emptyReason: string | null = null;
+/** The open requests of the keeper the server counts (US-TAU-02); absent when `undefined`, reset after each test. */
+let serverRequested: number | undefined;
 
 function server(
   cards: unknown[],
@@ -75,7 +77,7 @@ function server(
         return yes(u.pathname.split("/")[3] ?? "");
       }
       return u.pathname === "/exchange/match"
-        ? response(200, { cards, entries, empty: emptyReason })
+        ? response(200, { cards, entries, empty: emptyReason, requested: serverRequested })
         : response(404, {});
     }),
   );
@@ -100,6 +102,7 @@ beforeEach(() => {
 
 afterEach(() => {
   emptyReason = null;
+  serverRequested = undefined;
   cleanup();
   vi.unstubAllGlobals();
   delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
@@ -132,19 +135,17 @@ describe("US-TAU-01 match card in the web app", () => {
     const c = within(await current());
     expect(c.getByText("Dein Grund: Bleibt klein!")).toBeTruthy();
     expect(c.getByText("Auf deiner Wunschliste: Aloe vera 1")).toBeTruthy();
-    await press(/^Nein/);
+    await press(/^Ablehnen:/);
     await screen.findByRole("heading", { name: "Echte Aloe 2" });
     expect(screen.queryByText(/Dein Grund/)).toBeNull();
   });
 
-  it("US-TAU-01 offers Nein, Später and Ja as buttons that name species and giver (NFR-13)", async () => {
+  it("US-TAU-01 offers Ablehnen, Später and Anfragen as buttons that name species and giver (NFR-13)", async () => {
     server([card(1)]);
     open();
     await current();
-    expect(
-      screen.getByRole("button", { name: "Ja, anfragen: Echte Aloe 1 von Ben1" }),
-    ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Nein: Echte Aloe 1 von Ben1" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Anfragen: Echte Aloe 1 von Ben1" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ablehnen: Echte Aloe 1 von Ben1" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Später: Echte Aloe 1 von Ben1" })).toBeTruthy();
   });
 
@@ -165,7 +166,7 @@ describe("US-TAU-03 Yes asks for the offer", () => {
     const posts = server([card(1), card(2)]);
     open();
     await current();
-    await press(/^Ja, anfragen/);
+    await press(/^Anfragen:/);
     expect(await screen.findByRole("heading", { name: "Echte Aloe 2" })).toBeTruthy();
     expect([...posts]).toEqual(["/exchange/match/o1/yes"]);
     expect(screen.getByRole("status").textContent).toContain("Angefragt: Echte Aloe 1 von Ben1");
@@ -177,8 +178,32 @@ describe("US-TAU-03 Yes asks for the offer", () => {
     );
     open();
     await current();
-    await press(/^Ja, anfragen/);
+    await press(/^Anfragen:/);
     expect(await screen.findByText("Schon angefragt: Echte Aloe 1.")).toBeTruthy();
+  });
+
+  it("US-TAU-03 an answer on an offer I already requested is refused as such: the card moves on with that reason and nothing is stored", async () => {
+    const posts = server([card(1), card(2)], undefined, [], async () =>
+      response(409, { error: { code: "swap.already_requested", text: "x" } }),
+    );
+    open();
+    await current();
+    await press(/^Ablehnen:/);
+    expect(await screen.findByText("Schon angefragt: Echte Aloe 1.")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Echte Aloe 2" })).toBeTruthy();
+    expect(posts.answers).toEqual(["PUT o1 no"]);
+    expect(screen.getByRole("region", { name: "Abgelehnt (0)" })).toBeTruthy();
+  });
+
+  it("US-TAU-06 P-10 a Later entry whose offer I requested stays listed, with a link to Requests and no silent drop", async () => {
+    server([card(2)], undefined, [entry(1, "later", "requested")]);
+    open();
+    await current();
+    const section = within(screen.getByRole("region", { name: "Später ansehen (1)" }));
+    expect(section.getByText("Schon angefragt, du findest sie unter Anfragen.")).toBeTruthy();
+    expect(section.getByRole("link", { name: /^Anfrage ansehen/ }).getAttribute("href")).toBe(
+      "/friends/exchange?part=requests",
+    );
   });
 
   it("US-TAU-03 an offer that is gone shows the reason (P-10) and the deck goes on", async () => {
@@ -187,7 +212,7 @@ describe("US-TAU-03 Yes asks for the offer", () => {
     );
     open();
     await current();
-    await press(/^Ja, anfragen/);
+    await press(/^Anfragen:/);
     expect(await screen.findByRole("heading", { name: "Echte Aloe 2" })).toBeTruthy();
     expect(screen.getByRole("status").textContent).toContain("Echte Aloe 1");
     expect(screen.getByRole("status").textContent).not.toContain("Angefragt");
@@ -199,7 +224,7 @@ describe("US-TAU-03 Yes asks for the offer", () => {
     );
     open();
     await current();
-    await press(/^Ja, anfragen/);
+    await press(/^Anfragen:/);
     expect(await screen.findByText(/Fehler aufgetreten/)).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
   });
@@ -221,15 +246,18 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
   /** The moving layer of the card (its own transform, the parent of the article). */
   const movingLayer = async () => (await current()).parentElement as HTMLElement;
 
-  it("US-TAU-02 Nein and Später are stored for this account, send no request, and the end view counts them with a next step", async () => {
+  it("US-TAU-02 Ablehnen and Später are stored for this account, send no request, and the end view counts them with a next step", async () => {
     const posts = server([card(1), card(2)]);
     open();
     await current();
-    await press(/^Nein/);
+    await press(/^Ablehnen:/);
     await screen.findByRole("heading", { name: "Echte Aloe 2" });
+    expect(screen.getByRole("status").textContent).toBe(
+      "Abgelehnt: Echte Aloe 1. Der Freund erfährt davon nichts.",
+    );
     await press(/^Später/);
     expect(
-      await screen.findByText(/Für jetzt durch. 0 angefragt, 1 für später, 1 abgelehnt./),
+      await screen.findByText("Für jetzt durch: 0 angefragt, 1 für später, 1 abgelehnt"),
     ).toBeTruthy();
     expect([...posts]).toEqual([]);
     expect(posts.answers).toEqual(["PUT o1 no", "PUT o2 later"]);
@@ -243,16 +271,16 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     );
     open();
     await current();
-    await press(/^Nein/);
+    await press(/^Ablehnen:/);
     expect(await screen.findByText(/Fehler aufgetreten/)).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
   });
 
-  it("US-TAU-02 Rückgängig takes back the stored Nein", async () => {
+  it("US-TAU-02 Rückgängig takes back the stored Ablehnen", async () => {
     const posts = server([card(1), card(2)]);
     open();
     await current();
-    await press(/^Nein/);
+    await press(/^Ablehnen:/);
     await screen.findByRole("heading", { name: "Echte Aloe 2" });
     await press("Rückgängig");
     expect(await screen.findByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
@@ -290,7 +318,7 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     await userEvent.click(declined.getByRole("button", { name: /^Wieder ansehen/ }));
     expect(await screen.findByRole("region", { name: "Abgelehnt (0)" })).toBeTruthy();
     expect(posts.answers).toEqual(["DELETE o1"]);
-    await press(/^Nein/);
+    await press(/^Ablehnen:/);
     expect(await screen.findByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
   });
 
@@ -319,7 +347,7 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     expect(screen.getByText(/Noch nichts abgelehnt/)).toBeTruthy();
   });
 
-  it("US-TAU-02 a swipe to the left is Nein", async () => {
+  it("US-TAU-02 a swipe to the left is Ablehnen", async () => {
     const posts = server([card(1), card(2)]);
     open();
     await swipe(250, 100);
@@ -333,7 +361,7 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     await swipe(50, 250);
     expect(await screen.findByText("Bei Ben1 anfragen: Echte Aloe 1?")).toBeTruthy();
     expect([...posts]).toEqual([]);
-    await press("Ja, anfragen");
+    await press("Anfragen");
     expect(await screen.findByRole("heading", { name: "Echte Aloe 2" })).toBeTruthy();
     expect([...posts]).toEqual(["/exchange/match/o1/yes"]);
   });
@@ -367,7 +395,7 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     server([card(1), card(2)]);
     open();
     await current();
-    await press(/^Nein/);
+    await press(/^Ablehnen:/);
     await screen.findByRole("heading", { name: "Echte Aloe 2" });
     await press("Rückgängig");
     expect(await screen.findByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
@@ -416,7 +444,7 @@ describe("US-TAU-05 fits both ways in the web app", () => {
     const c = within(await current());
     expect(c.getByText("Passt in beide Richtungen")).toBeTruthy();
     expect(c.getByText("Ben1 möchte Echeverie von dir.")).toBeTruthy();
-    await press(/^Nein/);
+    await press(/^Ablehnen:/);
     await screen.findByRole("heading", { name: "Echte Aloe 2" });
     expect(screen.queryByText("Passt in beide Richtungen")).toBeNull();
     expect(document.body.textContent).not.toMatch(/%|Punkte|Sterne/);
@@ -428,16 +456,16 @@ describe("US-TAU-05 fits both ways in the web app", () => {
     expect(within(await current()).getByText("Passt in beide Richtungen")).toBeTruthy();
   });
 
-  it("US-TAU-05 Ja on such a card asks for one more confirmation and proposes my offer; nothing is sent before it", async () => {
+  it("US-TAU-05 Anfragen on such a card asks for one more confirmation and proposes my offer; nothing is sent before it", async () => {
     const posts = server([bothCard(1), card(2)]);
     open();
     await current();
-    await press(/^Ja, anfragen/);
+    await press(/^Anfragen:/);
     expect(
       await screen.findByText(/Als Gegengabe schlagen wir dein Angebot vor: Echeverie/),
     ).toBeTruthy();
     expect([...posts]).toEqual([]);
-    await press("Ja, mit Echeverie anfragen");
+    await press("Mit Echeverie anfragen");
     expect(await screen.findByRole("heading", { name: "Echte Aloe 2" })).toBeTruthy();
     expect([...posts]).toEqual(["/exchange/match/o1/yes"]);
     expect(posts.bodies.map((b) => JSON.parse(b))).toEqual([{ counterSpecimenId: "spec-mine" }]);
@@ -447,7 +475,7 @@ describe("US-TAU-05 fits both ways in the web app", () => {
     const posts = server([bothCard(1), card(2)]);
     open();
     await current();
-    await press(/^Ja, anfragen/);
+    await press(/^Anfragen:/);
     await press("Ohne Gegengabe anfragen");
     expect(await screen.findByRole("heading", { name: "Echte Aloe 2" })).toBeTruthy();
     expect(posts.bodies.map((b) => JSON.parse(b))).toEqual([{}]);
@@ -460,6 +488,10 @@ describe("US-TAU-07 empty states and calm mode", () => {
     ["no_wishes", /Wunschliste ist leer/, "Wunsch hinzufügen", "/collection?view=wishlist"],
     ["no_offers", /bieten gerade nichts an/, "Tauschbörse öffnen", "/friends/exchange"],
     ["no_match", /passt kein Angebot/, "Tauschbörse öffnen", "/friends/exchange"],
+    // US-TAU-03: every matching offer has my open request; the link opens the requests part, not the offers.
+    ["all_requested", /hast du angefragt/, "Anfragen ansehen", "/friends/exchange?part=requests"],
+    // US-TAU-07: no card is left because my No or Later holds the rest; the link opens the deck with its lists.
+    ["all_answered", /Für jetzt durch/, "Später ansehen", "/friends/match"],
   ])(
     "US-TAU-07 P-09 an empty deck (%s) names the reason and the next step",
     async (reason, text, label, href) => {
@@ -475,16 +507,16 @@ describe("US-TAU-07 empty states and calm mode", () => {
     server([card(1)]);
     open(true);
     await current();
-    await press(/^Nein/);
-    expect(await screen.findByText("Für jetzt durch.")).toBeTruthy();
+    await press(/^Ablehnen:/);
+    expect(await screen.findByText("Für jetzt durch")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/angefragt,|für später,/);
     cleanup();
     server([card(1)]);
     open(false);
     await current();
-    await press(/^Nein/);
+    await press(/^Ablehnen:/);
     expect(
-      await screen.findByText(/Für jetzt durch. 0 angefragt, 0 für später, 1 abgelehnt./),
+      await screen.findByText("Für jetzt durch: 0 angefragt, 0 für später, 1 abgelehnt"),
     ).toBeTruthy();
   });
 });
@@ -505,5 +537,89 @@ describe("US-QS-14 · US-QS-15 the matching offers are a sub-page with one page 
     server([card(1)]);
     open();
     expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
+  });
+});
+
+describe("US-TAU-02 the summary counts the open requests the server holds", () => {
+  it("US-TAU-02 P-10 after a reload the summary counts the open requests from the server", async () => {
+    serverRequested = 4;
+    server([], undefined, [entry(1, "later")]);
+    open();
+    expect(
+      await screen.findByText("Für jetzt durch: 4 angefragt, 1 für später, 0 abgelehnt"),
+    ).toBeTruthy();
+  });
+
+  it("US-TAU-02 a Yes in this session adds one to the count the server gave", async () => {
+    serverRequested = 4;
+    server([card(1), card(2)]);
+    open();
+    await current();
+    await press(/^Anfragen:/);
+    await screen.findByRole("heading", { name: "Echte Aloe 2" });
+    await press(/^Ablehnen:/);
+    expect(
+      await screen.findByText("Für jetzt durch: 5 angefragt, 0 für später, 1 abgelehnt"),
+    ).toBeTruthy();
+  });
+
+  it("US-TAU-02 a Yes that finds the offer already requested still counts, as a reload would", async () => {
+    // The request was made elsewhere: the card had no open request of mine at load, so the server count lacks it.
+    serverRequested = 4;
+    server([card(1), card(2)], async () =>
+      response(201, { outcome: "already_requested", swapId: null }),
+    );
+    open();
+    await current();
+    await press(/^Anfragen:/);
+    await screen.findByRole("heading", { name: "Echte Aloe 2" });
+    await press(/^Ablehnen:/);
+    expect(
+      await screen.findByText("Für jetzt durch: 5 angefragt, 0 für später, 1 abgelehnt"),
+    ).toBeTruthy();
+  });
+
+  it("US-TAU-02 without a count from the server the summary starts at 0 and counts this session only", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    await press(/^Anfragen:/);
+    expect(
+      await screen.findByText("Für jetzt durch: 1 angefragt, 0 für später, 0 abgelehnt"),
+    ).toBeTruthy();
+  });
+
+  it("US-TAU-07 US-ACH-08 calm mode shows no count from the server either", async () => {
+    serverRequested = 4;
+    server([card(1)]);
+    open(true);
+    await current();
+    await press(/^Ablehnen:/);
+    expect(await screen.findByText("Für jetzt durch")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/angefragt,|für später,/);
+  });
+});
+
+describe("US-QS-32 the match deck: no intro under the title, one line above the buttons (F-0279)", () => {
+  it("US-QS-32 F-0279 no intro under the title; one line above the buttons names the friend, the rest sits behind Mehr erfahren", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    expect(screen.queryByText(/Angebote deiner Freunde, deren Art/)).toBeNull();
+    const line = screen.getByText("Ben1 erfährt nur von einer Anfrage.");
+    expect(line.closest("details")).toBeNull();
+    const more = line.parentElement?.querySelector("details");
+    expect(more?.textContent).toContain("„Anfragen“ fragt das Angebot an");
+    expect(more?.textContent).toContain(
+      "Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen.",
+    );
+    expect(more?.textContent).not.toContain("Der Freund erfährt davon nichts");
+  });
+
+  it("US-QS-32 F-0279 a card without its giver's name says 'Ein Freund' in the same line", async () => {
+    server([card(1, { ownerName: null })]);
+    open();
+    await current();
+    expect(screen.getByText("Ein Freund erfährt nur von einer Anfrage.")).toBeTruthy();
   });
 });

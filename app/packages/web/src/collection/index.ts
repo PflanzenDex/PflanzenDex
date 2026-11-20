@@ -25,6 +25,8 @@ export const PrintLabelsPage = lazyPage(() =>
     default: m.PrintLabelsPage,
   })),
 );
+/** The format the labels were printed in last on this device, and its callback (US-QS-32): the route gives them to the page. */
+export { labelFormatProps } from "./other-pages/print-labels-page/label-sheet/label-format";
 /** The import of plants from a CSV file (US-BES-18, FR-BES-26): its own address `/collection/import`, shown while "csv_import" is on. */
 export const ImportPage = lazyPage(() =>
   import("./other-pages/import-page/import-page").then((m) => ({ default: m.ImportPage })),
@@ -38,6 +40,7 @@ export const DifficultyPage = lazyPage(() =>
 );
 export { loadCardSummary, loadSpecimenCount } from "./specimens/cards/cards-api";
 export { createSpecimen, setSpecimenLocation } from "./specimens/model/specimens-api";
+export { careProfileLayerId } from "./plants-screen/plant-layers/plant-layer/plant-care-tab/plant-care-tab";
 /**
  * The marker step of a further plant (US-BES-03, US-QS-15): its own chunk, loaded with step 2 of the first plant. It
  * reads the rule of the chosen species and reports it to the flow, so neither the sibling read nor the field reach the
@@ -58,7 +61,10 @@ export {
 } from "./markers/marker/marker-rule";
 export { createStart } from "./specimens/model/create-start";
 export type { CreateFields } from "./specimens/model/schemas";
+export { createSchema } from "./specimens/model/schemas";
 export type { PlantSlots } from "./plants-screen/plant-layers/layer-ids";
+/** The layer of the archive of the Sammlung (US-BES-07): its address is `?sheet=<ARCHIVE_LAYER>`, read by the swap requests. */
+export { ARCHIVE_LAYER } from "./plants-screen/plant-layers/layer-ids";
 export { VIEW_LAYER, ViewLayer } from "./plants-screen/plant-layers/view-layer/view-layer";
 export {
   formText,
@@ -66,7 +72,7 @@ export {
   type FormPlant,
 } from "./plants-screen/plant-layers/plant-forms/address/form-address";
 export { usePlantForm } from "./plants-screen/plant-layers/plant-forms/address/use-plant-form";
-export { UnsavedInputDialog } from "./plants-screen/plant-layers/plant-forms/unsaved-input-dialog/unsaved-input-dialog";
+export { UnsavedInputDialog } from "@/shared/ui/overlays/unsaved-input-dialog/unsaved-input-dialog";
 // The skeleton of the hints in the shape of their cards, the layer's skeleton on "Heute" (US-QS-14, issue 1697).
 export { HintsPageSkeleton } from "./other-pages/hints-page/hints-page.skeleton";
 // The skeleton of the care profile in the shape of its card, the section's skeleton on a species profile (US-QS-14, issue 1697).

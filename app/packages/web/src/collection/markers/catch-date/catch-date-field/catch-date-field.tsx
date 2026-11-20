@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -10,10 +10,11 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
 import type { ApiError } from "../../../../shared/data";
-import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
+import { FormButtons, Quiet, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import {
   catchDateSchema,
@@ -24,6 +25,7 @@ import { correctCatchDate } from "../../../specimens/model/specimens-api";
 import { UNKNOWN, dateText } from "../../../specimens/model/text";
 import { SIGN_IN, type Token } from "../../../specimens/hooks/use-collection";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { useToday } from "../use-today";
 import table from "./catch-date-field.de.json";
@@ -113,7 +115,7 @@ function CorrectedDateField(props: { control: Control<CatchDateFields>; today: s
 
 /**
  * Correct the catch date of an existing specimen (US-BES-11): preset to the stored date (or today if it is unknown),
- * never later than the keeper's local today. Only the catch date changes; the Pokédex derives its date from it.
+ * never later than the keeper's local today. Only the catch date changes; the species view derives its date from it.
  */
 export function CatchDateForm(props: {
   state: Pick<ReturnType<typeof useCatchDate>, "send" | "setOpen"> & { open: CatchDateTarget };
@@ -121,7 +123,7 @@ export function CatchDateForm(props: {
   const { open, send, setOpen } = props.state;
   const today = useToday();
   const [error, setError] = useState<ApiError | null>(null);
-  const form = useForm<CatchDateFields>({
+  const form = useFieldForm<CatchDateFields>({
     resolver: zodResolver(catchDateSchema),
     defaultValues: { catchDate: open.caughtAt ?? today },
   });
@@ -132,14 +134,16 @@ export function CatchDateForm(props: {
   );
   const submit = form.handleSubmit(async (values) => setError(await send(values.catchDate)));
   return (
-    <section aria-labelledby="catch-date-title">
-      <h1 id="catch-date-title" className={TITLE}>
-        Fangdatum korrigieren
-      </h1>
-      <p className="mb-2 text-muted-foreground">„{open.name}“</p>
+    <section aria-labelledby="catch-date-title" className="flex min-w-0 flex-col gap-2">
+      <PageHeader
+        headingId="catch-date-title"
+        title={tx("title")}
+        subject={open.name}
+        back={{ label: tx("back"), onBack: () => setOpen(null) }}
+      />
       <Quiet className="mb-5">
         Bisher: {open.caughtAt ? dateText(open.caughtAt) : UNKNOWN}. Nur das Fangdatum ändert sich;
-        der Pokédex rechnet mit dem neuen Datum.
+        die Ansicht „Arten“ rechnet mit dem neuen Datum.
       </Quiet>
       <Form {...form}>
         <FormRoot
@@ -149,9 +153,9 @@ export function CatchDateForm(props: {
         >
           <CorrectedDateField control={form.control} today={today} />
           {alertText !== null && (
-            <Warning>
+            <ErrorNotice>
               <p>{alertText}</p>
-            </Warning>
+            </ErrorNotice>
           )}
           <FormButtons
             submit="Fangdatum speichern"

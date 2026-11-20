@@ -12,8 +12,9 @@ type BoundaryProps = {
 };
 type BoundaryState = { failed: boolean; attempt: number };
 
-const TEXT = "Die Seite konnte nicht geladen werden.";
-const OFFLINE_TEXT = "Du bist offline. Diese Seite wurde noch nicht geladen.";
+const TEXT = "Die Seite konnte nicht geladen werden";
+const OFFLINE_TITLE = "Du bist offline";
+const OFFLINE_HINT = "Diese Seite wurde noch nicht geladen.";
 
 /** Catches a page chunk that cannot be fetched and offers "Erneut versuchen" (DS-08, DS-11, P-09, P-10). */
 export class ChunkErrorBoundary extends Component<BoundaryProps, BoundaryState> {
@@ -48,7 +49,8 @@ export class ChunkErrorBoundary extends Component<BoundaryProps, BoundaryState> 
         this.props.errorView?.(this.retry) ?? (
           <EmptyState
             variant="error"
-            title={isOnline() ? TEXT : OFFLINE_TEXT}
+            title={isOnline() ? TEXT : OFFLINE_TITLE}
+            {...(isOnline() ? {} : { description: OFFLINE_HINT })}
             action={{ label: "Erneut versuchen", onClick: this.retry }}
           />
         )

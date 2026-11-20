@@ -183,7 +183,8 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
       priority: { kind: "thinnest" },
     });
     expect(list[3]).toMatchObject({ zone: null, priority: { kind: "zone_unknown" } });
-    expect(r.body["hint"].nextAction).toEqual(expect.any(String));
+    // The thinnest zone's first row names the room, so the page shows no line of its own (US-QS-32, F-0162).
+    expect(r.body["hint"].nextAction).toBeNull();
     expect(
       (r.body["zones"] as { name: string; count: number }[]).map((z) => [z.name, z.count]),
     ).toEqual([
@@ -204,7 +205,7 @@ describe("US-WUN-01 candidates sorted by the stock of the target zone", () => {
       ["Zone 3", 1],
       ["Zone 4", 1],
     ]);
-    expect(own.zones[0]?.text).toBe("Nachschub nötig: Zone 2 (1 offener Kandidat)");
+    expect(own.zones[0]?.text).toBe("Zone 2 braucht Nachschub (1\u00a0offener Kandidat).");
     // Ben's zones are his own and hold none of Anna's wishes (P-04).
     const ben = (await candidates(subB)).body["replenishment"] as { zones: { open: number }[] };
     expect(ben.zones.map((z) => z.open)).toEqual([0, 0, 0]);

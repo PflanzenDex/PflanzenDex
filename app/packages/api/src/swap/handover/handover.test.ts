@@ -15,6 +15,9 @@ const SWAP_SIDE: KeyShape = {
   role: true,
   otherName: true,
   offerId: true,
+  // The offered specimen's own name: the giver's row only, the recipient's row has null (P-05, US-SOZ-11).
+  specimenName: true,
+  specimenArchived: true,
   speciesLatin: true,
   speciesGerman: true,
   type: true,
@@ -53,13 +56,17 @@ const SWAP_HISTORY_ENTRY: KeyShape = {
 let pool: Pool;
 let admin: Pool;
 let releaseTaxa: (() => Promise<void>) | undefined;
-const [subA, subB, subC, subD, subE, subOp] = [0, 1, 2, 3, 4, 5].map(
+// subF, subG and subH are fresh recipients of the plant, the offshoot and the recipient-first handovers: a recipient with
+// several unmarked specimens of a species must give markers (`specimen.markers_missing`), which would change the other tests' states.
+const [subA, subB, subC, subD, subE, subOp, subF, subG, subH] = [0, 1, 2, 3, 4, 5, 6, 7, 8].map(
   () => `soz11-${randomUUID()}`,
-) as [string, string, string, string, string, string];
+) as [string, string, string, string, string, string, string, string, string];
+// The display name an account gets from its sign-in (the token's `name`); a friend's row stores it.
+const nameOf = (sub: string) => `Name ${sub.slice(-4)}`;
 const reviewer: TokenVerifier = async (token) => {
   const [kind, sub] = token.split(":");
   return kind === "valid" && sub
-    ? { sub, email: `${sub}@example.test`, name: `Name ${sub.slice(-4)}`, email_verified: true }
+    ? { sub, email: `${sub}@example.test`, name: nameOf(sub), email_verified: true }
     : null;
 };
 // 2026-10-09 23:30 UTC: already 10 October in Berlin (NFR-08).
@@ -108,12 +115,17 @@ async function befriend(inviter: string, redeemer: string) {
   });
   clockNow = NOW;
 }
-/** An accepted swap: A offers a fresh specimen (marker `m`), B requests, A accepts. */
-async function accepted(m: string, mode: "swap" | "give_away" = "swap", by = subB) {
+/** An accepted swap: A offers a fresh specimen (marker `m`) of the given type, B requests, A accepts. */
+async function accepted(
+  m: string,
+  mode: "swap" | "give_away" = "swap",
+  by = subB,
+  type: "cutting" | "plant" | "offshoot" = "cutting",
+) {
   const id = await specimen(subA, m);
   await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
-  const offerId = (await call(subA, "POST", "/offers", { specimenId: id, type: "cutting", mode }))
-    .body.id as string;
+  const offerId = (await call(subA, "POST", "/offers", { specimenId: id, type, mode })).body
+    .id as string;
   const swapId = (await call(by, "POST", `/offers/${offerId}/request`, {})).body.swapId as string;
   await call(subA, "POST", `/swaps/${swapId}/answer`, { action: "accept" });
   return { specimenId: id, offerId, swapId };
@@ -136,7 +148,8 @@ beforeAll(async () => {
   releaseTaxa = await holdTaxonLock(admin);
   await migrate(pool);
   app = createApp({ reviewer, pool, clock: () => clockNow });
-  for (const sub of [subA, subB, subC, subD, subE, subOp]) await call(sub, "GET", "/account");
+  for (const sub of [subA, subB, subC, subD, subE, subOp, subF, subG, subH])
+    await call(sub, "GET", "/account");
   await admin.query(
     "insert into account_role (account, role) select id, 'operator' from account where subject = $1",
     [subOp],
@@ -165,10 +178,13 @@ beforeAll(async () => {
   await befriend(subA, subC);
   await befriend(subA, subD);
   await befriend(subA, subE);
+  await befriend(subA, subF);
+  await befriend(subA, subG);
+  await befriend(subA, subH);
 }, 120_000);
 afterAll(async () => {
   const accounts = "select id from account where subject = any($1)";
-  const subs = [[subA, subB, subC, subD, subE, subOp]];
+  const subs = [[subA, subB, subC, subD, subE, subOp, subF, subG, subH]];
   await admin.query(`delete from swap where account_id in (${accounts})`, subs);
   await admin.query(`delete from offer where account_id in (${accounts})`, subs);
   await admin.query(`delete from care_profile where account_id in (${accounts})`, subs);
@@ -210,7 +226,7 @@ describe("US-SOZ-11 the handover through the API", () => {
     });
   });
 
-  it("the first confirmation waits; the second completes: the giver's specimen is archived, the recipient gets a new one with today's local date at the growth location of the recipient's own care profile, both sides see 'handed over'", async () => {
+  it("US-SOZ-11 the first confirmation waits; the second completes: a cutting leaves the giver's plant active, the recipient gets a new cutting with today's local date at the growth location of the recipient's own care profile, both sides see 'handed over'", async () => {
     const mineLoc = (
       await call(subB, "POST", "/locations", {
         name: "Fensterbank",
@@ -237,11 +253,11 @@ describe("US-SOZ-11 the handover through the API", () => {
       status: 200,
       body: { status: "handed_over", receivedSpecimenId: expect.any(String) },
     });
+    // A cutting leaves the mother plant in the collection (Q-149); only a plant is archived (see the plant test below).
     const archived = (await call(subA, "GET", "/specimens/archived")).body.archived as {
       id: string;
-      archivedReason: string;
     }[];
-    expect(archived.find((x) => x.id === a.specimenId)?.archivedReason).toMatch(/^Getauscht mit /);
+    expect(archived.map((x) => x.id)).not.toContain(a.specimenId);
     const mine = (await call(subB, "GET", "/specimens")).body.specimens as {
       id: string;
       status: string;
@@ -264,8 +280,8 @@ describe("US-SOZ-11 the handover through the API", () => {
     expect((await confirm(subA, a.swapId)).body).toMatchObject({ status: "handed_over" });
   });
 
-  it("a gift is archived as 'Verschenkt an'; the recipient's new specimen is private (nothing shared)", async () => {
-    const a = await accepted("H3", "give_away");
+  it("US-SOZ-11 a plant given away is archived as 'Verschenkt an'; the recipient's new specimen is private (nothing shared)", async () => {
+    const a = await accepted("H3", "give_away", subB, "plant");
     await confirm(subA, a.swapId);
     // B owns the species since the test before, so the naming rule asks for a marker.
     const done = await confirm(subB, a.swapId, { marker: "blau" });
@@ -273,9 +289,130 @@ describe("US-SOZ-11 the handover through the API", () => {
       id: string;
       archivedReason: string;
     }[];
-    expect(archived.find((x) => x.id === a.specimenId)?.archivedReason).toMatch(/^Verschenkt an /);
+    // US-BES-07: the reason names the recipient (B), whoever confirmed last; the giver's own name never appears in it.
+    expect(archived.find((x) => x.id === a.specimenId)?.archivedReason).toBe(
+      `Verschenkt an ${nameOf(subB)}`,
+    );
     const shared = (await call(subB, "GET", "/sharing")).body.shared as { specimenId: string }[];
     expect(shared.map((s) => s.specimenId)).not.toContain(done.body.receivedSpecimenId);
+  });
+
+  it("US-SOZ-11 a plant handed over by swap is archived as 'Getauscht mit' and the recipient gets a plant", async () => {
+    const a = await accepted("H6", "swap", subF, "plant");
+    await confirm(subA, a.swapId);
+    const done = await confirm(subF, a.swapId);
+    expect(done.body).toMatchObject({ status: "handed_over" });
+    const archived = (await call(subA, "GET", "/specimens/archived")).body.archived as {
+      id: string;
+      archivedReason: string;
+    }[];
+    // US-BES-07: the recipient (F) confirmed last and is still the one the reason names.
+    expect(archived.find((x) => x.id === a.specimenId)?.archivedReason).toBe(
+      `Getauscht mit ${nameOf(subF)}`,
+    );
+    const mine = (await call(subF, "GET", "/specimens")).body.specimens as {
+      id: string;
+      status: string;
+    }[];
+    expect(mine.find((x) => x.id === done.body.receivedSpecimenId)?.status).toBe("plant");
+    // The giver's side names the plant while it is archived (the card's archive line, Q-85) ...
+    const side = (await call(subA, "GET", "/swaps")).body.received.find(
+      (s: { swapId: string }) => s.swapId === a.swapId,
+    );
+    expect(side).toMatchObject({ specimenName: expect.any(String), specimenArchived: true });
+    // ... and names it without the archive line once it is restored (US-BES-07).
+    expect((await call(subA, "POST", `/specimens/${a.specimenId}/restore`, {})).status).toBe(200);
+    const restored = (await call(subA, "GET", "/swaps")).body.received.find(
+      (s: { swapId: string }) => s.swapId === a.swapId,
+    );
+    expect(restored).toMatchObject({ specimenName: side.specimenName, specimenArchived: false });
+  });
+
+  it("US-BES-07 US-SOZ-11 the recipient confirms first and the giver last: the reason names the recipient by the name the giver's row stores, never the giver", async () => {
+    const a = await accepted("H11", "give_away", subH, "plant");
+    expect(await confirm(subH, a.swapId)).toMatchObject({
+      status: 200,
+      body: { status: "waiting" },
+    });
+    const done = await confirm(subA, a.swapId);
+    expect(done.body).toMatchObject({
+      status: "handed_over",
+      receivedSpecimenId: expect.any(String),
+    });
+    const archived = (await call(subA, "GET", "/specimens/archived")).body.archived as {
+      id: string;
+      archivedReason: string;
+    }[];
+    const reason = archived.find((x) => x.id === a.specimenId)?.archivedReason;
+    expect(reason).toBe(`Verschenkt an ${nameOf(subH)}`);
+    expect(reason).not.toContain(nameOf(subA));
+  });
+
+  it("US-SOZ-11 an offshoot handed over leaves the giver's plant active and the swap names the given specimen (history entry)", async () => {
+    const a = await accepted("H7", "swap", subG, "offshoot");
+    await confirm(subA, a.swapId);
+    const done = await confirm(subG, a.swapId);
+    expect(done.body).toMatchObject({ status: "handed_over" });
+    const archived = (await call(subA, "GET", "/specimens/archived")).body.archived as {
+      id: string;
+    }[];
+    expect(archived.map((x) => x.id)).not.toContain(a.specimenId);
+    const mine = (await call(subA, "GET", "/specimens")).body.specimens as {
+      id: string;
+      status: string;
+    }[];
+    expect(mine.find((x) => x.id === a.specimenId)).toBeDefined();
+    const sent = (await call(subA, "GET", "/swaps")).body.received as {
+      swapId: string;
+      status: string;
+      givenSpecimenId: string | null;
+    }[];
+    expect(sent.find((s) => s.swapId === a.swapId)).toMatchObject({
+      status: "handed_over",
+      givenSpecimenId: a.specimenId,
+    });
+    const history = (await call(subA, "GET", "/swaps/history")).body.entries as {
+      swapId: string;
+      type: string;
+      specimenId: string | null;
+    }[];
+    expect(history.find((e) => e.swapId === a.swapId)).toMatchObject({
+      type: "offshoot",
+      specimenId: a.specimenId,
+    });
+  });
+
+  it("US-SOZ-11 the giver's side names the offered specimen of an accepted plant; the recipient's side does not (P-05)", async () => {
+    const a = await accepted("H8", "swap", subF, "plant");
+    const name = (
+      (await call(subA, "GET", "/specimens")).body.specimens as { id: string; name: string }[]
+    ).find((x) => x.id === a.specimenId)?.name;
+    expect(name).toBeTruthy();
+    const giverSide = (await call(subA, "GET", "/swaps")).body.received.find(
+      (s: { swapId: string }) => s.swapId === a.swapId,
+    );
+    expect(giverSide).toMatchObject({ specimenName: name, specimenArchived: false });
+    const recipientSide = (await call(subF, "GET", "/swaps")).body.sent.find(
+      (s: { swapId: string }) => s.swapId === a.swapId,
+    );
+    expect(recipientSide).toMatchObject({ specimenName: null, specimenArchived: false });
+  });
+
+  it("US-SOZ-11 the names are read for an accepted or handed-over plant only: a cutting and a requested plant name nothing (P-08)", async () => {
+    const cutting = await accepted("H9", "swap", subE, "cutting");
+    const requestedId = await specimen(subA, "H10");
+    await call(subA, "PUT", `/sharing/specimens/${requestedId}`, { share: "friends" });
+    const offerId = (
+      await call(subA, "POST", "/offers", { specimenId: requestedId, type: "plant", mode: "swap" })
+    ).body.id as string;
+    const requestedSwap = (await call(subE, "POST", `/offers/${offerId}/request`, {})).body
+      .swapId as string;
+    const received = (await call(subA, "GET", "/swaps")).body.received as {
+      swapId: string;
+      specimenName: string | null;
+    }[];
+    expect(received.find((s) => s.swapId === cutting.swapId)?.specimenName).toBeNull();
+    expect(received.find((s) => s.swapId === requestedSwap)?.specimenName).toBeNull();
   });
 
   it("a recipient who has the species already is asked for a marker and nothing is written until it is given", async () => {
@@ -671,10 +808,10 @@ describe("US-TAU-02 No and Later through the API", () => {
       status: 201,
       body: { outcome: "requested" },
     });
-    // The offer stays a card, now marked as requested; the stored Later is gone.
+    // US-TAU-03: the request is the record. The offer is no card any more and the stored Later is gone.
     const d = await deck(subE);
     expect(d.later.map((c) => c.offerId)).not.toContain(offerId);
-    expect(d.cards.find((c) => c.offerId === offerId)).toMatchObject({ requested: true });
+    expect(d.cards.map((c) => c.offerId)).not.toContain(offerId);
   });
 });
 
@@ -907,7 +1044,7 @@ describe("US-QG-05 QG-D2 the swap and match outputs carry only the whitelisted f
     expect(body.cards.map((c: { offerId: string }) => c.offerId)).toContain(offerA2);
     expectExactKeys(
       body,
-      { cards: [MATCH_CARD], entries: [MATCH_ENTRY], empty: true },
+      { cards: [MATCH_CARD], entries: [MATCH_ENTRY], empty: true, requested: true },
       "GET /exchange/match",
     );
     for (const c of body.cards)
@@ -920,5 +1057,141 @@ describe("US-QG-05 QG-D2 the swap and match outputs carry only the whitelisted f
           MATCH_REASONS[r.kind as keyof typeof MATCH_REASONS],
           "entries[].card.reasons",
         );
+  });
+});
+
+// US-TAU-03 and US-TAU-07 through the API (real PostgreSQL), self-contained: its own giver and keepers with their friendships,
+// wishes and offers, all removed in afterAll. The scenarios above end friendships of subA, so nothing here relies on them.
+describe("US-TAU-03 an open request takes the offer out of the deck (real PostgreSQL)", () => {
+  const [giverM, keepB, keepC, keepD, keepE, keepF, keepG, keepH] = [0, 1, 2, 3, 4, 5, 6, 7].map(
+    () => `soz11-m-${randomUUID()}`,
+  ) as [string, string, string, string, string, string, string, string];
+  const keepers = [keepB, keepC, keepD, keepE, keepF, keepG, keepH];
+  const mine = [giverM, ...keepers];
+  const TZ = "timeZone=Europe%2FBerlin";
+  const deck = async (sub: string) =>
+    (await call(sub, "GET", `/exchange/match?${TZ}`)).body as {
+      cards: { offerId: string }[];
+      entries: { offerId: string }[];
+      empty: string | null;
+    };
+  const cardIds = async (sub: string) => (await deck(sub)).cards.map((c) => c.offerId);
+  /** An open shared offer of giverM for the approved species of this file. */
+  const offerOf = async (marker: string) => {
+    const id = await specimen(giverM, marker);
+    await call(giverM, "PUT", `/sharing/specimens/${id}`, { share: "friends" });
+    return (
+      await call(giverM, "POST", "/offers", { specimenId: id, type: "cutting", mode: "swap" })
+    ).body.id as string;
+  };
+  const yes = (sub: string, offerId: string) =>
+    call(sub, "POST", `/exchange/match/${offerId}/yes`, {});
+  /** Acts on every card of the keeper until none is left, so that the empty reason is the one the test sets up. */
+  const drain = async (sub: string, act: (offerId: string) => Promise<unknown>) => {
+    for (let round = 0; round < 20; round += 1) {
+      const ids = await cardIds(sub);
+      if (ids.length === 0) return;
+      for (const offerId of ids) await act(offerId);
+    }
+  };
+
+  beforeAll(async () => {
+    for (const sub of mine) await call(sub, "GET", "/account");
+    for (const keeper of keepers) await befriend(giverM, keeper);
+    // A probe offer gives the Latin name of the approved species; every keeper wishes for it.
+    const probe = await offerOf("M0");
+    const latin = (await call(keepB, "GET", `/exchange/offers?${TZ}`)).body.offers.find(
+      (x: { offerId: string }) => x.offerId === probe,
+    ).speciesLatin as string;
+    for (const keeper of keepers) await call(keeper, "POST", "/wishes", { name: latin });
+  }, 120_000);
+  afterAll(async () => {
+    const accounts = "select id from account where subject = any($1)";
+    const subs = [mine];
+    await admin.query(`delete from swap where account_id in (${accounts})`, subs);
+    await admin.query(`delete from offer where account_id in (${accounts})`, subs);
+    await admin.query(`delete from care_profile where account_id in (${accounts})`, subs);
+    await admin.query(`delete from specimen where account_id in (${accounts})`, subs);
+    await admin.query(`delete from friendship where account_id in (${accounts})`, subs);
+    await admin.query("delete from account where subject = any($1)", subs);
+  });
+
+  it("after Yes the offer is gone from my deck on the next load, is listed under my requests and marked requested in the exchange", async () => {
+    const offerId = await offerOf("M1");
+    expect(await cardIds(keepB)).toContain(offerId);
+    const r = await yes(keepB, offerId);
+    expect(r).toMatchObject({ status: 201, body: { outcome: "requested" } });
+    expect(await cardIds(keepB)).not.toContain(offerId);
+    expect((await deck(keepB)).entries.map((e) => e.offerId)).not.toContain(offerId);
+    expect((await swaps(keepB)).sent.map((s) => s.swapId)).toContain(r.body.swapId);
+    const listed = (await call(keepB, "GET", `/exchange/offers?${TZ}`)).body.offers.find(
+      (x: { offerId: string }) => x.offerId === offerId,
+    );
+    expect(listed?.requested).toBe(true);
+  });
+
+  it("P-04 another keeper's request does not hide the offer from me", async () => {
+    const offerId = await offerOf("M2");
+    expect((await yes(keepC, offerId)).status).toBe(201);
+    expect(await cardIds(keepD)).toContain(offerId);
+    expect(await cardIds(keepC)).not.toContain(offerId);
+  });
+
+  it("a withdrawn request brings the offer back into my deck", async () => {
+    const offerId = await offerOf("M3");
+    const r = await yes(keepE, offerId);
+    expect(await cardIds(keepE)).not.toContain(offerId);
+    expect(
+      (await call(keepE, "POST", `/swaps/${r.body.swapId}/answer`, { action: "withdraw" })).status,
+    ).toBe(200);
+    expect(await cardIds(keepE)).toContain(offerId);
+  });
+
+  it("a declined request brings the offer back into my deck, and the decline is shown to me", async () => {
+    const offerId = await offerOf("M4");
+    const r = await yes(keepF, offerId);
+    expect(await cardIds(keepF)).not.toContain(offerId);
+    expect(
+      (
+        await call(giverM, "POST", `/swaps/${r.body.swapId}/answer`, {
+          action: "decline",
+          reason: "Gerade nicht",
+        })
+      ).status,
+    ).toBe(200);
+    expect(await cardIds(keepF)).toContain(offerId);
+    expect((await swaps(keepF)).sent.find((s) => s.swapId === r.body.swapId)?.status).toBe(
+      "declined",
+    );
+  });
+
+  it("the answer to an offer I requested is refused as already requested and stores nothing (P-10)", async () => {
+    const offerId = await offerOf("M5");
+    expect((await yes(keepB, offerId)).status).toBe(201);
+    const put = await call(keepB, "PUT", `/exchange/match/${offerId}/answer`, {
+      answer: "later",
+      timeZone: "Europe/Berlin",
+    });
+    expect(put).toMatchObject({ status: 409, body: { error: { code: "swap.already_requested" } } });
+    expect((await deck(keepB)).entries.map((e) => e.offerId)).not.toContain(offerId);
+  });
+
+  it("US-TAU-07 names all_requested when every offer that matches my wishlist has my open request", async () => {
+    await offerOf("M6");
+    await drain(keepG, (offerId) => yes(keepG, offerId));
+    expect(await cardIds(keepG)).toEqual([]);
+    expect((await deck(keepG)).empty).toBe("all_requested");
+  });
+
+  it("US-TAU-07 names all_answered when no card is left because my Later holds the rest", async () => {
+    await offerOf("M7");
+    await drain(keepH, (offerId) =>
+      call(keepH, "PUT", `/exchange/match/${offerId}/answer`, {
+        answer: "later",
+        timeZone: "Europe/Berlin",
+      }),
+    );
+    expect(await cardIds(keepH)).toEqual([]);
+    expect((await deck(keepH)).empty).toBe("all_answered");
   });
 });

@@ -18,7 +18,7 @@ describe("US-QS-14 · page story Sammlung", () => {
     expect(
       (
         await screen.findAllByRole("button", {
-          name: / (Gesund|Vergeilt\/dünn|Behandeln|unbekannt)$/,
+          name: /^(Aloe|Monstera|Bogenhanf)(\s|$)/,
         })
       ).length,
     ).toBe(3);
@@ -26,17 +26,19 @@ describe("US-QS-14 · page story Sammlung", () => {
     expect(screen.queryByText(/wird geladen|Lädt/)).toBeNull();
   });
 
-  it("US-QS-14 · the species mode shows the caught species of the Pokédex", async () => {
+  it("US-QS-14 · the species mode shows the caught species of the Arten", async () => {
     await SpeciesDesktopDark.run();
     expect(await screen.findByText("Dracaena trifasciata")).toBeTruthy();
     // The count comes from its own request, which can arrive after the species list (issue 1697).
-    expect(await screen.findByText("3 gefangen")).toBeTruthy();
-    expect(screen.getByRole("button", { name: /· 3 gefangen/ })).toBeTruthy();
+    expect(await screen.findByText("3 Arten gefangen")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /– Fortschritt$/ })).toBeTruthy();
   });
 
   it("US-QS-14 · the wishlist mode shows the open wishes in order", async () => {
     await WishlistPhone.run();
-    expect(await screen.findByText(/Zebra-Haworthie \(Haworthia fasciata\)/)).toBeTruthy();
+    // The German name leads and the scientific name is italic on the meta line (US-QS-32, SG-TYPE-08).
+    expect(await screen.findByText(/Zebra-Haworthie$/)).toBeTruthy();
+    expect(screen.getByText("Haworthia fasciata").tagName).toBe("I");
     expect(screen.getByText(/^2\. /)).toBeTruthy();
   });
 

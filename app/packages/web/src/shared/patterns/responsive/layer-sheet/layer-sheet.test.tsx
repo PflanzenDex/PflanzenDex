@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { StrictMode } from "react";
+import { StrictMode, useState } from "react";
 import {
   act,
   cleanup,
@@ -8,16 +8,24 @@ import {
   renderHook,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useNavigate, useSearchParams } from "react-router";
+import {
+  BrowserRouter,
+  MemoryRouter,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
-import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
+import { LayerHost, LayerOpener, LayerSheet, useLayer, useUnsavedInput } from "./layer-sheet";
 import { useExitValue } from "./use-layer";
+import { GatedRouter, hold, releaseHold, resetHold } from "./layer-sheet.test-helpers";
 
 beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => undefined;
@@ -25,6 +33,7 @@ beforeAll(() => {
 });
 
 afterEach(cleanup);
+afterEach(resetHold);
 afterEach(releaseSheetExits);
 
 function Back() {
@@ -426,5 +435,650 @@ describe("LayerSheet (US-QS-15)", () => {
     } finally {
       warn.mockRestore();
     }
+  });
+});
+
+/** The address and history of the last render of a `Probe`, so a test reads where Back and a close have led (US-QS-32). */
+let seen: { pathname: string; search: string; state: unknown } = {
+  pathname: "",
+  search: "",
+  state: null,
+};
+/** The keys of the history entries the probe has seen, in order: a new entry is a new key (US-QS-32). */
+let keys: string[] = [];
+function Probe() {
+  const location = useLocation();
+  seen = { pathname: location.pathname, search: location.search, state: location.state };
+  if (keys.at(-1) !== location.key) keys = [...keys, location.key];
+  return null;
+}
+
+/** A form with typed input, as the forms of the layers are (US-QS-32); `save` closes the layer as a saved write does. */
+function TypingForm({ save }: { save: boolean }) {
+  const [text, setText] = useState("");
+  const { closeLayer } = useLayer("notiz");
+  useUnsavedInput(text !== "");
+  return (
+    <>
+      <label>
+        Text
+        <input value={text} onChange={(event) => setText(event.target.value)} />
+      </label>
+      {save ? (
+        <button
+          type="button"
+          onClick={() => {
+            // A saved write closes the layer first and empties the form after it, as the layers of the equipment do.
+            closeLayer();
+            setText("");
+          }}
+        >
+          Speichern
+        </button>
+      ) : null}
+    </>
+  );
+}
+
+/** Two Backs in one event: both steps are batched into one render, which lands on the list (US-QS-15). */
+function DoubleBack() {
+  const navigate = useNavigate();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        void navigate(-1);
+        void navigate(-1);
+      }}
+    >
+      Zweimal zurück
+    </button>
+  );
+}
+
+function Forward() {
+  const navigate = useNavigate();
+  return <button onClick={() => void navigate(1)}>Browser vor</button>;
+}
+
+function TypingLayer({ save = false }: { save?: boolean }) {
+  return (
+    <>
+      <Probe />
+      <LayerHost>
+        <LayerOpener id="notiz">Notiz</LayerOpener>
+        <LayerSheet id="notiz" title="Notiz">
+          <TypingForm save={save} />
+        </LayerSheet>
+      </LayerHost>
+      <Back />
+      <DoubleBack />
+      <Forward />
+    </>
+  );
+}
+
+/** The app at `entries`, the last one (`index`) is where it starts; the opener of the layer is on the last entry. */
+function renderTyping(entries: string[], index: number, save = false) {
+  return render(
+    <MemoryRouter initialEntries={entries} initialIndex={index}>
+      <TypingLayer save={save} />
+    </MemoryRouter>,
+  );
+}
+
+const QUESTION = { name: "Eingabe verwerfen?" };
+
+/** Opens the layer from its opener and types into its field; from 1024 px the layer is a pane, not a dialog. */
+async function openAndType(text: string, role: "dialog" | "complementary" = "dialog") {
+  await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
+  const layer = await screen.findByRole(role, { name: "Notiz" });
+  await userEvent.type(within(layer).getByLabelText("Text"), text);
+  return layer;
+}
+
+describe("US-QS-32 a layer asks before it discards typed input (SG-FORM-06, SG-SHEET-05)", () => {
+  it("US-QS-32 Escape with typed input asks; Weiter bearbeiten keeps the input and the layer open", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    await userEvent.keyboard("{Escape}");
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    expect(screen.getByRole("dialog", { name: "Notiz" })).toBeTruthy();
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-32 Weiter bearbeiten puts the focus back on the field the person typed in, inside the layer", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    const field = screen.getByLabelText("Text");
+    await userEvent.keyboard("{Escape}");
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(document.activeElement).toBe(field));
+    expect(screen.getByRole("dialog", { name: "Notiz" }).contains(field)).toBe(true);
+  });
+
+  it("US-QS-32 Escape on the question keeps the layer and its input, as Weiter bearbeiten does", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    await userEvent.keyboard("{Escape}");
+    await screen.findByRole("dialog", QUESTION);
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(screen.getByRole("dialog", { name: "Notiz" })).toBeTruthy();
+  });
+
+  it("US-QS-32 Verwerfen after Escape closes the layer and its address loses ?sheet", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    await userEvent.keyboard("{Escape}");
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.pathname).toBe("/start");
+    expect(seen.search).toBe("");
+  });
+
+  it("US-QS-32 from 1024 px the pane asks as well: Escape and its close control, Weiter bearbeiten keeps the pane", async () => {
+    setViewportWidth(1280);
+    renderTyping(["/start"], 0);
+    const pane = await openAndType("Basilikum", "complementary");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      within(await screen.findByRole("dialog", QUESTION)).getByRole("button", {
+        name: "Weiter bearbeiten",
+      }),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    await userEvent.click(within(pane).getByRole("button", { name: "Schließen" }));
+    const question = await screen.findByRole("dialog", QUESTION);
+    // While the question is open, the layer behind it is hidden from assistive technology, but it is still there.
+    expect(screen.getByRole("complementary", { name: "Notiz", hidden: true })).toBeTruthy();
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() => expect(screen.queryByRole("complementary", { name: "Notiz" })).toBeNull());
+  });
+
+  it("US-QS-32 the close control of a dialog from md asks while input is unsaved", async () => {
+    setViewportWidth(800);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    const dialog = screen.getByRole("dialog", { name: "Notiz" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Schließen" }));
+    expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
+    // The question hides the layer from assistive technology; the layer itself stays mounted with its input.
+    expect(dialog.isConnected).toBe(true);
+    expect(dialog.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("US-QS-32 Back with typed input asks and keeps the layer; Verwerfen lands on the list and a following Back goes where it went before", async () => {
+    setViewportWidth(360);
+    renderTyping(["/before", "/start"], 1);
+    await openAndType("Basilikum");
+    fireEvent.click(screen.getByText("Browser zurück"));
+    const question = await screen.findByRole("dialog", QUESTION);
+    expect(seen.search).toContain("sheet=notiz");
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/start");
+    expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull();
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(seen.pathname).toBe("/before"));
+  });
+
+  it("US-QS-32 Back with typed input and Weiter bearbeiten keeps the layer; the next Back asks again", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    fireEvent.click(screen.getByText("Browser zurück"));
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    fireEvent.click(screen.getByText("Browser zurück"));
+    expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-32 the first typed input pushes one guard entry at the same address, keeping the app flag and the focus flag", async () => {
+    setViewportWidth(360);
+    keys = [];
+    renderTyping(["/start"], 0);
+    await openAndType("B");
+    const entries = keys.length;
+    expect(seen.search).toContain("sheet=notiz");
+    expect(seen.state).toMatchObject({ layerGuard: true, layerFromApp: true, keepFocus: true });
+    // Further typing adds no entry: the guard is pushed once, not with every key.
+    await userEvent.type(screen.getByLabelText("Text"), "asilikum");
+    expect(keys.length).toBe(entries);
+  });
+
+  it("US-QS-32 a clean layer closes at once on Escape and on Back, with no question", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
+    await screen.findByRole("dialog", { name: "Notiz" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
+    await screen.findByRole("dialog", { name: "Notiz" });
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    expect(seen.pathname).toBe("/start");
+  });
+
+  it("US-QS-32 a saved write closes the layer through closeLayer without the question, and no guard entry remains", async () => {
+    setViewportWidth(360);
+    renderTyping(["/before", "/start"], 1, true);
+    await openAndType("Thymian");
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    expect(seen.search).toBe("");
+    expect(seen.pathname).toBe("/start");
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(seen.pathname).toBe("/before"));
+  });
+
+  it("US-QS-32 a sheet that is swiped down with typed input asks and slides back to its place", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    const layer = await openAndType("Basilikum");
+    // The swipe moved the sheet down (Vaul writes its transform inline while the finger drags).
+    layer.style.transform = "translate3d(0, 120px, 0)";
+    await userEvent.keyboard("{Escape}");
+    expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
+    await waitFor(() => expect(layer.style.transform).toBe("translate3d(0px, 0px, 0px)"));
+  });
+
+  it("US-QS-32 outside a layer useUnsavedInput is a no-op: leave runs its action at once", () => {
+    let ran = false;
+    function Bare() {
+      const { leave } = useUnsavedInput(true);
+      return <button type="button" onClick={() => leave(() => (ran = true))} />;
+    }
+    render(<Bare />);
+    fireEvent.click(screen.getByRole("button"));
+    expect(ran).toBe(true);
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+  });
+});
+
+/** The app on the browser history of the page: `window.history.back()` moves through its entries as a real Back does. */
+function renderOnBrowser(path: string) {
+  window.history.replaceState(null, "", path);
+  return render(
+    <BrowserRouter>
+      <TypingLayer />
+    </BrowserRouter>,
+  );
+}
+
+describe("US-QS-15 a second Back keeps the layer and its question; a layer opened by a reload closes to its list", () => {
+  it("US-QS-15 two Backs in quick succession with typed input keep the layer open and ask; the address still names it", async () => {
+    setViewportWidth(360);
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    window.history.back();
+    window.history.back();
+    await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-15 two Backs in one traversal (history.go(-2) on the browser history) keep the layer open and ask; the address still names it", async () => {
+    setViewportWidth(360);
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    // One step over both entries: the page sees the list at once, as when the two Backs arrive before React renders.
+    window.history.go(-2);
+    await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-15 two Backs batched into one render keep the layer open and ask; the address still names it", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    fireEvent.click(screen.getByText("Zweimal zurück"));
+    await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-15 a second Back after the question shows lands on the layer and asks again; input and address stay", async () => {
+    setViewportWidth(360);
+    keys = [];
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    window.history.back();
+    await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    const before = keys.length;
+    window.history.back();
+    await waitFor(() => expect(keys.length).toBeGreaterThan(before));
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    expect(screen.getByRole("dialog", QUESTION)).toBeTruthy();
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-15 Verwerfen after two quick Backs walks back to the list and leaves the layer", async () => {
+    setViewportWidth(360);
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    window.history.back();
+    window.history.back();
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/start");
+    expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull();
+  });
+
+  it("US-QS-15 Weiter bearbeiten after two quick Backs keeps the input; the focus is in the question while it is open and returns into the layer", async () => {
+    setViewportWidth(360);
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    const field = screen.getByLabelText("Text");
+    window.history.back();
+    window.history.back();
+    const question = await screen.findByRole("dialog", QUESTION);
+    expect(question.contains(document.activeElement)).toBe(true);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(field));
+    expect((field as HTMLInputElement).value).toBe("Basilikum");
+    expect(screen.getByRole("dialog", { name: "Notiz" }).contains(field)).toBe(true);
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-15 a layer opened by a reload closes with Back to its list, not to the page before it", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start", "/?sheet=notiz"], 1);
+    await screen.findByRole("dialog", { name: "Notiz" });
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.pathname).toBe("/");
+    expect(seen.search).toBe("");
+  });
+
+  it("US-QS-15 a layer opened by a reload with typed input asks on Back, and Verwerfen lands on its list", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start", "/?sheet=notiz"], 1);
+    const layer = await screen.findByRole("dialog", { name: "Notiz" });
+    await userEvent.type(within(layer).getByLabelText("Text"), "Basilikum");
+    fireEvent.click(screen.getByText("Browser zurück"));
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/");
+  });
+
+  it("US-QS-15 a layer opened by a reload: a saved close lands on the list, and Forward reaches the layer's own entry, not a guard entry", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start", "/?sheet=notiz"], 1, true);
+    const layer = await screen.findByRole("dialog", { name: "Notiz" });
+    await userEvent.type(within(layer).getByLabelText("Text"), "Thymian");
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    expect(seen.pathname).toBe("/");
+    expect(seen.search).toBe("");
+    fireEvent.click(screen.getByText("Browser vor"));
+    await waitFor(() => expect(seen.search).toContain("sheet=notiz"));
+    expect(seen.state).toMatchObject({ layerFromApp: true });
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    expect(await screen.findByRole("dialog", { name: "Notiz" })).toBeTruthy();
+  });
+});
+
+/**
+ * A close over the guard entry leaves no guard entry ahead (issue 2158): the guard becomes a plain entry of the list, so
+ * Forward reaches the layer's own entry, a second Forward closes the layer, and every Back on the way back shows a change.
+ */
+describe("US-QS-15 a close over the guard entry leaves no guard entry ahead (issue 2158)", () => {
+  /** From the list: Forward opens the layer on its own entry, a second Forward closes it; no entry ahead is a guard. */
+  async function forwardOpensThenCloses() {
+    fireEvent.click(screen.getByText("Browser vor"));
+    await waitFor(() => expect(seen.search).toContain("sheet=notiz"));
+    expect(seen.state).toMatchObject({ layerFromApp: true });
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    expect(await screen.findByRole("dialog", { name: "Notiz" })).toBeTruthy();
+    fireEvent.click(screen.getByText("Browser vor"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.search).toBe("");
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+  }
+
+  it("US-QS-15 Verwerfen after a Back leaves no guard entry ahead: Forward reaches the layer, a second Forward closes it (issue 2158)", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    fireEvent.click(screen.getByText("Browser zurück"));
+    const question = await screen.findByRole("dialog", QUESTION);
+    // The guard entry that the question was pushed with commits after the question shows (PF-031).
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/start");
+    await forwardOpensThenCloses();
+    // Every Back on the way back changes what is shown: the layer, then the list.
+    fireEvent.click(screen.getByText("Browser zurück"));
+    expect(await screen.findByRole("dialog", { name: "Notiz" })).toBeTruthy();
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.pathname).toBe("/start");
+  });
+
+  it("US-QS-15 Verwerfen after a Back in a layer opened by a reload leaves no guard entry ahead (issue 2158)", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start", "/?sheet=notiz"], 1);
+    const layer = await screen.findByRole("dialog", { name: "Notiz" });
+    await userEvent.type(within(layer).getByLabelText("Text"), "Basilikum");
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    fireEvent.click(screen.getByText("Browser zurück"));
+    const question = await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/");
+    await forwardOpensThenCloses();
+    fireEvent.click(screen.getByText("Browser zurück"));
+    expect(await screen.findByRole("dialog", { name: "Notiz" })).toBeTruthy();
+    fireEvent.click(screen.getByText("Browser zurück"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.pathname).toBe("/");
+  });
+
+  it("US-QS-15 Escape then Verwerfen leaves no guard entry ahead: a second Forward closes the layer (issue 2158)", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    await openAndType("Basilikum");
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    await userEvent.keyboard("{Escape}");
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.pathname).toBe("/start");
+    await forwardOpensThenCloses();
+  });
+
+  it("US-QS-15 a saved close with typed input leaves no guard entry ahead: Forward reaches the layer, a second Forward closes it (issue 2158)", async () => {
+    setViewportWidth(360);
+    renderTyping(["/before", "/start"], 1, true);
+    await openAndType("Thymian");
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.search).toBe("");
+    expect(seen.pathname).toBe("/start");
+    await forwardOpensThenCloses();
+  });
+
+  it("US-QS-15 on the browser history, Verwerfen after a Back leaves no guard entry ahead: Forward opens the layer, a second Forward closes it (issue 2158)", async () => {
+    setViewportWidth(360);
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    window.history.back();
+    const question = await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(window.location.search).toBe("");
+    // The browser's own history: the popstate of each step arrives later, so each Forward is awaited.
+    window.history.forward();
+    await waitFor(() => expect(seen.search).toContain("sheet=notiz"));
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    window.history.forward();
+    await waitFor(() => expect(seen.search).toBe(""));
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull();
+  });
+
+  /** The guard entry of a change waits in the gated router, as on a slow device: the saved close runs while it is pending (PF-031). */
+  function renderGatedTyping(entry: string, save: boolean) {
+    return render(
+      <GatedRouter entry={entry}>
+        <TypingLayer save={save} />
+      </GatedRouter>,
+    );
+  }
+
+  it("US-QS-15 a saved close whose guard entry is still pending closes the layer; Forward reaches the layer, a second Forward closes it (issue 2165)", async () => {
+    setViewportWidth(360);
+    renderGatedTyping("/start", true);
+    await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
+    const layer = await screen.findByRole("dialog", { name: "Notiz" });
+    // The first input pushes the guard entry; the router holds it back, so the saved close runs while it is pending.
+    hold.on = true;
+    await userEvent.type(within(layer).getByLabelText("Text"), "Thymian");
+    expect(hold.queued).not.toBeNull();
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    await releaseHold();
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    expect(seen.search).toBe("");
+    expect(seen.pathname).toBe("/start");
+    await forwardOpensThenCloses();
+  });
+
+  it("US-QS-15 a layer opened by a reload: a saved close whose guard entry is still pending lands on its list, and Forward reaches the layer's own entry (issue 2165)", async () => {
+    setViewportWidth(360);
+    renderGatedTyping("/?sheet=notiz", true);
+    const layer = await screen.findByRole("dialog", { name: "Notiz" });
+    hold.on = true;
+    await userEvent.type(within(layer).getByLabelText("Text"), "Thymian");
+    expect(hold.queued).not.toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    await releaseHold();
+    expect(seen.pathname).toBe("/");
+    expect(seen.search).toBe("");
+    fireEvent.click(screen.getByText("Browser vor"));
+    await waitFor(() => expect(seen.search).toContain("sheet=notiz"));
+    expect(seen.state).toMatchObject({ layerFromApp: true });
+    expect(seen.state).not.toMatchObject({ layerGuard: true });
+    expect(await screen.findByRole("dialog", { name: "Notiz" })).toBeTruthy();
+  });
+});
+
+/** A filter-like replace inside the layer, without state, as the catalog's filters do (US-QS-15, issue 2145). */
+function ReplaceInside() {
+  const [, setParams] = useSearchParams();
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        setParams(
+          (prev) => {
+            prev.set("q", "rosa");
+            return prev;
+          },
+          { replace: true },
+        )
+      }
+    >
+      Filter setzen
+    </button>
+  );
+}
+
+describe("US-QS-15 a layer keeps its input through a second Back; the hold stays on the entry below (issue 2145)", () => {
+  it("US-QS-15 a replace without state inside an open layer adds no history entry, so a filter in the layer does not ask for an entry", async () => {
+    setViewportWidth(360);
+    window.history.replaceState(null, "", "/start");
+    render(
+      <BrowserRouter>
+        <LayerHost>
+          <LayerOpener id="liste">Liste</LayerOpener>
+          <LayerSheet id="liste" title="Liste">
+            <ReplaceInside />
+          </LayerSheet>
+        </LayerHost>
+      </BrowserRouter>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Liste" }));
+    await screen.findByRole("dialog", { name: "Liste" });
+    const entries = window.history.length;
+    await userEvent.click(screen.getByRole("button", { name: "Filter setzen" }));
+    await waitFor(() => expect(new URL(window.location.href).searchParams.get("q")).toBe("rosa"));
+    expect(window.history.length).toBe(entries);
+    expect(screen.getByRole("dialog", { name: "Liste" })).toBeTruthy();
+  });
+
+  it("US-QS-15 a Back that jumps past the entry below the layer is not pulled forward: no question, no layer", async () => {
+    setViewportWidth(360);
+    keys = [];
+    window.history.replaceState(null, "", "/before");
+    window.history.pushState(null, "", "/start");
+    render(
+      <BrowserRouter>
+        <TypingLayer />
+      </BrowserRouter>,
+    );
+    await openAndType("Basilikum");
+    // Three entries back: the entry below the layer is the one at /start, the jump lands on /before.
+    window.history.go(-3);
+    await waitFor(() => expect(seen.pathname).toBe("/before"));
+    expect(seen.search).toBe("");
+    expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull();
+    expect(window.location.pathname).toBe("/before");
+  });
+
+  it("US-QS-15 a second Back while the question is open keeps the field as the focus target; Weiter bearbeiten returns to the field", async () => {
+    setViewportWidth(360);
+    keys = [];
+    renderOnBrowser("/start");
+    await openAndType("Basilikum");
+    const field = screen.getByLabelText("Text");
+    window.history.back();
+    await screen.findByRole("dialog", QUESTION);
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    const before = keys.length;
+    window.history.back();
+    await waitFor(() => expect(keys.length).toBeGreaterThan(before));
+    await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
+    const question = screen.getByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(field));
+    expect((field as HTMLInputElement).value).toBe("Basilikum");
   });
 });

@@ -47,6 +47,13 @@ describe("Collapsible and Accordion (US-QS-07, DS-34)", () => {
     expect(cls).toContain("motion-reduce:transition-none");
   });
 
+  it("US-QS-32 · SG-TOUCH-01 the section button is at least 44 px high (min-h-11) and keeps its 20 px chevron", () => {
+    render(<Collapsible title="Licht">x</Collapsible>);
+    const button = screen.getByRole("button", { name: "Licht" });
+    expect(button.className.split(" ")).toContain("min-h-11");
+    expect(button.querySelector("svg")?.getAttribute("class")).toContain("size-5");
+  });
+
   it("US-QS-07 the heading level is configurable", () => {
     render(
       <Collapsible title="Licht" headingLevel={2}>

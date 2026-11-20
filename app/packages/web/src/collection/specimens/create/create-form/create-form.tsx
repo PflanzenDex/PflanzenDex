@@ -1,13 +1,13 @@
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type UseFormReturn } from "react-hook-form";
+import { type UseFormReturn } from "react-hook-form";
 import {
   speciesDisplayName,
   type Species,
   type LightLocation,
   type LightZone,
 } from "@pflanzendex/core";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../../shared/data";
 import { refusesCatchDate } from "../../../markers/catch-date/catch-date-field/catch-date-field";
 import { useToday } from "../../../markers/catch-date/use-today";
@@ -15,7 +15,7 @@ import { Heading, NamePreview, OtherFields } from "../create-fields/create-field
 import { toCreateInput, type CreateInput } from "../create-input";
 import { MarkerFields } from "../../../markers/marker/marker-fields/marker-fields";
 import { markerRule, type Sibling } from "../../../markers/marker/marker-rule";
-import { FormButtons, Warning } from "../../cards/parts/parts";
+import { FormButtons, ErrorNotice } from "../../cards/parts/parts";
 import { useEdited, useRefusal } from "../../model/refusal";
 import { createSchema, type CreateFields } from "../../model/schemas";
 import { createStart } from "../../model/create-start";
@@ -35,7 +35,7 @@ function fieldsOfRefusal(error: ApiError): (keyof CreateFields)[] {
 function ErrorBox({ text, error }: { text: string; error: ApiError }) {
   const conflict = nameConflict(error);
   return (
-    <Warning>
+    <ErrorNotice>
       <p>{text}</p>
       {conflict && (
         <>
@@ -45,7 +45,7 @@ function ErrorBox({ text, error }: { text: string; error: ApiError }) {
           <p>{ui("withMarker", { name: conflict.name })}</p>
         </>
       )}
-    </Warning>
+    </ErrorNotice>
   );
 }
 
@@ -77,7 +77,7 @@ export function CreateForm(props: {
   const rule = markerRule(props.siblings);
   const today = useToday();
   const [error, setError] = useState<ApiError | null>(props.errorStart ?? null);
-  const form = useForm<CreateFields>({
+  const form = useFieldForm<CreateFields>({
     resolver: zodResolver(createSchema(rule)),
     defaultValues: createStart(rule, today),
   });

@@ -10,6 +10,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { ESLINT_SHARED, GATE_PARALLEL_LIMIT, GATE_STEPS, runGateSteps } from "./gate-steps.mjs";
 import { RESULTS_ENV } from "./eslint-shared.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const APP_DIR = fileURLToPath(new URL("../../../../", import.meta.url));
 const DEFAULT_CACHE_DIR = path.join(APP_DIR, ".cache", "gates");
@@ -192,6 +193,6 @@ export async function runGates({
   return passed ? 0 : 1;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   process.exitCode = await runGates();
 }

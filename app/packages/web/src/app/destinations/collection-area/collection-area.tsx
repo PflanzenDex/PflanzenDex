@@ -100,7 +100,8 @@ function FormFrame(p: { form: FormAddress; children: ReactNode }) {
   return (
     <>
       {form.notice ? (
-        <Banner variant="warning" className="mb-3">
+        // The notice is a failed load (a plant that is not there): the one error tone, never amber (SG-COLOR-04).
+        <Banner variant="error" className="mb-3">
           {form.notice}
         </Banner>
       ) : null}

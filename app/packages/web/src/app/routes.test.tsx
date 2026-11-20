@@ -41,6 +41,7 @@ vi.mock("../pokedex/pokedex-page/pokedex-page", () => {
 });
 
 import { AppRoutes } from "./routes";
+import { HomeRedirect } from "./destinations/area-parts/simple-routes/route-fallback/home-redirect/home-redirect";
 import { AddPlant } from "@/app/flows";
 import { AccountArea, TodayArea } from "@/app/destinations/area-parts/lazy-areas";
 
@@ -114,7 +115,7 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
   it("US-QS-07 · DS-08 a failed page chunk shows an error with retry instead of a blank page", async () => {
     renderAt("/collection?view=species");
     expect((await screen.findByRole("alert")).textContent).toContain(
-      "Die Seite konnte nicht geladen werden.",
+      "Die Seite konnte nicht geladen werden",
     );
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
@@ -129,7 +130,7 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
     // The species page chunk is mocked to fail: only the species mode requests it, so an alert proves the redirect.
     renderAt("/pokedex/irgendwas");
     expect((await screen.findByRole("alert")).textContent).toContain(
-      "Die Seite konnte nicht geladen werden.",
+      "Die Seite konnte nicht geladen werden",
     );
   });
 
@@ -139,9 +140,13 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
     expect(TodayArea.loaded()).not.toBeNull();
   });
 
-  it("US-QS-16 an unknown address leads to Heute", async () => {
+  it("US-QS-32 an unknown address shows the not-found view inside the frame, not Heute (F-0058)", async () => {
     renderAt("/gibt-es-nicht");
-    expect(await screen.findByRole("heading", { name: "Heute" })).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Heute" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Zu Heute" })).toBeTruthy();
   });
 
   it("US-QS-07 the new-plant form chunk is requested before the form opens, so the form shows at once (issue 1645)", async () => {
@@ -159,5 +164,17 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
     await screen.findByRole("heading", { name: "Sammlung" });
     // Konto is not on this screen: its chunk comes from the idle preload of the shell (issue 1645).
     await waitFor(() => expect(AccountArea.loaded()).not.toBeNull());
+  });
+});
+
+describe("US-QS-16 · issue 2230 the root address has no empty frame", () => {
+  it("US-QS-16 · issue 2230 the root address holds the skeleton of Heute while it redirects, its title in place", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <HomeRedirect />
+      </MemoryRouter>,
+    );
+    const title = screen.getByRole("heading", { level: 1, name: "Heute" });
+    expect(title.hasAttribute("data-route-fallback")).toBe(true);
   });
 });

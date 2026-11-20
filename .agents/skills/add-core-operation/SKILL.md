@@ -13,7 +13,7 @@ Writes never bypass the operations layer (P-03): the API, the UI and later the A
 4. Write the operation with `defineOperation({ name, schema, authorized?, run })` from `kernel/operation.ts`. Return domain failures as `failed(appError("<domain>.<reason>"))`; never throw for expected cases.
 5. Add every new error code with its German text to `ERROR_TEXTS` in `kernel/error.ts` (FR-QG-11). Codes are never renamed.
 6. Export it from the module `index.ts` (the root `core/src/index.ts` re-exports every module).
-7. Tests in `core` (use the `spec-to-tests` skill): valid input writes, invalid input writes nothing, another account gets `access.denied` or sees nothing, the same idempotency key does not write twice.
+7. Tests in `core` (use the `spec-to-tests` skill): valid input writes, invalid input writes nothing, another account gets `access.denied` or sees nothing, the same idempotency key does not write twice. An idempotent write that a UI may undo returns whether this call changed anything (`changed`, `created`), so an undo never reverts a change from another device or tap (US-QS-32, PR #2312).
 8. Database adapter in `app/packages/db` with tenant isolation (`account_id`, `tenant_protection()`, entry in `fixtures.ts`) so the generic tenant test covers the new table.
 9. API route in `app/packages/api` that calls `execute(op, deps, { context, input, idempotencyKey })` with the `Idempotency-Key` header (see `api/src/light/light-routes.ts`).
 10. Name the operation (`domain.verb`) and the route (`METHOD /path`) in the section of the story in `docs/guides/reference/app.md`; `make reference-check` fails otherwise (US-QG-10).

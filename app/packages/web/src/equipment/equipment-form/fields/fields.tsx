@@ -25,9 +25,18 @@ function TextField(props: {
   max?: number;
   hint?: string;
   inputMode?: "decimal";
+  optional?: boolean;
+  suffix?: string;
 }) {
   return (
-    <Field control={props.control} name={props.name} label={props.label} description={props.hint}>
+    <Field
+      control={props.control}
+      name={props.name}
+      label={props.label}
+      description={props.hint}
+      optional={props.optional}
+      suffix={props.suffix}
+    >
       {(field) => (
         <Input
           {...field}
@@ -102,7 +111,7 @@ export function RequiredFields({ control }: FieldProps) {
         name="name"
         label="Name"
         max={EQUIPMENT_LIMITS.name.max}
-        hint="Der Name ist einmalig. Bei mehreren gleichen Teilen hänge eine Unterscheidung an, zum Beispiel „ – Regal 2“."
+        hint="Der Name ist einmalig. Bei mehreren gleichen Geräten hänge eine Unterscheidung an, zum Beispiel „ – Regal 2“."
       />
     </>
   );
@@ -124,54 +133,39 @@ export function OptionalFields({ control }: FieldProps) {
       <TextField
         control={control}
         name="manufacturer"
-        label="Hersteller (optional)"
+        label="Hersteller"
+        optional
         max={EQUIPMENT_LIMITS.manufacturer.max}
       />
       <TextField
         control={control}
         name="model"
-        label="Modell (optional)"
+        label="Modell"
+        optional
         max={EQUIPMENT_LIMITS.model.max}
       />
       <TextField
         control={control}
         name="productId"
-        label="Produkt-ID (optional)"
+        label="Produkt-ID"
+        optional
         max={EQUIPMENT_LIMITS.productId.max}
         hint="GTIN/EAN oder Hersteller und Modell, keine Adresse."
       />
       <TextField
         control={control}
         name="priceEur"
-        label="Preis in Euro (optional)"
+        label="Preis"
+        optional
+        suffix="€"
         inputMode="decimal"
       />
-      <FormField
-        control={control}
-        name="boughtAt"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Kaufdatum (optional)</FormLabel>
-            <FormControl>
-              <DateField {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name="note"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Notiz (optional)</FormLabel>
-            <FormControl>
-              <Textarea {...field} rows={3} maxLength={EQUIPMENT_LIMITS.note.max} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <Field control={control} name="boughtAt" label="Kaufdatum" optional>
+        {(field) => <DateField {...field} />}
+      </Field>
+      <Field control={control} name="note" label="Notiz" optional>
+        {(field) => <Textarea {...field} rows={3} maxLength={EQUIPMENT_LIMITS.note.max} />}
+      </Field>
     </>
   );
 }

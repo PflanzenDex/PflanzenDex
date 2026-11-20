@@ -95,7 +95,7 @@ describe("US-PHA-03 set the location from the hint 'location missing' (BES-08)",
     expect((await screen.findByRole("status")).textContent).toContain(
       "„Bogenhanf“ steht jetzt am Standort „Flur“.",
     );
-    expect(await screen.findByText(/Keine Hinweise/)).toBeTruthy();
+    expect(await screen.findByText(/Nichts fehlt/)).toBeTruthy();
     expect(screen.queryByText(noLocation.text)).toBeNull();
     expect(posts(fetchFn)).toHaveLength(1);
     expect(String(posts(fetchFn)[0]?.[0])).toBe("http://api/specimens/e1/location");

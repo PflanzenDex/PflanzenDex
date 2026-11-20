@@ -10,7 +10,7 @@ import {
   timeZoneField,
 } from "../../../kernel";
 import type { ExchangeDependencies } from "../../exchange";
-import { matchDeck } from "../deck";
+import { readDeck } from "../deck";
 import type { MatchAnswers } from "./types";
 
 /** The answers that are stored (DM-TAU-01); a Yes is the swap request and has no row here. */
@@ -23,7 +23,8 @@ export type MatchAnswer = (typeof MATCH_ANSWERS)[number];
  * now: an offer of a stranger, an own, ended or unmatched offer answers like a missing one (`offer.not_found`, P-05), so
  * no answer can be stored for something the caller may not see. Species and giver name are copied so the entry stays
  * readable when the offer ends (P-10). The date is the local date of the caller (NFR-08). Answering again replaces the
- * earlier answer; the same Idempotency-Key replays the first reply.
+ * earlier answer; the same Idempotency-Key replays the first reply. An offer on which the caller has an open request is
+ * decided, not missing: the answer is refused as `swap.already_requested`, so the card moves on with that reason (US-TAU-03).
  */
 export const matchAnswer = (deps: ExchangeDependencies, answers: MatchAnswers, clock: () => Date) =>
   defineOperation<
@@ -37,10 +38,12 @@ export const matchAnswer = (deps: ExchangeDependencies, answers: MatchAnswers, c
       timeZone: timeZoneField("timeZone"),
     }),
     run: async ({ userId }, input) => {
-      const deck = await matchDeck(deps, { answers, clock }, userId, {
+      const deck = await readDeck(deps, { answers, clock }, userId, {
         timeZone: input.timeZone,
       });
       if (!deck.ok) return deck;
+      if (deck.value.requested.has(input.offerId))
+        return failed(appError("swap.already_requested"));
       const card = [
         ...deck.value.cards,
         ...deck.value.entries.flatMap((e) => (e.card ? [e.card] : [])),

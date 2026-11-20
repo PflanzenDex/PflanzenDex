@@ -18,23 +18,41 @@ const account: Account = {
 const nothing = () => undefined;
 
 describe("welcome (US-ACC-01)", () => {
-  it("US-ACC-01 a failed Anderes Konto shows its error as an alert, and the buttons stay for another try (P-10)", () => {
+  it("US-ACC-01 a failed Konto wechseln shows its error as an alert, and the buttons stay for another try (P-10)", () => {
     const html = renderToString(
       <Welcome
         onRegister={nothing}
         onSignIn={nothing}
-        onAnotherAccount={nothing}
+        onSwitchAccount={nothing}
+        canSwitch
         error="Abmelden hat nicht geklappt: Prüfe deine Verbindung und versuche es noch einmal."
       />,
     );
     expect(html).toContain('role="alert"');
     expect(html).toContain("Abmelden hat nicht geklappt");
-    expect(html).toContain("Anderes Konto");
+    expect(html).toContain("Konto wechseln");
+  });
+
+  it("US-QS-32 · SG-COLOR-04 the welcome page's failed sign-in is drawn in the error tone, with its mark and no warning token", () => {
+    const html = renderToString(
+      <Welcome
+        onRegister={nothing}
+        onSignIn={nothing}
+        onSwitchAccount={nothing}
+        error="Die Anmeldung ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal."
+      />,
+    );
+    // The opening tag of the alert carries its classes: the error tone is read from that tag.
+    const tag = html.match(/<[^>]*role="alert"[^>]*>/)?.[0] ?? "";
+    expect(tag).toContain("border-destructive");
+    expect(tag).not.toContain("bg-warning");
+    expect(tag).not.toContain("border-warning-border");
+    expect(html).toContain("Die Anmeldung ist gerade nicht erreichbar.");
   });
 
   it("offers register and sign in", () => {
     const html = renderToString(
-      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+      <Welcome onRegister={nothing} onSignIn={nothing} onSwitchAccount={nothing} />,
     );
     expect(html).toContain("Konto anlegen");
     expect(html).toContain("Anmelden");
@@ -42,20 +60,20 @@ describe("welcome (US-ACC-01)", () => {
 
   it("US-QS-09 sign-in and sign-up ask for no puzzle and no code, they hand over to the sign-in service (3.3.8)", () => {
     const html = renderToString(
-      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+      <Welcome onRegister={nothing} onSignIn={nothing} onSwitchAccount={nothing} />,
     );
     expect(html).not.toMatch(/<input|captcha|<canvas|<iframe/i);
-    expect(html.match(/<button/g)).toHaveLength(3);
+    expect(html.match(/<button/g)).toHaveLength(2);
   });
 
-  it("US-ACC-01 offers 'Anderes Konto' last, after sign-in and registration", () => {
+  it("US-ACC-01 offers 'Konto wechseln' last, after sign-in and registration, when a live session is known", () => {
     const html = renderToString(
-      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+      <Welcome onRegister={nothing} onSignIn={nothing} onSwitchAccount={nothing} canSwitch />,
     );
     const [signIn, register, other] = html.split("<button").slice(1);
     expect(signIn).toContain(">Anmelden<");
     expect(register).toContain(">Konto anlegen<");
-    expect(other).toContain(">Anderes Konto<");
+    expect(other).toContain(">Konto wechseln<");
   });
 
   it("names the next action after signing out", () => {
@@ -63,7 +81,7 @@ describe("welcome (US-ACC-01)", () => {
       <Welcome
         onRegister={nothing}
         onSignIn={nothing}
-        onAnotherAccount={nothing}
+        onSwitchAccount={nothing}
         hint="Du bist abgemeldet."
       />,
     );
@@ -72,10 +90,46 @@ describe("welcome (US-ACC-01)", () => {
   });
 });
 
+describe("welcome switch (US-QS-32)", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("US-QS-32 without a live session at the sign-in service the welcome page shows exactly Anmelden and Konto anlegen, and no Konto wechseln", () => {
+    const html = renderToString(
+      <Welcome
+        onRegister={nothing}
+        onSignIn={nothing}
+        onSwitchAccount={nothing}
+        canSwitch={false}
+      />,
+    );
+    const buttons = html.split("<button").slice(1);
+    expect(buttons).toHaveLength(2);
+    expect(buttons[0]).toContain(">Anmelden<");
+    expect(buttons[1]).toContain(">Konto anlegen<");
+    expect(html).not.toContain("Konto wechseln");
+  });
+
+  it("US-QS-32 pressing Konto wechseln calls the switch, and only once per press", async () => {
+    const onSwitchAccount = vi.fn();
+    render(
+      <Welcome
+        onRegister={nothing}
+        onSignIn={nothing}
+        onSwitchAccount={onSwitchAccount}
+        canSwitch
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Konto wechseln" }));
+    expect(onSwitchAccount).toHaveBeenCalledOnce();
+  });
+});
+
 describe("welcome in the sign-in frame (US-QS-14)", () => {
   it("US-QS-14 shows the wordmark, the three value lines and a drawing that assistive technology skips", () => {
     const html = renderToString(
-      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+      <Welcome onRegister={nothing} onSignIn={nothing} onSwitchAccount={nothing} />,
     );
     expect(html).toContain("PflanzenDéx");
     expect(html).toContain("Sammle deine Pflanzen wie Karten");
@@ -84,21 +138,21 @@ describe("welcome in the sign-in frame (US-QS-14)", () => {
     expect(html).toMatch(/<svg[^>]*aria-hidden="true"/);
   });
 
-  it("US-QS-14 sign-in is the filled button and comes first, registration the outline button", () => {
+  it("US-QS-14 · US-QS-32 sign-in is the filled button and comes first, registration the tinted button", () => {
     const html = renderToString(
-      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+      <Welcome onRegister={nothing} onSignIn={nothing} onSwitchAccount={nothing} />,
     );
     const [signIn, register] = html.split("<button").slice(1);
     expect(signIn).toContain(">Anmelden<");
     expect(signIn).toContain("bg-primary text-primary-foreground");
     expect(register).toContain(">Konto anlegen<");
-    expect(register).toContain("border border-primary bg-transparent");
+    expect(register).toContain("bg-accent text-accent-foreground");
     expect(register).not.toContain("bg-primary text-primary-foreground");
   });
 
   it("US-QS-14 offers no language choice on the card", () => {
     const html = renderToString(
-      <Welcome onRegister={nothing} onSignIn={nothing} onAnotherAccount={nothing} />,
+      <Welcome onRegister={nothing} onSignIn={nothing} onSwitchAccount={nothing} />,
     );
     expect(html).not.toMatch(/<select|lang=|Sprache|language/i);
   });
@@ -124,6 +178,23 @@ describe("signed-in view (US-ACC-01)", () => {
   it("shows no warning for a confirmed email", () => {
     const html = renderToString(<AccountView account={account} />);
     expect(html).not.toContain("bestätigen");
+  });
+
+  it("US-QS-32 · SG-COLOR-04 the error of the last sign-in step is drawn in the error tone, the unconfirmed e-mail stays amber (a deviation)", () => {
+    const html = renderToString(
+      <AccountView
+        account={{ ...account, emailConfirmed: false, mayShareWithFriends: false }}
+        error="Die Anmeldung ist gerade nicht erreichbar."
+      />,
+    );
+    const tags = [...html.matchAll(/<[^>]*role="alert"[^>]*>/g)].map((m) => m[0]);
+    expect(tags).toHaveLength(2);
+    const [unconfirmed, failed] = tags;
+    expect(unconfirmed).toContain("bg-warning");
+    expect(unconfirmed).not.toContain("border-destructive");
+    expect(failed).toContain("border-destructive");
+    expect(failed).not.toContain("bg-warning");
+    expect(html).toContain("Die Anmeldung ist gerade nicht erreichbar.");
   });
 });
 
@@ -168,7 +239,7 @@ describe("error with a reload of the page (US-ACC-01)", () => {
 
   it("US-ACC-01 an error without reloadPage keeps Erneut versuchen, and the click calls the retry", async () => {
     const onReload = vi.fn();
-    render(<AppError text="Das Konto konnte nicht geladen werden." onReload={onReload} />);
+    render(<AppError text="Konto nicht geladen" onReload={onReload} />);
     expect(screen.queryByRole("button", { name: "Seite neu laden" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(onReload).toHaveBeenCalledOnce();

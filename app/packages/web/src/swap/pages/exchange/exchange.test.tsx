@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { ExchangePage } from "./exchange";
 
 const response = (status: number, body: unknown) =>
@@ -74,7 +75,9 @@ function server(opts: { offers?: unknown[]; preview?: unknown } = {}) {
 const view = (path = "/") =>
   render(
     <MemoryRouter initialEntries={[path]}>
-      <ExchangePage api="http://api" token={token} />
+      <ToastProvider>
+        <ExchangePage api="http://api" token={token} />
+      </ToastProvider>
     </MemoryRouter>,
   );
 
@@ -87,7 +90,10 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
   it("US-SOZ-08 an empty list says what to do next (P-09)", async () => {
     server();
     view();
-    expect(await screen.findByText(/Du hast noch nichts angeboten/)).toBeTruthy();
+    expect(await screen.findByText(/Noch kein Angebot\./)).toBeTruthy();
+    // The step is "Zum Tausch anbieten" in the title bar; the empty line does not repeat it (SG-STATE-01, issue 2233).
+    expect(screen.getAllByRole("button", { name: "Zum Tausch anbieten" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Pflanze anbieten" })).toBeNull();
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
       "/friends",
     );
@@ -96,7 +102,7 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
   it("US-SOZ-08 · US-QS-20 the form is a layer behind 'Zum Tausch anbieten', not stacked above the list", async () => {
     server();
     view();
-    await screen.findByText(/Du hast noch nichts angeboten/);
+    await screen.findByText(/Noch kein Angebot\./);
     expect(screen.queryByLabelText("Pflanze", { selector: "select" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Zum Tausch anbieten" }));
     expect(await screen.findByLabelText("Pflanze", { selector: "select" })).toBeTruthy();
@@ -147,7 +153,7 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     const calls = server({ offers: [offer()] });
     view();
     await userEvent.click(
-      await screen.findByRole("button", { name: "Angebot für Haworthia zurückziehen" }),
+      await screen.findByRole("button", { name: "Angebot zurückziehen: Haworthia" }),
     );
     expect(await screen.findByText("Das Angebot für Haworthia ist zurückgezogen.")).toBeTruthy();
     expect(calls[0]).toMatchObject({ method: "POST", path: "/offers/o1/withdraw" });
@@ -222,6 +228,33 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     });
   });
 
+  it("US-QS-32 · SG-BTN-01 the offer in the title row is tinted, and the match link is a plain button", async () => {
+    server();
+    view();
+    await screen.findByText(/Noch kein Angebot\./);
+    expect(
+      screen.getByRole("button", { name: "Zum Tausch anbieten" }).className.split(/\s+/),
+    ).toContain("bg-accent");
+    const match = screen.getByRole("link", { name: "Passende Angebote" }).className.split(/\s+/);
+    expect(match).toContain("text-primary");
+    expect(match.some((c) => /^bg-/.test(c))).toBe(false);
+  });
+
+  it("US-QS-07 · US-SOZ-08 a created offer closes the layer and is confirmed by a toast, without the open-offer line (issue 1696)", async () => {
+    server();
+    view();
+    await screen.findByText(/Noch kein Angebot\./);
+    const opener = screen.getByRole("button", { name: "Zum Tausch anbieten" });
+    await userEvent.click(opener);
+    await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
+    await screen.findByText("Keine Behandlung bekannt");
+    await userEvent.click(screen.getByRole("button", { name: "Angebot erstellen" }));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await vi.waitFor(() => expect(document.activeElement).toBe(opener));
+    expect(screen.getAllByText(/Das Angebot ist erstellt/)).toHaveLength(1);
+    expect(screen.queryByText(/schon ein offenes Angebot/)).toBeNull();
+  });
+
   it("US-SOZ-08 a specimen with an open offer cannot be offered twice", async () => {
     server({ preview: preview({ offered: true }) });
     view("/?sheet=offer");
@@ -243,7 +276,7 @@ describe("US-QS-14 · US-QS-15 the exchange is a sub-page with one page header",
     expect(screen.getByRole("link", { name: "Zurück zu Freunde" }).getAttribute("href")).toBe(
       "/friends",
     );
-    expect(await screen.findByText(/Du hast noch nichts angeboten/)).toBeTruthy();
+    expect(await screen.findByText(/Noch kein Angebot\./)).toBeTruthy();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
   });
 });

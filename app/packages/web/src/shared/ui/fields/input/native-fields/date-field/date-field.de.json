@@ -1,0 +1,5 @@
+{
+  "invalid": "Kein gültiges Datum. Gib es als TT.MM.JJJJ an.",
+  "beforeMax": "Wähle ein Datum bis zum {date}.",
+  "afterMin": "Wähle ein Datum ab dem {date}."
+}

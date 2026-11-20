@@ -21,6 +21,18 @@ describe("Banner (US-QS-07, DS-56)", () => {
     expect(screen.getByRole("alert").textContent).toBe("Senden fehlgeschlagen");
   });
 
+  it("US-QS-32 · SG-STATE-03 a focusable error banner shows its focus ring, for every error that takes the focus", () => {
+    render(
+      <Banner variant="error" tabIndex={-1}>
+        Speichern hat nicht geklappt.
+      </Banner>,
+    );
+    const banner = screen.getByRole("alert");
+    expect(banner.className).toContain("focus-visible:outline-none");
+    expect(banner.className).toContain("focus-visible:ring-2");
+    expect(banner.className).toContain("focus-visible:ring-ring");
+  });
+
   it("US-QS-07 · info is the default variant and the icon is hidden from assistive technology", () => {
     const { container } = render(<Banner>Text</Banner>);
     expect(screen.getByRole("status").className).toContain("bg-secondary");

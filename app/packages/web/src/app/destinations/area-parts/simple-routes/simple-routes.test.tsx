@@ -29,14 +29,17 @@ afterEach(() => {
 });
 
 describe("US-DEV-06 routes of the function group social", () => {
-  it("US-DEV-06 Freunde, a friend's collection and the exchange lead to Heute while social is off", async () => {
+  it("US-DEV-06 · US-QS-32 Freunde, a friend's collection and the exchange show the not-found view while social is off", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response("{}", { status: 404 })),
     );
     for (const path of ["/friends", "/friends/exchange", "/friends/match", "/friends/abc"]) {
       renderAt(path, { social: false });
-      expect(await screen.findByText("START"), path).toBeTruthy();
+      expect(
+        await screen.findByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+        path,
+      ).toBeTruthy();
       cleanup();
     }
   });

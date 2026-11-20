@@ -22,7 +22,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Loading: Story = {};
 export const Plants: Story = { args: { caption: "12 Pflanzen" } };
-export const Species: Story = { args: { view: "species", caption: "7 gefangen" } };
+export const Species: Story = { args: { view: "species", caption: "7 Arten gefangen" } };
 
 export const Interactive: Story = {
   render: (args) => {

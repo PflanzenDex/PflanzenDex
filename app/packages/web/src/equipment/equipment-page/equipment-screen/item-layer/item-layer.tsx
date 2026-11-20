@@ -1,11 +1,19 @@
 import { useSearchParams } from "react-router";
 import { zoneLabel } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Badge } from "@/shared/ui/display/badge/badge";
+import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { withUnit } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { EquipmentData, EquipmentRow } from "../../../equipment-api";
-import { LAMP_TYPE, POT_TYPE, STATUS_LABELS, TYPE_LABELS } from "../../../labels";
+import {
+  DEFECTIVE_STATUS,
+  LAMP_TYPE,
+  POT_TYPE,
+  RETIRED_STATUS,
+  STATUS_LABELS,
+  TYPE_LABELS,
+} from "../../../labels";
 import table from "../../../equipment.de.json";
 import type { useLampActions } from "../../lamp-actions/lamp-actions";
 import { ItemCard } from "../item-card/item-card";
@@ -13,15 +21,30 @@ import { ItemCard } from "../item-card/item-card";
 const ITEM_PREFIX = "item-";
 const t = texts(table);
 
-/** One record as a row (name, kind, state, zone or pot size); the full record opens as a layer (US-QS-22). */
+/**
+ * The trailing badge of a record (US-QS-32, SG-COLOR-04, SG-LIST-03): only a defect has one, the amber warning. A retirement
+ * leads the meta line instead (see ItemRow), as plain muted text, so no badge can squeeze the name at a large text size;
+ * "Aktiv" is the normal state and shows nothing.
+ */
+function defectBadge(status: EquipmentRow["status"]) {
+  if (status === DEFECTIVE_STATUS)
+    return <Badge variant="warning">{STATUS_LABELS.defective}</Badge>;
+  return undefined;
+}
+
+/**
+ * One record as an object row (name, kind, zone or pot size, state); the full record opens as a layer (US-QS-22, US-QS-32,
+ * FX-35 step 5). Items have no photo: the drawn placeholder stands in the thumbnail. A retirement leads the meta line
+ * ("Ausgemustert · Lampe · …"), so it is never the part that truncates (P-10); a defect is the row's one trailing badge.
+ */
 export function ItemRow(props: { item: EquipmentRow; zone: string | undefined }) {
   const { item, zone } = props;
   const sheet = ITEM_PREFIX + item.id;
-  const { openLayer } = useLayer(sheet);
+  const { openLayer, open } = useLayer(sheet);
   const facts = [
+    item.status === RETIRED_STATUS ? STATUS_LABELS.retired : null,
     TYPE_LABELS[item.type],
-    item.status ? STATUS_LABELS[item.status] : null,
-    item.type === LAMP_TYPE ? (zone ?? "ohne Zone") : null,
+    item.type === LAMP_TYPE ? (zone ?? t("zone.missing")) : null,
     item.type === POT_TYPE
       ? item.diameterCm === null
         ? t("pot.sizeUnknown")
@@ -29,17 +52,15 @@ export function ItemRow(props: { item: EquipmentRow; zone: string | undefined })
       : null,
   ].filter(Boolean);
   return (
-    <Button
+    <ObjectRow
       id={`row-${sheet}`}
-      type="button"
-      variant="outline"
-      aria-haspopup="dialog"
+      title={item.name}
+      meta={facts.join(" · ")}
+      trailing={defectBadge(item.status)}
+      haspopup="dialog"
+      expanded={open}
       onClick={(e) => openLayer(e.currentTarget)}
-      className="h-auto w-full flex-col items-start gap-0 whitespace-normal px-3 py-2 text-left"
-    >
-      <span className="break-words font-semibold">{item.name}</span>
-      <span className="text-sm font-normal text-muted-foreground">{facts.join(" · ")}</span>
-    </Button>
+    />
   );
 }
 

@@ -4,6 +4,7 @@ import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { useOnline } from "@/shared/platform/browser/network";
 import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
+import { ScrollMemory } from "@/shared/platform/routing/scroll-memory/scroll-memory";
 import {
   ShortcutProvider,
   useShortcuts,
@@ -15,10 +16,12 @@ import { OverlayNotice } from "../../../shared/ui/overlays/overlay-notice/overla
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./app-shell.de.json";
 import { ToastProvider } from "../../../shared/patterns/states/toast/toast-provider/toast-provider";
+import { AppBarSlotProvider } from "../../../shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot";
 import { GlobalHeader } from "../global-header/global-header";
 import { SideNav } from "../side-nav/side-nav";
 import { MobileNavBar } from "../mobile-nav-bar/mobile-nav-bar";
 import type { NavItem } from "../../../shared/patterns/navigation/nav-item";
+import { useRememberBarSlots } from "../mobile-nav-bar/bar-slots";
 
 const MAIN_ID = "inhalt";
 const t = texts(table);
@@ -144,37 +147,42 @@ export function AppShell({
 }) {
   const shell = useRef<HTMLDivElement>(null);
   useStickyScrollPadding(shell);
+  // The start frame draws the words of this bar while the shell loads (issue 2230).
+  useRememberBarSlots(items);
   return (
     <ShortcutProvider mode={shortcutMode} targets={SHORTCUT_TARGETS}>
       <AnnouncerProvider>
         <ToastProvider>
-          <div
-            ref={shell}
-            className="mx-auto flex min-h-dvh w-full max-w-480 flex-col overflow-x-clip bg-background text-foreground md:flex-row"
-          >
-            <a
-              href={`#${MAIN_ID}`}
-              onClick={skipToContent}
-              className="sr-only rounded-md bg-background font-semibold text-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:inline-flex focus:min-h-[44px] focus:items-center focus:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          <AppBarSlotProvider>
+            <div
+              ref={shell}
+              className="mx-auto flex min-h-dvh w-full max-w-480 flex-col overflow-x-clip bg-background text-foreground md:flex-row"
             >
-              {t("skip")}
-            </a>
-            <SideNav items={items} />
-            <div className="flex min-w-0 flex-1 flex-col">
-              <GlobalHeader />
-              <main
-                id={MAIN_ID}
-                tabIndex={-1}
-                className="flex-1 px-4 pb-4 md:pb-6 tall-window:pb-[var(--bar-reserve,calc(4rem+env(safe-area-inset-bottom)))] tall-window:md:pb-6 pt-4 md:px-6 md:pt-6 xl:px-10"
+              <a
+                href={`#${MAIN_ID}`}
+                onClick={skipToContent}
+                className="sr-only rounded-md bg-background font-semibold text-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:inline-flex focus:min-h-[44px] focus:items-center focus:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
-                {children}
-              </main>
+                {t("skip")}
+              </a>
+              <SideNav items={items} />
+              <div className="flex min-w-0 flex-1 flex-col">
+                <GlobalHeader />
+                <main
+                  id={MAIN_ID}
+                  tabIndex={-1}
+                  className="flex-1 px-4 pb-4 md:pb-6 tall-window:pb-[var(--bar-reserve,calc(4rem+env(safe-area-inset-bottom)))] tall-window:md:pb-6 pt-4 md:px-6 md:pt-6 xl:px-10"
+                >
+                  {titleOf ? <RouteFocus titleOf={titleOf} /> : null}
+                  <ScrollMemory />
+                  {children}
+                </main>
+              </div>
+              <OfflineBanner />
+              <MobileNavBar items={items} />
+              <ShortcutOverviewLayer />
             </div>
-            <OfflineBanner />
-            <MobileNavBar items={items} />
-            <ShortcutOverviewLayer />
-          </div>
+          </AppBarSlotProvider>
         </ToastProvider>
       </AnnouncerProvider>
     </ShortcutProvider>

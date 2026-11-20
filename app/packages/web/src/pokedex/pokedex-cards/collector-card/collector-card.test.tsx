@@ -232,6 +232,32 @@ describe("US-POK-14 rarity in PflanzenDex on the card", () => {
   });
 });
 
+describe("US-QS-32 the collector card names a species the SG-TYPE-08 way", () => {
+  it("US-QS-32 the German name leads, upright; the scientific name is italic on the line below", () => {
+    show(card());
+    const german = screen.getByText("Birkenfeige");
+    expect(german.tagName).toBe("SPAN");
+    expect(german.closest("i")).toBeNull();
+    const latin = screen.getByText("Ficus benjamina");
+    expect(latin.tagName).toBe("I");
+    // The title comes first in the card, the scientific name after it.
+    const order = german.compareDocumentPosition(latin);
+    expect(order & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("US-QS-32 the full German name stays the tooltip of the German title (US-POK-01)", () => {
+    show(card());
+    expect(screen.getByText("Birkenfeige").getAttribute("title")).toBe("Birkenfeige (Zimmerlinde)");
+  });
+
+  it("US-QS-32 without a German name the scientific name is the one italic title, not doubled", () => {
+    const { container } = show(card({ germanName: null, germanNameFull: null }));
+    expect(screen.getAllByText("Ficus benjamina")).toHaveLength(1);
+    expect(screen.getByText("Ficus benjamina").tagName).toBe("I");
+    expect(container.querySelector("[title]")?.textContent).not.toBe("Ficus benjamina");
+  });
+});
+
 describe("US-POK-01 · US-QS-24 the card on a short screen (issue 1154)", () => {
   const unknownCard = card({ difficulty: null, lightZone: null });
 
@@ -247,6 +273,15 @@ describe("US-POK-01 · US-QS-24 the card on a short screen (issue 1154)", () => 
     // Known facts stay outside the fold.
     expect(fold.textContent).not.toContain("Gattung: 800 Arten");
     expect(screen.getByText("Gattung: 800 Arten")).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-ICON-01 the fold's summary keeps 8 px between its text and its chevron (gap-2)", () => {
+    windowHeight(640);
+    show(unknownCard);
+    const summary = screen.getByText("5 Angaben fehlen").closest("summary") as HTMLElement;
+    const tokens = summary.getAttribute("class")?.split(" ") ?? [];
+    expect(tokens).toContain("inline-flex");
+    expect(tokens).toContain("gap-2");
   });
 
   it("US-POK-01 · issue 1154 on a taller screen every line shows as before, without a fold", () => {

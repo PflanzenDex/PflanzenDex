@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router";
+import { Route, Routes, useLocation } from "react-router";
 import { useFeature } from "../shared/data";
 import { FriendsNewsLayer, FriendsNewsTile } from "../social";
 import {
@@ -8,7 +8,7 @@ import {
   type HandOver,
 } from "@/app/destinations/collection-area/hand-over-routes/hand-over-routes";
 import { useSession, type State } from "../account";
-import { ImportPage, PotLabelPage, PrintLabelsPage } from "@/collection";
+import { ImportPage, PotLabelPage, PrintLabelsPage, labelFormatProps } from "@/collection";
 import { AchievementNewsBanner } from "@/app/destinations/area-parts/lazy-news-banner/lazy-news-banner";
 import { anniversaryTile } from "@/app/destinations/area-parts/lazy-anniversaries/lazy-anniversaries";
 import { LockedLayer, LockedRows, LockedTile } from "./flows/unlock/locked-rows";
@@ -17,6 +17,8 @@ import { FunctionOverview, TodayIntro, UnlockPage } from "./flows";
 import { isShownLocked, lockMark, useUnlocks } from "./flows/unlock";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { useRouteFallback } from "./destinations/area-parts/simple-routes/route-fallback/route-fallback";
+import { HomeRedirect } from "./destinations/area-parts/simple-routes/route-fallback/home-redirect/home-redirect";
+import { NotFoundView } from "./destinations/area-parts/simple-routes/not-found-view/not-found-view";
 import {
   AccountArea,
   TodayArea,
@@ -33,10 +35,10 @@ import {
   IMPORT_PATH,
   LABELS_PATH,
   PATHS,
-  destinationHeading,
   type LinkTarget,
   type View,
 } from "../shared/patterns/navigation/navigation/navigation";
+import { destinationHeading } from "../shared/patterns/navigation/nav-item";
 type Token = () => Promise<string | undefined>;
 type SignedIn = Extract<State, { kind: "signedIn" }>["account"];
 /** A function that is not open yet shows its lock page at its own address, never a blank page (US-ONB-05, FR-ONB-02). */
@@ -62,7 +64,11 @@ function collectionSubRoutes(api: string, token: Token, locks: ReturnType<typeof
     <>
       <Route
         path={LABELS_PATH}
-        element={locks.page("pot_labels") ?? <PrintLabelsPage api={api} token={token} />}
+        element={
+          locks.page("pot_labels") ?? (
+            <PrintLabelsPage api={api} token={token} {...labelFormatProps()} />
+          )
+        }
       />
       <Route
         path={IMPORT_PATH}
@@ -80,7 +86,7 @@ function TodayRoute(props: { api: string; token: Token; onOpen: (v: LinkTarget) 
   const social = useFeature("social");
   const { api, token } = props;
   const tiles: TodayTile[] = [
-    anniversaryTile({ api, token, onOpen: () => props.onOpen("collection") }),
+    anniversaryTile({ api, token }),
     ...(social
       ? [
           {
@@ -131,6 +137,10 @@ export function AppRoutes(props: {
   session: ReturnType<typeof useSession>;
   account: SignedIn;
   error?: string;
+  /** "Auf allen Geräten abmelden" runs (US-ACC-01): its control shows busy. */
+  everywhereBusy?: boolean;
+  /** Its failure, with the retry that repeats it (US-QS-32). */
+  everywhereError?: string;
   onOpen: (v: LinkTarget) => void;
   onOpenProfile: (id: string) => void;
   handOver: HandOver;
@@ -162,11 +172,13 @@ export function AppRoutes(props: {
               overview={<FunctionOverview api={api} token={s.token} />}
               locks={(ids) => <LockedRows only={ids} />}
               {...(props.error ? { error: props.error } : {})}
+              {...(props.everywhereBusy ? { everywhereBusy: true } : {})}
+              {...(props.everywhereError ? { everywhereError: props.everywhereError } : {})}
             />
           }
         />
         {/* "Heute" is the home screen: the root address, old bookmarks and the brand lead there (US-QS-16). */}
-        <Route path="/" element={<Navigate to={PATHS.today} replace />} />
+        <Route path="/" element={<HomeRedirect />} />
         <Route path="/unlock/:id" element={<UnlockPage api={api} token={s.token} />} />
         {/* A scanned pot label opens its plant (US-BES-17); the id is opaque and the page asks the server as the keeper. */}
         <Route path="/label/:id" element={<PotLabelPage api={api} token={s.token} />} />
@@ -179,7 +191,7 @@ export function AppRoutes(props: {
         {legacyRoutes()}
         {simpleRoutes(api, s.token, roles)}
         {handOverRoutes(api, s.token, h, props.onOpenProfile)}
-        <Route path="*" element={<Navigate to={PATHS.today} replace />} />
+        <Route path="*" element={<NotFoundView />} />
       </Routes>
     </RouteBoundary>
   );

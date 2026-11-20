@@ -85,7 +85,7 @@ describe("US-BES-03 DS-48 invalid submission of the marker", () => {
     await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
     await waitFor(() => expect(document.activeElement).toBe(marker));
     expect(marker.getAttribute("aria-invalid")).toBe("true");
-    expect(describedText(marker)).toContain("Bitte gib ein Kennzeichen an");
+    expect(describedText(marker)).toContain("Gib ein Kennzeichen an");
     expect(posts).toHaveLength(0);
   });
 
@@ -108,7 +108,7 @@ describe("US-BES-03 DS-48 invalid submission of the marker", () => {
     const marker = screen.getByLabelText("Kennzeichen");
     await waitFor(() => expect(document.activeElement).toBe(marker));
     expect(marker.getAttribute("aria-invalid")).toBe("true");
-    expect(describedText(marker)).toContain("Bitte gib ein Kennzeichen an");
+    expect(describedText(marker)).toContain("Gib ein Kennzeichen an");
     expect(posts).toHaveLength(0);
   });
 });
@@ -117,13 +117,13 @@ describe("US-BES-07 DS-48 invalid submission of the archive reason", () => {
   it("US-BES-07 an own reason left empty focuses its field and links the German message", async () => {
     const posts = fakeServer([card("e1", null)]);
     render(page());
-    await userEvent.click(await findCardButton("Archivieren: Bogenhanf"));
+    await userEvent.click(await findCardButton("Pflanze archivieren: Bogenhanf"));
     await userEvent.selectOptions(await screen.findByLabelText("Grund"), "other");
     await userEvent.click(screen.getByRole("button", { name: "Archivieren" }));
     const own = screen.getByLabelText("Eigener Grund");
     await waitFor(() => expect(document.activeElement).toBe(own));
     expect(own.getAttribute("aria-invalid")).toBe("true");
-    expect(describedText(own)).toContain("Bitte nenne einen Grund");
+    expect(describedText(own)).toContain("Nenne einen Grund");
     expect(posts).toHaveLength(0);
   });
 });
@@ -169,7 +169,7 @@ describe("US-BES-08 DS-26 an empty view offers the next action", () => {
     );
     const open = vi.fn();
     render(<HintsPage api="http://api" token={async () => "tok"} onOpen={open} />);
-    expect(await screen.findByText(/Keine Hinweise/)).toBeTruthy();
+    expect(await screen.findByText(/Nichts fehlt/)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Zur Sammlung" }));
     expect(open).toHaveBeenCalledWith("collection");
   });

@@ -8,7 +8,11 @@ import {
   ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
-import { DISPLAY_NAME, type NavItem } from "../nav-item";
+import { DISPLAY_NAME, pageTitle, type NavItem } from "../nav-item";
+import { START_MODES } from "./reselect-link/reselect-link";
+
+/** Accessible name of every brand link; the brand leads to "Heute", the home screen (US-QS-16). */
+export const BRAND_LINK_LABEL = `${DISPLAY_NAME}, zu Heute`;
 
 export type View =
   "today" | "collection" | "discover" | "friends" | "review" | "operator" | "account";
@@ -61,6 +65,21 @@ export const LEGACY_SPECIES_PATH = "/species";
 export const CATALOG_ADDRESS = `${PATHS.discover}?view=catalog`;
 export const PROFILE_BASE = `${PATHS.discover}/species`;
 export const profileAddress = (id: string) => `${PROFILE_BASE}/${encodeURIComponent(id)}`;
+/** The layer of one plant is named after the plant: `plant-<id>` (US-QS-19); the plant rows open it, and so does every link to it. */
+export const plantLayerId = (id: string): string => `plant-${id}`;
+/**
+ * The address of one plant: its layer in the plants of the Sammlung, `?view=plants&sheet=plant-<id>`, the id URI-encoded. A row
+ * or a link that names a plant opens it with this address (US-QS-32, SG-NAV-04); a direct link reads the plant by its id.
+ */
+export const plantAddress = (id: string): string =>
+  `${PATHS.collection}?view=plants&sheet=${encodeURIComponent(plantLayerId(id))}`;
+/** The query parameter of the tab in a plant's layer (US-QS-23, `plant-layer.tsx`). */
+export const PLANT_TAB_PARAM = "tab";
+/**
+ * The tab of a plant's layer that holds its location (US-QS-32, FR-PHA-03): `tab=standort` next to `sheet=plant-<id>` opens
+ * it. Defined here, not in the plant layer, so the care rows reach it without the layer's module (`plant-layer.tsx`).
+ */
+export const PLANT_LOCATION_TAB = { [PLANT_TAB_PARAM]: "standort" } as const;
 
 /** The former addresses of "Wunschliste" and "Artenvergleich": the third mode and an arrangement of the species of the Sammlung (US-QS-14). */
 export const LEGACY_WISHLIST_PATH = "/wishlist";
@@ -106,7 +125,7 @@ export const LEGACY_LIGHT_PATH = "/light";
 /** The query parameters below the plants of the Sammlung: the grouping and the open management of the locations. */
 export const GROUP_PARAM = "group";
 export const MANAGE_PARAM = "manage";
-/** The plants grouped by care phase, with "Jetzt umgestellt" (US-PHA-01, US-PHA-03). */
+/** The plants grouped by care phase, with "Umstellen" (US-PHA-01, US-PHA-03). */
 export const PHASES_ADDRESS = `${PATHS.collection}?view=plants&${GROUP_PARAM}=phase`;
 /** The management of locations and light zones, opened in the plants of the Sammlung (US-LIC). */
 export const MANAGE_ADDRESS = `${PATHS.collection}?view=plants&${MANAGE_PARAM}=locations`;
@@ -147,10 +166,7 @@ const visible = (id: View, who: Who) =>
         ? who.social !== false
         : true;
 
-/**
- * The destinations for the shared shell (US-QS-07, DS-25). The review list is only for operators and reviewers
- * (US-BES-10), the operator area only for the operator (US-ACC-05); everybody else never sees these entries.
- */
+/** The shell's destinations (US-QS-07, DS-25); the role entries need their role (US-BES-10, US-ACC-05). */
 export function navItems(who: Who): NavItem[] {
   return ENTRIES.filter((e) => visible(e.id, who)).map((e) => ({
     href: PATHS[e.id],
@@ -158,13 +174,9 @@ export function navItems(who: Who): NavItem[] {
     icon: <e.icon aria-hidden="true" className="size-5 shrink-0" />,
     ...(who.locks?.[e.id] ? { note: who.locks[e.id] } : {}),
     ...(e.group ? { group: e.group } : {}),
+    ...(START_MODES[e.id] ?? {}),
   }));
 }
-
-/** The display name is not imported from core: the root barrel of core would add about 5 kB gzip to the initial bundle (DS-08). */
-const PRODUCT = DISPLAY_NAME;
-/** "Name – PflanzenDéx", or the product alone without a name (US-QS-09, WCAG 2.4.2). */
-export const pageTitle = (view?: string) => (view ? `${view} – ${PRODUCT}` : PRODUCT);
 
 /**
  * The page title of the address (US-QS-09, WCAG 2.4.2): the name of the navigation entry, so title, entry and heading
@@ -182,19 +194,4 @@ export function viewTitle(pathname: string): string {
   if (pathname.startsWith(`${PATHS.friends}/`)) return pageTitle("Sammlung eines Freundes");
   if (pathname.startsWith("/unlock/")) return pageTitle("Funktion freischalten");
   return pathname.startsWith(`${PROFILE_BASE}/`) ? pageTitle("Artprofil") : pageTitle();
-}
-
-/**
- * The destinations whose page heading is the name of their entry at every width (measured 2026-11-02, issue 1097).
- * "Konto" is not one: from 1024 px it opens "Einstellungen" with its own heading.
- */
-const HEADED: readonly View[] = ["today", "collection", "discover", "friends"];
-
-/**
- * The heading of a destination while its page loads (US-QS-14, DS-55, issue 1097): the name of its entry, which its
- * page shows as its h1 too; `null` for any other address, whose page names itself.
- */
-export function destinationHeading(pathname: string): string | null {
-  const entry = ENTRIES.find((e) => HEADED.includes(e.id) && PATHS[e.id] === pathname);
-  return entry?.text ?? null;
 }

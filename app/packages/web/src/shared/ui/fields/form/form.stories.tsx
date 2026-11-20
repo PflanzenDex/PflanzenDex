@@ -1,7 +1,6 @@
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { applyServerError } from "@/shared/lib/error-text";
 import { Button } from "../../button/button";
@@ -14,6 +13,7 @@ import {
   FormLabel,
   FormMessage,
   FormRoot,
+  useFieldForm,
 } from "./form";
 import { Input } from "../input/input";
 
@@ -24,7 +24,7 @@ type Values = z.infer<typeof schema>;
 type DemoProps = { submitEmpty?: boolean; serverError?: boolean; pending?: boolean };
 
 function Demo({ submitEmpty, serverError, pending }: DemoProps) {
-  const form = useForm<Values>({
+  const form = useFieldForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { name: serverError ? "Monstera" : "" },
   });
@@ -52,7 +52,7 @@ function Demo({ submitEmpty, serverError, pending }: DemoProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel required>Name</FormLabel>
+              <FormLabel>Name</FormLabel>
               <FormControl>
                 <Input {...field} required />
               </FormControl>

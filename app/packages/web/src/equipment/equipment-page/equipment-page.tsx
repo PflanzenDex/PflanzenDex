@@ -44,9 +44,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
         Gerät erfassen
       </Button>
       {props.data.items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Noch kein Gerät erfasst. Nur Art und Name sind nötig.
-        </p>
+        <p className="text-sm text-muted-foreground">Noch kein Gerät erfasst.</p>
       ) : null}
       <EquipmentTiles data={props.data} />
       <EquipmentLayers
@@ -54,6 +52,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
         lamps={lamps}
         wishes={wishes}
         prefill={prefill}
+        fill={fill}
         outcome={layered ? outcome : null}
         running={write.running}
         error={write.error}
@@ -67,7 +66,7 @@ type Host = { onCaption: (text: string | null) => void };
 
 function ReportCaption({ host, count }: { host: Host | undefined; count: number }) {
   useEffect(() => {
-    host?.onCaption(count === 1 ? "1 Teil" : `${count} Teile`);
+    host?.onCaption(count === 1 ? "1\u00a0Gerät" : `${count}\u00a0Geräte`);
     return () => host?.onCaption(null);
   }, [host, count]);
   return null;

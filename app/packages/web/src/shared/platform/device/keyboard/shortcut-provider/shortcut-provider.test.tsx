@@ -107,7 +107,7 @@ describe("US-QS-11 · the overview on ?", () => {
       "Suche öffnen",
       "Heute öffnen",
       "Sammlung öffnen",
-      "Pokédex öffnen",
+      "Arten öffnen",
       "Wunschliste öffnen",
     ])
       expect(within(dialog).getByText(label), label).toBeTruthy();

@@ -103,7 +103,7 @@ describe("US-BES-01 search", () => {
 
   it('without hits: offers "Propose species" (P-09)', async () => {
     search([], "/discover?view=catalog", "Zzyzx");
-    expect(screen.getByText("Keine Art zu „Zzyzx“ gefunden.")).toBeTruthy();
+    expect(screen.getByText("Keine Art zu „Zzyzx“ gefunden")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Art vorschlagen" }));
     expect(onPropose).toHaveBeenCalled();
   });
@@ -113,7 +113,7 @@ describe("US-BES-01 search", () => {
     expect(screen.getByText(/ist der Katalog noch leer/)).toBeTruthy();
     cleanup();
     search([], "/discover?view=catalog", "");
-    expect(screen.getByText("Der gemeinsame Katalog ist noch leer.")).toBeTruthy();
+    expect(screen.getByText("Der gemeinsame Katalog ist noch leer")).toBeTruthy();
     expect(screen.getByText(/Betreiber, den Start-Katalog zu laden/)).toBeTruthy();
   });
 });
@@ -138,7 +138,7 @@ describe("US-QS-21 the catalog list is paged", () => {
     const list = screen.getByRole("list", { name: "Treffer" });
     expect(within(list).getAllByRole("button")).toHaveLength(HITS_PER_PAGE);
     expect(screen.getByText(`Seite 1 von ${Math.ceil(45 / HITS_PER_PAGE)}`)).toBeTruthy();
-    expect(within(list).getAllByText("Bogenhanf · Schwierigkeit: Einfach")).toHaveLength(
+    expect(within(list).getAllByText("Bogenhanf · Schwierigkeit: Leicht")).toHaveLength(
       HITS_PER_PAGE,
     );
     expect(screen.queryByText("Mehr laden")).toBeNull();
@@ -243,7 +243,7 @@ describe("US-QS-21 filters live in a layer and show as chips", () => {
 
   it("US-QS-21 filters that match nothing say so and offer to reset them (P-09)", async () => {
     search(many(3), "/discover?view=catalog&own=1");
-    expect(screen.getByText("Keine Art passt zu den Filtern.")).toBeTruthy();
+    expect(screen.getByText("Keine Art passt zu den Filtern")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Filter zurücksetzen" }));
     expect(address()).not.toContain("own=1");
     expect(screen.getByText("Species 1")).toBeTruthy();
@@ -275,7 +275,7 @@ describe("US-QS-21 states name their next action", () => {
         />
       </MemoryRouter>,
     );
-    expect(screen.queryByText("Der gemeinsame Katalog ist noch leer.")).toBeNull();
+    expect(screen.queryByText("Der gemeinsame Katalog ist noch leer")).toBeNull();
   });
 });
 

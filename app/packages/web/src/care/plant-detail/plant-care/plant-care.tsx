@@ -29,7 +29,7 @@ const Loading = ({ text }: { text: string }) => (
 const OPEN_PARAM = "ofrom";
 const DONE_PARAM = "efrom";
 
-/** The open treatments of this plant with "Erledigt" (US-BEH-02, US-BEH-03). */
+/** The open treatments of this plant with "Abhaken" (US-BEH-02, US-BEH-03). */
 function OpenTreatmentsOfPlant(props: { api: string; token: Token; specimen: Specimen }) {
   const { api, token, specimen } = props;
   const again = useInvalidate(TREATMENTS);
@@ -159,8 +159,8 @@ function PlanTreatment({
 }
 
 /**
- * "Pflege" of the plant layer (US-QS-23): the open treatments with "Erledigt", the planning, the done ones, and the care
- * phase with "Jetzt umgestellt". All of it reuses the existing reads and writes (P-03); each part loads and fails on its
+ * "Pflege" of the plant layer (US-QS-23): the open treatments with "Abhaken", the planning, the done ones, and the care
+ * phase with "Umstellen". All of it reuses the existing reads and writes (P-03); each part loads and fails on its
  * own, so one broken request does not hide the others (P-10).
  */
 export function PlantCare(props: { api: string; token: Token; specimen: Specimen }) {

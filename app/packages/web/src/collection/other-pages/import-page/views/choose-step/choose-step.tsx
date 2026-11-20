@@ -14,6 +14,7 @@ import table from "../../import-page.de.json";
 
 const ui = texts(table);
 const FILE_ID = "import-file";
+const FILE_LABEL_ID = `${FILE_ID}-label`;
 
 /** The template as a file: its one header line, generated in the browser (US-BES-18). */
 function downloadTemplate(): void {
@@ -68,9 +69,12 @@ export function ChooseStep(props: { view: ImportFlow; moved: boolean }) {
         {ui("chooseHeading")}
       </h2>
       <div className="flex flex-col gap-1">
-        <Label htmlFor={FILE_ID}>{ui("fileLabel")}</Label>
+        <Label id={FILE_LABEL_ID} htmlFor={FILE_ID}>
+          {ui("fileLabel")}
+        </Label>
         <FileField
           id={FILE_ID}
+          groupLabelledBy={FILE_LABEL_ID}
           accept=".csv,text/csv"
           onChange={(e) => void view.choose(e.target.files?.[0])}
         />

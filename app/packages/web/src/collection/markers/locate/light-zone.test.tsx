@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
@@ -227,5 +227,22 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(await findCardButton("Lichtzone ändern: Bogenhanf")).toBeTruthy();
     expect(posts).toHaveLength(0);
+  });
+});
+
+describe("US-QS-32 the light-zone form is a full view: the task in the header, the plant's name as the subject", () => {
+  it("US-QS-32 one h1 with the task, the plant's name on the line under it, and a back control named after the Sammlung", async () => {
+    fakeServer({ cards: [card()] });
+    render(page());
+    await open();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("heading", { level: 1, name: "Lichtzone ändern" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
+    expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
+    // The chevron closes the form (US-QS-32, SG-HEAD-04).
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { level: 1, name: "Lichtzone ändern" })).toBeNull(),
+    );
   });
 });

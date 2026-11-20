@@ -9,6 +9,7 @@ import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toa
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { EquipmentPage } from "./equipment-page";
+import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 // The toast of an undo needs the provider of the app shell above the page (US-QS-07). The page sits in the frame of
@@ -133,7 +134,17 @@ describe("US-EQU-01 equipment page", () => {
       "Noch unbekannt: Hersteller und Modell, Produkt-ID, Preis, Gekauft am",
     );
     expect(card.textContent?.match(/unbekannt/g)).toHaveLength(3);
-    expect(card.textContent).toContain("ohne Zone");
+    expect(card.textContent).toContain("Lichtzone fehlt");
+  });
+
+  it("US-QS-32 'Gekauft am' shows the date as TT.MM.JJJJ, never the stored form", async () => {
+    fakeServer([item({ boughtAt: "2026-10-03" })]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-e1");
+    const card = await screen.findByRole("dialog", { name: "Zone 3" });
+    const value = within(card).getByText("03.10.2026");
+    expect(value.tagName).toBe("DD");
+    expect(value.previousElementSibling?.textContent).toBe("Gekauft am");
+    expect(card.textContent).not.toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 
   it("US-EQU-01 an empty list says what to do next", async () => {
@@ -151,8 +162,8 @@ describe("US-EQU-01 equipment page", () => {
     await user.selectOptions(screen.getByLabelText("Art"), "Lamp");
     await user.type(screen.getByLabelText("Produkt-ID (optional)"), "https://shop.example/x");
     await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
-    expect(await screen.findByText("Bitte gib einen Namen an.")).toBeTruthy();
-    expect(screen.getByText(/Bitte keine URL/)).toBeTruthy();
+    expect(await screen.findByText("Gib einen Namen ein.")).toBeTruthy();
+    expect(screen.getByText(/Gib keine URL ein/)).toBeTruthy();
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
   });
 
@@ -165,7 +176,7 @@ describe("US-EQU-01 equipment page", () => {
     await user.selectOptions(screen.getByLabelText("Art"), "Lamp");
     await user.type(screen.getByLabelText("Name"), "Neue Lampe");
     await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
-    expect(await screen.findByText(/Bitte wähle die Lichtzone/)).toBeTruthy();
+    expect(await screen.findByText(/Wähle die Lichtzone/)).toBeTruthy();
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
     await user.selectOptions(screen.getByLabelText("Lichtzone"), "z2");
     await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
@@ -244,11 +255,12 @@ describe("US-EQU-01 equipment page", () => {
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Art"), "Timer");
     await user.type(screen.getByLabelText("Name"), "Neue Lampe");
-    await user.type(screen.getByLabelText("Preis in Euro (optional)"), "49,90");
+    await user.type(screen.getByLabelText("Preis (optional)"), "49,90");
     await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
     // The layer closes, the outcome stands on the screen and the tile counts the new record (US-QS-22).
     expect(await screen.findByText(/Gerät „Neue Lampe“ gespeichert/)).toBeTruthy();
-    expect(await screen.findByText("1 Teil")).toBeTruthy();
+    // The count is in the tile twice, one copy per width (equipment-tiles.tsx).
+    expect(await screen.findAllByText("1 Gerät")).toHaveLength(2);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
     expect(JSON.parse(String(post?.[1]?.body))).toEqual({
       type: "Timer",
@@ -347,7 +359,7 @@ describe("US-EQU-01 equipment page", () => {
     await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("Lux-Messung");
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
-    await user.type(within(form).getByLabelText("Lux"), "12000");
+    await user.type(within(form).getByRole("textbox", { name: "Lichtstärke" }), "12000");
     await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
     const post = await vi.waitFor(() => {
       const call = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
@@ -364,7 +376,7 @@ describe("US-EQU-01 equipment page", () => {
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
     const user = userEvent.setup();
     const form = await screen.findByRole("form", { name: "Abweichungsgrenze" });
-    await user.type(within(form).getByLabelText(/Abweichungsgrenze in Prozent/), "150");
+    await user.type(within(form).getByLabelText(/^Abweichungsgrenze \(optional\)/), "150");
     await user.click(within(form).getByRole("button", { name: "Grenze speichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("1 bis 100");
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
@@ -399,12 +411,12 @@ describe("US-EQU-01 equipment page", () => {
     const user = userEvent.setup();
     await user.click(await screen.findByText("Herstellerangabe ändern"));
     const form = screen.getByRole("form", { name: "Herstellerangabe für Lampe Regal" });
-    await user.type(within(form).getByLabelText(/Leistung in Watt/), "abc");
+    await user.type(within(form).getByLabelText(/^Leistung \(optional\)/), "abc");
     await user.click(within(form).getByRole("button", { name: "Herstellerangabe speichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("ganze Zahlen");
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
-    await user.clear(within(form).getByLabelText(/Leistung in Watt/));
-    await user.type(within(form).getByLabelText(/Leistung in Watt/), "40");
+    await user.clear(within(form).getByLabelText(/^Leistung \(optional\)/));
+    await user.type(within(form).getByLabelText(/^Leistung \(optional\)/), "40");
     await user.type(within(form).getByLabelText(/Lichtstärke laut Hersteller/), "20000");
     await user.click(within(form).getByRole("button", { name: "Herstellerangabe speichern" }));
     const post = await postsTo(fetchFn);
@@ -420,7 +432,7 @@ describe("US-EQU-01 equipment page", () => {
     const user = userEvent.setup();
     const form = await screen.findByRole("form", { name: "Abweichungsgrenze" });
     expect(form.textContent).toContain("mehr als 25 %");
-    await user.clear(within(form).getByLabelText(/Abweichungsgrenze in Prozent/));
+    await user.clear(within(form).getByLabelText(/^Abweichungsgrenze \(optional\)/));
     await user.click(within(form).getByRole("button", { name: "Grenze speichern" }));
     const post = await postsTo(fetchFn);
     expect(String(post[0])).toContain("/equipment/lamps/limit");
@@ -453,8 +465,8 @@ describe("US-EQU-01 equipment page", () => {
     await user.click(await screen.findByText("Alle Messungen (2)"));
     expect(screen.getByText("2026-10-01: 12.000 lx")).toBeTruthy();
     const form = screen.getByRole("form", { name: "Messung für Lampe Regal" });
-    await user.type(within(form).getByLabelText("Lux"), "500");
-    await user.type(within(form).getByLabelText(/Abstand in cm/), "x");
+    await user.type(within(form).getByRole("textbox", { name: "Lichtstärke" }), "500");
+    await user.type(within(form).getByLabelText(/^Abstand \(optional\)/), "x");
     await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("Abstand");
   });
@@ -511,14 +523,17 @@ describe("US-QS-22 the equipment fits one screen", () => {
     const tile = async (name: string) =>
       (
         await screen.findByRole("button", {
-          name: (accessible) => accessible.startsWith(name) && !accessible.endsWith("erfassen"),
+          name: (accessible) =>
+            accessible.startsWith(name) &&
+            !accessible.startsWith(`${name}-`) &&
+            !accessible.endsWith("erfassen"),
         })
       ).textContent;
-    expect(await tile("Geräte")).toContain("2 Teile");
+    expect(await tile("Geräte")).toContain("2\u00a0Geräte");
     expect(await tile("Kosten")).toContain("unbekannt");
     expect(await tile("Bedarf")).toContain("nichts fehlt");
-    expect(await tile("Sensoren")).toContain("0 Sensoren");
-    expect(await tile("Wunschliste")).toContain("0 offene");
+    expect(await tile("Sensoren")).toContain("0\u00a0Sensoren");
+    expect(await tile("Geräte-Wünsche")).toContain("0\u00a0offene Wünsche");
   });
 
   it("US-QS-22 'Gerät erfassen' is the one primary action and opens the form as a layer", async () => {
@@ -529,7 +544,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(within(layer).getByLabelText("Art")).toBeTruthy();
     // The optional fields sit behind "Mehr Angaben" (US-QS-22).
     const more = within(layer).getByText("Mehr Angaben").closest("details") as HTMLElement;
-    expect(more.contains(within(layer).getByLabelText("Preis in Euro (optional)"))).toBe(true);
+    expect(more.contains(within(layer).getByLabelText("Preis (optional)"))).toBe(true);
     expect(more.contains(within(layer).getByLabelText("Name"))).toBe(false);
     // The save button stays in view while the form scrolls inside the layer.
     const save = within(layer).getByRole("button", { name: "Gerät speichern" });
@@ -558,7 +573,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     await screen.findByRole("button", { name: /^Kosten/ });
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByText("Zone 3")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: /^Geräte1 Teil/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Geräte 1\u00a0Gerät/ }));
     const layer = await screen.findByRole("dialog", { name: "Geräte" });
     expect(within(layer).getByRole("button", { name: /Zone 3/ })).toBeTruthy();
   });
@@ -585,6 +600,41 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(within(layer).getByText(/Noch unbekannt: Hersteller und Modell/)).toBeTruthy();
   });
 
+  it("US-QS-32 · SG-COLOR-04 a defective device shows an amber 'Defekt' badge beside its name; an active one shows no 'Aktiv'; 'Ausgemustert' leads the meta line, with no badge", async () => {
+    fakeServer([
+      item({ id: "e1", name: "Lampe defekt", status: "defective" }),
+      item({ id: "e2", name: "Lampe aktiv", status: "active" }),
+      item({ id: "e3", name: "Lampe alt", status: "retired" }),
+    ]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    const defective = await screen.findByRole("button", { name: /Lampe defekt/ });
+    expect(within(defective).getByText("Defekt").className.split(" ")).toContain("bg-warning");
+    const active = screen.getByRole("button", { name: /Lampe aktiv/ });
+    expect(active.textContent).not.toContain("Aktiv");
+    expect(active.textContent).not.toContain("Defekt");
+    const retired = screen.getByRole("button", { name: /Lampe alt/ });
+    // The retirement is plain muted text at the head of the meta line, so the row has no trailing badge at all.
+    expect(within(retired).getByText("Ausgemustert · Lampe · Lichtzone fehlt")).toBeTruthy();
+    expect(within(retired).queryByText("Ausgemustert")).toBeNull();
+    expect(retired.querySelector(".bg-warning")).toBeNull();
+    expect(retired.textContent).toMatch(/Lichtzone fehlt$/);
+  });
+
+  it("US-QS-32 · P-10 'Ausgemustert' leads the meta line as plain muted text; no trailing badge is left to squeeze the name", async () => {
+    fakeServer([item({ id: "e3", name: "Lampe alt", status: "retired" })]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    const row = await screen.findByRole("button", { name: /Lampe alt/ });
+    const meta = within(row).getByText("Ausgemustert · Lampe · Lichtzone fehlt");
+    expect(meta.className.split(" ")).toEqual(
+      expect.arrayContaining(["truncate", "text-muted-foreground"]),
+    );
+    expect(meta.className.split(" ")).not.toContain("max-w-[60%]");
+    expect(meta.parentElement?.className.split(" ")).not.toContain("max-w-[60%]");
+    // Only the name and the meta line are in the row's text: nothing trails them but the chevron.
+    expect(row.textContent).toBe("Lampe alt Ausgemustert · Lampe · Lichtzone fehlt");
+    expect(row.querySelectorAll("svg")).toHaveLength(2);
+  });
+
   it.each([360, 1440])(
     "US-QS-15 · US-QS-22 at %i px, Escape closes an item and the focus returns to the row it was opened from (WCAG 2.4.3)",
     async (width) => {
@@ -597,7 +647,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
             <EquipmentPage api="http://api" token={token} />
           </StrictMode>,
         );
-        await userEvent.click(await screen.findByRole("button", { name: /^Geräte2 Teile/ }));
+        await userEvent.click(await screen.findByRole("button", { name: /^Geräte 2\u00a0Geräte/ }));
         await userEvent.click(await screen.findByRole("button", { name: /Zone 3/ }));
         await screen.findByRole("heading", { name: "Zone 3" });
         await userEvent.keyboard("{Escape}");
@@ -700,5 +750,180 @@ describe("US-QS-22 the equipment fits one screen", () => {
     });
     expect(JSON.parse(String(posts[0]?.[1]?.body))).toEqual({ supply: "low" });
     expect(JSON.parse(String(posts[1]?.[1]?.body))).toEqual({ supply: "available" });
+  });
+});
+
+const NBSP = "\u00a0";
+const CUTTING = zone({ zoneId: "z1", name: "Zone 1 · Stecklingslicht", specimens: 0, lamps: [] });
+
+describe("US-QS-32 zone names and a missing zone in equipment", () => {
+  it("US-QS-32 a lamp row names its zone in brackets, a lamp without a zone reads 'Lichtzone fehlt'", async () => {
+    fakeServer(
+      [
+        item({ id: "e1", name: "Regal Lampe", lightZoneId: "z1" }),
+        item({ id: "e2", name: "Lose Lampe", lightZoneId: null }),
+      ],
+      undefined,
+      { zones: [CUTTING], unassigned: [] },
+    );
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    const layer = await screen.findByRole("dialog", { name: "Geräte" });
+    const regal = await within(layer).findByRole("button", { name: /Regal Lampe/ });
+    expect(regal.textContent).toContain("Lampe · Zone 1 (Stecklingslicht)");
+    expect(regal.textContent).not.toContain("Zone 1 · Stecklingslicht");
+    const lose = within(layer).getByRole("button", { name: /Lose Lampe/ });
+    expect(lose.textContent).toContain("Lichtzone fehlt");
+    expect(lose.textContent).not.toContain("ohne Zone");
+  });
+
+  it("US-QS-32 the record of a lamp keeps the zone in its own fact without brackets, and says 'Lichtzone fehlt' when there is none", async () => {
+    fakeServer([item({ id: "e1", name: "Regal Lampe", lightZoneId: "z1" })], undefined, {
+      zones: [CUTTING],
+      unassigned: [],
+    });
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-e1");
+    const card = await screen.findByRole("dialog", { name: "Regal Lampe" });
+    expect(card.textContent).toContain("Lichtzone");
+    expect(card.textContent).toContain("Zone 1 · Stecklingslicht");
+    expect(card.textContent).not.toContain("Zone 1 (Stecklingslicht)");
+  });
+
+  it("US-QS-32 F-0228 a device value breaks only inside a word; the record's facts stack in a narrow box", async () => {
+    fakeServer(
+      [item({ id: "e1", name: "Regal Lampe", manufacturer: "Acme", model: "Modell X" })],
+      undefined,
+      {
+        zones: [],
+        unassigned: [],
+      },
+    );
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-e1");
+    const card = await screen.findByRole("dialog", { name: "Regal Lampe" });
+    const value = within(card).getByText("Acme Modell X");
+    expect(value.className.split(" ")).toContain("[overflow-wrap:break-word]");
+    expect(value.className).not.toContain("break-all");
+    const facts = card.querySelector("dl") as HTMLElement;
+    expect(facts.className.split(" ")).toContain("grid-cols-1");
+    expect(facts.className).toContain("@min-[12rem]:grid-cols-[auto_minmax(0,1fr)]");
+    expect(facts.parentElement?.className.split(" ")).toContain("@container");
+  });
+
+  it("US-QS-32 a lamp's watts group the thousands the German way: 1.500 W, with no break before the unit", async () => {
+    fakeServer([], undefined, NO_ZONES, { limit: null, lamps: [lightOf({ powerW: 1500 })] });
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
+    const card = (await screen.findByText("Lampe Regal")).closest("details") as HTMLElement;
+    expect(card.textContent).toContain("1.500\u00a0W");
+    expect(card.textContent).not.toContain("1500");
+  });
+
+  it("US-QS-32 the lamp sheet reads '15 W · Zone 1 (Stecklingslicht)' with no break in the power, and 'Lichtzone fehlt' without a zone", async () => {
+    fakeServer(
+      [],
+      undefined,
+      { zones: [CUTTING], unassigned: [] },
+      {
+        limit: null,
+        lamps: [
+          lightOf({
+            powerW: 15,
+            zone: { id: "z1", name: "Zone 1 · Stecklingslicht", luxCeiling: 1500 },
+          }),
+          lightOf({ id: "l2", name: "Lampe Keller", zone: null, powerW: 20 }),
+        ],
+      },
+    );
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
+    const card = (await screen.findByText("Lampe Regal")).closest("details") as HTMLElement;
+    expect(card.textContent).toContain(`15${NBSP}W · Zone 1 (Stecklingslicht)`);
+    const keller = (await screen.findByText("Lampe Keller")).closest("details") as HTMLElement;
+    expect(keller.textContent).toContain(`20${NBSP}W · Lichtzone fehlt`);
+  });
+});
+
+// A row of the overview holds its value twice, one copy per width (equipment-tiles.tsx). jsdom has no layout, so the text a
+// row reads at one width is taken by leaving out the copy that width hides: beside the name at 18 rem and up, under it below.
+const readsAt = (row: HTMLElement, width: "beside" | "under") => {
+  const copy = row.cloneNode(true) as HTMLElement;
+  const hidden = width === "beside" ? "@min-[18rem]:hidden" : "hidden";
+  for (const span of Array.from(copy.querySelectorAll("span"))) {
+    if (span.classList.contains(hidden)) span.remove();
+  }
+  return (copy.textContent ?? "").replace(/\s+/g, " ").trim();
+};
+
+describe("US-QS-32 the equipment rows are flat grouped rows (FX-35, SG-LIST-03, SG-SHAPE-03)", () => {
+  it("US-QS-32 the six parts are rows of one grouped list in their order, each with its name and info, and each opens its layer", async () => {
+    fakeServer([item(), item({ id: "e2", name: "Timer A", type: "Timer" })]);
+    view(<EquipmentPage api="http://api" token={token} />);
+    const first = await screen.findByRole("button", { name: /^Geräte 2/ });
+    const list = first.closest("ul") as HTMLElement;
+    expect(Array.from(list.children).every((child) => child.tagName === "LI")).toBe(true);
+    expect(list.children).toHaveLength(6);
+    const rows = within(list).getAllByRole("button");
+    const names = [
+      "Geräte 2 Geräte",
+      "Kosten unbekannt",
+      "Bedarf nichts fehlt",
+      "Lampen und Zonen 0 Lampen",
+      "Sensoren 0 Sensoren",
+      "Geräte-Wünsche 0 offene Wünsche",
+    ];
+    expect(rows.map((row) => readsAt(row, "beside"))).toEqual(names);
+    expect(rows.map((row) => readsAt(row, "under"))).toEqual(names);
+    expect(rows.every((row) => row.getAttribute("aria-haspopup") === "dialog")).toBe(true);
+    // The layer is modal: the list behind it is hidden from assistive technology, so the row is read before the tap.
+    const costs = rows[1] as HTMLElement;
+    await userEvent.click(costs);
+    expect(await screen.findByRole("dialog", { name: "Kosten" })).toBeTruthy();
+    expect(costs.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("US-QS-32 each overview value is in its row once per width: beside the name from 18 rem, under it below", async () => {
+    fakeServer([item()]);
+    view(<EquipmentPage api="http://api" token={token} />);
+    const first = await screen.findByRole("button", { name: /^Geräte 1/ });
+    const list = first.closest("ul") as HTMLElement;
+    // The list is the size container of its rows, so the width of the row decides the shape.
+    expect(list.parentElement?.classList.contains("@container")).toBe(true);
+    for (const row of within(list).getAllByRole("button")) {
+      const spans = Array.from(row.querySelectorAll("span"));
+      const beside = spans.filter(
+        (span) =>
+          span.classList.contains("hidden") && span.classList.contains("@min-[18rem]:inline"),
+      );
+      const under = spans.filter((span) => span.classList.contains("@min-[18rem]:hidden"));
+      expect(beside).toHaveLength(1);
+      expect(under).toHaveLength(1);
+      expect(beside[0]?.textContent).toBe(under[0]?.textContent);
+    }
+  });
+
+  it("US-QS-32 an item is one object row: a drawn placeholder, its name, the facts line, and the Defekt badge as its one trailing element", async () => {
+    fakeServer([item({ id: "e1", name: "Lampe defekt", status: "defective" })]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    const row = await screen.findByRole("button", { name: /Lampe defekt/ });
+    expect(row.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
+    expect(within(row).getByText("Lampe · Lichtzone fehlt")).toBeTruthy();
+    expect(within(row).getByText("Defekt").className).toContain("bg-warning");
+    // The badge takes the place of the chevron: the placeholder is the row's only icon (SG-LIST-03).
+    expect(row.querySelectorAll("svg")).toHaveLength(1);
+    expect(row.getAttribute("aria-haspopup")).toBe("dialog");
+    await userEvent.click(row);
+    expect(await screen.findByRole("dialog", { name: "Lampe defekt" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 · DS-52 the placeholder of the equipment has the shape of the loaded page", () => {
+  it("US-QS-32 · DS-52 one block of the default button (44 px, the full width) and the six parts; no help line", () => {
+    const { container } = render(<EquipmentPageSkeleton label="Geräte werden geladen …" />);
+    const status = container.querySelector("[role=status]") as HTMLElement;
+    const blocks = Array.from(status.children).filter((el) => el.tagName === "DIV");
+    // The one block is the button of the page (Body: "Gerät erfassen", min-h 44 px, the column width); the list follows it.
+    expect(blocks).toHaveLength(1);
+    const button = blocks[0] as HTMLElement;
+    expect(button.className.split(" ")).toEqual(expect.arrayContaining(["h-11", "w-full"]));
+    expect(button.className).not.toContain("w-40");
+    expect(status.querySelector(".h-10")).toBeNull();
+    expect(status.querySelectorAll("li")).toHaveLength(6);
   });
 });

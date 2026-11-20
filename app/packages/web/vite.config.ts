@@ -145,6 +145,21 @@ export default defineConfig({
   // the root of this package, which the layout gate limits to five units.
   publicDir: "src/styles/pwa/public",
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          // The modules the entry imports statically travel as one chunk (QG-U6, issue 2226): left to the automatic split,
+          // each module that a lazy page shares became a tiny chunk of its own, and every chunk is compressed on its own,
+          // so the start paid for about 3 kB of headers and cross-chunk imports. Only `$initial` modules are captured, so
+          // no lazy page joins the start; the worker is its own entry and must stay a classic script without imports.
+          groups: [
+            { name: "start", tags: ["$initial"], test: (id) => !id.includes("service-worker") },
+          ],
+        },
+      },
+    },
+  },
   test: {
     setupFiles: ["./src/shared/testing/test-setup/test-setup.tsx"],
     coverage: coverageFor("web"),

@@ -55,10 +55,10 @@ export const stateFlag = (state: unknown, flag: string): boolean =>
   (state as Record<string, unknown> | null)?.[flag] === true;
 
 /** The state of a guard entry: it belongs to the form below it, so it keeps the app flag of that form. */
-export const guardState = (state: unknown) => ({
+export const guardState = (fromApp: boolean) => ({
   [GUARD]: true,
   keepFocus: true,
-  [FROM_APP]: stateFlag(state, FROM_APP),
+  [FROM_APP]: fromApp,
 });
 
 export type FormAddress = {
@@ -79,7 +79,7 @@ export type FormAddress = {
   asking: boolean;
   /** "Weiter bearbeiten": keeps the form and its input. */
   keepEditing: () => void;
-  /** "Verwerfen": leaves the form and its input, the way the question was asked. */
+  /** "Eingabe verwerfen": leaves the form and its input, the way the question was asked. */
   discard: () => void;
   /** A notice of the last close, e.g. that the plant is not there (P-10). */
   notice: string | null;

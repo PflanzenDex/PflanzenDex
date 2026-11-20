@@ -1,9 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/shared/ui/button/button";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { LoadFrame, useInvalidate } from "../../../shared/data";
 import { loadKeeperStyle, type KeeperStyleState } from "./keeper-style-api";
-import { Refusal, StyleButtons, StyleSelect, useSaveStyle } from "./style-parts/style-parts";
+import {
+  KEEPER_STYLE_CHOICES,
+  Refusal,
+  StyleButtons,
+  StyleSelect,
+  useSaveStyle,
+} from "./style-parts/style-parts";
+import table from "./keeper-style.de.json";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
@@ -23,9 +34,17 @@ function StyleFieldset(props: { api: string; token: Token; state: KeeperStyleSta
     <fieldset className="m-0 flex min-w-0 flex-col rounded-lg border-2 border-border px-3 pb-2 pt-1">
       <legend className="sr-only">Wie nutzt du die App?</legend>
       <StyleSelect value={style} disabled={saving} onPick={(s) => void save(s)} />
-      <p className="mt-1 text-sm text-muted-foreground">
-        Du kannst das jederzeit ändern. Was du schon geöffnet hast, bleibt offen.
-      </p>
+      {/* One line of hint (SG-COPY-05, US-QS-32); what the chosen style means and what stays open sit behind it. */}
+      <MoreHelp
+        more={
+          <>
+            <p className="m-0">{KEEPER_STYLE_CHOICES.find((c) => c.style === style)?.hint}</p>
+            <p className="m-0">{ui("kept")}</p>
+          </>
+        }
+      >
+        Du kannst das jederzeit ändern.
+      </MoreHelp>
       <Refusal error={error} />
       {message && (
         <p role="status" className="mt-2 rounded-lg border border-border p-3">

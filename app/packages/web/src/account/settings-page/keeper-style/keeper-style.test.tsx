@@ -59,6 +59,28 @@ describe("US-ONB-03 keeper style in the profile", () => {
     expect(screen.getByText(/bleibt offen/)).toBeTruthy();
   });
 
+  it("US-QS-32 SG-COPY-05 one line of hint under the style; the rest sits behind Mehr erfahren and does not repeat it", async () => {
+    fakeServer({ style: "few", chosen: true });
+    show();
+    await screen.findByRole("combobox");
+    const line = screen.getByText("Du kannst das jederzeit ändern.");
+    expect(line.closest("details")).toBeNull();
+    const more = screen.getByText("Was du schon geöffnet hast, bleibt offen.").closest("details");
+    expect(more).not.toBeNull();
+    expect(more?.textContent).toContain("Neue Funktionen zeigt die App dir nach und nach.");
+    expect(more?.textContent).not.toContain("Du kannst das jederzeit ändern.");
+    expect(screen.getByText("Mehr erfahren")).toBeTruthy();
+  });
+
+  it("US-QS-32 SG-COPY-05 the explanation behind Mehr erfahren follows the chosen style", async () => {
+    fakeServer({ style: "many", chosen: true });
+    show();
+    await screen.findByRole("combobox");
+    const more = screen.getByText("Was du schon geöffnet hast, bleibt offen.").closest("details");
+    expect(more?.textContent).toContain("Alles ist sofort offen, ohne Hinweise.");
+    expect(more?.textContent).not.toContain("Neue Funktionen zeigt die App");
+  });
+
   it("US-ONB-03 a refusal stays visible and the stored style stays selected (P-10)", async () => {
     fakeServer({ style: "few", chosen: true }, () =>
       response(400, { error: { code: "input.invalid", text: "x" } }),

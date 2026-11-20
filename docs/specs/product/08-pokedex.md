@@ -117,7 +117,7 @@ Acceptance criteria:
 
 - The "seen" state is stored per account on the server (not in the browser). `new` = caught species − `seen`.
 - On the first visit (or with a missing state): silent creation with the current state, **no** banner.
-- The banner "Newly caught: …" stays until "Okay", which writes `seen`.
+- The banner "Newly caught: …" stays until "Als gesehen markieren", which writes `seen`.
 - Read errors do not break the page; no banner appears then.
 
 ### US-POK-13 · Rarity of a species in nature · 🟨 (new)

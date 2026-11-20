@@ -33,15 +33,20 @@ const publicOffer = <T extends { ownerId: string }>(offer: T) => withoutKey(offe
  * - GET /exchange/offers?timeZone=…[&type=cutting|plant|offshoot][&lack=true]: `{ offers }`, the open offers of
  *   friends with species, type, mode, health details (reason and date only), phase, `lack` ("you lack it", `null` =
  *   unknown), `onWishlist` (a hint, the list is never transmitted, FR-WUN-07) and `requested`
- * - GET /exchange/match?timeZone=…: `{ cards, entries }`, the match deck (US-TAU-01): the same offers narrowed to
+ * - GET /exchange/match?timeZone=…: `{ cards, entries, empty, requested }`, the match deck (US-TAU-01): the same offers narrowed to
  *   species on the own wishlist, each with its `reasons` (the wish, and "fits both ways" when the giver asked for an own offer, US-TAU-05), oldest offer first; no score and no ranking (FR-TAU-06).
- *   `cards` are the offers without an answer plus those answered with Later on an earlier day (US-TAU-06); `entries`
+ *   `cards` are the offers without an answer plus those answered with Later on an earlier day (US-TAU-06), without any
+ *   offer on which the caller has an open request (US-TAU-03: it is listed under Requests); `entries`
  *   are all answers of the caller (No and Later) with `answeredOn`, the `state` of the offer (`open`, `requested`,
  *   `wish_done`, `unavailable`) and the `card` while it is open, so nothing disappears silently (P-10); `empty` names why
- *   there is no card (`no_friends`, `no_wishes`, `no_offers`, `no_match`) or is `null` (US-TAU-07)
+ *   there is no card (`no_friends`, `no_wishes`, `no_offers`, `no_match`, `all_requested` when every offer that matches a
+ *   wish has my open request, `all_answered` when my No or Later holds the rest) or is `null` (US-TAU-07); `requested` is
+ *   the number of matching offers on which I have an open request (US-TAU-02): the summary after the last card counts it
+ *   from the server, so a reload keeps it; my own data only, no friend's (P-05)
  * - PUT /exchange/match/:offerId/answer `{ answer: "no" | "later", timeZone }` (with `Idempotency-Key`; US-TAU-02):
  *   stores the private answer of the caller, 200 `{ answeredOn }`; 404 `offer.not_found` for an offer that is no card of
- *   the caller (also for a foreign one, P-05); the giver learns nothing (FR-TAU-02)
+ *   the caller (also for a foreign one, P-05); the giver learns nothing (FR-TAU-02); 409 `swap.already_requested` for an offer on which the caller has an open request
+ *   (US-TAU-03: decided, the card moves on)
  * - DELETE /exchange/match/:offerId/answer (with `Idempotency-Key`): takes the answer back (undo, "Reconsider", "Remove
  *   from list"), 200 `{ undone: true }`; 404 `offer.not_found` when there is none
  * - POST /exchange/match/:offerId/yes `{ counterSpecimenId? }` (with `Idempotency-Key`; US-TAU-03, US-TAU-05): the same request

@@ -1,5 +1,6 @@
-import { Suspense, useState, type ReactNode } from "react";
+import { Suspense, useRef, useState, type ReactNode } from "react";
 import { FIRST_PLANT_STEPS } from "@pflanzendex/core";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { Button } from "@/shared/ui/button/button";
 import { KeeperStyleQuestion } from "../../../../account";
 import { SaveStep } from "./save-step/save-step";
@@ -12,7 +13,6 @@ import table from "./onboarding-wizard.de.json";
 const ui = texts(table);
 
 const ACTIONS = "flex flex-col gap-3 sm:flex-row";
-
 type Token = () => Promise<string | undefined>;
 type Flow = ReturnType<typeof useFirstPlant>;
 
@@ -26,9 +26,10 @@ function Created(props: {
 }) {
   const [asked, setAsked] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   return (
     <section className="flex flex-col gap-3">
-      <h2 tabIndex={-1} className="text-xl font-semibold">
+      <h2 ref={heading} tabIndex={-1} className="text-xl font-semibold">
         {ui("created", { name: props.name })}
       </h2>
       <p className="m-0">{ui("howItGrows")}</p>
@@ -41,6 +42,7 @@ function Created(props: {
             setNote(n ?? null);
             setAsked(true);
           }}
+          focusHeading={() => heading.current?.focus()}
         />
       )}
       {note && (
@@ -62,8 +64,7 @@ function Created(props: {
   );
 }
 
-function Buttons(props: { f: Flow; onSkip: () => void }) {
-  const { f } = props;
+function Buttons({ f, onSkip }: { f: Flow; onSkip: () => void }) {
   return (
     <div className={ACTIONS}>
       {f.index === 0 ? (
@@ -94,7 +95,7 @@ function Buttons(props: { f: Flow; onSkip: () => void }) {
           </Button>
         </>
       )}
-      <Button type="button" variant="ghost" onClick={props.onSkip}>
+      <Button type="button" variant="ghost" onClick={onSkip}>
         {ui("skip")}
       </Button>
     </div>
@@ -116,6 +117,8 @@ function Step(props: {
       <SaveStep
         species={f.species}
         zones={f.zones}
+        zonesError={f.zonesError}
+        onRetryZones={f.retryZones}
         zoneId={f.zoneId}
         onZone={f.setZoneId}
         error={f.error}
@@ -157,11 +160,10 @@ export function OnboardingWizard(props: {
   entry?: ReactNode;
 }) {
   const f = useFirstPlant(props.api, props.token);
-  const step = FIRST_PLANT_STEPS[f.index];
   const stepLabel = ui("stepOf", { n: f.index + 1, total: FIRST_PLANT_STEPS.length });
   return (
     <div className="flex flex-col gap-3" ref={f.box}>
-      <h1 className="text-2xl font-semibold">{ui("today")}</h1>
+      <PageHeader headingId="today-title" title={ui("today")} />
       {f.created !== null ? (
         <Created
           name={f.created.name}
@@ -177,7 +179,7 @@ export function OnboardingWizard(props: {
             {ui("step", {
               n: f.index + 1,
               total: FIRST_PLANT_STEPS.length,
-              title: step?.title ?? "",
+              title: FIRST_PLANT_STEPS[f.index]?.title ?? "",
             })}
           </p>
           <Step

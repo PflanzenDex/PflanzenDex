@@ -99,6 +99,13 @@
   --phase-growth: #1f6b3a;
   --phase-dormancy: #3f5f9a;
 
+  /*
+   * Scrim (US-QS-32, SG-COLOR-07, issue 1867): the backdrop of a sheet or dialog is black at 45 % in both schemes
+   * (starting value, assumption). It takes no foreground colour, because --foreground turns light in dark mode and
+   * the page behind a sheet went light grey there. The status bar dims to the same value (status-bar/theme-colour.ts).
+   */
+  --scrim: rgb(0 0 0 / 0.45);
+
   color-scheme: light dark;
 }
 
@@ -134,6 +141,9 @@
     --zone-4: #6cc4e3;
     --phase-growth: #7fd29d;
     --phase-dormancy: #9db8f0;
+
+    /* The same in both schemes (US-QS-32): black dims the dark page as it dims the light one. */
+    --scrim: rgb(0 0 0 / 0.45);
   }
 }
 
@@ -166,6 +176,7 @@
   --color-zone-4: var(--zone-4);
   --color-phase-growth: var(--phase-growth);
   --color-phase-dormancy: var(--phase-dormancy);
+  --color-scrim: var(--scrim);
   --shadow-elevation-1: var(--elevation-1);
   --shadow-elevation-2: var(--elevation-2), 0 0 0 1px var(--elevation-2-border);
 }
@@ -353,6 +364,17 @@
     main:has([data-fit-screen]) {
       overflow-y: auto;
       overscroll-behavior: contain;
+    }
+    /*
+     * With the bottom bar (below 48 rem of width) the view ends where the room for the bar begins (issue 1835): only its
+     * top and sides reach into the padding of `main`, so its own bottom padding, the last 0.5 rem of a scrolled view,
+     * stays above the bar. From `md` there is no bar and the view keeps its bleed at the bottom too.
+     */
+    @media (width < 48rem) {
+      main > div > [data-fit-fill] {
+        height: calc(100% + 0.5rem);
+        margin-bottom: 0;
+      }
     }
   }
 }

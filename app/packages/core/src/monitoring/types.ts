@@ -164,6 +164,8 @@ export interface WateringStore {
    * nothing new. Returns how many entries are new.
    */
   record(userId: string, entries: readonly WateringEntry[]): Promise<{ readonly created: number }>;
+  /** Removes the manual entries of the given days (the undo of "Gegossen", US-QS-32); a day without one is no error. */
+  unrecord(userId: string, entries: readonly WateringEntry[]): Promise<{ removed: number }>;
 }
 
 /** One entry of the fertilizing log (US-MON-09): the local calendar date on which the specimen was fertilized (NFR-08). */

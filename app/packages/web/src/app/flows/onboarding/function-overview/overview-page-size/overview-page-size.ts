@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
-import { useIsLg } from "@/shared/platform/browser/use-breakpoint";
+import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 
 /** Height the page takes besides the rows of the list: app bar, heading, pager and the rest (starting value, assumption). */
 const RESERVED_PX = 460;

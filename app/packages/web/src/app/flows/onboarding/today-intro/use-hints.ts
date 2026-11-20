@@ -3,6 +3,7 @@ import { FIRST_PLANT_GUIDE, UNLOCK_FUNCTIONS, type OnboardingCounts } from "@pfl
 import { useUnlocks } from "../../unlock";
 import type { ApiError } from "../../../../shared/data";
 import { loadHints, saveHint, type HintState } from "./hint/hint-api";
+import { HintNote } from "./hint";
 
 type Token = () => Promise<string | undefined>;
 
@@ -33,11 +34,15 @@ export function useHints(api: string, token: Token, counts: OnboardingCounts | u
   useEffect(() => {
     if (key === null) return;
     let current = true;
-    void (async () => {
+    // A token that cannot be read or a request that throws ends as "failed" too (P-10): the state never stays null, because
+    // the intro holds the tasks while it is null (issue 2230).
+    const answer = (async () => {
       const t = await token();
-      const r = t ? await loadHints(api, t, key ? key.split(",") : []) : null;
+      return t ? loadHints(api, t, key ? key.split(",") : []) : null;
+    })().catch(() => null);
+    void answer.then((r) => {
       if (current) setState(r?.ok ? r.value : "failed");
-    })();
+    });
     return () => {
       current = false;
     };
@@ -69,4 +74,21 @@ export function useGuideEnd(api: string, token: Token, hints: HintState | "faile
     },
     retry: () => void store(),
   };
+}
+
+/** The code of a due note is in hand before Heute shows (issue 2230): a lazy note would arrive after the tasks. */
+export function useNoteCode(note: "first_plant_saved" | "function_unlocked" | null): boolean {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (note === null) return;
+    let alive = true;
+    const done = () => {
+      if (alive) setReady(true);
+    };
+    void HintNote.load().then(done, done);
+    return () => {
+      alive = false;
+    };
+  }, [note]);
+  return note === null || ready || HintNote.loaded() !== null;
 }

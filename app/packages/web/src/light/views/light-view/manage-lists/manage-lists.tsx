@@ -14,7 +14,7 @@ import { zoneLayerId } from "../../../zones/zone-layer/zone-layer";
 import { locationLayerId } from "../../../zones/location-layer/location-layer";
 import { HINTS, NEW_LOCATION, NEW_ZONE, REFERENCE } from "../light-layers/light-layers";
 import type { LightActions } from "../light-view";
-import { LightRow } from "../light-row/light-row";
+import { LIGHT_ROW_LIST, LightRow } from "../light-row/light-row";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../light.de.json";
 
@@ -77,6 +77,7 @@ function ZoneColumn(props: {
           fit
           label={t("lists.zones")}
           param={ZONE_PAGE}
+          listClassName={LIGHT_ROW_LIST}
           getKey={(z) => z.id}
           renderItem={(z) => (
             <LightRow
@@ -106,6 +107,7 @@ function LocationColumn(props: { data: LightData; active: boolean; size: number 
           fit
           label={t("lists.locations")}
           param={LOCATION_PAGE}
+          listClassName={LIGHT_ROW_LIST}
           getKey={(s) => s.id}
           renderItem={(s) => (
             <LightRow
@@ -121,9 +123,8 @@ function LocationColumn(props: { data: LightData; active: boolean; size: number 
 }
 
 /**
- * The zones and the locations of the account (US-QS-19): on a phone one list at a time, chosen by two segments with
- * their counts and the "+" of the chosen list beside them; from 768 px both lists side by side, each with its own
- * heading and "+". Each list is paged with compact rows (`Pager`, page size from the width).
+ * The zones and the locations (US-QS-19): one list at a time on a phone, chosen by two segments with their counts; from
+ * 768 px both side by side, each with its own heading and "+", paged with compact rows.
  */
 export function ManageLists({ data, actions }: { data: LightData; actions: LightActions }) {
   const [params, setParams] = useSearchParams();

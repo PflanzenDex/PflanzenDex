@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Suspense, lazy, useEffect } from "react";
 import {
@@ -8,6 +8,7 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
   useNavigate,
   useSearchParams,
 } from "react-router";
@@ -17,6 +18,8 @@ import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { PAGER_PARTS, type PagerPart } from "@/shared/patterns/responsive/pager/paging/address";
 import { RouteFocus } from "./route-focus";
 import { createFocusMover } from "./focus-moves";
+import { quietFrom } from "./quiet-steps";
+import { mainHeading } from "./view-start";
 
 afterEach(() => {
   cleanup();
@@ -501,5 +504,62 @@ describe("US-QS-09 · issue 1097 the heading of a loading skeleton is not the vi
     expect(document.activeElement).toBe(main.querySelector("h1"));
     mover.dispose();
     main.remove();
+  });
+});
+
+describe("US-QS-15 · issue 2165 a listed entry is taken off the list by its first change of entry", () => {
+  it("US-QS-15 · issue 2165 a same-view arrival from a listed entry takes it off the list, so the next view change from that entry moves the focus", async () => {
+    const at: { key: string; navigate: ReturnType<typeof useNavigate> | null } = {
+      key: "",
+      navigate: null,
+    };
+    function Probe() {
+      const location = useLocation();
+      at.key = location.key;
+      at.navigate = useNavigate();
+      return null;
+    }
+    render(
+      <AnnouncerProvider>
+        <MemoryRouter initialEntries={["/"]}>
+          <Probe />
+          <Harness />
+        </MemoryRouter>
+      </AnnouncerProvider>,
+    );
+    const first = at.key;
+    quietFrom(first);
+    // The same view (a layer): this arrival moves no focus, and it is the first change of entry from the listed entry.
+    await userEvent.click(screen.getByRole("link", { name: "Mit Ebene" }));
+    await waitFor(() => expect(at.key).not.toBe(first));
+    act(() => at.navigate?.(-1));
+    await waitFor(() => expect(at.key).toBe(first));
+    // A real view change from that entry: the focus moves to the heading of the new view.
+    await userEvent.click(screen.getByRole("link", { name: "Zweite" }));
+    await waitFor(() => expect(document.activeElement?.textContent).toBe("Zweite Seite"));
+  });
+});
+
+describe("US-QS-32 · the view's heading is the one in the top bar below md (SG-HEAD-01)", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("US-QS-32 the heading of the top bar is the view's heading, before the one of the main region", () => {
+    document.body.innerHTML =
+      '<header><div data-app-bar-slot=""><h1>Tauschbörse</h1></div></header><main id="inhalt"><h1>Inhalt</h1></main>';
+    expect(mainHeading()?.textContent).toBe("Tauschbörse");
+  });
+
+  it("US-QS-32 a loading skeleton's heading in the bar is not the view's heading; the main region's one is taken", () => {
+    document.body.innerHTML =
+      '<header><div data-app-bar-slot=""><h1 data-route-fallback="">Sammlung</h1></div></header><main id="inhalt"><h1>Sammlung</h1></main>';
+    expect(mainHeading()?.parentElement?.closest("main")).not.toBeNull();
+  });
+
+  it("US-QS-32 without a heading in the bar (from md up) the main region's heading is the view's", () => {
+    document.body.innerHTML =
+      '<header><div data-app-bar-slot=""></div></header><main id="inhalt"><h1>Heute</h1></main>';
+    expect(mainHeading()?.textContent).toBe("Heute");
   });
 });

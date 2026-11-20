@@ -59,7 +59,7 @@ function OpenButtons(props: {
       <Button
         type="button"
         size="touch"
-        variant="outline"
+        variant="plain"
         className="w-auto flex-1"
         aria-label={`Ablehnen: ${title}`}
         onClick={() => props.onMode("decline")}
@@ -69,7 +69,7 @@ function OpenButtons(props: {
       <Button
         type="button"
         size="touch"
-        variant="outline"
+        variant="plain"
         aria-label={`Anderes vorschlagen: ${title}`}
         onClick={() => props.onMode("propose")}
       >
@@ -115,7 +115,7 @@ function GiverActions(props: { s: SwapSide; busy: boolean; onAnswer: (a: AnswerI
       <Button
         type="button"
         size="touch"
-        variant="outline"
+        variant="plain"
         disabled={props.busy}
         aria-label={`Zusage zurückziehen: ${title}`}
         onClick={() => send({ action: "cancel" })}
@@ -153,7 +153,7 @@ export function SwapCard(props: {
           <Button
             type="button"
             size="touch"
-            variant="outline"
+            variant="plain"
             disabled={props.busy}
             aria-label={`Anfrage zurückziehen: ${swapTitle(s)}`}
             onClick={() => props.onAnswer({ action: "withdraw" })}

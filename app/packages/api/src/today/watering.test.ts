@@ -205,3 +205,74 @@ describe("US-MON-05 watering by interval", () => {
     expect(await due(subB)).toEqual([]);
   });
 });
+
+describe("US-QS-32 undo of Gegossen (POST /watering/unwater)", () => {
+  it("US-QS-32 without token: 401", async () => {
+    expect((await call(null, "POST", "/watering/unwater", {})).status).toBe(401);
+  });
+
+  it("US-QS-32 undoes today's 'watered' in one step: removed 1, a repeat removes nothing (idempotent)", async () => {
+    at("2026-12-01");
+    await call(subA, "POST", "/watering", { specimenIds: [plant], timeZone: "Europe/Berlin" });
+    const undone = await call(subA, "POST", "/watering/unwater", {
+      specimenIds: [plant],
+      timeZone: "Europe/Berlin",
+    });
+    expect(undone).toMatchObject({ status: 200, body: { date: "2026-12-01", removed: 1 } });
+    const again = await call(subA, "POST", "/watering/unwater", {
+      specimenIds: [plant],
+      timeZone: "Europe/Berlin",
+    });
+    expect(again).toMatchObject({ status: 200, body: { removed: 0 } });
+  });
+
+  it("US-QS-32 P-04 a foreign account's specimen is not found, and the entry of the owner stays", async () => {
+    at("2026-12-02");
+    await call(subA, "POST", "/watering", { specimenIds: [plant], timeZone: "Europe/Berlin" });
+    const foreign = await call(subB, "POST", "/watering/unwater", {
+      specimenIds: [plant],
+      timeZone: "Europe/Berlin",
+    });
+    expect(foreign).toMatchObject({
+      status: 404,
+      body: { error: { code: "specimen.not_found" } },
+    });
+    const own = await call(subA, "POST", "/watering/unwater", {
+      specimenIds: [plant],
+      timeZone: "Europe/Berlin",
+    });
+    expect(own).toMatchObject({ status: 200, body: { removed: 1 } });
+  });
+
+  it("US-QS-32 an unknown time zone is invalid input (400) and nothing is removed", async () => {
+    const r = await call(subA, "POST", "/watering/unwater", {
+      specimenIds: [plant],
+      timeZone: "Mars/Olympus",
+    });
+    expect(r).toMatchObject({ status: 400, body: { error: { code: "input.invalid" } } });
+  });
+});
+
+describe("US-QS-32 the undo takes the date of the write (POST /watering/unwater with date)", () => {
+  it("US-QS-32 yesterday's date is accepted: the write made before midnight is taken back", async () => {
+    at("2026-12-05");
+    await call(subA, "POST", "/watering", { specimenIds: [plant], timeZone: "Europe/Berlin" });
+    at("2026-12-06");
+    const undone = await call(subA, "POST", "/watering/unwater", {
+      specimenIds: [plant],
+      timeZone: "Europe/Berlin",
+      date: "2026-12-05",
+    });
+    expect(undone).toMatchObject({ status: 200, body: { date: "2026-12-05", removed: 1 } });
+  });
+
+  it("US-QS-32 a date two days back is refused as input.invalid (400)", async () => {
+    at("2026-12-07");
+    const r = await call(subA, "POST", "/watering/unwater", {
+      specimenIds: [plant],
+      timeZone: "Europe/Berlin",
+      date: "2026-12-04",
+    });
+    expect(r).toMatchObject({ status: 400, body: { error: { code: "input.invalid" } } });
+  });
+});

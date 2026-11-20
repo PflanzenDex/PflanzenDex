@@ -42,7 +42,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("US-ACC-04 the card Fristen shows the deadlines in UTC and the open identity removals", () => {
+describe("US-ACC-04 the topic Löschfristen shows the deadlines in UTC and the open identity removals", () => {
   it("US-ACC-04 lists a passed deadline with its dates in UTC, and the identity removal with its subject", () => {
     render(
       inRouter(
@@ -75,10 +75,11 @@ describe("US-ACC-04 the card Fristen shows the deadlines in UTC and the open ide
     expect(screen.queryByText(/accountId|account_id/)).toBeNull();
   });
 
-  it("US-ACC-04 with nothing open the card says so and what to do next (P-09)", () => {
+  it("US-ACC-04 · US-QS-32 with nothing open the sheet says so in one line and the row reads Keine Frist offen (F-0341)", () => {
     render(inRouter(<DeletionBody view={view()} running={false} onMark={() => undefined} />));
-    expect(screen.getByText("Keine offenen Löschungen")).toBeTruthy();
-    expect(screen.getByText(/Nichts zu tun/)).toBeTruthy();
+    expect(screen.getByText("Nichts zu tun.")).toBeTruthy();
+    expect(screen.queryByText(/Löschungen|Karte/)).toBeNull();
+    expect(deadlineSummary(view())).toBe("Keine Frist offen");
   });
 
   it("US-ACC-04 marking an identity removal passes its entry id on, and a running write blocks a second mark", () => {
@@ -106,7 +107,7 @@ describe("US-ACC-04 the card Fristen shows the deadlines in UTC and the open ide
   it("US-ACC-04 the overview row shows the counts of the card, and the dates are UTC", () => {
     expect(
       deadlineSummary(view({ near: [request], past: [identity], identityRemovals: [identity] })),
-    ).toBe("1 nahe · 1 überschritten · 1 offen beim Anmeldedienst");
+    ).toBe("1 nahe · 1 überschritten · 1 offen");
     expect(utcText(identity.deadline)).toMatch(/10\.10\.2026.*08:00 UTC/);
   });
 
@@ -118,9 +119,7 @@ describe("US-ACC-04 the card Fristen shows the deadlines in UTC and the open ide
       ),
     );
     render(inRouter(<DeadlineRow api="http://api" token={async () => "tok"} />));
-    expect(
-      await screen.findByText("1 nahe · 0 überschritten · 1 offen beim Anmeldedienst"),
-    ).toBeTruthy();
+    expect(await screen.findByText("1 nahe · 0 überschritten · 1 offen")).toBeTruthy();
   });
 
   it("US-ACC-04 a failed load is named in the row, which still opens the layer with the reason (P-10)", async () => {
@@ -133,14 +132,14 @@ describe("US-ACC-04 the card Fristen shows the deadlines in UTC and the open ide
     render(inRouter(<DeadlineRow api="http://api" token={async () => "tok"} />));
     expect(
       await screen.findByText(
-        "Fristen konnten nicht geladen werden. Tippe, um es erneut zu versuchen.",
+        "Löschfristen konnten nicht geladen werden. Tippe, um es erneut zu versuchen.",
       ),
     ).toBeTruthy();
     expect(screen.queryByText("RAW SERVER TEXT")).toBeNull();
   });
 });
 
-describe("US-ACC-04 the card Fristen loads the open deletions and marks an identity removal", () => {
+describe("US-ACC-04 the topic Löschfristen loads the open deletions and marks an identity removal", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();

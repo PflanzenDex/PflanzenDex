@@ -74,9 +74,9 @@ function sandbox() {
   const repo = path.join(dir, "repo");
   gitOk(dir, ["init", "-q", "-b", "dev", repo]);
   mkdirSync(path.join(repo, "app", "node_modules"), { recursive: true });
-  mkdirSync(path.join(repo, "app", "tools", "check", "supply"), { recursive: true });
+  mkdirSync(path.join(repo, "app", "tools", "check", "delivery", "supply"), { recursive: true });
   writeFileSync(
-    path.join(repo, "app", "tools", "check", "supply", "check-deps.mjs"),
+    path.join(repo, "app", "tools", "check", "delivery", "supply", "check-deps.mjs"),
     "process.exit(0);\n",
   );
   writeFileSync(path.join(repo, "README.md"), "dev\n");

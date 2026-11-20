@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch, type Control, type ControllerRenderProps } from "react-hook-form";
+import { useWatch, type Control, type ControllerRenderProps } from "react-hook-form";
 import { localToday, TREATMENT_LIMITS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
@@ -10,6 +10,7 @@ import {
   FormMessage,
   useFormField,
   FormRoot,
+  useFieldForm,
 } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
@@ -80,7 +81,7 @@ export function TermFields({ control }: { control: Control<TreatmentFields> }) {
           />
         )}
       </Field>
-      <Field control={control} name="agent" label="Mittel (optional)">
+      <Field control={control} name="agent" label="Mittel" optional>
         {(field) => <Input {...field} autoComplete="off" maxLength={TREATMENT_LIMITS.agent.max} />}
       </Field>
       <Field control={control} name="date" label="Datum">
@@ -139,7 +140,7 @@ export function CourseFields({ control }: { control: Control<TreatmentFields> })
           <Field control={control} name="count" label="Anzahl der Termine">
             {(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
           </Field>
-          <Field control={control} name="intervalDays" label="Abstand in Tagen">
+          <Field control={control} name="intervalDays" label="Abstand" suffix="Tage">
             {(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
           </Field>
         </div>
@@ -163,7 +164,7 @@ export function TreatmentForm(props: {
   chosen?: readonly string[];
 }) {
   const today = localToday(new Date(), currentTimeZone());
-  const form = useForm<TreatmentFields>({
+  const form = useFieldForm<TreatmentFields>({
     resolver: zodResolver(treatmentSchema),
     defaultValues: { ...treatmentDefaults(today), specimenIds: [...(props.chosen ?? [])] },
   });
@@ -181,7 +182,12 @@ export function TreatmentForm(props: {
       >
         <BasicFields control={form.control} specimens={props.specimens} focusRef={props.focusRef} />
         <CourseFields control={form.control} />
-        <Button type="submit" size="touch" disabled={props.running || form.formState.isSubmitting}>
+        <Button
+          type="submit"
+          size="touch"
+          disabled={props.running || form.formState.isSubmitting}
+          needsNetwork
+        >
           {isCourse ? "Kur planen" : "Behandlung speichern"}
         </Button>
       </FormRoot>

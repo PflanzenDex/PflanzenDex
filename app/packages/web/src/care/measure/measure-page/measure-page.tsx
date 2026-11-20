@@ -19,8 +19,8 @@ type Token = () => Promise<string | undefined>;
 const LOADING = "Messungen werden geladen …";
 
 /**
- * Measure (US-WAC-01): on the page the one fact line (last measurement, value and date) with the link "Verlauf (n)", the
- * input form and the sticky "Messung speichern". The facts and the course of the specimen live in the layer "Verlauf"
+ * Measure (US-WAC-01): on the page the one fact line (last measurement, value and date) with the link "Messverlauf (n)", the
+ * input form and the sticky "Messung speichern". The facts and the course of the specimen live in the layer "Messverlauf"
  * (US-QS-15). Every view says what to do next (P-09).
  */
 /** `onSaved` is called after a measurement was written; the page stays open (US-QS-15). */
@@ -66,7 +66,7 @@ function MeasuredView(props: MeasuredProps) {
     <>
       <MeasurementHeader
         view={view}
-        action={<LayerOpener id={course}>Verlauf ({view.measurements.length})</LayerOpener>}
+        action={<LayerOpener id={course}>Messverlauf ({view.measurements.length})</LayerOpener>}
       />
       <GrowthNoteLayer note={growthNoteText({ moments, justSaved })} saves={saves}>
         <MeasureForm
@@ -113,7 +113,8 @@ export function MeasurePage(props: MeasurePageProps) {
     <section aria-labelledby="measure-title" className="flex min-w-0 flex-col gap-3">
       <PageHeader
         headingId="measure-title"
-        title={`Messen: ${specimen.name}`}
+        title="Messen"
+        subject={specimen.name}
         back={{ label: "Zurück zur Sammlung", onBack: props.onBack }}
       />
       <LoadFrame

@@ -6,7 +6,7 @@ import { createQueryClient, deviceTimeZone, setProfileTimeZone } from "../../sha
 import { renderToString as render } from "react-dom/server";
 import { ToastProvider } from "../../shared/patterns/states/toast/toast-provider/toast-provider";
 import { localToday, type MeasurementView, type MeasurementRow } from "@pflanzendex/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { measurementSchema, toMeasurementInput } from "../shared/schemas";
 import { MeasurementFacts, MeasurementHeader } from "./measurement-header/measurement-header";
 import { MeasureForm } from "./measure-form/measure-form";
@@ -193,6 +193,24 @@ describe("US-WAC-01 default date in the profile's time zone (NFR-08, US-ACC-02)"
 });
 
 describe("US-WAC-01 Ansicht „Messen“", () => {
+  // The keeper's today is fixed: the fact line says "am 03.10.2026" beyond 7 days (US-QS-32).
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-15T12:00:00Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("US-QS-32 the fact line reads 'vor 6 Tagen' within 7 days and the value keeps its unit", () => {
+    vi.setSystemTime(new Date("2026-10-09T12:00:00Z"));
+    const m = measurement();
+    const page = render(<MeasurementHeader view={view({ measurements: [m], last: m })} />);
+    expect(page).toContain("Letzte Messung");
+    expect(page).toContain("12,5\u00a0cm vor 6\u00a0Tagen");
+    expect(page).not.toContain("am 03.10.2026");
+  });
+
   it('shows "Was messen?", last measurement and last rating', () => {
     const m = measurement({ quality: "etiolated" });
     const html = renderToString(
@@ -227,7 +245,7 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(page).not.toContain("Was messen?");
     const facts = renderToString(<MeasurementFacts view={v} />);
     expect(facts).toContain("Was messen?");
-    expect(facts).toContain("Letzte Bewertung");
+    expect(facts).toContain("Letzte Qualität");
   });
 
   it("FR-WAC-05 a cutting is marked as Steckling in the growth view, a plant is not", () => {
@@ -278,8 +296,9 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     );
     expect(html).toMatch(/<option value="healthy" selected[^>]*>Gesund<\/option>/);
     expect(html).toMatch(/<option value="etiolated"[^>]*>Vergeilt\/dünn<\/option>/);
-    expect(html).toMatch(/<details(?![^>]*\sopen)[^>]*>\s*<summary[^>]*>Wie erkennen\?<\/summary>/);
-    expect(html).toContain("Vergeilung-Anzeichen dieser Art: Rosette streckt sich.");
+    // The summary holds the text and then the decorative chevron icon (US-QS-32 · SG-ICON-01); it stays closed.
+    expect(html).toMatch(/<details(?![^>]*\sopen)[^>]*>\s*<summary[^>]*>Wie erkennen\?<svg/);
+    expect(html).toContain("Vergeilungsanzeichen dieser Art: Rosette streckt sich.");
   });
 
   it("US-WAC-02 without etiolation signs (or from an older server) the form shows no disclosure", () => {
@@ -311,7 +330,9 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     );
     expect(await screen.findByRole("status")).toBeTruthy();
     const html = container.innerHTML;
-    expect(html).toContain("Messen: Bogenhanf");
+    // The title is "Messen" and the plant name is the line under it (US-QS-32).
+    expect(html).toContain(">Messen<");
+    expect(html).toContain("Bogenhanf");
     expect(html).toContain("Messungen werden geladen");
     expect(html).toContain("Zurück zur Sammlung");
   });

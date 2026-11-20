@@ -136,17 +136,26 @@ describe("US-ONB-06 function overview", () => {
     expect(list.map((r) => r.name)).toEqual(
       allIds.map((id) => FUNCTION_NAMES[id as keyof typeof FUNCTION_NAMES]),
     );
-    expect(list.find((r) => r.name === "Tauschen")?.state).toBe("Freischaltbar");
+    expect(list.find((r) => r.name === "Tauschbörse")?.state).toBe("Jetzt freischaltbar");
     expect(list.find((r) => r.name === "Heute")?.state).toBe("Aktiv");
-    await openFunction("Tauschen");
+    await openFunction("Tauschbörse");
     const dialog = await screen.findByRole("dialog");
     expect(
       within(dialog).getByText(/Öffnet sich von selbst: lege noch 3 Pflanzen an/),
     ).toBeTruthy();
     expect(within(dialog).getByText(FUNCTION_PURPOSES["swapping"] ?? "")).toBeTruthy();
-    expect(
-      within(dialog).getByRole("link", { name: "Tauschen: Seite ansehen" }).getAttribute("href"),
-    ).toBe("/unlock/swapping");
+    const look = within(dialog).getByRole("link", { name: "Tauschbörse ansehen" });
+    expect(look.textContent).toBe("Tauschbörse ansehen");
+    expect(look.getAttribute("href")).toBe("/unlock/swapping");
+  });
+
+  it("US-QS-32 · F-0298 the link of an open function names the function: Heute öffnen", async () => {
+    show(few);
+    await openFunction("Heute");
+    const dialog = await screen.findByRole("dialog");
+    const open = within(dialog).getByRole("link", { name: "Heute öffnen" });
+    expect(open.textContent).toBe("Heute öffnen");
+    expect(within(dialog).queryByRole("link", { name: "Öffnen" })).toBeNull();
   });
 
   it("US-ONB-06 shows the same list for style many, all aktiv, and says Alles ist offen with the next step", async () => {
@@ -183,7 +192,7 @@ describe("US-ONB-06 function overview", () => {
     const names = (await rows()).map((r) => r.name);
     expect(names).not.toContain("Freunde");
     expect(names).not.toContain("Jahresrückblick");
-    expect(names).toContain("Tauschen");
+    expect(names).toContain("Tauschbörse");
   });
 
   it("US-ONB-06 · US-ACH-08 switching calm mode on removes the achievement functions at once, without a reload", async () => {
@@ -226,14 +235,14 @@ describe("US-ONB-06 function overview", () => {
 
   it("US-ONB-06 unlocks with one tap in its layer and says what may still be empty", async () => {
     const posts = show(few);
-    await openFunction("Tauschen");
+    await openFunction("Tauschbörse");
     const dialog = await screen.findByRole("dialog");
     await userEvent.click(
-      within(dialog).getByRole("button", { name: "Tauschen: Jetzt freischalten" }),
+      within(dialog).getByRole("button", { name: "Tauschbörse: Jetzt freischalten" }),
     );
     expect(posts).toEqual(["/onboarding/unlocks/swapping"]);
     expect(
-      await screen.findByText(`Tauschen ist jetzt freigeschaltet. ${FUNCTION_EMPTY.swapping}`),
+      await screen.findByText(`Tauschbörse ist jetzt freigeschaltet. ${FUNCTION_EMPTY.swapping}`),
     ).toBeTruthy();
   });
 
@@ -301,7 +310,7 @@ describe("US-ONB-09 keeper switches in Was die App kann", () => {
     const list = await rows();
     expect(list.find((r) => r.name === "Wunschliste")?.state).toBe("Ausgeschaltet");
     expect(list.map((r) => r.state)).not.toContain("Bald");
-    expect(list.find((r) => r.name === "Wunschliste")?.state).not.toBe("Gesperrt");
+    expect(list.find((r) => r.name === "Wunschliste")?.state).not.toBe("Noch gesperrt");
   });
 
   it("US-ONB-09 its layer has the switch to turn it on again, and no link to a function that is off", async () => {
@@ -348,12 +357,12 @@ describe("US-ONB-09 keeper switches in Was die App kann", () => {
     });
   });
 
-  it("US-ONB-09 a core function has no switch and says why in one sentence", async () => {
+  it("US-ONB-09 · US-QS-32 a core function has no switch and its one sentence names that function alone (F-0299)", async () => {
     showWrites(many);
     await openFunction("Sammlung");
     const dialog = await screen.findByRole("dialog");
     expect(
-      within(dialog).getByText("Gehört zum Kern der App: Sammlung, Pflege und Pokédex bleiben an."),
+      within(dialog).getByText("Sammlung gehört zum Kern der App und bleibt immer an."),
     ).toBeTruthy();
     expect(within(dialog).queryByRole("checkbox")).toBeNull();
   });

@@ -1,13 +1,15 @@
 import type { ReactNode } from "react";
 import { classificationRules, zoneLabel } from "@pflanzendex/core";
+import { withUnit } from "@/shared/lib/format";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
-import {
-  ResponsiveTable,
-  type ResponsiveColumn,
-} from "@/shared/patterns/responsive/responsive-table/responsive-table";
 import type { LightZone } from "../../shared/light-api/light-api";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import table from "./rules-view.de.json";
+
+const t = texts(table);
 
 /** The entries cut into pages of `size` (a page is one part of the rules). */
 const pagesOf = <T,>(entries: readonly T[], size: number): T[][] =>
@@ -15,24 +17,22 @@ const pagesOf = <T,>(entries: readonly T[], size: number): T[][] =>
     entries.slice(i * size, (i + 1) * size),
   );
 
-const number = new Intl.NumberFormat("de-DE");
 const H2 = "text-xl font-semibold";
 const H3 = "text-base font-semibold";
 const LIST = "m-0 flex flex-col gap-2 pl-5";
 
-const COLUMNS: ResponsiveColumn<LightZone>[] = [
-  { key: "name", header: "Zone", cell: (z) => zoneLabel(z.name) },
-  {
-    key: "lux",
-    header: "Lux-Obergrenze",
-    cell: (z) => <span className="tabular-nums">{number.format(z.luxCeiling)}</span>,
-  },
-  {
-    key: "ppfd",
-    header: "PPFD",
-    cell: (z) => (z.ppfd === null ? "unbekannt" : number.format(z.ppfd)),
-  },
-];
+/**
+ * The reach of a zone as its meta line: "bis 1.500 Lux · PPFD 36 µmol/m²/s" (US-QS-32, SG-FMT-02). The thousands are
+ * grouped and the unit is kept with its number; an unknown PPFD reads "PPFD unbekannt" (P-08).
+ */
+function zoneMeta(z: LightZone): string {
+  const lux = t("zone.lux", { value: withUnit(z.luxCeiling, t("unit.lux")) });
+  const ppfd =
+    z.ppfd === null
+      ? t("zone.ppfdUnknown")
+      : t("zone.ppfd", { value: withUnit(z.ppfd, t("unit.ppfd")) });
+  return `${lux} · ${ppfd}`;
+}
 
 // US-LIC-04: reference on levels, indicators and warning signs. The collection table is the overview above (US-LIC-03).
 // Three parts, one per page (US-QS-19): the zone table, the indicators and the warning signs.
@@ -45,18 +45,17 @@ function rulePartsFor(zones: readonly LightZone[], size: number): ReactNode[] {
     sorted.length === 0
       ? [
           <p key="empty" className="text-sm text-muted-foreground">
-            Deine Stufentabelle erscheint hier, sobald du unten Lichtzonen übernommen oder angelegt
+            Deine Zonentabelle erscheint hier, sobald du unten Lichtzonen übernommen oder angelegt
             hast.
           </p>,
         ]
       : pagesOf(sorted, size).map((page, i) => (
-          <ResponsiveTable
-            key={`zones-${i}`}
-            caption="Deine Lichtzonen"
-            columns={COLUMNS}
-            rows={page}
-            getRowKey={(z) => z.id}
-          />
+          // One zone is one row: its name once, its reach in the meta line (US-QS-32).
+          <GroupedList key={`zones-${i}`} label="Deine Lichtzonen" level={3}>
+            {page.map((z) => (
+              <GroupedRow key={z.id} title={zoneLabel(z.name)} meta={zoneMeta(z)} />
+            ))}
+          </GroupedList>
         ));
   const warningPages = pagesOf(rules.warnings, size);
   return [
@@ -67,7 +66,7 @@ function rulePartsFor(zones: readonly LightZone[], size: number): ReactNode[] {
       >
         Die niedrigste Zone ist Stecklingslicht und nie Ziel für erwachsene Pflanzen.
       </MoreHelp>
-      <h3 className={H3}>Indikatoren für höhere Stufen</h3>
+      <h3 className={H3}>Indikatoren für höhere Zonen</h3>
       <ul className={LIST}>
         {rules.indicators.map((i) => (
           <li key={i.key}>{i.text}</li>

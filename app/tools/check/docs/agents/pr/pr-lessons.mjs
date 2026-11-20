@@ -1,10 +1,10 @@
+import { isEntryPoint } from "../../../shared/entry-point.mjs";
 // US-DEV-05 (issue 1747): the "## Lessons" section of a pull request says what the change taught and where each lesson went:
 // a gate, a skill, a pitfall (PF-nnn) or none with the reason. One line per lesson, or the single word `none`:
 //   - <lesson> → gate <name> | skill <name> | PF-<nnn> | none (<why>)
 // `make pr` runs this check before anything is pushed (tools/repo/pr-ready.sh). The section is written with the skill
 // recap-and-learnings. HTML comments (the placeholder of a fresh draft) count as nothing.
 //   PR_BODY="<body>" node app/tools/check/docs/agents/pr/pr-lessons.mjs   exit 1 with the problems, exit 0 when the section passes
-import { pathToFileURL } from "node:url";
 
 const LESSON_FORMAT = "- <lesson> → gate <name> | skill <name> | PF-<nnn> | none (<why>)";
 const NONE = /^(?:- )?none$/i;
@@ -53,4 +53,4 @@ export function main(env = process.env) {
   return 1;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) process.exit(main());
+if (isEntryPoint(import.meta.url)) process.exit(main());

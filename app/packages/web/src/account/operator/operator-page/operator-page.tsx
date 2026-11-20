@@ -1,13 +1,19 @@
 import type { OperatorOverview } from "@pflanzendex/core";
 import { useCallback } from "react";
 import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { LoadFrame } from "../../../shared/data";
 import { loadOverview } from "../../api/access-api";
 import { DeadlineRow, DeletionSection } from "../deletion-section/deletion-section";
 import { IntroductionSection } from "../introduction-section/introduction-section";
 import { CostForm, costPerUserText, moneyText, monthText } from "../operator-cost/operator-cost";
-import { InvitationsArea, ModeSection, OperatorRow } from "../operator-parts/operator-parts";
+import {
+  EnterCostButton,
+  InvitationsArea,
+  ModeSection,
+  OperatorRow,
+} from "../operator-parts/operator-parts";
 import { OperatorPageSkeleton } from "./operator-page.skeleton";
 import { LayerNotice } from "./layer-notice/layer-notice";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -31,16 +37,13 @@ function Numbers(props: { overview: OperatorOverview }) {
         <dt className="text-sm text-muted-foreground sm:text-base">Konten</dt>
         <dd className="m-0 mb-2 font-semibold @lg:mb-0">{o.accounts}</dd>
         <dt className="text-sm text-muted-foreground sm:text-base">
-          {keepTogether(`Aktive Nutzer (letzte ${o.activeWindowDays} Tage)`)}
+          {keepTogether(`Aktive Konten (letzte ${o.activeWindowDays} Tage)`)}
         </dt>
         <dd className="m-0 mb-2 font-semibold @lg:mb-0">{o.activeAccounts}</dd>
-        <dt className="text-sm text-muted-foreground sm:text-base">Monatliche Kosten</dt>
-        <dd className="m-0 mb-2 font-semibold [overflow-wrap:anywhere] @lg:mb-0">
-          {costText(o.cost)}
-        </dd>
-        <dt className="text-sm text-muted-foreground sm:text-base">Kosten pro Nutzer</dt>
-        <dd className="m-0 font-semibold [overflow-wrap:anywhere]">
-          {costPerUserText(o.costPerUser)}
+        <dt className="text-sm text-muted-foreground sm:text-base">Kosten pro aktivem Konto</dt>
+        <dd className="m-0 flex flex-col items-start font-semibold [overflow-wrap:anywhere]">
+          <span>{costPerUserText(o.costPerUser)}</span>
+          {!o.costPerUser.known && o.costPerUser.reason === "no_figure" && <EnterCostButton />}
         </dd>
       </dl>
       <p className="mt-3 text-sm text-muted-foreground">
@@ -54,13 +57,13 @@ function CostLayer(props: { overview: OperatorOverview; actions: Actions }) {
   return (
     <div className="flex flex-col gap-3">
       <LayerNotice notice={props.actions.notice} scope="cost" />
-      <MoreHelp more="Die Kosten pro Nutzer sind dieser Betrag geteilt durch die aktiven Nutzer.">
+      <MoreHelp more="Die Kosten pro aktivem Konto sind dieser Betrag geteilt durch die aktiven Konten.">
         Trage die echten Hosting-Kosten eines Monats ein.
       </MoreHelp>
       <CostForm
         cost={props.overview.cost}
         running={props.actions.running}
-        onSave={(f) => void props.actions.setCost(f)}
+        onSave={props.actions.setCost}
       />
     </div>
   );
@@ -149,7 +152,7 @@ function Layers(props: {
             running={actions.running}
             created={actions.created}
             invitations={overview.invitations}
-            onCreate={(d) => void actions.create(d)}
+            onCreate={actions.create}
           />
         </div>
       </LayerSheet>
@@ -168,7 +171,8 @@ export function OperatorPage(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadOverview(api, t), [api]);
   return (
     <div data-fit-screen="" className="flex min-w-0 flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Betreiber</h1>
+      {/* The page's header like every destination's: in the top bar below md, where the start frame already put it (issue 2230). */}
+      <PageHeader title="Betreiber" />
       <LoadFrame
         queryKey={[...OPERATOR_KEY, "overview"]}
         token={token}

@@ -70,9 +70,12 @@ const show = (
   props: {
     signOut?: () => void;
     everywhere?: () => void;
+    busy?: boolean;
     ai?: boolean;
     achievements?: boolean;
     current?: "settings";
+    error?: string;
+    everywhereError?: string;
   } = {},
 ) =>
   render(
@@ -93,6 +96,9 @@ const show = (
           hasOverview
           onSignOut={props.signOut ?? (() => undefined)}
           onEverywhereSignOut={props.everywhere ?? (() => undefined)}
+          everywhereBusy={props.busy ?? false}
+          {...(props.error ? { error: props.error } : {})}
+          {...(props.everywhereError ? { everywhereError: props.everywhereError } : {})}
         />
       </MemoryRouter>
     </FeaturesProvider>,
@@ -105,7 +111,7 @@ afterEach(() => {
 });
 
 describe("US-QS-17 the index of Konto", () => {
-  it("US-QS-17 shows the profile row, a row per section with its current value and Abmelden…", async () => {
+  it("US-QS-17 shows the profile row, a row per section with its current value and Abmelden …", async () => {
     fakeServer();
     show();
     const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
@@ -113,19 +119,19 @@ describe("US-QS-17 the index of Konto", () => {
     const value = (name: RegExp, text: string) =>
       waitFor(() => expect(within(list).getByRole("link", { name }).textContent).toContain(text));
     await value(/^Einstellungen/, "Lena · Europe/Berlin");
-    await value(/^Erinnerungen/, "an");
+    await value(/^Erinnerungen/, "im Posteingang");
     await value(/^Erfolge/, "3");
     await value(/^KI-Clients/, "1");
     expect(within(list).getByRole("link", { name: "Nutzungsdaten" })).toBeTruthy();
     expect(within(list).getByRole("link", { name: "Was die App kann" })).toBeTruthy();
     expect(within(list).getByRole("link", { name: "Meine Daten" })).toBeTruthy();
-    expect(within(list).getByRole("button", { name: "Abmelden…" })).toBeTruthy();
+    expect(within(list).getByRole("button", { name: "Abmelden …" })).toBeTruthy();
   });
 
-  it("US-QS-17 Abmelden… is a row with the same chevron as the sections (issue 1045)", async () => {
+  it("US-QS-32 Abmelden … is a button without a chevron: it acts in place and opens a confirmation, no view (F-0098)", async () => {
     show();
-    const button = await screen.findByRole("button", { name: "Abmelden…" });
-    expect(button.querySelector("svg")).not.toBeNull();
+    const button = await screen.findByRole("button", { name: "Abmelden …" });
+    expect(button.querySelector("svg")).toBeNull();
     expect(button.className).toContain("border-transparent");
   });
 
@@ -135,19 +141,95 @@ describe("US-QS-17 the index of Konto", () => {
       .getByRole("navigation", { name: "Abschnitte von Konto" })
       .querySelector("ul");
     expect(list?.className).toContain("-mx-[calc(0.75rem+4px)]");
-    const row = await screen.findByRole("button", { name: "Abmelden…" });
+    const row = await screen.findByRole("button", { name: "Abmelden …" });
     // The bleed is the row's 4 px bar plus its 0.75 rem padding.
     expect(row.className).toContain("border-l-4");
     expect(row.className).toContain("px-3");
   });
 
-  it("US-QS-17 · P-08 a value that cannot be read says unbekannt", async () => {
+  it("US-QS-32 · P-08 a section whose request failed says Nicht geladen with its retry, never unbekannt", async () => {
     fakeServer({ profile: null, achievements: null, connections: null });
     show();
-    for (const name of [/^Einstellungen/, /^Erinnerungen/, /^Erfolge/, /^KI-Clients/])
+    for (const name of [/^Einstellungen/, /^Erinnerungen/, /^Erfolge/, /^KI-Clients/]) {
       await waitFor(() =>
-        expect(screen.getByRole("link", { name }).textContent).toContain("unbekannt"),
+        expect(screen.getByRole("link", { name }).textContent).toContain("Nicht geladen"),
       );
+      expect(screen.getByRole("link", { name }).textContent).not.toContain("unbekannt");
+    }
+    expect(screen.getByRole("button", { name: "Erneut versuchen: Einstellungen" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Erneut versuchen: Erfolge und Rückblick" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Erneut versuchen: KI-Clients" })).toBeTruthy();
+  });
+
+  it("US-QS-32 the retry of a failed row asks its request again and the row shows the value", async () => {
+    fakeServer({ profile: null });
+    show();
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).toContain(
+        "Nicht geladen",
+      ),
+    );
+    fakeServer();
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen: Einstellungen" }));
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).toContain(
+        "Lena · Europe/Berlin",
+      ),
+    );
+    expect(screen.queryByRole("button", { name: "Erneut versuchen: Einstellungen" })).toBeNull();
+  });
+
+  it("US-QS-32 · F-0315 a new account without a saved zone reads Zeitzone vom Gerät when the device gives one, in both rows", async () => {
+    fakeServer({
+      profile: { displayName: "Lena", timeZone: null, notifications: { phase: true } },
+    });
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+      timeZone: "Europe/Berlin",
+    } as Intl.ResolvedDateTimeFormatOptions);
+    try {
+      show();
+      await waitFor(() =>
+        expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).toContain(
+          "Lena · Zeitzone vom Gerät",
+        ),
+      );
+      expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).not.toMatch(
+        /· unbekannt/,
+      );
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("US-QS-32 · F-0315 a device without a zone reads Zeitzone unbekannt, the label kept (P-08)", async () => {
+    fakeServer({
+      profile: { displayName: "Lena", timeZone: null, notifications: { phase: true } },
+    });
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+      timeZone: undefined,
+    } as unknown as Intl.ResolvedDateTimeFormatOptions);
+    try {
+      show();
+      await waitFor(() =>
+        expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).toContain(
+          "Lena · Zeitzone unbekannt",
+        ),
+      );
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("US-QS-32 · F-0315 an unknown name is named as such, never a bare unbekannt", async () => {
+    fakeServer({ profile: { displayName: null, timeZone: "Europe/Berlin", notifications: {} } });
+    show();
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).toContain(
+        "Name unbekannt · Europe/Berlin",
+      ),
+    );
   });
 
   it("US-QS-17 · US-ACH-08 calm mode hides the row Erfolge, the function ai hides KI-Clients", async () => {
@@ -168,12 +250,12 @@ describe("US-QS-17 the index of Konto", () => {
     ).toBeNull();
   });
 
-  it("US-QS-17 Abmelden… opens a confirmation with Abmelden, Auf allen Geräten abmelden and a way to cancel", async () => {
+  it("US-QS-17 Abmelden … opens a confirmation with Abmelden, Auf allen Geräten abmelden and a way to cancel", async () => {
     fakeServer();
     const signOut = vi.fn();
     const everywhere = vi.fn();
     show({ signOut, everywhere });
-    await userEvent.click(screen.getByRole("button", { name: "Abmelden…" }));
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
     const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Auf allen Geräten abmelden" }),
@@ -183,6 +265,68 @@ describe("US-QS-17 the index of Konto", () => {
     expect(signOut).toHaveBeenCalledOnce();
     await userEvent.click(within(dialog).getByRole("button", { name: "Abbrechen" }));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("US-QS-32 · SG-COLOR-04 a failed sign-out is drawn in the error tone, with its mark and no warning token", async () => {
+    fakeServer();
+    show({ error: "Abmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar." });
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
+    const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
+    const alert = within(dialog).getByRole("alert");
+    expect(alert.textContent).toContain("Abmelden hat nicht geklappt");
+    expect(alert.className).toContain("border-destructive");
+    expect(alert.className).not.toMatch(/warning/);
+    expect(alert.querySelector("svg")).not.toBeNull();
+    expect(within(alert).queryByRole("button")).toBeNull();
+  });
+
+  it("US-QS-32 · SG-STATE-03 a failed sign-out on all devices offers Erneut versuchen, and the click repeats that sign-out", async () => {
+    fakeServer();
+    const everywhere = vi.fn();
+    show({
+      everywhere,
+      everywhereError:
+        "Abmelden auf allen Geräten hat nicht geklappt. Versuche es gleich noch einmal.",
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
+    const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
+    const alert = within(dialog).getByRole("alert");
+    expect(alert.className).toContain("border-destructive");
+    expect(alert.className).not.toMatch(/warning/);
+    await userEvent.click(within(alert).getByRole("button", { name: "Erneut versuchen" }));
+    expect(everywhere).toHaveBeenCalledOnce();
+  });
+
+  it("US-QS-32 · SG-STATE-03 a failed sign-out on this device offers no Erneut versuchen: the dialog's own Abmelden is the retry", async () => {
+    fakeServer();
+    show({ error: "Abmelden hat nicht geklappt: Die Anmeldung ist gerade nicht erreichbar." });
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
+    const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
+    expect(within(dialog).queryByRole("button", { name: "Erneut versuchen" })).toBeNull();
+  });
+
+  it("US-ACC-01 while signing out on all devices runs, its control is busy, keeps the focus and a press does nothing", async () => {
+    fakeServer();
+    const everywhere = vi.fn();
+    show({ everywhere, busy: true });
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
+    const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
+    const control = within(dialog).getByRole("button", { name: "Auf allen Geräten abmelden" });
+    expect(control.getAttribute("aria-busy")).toBe("true");
+    expect(control.getAttribute("aria-disabled")).toBe("true");
+    await userEvent.click(control);
+    expect(everywhere).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(control);
+  });
+
+  it("US-ACC-01 the control of signing out on all devices is not busy before a press", async () => {
+    fakeServer();
+    show();
+    await userEvent.click(screen.getByRole("button", { name: "Abmelden …" }));
+    const dialog = await screen.findByRole("dialog", { name: "Abmelden?" });
+    const control = within(dialog).getByRole("button", { name: "Auf allen Geräten abmelden" });
+    expect(control.getAttribute("aria-busy")).toBeNull();
+    expect(control.getAttribute("aria-disabled")).toBeNull();
   });
 
   it("US-DEV-06 the index has a row that opens the page Neu in PflanzenDéx", async () => {
@@ -216,13 +360,36 @@ describe("US-ONB-09 the keeper's switch achievement_views in the index", () => {
   });
 });
 
+describe("US-QS-32 the row Erinnerungen while push is not set up", () => {
+  it("US-QS-32 reads im Posteingang while a reminder is on and never an", async () => {
+    fakeServer();
+    show();
+    const row = await screen.findByRole("link", { name: /^Erinnerungen/ });
+    await waitFor(() => expect(within(row).getByText("im Posteingang")).toBeTruthy());
+    expect(within(row).queryByText("an")).toBeNull();
+  });
+
+  it("US-QS-32 reads aus while every occasion is off", async () => {
+    fakeServer({
+      profile: {
+        displayName: "Lena",
+        timeZone: "Europe/Berlin",
+        notifications: { phase: false, swap: false },
+      },
+    });
+    show();
+    const row = await screen.findByRole("link", { name: /^Erinnerungen/ });
+    await waitFor(() => expect(within(row).getByText("aus")).toBeTruthy());
+  });
+});
+
 describe("US-QS-28 the install row of the index", () => {
-  it("US-QS-28 with the install on offer the row App installieren sits above Abmelden…", async () => {
+  it("US-QS-28 with the install on offer the row App installieren sits above Abmelden …", async () => {
     install.offer = "promptable";
     fakeServer();
     show();
     const entry = await screen.findByRole("button", { name: "App installieren" });
-    const signOut = screen.getByRole("button", { name: "Abmelden…" });
+    const signOut = screen.getByRole("button", { name: "Abmelden …" });
     expect(entry.compareDocumentPosition(signOut) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
@@ -240,6 +407,6 @@ describe("US-QS-28 the install row of the index", () => {
     show();
     const list = screen.getByRole("navigation", { name: "Abschnitte von Konto" });
     expect(within(list).queryByRole("button", { name: "App installieren" })).toBeNull();
-    expect(within(list).getByRole("button", { name: "Abmelden…" })).toBeTruthy();
+    expect(within(list).getByRole("button", { name: "Abmelden …" })).toBeTruthy();
   });
 });

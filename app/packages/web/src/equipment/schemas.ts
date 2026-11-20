@@ -1,6 +1,7 @@
 import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "@pflanzendex/core";
 import { z } from "zod";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { dateValue } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 import type { EquipmentInput } from "./equipment-api";
 import type { EquipmentWishInput } from "./overviews/wishes-view/wishes-api";
 import { isSizeCm, POT_FORM, potInput, type PotInput } from "./equipment-form/pot-form";
@@ -9,7 +10,8 @@ import table from "./equipment.de.json";
 
 const t = texts(table);
 
-const NOT_URL = "Die Produkt-ID sagt, was das Produkt ist, und ist keine Adresse: Bitte keine URL.";
+const NOT_URL =
+  "Die Produkt-ID sagt, was das Produkt ist, und ist keine Adresse: Gib keine URL ein.";
 
 /** A price with a decimal comma or point and at most two decimals; empty is unknown. */
 const isPrice = (v: string): boolean => {
@@ -30,8 +32,8 @@ const isPrice = (v: string): boolean => {
  */
 export const equipmentSchema = z
   .object({
-    type: z.enum(EQUIPMENT_TYPES, { error: "Bitte wähle eine Art." }),
-    name: z.string().trim().min(EQUIPMENT_LIMITS.name.min, "Bitte gib einen Namen an."),
+    type: z.enum(EQUIPMENT_TYPES, { error: "Wähle eine Art." }),
+    name: z.string().trim().min(EQUIPMENT_LIMITS.name.min, "Gib einen Namen ein."),
     manufacturer: z.string(),
     model: z.string(),
     productId: z
@@ -41,11 +43,8 @@ export const equipmentSchema = z
     priceEur: z
       .string()
       .trim()
-      .refine(
-        (v) => v === "" || isPrice(v),
-        "Bitte gib einen Preis in Euro an, zum Beispiel 49,90.",
-      ),
-    boughtAt: z.string(),
+      .refine((v) => v === "" || isPrice(v), "Gib einen Preis in Euro an, zum Beispiel 49,90."),
+    boughtAt: dateValue(),
     note: z.string(),
     lightZoneId: z.string(),
     diameterCm: z.string(),
@@ -58,7 +57,7 @@ export const equipmentSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["lightZoneId"],
-        message: "Bitte wähle die Lichtzone, in der die Lampe hängt.",
+        message: "Wähle die Lichtzone, in der die Lampe hängt.",
       });
     // The pot fields are checked for a pot only: a value typed before a change of type does not block another type.
     if (f.type !== POT_TYPE) return;
@@ -136,8 +135,8 @@ export function fieldsOfRefusal(error: {
 
 /** The form to record an equipment wish (US-EQU-08): type and name are required, the rest stays unknown (P-08). */
 export const wishSchema = z.object({
-  type: z.enum(EQUIPMENT_TYPES, { error: "Bitte wähle eine Art." }),
-  name: z.string().trim().min(EQUIPMENT_LIMITS.name.min, "Bitte gib einen Namen an."),
+  type: z.enum(EQUIPMENT_TYPES, { error: "Wähle eine Art." }),
+  name: z.string().trim().min(EQUIPMENT_LIMITS.name.min, "Gib einen Namen ein."),
   productId: z
     .string()
     .trim()
@@ -145,7 +144,7 @@ export const wishSchema = z.object({
   priceEur: z
     .string()
     .trim()
-    .refine((v) => v === "" || isPrice(v), "Bitte gib einen Preis in Euro an, zum Beispiel 49,90."),
+    .refine((v) => v === "" || isPrice(v), "Gib einen Preis in Euro an, zum Beispiel 49,90."),
 });
 
 export type WishFields = z.input<typeof wishSchema>;

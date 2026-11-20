@@ -7,6 +7,7 @@ import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { EMPTY_DISTRIBUTION } from "../../../insights/distribution-test-helpers";
 import { PlantsScreen } from "../../plants-screen";
 import { pagesOf, summaryOf } from "../../../specimens/tests/plants-test-helpers";
@@ -92,7 +93,7 @@ function show(cards: SpecimenCard[], extra: Extra = {}, at = "/") {
   );
 }
 const open = async () => {
-  await userEvent.click(await screen.findByRole("button", { name: /^Aloe / }));
+  await userEvent.click(await screen.findByRole("button", { name: /^Aloe(\s|$)/ }));
   return screen.findByRole("dialog", { name: "Aloe" });
 };
 
@@ -191,7 +192,7 @@ describe("US-QS-23 Überblick", () => {
     expect(within(panel).getByText(/Letzte Messung: 12,5 cm/)).toBeTruthy();
     expect(within(panel).getByText(/am 01\.10\.2026/)).toBeTruthy();
     expect(within(panel).getByText("Trend: stabil")).toBeTruthy();
-    expect(within(panel).getByText("Zustand:").textContent).toContain("Gesund");
+    expect(within(panel).getByText("Qualität:").textContent).toContain("Gesund");
     expect(within(panel).getByText("Noch kein Foto")).toBeTruthy();
     expect(panel.innerHTML).not.toMatch(/overflow-(y-)?(auto|scroll)/);
   });
@@ -300,7 +301,7 @@ describe("US-QS-23 the other tabs", () => {
     expect(screen.getByTestId("address").textContent).toBe(
       "?sheet=profil-e1&tab=pflege&teil=profil",
     );
-    expect(await within(profile).findByText("Du hast noch keine Pflanze dieser Art.")).toBeTruthy();
+    expect(await within(profile).findByText("Du hast noch keine Pflanze dieser Art")).toBeTruthy();
     expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull();
     act(() => screen.getByText("Browser zurück").click());
     const back = await screen.findByRole("dialog", { name: "Aloe" });
@@ -408,21 +409,30 @@ describe("US-QS-23 Mehr", () => {
     await open();
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
     expect(screen.getAllByRole("menuitem").map((i) => i.textContent)).toEqual([
-      "Kennzeichen",
-      "Fangdatum",
-      "Archivieren",
+      "Kennzeichen ändern",
+      "Fangdatum ändern",
+      "Pflanze archivieren",
     ]);
-    await userEvent.click(screen.getByRole("menuitem", { name: "Archivieren" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Pflanze archivieren" }));
     expect(handlers.onArchive).toHaveBeenCalledOnce();
     expect(handlers.onArchive.mock.calls[0]?.[0]).toMatchObject({ id: "e1" });
   });
 
-  it("US-QS-23 Eingetopft is offered for a cutting only", async () => {
+  it("US-QS-32 the menu items name object and verb: Umtopfen eintragen for a plant, Eintopfen eintragen for a cutting", async () => {
+    setViewportWidth(360);
+    show([card()], { onRepot: vi.fn() });
+    await open();
+    await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
+    expect(screen.getByRole("menuitem", { name: "Umtopfen eintragen" })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Umgetopft" })).toBeNull();
+  });
+
+  it("US-QS-23 Eintopfen eintragen is offered for a cutting only", async () => {
     setViewportWidth(360);
     show([card({ status: "cutting" })], { onRepot: vi.fn() });
     await open();
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
-    expect(screen.getByRole("menuitem", { name: "Eingetopft" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Eintopfen eintragen" })).toBeTruthy();
   });
 
   it("US-QS-23 without any rarer action there is no menu", async () => {
@@ -439,7 +449,7 @@ describe("US-QS-23 wide screen", () => {
     show([card()], {}, "/?sheet=plant-e1");
     const pane = await screen.findByRole("complementary", { name: "Aloe" });
     expect(pane).toBeTruthy();
-    expect(screen.getByRole("button", { name: /^Aloe / })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Aloe(\s|$)/ })).toBeTruthy();
     expect(within(pane).getAllByRole("tab")).toHaveLength(4);
   });
 });
@@ -491,5 +501,61 @@ describe("US-QS-14 issue 1784 · the plant layer slot shows the shape of its par
     expect(status.querySelectorAll(".animate-pulse").length).toBeGreaterThan(1);
     await act(async () => release());
     expect(await screen.findByText("Behandlungen der Pflanze")).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 the action row of a plant has all its buttons from the first frame (SG-STATE-02, F-0082, issue 1889)", () => {
+  it("US-QS-32 · SG-STATE-02 while 'Gießen' loads, its disabled button stands in its place before 'Behandeln'", async () => {
+    setViewportWidth(360);
+    const never = new Promise<never>(() => undefined);
+    function Pending(): ReactNode {
+      // A part that suspends for good, as a chunk on its way.
+      throw never;
+    }
+    show([card()], { slots: { ...SLOTS, water: () => <Pending /> } });
+    const layer = await open();
+    const water = within(layer).getByRole("button", { name: "Gießen" });
+    expect((water as HTMLButtonElement).disabled).toBe(true);
+    expect(water.getAttribute("aria-busy")).toBe("true");
+    const treat = within(layer).getByRole("button", { name: /Behandeln/ });
+    expect(water.nextElementSibling).toBe(treat);
+  });
+});
+
+/** The Pflege tab with a paged list of three treatments: its own page part `ofrom`, as the care part pages its list. */
+function PagedCare() {
+  return (
+    <Pager
+      items={["Erste Behandlung", "Zweite Behandlung", "Dritte Behandlung"]}
+      pageSize={1}
+      label="Behandlungen"
+      param="ofrom"
+      renderItem={(item) => <p>{item}</p>}
+    />
+  );
+}
+
+describe("US-QS-15 issue 2147 · a plant opened by a reload closes to its list without the layer's tab and page", () => {
+  it("US-QS-15 issue 2147 · a reload on Pflege at a later page, closed, leaves no tab or page in the list: the next plant opens on Überblick and its first page", async () => {
+    setViewportWidth(360);
+    show(
+      [card(), card({ id: "e2", name: "Basilikum", speciesName: "Ocimum basilicum" })],
+      { slots: { ...SLOTS, care: () => <PagedCare /> } },
+      "/?sheet=plant-e1&tab=pflege&ofrom=2",
+    );
+    const aloe = await screen.findByRole("dialog", { name: "Aloe" });
+    // The reload shows the stored tab and page: the setup of the report.
+    expect(within(aloe).getByRole("tab", { name: "Pflege", selected: true })).toBeTruthy();
+    expect(within(aloe).getByText("Seite 3 von 3")).toBeTruthy();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull());
+    // The list the layer closes to carries no part of the layer.
+    expect(screen.getByTestId("address").textContent).toBe("");
+    await userEvent.click(await screen.findByRole("button", { name: /^Basilikum(\s|$)/ }));
+    const basilikum = await screen.findByRole("dialog", { name: "Basilikum" });
+    expect(screen.getByTestId("address").textContent).toBe("?sheet=plant-e2");
+    expect(within(basilikum).getByRole("tab", { name: "Überblick", selected: true })).toBeTruthy();
+    await userEvent.click(within(basilikum).getByRole("tab", { name: "Pflege" }));
+    expect(within(basilikum).getByText("Seite 1 von 3")).toBeTruthy();
   });
 });

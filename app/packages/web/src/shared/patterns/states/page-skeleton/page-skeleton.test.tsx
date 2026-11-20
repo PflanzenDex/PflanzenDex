@@ -10,7 +10,7 @@ describe("PageSkeleton (US-QS-07, DS-55, DS-56)", () => {
     const { container } = render(<PageSkeleton />);
     expect(await screen.findByRole("status")).toBeTruthy();
     expect(screen.getAllByRole("status")).toHaveLength(1);
-    expect(screen.getByText("Lädt…")).toBeTruthy();
+    expect(screen.getByText("Lädt …")).toBeTruthy();
     expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(0);
   });
 
@@ -31,7 +31,7 @@ describe("PageSkeleton with the destination heading (US-QS-14, DS-55, issue 1097
     expect(heading.className).toContain("text-2xl");
     expect(await screen.findByRole("status")).toBeTruthy();
     expect(screen.getAllByRole("status")).toHaveLength(1);
-    expect(screen.getByText("Lädt…")).toBeTruthy();
+    expect(screen.getByText("Lädt …")).toBeTruthy();
   });
 
   it("US-QS-14 · issue 1697 the name stands at once and the blocks wait for the delay", async () => {

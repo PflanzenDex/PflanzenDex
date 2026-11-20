@@ -1,14 +1,19 @@
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
+import { useWatch } from "react-hook-form";
 import { specimenName } from "@pflanzendex/core";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../../shared/data";
 import { MarkerInput } from "../marker-fields/marker-fields";
-import { FormButtons, Quiet, TITLE, Warning } from "../../../specimens/cards/parts/parts";
+import { FormButtons, Quiet, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { refusalText } from "@/shared/lib/error-text";
 import { useEdited } from "../../../specimens/model/refusal";
 import { markerSchema, type MarkerFields } from "../../../specimens/model/schemas";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
+
+import table from "./marker-form.de.json";
+const tx = texts(table);
 
 /**
  * Give a specimen a marker or change it (US-BES-03). The new name is shown before saving (DM-BES-03); the form says
@@ -21,7 +26,7 @@ export function MarkerForm(props: {
   onSend: (marker: string) => Promise<ApiError | null>;
   onCancel: () => void;
 }) {
-  const form = useForm<MarkerFields>({
+  const form = useFieldForm<MarkerFields>({
     resolver: zodResolver(markerSchema),
     defaultValues: { marker: props.marker ?? "" },
   });
@@ -33,11 +38,13 @@ export function MarkerForm(props: {
   );
   const submit = form.handleSubmit(async (values) => setError(await props.onSend(values.marker)));
   return (
-    <section aria-labelledby="marker-title">
-      <h1 id="marker-title" className={TITLE}>
-        Kennzeichen ändern
-      </h1>
-      <p className="mb-2 text-muted-foreground">„{props.name}“</p>
+    <section aria-labelledby="marker-title" className="flex min-w-0 flex-col gap-2">
+      <PageHeader
+        headingId="marker-title"
+        title={tx("title")}
+        subject={props.name}
+        back={{ label: tx("back"), onBack: props.onCancel }}
+      />
       <Quiet className="mb-5">
         Nur der Name ändert sich: Messungen und Behandlungen bleiben bei der Pflanze.
       </Quiet>
@@ -57,9 +64,9 @@ export function MarkerForm(props: {
           )}
           <MarkerInput control={form.control} name="marker" label="Kennzeichen" />
           {error && (
-            <Warning>
+            <ErrorNotice>
               <p>{refusalText(error)}</p>
-            </Warning>
+            </ErrorNotice>
           )}
           <FormButtons
             submit="Kennzeichen speichern"

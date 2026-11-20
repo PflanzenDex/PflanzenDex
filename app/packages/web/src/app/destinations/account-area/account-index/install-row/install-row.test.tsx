@@ -37,11 +37,11 @@ afterEach(() => {
 });
 
 describe("US-QS-28 the install row of Konto", () => {
-  it("US-QS-28 with the install on offer the index has the row App installieren, a button with its chevron", () => {
+  it("US-QS-32 with the install on offer the index has the row App installieren, a button without a chevron: it acts in place (F-0098)", () => {
     install.offer = "promptable";
     render(list());
     const row = screen.getByRole("button", { name: "App installieren" });
-    expect(row.querySelector("svg")).not.toBeNull();
+    expect(row.querySelector("svg")).toBeNull();
   });
 
   it("US-QS-28 choosing the row asks the browser for the install", async () => {

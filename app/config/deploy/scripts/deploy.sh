@@ -77,6 +77,32 @@ refresh_proxy() {
   "${compose[@]}" up -d --no-deps --force-recreate proxy || { echo "recreating the proxy failed" >&2; return 1; }
 }
 
+# Keycloak keeps gzip copies of the theme files in the container (data/tmp/kc-gzip-cache, per resources version), and a
+# restart keeps them: clients that accept gzip got the old stylesheet after a deploy that changed only the theme (measured
+# on a probe container, #2161). A new container drops them, so a change recreates keycloak. The theme is a bind mount: a
+# file or folder of it newer than the start of the container means a change after the start (git checkout rewrites only
+# the changed files, and a removed file changes its folder). StartedAt is compared at whole seconds (the floor), so a
+# change is never missed; a change in the second of the start recreates keycloak once more, which is harmless.
+refresh_keycloak_theme() {
+  local id started started_epoch changed
+  id="$("${compose[@]}" ps -q keycloak)" || { echo "ERROR: ${compose[*]} ps -q keycloak failed; the keycloak theme cannot be checked" >&2; return 1; }
+  # No container (a first deploy): `up` has just started keycloak with the checked-out theme.
+  if [ -z "$id" ]; then return 0; fi
+  started="$(docker inspect -f '{{.State.StartedAt}}' "$id")" || { echo "ERROR: docker inspect of keycloak failed; the keycloak theme cannot be checked" >&2; return 1; }
+  if [ -z "$started" ] || ! started_epoch="$(date -d "$started" +%s 2> /dev/null)"; then
+    echo "ERROR: the start time \"$started\" of keycloak cannot be read; the keycloak theme cannot be checked" >&2
+    return 1
+  fi
+  # A file names the change. A folder counts only when no file did (a removed file changes only its folder).
+  changed="$(find ../dev/keycloak-theme -type f -newermt "@$started_epoch" -print -quit)" || { echo "ERROR: cannot search ../dev/keycloak-theme; keycloak was not recreated" >&2; return 1; }
+  if [ -z "$changed" ]; then
+    changed="$(find ../dev/keycloak-theme -newermt "@$started_epoch" -print -quit)" || { echo "ERROR: cannot search ../dev/keycloak-theme; keycloak was not recreated" >&2; return 1; }
+  fi
+  if [ -z "$changed" ]; then return 0; fi
+  echo "keycloak theme changed since keycloak started ($changed); recreating keycloak (its gzip cache in data/tmp/kc-gzip-cache survives a restart)"
+  "${compose[@]}" up -d --no-deps --force-recreate keycloak || { echo "recreating keycloak failed; logs: ${compose[*]} logs keycloak" >&2; return 1; }
+}
+
 # Builds and starts <ref>, waits for api health, then smoke-tests it. Returns non-zero on any failure.
 deploy_ref() {
   local ref="$1"
@@ -88,6 +114,8 @@ deploy_ref() {
   # The one-shot `migrate` service runs before the api (docker-compose.yml); a failed migration fails this step.
   "${compose[@]}" up -d --build --remove-orphans || { echo "compose up failed (build or migration); logs: ${compose[*]} logs migrate" >&2; return 1; }
   refresh_proxy || return 1
+  # Also on a rollback: the checkout of the old ref rewrites the theme files, so keycloak is recreated for the old theme too.
+  refresh_keycloak_theme || return 1
   wait_healthy api 30 || return 1
   # The sign-in service starts slowly on a small host (first start imports the realm), hence the longer wait.
   wait_healthy keycloak 90 || return 1

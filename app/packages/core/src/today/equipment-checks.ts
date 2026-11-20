@@ -28,11 +28,10 @@ export async function equipmentCheckItems(
     kind: "equipment_check_due",
     specimenId: null,
     specimenName: null,
-    text: `Prüfung fällig: ${d.name} – ${
+    text:
       d.lastCheckedOn === null
-        ? "noch nie geprüft."
-        : `zuletzt geprüft am ${germanDate(d.lastCheckedOn)}.`
-    }`,
+        ? `${d.name} wurde noch nie geprüft.`
+        : `${d.name} wurde zuletzt am ${germanDate(d.lastCheckedOn)} geprüft.`,
     nextAction: "Prüfe das Gerät und bestätige es unter Geräte mit „Jetzt geprüft“.",
     target: "equipment",
   }));

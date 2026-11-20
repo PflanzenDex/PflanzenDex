@@ -12,15 +12,24 @@ export const ZONE_DEFAULT: readonly ZoneValues[] = [
 
 const DEFAULT_NAME = /^(?:Lampe|Zone) ([1-9])(?: · Stecklingslicht)?$/;
 
+export interface ZoneLabelOptions {
+  /**
+   * The label sits inside a line joined by " · " (a meta line, a row): the cutting light then reads with brackets,
+   * "Zone 1 (Stecklingslicht)", so it does not read as two facts (SG-FMT-04, US-QS-32).
+   */
+  readonly inLine?: boolean;
+}
+
 /**
  * How a light zone is named in a text (US-QS-24): a default-style name ("Lampe 2" of older accounts, "Zone 2")
- * reads "Zone 2", the lowest one "Zone 1 · Stecklingslicht"; a name the keeper chose stays exactly as typed.
- * Stored names are never rewritten, only the display changes.
+ * reads "Zone 2", the lowest one "Zone 1 · Stecklingslicht" (`inLine`: "Zone 1 (Stecklingslicht)"); a name the keeper
+ * chose stays exactly as typed. Stored names are never rewritten, only the display changes.
  */
-export function zoneLabel(name: string): string {
+export function zoneLabel(name: string, options: ZoneLabelOptions = {}): string {
   const m = DEFAULT_NAME.exec(name.trim());
   if (!m) return name;
-  return m[1] === "1" ? "Zone 1 · Stecklingslicht" : `Zone ${m[1]}`;
+  if (m[1] !== "1") return `Zone ${m[1]}`;
+  return options.inLine ? "Zone 1 (Stecklingslicht)" : "Zone 1 · Stecklingslicht";
 }
 
 const save = (r: LightZone | "name_taken" | "not_found"): Result<LightZone> => {

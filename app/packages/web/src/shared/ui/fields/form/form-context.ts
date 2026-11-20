@@ -58,3 +58,39 @@ export function useFormField() {
     messageId: `${id}-message`,
   };
 }
+
+/** The send button of this form that a mouse event hit, or `null`. */
+function sendOf(event: React.MouseEvent<HTMLFormElement>) {
+  const target = event.target instanceof Element ? event.target : null;
+  const send = target?.closest<HTMLButtonElement | HTMLInputElement>(
+    "button[type='submit'], input[type='submit']",
+  );
+  return send && send.form === event.currentTarget ? send : null;
+}
+
+/**
+ * A press on a send button of its form while a field of that form has the focus: the field keeps it until the press
+ * ends (issue 2216, US-QS-32). Leaving it first runs its check on leaving, the message (and a closing phone keyboard)
+ * moves the page under the finger, the release lands beside the button and the tap sends nothing. `own` is the
+ * caller's handler, run first. The click then moves the focus (`focusSend`).
+ */
+export function keepFieldFocus(
+  event: React.MouseEvent<HTMLFormElement>,
+  own?: React.MouseEventHandler<HTMLFormElement>,
+) {
+  own?.(event);
+  const send = sendOf(event);
+  const focused = document.activeElement;
+  if (event.defaultPrevented || !send || !focused || focused === send) return;
+  if (event.currentTarget.contains(focused)) event.preventDefault();
+}
+
+/**
+ * The click of that press gives the send button the focus the press did not, before the send runs (US-QS-14): a valid
+ * send keeps it on the busy button, a refused one moves it to the first wrong field. Enter in a field sends with a
+ * click of `detail` 0 and keeps the focus in the field.
+ */
+export function focusSend(event: React.MouseEvent<HTMLFormElement>) {
+  const send = sendOf(event);
+  if (send && event.detail > 0 && document.activeElement !== send) send.focus();
+}

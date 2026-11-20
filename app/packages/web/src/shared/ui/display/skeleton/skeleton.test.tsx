@@ -9,14 +9,14 @@ afterEach(cleanup);
 describe("Skeleton (US-QS-07, DS-52, DS-56)", () => {
   it("US-QS-07 · DS-56 a container has exactly one status with the loading text and aria-hidden blocks", () => {
     const { container } = render(
-      <SkeletonGroup label="Lädt…">
+      <SkeletonGroup label="Lädt …">
         <Skeleton data-testid="a" />
         <Skeleton data-testid="b" />
       </SkeletonGroup>,
     );
     const statuses = screen.getAllByRole("status");
     expect(statuses).toHaveLength(1);
-    expect(statuses[0]?.textContent).toContain("Lädt…");
+    expect(statuses[0]?.textContent).toContain("Lädt …");
     expect(screen.getByTestId("a").getAttribute("aria-hidden")).toBe("true");
     expect(screen.getByTestId("b").getAttribute("aria-hidden")).toBe("true");
     expect(container.querySelectorAll("[aria-hidden='true']")).toHaveLength(2);
@@ -29,7 +29,7 @@ describe("Skeleton (US-QS-07, DS-52, DS-56)", () => {
 
   it("US-QS-07 · DS-56 a loading state shows no number (P-08)", () => {
     render(
-      <SkeletonGroup label="Lädt…">
+      <SkeletonGroup label="Lädt …">
         <Skeleton />
       </SkeletonGroup>,
     );

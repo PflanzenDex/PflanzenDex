@@ -44,8 +44,8 @@ function History(props: {
       loadingFallback={<TreatmentHistorySkeleton label="Verlauf wird geladen …" />}
       empty={{
         isEmpty: (rows: readonly TreatmentRow[]) => rows.length === 0,
-        title: "Noch keine erledigte Behandlung für diese Pflanze.",
-        description: "Hake oben einen offenen Termin mit „Erledigt“ ab, dann erscheint er hier.",
+        title: "Noch keine erledigte Behandlung für diese Pflanze",
+        description: "Hake oben einen offenen Termin mit „Abhaken“ ab, dann erscheint er hier.",
         action: { label: "Andere Pflanze wählen", onClick: props.onChoose },
       }}
     >

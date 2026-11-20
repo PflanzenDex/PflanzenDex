@@ -14,20 +14,21 @@ import {
   locationChoices,
   UNPLACED_KEY,
 } from "./rows/location-groups/group-by-location";
-import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { TITLE } from "../specimens/cards/parts/parts";
 import { useCardPages, type CardPages } from "../specimens/cards/use-card-pages";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { PlantTile } from "./rows/plant-tile/plant-tile";
+import { PlantTile, PlantTileSkeleton } from "./rows/plant-tile/plant-tile";
+import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { PlantLayers } from "./plant-layers/plant-layers";
 import { ARCHIVE_LAYER, type LayerProps } from "./plant-layers/layer-ids";
 import { ZoneInsightRow } from "./rows/zone-insight/zone-insight";
 import table from "./plant-layers/plant-layers.de.json";
 
 const t = texts(table);
-
 /**
- * Tiles per page without a layout (starting values, assumption): 2 columns below 768 px, 3 from 768 px, 4 from 1024 px.
+ * Rows per page without a layout (starting values, assumption): 6 below 768 px (one column), 12 from 768 px (two columns), 16 from 1024 px.
  * With a layout the page takes the free height of the region instead (US-QS-19, issue 1029).
  */
 export function usePageSize(): number {
@@ -49,14 +50,10 @@ type Props = LayerProps & {
   summary: SpecimenSummary;
 };
 
-// Two tiles per row from a 360 px phone at normal text, one per row at a larger text size (issue 1019). 8.75 rem lets
-// two columns fit the 294 px of the list at 360 px, so a page holds 6 tiles (owner decision 2026-11-01, issue 1108);
-// a column is never wider than the list, so at a larger text size a tile stays inside its card (issue 1113). The wider
-// windows keep 3 and 4 columns at normal text and lose columns as the text grows, because the minimum is in rem (issue 1304).
-const TILES =
-  "grid grid-cols-[repeat(auto-fill,minmax(min(8.75rem,100%),1fr))] gap-2 md:grid-cols-[repeat(auto-fill,minmax(min(11rem,100%),1fr))] lg:grid-cols-[repeat(auto-fill,minmax(min(max(9.5rem,22%),100%),1fr))]";
+// The plants are one flat group in one column at every width (US-QS-32, FX-35): no group inside a group.
+const TILES = OBJECT_GROUP;
 
-/** The server paging of a list of plants for the Pager (FR-BES-23): the total, the loading state and a failure's text. */
+/** The server paging of a list of plants for the Pager (FR-BES-23): total, loading state, failure, tile skeleton (F-0124). */
 function pagingOf(list: CardPages, fallbackTotal: number): PagerPaging {
   return {
     total: list.total ?? fallbackTotal,
@@ -67,6 +64,7 @@ function pagingOf(list: CardPages, fallbackTotal: number): PagerPaging {
     onRetry: list.retry,
     loadingText: t("list.loading"),
     retryText: t("list.retry"),
+    placeholder: <PlantTileSkeleton />,
   };
 }
 
@@ -134,28 +132,30 @@ function Grouped(props: Props) {
 function Row(props: Props) {
   const archive = useLayer(ARCHIVE_LAYER);
   return (
-    // Wraps at a larger text size, so the insight keeps its longest word whole (issue 1113).
-    <div className="flex flex-wrap items-center gap-2">
+    // The light-zone row is a row of its own above the buttons (F-0114, US-QS-32); the buttons wrap at a larger text size.
+    <div className="flex flex-col gap-2">
       <ZoneInsightRow distribution={props.distribution} />
-      {props.archived.length > 0 ? (
+      <div className="flex flex-wrap items-center gap-2">
+        {props.archived.length > 0 ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-haspopup="dialog"
+            onClick={(event) => archive.openLayer(event.currentTarget)}
+          >
+            Archiv ({props.archived.length})
+          </Button>
+        ) : null}
         <Button
           type="button"
-          variant="outline"
-          size="sm"
-          aria-haspopup="dialog"
-          onClick={(event) => archive.openLayer(event.currentTarget)}
+          size="icon"
+          aria-label="Pflanze anlegen"
+          onClick={props.onSpeciesChoose}
         >
-          Archiv ({props.archived.length})
+          <Plus aria-hidden="true" className="size-5" />
         </Button>
-      ) : null}
-      <Button
-        type="button"
-        size="icon"
-        aria-label="Weitere Pflanze"
-        onClick={props.onSpeciesChoose}
-      >
-        <Plus aria-hidden="true" className="size-5" />
-      </Button>
+      </div>
     </div>
   );
 }
@@ -169,7 +169,7 @@ export function PlantsScreen(props: Props) {
   const body =
     props.summary.total === 0 ? (
       <EmptyState
-        title="Du hast noch keine Pflanze."
+        title="Du hast noch keine Pflanze"
         description="Wähle zuerst eine Art aus dem Katalog."
         action={{ label: "Art wählen", onClick: props.onSpeciesChoose }}
       />
