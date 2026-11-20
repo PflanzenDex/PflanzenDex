@@ -68,11 +68,17 @@ async function navigate(url, settle) {
   await sleep(300);
   await evalRetry("!!window.__perf");
   if (await ensureSignedIn()) return navigate(url, settle);
-  const t = await evalRetry(`window.__perf.waitFor(${JSON.stringify(settle)}, 20000)`);
+  const t = await evalRetry(`window.__perf.waitFor(${q(settle)}, 20000)`);
   if (t == null) throw new Error("settle timeout after navigate " + url);
   return t;
 }
-const q = (s) => JSON.stringify(s);
+// A string as a JS string literal for Runtime.evaluate: JSON plus escapes for the characters that can end a script or a
+// line in JS source (CodeQL js/bad-code-sanitization).
+const q = (s) =>
+  JSON.stringify(s).replace(
+    /[<>\/\u2028\u2029]/g,
+    (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`,
+  );
 const mainBtn = (re) =>
   `[...document.querySelectorAll('main button, main a')].find(b => ${re}.test(b.textContent) && b.getBoundingClientRect().height > 0)`;
 const dlgBtn = (re) =>
