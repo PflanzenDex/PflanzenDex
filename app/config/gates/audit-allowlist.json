@@ -1,11 +1,4 @@
 {
   "_comment": "Tolerated high/critical npm advisories (QG-S2). Only unpatched dev/release tooling (semantic-release, markdownlint-cli2, never shipped in the app runtime). The expiry is 30 days (an assumption, starting value; chosen by the owner on 2026-10-29), so upstream fixes get picked up soon; when it passes, tools/check/delivery/supply/check-audit.mjs fails so each entry gets re-reviewed: look for a patched release first, then extend with a new reason or remove the entry.",
-  "entries": [
-    {
-      "advisory": "GHSA-gg6h-894w-4m9c",
-      "package": "re2js",
-      "reason": "re2js 2.8.6 (patched 2.8.7) is pinned exactly by markdownlint 0.42.0, pulled in by markdownlint-cli2 0.24.0 (latest, pins markdownlint 0.42.0 exactly); markdownlint 0.42.1 has the fix (re2js 2.9.1) but cli2 does not take it yet (checked 2026-11-07). Lints only our own docs, dev tooling only. markdownlint-cli2 0.23.3 would bring back two high markdown-it advisories. No overrides (owner, 2026-11-07, issue 1518): wait for a markdownlint-cli2 release.",
-      "expires": "2026-11-28"
-    }
-  ]
+  "entries": []
 }
