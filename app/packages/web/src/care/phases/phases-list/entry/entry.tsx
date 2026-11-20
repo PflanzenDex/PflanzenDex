@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router";
 import {
   phaseStatus,
   type LightLocation,
@@ -11,7 +12,11 @@ import { useObjectPhoto } from "@/shared/lists/object-row/use-object-photo";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { plantLayerId } from "@/shared/patterns/navigation/navigation/navigation";
+import {
+  PLANT_LOCATION_TAB,
+  PLANT_TAB_PARAM,
+  plantLayerId,
+} from "@/shared/patterns/navigation/navigation/navigation";
 import { PHASE_TEXT, locationText, nextChangeText } from "../../../shared/text";
 import { needsSwitch, switchedText } from "../../phase-groups";
 import table from "../phases-list.de.json";
@@ -47,12 +52,22 @@ function HintChip({ hints }: { hints: readonly string[] }) {
 
 /**
  * The one trailing badge of a phase row when there is no action (SG-LIST-03): the place only when it deviates (amber,
- * "Weicht ab") or is missing (neutral). A plant in place shows no place (owner answer Q-82).
+ * "Weicht ab"). A plant in place shows no place (owner answer Q-82); a missing place is the action (US-QS-32).
  */
 function placeBadge(status: PhaseStatus) {
   if (status === "deviation") return <Badge variant="warning">{ui("deviates")}</Badge>;
-  if (status === "location_missing") return <Badge>{ui("locationMissing")}</Badge>;
   return undefined;
+}
+
+/** The Standort tab in the plant's own layer, replaced like the tab choice of the layer (`usePlantTab`, US-QS-32). */
+function useShowLocationTab(): () => void {
+  const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  return () => {
+    const next = new URLSearchParams(params);
+    next.set(PLANT_TAB_PARAM, PLANT_LOCATION_TAB[PLANT_TAB_PARAM]);
+    setParams(next, { replace: true, state: location.state });
+  };
 }
 
 /**
@@ -69,12 +84,12 @@ function metaOf(z: PhasesRow, locations: readonly LightLocation[], moves: boolea
 
 /**
  * The hints under a phase row, the next step of an entry that is missing (P-09, P-10): a missing location with a target
- * keeps the switch hint (the place fact moves into the action), a missing location without one keeps its hint, and a
- * plant without a target names what to choose.
+ * keeps the switch hint (the place fact moves into the action), a missing location without one says "Kein Standort" (the
+ * action "Standort setzen" sits beside the row, US-QS-32), and a plant without a target names what to choose.
  */
 function rowHints(z: PhasesRow, status: PhaseStatus, canSwitch: boolean): string[] {
   const location =
-    status === "location_missing" ? (canSwitch ? ui("switchHint") : ui("hintLocation")) : null;
+    status === "location_missing" ? (canSwitch ? ui("switchHint") : ui("noLocation")) : null;
   return [
     z.nextChange === null ? ui("hintReview") : null,
     location,
@@ -100,10 +115,12 @@ function CompactEntry(props: {
 }) {
   const { row: z, locations } = props;
   const { openLayer, open } = useLayer(plantLayerId(z.specimenId));
+  const showLocation = useShowLocationTab();
   const [ref, src] = useObjectPhoto(props.access, z.photo?.url);
   const status = phaseStatus(z);
   const moves = needsSwitch(z);
   const canSwitch = props.onConfirm !== undefined && moves;
+  const locate = status === "location_missing" && !canSwitch; // opens the plant's own location choice (US-QS-32)
   const action = canSwitch ? (
     <Button
       type="button"
@@ -114,6 +131,18 @@ function CompactEntry(props: {
       onClick={() => props.onConfirm?.([z.specimenId], switchedText([z], locations))}
     >
       {ui("switch")}
+    </Button>
+  ) : locate ? (
+    <Button
+      type="button"
+      variant="secondary"
+      className="shrink-0 px-3"
+      aria-label={ui("locateLabel", { name: z.name })}
+      onClick={(event) =>
+        props.opens ? openLayer(event.currentTarget, PLANT_LOCATION_TAB) : showLocation()
+      }
+    >
+      {ui("locate")}
     </Button>
   ) : undefined;
   return (

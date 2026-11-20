@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation } from "react-router";
+import { MemoryRouter, useLocation, useNavigationType } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
 import { Entry } from "./entry";
@@ -27,10 +27,18 @@ const row = (extra: Partial<PhasesRow> = {}): PhasesRow => ({
   ...extra,
 });
 
-/** Shows the address the row leads to, so a test can see that the plant's layer opened (US-QS-19). */
+/**
+ * Shows the address the row leads to, so a test can see that the plant's layer opened (US-QS-19), and how the address
+ * changed: `data-navigation` is PUSH for a new entry, REPLACE for a tab change (US-QS-32, issue 2150).
+ */
 function Where() {
   const at = useLocation();
-  return <output data-testid="where">{at.search}</output>;
+  const how = useNavigationType();
+  return (
+    <output data-testid="where" data-navigation={how}>
+      {at.search}
+    </output>
+  );
 }
 
 const access = { api: "http://api", token: async () => "tok" };
@@ -91,6 +99,108 @@ describe("US-QS-32 a phase row opens its plant the way the list 'Alle' does (SG-
     expect(
       within(opener).getByText("Bogenhanf · Nächster Wechsel zur Wachstumsphase: 16.03.2027"),
     ).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 (issue 2150) a phase row without a location says 'Kein Standort' and offers 'Standort setzen' beside it", () => {
+  const withoutLocation = (extra: Partial<PhasesRow> = {}) => row({ locationId: null, ...extra });
+
+  it("US-QS-32 (issue 2150) a bare row without a location shows 'Kein Standort', no 'Standort fehlt' and no hint about 'Hinweise'", () => {
+    render(
+      <MemoryRouter>
+        <Entry
+          bare
+          row={withoutLocation()}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Kein Standort")).toBeTruthy();
+    expect(screen.queryByText(/Standort fehlt/)).toBeNull();
+    expect(screen.queryByText(/Weise der Pflanze unter „Hinweise“/)).toBeNull();
+  });
+
+  it("US-QS-32 (issue 2150) the button 'Standort setzen: Bogenhanf' sits beside the row, never inside the row's button", () => {
+    render(
+      <MemoryRouter>
+        <Entry
+          bare
+          row={withoutLocation()}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+      </MemoryRouter>,
+    );
+    const opener = screen.getByRole("button", { name: /^Bogenhanf(\s|$)/ });
+    const setter = screen.getByRole("button", { name: "Standort setzen: Bogenhanf" });
+    expect(setter.textContent).toBe("Standort setzen");
+    expect(within(opener).queryByRole("button")).toBeNull();
+    expect(opener.contains(setter)).toBe(false);
+  });
+
+  it("US-QS-32 (issue 2150) a click on 'Standort setzen' opens the plant's layer on its Standort tab in one new entry", async () => {
+    render(
+      <MemoryRouter initialEntries={["/collection?view=plants&group=phase"]}>
+        <Entry
+          bare
+          row={withoutLocation()}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+        <Where />
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Standort setzen: Bogenhanf" }));
+    const where = screen.getByTestId("where");
+    expect(where.textContent).toContain("sheet=plant-e1");
+    expect(where.textContent).toContain("tab=standort");
+    expect(where.getAttribute("data-navigation")).toBe("PUSH");
+  });
+
+  it("US-QS-32 (issue 2150) with opens false the click sets only tab=standort, replaced, and opens no layer", async () => {
+    render(
+      <MemoryRouter initialEntries={["/collection?view=plants"]}>
+        <Entry
+          bare
+          opens={false}
+          row={withoutLocation()}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+        <Where />
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Standort setzen: Bogenhanf" }));
+    const where = screen.getByTestId("where");
+    expect(where.textContent).toContain("tab=standort");
+    expect(where.textContent).not.toContain("sheet=");
+    expect(where.getAttribute("data-navigation")).toBe("REPLACE");
+  });
+
+  it("US-QS-32 (issue 2150) a row with a location shows no 'Standort setzen'", () => {
+    render(
+      <MemoryRouter>
+        <Entry
+          bare
+          row={row()}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole("button", { name: /^Standort setzen/ })).toBeNull();
+    expect(screen.queryByText("Standort setzen")).toBeNull();
   });
 });
 
