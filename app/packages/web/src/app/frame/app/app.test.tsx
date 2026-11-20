@@ -300,7 +300,30 @@ describe("US-ACC-01 App", () => {
     fakeServer(500);
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    expect((await screen.findByRole("alert")).textContent).toContain("Konto nicht geladen");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Dein Konto konnte gerade nicht geladen werden.",
+    );
+    fakeServer();
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
+  });
+
+  it("US-QS-32 a keeper signed in on this device sees a failed account load inside both bars, and a retry that fails again says so", async () => {
+    window.localStorage.setItem(
+      "oidc.user:http://auth/realm:pflanzendex-web",
+      JSON.stringify({ access_token: "tok", expires_at: Math.floor(Date.now() / 1000) + 3600 }),
+    );
+    fakeServer(500);
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    const { container } = renderApp();
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Dein Konto konnte gerade nicht geladen werden.",
+    );
+    // The frame stays: the bottom bar is drawn, and the error sits in the page's main column.
+    expect(container.querySelector("[data-start-bar]")).not.toBeNull();
+    expect(screen.getByRole("main").contains(screen.getByRole("alert"))).toBe(true);
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Wieder nicht geladen.");
     fakeServer();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
@@ -640,11 +663,16 @@ describe("US-ACC-01 App", () => {
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
   });
 
-  it("US-QS-07 · an unknown address lands on Heute", async () => {
+  it("US-QS-07 · US-QS-32 an unknown address shows the not-found view inside the frame, with both bars and its way on", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/gibt-es-nicht");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+    ).toBeTruthy();
+    expect(document.title).toBe("Seite nicht gefunden – PflanzenDéx");
+    await userEvent.click(screen.getByRole("button", { name: "Zu Heute" }));
     await waitFor(() => expectHeute());
   });
 

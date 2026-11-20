@@ -11,6 +11,8 @@ export type EmptyStateProps = {
   description?: string;
   /** The next step (P-09). Required in practice: every empty or error view offers one. */
   action?: EmptyStateAction;
+  /** A second, plain action beside the filled one (SG-BTN-01, tertiary: text only), e.g. "Zur Sammlung" (US-QS-32). */
+  secondary?: EmptyStateAction;
   /** `error` is announced as an alert; `empty` is plain content. */
   variant?: "empty" | "error";
   /** The lucide mark of an empty state (SG-ICON-01, SG-ILLU-02); `Sprout` when the caller passes none. The error has its own mark. */
@@ -18,8 +20,8 @@ export type EmptyStateProps = {
   /** Without the icon tile and with less room: for a state below a notice that already says most of it (issue 1343). */
   compact?: boolean;
   className?: string;
-  /** Heading level of the title: 2 on a page, 3 inside a section of a page (US-QS-14). */
-  level?: 2 | 3;
+  /** Heading level of the title: 1 when the state is the whole page (its one h1), 2 on a page with its own h1, 3 inside a section of a page (US-QS-14, US-QS-32). */
+  level?: 1 | 2 | 3;
   /** Receives the title; it is then focusable (`tabIndex=-1`) so a view can move the focus there when it replaces another (SC 2.4.3). */
   titleRef?: React.Ref<HTMLHeadingElement>;
 };
@@ -49,11 +51,27 @@ function IconTile({ variant, icon }: { variant: "empty" | "error"; icon: LucideI
   );
 }
 
+/** The button of an action: a link when it has an `href`, else a button that runs its handler (US-QS-07). */
+function ActionControl({ action, variant }: { action: EmptyStateAction; variant: ButtonVariant }) {
+  return action.href !== undefined ? (
+    <Button asChild variant={variant}>
+      <a href={action.href}>{action.label}</a>
+    </Button>
+  ) : (
+    <Button variant={variant} onClick={action.onClick}>
+      {action.label}
+    </Button>
+  );
+}
+
+type ButtonVariant = "default" | "tinted" | "plain";
+
 /** Empty or error state of a list, table or detail view (US-QS-07, DS-26, P-09): says what happened and what to do next. */
 export function EmptyState({
   title,
   description,
   action,
+  secondary,
   variant = "empty",
   icon,
   compact = false,
@@ -61,7 +79,7 @@ export function EmptyState({
   level = 2,
   titleRef,
 }: EmptyStateProps) {
-  const Title = level === 3 ? "h3" : "h2";
+  const Title = level === 1 ? "h1" : level === 3 ? "h3" : "h2";
   return (
     <div
       role={variant === "error" ? "alert" : undefined}
@@ -84,16 +102,9 @@ export function EmptyState({
         <p className="max-w-prose break-words text-sm text-muted-foreground">{description}</p>
       ) : null}
       {action ? (
-        action.href !== undefined ? (
-          <Button asChild variant={variant === "error" ? "tinted" : "default"}>
-            <a href={action.href}>{action.label}</a>
-          </Button>
-        ) : (
-          <Button variant={variant === "error" ? "tinted" : "default"} onClick={action.onClick}>
-            {action.label}
-          </Button>
-        )
+        <ActionControl action={action} variant={variant === "error" ? "tinted" : "default"} />
       ) : null}
+      {secondary ? <ActionControl action={secondary} variant="plain" /> : null}
     </div>
   );
 }

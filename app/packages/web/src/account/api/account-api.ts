@@ -120,12 +120,10 @@ export function addressFromState(origin: string, state: unknown): string | undef
 
 export const apiUrl = (env: Environment): string => env["VITE_API_URL"] ?? "http://localhost:3000";
 
-/** Whether the 403 means "registration needs an invitation code" (US-ACC-05), judged by the code, never by the text. */
-async function invitationRequired(res: globalThis.Response): Promise<boolean> {
-  const body = (await res.json().catch(() => ({}))) as { error?: { code?: string } };
-  return body.error?.code === "invitation.required";
-}
+/** The code of a refusal of the account load that the message table does not know (US-QS-32, P-10). */
+export const ACCOUNT_NOT_LOADABLE = "account.not_loadable";
 
+/** Loads the account; a refusal rejects with its error code (US-QS-32), no answer rejects as it is (see `session-failure.ts`). */
 export async function getAccount(
   api: string,
   token: string,
@@ -136,9 +134,11 @@ export async function getAccount(
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
   });
   if (res.status === 401) throw new Error("not_signed_in");
-  if (res.status === 403 && (await invitationRequired(res))) throw new Error("invitation_required");
-  if (!res.ok) throw new Error("account_not_loadable");
-  return (await res.json()) as Account;
+  if (res.ok) return (await res.json()) as Account;
+  const body = (await res.json().catch(() => ({}))) as { error?: { code?: string } };
+  if (res.status === 403 && body.error?.code === "invitation.required")
+    throw new Error("invitation_required");
+  throw new Error(body.error?.code ?? ACCOUNT_NOT_LOADABLE);
 }
 
 /** The code of a sign-out that got no answer: offline, or no answer within the timeout (US-ACC-01). */

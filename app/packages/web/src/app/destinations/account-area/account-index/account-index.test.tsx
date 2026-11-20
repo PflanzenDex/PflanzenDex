@@ -147,13 +147,89 @@ describe("US-QS-17 the index of Konto", () => {
     expect(row.className).toContain("px-3");
   });
 
-  it("US-QS-17 · P-08 a value that cannot be read says unbekannt", async () => {
+  it("US-QS-32 · P-08 a section whose request failed says Nicht geladen with its retry, never unbekannt", async () => {
     fakeServer({ profile: null, achievements: null, connections: null });
     show();
-    for (const name of [/^Einstellungen/, /^Erinnerungen/, /^Erfolge/, /^KI-Clients/])
+    for (const name of [/^Einstellungen/, /^Erinnerungen/, /^Erfolge/, /^KI-Clients/]) {
       await waitFor(() =>
-        expect(screen.getByRole("link", { name }).textContent).toContain("unbekannt"),
+        expect(screen.getByRole("link", { name }).textContent).toContain("Nicht geladen"),
       );
+      expect(screen.getByRole("link", { name }).textContent).not.toContain("unbekannt");
+    }
+    expect(screen.getByRole("button", { name: "Erneut versuchen: Einstellungen" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Erneut versuchen: Erfolge und Rückblick" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Erneut versuchen: KI-Clients" })).toBeTruthy();
+  });
+
+  it("US-QS-32 the retry of a failed row asks its request again and the row shows the value", async () => {
+    fakeServer({ profile: null });
+    show();
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).toContain(
+        "Nicht geladen",
+      ),
+    );
+    fakeServer();
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen: Einstellungen" }));
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).toContain(
+        "Lena · Europe/Berlin",
+      ),
+    );
+    expect(screen.queryByRole("button", { name: "Erneut versuchen: Einstellungen" })).toBeNull();
+  });
+
+  it("US-QS-32 · F-0315 a new account without a saved zone reads Zeitzone vom Gerät when the device gives one, in both rows", async () => {
+    fakeServer({
+      profile: { displayName: "Lena", timeZone: null, notifications: { phase: true } },
+    });
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+      timeZone: "Europe/Berlin",
+    } as Intl.ResolvedDateTimeFormatOptions);
+    try {
+      show();
+      await waitFor(() =>
+        expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).toContain(
+          "Lena · Zeitzone vom Gerät",
+        ),
+      );
+      expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).not.toMatch(
+        /· unbekannt/,
+      );
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("US-QS-32 · F-0315 a device without a zone reads Zeitzone unbekannt, the label kept (P-08)", async () => {
+    fakeServer({
+      profile: { displayName: "Lena", timeZone: null, notifications: { phase: true } },
+    });
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+      timeZone: undefined,
+    } as unknown as Intl.ResolvedDateTimeFormatOptions);
+    try {
+      show();
+      await waitFor(() =>
+        expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).toContain(
+          "Lena · Zeitzone unbekannt",
+        ),
+      );
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("US-QS-32 · F-0315 an unknown name is named as such, never a bare unbekannt", async () => {
+    fakeServer({ profile: { displayName: null, timeZone: "Europe/Berlin", notifications: {} } });
+    show();
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /^Einstellungen/ }).textContent).toContain(
+        "Name unbekannt · Europe/Berlin",
+      ),
+    );
   });
 
   it("US-QS-17 · US-ACH-08 calm mode hides the row Erfolge, the function ai hides KI-Clients", async () => {

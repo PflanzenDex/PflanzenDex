@@ -50,10 +50,10 @@ function startingAt(path: string) {
   return { ...view, end };
 }
 
-function frameAt(path: string) {
+function frameAt(path: string, body?: ReactNode) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <StartFrame />
+      <StartFrame {...(body === undefined ? {} : { body })} />
     </MemoryRouter>,
   );
 }
@@ -92,6 +92,30 @@ describe("US-QS-32 one loading picture from the app start to the page (SG-STATE-
     expect(likelySignedIn()).toBe(false);
     window.localStorage.setItem(key, JSON.stringify({ expires_at: Date.now() / 1000 + 3600 }));
     expect(likelySignedIn()).toBe(true);
+  });
+});
+
+describe("US-QS-32 the start frame carries a failed account load inside the frame (F-0059, Q03)", () => {
+  it("US-QS-32 a body given to the start frame replaces the page skeleton in main, and both bars stay", () => {
+    const { container } = frameAt(
+      "/today",
+      <p role="alert">Dein Konto konnte gerade nicht geladen werden.</p>,
+    );
+    expect(screen.getByRole("alert").textContent).toContain("Dein Konto konnte");
+    expect(screen.queryAllByRole("status")).toHaveLength(0);
+    expect(container.querySelector("[data-start-bar]")).not.toBeNull();
+    expect(topBarOf(container)).toBeDefined();
+    expect(screen.getByRole("main").contains(screen.getByRole("alert"))).toBe(true);
+  });
+
+  it("US-QS-32 without a body the start frame shows its skeleton as before", () => {
+    const end = beginAppStart();
+    try {
+      frameAt("/today");
+      expect(screen.getAllByRole("status")).toHaveLength(1);
+    } finally {
+      end();
+    }
   });
 });
 

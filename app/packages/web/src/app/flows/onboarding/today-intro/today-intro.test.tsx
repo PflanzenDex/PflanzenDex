@@ -170,7 +170,7 @@ const tasksShown = () =>
   });
 
 async function pickSpecies() {
-  await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Monstera");
+  await userEvent.type(await screen.findByLabelText("Art"), "Monstera");
   await userEvent.click(await screen.findByRole("button", { name: /Monstera deliciosa/ }));
 }
 
@@ -267,9 +267,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     await pickSpecies();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await userEvent.click(await screen.findByRole("button", { name: "Zurück" }));
-    expect(((await screen.findByLabelText("Name der Pflanze")) as HTMLInputElement).value).toBe(
-      "Monstera",
-    );
+    expect(((await screen.findByLabelText("Art")) as HTMLInputElement).value).toBe("Monstera");
     expect(
       (await screen.findByRole("button", { name: /Monstera deliciosa/ })).getAttribute(
         "aria-pressed",
@@ -280,10 +278,8 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
   it("US-ONB-01 a name without a hit offers the catalog instead of a dead end", async () => {
     fakeServer(world({ hits: [] }));
     view();
-    await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Zzz");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Im Katalog suchen oder vorschlagen" }),
-    );
+    await userEvent.type(await screen.findByLabelText("Art"), "Zzz");
+    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     expect(open).toHaveBeenCalledWith("species");
   });
 
@@ -315,7 +311,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     cleanup();
     view();
     expect(await tasksShown()).toBeTruthy();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 
   it("US-ONB-07 · DM-ONB-03 ending the guide is stored for the account, not for the device", async () => {
@@ -335,14 +331,14 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     // another device of the same account: the guide stays ended
     view();
     expect(await tasksShown()).toBeTruthy();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 
   it("US-ONB-07 a guide that ended on another device does not come back here", async () => {
     fakeServer(world({ guideEnded: true }));
     view();
     expect(await tasksShown()).toBeTruthy();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 
   it("US-ONB-01 · P-10 an end of the guide that is not stored is shown with a retry, and the retry stores it: the guide does not come back unannounced (#1803)", async () => {
@@ -352,7 +348,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Überspringen" }));
     // the guide is left in this visit, the tasks show, and the keeper is told that the end is not stored
     expect(await tasksShown()).toBeTruthy();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
     const notice = await screen.findByRole("alert");
     expect(notice.textContent).toContain("nicht gespeichert");
     expect(notice.textContent).toContain("nicht erreichbar");
@@ -366,7 +362,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     cleanup();
     view();
     expect(await tasksShown()).toBeTruthy();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 
   it("US-ONB-01 a returning keeper (all plants archived) gets the day's tasks, not the flow (#291)", async () => {
@@ -374,7 +370,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     view();
     expect(await tasksShown()).toBeTruthy();
     expect(screen.queryByText(/Schritt 1 von/)).toBeNull();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 });
 
@@ -776,7 +772,7 @@ describe("US-ONB-01 · #1795 the guide follows the plants of the account, not a 
     expect(await tasksShown()).toBeTruthy();
     await settle();
     expect(guideShown()).toBe(false);
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 
   it("US-ONB-01 an account without a plant shows the first-plant guide on Heute (#1795)", async () => {
@@ -837,13 +833,13 @@ describe("US-ONB-01 · #1795 the guide follows the plants of the account, not a 
         <AskAgain />
       </>,
     );
-    await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Monstera");
+    await userEvent.type(await screen.findByLabelText("Art"), "Monstera");
     const release = holdPath("/specimens/count");
     await userEvent.click(screen.getByRole("button", { name: "Neu laden" }));
     // The count is asked again while the guide is open (the hold records the request after the stub).
     await vi.waitFor(() => expect(paths()).toContain("/specimens/count"));
     await settle();
-    const typed = () => (screen.getByLabelText("Name der Pflanze") as HTMLInputElement).value;
+    const typed = () => (screen.getByLabelText("Art") as HTMLInputElement).value;
     expect(typed()).toBe("Monstera");
     release();
     await settle();

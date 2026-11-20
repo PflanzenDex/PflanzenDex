@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ERROR_TEXTS } from "@pflanzendex/core";
 
 // The sign-in service is a foreign system: UserManager is replaced, the session logic of the app runs for real.
 const mgr = vi.hoisted(() => {
@@ -166,7 +167,8 @@ describe("US-ACC-01 session", () => {
     await waitFor(() =>
       expect(result.current.state).toEqual({
         kind: "error",
-        text: "Konto nicht geladen",
+        code: "account.not_loadable",
+        text: "Dein Konto konnte gerade nicht geladen werden. Versuche es noch einmal.",
       }),
     );
     vi.stubGlobal(
@@ -1235,9 +1237,98 @@ describe("US-ACC-01 first load when the sign-in service or its library fails", (
     await waitFor(() => expect(result.current.state.kind).toBe("error"));
     expect(result.current.state).toEqual({
       kind: "error",
-      text: "Konto nicht geladen",
+      code: "account.not_loadable",
+      text: "Dein Konto konnte gerade nicht geladen werden. Versuche es noch einmal.",
     });
     expect(result.current.state).not.toHaveProperty("reloadPage");
+  });
+
+  it("US-QS-32 a refusal with a code of the message table shows the text of that code, never the raw server text (P-10)", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        response(503, { error: { code: "system.database_unavailable", text: "raw server text" } }),
+      ),
+    );
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("error"));
+    expect(result.current.state).toEqual({
+      kind: "error",
+      code: "system.database_unavailable",
+      text: ERROR_TEXTS["system.database_unavailable"],
+    });
+    expect(JSON.stringify(result.current.state)).not.toContain("raw server text");
+  });
+
+  it("US-QS-32 a network failure says that the server is not reachable, and offline says the connection is missing", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => {
+        throw new TypeError("Failed to fetch");
+      }),
+    );
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("error"));
+    expect(result.current.state).toEqual({
+      kind: "error",
+      code: "network.not_reachable",
+      text: "Der Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.",
+    });
+    const online = Object.getOwnPropertyDescriptor(window.navigator, "onLine");
+    Object.defineProperty(window.navigator, "onLine", { configurable: true, get: () => false });
+    try {
+      await act(() => result.current.reload());
+      await waitFor(() =>
+        expect(result.current.state).toEqual({
+          kind: "error",
+          code: "network.not_reachable",
+          text: "Wieder keine Verbindung. Prüfe dein Netz und versuche es noch einmal.",
+        }),
+      );
+    } finally {
+      if (online) Object.defineProperty(window.navigator, "onLine", online);
+      else delete (window.navigator as { onLine?: boolean }).onLine;
+    }
+  });
+
+  it("US-QS-32 a retry that fails again says so: the error text starts with Wieder keine Verbindung.", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => {
+        throw new TypeError("Failed to fetch");
+      }),
+    );
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("error"));
+    await act(() => result.current.reload());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({
+        kind: "error",
+        code: "network.not_reachable",
+        text: "Wieder keine Verbindung. Der Server ist gerade nicht erreichbar.",
+      }),
+    );
+  });
+
+  it("US-QS-32 a refusal that fails again says that the load failed again, with the text of its code", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => response(500)),
+    );
+    const { result } = renderHook(() => useSession());
+    await waitFor(() => expect(result.current.state.kind).toBe("error"));
+    await act(() => result.current.reload());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({
+        kind: "error",
+        code: "account.not_loadable",
+        text: "Wieder nicht geladen. Dein Konto konnte gerade nicht geladen werden. Versuche es noch einmal.",
+      }),
+    );
   });
 
   it("US-ACC-01 when our API never answers, the account load ends in its error and the retry works", async () => {
@@ -1259,7 +1350,8 @@ describe("US-ACC-01 first load when the sign-in service or its library fails", (
       await waitFor(() =>
         expect(result.current.state).toEqual({
           kind: "error",
-          text: "Konto nicht geladen",
+          code: "network.not_reachable",
+          text: "Der Server ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal.",
         }),
       );
       expect(timeout).toHaveBeenCalledWith(15_000);

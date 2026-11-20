@@ -1,19 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { UserManager, User } from "oidc-client-ts";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { UserManager } from "oidc-client-ts";
 import { setProfileTimeZone } from "../../shared/data";
 import { apiUrl, getAccount, type Account } from "../api/account-api";
 import { here, hereState, newManager, processReturn } from "../api/sign-in-client";
+import { failureOf } from "./session-failure";
+import { registerReturn, signedOutState, switchReturn } from "./session-returns";
 import { texts } from "../../shared/lib/text-rules/texts";
 import table from "../views/views.de.json";
-import {
-  LIVE,
-  MARKER,
-  REGISTER,
-  SILENT_TRIED,
-  endSession,
-  sessionActions,
-  shouldTrySilently,
-} from "./session-actions";
+import { LIVE, REGISTER, SILENT_TRIED, sessionActions, shouldTrySilently } from "./session-actions";
 
 export type State =
   | { kind: "loading" }
@@ -30,67 +24,15 @@ export type State =
       everywhereError?: string | undefined;
       everywhereBusy?: boolean;
     }
-  /** reloadPage: the sign-in library did not load, so the page offers a full reload instead of a retry (US-ACC-01). */
-  | { kind: "error"; text: string; reloadPage?: boolean };
+  /** `code` and `text` of a failed account load (US-QS-32); reloadPage: the sign-in library did not load (US-ACC-01). */
+  | { kind: "error"; text: string; reloadPage?: boolean; code?: string };
 
 const env = import.meta.env as Record<string, string | undefined>;
 const t = texts(table);
 
-// The return of "Konto anlegen" (US-ACC-01), null if not about it: a live session ends first (id token: no logout page).
-async function registerReturn(
-  mgr: UserManager,
-  intent: string | null,
-  user: User | undefined,
-  answered: boolean,
-): Promise<State | null> {
-  if (intent === "check" && answered) {
-    if (user)
-      await endSession(mgr, "after_logout").catch((e: unknown) => {
-        window.sessionStorage.removeItem(REGISTER); // the session did not end: no flag stays behind
-        throw e;
-      });
-    else await mgr.signinRedirect({ prompt: "create" });
-    return { kind: "loading" };
-  }
-  if (intent === "after_logout" && !user) {
-    await mgr.signinRedirect({ prompt: "create" });
-    return { kind: "loading" };
-  }
-  return null;
-}
-
 // The error answers of a sign-in return that say the sign-in service holds a session for this browser, but needs an
 // interaction first (US-QS-32). `login_required` says there is none and is not among them.
 const LIVE_ERRORS = ["interaction_required", "consent_required", "account_selection_required"];
-
-// The welcome page of a visitor without a sign-in (US-ACC-01, US-QS-32). The hint names a real sign-out only (MARKER); the
-// switch shows while this tab knows of a live session and no sign-out happened. A field that does not apply is left out.
-function signedOutState(error?: string): State {
-  const signedOut = window.sessionStorage.getItem(MARKER);
-  const live = window.sessionStorage.getItem(LIVE) && !signedOut;
-  return {
-    kind: "signedOut",
-    ...(signedOut ? { hint: "Du bist abgemeldet." } : {}),
-    ...(error ? { error } : {}),
-    ...(live ? { canSwitch: true } : {}),
-  };
-}
-
-// The return of "Konto wechseln" (US-ACC-01), null if not about it: its session has ended, so the sign-in form opens for the
-// other account at once (owner decision 2026-11-14). A redirect that cannot start shows the welcome page with its error (P-10).
-async function switchReturn(
-  mgr: UserManager,
-  intent: string | null,
-  user: User | undefined,
-): Promise<State | null> {
-  if (intent !== "after_switch" || user) return null;
-  try {
-    await mgr.signinRedirect({ prompt: "login", redirect_uri: here(), state: hereState() });
-    return { kind: "loading" };
-  } catch {
-    return signedOutState(t("signIn.failed"));
-  }
-}
 
 // The one silent attempt of the tab (US-ACC-01). The redirect leaves the page, so the state stays loading; when the
 // sign-in service cannot be reached, the welcome page says so. The attempt stays used up (SILENT_TRIED), so no retry follows.
@@ -104,7 +46,7 @@ async function silentAttempt(mgr: UserManager): Promise<State> {
   }
 }
 
-async function loadState(mgr: UserManager): Promise<State> {
+async function loadState(mgr: UserManager, retrying: boolean): Promise<State> {
   try {
     // Read and cleared at once: Strict Mode runs the load twice, and only the first run acts on the intent.
     const intent = window.sessionStorage.getItem(REGISTER);
@@ -143,15 +85,17 @@ async function loadState(mgr: UserManager): Promise<State> {
     }
     if (e instanceof Error && e.message === "invitation_required")
       return { kind: "invitationNeeded" };
-    return { kind: "error", text: "Konto nicht geladen" };
+    return { kind: "error", ...(await failureOf(e, retrying)) };
   }
 }
 
 export function useSession() {
   const manager = useMemo(newManager, []);
   const [state, setState] = useState<State>({ kind: "loading" });
+  const failed = useRef(false); // the last load failed: a retry that fails again says so (US-QS-32)
 
   const load = useCallback(async () => {
+    const retrying = failed.current;
     setState({ kind: "loading" });
     let mgr: UserManager;
     try {
@@ -161,7 +105,9 @@ export function useSession() {
       setState({ kind: "error", text: t("library.failed"), reloadPage: true });
       return;
     }
-    setState(await loadState(mgr));
+    const next = await loadState(mgr, retrying);
+    failed.current = next.kind === "error";
+    setState(next);
   }, [manager]);
 
   useEffect(() => {
