@@ -78,3 +78,21 @@ describe("Select (US-QS-07, ADR 0007, DS-15, DS-38)", () => {
     expect(cls).toContain("focus-visible:ring-2");
   });
 });
+
+describe("US-QS-32 · issue 1960 a value that does not fit", () => {
+  it("US-QS-32 · issue 1960 the select stays on one line and ends a value that does not fit with an ellipsis", () => {
+    render(<Select aria-label="Lichtzone">{options}</Select>);
+    const classes = screen.getByLabelText("Lichtzone").className.split(" ");
+    // `truncate` is overflow hidden, text-overflow ellipsis and no wrapping: the value is never cut mid-letter.
+    expect(classes).toContain("truncate");
+  });
+
+  it("US-QS-32 · issue 1960 a caller's class does not drop the ellipsis", () => {
+    render(
+      <Select aria-label="Lichtzone" className="w-36 shrink-0">
+        {options}
+      </Select>,
+    );
+    expect(screen.getByLabelText("Lichtzone").className.split(" ")).toContain("truncate");
+  });
+});

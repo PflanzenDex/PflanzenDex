@@ -131,6 +131,33 @@ describe("US-QS-32 · SG-BTN-03 the deletion is a red plain button below the exp
   });
 });
 
+describe("US-QS-32 · P-08 a failed read of the deletion state", () => {
+  it("US-QS-32 the row says Nicht geladen with its retry instead of unbekannt, and the retry reads the state again", async () => {
+    fakeServer();
+    let reads = 0;
+    const real = vi.mocked(fetch).getMockImplementation();
+    if (!real) throw new Error("fetch is not stubbed");
+    vi.mocked(fetch).mockImplementation(async (url, init) => {
+      if (
+        new URL(String(url)).pathname === "/account/deletion" &&
+        (init?.method ?? "GET") === "GET"
+      ) {
+        reads += 1;
+        if (reads === 1)
+          return json(500, { error: { code: "system.database_unavailable", text: "x" } });
+      }
+      return real(url, init);
+    });
+    show();
+    const remove = await deleteRow();
+    expect(await screen.findByText("Nicht geladen")).toBeTruthy();
+    expect(remove.parentElement?.textContent).not.toContain("unbekannt");
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen: Konto löschen" }));
+    expect(await screen.findByText("Noch nichts vorgemerkt")).toBeTruthy();
+    expect(reads).toBe(2);
+  });
+});
+
 describe("US-ACC-04 download of all own data", () => {
   it("US-ACC-04 one tap fetches the archive, saves it and says what it holds", async () => {
     stubDownload();

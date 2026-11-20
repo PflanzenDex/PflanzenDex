@@ -731,8 +731,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     show("/today?sheet=treatments");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
-    // Four plants per page on a phone, the position in text, search and location filter above the list.
-    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(4);
+    // Three plants per page on a phone (owner decision 2026-11-20), the position in text, search and location filter above the list.
+    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(3);
     expect(within(form).getByText("Seite 1 von 2")).toBeTruthy();
     await user.type(within(form).getByRole("searchbox", { name: "Pflanze suchen" }), "EFE");
     expect(within(form).queryByRole("checkbox", { name: /^Aloe/ })).toBeNull();

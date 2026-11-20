@@ -40,3 +40,19 @@ export function returnFocusOnClose(opener: { readonly current: HTMLElement | nul
     returnFocus(opener.current);
   };
 }
+
+// The title a route claims for the page it shows itself (US-QS-09): the not-found view claims its title here, because the address
+// alone does not say that no page exists. RouteFocus reads the claim before it sets the title of an address; the view releases it
+// when it leaves, so the title of the next address counts again.
+let claimed: string | null = null;
+
+/** Claims the title of the page the route shows; the returned function releases it when the route leaves. */
+export function claimTitle(title: string): () => void {
+  claimed = title;
+  return () => {
+    if (claimed === title) claimed = null;
+  };
+}
+
+/** The title a route has claimed, or `null`: the address decides then. */
+export const claimedTitle = (): string | null => claimed;

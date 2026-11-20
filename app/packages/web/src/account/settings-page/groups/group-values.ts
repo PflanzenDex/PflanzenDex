@@ -1,13 +1,31 @@
+import { deviceTimeZone } from "../../../shared/data";
+import { texts } from "../../../shared/lib/text-rules/texts";
 import type { AccountProfile } from "../../api/account-api";
+import table from "../../views/views.de.json";
+
+const ui = texts(table);
 
 /** What a row shows when a value cannot be read (P-08). */
 export const UNKNOWN = "unbekannt";
 
-const known = (text: string | null | undefined) => (text ? text : UNKNOWN);
+/** The display name of a row: "Name unbekannt" while none is saved, so the label says what is unknown (SG-STATE-06, F-0315). */
+export const nameValue = (name: string | null | undefined): string =>
+  name ? name : ui("row.nameUnknown");
+
+/**
+ * The time zone of a row (F-0315, SG-STATE-06, owner answers Q08 and Q23): the saved zone; while none is saved the device's
+ * zone, named as the device's ("Zeitzone vom Gerät", the profile form prefills it); "Zeitzone unbekannt" only when the device
+ * gives none. Never a bare "unbekannt".
+ */
+export function timeZoneValue(saved: string | null | undefined): string {
+  if (saved) return saved;
+  const device: string | undefined = deviceTimeZone();
+  return device ? ui("row.zoneFromDevice") : ui("row.zoneUnknown");
+}
 
 /** Row "Profil": display name and time zone, which may break after its slash at 200 % text (issue 1315). */
 export const profileValue = (p: AccountProfile) =>
-  `${known(p.displayName)} · ${known(p.timeZone).replaceAll("/", "/\u200b")}`;
+  `${nameValue(p.displayName)} · ${timeZoneValue(p.timeZone).replaceAll("/", "/\u200b")}`;
 
 /**
  * Row "Benachrichtigungen": reminders are not sent yet, push is not set up (issue 2028, US-QS-32), so the row says so

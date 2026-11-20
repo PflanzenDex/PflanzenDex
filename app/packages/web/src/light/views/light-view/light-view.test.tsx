@@ -114,7 +114,7 @@ describe("US-LIC-05 view locations and light zones", () => {
     expect(h).toContain("Lux-Obergrenze");
     expect(h).toContain('inputMode="numeric"');
     expect(renderToString(<LocationForm zones={[zone]} onSave={nothing} />)).toContain(
-      "Keine Lichtzone (erscheint in den Hinweisen)",
+      "Keine Lichtzone",
     );
   });
 });

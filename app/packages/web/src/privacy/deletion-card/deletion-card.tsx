@@ -8,6 +8,7 @@ import {
   useHeldLoader,
 } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { FailedValue } from "@/shared/patterns/states/request-state/failed-value/failed-value";
 import { useRequest } from "../../shared/data";
 import { loadDeletion, type DeletionState } from "../privacy-api";
 import { DELETION_KEY, useDeletionAction } from "./use-deletion-action/use-deletion-action";
@@ -28,6 +29,20 @@ function deletionValue(state: DeletionState | undefined, waiting: boolean): Reac
   return state.requested ? `Löschung vorgemerkt für ${day(state.dueAt)}` : "Noch nichts vorgemerkt";
 }
 
+/** The state under the opener; a failed read says so and offers its retry (US-QS-32, P-08). */
+function DeletionValue(props: {
+  failed: boolean;
+  retry: () => void;
+  state: DeletionState | undefined;
+  waiting: boolean;
+}) {
+  return props.failed ? (
+    <FailedValue name={t("open")} onRetry={props.retry} />
+  ) : (
+    deletionValue(props.state, props.waiting)
+  );
+}
+
 /**
  * Deleting the own account with a grace period (US-ACC-04): a red plain "Konto löschen" below the export, with the state
  * under it (SG-BTN-03, F-0303), and its layer. Not yet requested, the layer names what goes and stays (step 1), then asks
@@ -43,10 +58,11 @@ export function DeletionCard(props: { api: string; token: Token }) {
   const [step, setStep] = useState<Step>(1);
   const [typed, setTyped] = useState("");
   // The state waits for its loader: a shown loader holds once it has shown (D5), and the value, the footer and the body
-  // follow the same held state. A failed read shows "unbekannt" (P-08), after any hold.
+  // follow the same held state. A failed read shows its retry (US-QS-32, P-08), after any hold.
   const waiting = useHeldLoader(act.state === undefined && r.status !== "error");
   const state = waiting ? undefined : act.state;
   const loadError = waiting ? undefined : r.error;
+  const failed = r.status === "error";
 
   useEffect(() => {
     if (!open) {
@@ -72,7 +88,7 @@ export function DeletionCard(props: { api: string; token: Token }) {
             {t("open")}
           </Button>
           <div className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
-            {deletionValue(state, waiting)}
+            <DeletionValue failed={failed} retry={r.retry} state={state} waiting={waiting} />
           </div>
         </div>
       }

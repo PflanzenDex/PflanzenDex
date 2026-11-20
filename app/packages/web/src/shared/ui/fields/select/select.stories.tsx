@@ -58,3 +58,16 @@ export const Invalid: Story = {
     </div>
   ),
 };
+
+// A value that does not fit at 360 px and 200 % text ends with an ellipsis (US-QS-32, issue 1960).
+export const LongValue: Story = {
+  render: () => (
+    <div className="flex w-[360px] flex-col gap-2 p-4">
+      <Label htmlFor="s-long">Lichtzone</Label>
+      <Select id="s-long" defaultValue="long">
+        <option value="long">Zone 3 (Stecklingslicht mit Zusatzlicht im Gewächshaus)</option>
+        <option value="short">Zone 1</option>
+      </Select>
+    </div>
+  ),
+};
