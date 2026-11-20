@@ -15,8 +15,8 @@ Number of `v*` tags that are not SemVer, do not point at a commit on `main`, or 
 
 ## Checked by
 
-`app/tools/check/release/check-release-tags.mjs`, tag ruleset `.github/rulesets/release-tags.json` (blocks changing and deleting tags).
+`app/tools/check/delivery/release/check-release-tags.mjs`, tag ruleset `.github/rulesets/release-tags.json` (blocks changing and deleting tags).
 
 ## Evidence
 
-The workflow `.github/workflows/release-tag-check.yml` runs the check on every pushed tag and fails the run; the nightly suite runs `make release-tags-check`. Tests in `app/tools/check/release/check-release-tags.test.mjs`. Creating a tag cannot be blocked, so a wrong tag is detected after the push (ADR 0002).
+The workflow `.github/workflows/release-tag-check.yml` runs the check on every pushed tag and fails the run; the nightly suite runs `make release-tags-check`. Tests in `app/tools/check/delivery/release/check-release-tags.test.mjs`. Creating a tag cannot be blocked, so a wrong tag is detected after the push (ADR 0002).

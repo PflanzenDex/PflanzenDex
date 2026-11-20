@@ -63,6 +63,8 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const copies = [
     ["../../../../config/lint/layout.config.mjs", "app/config/lint/layout.config.mjs"],
+    // The entry-point helper the scripts import from the shared folder (US-QG-02).
+    ["../../shared/entry-point.mjs", "app/tools/check/shared/entry-point.mjs"],
     ...["check-layout", "layout-rules", "layout-tree", "layout-baseline"].map((n) => [
       `${n}.mjs`,
       `app/tools/check/code/layout/${n}.mjs`,

@@ -9,12 +9,13 @@
 // Imports are checked afterwards: each rewritten import must still resolve to the file it pointed at before.
 // Other mentions of a moved path (a config string, a doc) are only reported; check them by hand and with the tests.
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import defaultConfig from "../../config/lint/layout.config.mjs";
 import { listPaths } from "../check/code/layout/check-layout.mjs";
 import { buildTree, matchDir, unitCount } from "../check/code/layout/layout-tree.mjs";
 import { planMoves } from "./fix-plan.mjs";
 import { applyMoves, broken, fixMoves, mentions, readAliases, rewriteAll } from "./fix-move.mjs";
+import { isEntryPoint } from "../check/shared/entry-point.mjs";
 
 // Directories that the moves touch and that would still be over their unit limit (a new folder can be too big itself).
 function overLimit(paths, moves, dir, config) {
@@ -149,5 +150,4 @@ function main(argv) {
   );
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href)
-  process.exit(main(process.argv.slice(2)));
+if (isEntryPoint(import.meta.url)) process.exit(main(process.argv.slice(2)));

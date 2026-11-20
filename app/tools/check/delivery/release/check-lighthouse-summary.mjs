@@ -1,16 +1,17 @@
 // Gate QG-U1 (FR-QG-09, issue 1136): Markdown summary of the Lighthouse runs in packages/web/.lighthouseci, each median
 // against its limit in config/gates/quality-limits.json (`lighthouse`, the only source of the limits).
-// Usage: node tools/check/release/check-lighthouse-summary.mjs [--check] [reports-dir]   (entry point: tools/lighthouse/lighthouse-summary.sh)
+// Usage: node tools/check/delivery/release/check-lighthouse-summary.mjs [--check] [reports-dir]   (entry point: tools/lighthouse/lighthouse-summary.sh)
 // --check exits 1 when a median is past its limit. Every number is the median over the runs, taken per metric, measured
 // under Lighthouse's mobile emulation (simulated throttling), never on a real phone.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 export const DEFAULT_DIR = fileURLToPath(
-  new URL("../../../packages/web/.lighthouseci", import.meta.url),
+  new URL("../../../../packages/web/.lighthouseci", import.meta.url),
 );
-const LIMITS_FILE = new URL("../../../config/gates/quality-limits.json", import.meta.url);
+const LIMITS_FILE = new URL("../../../../config/gates/quality-limits.json", import.meta.url);
 
 export function readLimits(file = LIMITS_FILE) {
   return JSON.parse(fs.readFileSync(file, "utf8")).lighthouse;
@@ -171,7 +172,7 @@ export function readReports(dir) {
   return files.sort().map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const args = process.argv.slice(2);
   const check = args.includes("--check");
   try {

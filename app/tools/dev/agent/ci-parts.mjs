@@ -11,6 +11,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { runCiParts } from "../../check/quality/gates/gate-steps.mjs";
 import { formatBlock, runArgv } from "../../check/quality/gates/run-gates.mjs";
+import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 
 function heavyLock() {
   if (process.env.CI) return 0;
@@ -20,7 +21,7 @@ function heavyLock() {
   return lock.status ?? 1;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const locked = heavyLock();
   if (locked !== 0) process.exit(locked);
   const { code, summary } = await runCiParts({

@@ -8,7 +8,8 @@
 // app/packages/e2e/support/display/one-screen/register.weights.json.
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../app/tools/check/shared/entry-point.mjs";
 
 const WEIGHTS_FILE = fileURLToPath(
   new URL(
@@ -172,7 +173,7 @@ function main(args) {
 }
 
 // Runs only as a script: the tests import the functions above.
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+if (isEntryPoint(import.meta.url)) {
   try {
     main(process.argv.slice(2));
   } catch (error) {

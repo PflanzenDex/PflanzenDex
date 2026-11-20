@@ -4,8 +4,8 @@
 
 ## What it measures
 
-- Same definition of "initial" as the gate (`app/tools/check/supply/check-bundle-budget.mjs`, DS-08): the entry chunk, its modulepreloads and everything they import statically, in gzip bytes (1 kB = 1000 bytes). The total matches the gate's number.
-- The script (`app/tools/check/supply/report-bundle.mjs`) builds the web app once more into `app/packages/web/node_modules/.cache/bundle-report` with `vite build --sourcemap` (a CLI flag; the Vite config is untouched) and reads the sourcemaps.
+- Same definition of "initial" as the gate (`app/tools/check/delivery/supply/check-bundle-budget.mjs`, DS-08): the entry chunk, its modulepreloads and everything they import statically, in gzip bytes (1 kB = 1000 bytes). The total matches the gate's number.
+- The script (`app/tools/check/delivery/supply/report-bundle.mjs`) builds the web app once more into `app/packages/web/node_modules/.cache/bundle-report` with `vite build --sourcemap` (a CLI flag; the Vite config is untouched) and reads the sourcemaps.
 - Per chunk: the real gzip size of each initial file.
 - Per package: the minified bytes the sourcemap attributes to an npm package (`react-dom`, `@radix-ui/react-dialog`, ...) or to our own code (`web/<directory>`, `core/<directory>`). A chunk's gzip size is shared by those byte shares, so the package column is an **estimate** (gzip is not additive) that sums exactly to the total. `(unattributed)` is code without a source (bundler glue). Only the 25 largest packages are listed; the rest is one summed row.
 

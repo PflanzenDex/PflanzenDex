@@ -341,3 +341,11 @@ IDs are never renumbered.
 - **Fix:** Stop the previous preview by its own PID and wait until nothing listens on the port before you start the next one. Before each series, check that the page loads the entry chunk of the build you mean (its hashed `index-*.js` name). The trial runner of issue 2300 did both.
 - **Can it become a gate?** No: A/B measurements on the phone run by hand, and no gate builds two variants.
 - **Source:** Issue #2300, record `docs/records/spikes/2026-11-20-react-compiler/README.md` (two discarded sessions).
+
+## PF-042 A symlinked temp path breaks entry-point guards and path comparisons on a Mac
+
+- **Symptom:** A tool test passes in CI and fails on the devbox: an expected path is not found in the output, or a check script started from a temporary copy exits 0 without output.
+- **Cause:** On macOS `os.tmpdir()` can be `/var/folders/…`, a symlink to `/private/var/folders/…` (a shell that skips `~/.zshrc` keeps the unresolved `TMPDIR`). Git and Node resolve the link: `git rev-parse` and `import.meta.url` give `/private/var/…`, while `process.argv[1]` and `os.tmpdir()` keep `/var/…`. A guard `process.argv[1] === fileURLToPath(import.meta.url)` is then false and the script skips `main()`, so a check passes silently. GitHub runners use `/tmp`, no symlink, so CI stays green.
+- **Fix:** Start a script's `main()` through `isEntryPoint(import.meta.url)` (`app/tools/check/shared/entry-point.mjs`, which compares realpaths); package scripts that cannot import it compare `realpathSync(process.argv[1])`. A test that compares paths builds its temp folder from `realpathSync(os.tmpdir())`. A test that copies a script into a temp tree copies the helper with it.
+- **Can it become a gate?** Not now (E-30): the shared helper removes the copies under `app/tools/` and `tools/`, and the symlink tests (`check-ci-drift.test.mjs`, `entry-point.test.mjs`) fail when the guard regresses.
+- **Source:** Issue #2290, PR #2309.

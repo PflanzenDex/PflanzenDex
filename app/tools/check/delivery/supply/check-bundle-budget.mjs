@@ -1,6 +1,6 @@
 // Gate QG-U6 (DS-08, FR-QG-09): budget for the initial JavaScript of the built web app, measured in gzip bytes.
 // Runs on `packages/web/dist` after `npm run build`; needs no browser. Usage:
-//   node tools/check/supply/check-bundle-budget.mjs [--report] [dist-dir]
+//   node tools/check/delivery/supply/check-bundle-budget.mjs [--report] [dist-dir]
 //   --report  print the measurement and the verdict but always exit 0 (report-only phase)
 //
 // What counts as "initial" (everything a first visit downloads before the current route renders):
@@ -15,16 +15,19 @@ import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 export function readBudget(
-  file = new URL("../../../config/gates/quality-limits.json", import.meta.url),
+  file = new URL("../../../../config/gates/quality-limits.json", import.meta.url),
 ) {
   return JSON.parse(fs.readFileSync(file, "utf8")).bundle.initialJsGzipBytes;
 }
 
 export const INITIAL_JS_BUDGET_BYTES = readBudget();
 
-export const DEFAULT_DIST = fileURLToPath(new URL("../../../packages/web/dist", import.meta.url));
+export const DEFAULT_DIST = fileURLToPath(
+  new URL("../../../../packages/web/dist", import.meta.url),
+);
 
 export const formatKb = (bytes) => `${(bytes / 1000).toFixed(1)} kB`;
 
@@ -103,4 +106,4 @@ function main(argv) {
   return ok || report ? 0 : 1;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) process.exit(main(process.argv.slice(2)));
+if (isEntryPoint(import.meta.url)) process.exit(main(process.argv.slice(2)));

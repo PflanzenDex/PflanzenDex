@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const SEMVER = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 export const SEED_TAG = "v0.0.0";
@@ -69,8 +70,8 @@ function collect(root) {
   return { tags, releases, onMain, packageJsons };
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const root = fileURLToPath(new URL("../../../..", import.meta.url));
+if (isEntryPoint(import.meta.url)) {
+  const root = fileURLToPath(new URL("../../../../..", import.meta.url));
   // semantic-release pushes the tag shortly before the release exists; on a tag push the workflow allows a short wait.
   const attempts = Number(process.env.RELEASE_TAG_CHECK_ATTEMPTS ?? 1);
   let problems = [];

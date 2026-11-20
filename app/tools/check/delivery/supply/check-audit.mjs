@@ -3,7 +3,7 @@
 // (same as `npm audit --audit-level=high`). Allowlisted advisories that no longer appear only produce a hint.
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const BLOCKING = new Set(["high", "critical"]);
 
@@ -64,7 +64,7 @@ function main() {
     return 2;
   }
   const allowlist = JSON.parse(
-    readFileSync(new URL("../../../config/gates/audit-allowlist.json", import.meta.url), "utf8"),
+    readFileSync(new URL("../../../../config/gates/audit-allowlist.json", import.meta.url), "utf8"),
   );
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -76,4 +76,4 @@ function main() {
   return result.ok ? 0 : 1;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) process.exit(main());
+if (isEntryPoint(import.meta.url)) process.exit(main());

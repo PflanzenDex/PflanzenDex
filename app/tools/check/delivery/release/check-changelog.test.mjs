@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { FRAGMENT_DIR } from "../../../packages/web/src/app/destinations/account-area/whats-new/news-lines.mjs";
+import { FRAGMENT_DIR } from "../../../../packages/web/src/app/destinations/account-area/whats-new/news-lines.mjs";
 import { checkChangelog, CHANGELOG_FILE, commitType, isFragmentPath } from "./check-changelog.mjs";
 
 const FRAGMENT = `${FRAGMENT_DIR}/1490-neu.json`;

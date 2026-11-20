@@ -1,6 +1,6 @@
 // Report QG-U6 (FR-QG-10, DS-08, ADR 0007 decision 5): where the initial JavaScript of the web app comes from.
 // Report only: never fails, changes no threshold; the blocking gate is check-bundle-budget.mjs.
-//   node tools/check/supply/report-bundle.mjs [dist-dir]   (Markdown on stdout; without a dist-dir it builds one)
+//   node tools/check/delivery/supply/report-bundle.mjs [dist-dir]   (Markdown on stdout; without a dist-dir it builds one)
 // The build is `vite build --sourcemap` into a scratch directory (a CLI flag, the Vite config stays untouched). Each
 // initial chunk gets its gzip size; its bytes are attributed to packages via the sourcemap and the chunk's gzip size is
 // shared by those bytes, so per-package numbers are estimates (gzip is not additive) that sum to the measured total.
@@ -10,6 +10,7 @@ import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { initialChunks, readBudget, formatKb } from "./check-bundle-budget.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 // Goal in gzip bytes (owner decision, ADR 0018): where the initial JS should stay; report only, never fails.
 export const GOAL_BYTES = 125000;
@@ -177,7 +178,7 @@ export function renderMarkdown(report, { limit = readBudget() } = {}) {
 
 function main(argv) {
   const given = argv.find((a) => !a.startsWith("--"));
-  const web = fileURLToPath(new URL("../../../packages/web", import.meta.url));
+  const web = fileURLToPath(new URL("../../../../packages/web", import.meta.url));
   const dist = given ?? path.join(web, "node_modules/.cache/bundle-report");
   if (!given) {
     const args = ["run", "build", "-w", "@pflanzendex/web", "--", "--sourcemap", "--emptyOutDir"];
@@ -196,5 +197,4 @@ function main(argv) {
   process.stdout.write(renderMarkdown(buildReport(dist))); // always exit 0: report only
   return 0;
 }
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) process.exit(main(process.argv.slice(2)));
+if (isEntryPoint(import.meta.url)) process.exit(main(process.argv.slice(2)));

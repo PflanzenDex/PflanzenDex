@@ -15,7 +15,7 @@ Gzip size of the initial JavaScript of the built app (the entry chunk, the modul
 
 ## Checked by
 
-`app/tools/check/supply/check-bundle-budget.mjs`, `app/config/gates/quality-limits.json`.
+`app/tools/check/delivery/supply/check-bundle-budget.mjs`, `app/config/gates/quality-limits.json`.
 
 ## Gate
 
@@ -23,4 +23,4 @@ Gzip size of the initial JavaScript of the built app (the entry chunk, the modul
 
 ## Evidence
 
-Tests in `app/tools/check/supply/check-bundle-budget.test.mjs`. The report of each chunk is written to the job summary by the job `app-ui` (report only).
+Tests in `app/tools/check/delivery/supply/check-bundle-budget.test.mjs`. The report of each chunk is written to the job summary by the job `app-ui` (report only).

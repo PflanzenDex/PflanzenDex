@@ -1,10 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
-// The repository root, from this file's own place: app/tools/check/release/ is four folders below it (US-QG-02). The working
+// The repository root, from this file's own place: app/tools/check/delivery/release/ is five folders below it (US-QG-02). The working
 // directory does not matter: `npm run ci-drift` runs in app/ and reads the same Makefile and workflows as a run from the root.
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../..");
 
 // Allowlist of npm/npx/node commands that do not go through make. An entry is a whole command: a command that only starts with
 // it, such as `npm ci && npm test`, or that names a folder like `actions/` is not allowed.
@@ -170,4 +171,4 @@ function main() {
 }
 
 // Runs only as the script: a test that imports findDrift or readRepo must not run the check.
-if (process.argv[1] === fileURLToPath(import.meta.url)) process.exitCode = main();
+if (isEntryPoint(import.meta.url)) process.exitCode = main();

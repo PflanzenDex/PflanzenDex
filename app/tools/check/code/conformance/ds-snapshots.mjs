@@ -20,6 +20,7 @@ import {
   replacePngs,
   snapshotStoryIds,
 } from "./ds-snapshots.lib.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 export const baselineDir = path.join(appRoot, "packages", "web", ".storybook", "snapshots");
@@ -178,4 +179,4 @@ function main() {
   );
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main();
+if (isEntryPoint(import.meta.url)) main();
