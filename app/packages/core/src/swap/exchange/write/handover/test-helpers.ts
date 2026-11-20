@@ -21,9 +21,17 @@ const specimen = (extra: Partial<HandoverSpecimen> = {}): HandoverSpecimen => ({
 });
 export { specimen as handoverSpecimen };
 
+/** The names the two sides stored at the request; `null` = none (P-08). The giver's side names the recipient, and vice versa. */
+export interface HandoverNames {
+  readonly giver: string | null;
+  readonly recipient: string | null;
+}
+
 /**
  * In-memory handover for tests only: it plays the transaction (writes are applied only on commit) and the two sides'
- * confirmations. `refuseReceive` makes the creation of the new specimen fail like a taken name.
+ * confirmations. `refuseReceive` makes the creation of the new specimen fail like a taken name. Role-aware like the
+ * database: `otherName` is the name the confirming side's row holds for the other side, `recipientName` is always the
+ * recipient's name (US-BES-07).
  */
 export class InMemoryHandover implements HandoverStore {
   confirmed = { giver: false, recipient: false };
@@ -43,14 +51,41 @@ export class InMemoryHandover implements HandoverStore {
   commits = 0;
   rollbacks = 0;
 
+  private readonly names: HandoverNames;
+
   constructor(
     private readonly sides: {
       giver: string;
       recipient: string;
       mode: "swap" | "give_away";
       type: "cutting" | "plant" | "offshoot";
+      /** Defaults to Anna (giver) and Ben (recipient). */
+      names?: HandoverNames;
     },
-  ) {}
+  ) {
+    this.names = sides.names ?? { giver: "Anna", recipient: "Ben" };
+  }
+
+  /** The context one confirmation answers, as the database answers it for that role (see `confirm_handover`). */
+  private confirmAs(role: "giver" | "recipient", marker: string | null): HandoverContext {
+    if (this.outcome === "ok") {
+      this.confirmed[role] = true;
+      if (role === "recipient" && marker) this.marker = marker;
+    }
+    return {
+      outcome: this.outcome,
+      both: this.confirmed.giver && this.confirmed.recipient,
+      role,
+      otherId: role === "giver" ? this.sides.recipient : this.sides.giver,
+      offerId: "offer-1",
+      specimenId: "g1",
+      type: this.sides.type,
+      marker: this.marker,
+      mode: this.sides.mode,
+      otherName: role === "giver" ? this.names.recipient : this.names.giver,
+      recipientName: this.names.recipient,
+    };
+  }
 
   async handover<T>(
     userId: string,
@@ -60,24 +95,7 @@ export class InMemoryHandover implements HandoverStore {
     const pending: (() => void)[] = [];
     const role = userId === this.sides.giver ? "giver" : "recipient";
     const steps: HandoverSteps = {
-      confirm: async (_swap, marker) => {
-        if (this.outcome === "ok") {
-          this.confirmed[role] = true;
-          if (role === "recipient" && marker) this.marker = marker;
-        }
-        return {
-          outcome: this.outcome,
-          both: this.confirmed.giver && this.confirmed.recipient,
-          role,
-          otherId: role === "giver" ? this.sides.recipient : this.sides.giver,
-          offerId: "offer-1",
-          specimenId: "g1",
-          type: this.sides.type,
-          marker: this.marker,
-          mode: this.sides.mode,
-          otherName: "Ben",
-        };
-      },
+      confirm: async (_swap, marker) => this.confirmAs(role, marker),
       giverSpecimen: async () => this.giverHas,
       recipientSpecimens: async () => this.recipientHas,
       archiveGiven: async (giver, id, reason, date) => {

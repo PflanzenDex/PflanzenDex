@@ -942,7 +942,7 @@
     "account": "test2",
     "path": "/label/unbekannt",
     "route": "/label/:id",
-    "title": "Pflanze nicht gefunden"
+    "title": "Etikett ohne Pflanze"
   },
   {
     "id": "operator-sheet-zahlen",
@@ -1275,11 +1275,11 @@
   {
     "id": "collection-equipment-item-plant-agent-neemoel",
     "account": "test2",
-    "path": "/collection?view=equipment&sheet=items",
+    "path": "/collection?view=equipment&sheet=items&lpage=2",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
-        "nth": 5
+        "nth": 0
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
@@ -1292,7 +1292,7 @@
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
-        "nth": 0
+        "nth": 1
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
@@ -1305,7 +1305,7 @@
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
-        "nth": 1
+        "nth": 2
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
@@ -1318,7 +1318,7 @@
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
-        "nth": 2
+        "nth": 3
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
@@ -1331,7 +1331,7 @@
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
-        "nth": 3
+        "nth": 4
       }
     ],
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",

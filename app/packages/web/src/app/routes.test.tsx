@@ -140,9 +140,13 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
     expect(TodayArea.loaded()).not.toBeNull();
   });
 
-  it("US-QS-16 an unknown address leads to Heute", async () => {
+  it("US-QS-32 an unknown address shows the not-found view inside the frame, not Heute (F-0058)", async () => {
     renderAt("/gibt-es-nicht");
-    expect(await screen.findByRole("heading", { name: "Heute" })).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Heute" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Zu Heute" })).toBeTruthy();
   });
 
   it("US-QS-07 the new-plant form chunk is requested before the form opens, so the form shows at once (issue 1645)", async () => {

@@ -9,6 +9,7 @@ import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toa
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { EquipmentPage } from "./equipment-page";
+import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 // The toast of an undo needs the provider of the app shell above the page (US-QS-07). The page sits in the frame of
@@ -258,7 +259,8 @@ describe("US-EQU-01 equipment page", () => {
     await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
     // The layer closes, the outcome stands on the screen and the tile counts the new record (US-QS-22).
     expect(await screen.findByText(/Gerät „Neue Lampe“ gespeichert/)).toBeTruthy();
-    expect(await screen.findByText("1 Gerät")).toBeTruthy();
+    // The count is in the tile twice, one copy per width (equipment-tiles.tsx).
+    expect(await screen.findAllByText("1 Gerät")).toHaveLength(2);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
     expect(JSON.parse(String(post?.[1]?.body))).toEqual({
       type: "Timer",
@@ -571,7 +573,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     await screen.findByRole("button", { name: /^Kosten/ });
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByText("Zone 3")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: /^Geräte1\u00a0Gerät/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Geräte 1\u00a0Gerät/ }));
     const layer = await screen.findByRole("dialog", { name: "Geräte" });
     expect(within(layer).getByRole("button", { name: /Zone 3/ })).toBeTruthy();
   });
@@ -598,7 +600,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(within(layer).getByText(/Noch unbekannt: Hersteller und Modell/)).toBeTruthy();
   });
 
-  it("US-QS-32 · SG-COLOR-04 a defective device shows an amber 'Defekt' badge beside its name; an active one shows no 'Aktiv'; 'Ausgemustert' is neutral text", async () => {
+  it("US-QS-32 · SG-COLOR-04 a defective device shows an amber 'Defekt' badge beside its name; an active one shows no 'Aktiv'; 'Ausgemustert' leads the meta line, with no badge", async () => {
     fakeServer([
       item({ id: "e1", name: "Lampe defekt", status: "defective" }),
       item({ id: "e2", name: "Lampe aktiv", status: "active" }),
@@ -611,8 +613,26 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(active.textContent).not.toContain("Aktiv");
     expect(active.textContent).not.toContain("Defekt");
     const retired = screen.getByRole("button", { name: /Lampe alt/ });
-    expect(retired.textContent).toMatch(/Ausgemustert$/);
+    // The retirement is plain muted text at the head of the meta line, so the row has no trailing badge at all.
+    expect(within(retired).getByText("Ausgemustert · Lampe · Lichtzone fehlt")).toBeTruthy();
+    expect(within(retired).queryByText("Ausgemustert")).toBeNull();
     expect(retired.querySelector(".bg-warning")).toBeNull();
+    expect(retired.textContent).toMatch(/Lichtzone fehlt$/);
+  });
+
+  it("US-QS-32 · P-10 'Ausgemustert' leads the meta line as plain muted text; no trailing badge is left to squeeze the name", async () => {
+    fakeServer([item({ id: "e3", name: "Lampe alt", status: "retired" })]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    const row = await screen.findByRole("button", { name: /Lampe alt/ });
+    const meta = within(row).getByText("Ausgemustert · Lampe · Lichtzone fehlt");
+    expect(meta.className.split(" ")).toEqual(
+      expect.arrayContaining(["truncate", "text-muted-foreground"]),
+    );
+    expect(meta.className.split(" ")).not.toContain("max-w-[60%]");
+    expect(meta.parentElement?.className.split(" ")).not.toContain("max-w-[60%]");
+    // Only the name and the meta line are in the row's text: nothing trails them but the chevron.
+    expect(row.textContent).toBe("Lampe alt Ausgemustert · Lampe · Lichtzone fehlt");
+    expect(row.querySelectorAll("svg")).toHaveLength(2);
   });
 
   it.each([360, 1440])(
@@ -627,7 +647,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
             <EquipmentPage api="http://api" token={token} />
           </StrictMode>,
         );
-        await userEvent.click(await screen.findByRole("button", { name: /^Geräte2\u00a0Geräte/ }));
+        await userEvent.click(await screen.findByRole("button", { name: /^Geräte 2\u00a0Geräte/ }));
         await userEvent.click(await screen.findByRole("button", { name: /Zone 3/ }));
         await screen.findByRole("heading", { name: "Zone 3" });
         await userEvent.keyboard("{Escape}");
@@ -817,5 +837,93 @@ describe("US-QS-32 zone names and a missing zone in equipment", () => {
     expect(card.textContent).toContain(`15${NBSP}W · Zone 1 (Stecklingslicht)`);
     const keller = (await screen.findByText("Lampe Keller")).closest("details") as HTMLElement;
     expect(keller.textContent).toContain(`20${NBSP}W · Lichtzone fehlt`);
+  });
+});
+
+// A row of the overview holds its value twice, one copy per width (equipment-tiles.tsx). jsdom has no layout, so the text a
+// row reads at one width is taken by leaving out the copy that width hides: beside the name at 18 rem and up, under it below.
+const readsAt = (row: HTMLElement, width: "beside" | "under") => {
+  const copy = row.cloneNode(true) as HTMLElement;
+  const hidden = width === "beside" ? "@min-[18rem]:hidden" : "hidden";
+  for (const span of Array.from(copy.querySelectorAll("span"))) {
+    if (span.classList.contains(hidden)) span.remove();
+  }
+  return (copy.textContent ?? "").replace(/\s+/g, " ").trim();
+};
+
+describe("US-QS-32 the equipment rows are flat grouped rows (FX-35, SG-LIST-03, SG-SHAPE-03)", () => {
+  it("US-QS-32 the six parts are rows of one grouped list in their order, each with its name and info, and each opens its layer", async () => {
+    fakeServer([item(), item({ id: "e2", name: "Timer A", type: "Timer" })]);
+    view(<EquipmentPage api="http://api" token={token} />);
+    const first = await screen.findByRole("button", { name: /^Geräte 2/ });
+    const list = first.closest("ul") as HTMLElement;
+    expect(Array.from(list.children).every((child) => child.tagName === "LI")).toBe(true);
+    expect(list.children).toHaveLength(6);
+    const rows = within(list).getAllByRole("button");
+    const names = [
+      "Geräte 2 Geräte",
+      "Kosten unbekannt",
+      "Bedarf nichts fehlt",
+      "Lampen und Zonen 0 Lampen",
+      "Sensoren 0 Sensoren",
+      "Geräte-Wünsche 0 offene Wünsche",
+    ];
+    expect(rows.map((row) => readsAt(row, "beside"))).toEqual(names);
+    expect(rows.map((row) => readsAt(row, "under"))).toEqual(names);
+    expect(rows.every((row) => row.getAttribute("aria-haspopup") === "dialog")).toBe(true);
+    // The layer is modal: the list behind it is hidden from assistive technology, so the row is read before the tap.
+    const costs = rows[1] as HTMLElement;
+    await userEvent.click(costs);
+    expect(await screen.findByRole("dialog", { name: "Kosten" })).toBeTruthy();
+    expect(costs.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("US-QS-32 each overview value is in its row once per width: beside the name from 18 rem, under it below", async () => {
+    fakeServer([item()]);
+    view(<EquipmentPage api="http://api" token={token} />);
+    const first = await screen.findByRole("button", { name: /^Geräte 1/ });
+    const list = first.closest("ul") as HTMLElement;
+    // The list is the size container of its rows, so the width of the row decides the shape.
+    expect(list.parentElement?.classList.contains("@container")).toBe(true);
+    for (const row of within(list).getAllByRole("button")) {
+      const spans = Array.from(row.querySelectorAll("span"));
+      const beside = spans.filter(
+        (span) =>
+          span.classList.contains("hidden") && span.classList.contains("@min-[18rem]:inline"),
+      );
+      const under = spans.filter((span) => span.classList.contains("@min-[18rem]:hidden"));
+      expect(beside).toHaveLength(1);
+      expect(under).toHaveLength(1);
+      expect(beside[0]?.textContent).toBe(under[0]?.textContent);
+    }
+  });
+
+  it("US-QS-32 an item is one object row: a drawn placeholder, its name, the facts line, and the Defekt badge as its one trailing element", async () => {
+    fakeServer([item({ id: "e1", name: "Lampe defekt", status: "defective" })]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
+    const row = await screen.findByRole("button", { name: /Lampe defekt/ });
+    expect(row.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
+    expect(within(row).getByText("Lampe · Lichtzone fehlt")).toBeTruthy();
+    expect(within(row).getByText("Defekt").className).toContain("bg-warning");
+    // The badge takes the place of the chevron: the placeholder is the row's only icon (SG-LIST-03).
+    expect(row.querySelectorAll("svg")).toHaveLength(1);
+    expect(row.getAttribute("aria-haspopup")).toBe("dialog");
+    await userEvent.click(row);
+    expect(await screen.findByRole("dialog", { name: "Lampe defekt" })).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 · DS-52 the placeholder of the equipment has the shape of the loaded page", () => {
+  it("US-QS-32 · DS-52 one block of the default button (44 px, the full width) and the six parts; no help line", () => {
+    const { container } = render(<EquipmentPageSkeleton label="Geräte werden geladen …" />);
+    const status = container.querySelector("[role=status]") as HTMLElement;
+    const blocks = Array.from(status.children).filter((el) => el.tagName === "DIV");
+    // The one block is the button of the page (Body: "Gerät erfassen", min-h 44 px, the column width); the list follows it.
+    expect(blocks).toHaveLength(1);
+    const button = blocks[0] as HTMLElement;
+    expect(button.className.split(" ")).toEqual(expect.arrayContaining(["h-11", "w-full"]));
+    expect(button.className).not.toContain("w-40");
+    expect(status.querySelector(".h-10")).toBeNull();
+    expect(status.querySelectorAll("li")).toHaveLength(6);
   });
 });

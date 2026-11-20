@@ -14,8 +14,14 @@ export interface HandoverContext {
   /** The marker the recipient chose for the new specimen. */
   readonly marker: string | null;
   readonly mode: OfferMode | null;
-  /** The name of the other side as stored at the request; `null` = none (P-08). */
+  /**
+   * The name the caller's own row holds for the other side, as stored at the request; `null` = none (P-08). It names the
+   * giver to the recipient and the recipient to the giver, so it must not be the archive reason's name: that takes
+   * `recipientName` (issue 2294).
+   */
   readonly otherName: string | null;
+  /** The recipient's name as the giver's side stored it at the request; `null` = none (P-08). Whoever confirms last. */
+  readonly recipientName: string | null;
 }
 
 /** A specimen as the handover reads it (a subset of `SpecimenRow` of `collection`). */

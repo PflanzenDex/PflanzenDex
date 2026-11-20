@@ -234,3 +234,38 @@ describe("US-SOZ-11 the handover counts only when both sides confirmed", () => {
     expect(store.commits).toBe(before + 1);
   });
 });
+
+describe("US-BES-07 US-SOZ-11 the archive reason names the recipient, whoever confirms last", () => {
+  // The completing confirmation reads the other side's name from its own row (ports: `otherName`, `recipientName`).
+  it.each([
+    ["give_away", "giver", "recipient", "Verschenkt an Ben"],
+    ["give_away", "recipient", "giver", "Verschenkt an Ben"],
+    ["swap", "giver", "recipient", "Getauscht mit Ben"],
+    ["swap", "recipient", "giver", "Getauscht mit Ben"],
+  ] as const)(
+    "US-BES-07 US-SOZ-11 mode %s, %s confirms first and %s last: the giver's plant is archived with '%s'",
+    async (mode, first, last, reason) => {
+      store = new InMemoryHandover({ giver: GIVER, recipient: RECIPIENT, mode, type: "plant" });
+      const userOf = { giver: GIVER, recipient: RECIPIENT } as const;
+      await run({}, userOf[first]);
+      const r = await run({}, userOf[last]);
+      expect(r.ok && r.value).toEqual({ status: "handed_over", receivedSpecimenId: "r1" });
+      // The exact reason names the recipient; the giver's own name never appears in it.
+      expect(store.archived).toEqual([{ giver: GIVER, id: "g1", reason, date: "2026-10-10" }]);
+      expect(store.created[0]?.recipient).toBe(RECIPIENT);
+    },
+  );
+
+  it("US-BES-07 without a stored name for the recipient the reason says 'einem Freund' (P-08)", async () => {
+    store = new InMemoryHandover({
+      giver: GIVER,
+      recipient: RECIPIENT,
+      mode: "give_away",
+      type: "plant",
+      names: { giver: "Anna", recipient: null },
+    });
+    await run({}, RECIPIENT);
+    await run({}, GIVER);
+    expect(store.archived[0]?.reason).toBe("Verschenkt an einem Freund");
+  });
+});

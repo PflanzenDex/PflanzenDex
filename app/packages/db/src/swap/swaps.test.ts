@@ -538,6 +538,44 @@ describe("US-SOZ-11 the handover in one transaction", () => {
     ).toBe("handed_over");
   });
 
+  it("US-BES-07 US-SOZ-11 the recipient confirms first and the giver completes: the answer names the recipient, not the giver", async () => {
+    const a = await accepted();
+    const giverName = `N-${anna.slice(0, 4)}`;
+    const recipientName = `N-${ben.slice(0, 4)}`;
+    // Precondition: the two names differ, so a swapped branch of the CASE cannot pass unnoticed.
+    expect(recipientName).not.toBe(giverName);
+    const asRecipient = await swaps.handover(ben, async (s) => ({
+      commit: true,
+      value: await s.confirm(a.swapId, null),
+    }));
+    const asGiver = await swaps.handover(anna, async (s) => ({
+      commit: true,
+      value: await s.confirm(a.swapId, null),
+    }));
+    expect(asRecipient).toMatchObject({ role: "recipient", both: false, recipientName });
+    expect(asGiver).toMatchObject({ role: "giver", both: true, recipientName });
+  });
+
+  it("US-BES-07 US-SOZ-11 the giver confirms first and the recipient completes: the completing answer names the recipient, not the giver", async () => {
+    const a = await accepted();
+    const giverName = `N-${anna.slice(0, 4)}`;
+    const recipientName = `N-${ben.slice(0, 4)}`;
+    // Precondition: the two names differ, so a swapped branch of the CASE cannot pass unnoticed.
+    expect(recipientName).not.toBe(giverName);
+    const asGiver = await swaps.handover(anna, async (s) => ({
+      commit: true,
+      value: await s.confirm(a.swapId, null),
+    }));
+    const asRecipient = await swaps.handover(ben, async (s) => ({
+      commit: true,
+      value: await s.confirm(a.swapId, null),
+    }));
+    expect(asGiver).toMatchObject({ role: "giver", both: false });
+    // The completing call takes the name from the giver's row (`their_name`), the branch the other order does not reach.
+    expect(asRecipient).toMatchObject({ role: "recipient", both: true, recipientName });
+    expect(asRecipient).not.toMatchObject({ recipientName: giverName });
+  });
+
   it("the recipient starts with an empty history: nothing but the species is passed on", async () => {
     const a = await accepted();
     await confirmAs(anna, a);

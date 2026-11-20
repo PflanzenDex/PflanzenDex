@@ -1,5 +1,5 @@
 {
-  "maxTotal": 963,
+  "maxTotal": 959,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -636,10 +636,6 @@
     {
       "file": "packages/web/src/wishlist/wish-form/wish-fields/wish-fields.tsx",
       "count": 13
-    },
-    {
-      "file": "packages/web/src/wishlist/wishlist-page/rows/wish-row/wish-row.tsx",
-      "count": 4
     }
   ]
 }
