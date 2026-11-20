@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useAnnounce } from "@/shared/platform/announcer/context";
 import { Button } from "@/shared/ui/button/button";
 import table from "./growth-note-layer.de.json";
 
@@ -58,9 +57,10 @@ function listenForDismiss(
  * so the form and the controls below it never move when it appears. It sits just below the row of the focused field, so
  * the field the keeper works in is never covered; when no field has the focus it sits at the top of the form. The sticky
  * save button paints over it (its z-index is higher), and at 200 % text the note scrolls inside 40 % of the window
- * height. It is announced once per save (DS-69). It closes with "Schließen" (the focus goes back to the control it came
- * from), when the keeper types or taps in the form outside the note, when the focus moves into the form outside the note
- * (a Tab into a covered control), and at the next save (`saves` counts the saves of the view).
+ * height. The note is not read here: the save announces it with its confirmation (`useSaveAnnouncement`, US-QS-08, issue
+ * 2323). It closes with "Schließen" (the focus goes back to the control it came from), when the keeper types or taps in
+ * the form outside the note, when the focus moves into the form outside the note (a Tab into a covered control), and at
+ * the next save (`saves` counts the saves of the view).
  */
 export function GrowthNoteLayer(props: {
   note: string | null;
@@ -68,19 +68,11 @@ export function GrowthNoteLayer(props: {
   children: ReactNode;
 }) {
   const { note, saves, children } = props;
-  const announce = useAnnounce()?.announce;
   const [closedFor, setClosedFor] = useState<number | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLDivElement>(null);
-  const announced = useRef<number | null>(null);
   const returnTo = useRef<HTMLElement | null>(null);
   const visible = note !== null && closedFor !== saves;
-
-  useEffect(() => {
-    if (note === null || announced.current === saves) return;
-    announced.current = saves;
-    announce?.(note);
-  }, [note, saves, announce]);
 
   // Placed once when the note appears (or a save shows it again): the card scrolls with the form, so its place holds
   // while it stays open.
