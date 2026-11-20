@@ -212,3 +212,38 @@ describe("US-QS-32 an object row is flat: the group draws the card, the row draw
     expect(root?.className).not.toMatch(/\bborder-border\b|\brounded-lg\b|\bbg-card\b/);
   });
 });
+
+describe("US-QS-32 ObjectRow: the row wraps its action, and the name keeps its two-line width beside it (issue 2322, SG-LIST-03)", () => {
+  const action = (
+    <Button type="button" variant="secondary">
+      Umstellen
+    </Button>
+  );
+  const classesOf = (el: Element | null | undefined) =>
+    (el?.getAttribute("class") ?? "").split(" ");
+
+  it("US-QS-32 the row may wrap, and its action is a shrink-0 box at the trailing edge of its own line", () => {
+    const { container } = render(
+      wrap(<ObjectRow to="/plant/s1" title="Bogenhanf" meta="Wechsel" action={action} />),
+    );
+    expect(classesOf(container.firstElementChild)).toContain("flex-wrap");
+    const actionBox = screen.getByRole("button", { name: "Umstellen" }).parentElement;
+    expect(classesOf(actionBox)).toEqual(
+      expect.arrayContaining(["shrink-0", "ml-auto", "max-w-full"]),
+    );
+  });
+
+  it("US-QS-32 the opener's minimum width is the thumbnail and two lines of name, in rem so it grows with the text", () => {
+    render(wrap(<ObjectRow to="/plant/s1" title="Bogenhanf" meta="Wechsel" action={action} />));
+    const opener = screen.getByRole("link", { name: /^Bogenhanf/ }).parentElement;
+    expect(classesOf(opener)).toEqual(expect.arrayContaining(["min-w-0", "grow"]));
+    expect(classesOf(opener)).toContain("basis-[calc(56px_+_8rem)]");
+    expect(classesOf(opener)).not.toContain("flex-1");
+  });
+
+  it("US-QS-32 without an action the row has no action box and the opener is the whole row", () => {
+    const { container } = render(wrap(<ObjectRow to="/plant/s1" title="Clip" />));
+    expect(container.querySelector('[class~="max-w-full"]')).toBeNull();
+    expect(classesOf(container.firstElementChild)).toContain("flex-wrap");
+  });
+});
