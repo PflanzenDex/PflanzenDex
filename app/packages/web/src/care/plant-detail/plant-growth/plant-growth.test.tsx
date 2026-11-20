@@ -185,7 +185,7 @@ describe("US-QS-32 the growth line reserves its final height in every state (iss
     expect(sizers(status).map((p) => drawn(p))).toEqual(loadingTexts);
   });
 
-  it("US-QS-32 the reserved readings cover every reading the core derives from a course (P-08)", () => {
+  it("US-QS-32 the reserved readings cover every reading the core derives from a course, but the same-day etiolated ones (P-08)", () => {
     const key = (growth: GrowthTrend) => {
       const lines = growthLines(growth);
       return `${wording(lines.rate)}\u0000${lines.trend}`;
@@ -194,6 +194,13 @@ describe("US-QS-32 the growth line reserves its final height in every state (iss
     const missing = derivedCourses()
       .filter((course) => !reserved.has(key(growthTrend(course.points))))
       .map((course) => course.name);
-    expect(missing).toEqual([]);
+    // The one allowed exception (owner decision 2026-11-20, issue 2318, option b): measurements that all fall on one day, the
+    // last one etiolated. Two of them give this reading; three or four give the same wording, so the same height. Any other
+    // derived reading that is not reserved fails this test.
+    expect(missing).toEqual(
+      Object.keys(SHAPES).flatMap((shape) =>
+        [2, 3, 4].map((n) => `${shape} n=${n} sameDay=true last=etiolated`),
+      ),
+    );
   });
 });

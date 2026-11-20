@@ -32,7 +32,11 @@ const TRENDS = Object.keys(TREND_TEXT) as Trend[];
 /**
  * The growth readings the frame reserves (US-QS-32): one sample for each reading that `growthTrend` can derive from a course
  * with the rate of `SAMPLE_RATE`, and each trend with and without the success signal. The texts come from `growthLines`,
- * never copied here; a test checks that every reading of a derived course is one of these.
+ * never copied here; a test checks that every reading of a derived course is one of these, except the one exception below.
+ *
+ * Exception (owner decision 2026-11-20, issue 2318, option b): the reading of two measurements on the same day whose last
+ * one is etiolated is left out. It is four lines at 360 px, one line more than the tallest reading kept here, so the
+ * overview would overflow 360x640 (US-QS-23). In that rare state the loaded line may grow by one line.
  */
 const SAMPLES: readonly GrowthTrend[] = [
   // No rate: no measurement, one measurement (its etiolation counts), or two on the same day.
@@ -40,7 +44,6 @@ const SAMPLES: readonly GrowthTrend[] = [
   { count: 1, ratePerYear: null, trend: null, signal: null },
   { count: 1, ratePerYear: null, trend: null, signal: "etiolated" },
   { count: 2, ratePerYear: null, trend: null, signal: null },
-  { count: 2, ratePerYear: null, trend: null, signal: "etiolated" },
   // A rate from two measurements: the hint for the third one, or etiolated growth.
   { count: 2, ratePerYear: SAMPLE_RATE, trend: null, signal: null },
   { count: 2, ratePerYear: SAMPLE_RATE, trend: null, signal: "etiolated" },
