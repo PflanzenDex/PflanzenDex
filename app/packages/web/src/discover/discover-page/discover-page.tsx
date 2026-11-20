@@ -1,3 +1,4 @@
+import { useRepeatKey } from "@/shared/data";
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
 import { LoadFrame, type Response } from "../../shared/data";
@@ -13,6 +14,34 @@ const SIGN_IN_NEEDED = {
   ok: false as const,
   error: { code: "access.not_signed_in", text: t("page.signIn") },
 };
+
+/** Decide and undo of a suggestion, each under its held key per species (US-QS-03): a lost answer repeats under that key. */
+function useSuggestionWrites(api: string, token: () => Promise<string | undefined>) {
+  const keys = useRepeatKey();
+  // One held key per species and kind of answer: a lost answer is repeated under the same key (US-QS-03).
+  const decide = useCallback(
+    async (species: string, decision: "yes" | "no") => {
+      const key = keys.take(species);
+      const r = await signedIn(token, (t) =>
+        decideSuggestion(api, t, { species, decision }, { key }),
+      );
+      keys.settle(key, r, species);
+      return r;
+    },
+    [api, token, keys],
+  );
+  const undo = useCallback(
+    async (species: string) => {
+      const scope = `${species}:undo`;
+      const key = keys.take(scope);
+      const r = await signedIn(token, (t) => undoSuggestionDecision(api, t, species, { key }));
+      keys.settle(key, r, scope);
+      return r;
+    },
+    [api, token, keys],
+  );
+  return { decide, undo };
+}
 
 /** Runs a write with the token of the keeper; without a sign-in the answer says so (P-10). */
 async function signedIn<T>(
@@ -42,15 +71,7 @@ export function DiscoverPage(props: {
     (t: string) => loadSuggestions(api, t, zone === undefined ? { deck } : { deck, zone }),
     [api, deck, zone],
   );
-  const decide = useCallback(
-    (species: string, decision: "yes" | "no") =>
-      signedIn(token, (t) => decideSuggestion(api, t, { species, decision })),
-    [api, token],
-  );
-  const undo = useCallback(
-    (species: string) => signedIn(token, (t) => undoSuggestionDecision(api, t, species)),
-    [api, token],
-  );
+  const { decide, undo } = useSuggestionWrites(api, token);
   return (
     <section
       {...(embedded

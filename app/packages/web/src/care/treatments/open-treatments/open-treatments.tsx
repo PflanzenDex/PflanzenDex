@@ -76,15 +76,15 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
     if (tapped.current !== null) return;
     if (isOnline()) tapped.current = { row, index };
     else setHidden((ids) => [...ids, row.id]);
-    void complete.run(async (t) => {
-      const r = await completeTreatment(api, t, row.id);
+    void complete.run(async (t, opts) => {
+      const r = await completeTreatment(api, t, row.id, opts);
       changed.current = r.ok && r.value.changed;
       return r;
     }, ui("doneResult"));
   };
   const reopen = (id: string) => {
     restoring.current = id;
-    void restore.run((t) => reopenTreatment(api, t, id), ui("restored"));
+    void restore.run((t, opts) => reopenTreatment(api, t, id, opts), ui("restored"));
   };
   return {
     tick,

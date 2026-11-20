@@ -61,7 +61,10 @@ function TimesForm(props: { api: string; token: Token; saved: ReminderSettings }
       quietTo: quiet[1] === "" ? null : quiet[1],
       measurementDays: Number(days),
     };
-    void write.run((t) => saveReminderSettings(props.api, t, next), "Erinnerungen gespeichert.");
+    void write.run(
+      (t, opts) => saveReminderSettings(props.api, t, next, opts),
+      "Erinnerungen gespeichert.",
+    );
   };
 
   return (
@@ -98,7 +101,10 @@ function PausesForm(props: { api: string; token: Token; saved: ReminderSettings 
     // A typed text that is no day: its field shows the message on leaving it (US-QS-32), nothing is saved.
     if (!Object.values(paused).every(isHandedDate)) return;
     const next: ReminderSettings = { ...saved, paused };
-    void write.run((t) => saveReminderSettings(props.api, t, next), "Pausen gespeichert.");
+    void write.run(
+      (t, opts) => saveReminderSettings(props.api, t, next, opts),
+      "Pausen gespeichert.",
+    );
   };
   const pause = (o: ReminderOccasion, until: string) => setPaused((p) => withPause(p, o, until));
 

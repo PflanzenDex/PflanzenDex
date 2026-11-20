@@ -1,3 +1,4 @@
+import { useRepeatKey } from "@/shared/data";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
 import type { Species, Specimen } from "@pflanzendex/core";
@@ -32,11 +33,15 @@ async function failureText(w: WishToPlant, code: string | undefined): Promise<st
 
 /** Links the wish to its new specimen and says what happened; a failure offers a retry (P-10). */
 function useLink(api: string, token: Token, setNotice: (n: Notice) => void) {
+  const keys = useRepeatKey();
   const link = useCallback(
     async (w: WishToPlant, specimen: Specimen): Promise<void> => {
       const t = await token();
       const r = t
-        ? await linkWishSpecimen(api, t, { wishId: w.id, specimenId: specimen.id })
+        ? await keys.run(
+            (key) => linkWishSpecimen(api, t, { wishId: w.id, specimenId: specimen.id }, { key }),
+            w.id,
+          )
         : null;
       setNotice(
         r?.ok

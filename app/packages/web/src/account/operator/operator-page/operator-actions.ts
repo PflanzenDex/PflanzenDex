@@ -1,6 +1,13 @@
 import type { CreatedInvitation, OperatorCostFigure } from "@pflanzendex/core";
 import { useRef, useState } from "react";
-import { SIGN_IN, useInvalidate, type ApiError, type Response } from "../../../shared/data";
+import {
+  SIGN_IN,
+  useInvalidate,
+  useRepeatKey,
+  type ApiError,
+  type Response,
+  type WriteOptions,
+} from "../../../shared/data";
 import {
   createInvitation,
   markIdentityRemoved,
@@ -23,24 +30,35 @@ export type Scope = "cost" | "mode" | "codes" | "deletion";
 export type Notice = { scope: Scope; message: string | null; error: ApiError | null };
 
 /** One write at a time (a double tap sends one); a refusal stays visible (P-10), the page reloads afterwards. */
+/** Sends a write of the action under its held key (US-QS-03): a lost answer repeats the same write under that key. */
+function sendHeld<T>(
+  keys: ReturnType<typeof useRepeatKey>,
+  scope: Scope,
+  t: string,
+  send: (t: string, opts: WriteOptions) => Promise<Response<T>>,
+): Promise<Response<T>> {
+  return keys.run((key) => send(t, { key }), scope);
+}
+
 export function useOperatorActions(api: string, token: Token) {
   const invalidate = useInvalidate(OPERATOR_KEY);
   const [running, setRunning] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [created, setCreated] = useState<CreatedInvitation | null>(null);
   const busy = useRef(false);
+  const keys = useRepeatKey();
 
   /** Resolves true when the write was saved; false when it was refused or skipped because another write runs (US-QS-32). */
   const run = async <T>(
     scope: Scope,
-    send: (t: string) => Promise<Response<T>>,
+    send: (t: string, opts: WriteOptions) => Promise<Response<T>>,
     done: (value: T) => string,
   ): Promise<boolean> => {
     if (busy.current) return false;
     busy.current = true;
     setRunning(true);
     const t = await token();
-    const r = t ? await send(t) : { ok: false as const, error: SIGN_IN };
+    const r = t ? await sendHeld(keys, scope, t, send) : { ok: false as const, error: SIGN_IN };
     busy.current = false;
     setRunning(false);
     setNotice(
@@ -59,7 +77,7 @@ export function useOperatorActions(api: string, token: Token) {
     setMode: (on: boolean) =>
       run(
         "mode",
-        (t) => setRegistrationMode(api, t, on),
+        (t, opts) => setRegistrationMode(api, t, on, opts),
         (v) =>
           v.invitationOnly
             ? "Registrierung: ab jetzt nur mit Einladungscode."
@@ -68,16 +86,16 @@ export function useOperatorActions(api: string, token: Token) {
     setCost: (figure: OperatorCostFigure) =>
       run(
         "cost",
-        (t) => setOperatorCost(api, t, figure),
+        (t, opts) => setOperatorCost(api, t, figure, opts),
         () => "Monatliche Kosten gespeichert.",
       ),
     /** Closes an identity removal done by hand (US-ACC-04); the card and its row reload afterwards. */
     markIdentity: (entryId: string) =>
-      run("deletion", (t) => markIdentityRemoved(api, t, entryId), markDone),
+      run("deletion", (t, opts) => markIdentityRemoved(api, t, entryId, opts), markDone),
     create: (days: number) =>
       run(
         "codes",
-        (t) => createInvitation(api, t, days),
+        (t, opts) => createInvitation(api, t, days, opts),
         (v) => {
           setCreated(v);
           return "Einladungscode erstellt.";

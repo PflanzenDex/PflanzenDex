@@ -1,5 +1,11 @@
 import type { ArchivedEntry, SpecimenRow } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -20,10 +26,10 @@ export async function archiveSpecimen(
   api: string,
   token: string,
   input: { id: string; reason: string },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<SpecimenRow>> {
   const timeZone = currentTimeZone();
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/archive`,
     { reason: input.reason, timeZone },
@@ -36,9 +42,9 @@ export async function restoreSpecimen(
   api: string,
   token: string,
   id: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<SpecimenRow>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/specimens/${encodeURIComponent(id)}/restore`,
     {},

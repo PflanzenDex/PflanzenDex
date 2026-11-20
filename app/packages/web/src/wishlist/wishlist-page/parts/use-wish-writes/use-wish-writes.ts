@@ -25,8 +25,8 @@ export function useWishWrites(
       : candidate;
   const send = async (input: WishInput): Promise<boolean> => {
     let saved = false;
-    await write.run(async (t) => {
-      const r = await createWish(api, t, input);
+    await write.run(async (t, opts) => {
+      const r = await createWish(api, t, input, opts);
       saved = r.ok;
       return r;
     }, `Wunsch „${input.name}“ gespeichert.`);

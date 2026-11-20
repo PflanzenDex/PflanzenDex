@@ -74,10 +74,15 @@ afterEach(cleanup);
 describe("US-WAC-01 client of the measure API", () => {
   it("records with bearer token, time zone of the device and a fresh Idempotency-Key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(201, measurement()));
-    const r = await recordMeasurement({ api: "http://api", token: "tok", fetchFn }, "e1", {
-      value: 12.5,
-      quality: "healthy",
-    });
+    const r = await recordMeasurement(
+      { api: "http://api", token: "tok", fetchFn },
+      "e1",
+      {
+        value: 12.5,
+        quality: "healthy",
+      },
+      { fetchFn, key: "test-key" },
+    );
     expect(r).toMatchObject({ ok: true, value: { value: 12.5 } });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/specimens/e1/measurements");
@@ -94,10 +99,15 @@ describe("US-WAC-01 client of the measure API", () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(201, measurement()));
     setProfileTimeZone("Pacific/Kiritimati");
     try {
-      await recordMeasurement({ api: "http://api", token: "tok", fetchFn }, "e1", {
-        value: 12.5,
-        quality: "healthy",
-      });
+      await recordMeasurement(
+        { api: "http://api", token: "tok", fetchFn },
+        "e1",
+        {
+          value: 12.5,
+          quality: "healthy",
+        },
+        { fetchFn, key: "test-key" },
+      );
     } finally {
       setProfileTimeZone(null);
     }
@@ -108,10 +118,15 @@ describe("US-WAC-01 client of the measure API", () => {
   it("an error of the API stays an error with code and text", async () => {
     const error = { code: "specimen.not_found", text: "Die Pflanze gibt es nicht." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(404, { error }));
-    const r = await recordMeasurement({ api: "http://api", token: "tok", fetchFn }, "e1", {
-      value: 1,
-      quality: "healthy",
-    });
+    const r = await recordMeasurement(
+      { api: "http://api", token: "tok", fetchFn },
+      "e1",
+      {
+        value: 1,
+        quality: "healthy",
+      },
+      { fetchFn, key: "test-key" },
+    );
     expect(r).toMatchObject({ ok: false, error: { code: "specimen.not_found" } });
   });
 

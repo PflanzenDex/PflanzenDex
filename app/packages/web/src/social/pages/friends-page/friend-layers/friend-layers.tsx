@@ -31,7 +31,7 @@ export function ListLayers(props: {
           busy={answer.running}
           onAnswer={(id, decision) =>
             void answer.run(
-              (t) => answerFriendRequest(api, t, { requestId: id, decision }),
+              (t, opts) => answerFriendRequest(api, t, { requestId: id, decision }, opts),
               decision === "accept"
                 ? tx("friends.accepted", {
                     name: nameOf(

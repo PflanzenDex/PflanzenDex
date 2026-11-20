@@ -1,5 +1,5 @@
 import type { AiConnection, AiRights } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../shared/data";
+import { call, createWrite, type Response, type WriteOptions } from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -17,14 +17,21 @@ export async function loadConnections(
   return r.ok ? { ok: true, value: r.value.connections } : r;
 }
 
-export const setRights = (api: string, token: string, id: string, rights: AiRights) =>
-  createWrite(api, token)("PUT", `/ai/connections/${id}/rights`, { rights });
+export const setRights = (
+  api: string,
+  token: string,
+  target: { id: string; rights: AiRights },
+  options: WriteOptions,
+) =>
+  createWrite(api, token, options)("PUT", `/ai/connections/${target.id}/rights`, {
+    rights: target.rights,
+  });
 
-export const revokeConnection = (api: string, token: string, id: string) =>
-  createWrite(api, token)("POST", `/ai/connections/${id}/revoke`);
+export const revokeConnection = (api: string, token: string, id: string, options: WriteOptions) =>
+  createWrite(api, token, options)("POST", `/ai/connections/${id}/revoke`);
 
-export const allowAgain = (api: string, token: string, id: string) =>
-  createWrite(api, token)("POST", `/ai/connections/${id}/allow-again`);
+export const allowAgain = (api: string, token: string, id: string, options: WriteOptions) =>
+  createWrite(api, token, options)("POST", `/ai/connections/${id}/allow-again`);
 
 export interface AiDraftRow {
   readonly id: string;
@@ -46,11 +53,11 @@ export async function loadDrafts(
   return r.ok ? { ok: true, value: r.value.drafts } : r;
 }
 
-export const adoptDraft = (api: string, token: string, id: string) =>
-  createWrite(api, token)("POST", `/ai/drafts/${id}/adopt`);
+export const adoptDraft = (api: string, token: string, id: string, options: WriteOptions) =>
+  createWrite(api, token, options)("POST", `/ai/drafts/${id}/adopt`);
 
-export const discardDraft = (api: string, token: string, id: string) =>
-  createWrite(api, token)("POST", `/ai/drafts/${id}/discard`);
+export const discardDraft = (api: string, token: string, id: string, options: WriteOptions) =>
+  createWrite(api, token, options)("POST", `/ai/drafts/${id}/discard`);
 
 export type AiTaskType = "species_profile" | "wish_candidates" | "photo_assessment";
 
@@ -76,18 +83,28 @@ export async function loadTasks(
   return call(fetchFn, `${api}/ai/tasks`, token);
 }
 
-export const createTask = (api: string, token: string, type: AiTaskType, reference: string) =>
-  createWrite(api, token)("POST", "/ai/tasks", { type, reference });
+export const createTask = (
+  api: string,
+  token: string,
+  target: { type: AiTaskType; reference: string },
+  options: WriteOptions,
+) => createWrite(api, token, options)("POST", "/ai/tasks", target);
 
-export const previewTask = (api: string, token: string, type: AiTaskType, reference: string) =>
-  call<{ prompt: string }>(fetch, `${api}/ai/tasks/preview`, token, {
+/** The ready-made prompt of a task before it is created; a repeat of the same preview carries the key of its action (US-QS-03). */
+export const previewTask = (
+  api: string,
+  token: string,
+  target: { type: AiTaskType; reference: string },
+  options: WriteOptions,
+) =>
+  call<{ prompt: string }>(options.fetchFn ?? fetch, `${api}/ai/tasks/preview`, token, {
     method: "POST",
-    body: { type, reference },
-    key: crypto.randomUUID(),
+    body: target,
+    key: options.key,
   });
 
-export const cancelTask = (api: string, token: string, id: string) =>
-  createWrite(api, token)("POST", `/ai/tasks/${id}/cancel`);
+export const cancelTask = (api: string, token: string, id: string, options: WriteOptions) =>
+  createWrite(api, token, options)("POST", `/ai/tasks/${id}/cancel`);
 
 export interface AiLogEntry {
   readonly id: string;

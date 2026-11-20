@@ -128,7 +128,7 @@ function List(props: {
               onCopy={(t) => void copy(t)}
               onCancel={() =>
                 void write.run(
-                  (t) => cancelTask(props.api, t, row.id),
+                  (t, opts) => cancelTask(props.api, t, row.id, opts),
                   "Der Auftrag ist zurückgezogen.",
                 )
               }

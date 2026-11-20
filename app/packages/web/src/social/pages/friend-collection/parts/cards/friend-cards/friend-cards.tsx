@@ -119,7 +119,7 @@ export function FriendCards(props: {
               busy={wish.running}
               onWish={(card) =>
                 void wish.run(
-                  (t) => addToWishlist(props.api, t, card.speciesLatin ?? ""),
+                  (t, opts) => addToWishlist(props.api, t, card.speciesLatin ?? "", opts),
                   tx("friendCollection.wishAdded", { name: card.speciesLatin ?? "" }),
                 )
               }

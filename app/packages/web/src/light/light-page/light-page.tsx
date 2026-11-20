@@ -4,6 +4,7 @@ import { RequestState } from "@/shared/patterns/states/request-state/request-sta
 import {
   SIGN_IN as KERNEL_SIGN_IN,
   useQueryClient,
+  useRepeatKey,
   useReload,
   useRequest,
 } from "../../shared/data";
@@ -50,7 +51,7 @@ function useNotify(): Notify {
 }
 
 function buildActions(
-  { api, token }: { api: string; token: Token },
+  { api, token, keys }: { api: string; token: Token; keys: ReturnType<typeof useRepeatKey> },
   load: () => Promise<void>,
   setLastError: (f: ApiError | undefined) => void,
   notify: Notify,
@@ -63,7 +64,11 @@ function buildActions(
   ) => {
     const t = await token();
     if (!t) return SIGN_IN;
-    const r = await createWrite(api, t)(method, path, body);
+    // One held key per target and action (US-QS-03): a lost answer repeats the same write, another target never does.
+    const r = await keys.run(
+      (key) => createWrite(api, t, { key })(method, path, body),
+      `${method} ${path}`,
+    );
     if (!r.ok) return r.error;
     setLastError(undefined);
     await load();
@@ -125,9 +130,10 @@ export function LightPage(props: {
   const reload = useReload(LIGHT_KEY);
   const load = useCallback(() => reload(), [reload]);
 
+  const keys = useRepeatKey();
   const actions = useMemo(
-    () => buildActions({ api, token }, load, setLastError, notify),
-    [api, token, load, notify],
+    () => buildActions({ api, token, keys }, load, setLastError, notify),
+    [api, token, load, notify, keys],
   );
 
   const loading = "Standorte und Lichtzonen werden geladen …";

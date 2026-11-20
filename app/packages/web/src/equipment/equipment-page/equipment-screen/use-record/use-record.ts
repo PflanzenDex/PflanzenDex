@@ -19,8 +19,8 @@ export function useRecord(
   const [prefill, setPrefill] = useState<EquipmentFill | null>(null);
   const send = async (input: EquipmentInput): Promise<boolean> => {
     let saved = false;
-    await write.run(async (t) => {
-      const r = await recordEquipment(api, t, input);
+    await write.run(async (t, opts) => {
+      const r = await recordEquipment(api, t, input, opts);
       saved = r.ok;
       return r;
     }, `Gerät „${input.name}“ gespeichert.`);

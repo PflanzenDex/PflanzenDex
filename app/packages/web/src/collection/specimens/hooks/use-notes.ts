@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { useReload, type ApiError } from "../../../shared/data";
+import { useReload, type ApiError, useRepeatKey } from "../../../shared/data";
 import { setSpecimenNotes } from "../model/specimens-api";
 import { SIGN_IN } from "./use-collection";
 import table from "../../plants-screen/plant-layers/plant-layer/plant-notes/plant-notes.de.json";
@@ -21,6 +21,7 @@ export function useNotes(access: PhotoAccess, plant: { id: string; name: string 
   const reload = useReload(notesKey(plant.id));
   const { api, token } = access;
   const { id, name } = plant;
+  const keys = useRepeatKey();
 
   const send = useCallback(
     async (notes: string): Promise<ApiError | null> => {
@@ -28,7 +29,10 @@ export function useNotes(access: PhotoAccess, plant: { id: string; name: string 
       try {
         const credential = await token();
         if (!credential) return SIGN_IN;
-        const r = await setSpecimenNotes(api, credential, { id, notes });
+        const r = await keys.run(
+          (key) => setSpecimenNotes(api, credential, { id, notes }, { key }),
+          id,
+        );
         if (!r.ok) return r.error;
         await reload();
         setMessage(

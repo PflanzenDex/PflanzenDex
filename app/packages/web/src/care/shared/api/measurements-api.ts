@@ -1,5 +1,11 @@
 import type { MeasurementView, MeasurementRow, Quality } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -39,9 +45,10 @@ export async function recordMeasurement(
   access: Access,
   specimenId: string,
   input: MeasurementInput,
+  options: WriteOptions,
 ): Promise<Response<MeasurementRow>> {
   const timeZone = currentTimeZone();
-  const r = await createWrite(access.api, access.token, access.fetchFn ?? fetch)(
+  const r = await createWrite(access.api, access.token, options)(
     "POST",
     `/specimens/${encodeURIComponent(specimenId)}/measurements`,
     { ...input, timeZone },

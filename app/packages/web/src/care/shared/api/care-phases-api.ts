@@ -1,5 +1,11 @@
 import type { PhasesRow, SwitchedSpecimen } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -29,10 +35,10 @@ export async function confirmPhaseSwitch(
   api: string,
   token: string,
   specimenIds: readonly string[],
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<readonly SwitchedSpecimen[]>> {
   const timeZone = currentTimeZone();
-  const r = await createWrite(api, token, fetchFn)("POST", "/care-phases/confirm", {
+  const r = await createWrite(api, token, options)("POST", "/care-phases/confirm", {
     specimenIds,
     timeZone,
   });
@@ -47,10 +53,10 @@ export async function restorePhaseLocations(
   api: string,
   token: string,
   moves: readonly { specimenId: string; locationId: string }[],
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<unknown>> {
   for (const move of moves) {
-    const r = await createWrite(api, token, fetchFn)(
+    const r = await createWrite(api, token, options)(
       "POST",
       `/specimens/${encodeURIComponent(move.specimenId)}/location`,
       { locationId: move.locationId },

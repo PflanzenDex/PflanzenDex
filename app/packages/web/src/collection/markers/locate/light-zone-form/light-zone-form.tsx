@@ -1,3 +1,4 @@
+import { useRepeatKey } from "@/shared/data";
 import { useCallback, useState } from "react";
 import { type Control } from "react-hook-form";
 import type { LightZone, SpecimenCard } from "@pflanzendex/core";
@@ -55,13 +56,17 @@ const setText = (card: SpecimenCard, zone: LightZone): string =>
  */
 export function useLightZone(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<SpecimenCard | null>(null);
+  const keys = useRepeatKey();
   const zones = useZones(api, token, !!open);
 
   const send = useCallback(
     async (lightZoneId: string | null): Promise<ApiError | null> => {
       const t = await token();
       if (!t || !open) return SIGN_IN;
-      const r = await setLightZone(api, t, { id: open.id, lightZoneId });
+      const r = await keys.run(
+        (key) => setLightZone(api, t, { id: open.id, lightZoneId }, { key }),
+        open.id,
+      );
       if (!r.ok) return r.error;
       const zone = zones.items.find((z) => z.id === lightZoneId);
       say(zone ? setText(open, zone) : await derivedText(api, t, open.id, open.name));

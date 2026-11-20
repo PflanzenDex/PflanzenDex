@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { accountAddress } from "@/shared/patterns/navigation/navigation/navigation";
 import { Button } from "@/shared/ui/button/button";
-import { useInvalidate, useRequest, WRITE_SUCCEEDED } from "../../shared/data";
+import { useInvalidate, useRequest, WRITE_SUCCEEDED, newRepeatKey } from "../../shared/data";
 import { loadNews, markSeen } from "../achievements-api";
 import { ACHIEVEMENT_NAMES } from "../overview/texts";
 
@@ -39,7 +39,8 @@ export function AchievementNewsBanner(props: { api: string; token: Token }) {
     // Silent creation (US-ACH-03): no message; a failure is retried at the next visit.
     void (async () => {
       const t = await token();
-      if (t) await markSeen(api, t, due);
+      // A per-send key: the mark is silent and idempotent, and a lost answer is marked again at the next visit (US-ACH-03).
+      if (t) await markSeen(api, t, due, { key: newRepeatKey() });
       writing.current = false;
       reload();
     })();

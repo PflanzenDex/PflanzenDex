@@ -133,7 +133,7 @@ function Offers(props: {
             onCancel={() => setOpenId(null)}
             onSend={(input) =>
               void write.run(
-                (t) => requestOffer({ api, token: t }, o.offerId, input),
+                (t, opts) => requestOffer({ api, token: t }, o.offerId, input, opts),
                 t("friends.sent", { title: title(o) }),
               )
             }

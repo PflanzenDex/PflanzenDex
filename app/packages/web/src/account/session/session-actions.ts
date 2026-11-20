@@ -1,11 +1,22 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { User, UserManager } from "oidc-client-ts";
-import { setProfileTimeZone, type ApiError } from "../../shared/data";
+import { setProfileTimeZone, type ApiError, newRepeatKey, isUnanswered } from "../../shared/data";
 import { SIGN_OUT_UNREACHABLE, signOutEverywhere } from "../api/account-api";
 import { here, hereState } from "../api/sign-in-client";
 import { texts } from "../../shared/lib/text-rules/texts";
 import table from "../views/views.de.json";
 import type { State } from "./session";
+
+/** The sign-out-everywhere key of an open press: a lost answer is repeated under it (US-QS-03). */
+let everywhereKey: string | null = null;
+
+/** Ends the sessions on all devices; a lost answer repeats the press under its key (US-QS-03). */
+async function endEverywhere(api: string, token: string) {
+  const key = everywhereKey ?? newRepeatKey();
+  const r = await signOutEverywhere(api, token, { key });
+  everywhereKey = !r.ok && isUnanswered(r.error) ? key : null;
+  return r;
+}
 
 // The sessionStorage keys of the sign-in (US-ACC-01). They live here because the actions write them and session.ts reads them.
 export const MARKER = "pflanzendex.signed_out";
@@ -146,7 +157,7 @@ export function sessionActions(
         const user = await signedInUser(mgr);
         // Without a stored sign-in there is no token to end the sessions with; a success here would claim what did not happen.
         if (!user) return showError(t("everywhere.failed"));
-        const r = await signOutEverywhere(api, user.access_token);
+        const r = await endEverywhere(api, user.access_token);
         if (!r.ok) return showError(everywhereText(r.error));
         await forgetSignIn(mgr);
         setState({ kind: "signedOut", hint: "Du bist auf allen Geräten abgemeldet." });

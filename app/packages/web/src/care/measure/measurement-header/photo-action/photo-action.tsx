@@ -1,3 +1,4 @@
+import { useRepeatKey } from "@/shared/data";
 import { useState } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
@@ -23,10 +24,13 @@ function usePhotoUpload(props: {
   const [problem, setProblem] = useState<string | null>(null);
   const [pending, setPending] = useState<File | null>(null);
   const [inputKey, setInputKey] = useState(0);
+  const keys = useRepeatKey();
   const send = async (file: File, replace: boolean) => {
     const token = await access.token();
     if (!token) return;
-    const r = await uploadPhoto({ api: access.api, token }, specimenId, { file, date, replace });
+    const r = await keys.run((key) =>
+      uploadPhoto({ api: access.api, token }, specimenId, { file, date, replace }, key),
+    );
     setInputKey((k) => k + 1);
     if (r.ok) {
       setPending(null);

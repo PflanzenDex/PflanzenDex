@@ -100,7 +100,7 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
           busy={withdraw.running}
           onWithdraw={(o: OfferView) =>
             void withdraw.run(
-              (t) => withdrawOffer(api, t, o.id),
+              (t, opts) => withdrawOffer(api, t, o.id, opts),
               t("exchange.withdrawn", { name: o.specimenName ?? t("exchange.plant") }),
             )
           }

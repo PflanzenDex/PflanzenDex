@@ -10,7 +10,7 @@ import type {
   WishRow,
   WishVisibilityResult,
 } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../shared/data";
+import { call, createWrite, type Response, type WriteOptions } from "../shared/data";
 
 /** Loads the open candidates sorted by space need (US-WUN-01); derived on every request, never stored. */
 function loadCandidates(
@@ -53,12 +53,12 @@ export async function buyWish(
   api: string,
   token: string,
   wishId: string,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions,
 ): Promise<Response<WishBuyResult>> {
   const r = await createWrite(
     api,
     token,
-    fetchFn,
+    options,
   )("POST", `/wishes/${encodeURIComponent(wishId)}/buy`);
   return r.ok ? { ok: true, value: r.value as WishBuyResult } : r;
 }
@@ -68,12 +68,12 @@ export async function discardWish(
   api: string,
   token: string,
   wishId: string,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions,
 ): Promise<Response<WishDiscardResult>> {
   const r = await createWrite(
     api,
     token,
-    fetchFn,
+    options,
   )("POST", `/wishes/${encodeURIComponent(wishId)}/discard`);
   return r.ok ? { ok: true, value: r.value as WishDiscardResult } : r;
 }
@@ -83,9 +83,9 @@ export async function linkWishSpecimen(
   api: string,
   token: string,
   target: { wishId: string; specimenId: string },
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions,
 ): Promise<Response<WishLinkResult>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/wishes/${encodeURIComponent(target.wishId)}/specimen`,
     { specimenId: target.specimenId },
@@ -108,9 +108,9 @@ export async function createWish(
   api: string,
   token: string,
   input: WishInput,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions,
 ): Promise<Response<WishRow>> {
-  const r = await createWrite(api, token, fetchFn)("POST", "/wishes", input);
+  const r = await createWrite(api, token, options)("POST", "/wishes", input);
   return r.ok ? { ok: true, value: (r.value as { wish: WishRow }).wish } : r;
 }
 
@@ -119,9 +119,9 @@ export async function renameWish(
   api: string,
   token: string,
   target: { wishId: string; name: string },
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions,
 ): Promise<Response<WishRenameResult>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/wishes/${encodeURIComponent(target.wishId)}/rename`,
     { name: target.name },
@@ -134,12 +134,12 @@ export async function removeDuplicateWish(
   api: string,
   token: string,
   wishId: string,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions,
 ): Promise<Response<WishRemoveResult>> {
   const r = await createWrite(
     api,
     token,
-    fetchFn,
+    options,
   )("POST", `/wishes/${encodeURIComponent(wishId)}/remove-duplicate`);
   return r.ok ? { ok: true, value: r.value as WishRemoveResult } : r;
 }
@@ -149,12 +149,12 @@ export async function storeWishImage(
   api: string,
   token: string,
   wishId: string,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions,
 ): Promise<Response<{ changed: boolean }>> {
   const r = await createWrite(
     api,
     token,
-    fetchFn,
+    options,
   )("POST", `/wishes/${encodeURIComponent(wishId)}/image`);
   return r.ok ? { ok: true, value: r.value as { changed: boolean } } : r;
 }
@@ -173,9 +173,9 @@ export async function setWishVisibleToFriends(
   api: string,
   token: string,
   target: { wishId: string; visible: boolean },
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions,
 ): Promise<Response<WishVisibilityResult>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/wishes/${encodeURIComponent(target.wishId)}/visibility`,
     { visible: target.visible },

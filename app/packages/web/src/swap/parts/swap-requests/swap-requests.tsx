@@ -85,12 +85,12 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
   const [handed, setHanded] = useState<string | null>(null);
   const answer = (s: SwapSide, a: AnswerInput) => {
     setHanded(null);
-    void write.run((t) => answerSwap({ api, token: t }, s.swapId, a), doneText(s, a));
+    void write.run((t, opts) => answerSwap({ api, token: t }, s.swapId, a, opts), doneText(s, a));
   };
   const handover = (s: SwapSide, marker: string | null) => {
     setHanded(null);
-    void write.run(async (t) => {
-      const r = await confirmHandover({ api, token: t }, s.swapId, marker);
+    void write.run(async (t, opts) => {
+      const r = await confirmHandover({ api, token: t }, s.swapId, marker, opts);
       if (r.ok) setHanded(handoverText(s, r.value.status));
       return r;
     }, "");

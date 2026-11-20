@@ -6,7 +6,13 @@ import type {
   OfferView,
   SpecimenRow,
 } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -63,9 +69,9 @@ export async function createOffer(
   api: string,
   token: string,
   input: OfferInput,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<OfferRow>> {
-  const r = await createWrite(api, token, fetchFn)("POST", "/offers", input);
+  const r = await createWrite(api, token, options)("POST", "/offers", input);
   return r.ok ? { ok: true, value: r.value as OfferRow } : r;
 }
 
@@ -74,9 +80,9 @@ export async function withdrawOffer(
   api: string,
   token: string,
   offerId: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<OfferRow>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/offers/${encodeURIComponent(offerId)}/withdraw`,
     {},
@@ -89,9 +95,9 @@ export async function shareSpecimen(
   api: string,
   token: string,
   specimenId: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<unknown>> {
-  return createWrite(api, token, fetchFn)(
+  return createWrite(api, token, options)(
     "PUT",
     `/sharing/specimens/${encodeURIComponent(specimenId)}`,
     {

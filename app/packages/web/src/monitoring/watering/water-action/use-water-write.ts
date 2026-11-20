@@ -41,8 +41,8 @@ export function useWaterWrite(
   });
   const water = () =>
     void write.run(
-      async (tok) => {
-        const r = await markWatered(api, tok, [specimen.id]);
+      async (tok, opts) => {
+        const r = await markWatered(api, tok, [specimen.id], opts);
         made.current = r.ok && madeEntries(r.value, 1);
         writtenOn.current =
           r.ok && made.current ? ((r.value as { date?: string }).date ?? null) : null;
@@ -53,8 +53,8 @@ export function useWaterWrite(
   const undoWater = () => {
     const date = writtenOn.current;
     if (date === null) return;
-    void restore.run(async (tok) => {
-      const r = await unwaterPlants(api, tok, { specimenIds: [specimen.id], date });
+    void restore.run(async (tok, opts) => {
+      const r = await unwaterPlants(api, tok, { specimenIds: [specimen.id], date }, opts);
       removed.current = r.ok ? ((r.value as { removed?: number }).removed ?? 0) : 0;
       return r;
     }, t("restored"));

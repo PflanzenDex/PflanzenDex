@@ -1,5 +1,11 @@
 import type { TreatmentListRow, TreatmentRow } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -53,10 +59,10 @@ export async function planTreatments(
   api: string,
   token: string,
   input: TreatmentInput,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<readonly TreatmentRow[]>> {
   const { course, ...rest } = input;
-  const r = await createWrite(api, token, fetchFn)("POST", "/treatments", {
+  const r = await createWrite(api, token, options)("POST", "/treatments", {
     ...rest,
     ...(course ? { count: course.count, intervalDays: course.intervalDays } : {}),
   });
@@ -71,10 +77,10 @@ export async function completeTreatment(
   api: string,
   token: string,
   id: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<{ treatment: TreatmentRow; changed: boolean }>> {
   const timeZone = currentTimeZone();
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/treatments/${encodeURIComponent(id)}/complete`,
     {
@@ -122,9 +128,9 @@ export async function reopenTreatment(
   api: string,
   token: string,
   id: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<TreatmentRow>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/treatments/${encodeURIComponent(id)}/reopen`,
     { timeZone: currentTimeZone() },

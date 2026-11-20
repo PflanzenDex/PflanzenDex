@@ -1,5 +1,11 @@
 import type { Specimen } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -20,10 +26,10 @@ export async function createSpecimen(
     /** Back-dated catch date `YYYY-MM-DD` (FR-BES-04); without it the server uses today's local date. */
     catchDate?: string;
   },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<Specimen>> {
   const timeZone = currentTimeZone();
-  const r = await createWrite(api, token, fetchFn)("POST", "/specimens", {
+  const r = await createWrite(api, token, options)("POST", "/specimens", {
     ...input,
     timeZone,
   });
@@ -39,9 +45,9 @@ export async function repotSpecimen(
   api: string,
   token: string,
   input: { id: string; date?: string; potId?: string },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<Specimen>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/repot`,
     {
@@ -61,9 +67,9 @@ export async function setSpecimenLocation(
   api: string,
   token: string,
   input: { id: string; locationId: string },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<Specimen>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/location`,
     { locationId: input.locationId },
@@ -76,9 +82,9 @@ export async function markSpecimen(
   api: string,
   token: string,
   input: { id: string; marker: string },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<Specimen>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/marker`,
     { marker: input.marker },
@@ -94,9 +100,9 @@ export async function correctCatchDate(
   api: string,
   token: string,
   input: { id: string; catchDate: string },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<Specimen>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/catch-date`,
     { catchDate: input.catchDate, timeZone: currentTimeZone() },
@@ -112,9 +118,9 @@ export async function setLightZone(
   api: string,
   token: string,
   input: { id: string; lightZoneId: string | null },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<Specimen>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/light-zone`,
     { lightZoneId: input.lightZoneId },
@@ -146,9 +152,9 @@ export async function setSpecimenNotes(
   api: string,
   token: string,
   input: { id: string; notes: string },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<SpecimenNotes>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/notes`,
     { notes: input.notes },

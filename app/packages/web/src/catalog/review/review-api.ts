@@ -1,5 +1,5 @@
 import type { MergeOutcome, ReviewCase, ReviewList } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../shared/data";
+import { call, createWrite, type Response, type WriteOptions } from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -21,9 +21,9 @@ export async function decideProposal(
   api: string,
   token: string,
   { caseId, ...decision }: Decision,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<ReviewCase>> {
-  const r = await createWrite(api, token, fetchFn)("POST", `/review/${caseId}/decide`, decision);
+  const r = await createWrite(api, token, options)("POST", `/review/${caseId}/decide`, decision);
   return r.ok ? { ok: true, value: r.value as ReviewCase } : r;
 }
 
@@ -32,9 +32,9 @@ export async function mergeProposal(
   api: string,
   token: string,
   { caseId, targetSpeciesId }: { caseId: string; targetSpeciesId: string },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<MergeOutcome>> {
-  const r = await createWrite(api, token, fetchFn)("POST", `/review/${caseId}/merge`, {
+  const r = await createWrite(api, token, options)("POST", `/review/${caseId}/merge`, {
     targetSpeciesId,
   });
   return r.ok ? { ok: true, value: r.value as MergeOutcome } : r;

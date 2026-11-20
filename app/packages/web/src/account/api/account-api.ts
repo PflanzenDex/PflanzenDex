@@ -1,5 +1,11 @@
 import type { UserManagerSettings } from "oidc-client-ts";
-import { call, createWrite, withRepeatKey, type ApiError, type Response } from "../../shared/data";
+import {
+  call,
+  createWrite,
+  type ApiError,
+  type Response,
+  type WriteOptions,
+} from "../../shared/data";
 
 export type Account = {
   id: string;
@@ -155,28 +161,25 @@ export const SIGN_OUT_UNREACHABLE = "network.not_reachable";
 export function signOutEverywhere(
   api: string,
   token: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<unknown>> {
-  return withRepeatKey<unknown>(
-    JSON.stringify([api, "POST", "/account/sessions/end"]),
-    async (key) => {
-      try {
-        const res = await fetchFn(`${api}/account/sessions/end`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Idempotency-Key": key },
-          signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
-        });
-        const body = (await res.json().catch(() => ({}))) as { error?: ApiError };
-        if (res.ok) return { ok: true, value: body };
-        return {
-          ok: false,
-          error: body.error ?? { code: "account.sign_out_everywhere_failed", text: "" },
-        };
-      } catch {
-        return { ok: false, error: { code: SIGN_OUT_UNREACHABLE, text: "" } };
-      }
-    },
-  );
+  return (async (key: string): Promise<Response<unknown>> => {
+    try {
+      const res = await (options.fetchFn ?? fetch)(`${api}/account/sessions/end`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Idempotency-Key": key },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
+      });
+      const body = (await res.json().catch(() => ({}))) as { error?: ApiError };
+      if (res.ok) return { ok: true, value: body };
+      return {
+        ok: false,
+        error: body.error ?? { code: "account.sign_out_everywhere_failed", text: "" },
+      };
+    } catch {
+      return { ok: false, error: { code: SIGN_OUT_UNREACHABLE, text: "" } };
+    }
+  })(options.key);
 }
 
 export const loadProfile = (
@@ -190,8 +193,8 @@ export async function saveProfile(
   api: string,
   token: string,
   profile: AccountProfile,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<AccountProfile>> {
-  const r = await createWrite(api, token, fetchFn)("PUT", "/account/profile", profile);
+  const r = await createWrite(api, token, options)("PUT", "/account/profile", profile);
   return r.ok ? { ok: true, value: r.value as AccountProfile } : r;
 }

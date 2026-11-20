@@ -100,7 +100,9 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
             type="button"
             size="touch"
             disabled={write.running}
-            onClick={() => void write.run((t) => markWatered(api, t, [specimen.id]), ui("watered"))}
+            onClick={() =>
+              void write.run((t, o) => markWatered(api, t, [specimen.id], o), ui("watered"))
+            }
           >
             {ui("water")}
           </Button>
@@ -110,7 +112,7 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
             variant="outline"
             disabled={write.running}
             onClick={() =>
-              void write.run((t) => markFertilized(api, t, specimen.id), ui("fertilized"))
+              void write.run((t, o) => markFertilized(api, t, specimen.id, o), ui("fertilized"))
             }
           >
             {ui("fertilize")}
@@ -188,7 +190,7 @@ function Archived(props: { api: string; token: Token; id: string; specimen: Spec
         size="touch"
         variant="tinted"
         disabled={write.running}
-        onClick={() => void write.run((t) => restoreSpecimen(api, t, specimen.id), ui("restored"))}
+        onClick={() => void write.run((t, o) => restoreSpecimen(api, t, id, o), ui("restored"))}
       >
         {ui("restore")}
       </Button>

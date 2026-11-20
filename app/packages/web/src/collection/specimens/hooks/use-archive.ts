@@ -1,3 +1,4 @@
+import { useRepeatKey } from "@/shared/data";
 import { useCallback, useState } from "react";
 import type { ApiError } from "../../../shared/data";
 import { refusalText } from "@/shared/lib/error-text";
@@ -18,13 +19,17 @@ type SpecimenName = { id: string; name: string };
  */
 export function useArchive(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<SpecimenName | null>(null);
+  const keys = useRepeatKey();
   const toast = useToast();
 
   const archive = useCallback(
     async (reason: string): Promise<ApiError | null> => {
       const tok = await token();
       if (!tok || !open) return SIGN_IN;
-      const r = await archiveSpecimen(api, tok, { id: open.id, reason });
+      const r = await keys.run(
+        (key) => archiveSpecimen(api, tok, { id: open.id, reason }, { key }),
+        `${open.id}:archive`,
+      );
       if (!r.ok) return r.error;
       // The row leaves the list: visible result until the in-place row of FX-09 (SG-FEED-03).
       toast.show({ message: t("archived", { name: open.name }) });
@@ -39,7 +44,7 @@ export function useArchive(api: string, token: Token, after: () => void, say: Sa
     async (e: SpecimenName) => {
       const tok = await token();
       const r = tok
-        ? await restoreSpecimen(api, tok, e.id)
+        ? await keys.run((key) => restoreSpecimen(api, tok, e.id, { key }), `${e.id}:restore`)
         : { ok: false as const, error: SIGN_IN };
       if (!r.ok) say(refusalText(r.error), "error");
       // The row leaves the archive: visible result until the in-place row of FX-09 (SG-FEED-03).

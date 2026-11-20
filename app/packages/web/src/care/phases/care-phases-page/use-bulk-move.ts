@@ -71,7 +71,7 @@ export function useBulkMove(api: string, token: Token, again: () => void) {
     const moves = movesOf(undo.held, group);
     restoring.current = group;
     setNote(null);
-    void restore.run((t) => restorePhaseLocations(api, t, moves), ui("restored"));
+    void restore.run((t, opts) => restorePhaseLocations(api, t, moves, opts), ui("restored"));
   };
   const groupUndo = (target: string) =>
     undo.held.some((h) => h.group === target)

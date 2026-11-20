@@ -53,7 +53,7 @@ function useOverviewWrites(api: string, token: Token) {
   const unlock = useCallback(
     (id: string) =>
       run(
-        (tk) => unlockFunction(api, tk, id),
+        (tk, opts) => unlockFunction(api, tk, id, opts),
         t("unlock.done", { name: functionName(id), empty: functionEmpty(id) }).trim(),
       ),
     [run, api],
@@ -61,7 +61,7 @@ function useOverviewWrites(api: string, token: Token) {
   const keeper = useCallback(
     (feature: string, enabled: boolean, name: string) =>
       run(
-        (tk) => setKeeperSwitch(api, tk, feature, enabled),
+        (tk, opts) => setKeeperSwitch(api, tk, { feature, enabled }, opts),
         enabled ? t("keeper.savedOn", { name }) : t("keeper.savedOff", { name }),
       ),
     [run, api],

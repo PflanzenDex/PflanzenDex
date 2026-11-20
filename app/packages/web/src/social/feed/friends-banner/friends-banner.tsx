@@ -70,7 +70,7 @@ export function NewPlantsBody(props: {
 }) {
   const { news, okay, compact, offline } = props;
   const seen = async () => {
-    await okay.run((tk) => markFeedSeen(props.api, tk, news.asOf), t("news.okayDone"));
+    await okay.run((tk, opts) => markFeedSeen(props.api, tk, news.asOf, opts), t("news.okayDone"));
     props.onSeen?.();
   };
   return (

@@ -1,5 +1,5 @@
 import type { CareProfile, CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../shared/data";
+import { call, createWrite, type Response, type WriteOptions } from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -21,9 +21,9 @@ export async function saveCareProfile(
   api: string,
   token: string,
   input: { speciesId: string; changes: CareProfileChanges },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<CareProfile>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "PUT",
     `/care-profiles/${encodeURIComponent(input.speciesId)}`,
     input.changes,

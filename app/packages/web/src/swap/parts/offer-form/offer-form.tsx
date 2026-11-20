@@ -56,8 +56,8 @@ function useOfferForm(
   const ready = p !== undefined && p.shared && !p.offered && (!p.health.treatmentOpen || confirm);
   const submit = async () => {
     let created = false;
-    await write.run(async (t) => {
-      const r = await createOffer(api, t, offerBody(fields, confirm));
+    await write.run(async (t, opts) => {
+      const r = await createOffer(api, t, offerBody(fields, confirm), opts);
       created = r.ok;
       return r;
     }, CREATED);
@@ -67,7 +67,7 @@ function useOfferForm(
   };
   const share = () =>
     void write.run(
-      (t) => shareSpecimen(api, t, fields.specimenId),
+      (t, opts) => shareSpecimen(api, t, fields.specimenId, opts),
       "Freigegeben: Freunde sehen diese Pflanze ab jetzt.",
     );
   return {

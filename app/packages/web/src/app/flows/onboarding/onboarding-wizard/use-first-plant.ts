@@ -15,7 +15,7 @@ import {
   type CreateFields,
   type MarkerRule,
 } from "../../../../collection";
-import { currentTimeZone, SIGN_IN, type ApiError } from "../../../../shared/data";
+import { currentTimeZone, SIGN_IN, type ApiError, useRepeatKey } from "../../../../shared/data";
 import { useOwnZones } from "./save-step/use-own-zones";
 import { useFieldForm } from "@/shared/ui/fields/form/form";
 
@@ -47,17 +47,23 @@ async function createPlant(args: {
   marker: { form: UseFormReturn<CreateFields>; rule: MarkerRule | null };
   zoneId: string;
   locationId: string;
+  key: string;
 }) {
-  const { api, token, species, marker, zoneId, locationId } = args;
+  const { api, token, species, marker, zoneId, locationId, key } = args;
   const t = await token();
   const rule = marker.rule;
-  if (!t || !rule) return null;
-  return createSpecimen(api, t, {
-    speciesId: species.id,
-    ...markerInputOf(marker.form.getValues(), rule.missing),
-    ...(zoneId ? { lightZoneId: zoneId } : {}),
-    ...(locationId ? { locationId } : {}),
-  });
+  if (!t || !rule) return { ok: false as const, error: SIGN_IN };
+  return createSpecimen(
+    api,
+    t,
+    {
+      speciesId: species.id,
+      ...markerInputOf(marker.form.getValues(), rule.missing),
+      ...(zoneId ? { lightZoneId: zoneId } : {}),
+      ...(locationId ? { locationId } : {}),
+    },
+    { key },
+  );
 }
 
 /**
@@ -125,6 +131,8 @@ export function useFirstPlant(api: string, token: Token) {
     shown.current = { index, created };
     box.current?.querySelector("h2")?.focus();
   }, [index, created]);
+  // The held key of the first plant: a lost answer repeats the same create under it (US-QS-03).
+  const keys = useRepeatKey();
   const pick = (s: Species) => {
     setSpecies(s);
     setZoneId("");
@@ -134,7 +142,9 @@ export function useFirstPlant(api: string, token: Token) {
   const save = async () => {
     if (!species || !marker.rule || !(await markerChecked(marker.form))) return;
     setSaving(true);
-    const r = await createPlant({ api, token, species, marker, zoneId, locationId });
+    const r = await keys.run((key) =>
+      createPlant({ api, token, species, marker, zoneId, locationId, key }),
+    );
     setSaving(false);
     if (!r) return setError(errorText(SIGN_IN.code));
     if (!r.ok)

@@ -27,8 +27,8 @@ function useSendRequest(
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const send = async (code: string): Promise<boolean> => {
     let ok = false;
-    await write.run(async (t) => {
-      const r = await sendFriendRequest(api, t, code);
+    await write.run(async (t, opts) => {
+      const r = await sendFriendRequest(api, t, code, opts);
       ok = r.ok;
       setRefusal(r.ok ? null : r.error);
       return r;
@@ -84,8 +84,8 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
               created={created}
               running={invite.running}
               onCreate={() =>
-                void invite.run(async (t) => {
-                  const r = await createFriendCode(api, t);
+                void invite.run(async (t, opts) => {
+                  const r = await createFriendCode(api, t, opts);
                   if (r.ok) setCreated(r.value);
                   return r;
                 }, "Code erzeugt.")

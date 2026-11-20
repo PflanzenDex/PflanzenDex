@@ -88,16 +88,15 @@ UntilField.displayName = "UntilField";
  * Explicit pauses of the care rhythm (US-ACH-04): holiday or illness, up to 4 weeks each. Tasks due inside a pause
  * are neutral, nothing is lost. A refusal (too long, end before start) stays visible with its reason (P-10).
  */
+// A pause is set from today on, and the keeper changes both days (US-ACH-04, US-QS-32: prefilled with today).
 export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmPauseItem[] }) {
   const { api, token, pauses } = props;
-  // A pause is set from today on, and the keeper changes both days (US-ACH-04, US-QS-32: prefilled with today).
   const today = localToday(new Date(), currentTimeZone());
   const [from, setFrom] = useState(today);
   const [until, setUntil] = useState(today);
   const [untilLeft, setUntilLeft] = useState(false);
   const untilRef = useRef<HTMLInputElement>(null);
-  const refresh = useInvalidate(["achievements"]);
-  const write = useWriteAction(token, refresh);
+  const write = useWriteAction(token, useInvalidate(["achievements"]));
   const stop = stopMessageOf(from, until, untilLeft, write.error?.code === TOO_LONG);
   const submit = () => {
     if (!isHandedDate(from) || !isHandedDate(until)) return;
@@ -107,7 +106,7 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
       untilRef.current?.focus();
       return;
     }
-    void write.run((t) => addRhythmPause(api, t, { from, until }), "Urlaub eingetragen.");
+    void write.run((t, o) => addRhythmPause(api, t, { from, until }, o), "Urlaub eingetragen.");
   };
   return (
     <div className="flex min-w-0 flex-col gap-3 text-sm">
@@ -134,7 +133,9 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
       </div>
       <PauseList
         pauses={pauses}
-        remove={(id) => void write.run((t) => removeRhythmPause(api, t, id), "Urlaub entfernt.")}
+        remove={(id) =>
+          void write.run((t, o) => removeRhythmPause(api, t, id, o), "Urlaub entfernt.")
+        }
       />
       {write.error && write.error.code !== TOO_LONG && (
         <p role="alert" className="mt-2 text-destructive">

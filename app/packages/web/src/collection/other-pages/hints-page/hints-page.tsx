@@ -109,7 +109,7 @@ function HintsList(props: HintsListProps) {
               onOpen={onOpen}
               onLocate={(specimenId, locationId, success) =>
                 void place.run(
-                  (t) => setSpecimenLocation(api, t, { id: specimenId, locationId }),
+                  (t, opts) => setSpecimenLocation(api, t, { id: specimenId, locationId }, opts),
                   success,
                 )
               }

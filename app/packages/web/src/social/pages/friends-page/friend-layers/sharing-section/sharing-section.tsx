@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useWriteAction } from "../../../../../shared/data";
+import { useWriteAction, newRepeatKey, type WriteOptions } from "../../../../../shared/data";
 import {
   setSpeciesSharing,
   setSpecimenSharing,
@@ -10,6 +10,9 @@ import { partialText } from "./sharing-text";
 import { Outcome } from "../outcome/outcome";
 
 /** The sharing panel with its own writes and their outcome (US-SOZ-04): one request at a time, the page reloads after each. */
+/** The key of one species write of a bulk action: each species is its own write (US-QS-03, its sharing is idempotent). */
+const perSpecies = (o: WriteOptions): WriteOptions => ({ ...o, key: newRepeatKey() });
+
 export function SharingSection(props: {
   data: FriendsData;
   api: string;
@@ -22,7 +25,7 @@ export function SharingSection(props: {
   const [partial, setPartial] = useState<string | null>(null);
   const set = (specimenId: string, share: boolean) =>
     void sharing.run(
-      (t) => setSpecimenSharing(api, t, { specimenId, share }),
+      (t, opts) => setSpecimenSharing(api, t, { specimenId, share }, opts),
       share
         ? "Freigegeben: Freunde sehen diese Pflanze ab jetzt."
         : "Zurückgezogen: Freunde sehen diese Pflanze ab dem nächsten Abruf nicht mehr.",
@@ -34,11 +37,11 @@ export function SharingSection(props: {
     ];
     setPartial(null);
     void sharing.run(
-      async (t) => {
+      async (t, opts) => {
         let last: Awaited<ReturnType<typeof setSpeciesSharing>> | undefined;
         let done = 0;
         for (const speciesId of ids) {
-          last = await setSpeciesSharing(api, t, { speciesId, share });
+          last = await setSpeciesSharing(api, t, { speciesId, share }, perSpecies(opts));
           if (!last.ok) {
             setPartial(partialText(done, ids.length));
             return last;

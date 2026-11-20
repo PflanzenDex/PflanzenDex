@@ -62,7 +62,7 @@ export function CareProfileSection(props: {
     [api, speciesId, client],
   );
   const save = (speciesId: string, changes: CareProfileChanges, success: string) =>
-    void write.run((t) => saveCareProfile(api, t, { speciesId, changes }), success);
+    void write.run((t, opts) => saveCareProfile(api, t, { speciesId, changes }, opts), success);
   return (
     <div className="min-w-0">
       <LoadFrame

@@ -3,7 +3,7 @@ import { useAnnounce } from "@/shared/platform/announcer/context";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useUndo, type Held, type Undo } from "@/shared/feedback/undo-row/use-undo";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useInvalidate, useWriteAction } from "../../../shared/data";
+import { useInvalidate, useWriteAction, type WriteOptions } from "../../../shared/data";
 import { WATERING_KEY } from "../../api/due-count/due-count";
 import {
   madeEntries,
@@ -69,13 +69,15 @@ function holdWritten(
 async function sendWater(
   api: string,
   tok: string,
-  entries: readonly WaterEntry[],
-  made: { current: { date: string } | null },
+  target: { entries: readonly WaterEntry[]; made: { current: { date: string } | null } },
+  options: WriteOptions,
 ) {
+  const { entries, made } = target;
   const r = await markWatered(
     api,
     tok,
     entries.map((e) => e.row.specimenId),
+    options,
   );
   const date = r.ok && madeEntries(r.value, entries.length) ? dateOf(r.value) : null;
   made.current = date === null ? null : { date };
@@ -86,10 +88,11 @@ async function sendWater(
 async function sendUndo(
   api: string,
   tok: string,
-  input: { specimenIds: readonly string[]; date: string },
-  removed: { current: number },
+  target: { input: { specimenIds: readonly string[]; date: string }; removed: { current: number } },
+  options: WriteOptions,
 ) {
-  const r = await unwaterPlants(api, tok, input);
+  const { input, removed } = target;
+  const r = await unwaterPlants(api, tok, input, options);
   removed.current = r.ok ? removedOf(r.value) : 0;
   return r;
 }
@@ -135,14 +138,17 @@ export function useDueWrite(api: string, token: () => Promise<string | undefined
     if (pending.current !== null || restoring.current !== null) return;
     setResult(null);
     if (isOnline()) pending.current = { entries, bulk: entries.length > 1 };
-    void write.run((tok) => sendWater(api, tok, entries, made), ui("done"));
+    void write.run((tok, opts) => sendWater(api, tok, { entries, made }, opts), ui("done"));
   };
   const undoPlant = (group: string) => {
     const date = dates.current.get(group);
     if (date === undefined || pending.current !== null || restoring.current !== null) return;
     const specimenIds = undo.held.filter((h) => h.group === group).map((h) => h.key);
     restoring.current = group;
-    void restore.run((tok) => sendUndo(api, tok, { specimenIds, date }, removed), ui("restored"));
+    void restore.run(
+      (tok, opts) => sendUndo(api, tok, { input: { specimenIds, date }, removed }, opts),
+      ui("restored"),
+    );
   };
   return {
     result,
