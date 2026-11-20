@@ -2,6 +2,7 @@ import { axeReport } from "../support/axe";
 import {
   addLocation,
   expectAnnounced,
+  listRow,
   openLocations,
   showLocations,
   signInAtLight,
@@ -29,7 +30,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
   }, info) => {
     await signInAtLight(page, account);
     await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
-    await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
+    await expect(listRow(page, "Zone 2")).toBeVisible();
     await expect(page.getByText("bis 15.000 Lux")).toBeVisible();
 
     await addLocation(page);
@@ -39,7 +40,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
     await form.getByLabel("Innen oder außen").selectOption("outdoor");
     await form.getByRole("button", { name: "Standort anlegen" }).click();
 
-    await expect(page.getByRole("heading", { level: 3, name: "Balkon" })).toBeVisible();
+    await expect(listRow(page, "Balkon")).toBeVisible();
     await expect(page.getByText("Zone 3 · außen")).toBeVisible();
     await axeReport(page, info, "light-eingerichtet", { blocking: true });
 
@@ -47,7 +48,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
     await page.reload();
     await openLocations(page);
     await showLocations(page);
-    await expect(page.getByRole("heading", { level: 3, name: "Balkon" })).toBeVisible();
+    await expect(listRow(page, "Balkon")).toBeVisible();
   });
 
   test("US-LIC-05 location without light zone appears in the hints with the next action", async ({
@@ -73,7 +74,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
     await form.getByLabel("Name").fill("Fensterbank");
     await form.getByLabel("Lux-Obergrenze").fill("8000");
     await form.getByRole("button", { name: "Lichtzone anlegen" }).click();
-    await expect(page.getByRole("heading", { level: 3, name: "Fensterbank" })).toBeVisible();
+    await expect(listRow(page, "Fensterbank")).toBeVisible();
     await expect(page.getByText("bis 8.000 Lux")).toBeVisible();
   });
 });
@@ -85,7 +86,7 @@ test.describe("US-LIC-01 determine the zone of a species", () => {
   }) => {
     await signInAtLight(page, account);
     await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
-    await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
+    await expect(listRow(page, "Zone 2")).toBeVisible();
 
     // The confirmation is only announced (SG-FEED-01, US-QS-32); no toast covers the reference button.
     await expectAnnounced(page, "Standard-Zonen übernommen.");

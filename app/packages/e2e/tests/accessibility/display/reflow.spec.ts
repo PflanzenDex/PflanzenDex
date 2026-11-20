@@ -8,7 +8,7 @@ import {
   signInToApp,
   tooltips,
 } from "../../../support/display/display";
-import { addLocation, expect, test } from "../../../support/fixtures";
+import { addLocation, expect, listRow, test } from "../../../support/fixtures";
 import { specimenByKeyboard } from "../../../support/keyboard";
 
 // US-QS-12: enlarge and adapt the display without losing content. Every view of a fresh account is measured in the
@@ -20,17 +20,13 @@ async function withSomeData(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
   // The zones are paged by the free height (US-QS-19): on a short window the first page may end before Zone 2, so the
   // check names the first zone, which is always on the first page.
-  await expect(
-    page.getByRole("heading", { level: 3, name: "Zone 1 · Stecklingslicht" }),
-  ).toBeVisible();
+  await expect(listRow(page, "Zone 1")).toBeVisible();
   await addLocation(page);
   const form = page.getByRole("form", { name: "Standort anlegen" });
   await form.getByLabel("Name").fill("Fensterbank im Schlafzimmer nach Südsüdwest");
   await form.getByLabel("Lichtzone").selectOption({ label: "Zone 3" });
   await form.getByRole("button", { name: "Standort anlegen" }).click();
-  await expect(
-    page.getByRole("heading", { level: 3, name: /Fensterbank im Schlafzimmer/ }),
-  ).toBeVisible();
+  await expect(listRow(page, "Fensterbank im Schlafzimmer")).toBeVisible();
 }
 
 /** Opens every view and collects its layout problems, after an optional preparation (for example a stylesheet). */
@@ -116,6 +112,25 @@ test.describe("US-QS-12 adaptable display: reflow, zoom and orientation", () => 
   });
 });
 
+/**
+ * The first plant of the Sammlung gets a last measurement with the quality "Vergeilt/dünn", so its tile shows the state that
+ * needs attention (US-QS-32). The Sammlung is shown again afterwards.
+ */
+async function etiolatedMeasurement(page: Page): Promise<void> {
+  await page.getByRole("list", { name: "Pflanzen" }).getByRole("button").first().click();
+  await page.getByRole("button", { name: /^Messen: / }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Messen", exact: true })).toBeVisible();
+  const form = page.getByRole("form", { name: "Messung erfassen" });
+  await form.getByLabel(/^Messwert/).fill("12,5");
+  await form.getByLabel("Qualität").selectOption("etiolated");
+  await page.getByRole("button", { name: "Messung speichern" }).click();
+  // The form clears once the measurement is stored; the saved result is not waited for here (a growth note takes the
+  // one polite region after a save, see the measure spec).
+  await expect(form.getByLabel(/^Messwert/)).toHaveValue("");
+  await page.getByRole("link", { name: "Sammlung", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Sammlung" })).toBeVisible();
+}
+
 // FR-BES-23 (issue 1414): the tile of a plant in the Sammlung at 360 px and 200 % text. At that width the picture and the
 // text stack (`@max-[7.5rem]` in plant-tile.tsx), so the state keeps the full width of the tile. Without the stacking the
 // picture and the text share one row, the text column gets no room and the state mark is cut off. Nothing overflows the
@@ -133,22 +148,23 @@ test.describe("FR-BES-23 Sammlung tiles at 200 % text", () => {
     test.setTimeout(120_000);
     await signInToApp(page, account);
     await specimenByKeyboard(page, "Aloe vera");
+    await etiolatedMeasurement(page);
 
     await page.setViewportSize({ width: 360, height: 640 });
     await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
 
     const tile = page.getByRole("list", { name: "Pflanzen" }).getByRole("button").first();
     await expect(tile).toBeVisible();
-    const state = tile.locator("[data-attention]");
+    // The state leads the meta line of the row (US-QS-32, #2266); a plant without an attention state shows none.
+    const state = tile.getByText("Vergeilt/dünn", { exact: true });
     await expect(state).toBeVisible();
 
-    // The state mark lies inside the tile, left and right, and its text is not cut off by the mark's own box.
+    // The state lies inside the tile, left and right: its word is not cut off by the edge of the tile.
     const tileBox = await tile.boundingBox();
     const stateBox = await state.boundingBox();
-    if (!tileBox || !stateBox) throw new Error("the tile or its state mark has no box");
+    if (!tileBox || !stateBox) throw new Error("the tile or its state has no box");
     expect(stateBox.x).toBeGreaterThanOrEqual(tileBox.x);
     expect(stateBox.x + stateBox.width).toBeLessThanOrEqual(tileBox.x + tileBox.width);
-    expect(await state.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   });
 });
 

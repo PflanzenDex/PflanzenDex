@@ -110,7 +110,9 @@ async function expectPhases(
 ): Promise<void> {
   const { ruhe, profil, wachs } = names;
   const list = page.getByRole("list", { name: "Pflanzen mit Pflegephase" });
-  const row = (name: string) => page.getByRole("button", { name });
+  // The "Umstellen: <name>" button of a plant carries the same name: the row is the button without that label.
+  const row = (name: string) =>
+    page.getByRole("button", { name }).and(page.locator(":not([aria-label^='Umstellen'])"));
   await expect(page.getByRole("button", { name: /^Ruhephase \(2\)$/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Wachstumsphase \(1\)$/ })).toBeVisible();
   // Dormancy today: the plant at Fensterbank stands off its target Keller, so the row carries the one action that moves it
@@ -182,7 +184,8 @@ test.describe("US-PHA-01 Pflegephasen mit Pflanzen", () => {
     await createPlant(page, { location: "Fensterbank", marker: "Steckling", cutting: true });
     await chooseSpecies(page, ruhe);
     await createPlant(page, { location: "Fensterbank", marker: "alt" });
-    await archivePlant(page, `${ruhe} – alt`);
+    // The row of a plant with its own name shows the name as its title and the species after it (US-QS-32, #2266).
+    await archivePlant(page, `alt ${ruhe}`);
 
     await openPhaseGrouping(page);
     await expectPhases(page, info, { ruhe, profil, wachs });

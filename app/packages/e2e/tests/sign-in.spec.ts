@@ -59,7 +59,8 @@ test.describe("US-ACC-01 sign-in", () => {
     await page.locator("#username").fill(account.email);
     await page.locator("#password").fill("falsches-Passwort-123");
     await page.locator("#kc-login").click();
-    await expect(page.getByText(/Ungültig/)).toBeVisible();
+    // The sign-in service's text says how to go on (US-QS-32, #2190); the refusal is the same for an unknown account.
+    await expect(page.getByText(/E-Mail, Benutzername oder Passwort stimmen nicht/)).toBeVisible();
     // Still at the sign-in service, whichever port it runs on (E2E_KEYCLOAK_URL).
     await expect(page).toHaveURL(/\/realms\/pflanzendex\//);
   });

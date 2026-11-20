@@ -1,8 +1,8 @@
 import type { Locator, Page } from "@playwright/test";
 import {
-  dismissToast,
   expectAnnounced,
   expect,
+  expectUndoInPlace,
   openFirstPlant,
   proposeSpecies,
   signIn,
@@ -98,7 +98,7 @@ async function settleMeasurementSave(page: Page): Promise<void> {
 async function measureWithPhoto(page: Page): Promise<void> {
   await openFirstPlant(page);
   await page.getByRole("button", { name: /^Messen: / }).click();
-  await expect(page.getByRole("heading", { level: 1, name: /^Messen: / })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Messen", exact: true })).toBeVisible();
   await expectFitsWidth(page, "Messen");
   const form = page.getByRole("form", { name: "Messung erfassen" });
   await form.getByLabel(/^Messwert/).fill("12,5");
@@ -122,14 +122,14 @@ async function waterPlant(page: Page): Promise<void> {
   const water = page.getByRole("button", { name: /^Gießen: / });
   await expectLowerHalf(page, water, "water: Gießen");
   await water.click();
-  await expect(
-    page.getByRole("status").filter({ hasText: "als gegossen eingetragen" }),
-  ).toBeVisible();
+  // The watering stays in its place as "Gegossen heute · Rückgängig" for 8 s, then "Gießen" is back; no toast opens
+  // (US-QS-32, SG-FEED-03). The check waits for the window to end.
+  await expectUndoInPlace(page, "Gegossen heute", /^Rückgängig: /);
+  await expect(water).toBeVisible();
   // Escape closes a layer only while the focus is inside it, so the focus goes to the layer's tab first.
   await page.getByRole("tab", { name: "Überblick" }).focus();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("tab", { name: "Überblick" })).toBeHidden();
-  await dismissToast(page, "als gegossen eingetragen");
 }
 
 /** 3. Tick off an open treatment: plan one in the layer "Behandlungen" of "Heute" (US-BEH-01), then tick it off. */
@@ -153,7 +153,8 @@ async function tickOffTreatment(page: Page): Promise<void> {
   // Not in the lower-half check: the layer "Behandlungen" opens from the top of the window, and its first row ("Abhaken")
   // lies in the upper half by design (docs/records/test-logs/qs-one-screen/360x640-heute-behandeln.png).
   await page.getByRole("button", { name: /^Wollläuse bei .* als erledigt abhaken$/ }).click();
-  await expect(page.getByText(/„Wollläuse“ als erledigt eingetragen am/)).toBeVisible();
+  // The tick-off stays in its place as "Erledigt · Rückgängig" for 8 s, then the row moves (US-QS-32, SG-FEED-03).
+  await expectUndoInPlace(page, "Erledigt", /^Rückgängig: Wollläuse bei /);
   await page.getByRole("button", { name: "Behandlung planen" }).first().focus();
   await page.keyboard.press("Escape");
   // The tick-off confirms in the layer's own text (asserted above), not with a toast.

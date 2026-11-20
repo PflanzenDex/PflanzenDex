@@ -1,5 +1,5 @@
 import { randomInt } from "node:crypto";
-import { expect, test as base, type Page } from "@playwright/test";
+import { expect, test as base, type Locator, type Page } from "@playwright/test";
 import { createTestAccount, type TestAccount } from "./account";
 
 export { expect };
@@ -73,6 +73,25 @@ export async function addLocation(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Neuer Standort" }).click();
 }
 
+/**
+ * A row of the lists of light zones and locations (US-LIC-05, US-QS-19): a button named by its title and facts ("Zone 2
+ * bis 15.000 Lux"). It has no heading; choosing it opens the layer of the entry. Titles here are unique on the page.
+ */
+export function listRow(page: Page, title: string): Locator {
+  return page.getByRole("button", { name: title });
+}
+
+/**
+ * A change that stays in its place for the undo window (SG-FEED-03, US-QS-32): the result and "Rückgängig" stand where the
+ * control was. The row leaves when its 8 s end; the check waits for that, no clock is faked.
+ */
+export async function expectUndoInPlace(page: Page, result: string, undo: RegExp): Promise<void> {
+  const button = page.getByRole("button", { name: undo });
+  await expect(button).toBeVisible();
+  await expect(page.getByText(`${result} · Rückgängig`, { exact: true })).toBeVisible();
+  await expect(button).toBeHidden({ timeout: 12_000 });
+}
+
 export async function openLocations(page: Page): Promise<void> {
   await page.getByRole("link", { name: "Sammlung", exact: true }).click();
   await page.getByRole("button", { name: "Ansicht" }).click();
@@ -92,7 +111,7 @@ export async function createLocation(page: Page, name: string): Promise<void> {
   const form = page.getByRole("form", { name: "Standort anlegen" });
   await form.getByLabel("Name").fill(name);
   await form.getByRole("button", { name: "Standort anlegen" }).click();
-  await expect(page.getByRole("heading", { level: 3, name })).toBeVisible();
+  await expect(listRow(page, name)).toBeVisible();
 }
 
 /** The plant whose name contains `name` (a species, or a species with its marker) as its layer with tabs (US-QS-23). */

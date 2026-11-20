@@ -79,12 +79,14 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     await openFirstPlant(page);
     await page.getByRole("button", { name: /^Messen: / }).click();
 
-    await expect(page.getByRole("heading", { level: 1, name: /^Messen: / })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Messen", exact: true }),
+    ).toBeVisible();
     await expect(page.getByText("noch keine Messung").first()).toBeVisible();
     await openCourse(page);
     await expect(page.getByText("Was messen?")).toBeVisible();
     await expect(page.getByText("Rosettendurchmesser.")).toBeVisible();
-    await expect(page.getByText("Trage oben den ersten Messwert ein.")).toBeVisible();
+    await expect(page.getByText("Noch keine Messung.", { exact: true })).toBeVisible();
     await axeReport(page, info, "measure-empty");
     await closeCourse(page);
 
@@ -135,6 +137,6 @@ test.describe("US-WAC-01 Messung erfassen", () => {
       await expect(page.getByRole("alert")).toContainText("Gib eine Zahl ab 0 an");
     }
     await openCourse(page);
-    await expect(page.getByText("Trage oben den ersten Messwert ein.")).toBeVisible();
+    await expect(page.getByText("Noch keine Messung.", { exact: true })).toBeVisible();
   });
 });
