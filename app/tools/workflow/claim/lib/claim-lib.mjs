@@ -1,6 +1,8 @@
 // Pure rules of the claim check (US-DEV-08): who works on which story, how a branch is named,
 // which findings forbid a second claim. No I/O here; the clients live in claim-client.mjs.
 import { EPIC_SCOPES } from "../../../../config/project/commitlint.config.js";
+// The PR keyword rules (Closes #n, Refs #n) live with the project status; the claim reuses them, one source (US-DEV-08).
+import { closedIssues, referredIssues } from "../../actions/project-status/project-status-lib.mjs";
 
 // Assumption (starting value, not measured): a claim without a commit for 48 hours counts as stale.
 export const DEFAULT_STALE_HOURS = 48;
@@ -12,9 +14,6 @@ export const REPORT_LABEL = "report";
 export const TRIAGE_LABEL = "needs-triage";
 
 const ID_PATTERN = /\b(US-[A-Z]{2,4}-\d{2}|FR-[A-Z]{2,4}-\d{2}|TE-\d{2})\b/i;
-const CLOSING = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+#(\d+)\b/gi;
-// `Refs #n` names a partial step: it links the PR to the issue without closing it (US-DEV-08).
-const REFERS = /\b(?:refs?|references?)\s*:?\s+#(\d+)\b/gi;
 const UMLAUTS = { ä: "ae", ö: "oe", ü: "ue", ß: "ss" };
 
 /** Story ID such as "US-DEV-08" from a title or branch text, or null. */
@@ -97,9 +96,8 @@ export function scopeOf(issue) {
   return EPIC_SCOPES.includes(epic) ? epic : "dev";
 }
 
-const numbersIn = (pattern, body) => [...(body ?? "").matchAll(pattern)].map((m) => Number(m[1]));
-const closesIssue = (pr, issue) => numbersIn(CLOSING, pr.body).includes(issue.number);
-const refersToIssue = (pr, issue) => numbersIn(REFERS, pr.body).includes(issue.number);
+const closesIssue = (pr, issue) => closedIssues(pr).includes(issue.number);
+const refersToIssue = (pr, issue) => referredIssues(pr).includes(issue.number);
 
 /** Whether a PR links to the issue (US-DEV-08): its body closes or refers to it, or its branch carries its issue number. Titles never link. */
 export function prReferences(pr, issue) {

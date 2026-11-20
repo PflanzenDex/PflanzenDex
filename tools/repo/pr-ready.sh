@@ -82,7 +82,8 @@ if ! PR_BODY="$body" node app/tools/check/docs/agents/pr/pr-lessons.mjs; then
 fi
 
 # A note, never a refusal (US-DEV-08): a body that refers to an issue with `Refs #n` and closes no such number links nothing
-# on merge (only Closes moves the board to On dev and closes the issue). The keyword patterns follow claim-lib.mjs (REFERS, CLOSING).
+# on merge (only Closes moves the board to On dev and closes the issue). The grep copies follow closedIssues and referredIssues in
+# app/tools/workflow/actions/project-status/project-status-lib.mjs (shell cannot import them; the pr-ready test pins the behaviour).
 refs_found="$(printf '%s\n' "$body" | grep -oiE '(^|[^[:alnum:]_])(refs?|references?)[[:space:]]*:?[[:space:]]+#[0-9]+' | grep -oE '#[0-9]+' || true)"
 closes_found="$(printf '%s\n' "$body" | grep -oiE '(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]*:?[[:space:]]+#[0-9]+' | grep -oE '#[0-9]+' || true)"
 while IFS= read -r ref; do
