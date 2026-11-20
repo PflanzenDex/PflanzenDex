@@ -79,6 +79,22 @@ export class TreatmentsPostgres {
     return r.rows[0] ?? "unknown";
   }
 
+  /**
+   * Clears done and the done date of one treatment (US-QS-32, the undo of "Erledigt"). The table keeps both together
+   * (`done = (done_at is not null)`). An open treatment comes back unchanged; a foreign or unknown ID is `unknown`.
+   */
+  async reopen(userId: string, id: string): Promise<TreatmentRow | "unknown"> {
+    const r = await withAccount(this.pool, userId, async (c) => {
+      const updated = await c.query<TreatmentRow>(
+        `update treatment set done = false, done_at = null where id = $1 and done returning ${COLUMNS}`,
+        [id],
+      );
+      if (updated.rows.length > 0) return updated;
+      return c.query<TreatmentRow>(`select ${COLUMNS} from treatment where id = $1`, [id]);
+    });
+    return r.rows[0] ?? "unknown";
+  }
+
   /** Done treatments of one specimen, latest done date first (history, US-BEH-03). */
   async done(userId: string, specimenId: string): Promise<readonly TreatmentRow[]> {
     const r = await withAccount(this.pool, userId, (c) =>

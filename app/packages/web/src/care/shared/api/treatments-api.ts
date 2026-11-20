@@ -113,3 +113,21 @@ export async function loadOpenTreatments(
   );
   return r.ok ? { ok: true, value: r.value.treatments } : r;
 }
+
+/**
+ * The undo of "Erledigt" (US-QS-32): opens the treatment again when it was ticked off today in the device's time zone
+ * (NFR-08); a tick-off of another day is refused by its code. The repeat-guard key is created per call.
+ */
+export async function reopenTreatment(
+  api: string,
+  token: string,
+  id: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<TreatmentRow>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/treatments/${encodeURIComponent(id)}/reopen`,
+    { timeZone: currentTimeZone() },
+  );
+  return r.ok ? { ok: true, value: (r.value as { treatment: TreatmentRow }).treatment } : r;
+}

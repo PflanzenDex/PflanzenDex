@@ -43,6 +43,15 @@ export class InMemoryTreatments implements TreatmentStore {
     return bare(this.rows[index] as typeof found);
   }
 
+  async reopen(userId: string, id: string): Promise<TreatmentRow | "unknown"> {
+    this.writes += 1;
+    const index = this.rows.findIndex((r) => r.userId === userId && r.id === id);
+    const found = this.rows[index];
+    if (!found) return "unknown";
+    this.rows[index] = { ...found, done: false, doneAt: null };
+    return bare(this.rows[index] as typeof found);
+  }
+
   async done(userId: string, specimenId: string): Promise<readonly TreatmentRow[]> {
     return this.rows
       .filter((r) => r.userId === userId && r.specimenId === specimenId && r.done)

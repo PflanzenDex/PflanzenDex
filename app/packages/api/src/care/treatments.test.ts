@@ -412,3 +412,60 @@ describe("US-BEH-03 history per specimen", () => {
     expect((await history(subA, "x")).status).toBe(400);
   });
 });
+
+const reopen = (sub: string | null, id: string, body: unknown = { timeZone: "Europe/Berlin" }) =>
+  call(sub, "POST", `/treatments/${id}/reopen`, body);
+
+describe("US-QS-32 undo of Erledigt (POST /treatments/:id/reopen)", () => {
+  it("US-QS-32 without token: 401", async () => {
+    expect((await reopen(null, randomUUID())).status).toBe(401);
+  });
+
+  it("US-QS-32 reopens a treatment ticked off today: 200, open again and listed as open", async () => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    const id = (t as { id: string }).id;
+    await complete(subA, id);
+    expect(await reopen(subA, id)).toMatchObject({
+      status: 200,
+      body: { treatment: { id, done: false, doneAt: null } },
+    });
+    expect((await listed(subA)).some((x) => x.id === id)).toBe(true);
+  });
+
+  it("US-QS-32 a treatment ticked off on another local day is refused with 409 and stays done (NFR-08)", async () => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    const id = (t as { id: string }).id;
+    // 23:30 UTC is the 3rd in Berlin: the tick-off dates the 3rd, so the 2nd in Los Angeles is another day.
+    await complete(subA, id, { timeZone: "Europe/Berlin" });
+    expect(await reopen(subA, id, { timeZone: "America/Los_Angeles" })).toMatchObject({
+      status: 409,
+      body: { error: { code: "treatment.not_reopenable" } },
+    });
+    expect((await listed(subA)).some((x) => x.id === id)).toBe(false);
+  });
+
+  it("US-QS-32 P-04 a foreign treatment is not found and the owner's tick-off stays", async () => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    const id = (t as { id: string }).id;
+    await complete(subA, id);
+    expect(await reopen(subB, id)).toMatchObject({
+      status: 404,
+      body: { error: { code: "treatment.not_found" } },
+    });
+    expect((await listed(subA)).some((x) => x.id === id)).toBe(false);
+  });
+
+  it("US-QS-32 an unknown time zone is invalid input (400)", async () => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    expect(
+      await reopen(subA, (t as { id: string }).id, { timeZone: "Mars/Olympus" }),
+    ).toMatchObject({
+      status: 400,
+      body: { error: { code: "input.invalid" } },
+    });
+  });
+});

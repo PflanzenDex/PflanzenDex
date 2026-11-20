@@ -108,3 +108,18 @@ export const markFertilized = (
     specimenId,
     timeZone: currentTimeZone(),
   });
+
+/**
+ * The undo of "Gegossen" (US-QS-32): takes today's entries of the given plants back through `monitoring.unwater`. The
+ * repeat-guard key is created per call; the device's time zone decides which day counts as today (NFR-08).
+ */
+export const unwaterPlants = (
+  api: string,
+  token: string,
+  specimenIds: readonly string[],
+  fetchFn: FetchFn = fetch,
+) =>
+  createWrite(api, token, fetchFn)("POST", "/watering/unwater", {
+    specimenIds,
+    timeZone: currentTimeZone(),
+  });

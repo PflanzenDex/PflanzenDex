@@ -336,3 +336,34 @@ describe("NFR-12 done treatments of many specimens in one read", () => {
     }
   });
 });
+
+describe("US-QS-32 undo of Erledigt in the database", () => {
+  it("US-QS-32 reopens a ticked-off treatment: done and its date clear together, an open one comes back unchanged", async () => {
+    const a = await specimen(anna, "Wieder offen DB");
+    const created = await treatments.createMany(anna, [
+      values({ specimenId: a, dueAt: "2026-10-12" }),
+    ]);
+    const id = typeof created === "string" ? "" : (created[0]?.id ?? "");
+    await treatments.complete(anna, id, "2026-10-03");
+    expect(await treatments.reopen(anna, id)).toMatchObject({ id, done: false, doneAt: null });
+    expect(await treatments.reopen(anna, id)).toMatchObject({ id, done: false, doneAt: null });
+    expect(await treatments.open(anna, [a])).toEqual(
+      new Map([[a, [expect.objectContaining({ id })]]]),
+    );
+  });
+
+  it("US-QS-32 P-04 another account's treatment is unknown to reopen and stays done", async () => {
+    const b = await specimen(anna, "Fremd erledigt DB");
+    const created = await treatments.createMany(anna, [
+      values({ specimenId: b, dueAt: "2026-10-13" }),
+    ]);
+    const id = typeof created === "string" ? "" : (created[0]?.id ?? "");
+    await treatments.complete(anna, id, "2026-10-03");
+    expect(await treatments.reopen(ben, id)).toBe("unknown");
+    expect(await treatments.find(anna, id)).toMatchObject({ done: true, doneAt: "2026-10-03" });
+  });
+
+  it("US-QS-32 an unknown id is unknown", async () => {
+    expect(await treatments.reopen(anna, randomUUID())).toBe("unknown");
+  });
+});

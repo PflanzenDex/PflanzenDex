@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -30,6 +30,8 @@ const token = async () => "tok";
 function fakeServer(state: {
   phases: ReturnType<typeof row>[];
   confirm: (body: { specimenIds: string[]; timeZone: string }) => Promise<Response>;
+  /** The location writes of the undo, in the order they arrived (US-QS-32). */
+  moves?: { specimenId: string; locationId: string }[];
 }) {
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const path = new URL(String(url)).pathname;
@@ -38,6 +40,15 @@ function fakeServer(state: {
       return response(200, { phases: state.phases });
     if (path === "/care-phases/confirm")
       return state.confirm(JSON.parse(String(init?.body)) as never);
+    if (/^\/specimens\/[^/]+\/location$/.test(path) && init?.method === "POST") {
+      const specimenId = path.split("/")[2] ?? "";
+      const locationId = (JSON.parse(String(init.body)) as { locationId: string }).locationId;
+      state.moves?.push({ specimenId, locationId });
+      state.phases = state.phases.map((p) =>
+        p.specimenId === specimenId ? { ...p, locationId } : p,
+      );
+      return response(200, { id: specimenId, locationId });
+    }
     return response(404, {});
   });
   vi.stubGlobal("fetch", fetchFn);
@@ -204,5 +215,81 @@ describe("US-PHA-03 'Umstellen' on the page of the care phases", () => {
     // The refusal (by its code) is replaced by the load error of the reload that follows; both ask to sign in.
     expect((await screen.findByRole("alert")).textContent).toMatch(/melde dich (neu )?an/);
     expect(posts(fetchFn)).toHaveLength(0);
+  });
+});
+
+describe("US-QS-32 the bulk move 'Alle n nach … umstellen' can be undone in place (SG-FEED-03)", () => {
+  it("US-QS-32 the group keeps its rows for the 8 s, and its undo sits where its button was: 'Umgestellt · Rückgängig'", async () => {
+    const state = {
+      phases: [row("e1", "Bogenhanf", "s1", "s2"), row("e3", "Efeu", "s9", "s2")],
+      confirm: async () => {
+        state.phases = state.phases.map((p) => ({ ...p, locationId: p.targetLocationId }));
+        return response(200, { specimens: [] });
+      },
+      moves: [] as { specimenId: string; locationId: string }[],
+    };
+    fakeServer(state);
+    render(<CarePhasesPage api="http://api" token={token} />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Alle 2 nach Kühler Flur umstellen" }),
+    );
+    const undo = await screen.findByRole("button", {
+      name: "Rückgängig: 2 Pflanzen nach Kühler Flur",
+    });
+    expect(undo.closest("p")?.textContent).toBe("Umgestellt · Rückgängig");
+    expect(screen.getByText("Bogenhanf")).toBeTruthy();
+    expect(screen.getByText("Efeu")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Alle 2 nach Kühler Flur umstellen" })).toBeNull();
+  });
+
+  it("US-QS-32 the bulk undo restores each plant's own earlier location with the location write, and the group button returns", async () => {
+    const state = {
+      phases: [row("e1", "Bogenhanf", "s1", "s2"), row("e3", "Efeu", "s9", "s2")],
+      confirm: async () => {
+        state.phases = state.phases.map((p) => ({ ...p, locationId: p.targetLocationId }));
+        return response(200, { specimens: [] });
+      },
+      moves: [] as { specimenId: string; locationId: string }[],
+    };
+    fakeServer(state);
+    render(<CarePhasesPage api="http://api" token={token} />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Alle 2 nach Kühler Flur umstellen" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Rückgängig: 2 Pflanzen nach Kühler Flur" }),
+    );
+    await screen.findByRole("button", { name: "Alle 2 nach Kühler Flur umstellen" });
+    expect(state.moves).toEqual([
+      { specimenId: "e1", locationId: "s1" },
+      { specimenId: "e3", locationId: "s9" },
+    ]);
+    expect(screen.getByRole("status").textContent).toBe("Rückgängig gemacht.");
+  });
+
+  it("US-QS-32 after the 8 s the held rows let go: the group is shown as moved and no undo is left", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const state = {
+        phases: [row("e1", "Bogenhanf", "s1", "s2"), row("e3", "Efeu", "s9", "s2")],
+        confirm: async () => {
+          state.phases = state.phases.map((p) => ({ ...p, locationId: p.targetLocationId }));
+          return response(200, { specimens: [] });
+        },
+      };
+      fakeServer(state);
+      render(<CarePhasesPage api="http://api" token={token} />);
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Alle 2 nach Kühler Flur umstellen" }),
+      );
+      await screen.findByRole("button", { name: "Rückgängig: 2 Pflanzen nach Kühler Flur" });
+      act(() => vi.advanceTimersByTime(8000));
+      expect(screen.queryByRole("button", { name: /^Rückgängig/ })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Alle 2 nach Kühler Flur umstellen" }),
+      ).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

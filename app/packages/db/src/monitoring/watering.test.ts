@@ -84,3 +84,53 @@ describe("US-MON-05 watering log in the database", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("US-QS-32 undo of Gegossen in the database", () => {
+  it("US-QS-32 removes the manual entries of the given days and keeps the other days", async () => {
+    const u = await specimen(anna, "Undo eins");
+    await log.record(anna, [
+      { specimenId: u, date: "2026-10-03" },
+      { specimenId: u, date: "2026-10-04" },
+    ]);
+    expect(await log.unrecord(anna, [{ specimenId: u, date: "2026-10-04" }])).toEqual({
+      removed: 1,
+    });
+    expect(await log.lastWatered(anna, [u])).toEqual(new Map([[u, "2026-10-03"]]));
+  });
+
+  it("US-QS-32 a day without an entry removes nothing and is no error (idempotent)", async () => {
+    const u = await specimen(anna, "Undo zwei");
+    expect(await log.unrecord(anna, [{ specimenId: u, date: "2026-10-04" }])).toEqual({
+      removed: 0,
+    });
+    expect(await log.unrecord(anna, [])).toEqual({ removed: 0 });
+  });
+
+  it("US-QS-32 only the keeper's manual entry goes: a sensor reading of the same day stays", async () => {
+    const u = await specimen(anna, "Undo sensor");
+    await admin.query(
+      "insert into watering_log (account_id, specimen_id, watered_on, source) values ($1, $2, '2026-10-05', 'sensor')",
+      [anna, u],
+    );
+    expect(await log.unrecord(anna, [{ specimenId: u, date: "2026-10-05" }])).toEqual({
+      removed: 0,
+    });
+    const left = await admin.query(
+      "select count(*)::int as n from watering_log where specimen_id = $1 and source = 'sensor'",
+      [u],
+    );
+    expect(left.rows[0].n).toBe(1);
+  });
+
+  it("US-QS-32 P-04 another account's specimen matches nothing and its entry stays", async () => {
+    await log.record(ben, [{ specimenId: bens, date: "2026-10-12" }]);
+    expect(await log.unrecord(anna, [{ specimenId: bens, date: "2026-10-12" }])).toEqual({
+      removed: 0,
+    });
+    const own = await admin.query(
+      "select count(*)::int as n from watering_log where specimen_id = $1 and watered_on = '2026-10-12'",
+      [bens],
+    );
+    expect(own.rows[0].n).toBe(1);
+  });
+});

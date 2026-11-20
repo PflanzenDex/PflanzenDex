@@ -13,5 +13,7 @@
   "phaseLine": "Pflegephase heute: {phase}",
   "place": "Standort: {place}",
   "targetPlace": "Soll-Standort: {place}",
-  "deviationFull": "Weicht ab: steht am Standort „{here}“, Soll ist „{target}“."
+  "deviationFull": "Weicht ab: steht am Standort „{here}“, Soll ist „{target}“.",
+  "movedResult": "Umgestellt",
+  "groupSubject": "{count} Pflanzen nach {place}"
 }

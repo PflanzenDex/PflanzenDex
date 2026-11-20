@@ -601,16 +601,17 @@ describe("US-QS-18 Heute stays one column, with or without an anniversary", () =
 });
 
 describe("US-QS-18 the layers keep the actions of their items", () => {
-  it("US-QS-18 · US-BEH-03 Erledigt works in the layer Behandlungen, says what was ticked off and the tile count follows", async () => {
+  it("US-QS-18 · US-BEH-03 Erledigt works in the layer Behandlungen, says what was ticked off and the row keeps its undo", async () => {
     const posts = fakeServer();
     const user = userEvent.setup();
     show("/today?sheet=treatments");
     await user.click(
       await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
     );
-    expect((await screen.findByText(/als erledigt eingetragen/)).textContent).toContain("Aloe");
+    expect(
+      await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" }),
+    ).toBeTruthy();
     expect(posts).toEqual(["/treatments/a/complete"]);
-    expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
   });
 
   it("US-QS-18 · US-BEH-02 the open treatments stand by urgency with a short chip and are paged", async () => {
@@ -942,7 +943,9 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
         name: "Grund a bei Aloe als erledigt abhaken",
       }),
     );
-    expect(await within(layer).findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
+    expect(
+      await within(layer).findByRole("button", { name: "Rückgängig: Grund a bei Aloe" }),
+    ).toBeTruthy();
     await waitFor(() => expect(screen.queryByText(/Läuse/)).toBeNull());
   });
 

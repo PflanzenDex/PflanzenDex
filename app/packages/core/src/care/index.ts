@@ -40,6 +40,8 @@ export { treatmentPlan } from "./treatments/treatment-plan";
 export type { PlanDependencies, PlanResult } from "./treatments/treatment-plan";
 export { treatmentComplete } from "./treatments/treatment-complete";
 export type { CompleteDependencies, CompleteResult } from "./treatments/treatment-complete";
+export { treatmentReopen } from "./treatment-reopen/treatment-reopen";
+export type { ReopenDependencies } from "./treatment-reopen/treatment-reopen";
 export { treatmentHistory } from "./treatments/treatment-history";
 export type { HistoryDependencies } from "./treatments/treatment-history";
 export { treatmentSource } from "./treatments/treatment-source";

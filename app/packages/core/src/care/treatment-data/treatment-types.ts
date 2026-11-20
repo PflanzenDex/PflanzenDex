@@ -54,6 +54,11 @@ export interface TreatmentStore {
    * unchanged and keeps its first done date. `"unknown"` for a foreign or unknown ID.
    */
   complete(userId: string, id: string, doneAt: string): Promise<TreatmentRow | "unknown">;
+  /**
+   * Clears done and the done date of one treatment of the account (the undo of "Erledigt", US-QS-32). An open treatment
+   * is returned unchanged. `"unknown"` for a foreign or unknown ID. The rule which dates may be reopened is in `core`.
+   */
+  reopen(userId: string, id: string): Promise<TreatmentRow | "unknown">;
   /** Done treatments of one specimen of the account, latest done date first (history, US-BEH-03). */
   done(userId: string, specimenId: string): Promise<readonly TreatmentRow[]>;
   /**

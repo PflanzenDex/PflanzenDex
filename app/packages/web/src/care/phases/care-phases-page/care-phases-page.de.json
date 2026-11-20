@@ -2,5 +2,7 @@
   "title": "Pflegephasen",
   "loading": "Pflegephasen werden geladen …",
   "countOne": "1 Pflanze mit Pflegephase",
-  "countMany": "{count} Pflanzen mit Pflegephase"
+  "countMany": "{count} Pflanzen mit Pflegephase",
+  "movedResult": "Umgestellt",
+  "restored": "Rückgängig gemacht."
 }
