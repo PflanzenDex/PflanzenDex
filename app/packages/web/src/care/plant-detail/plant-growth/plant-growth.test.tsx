@@ -39,6 +39,16 @@ function sizers(root: ParentNode): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>('div[aria-hidden="true"].invisible > p'));
 }
 
+/**
+ * The text a copy draws, read from its `data-reading` attributes: the copies hold no text node, so their text is in
+ * attributes and CSS only (US-QS-32).
+ */
+function drawn(copy: HTMLElement): string {
+  return Array.from(copy.querySelectorAll<HTMLElement>("[data-reading]"))
+    .map((span) => span.dataset["reading"] ?? "")
+    .join("");
+}
+
 /** The visible cell of the frame: its last child, after the sizer copies. */
 function visibleCell(frame: HTMLElement): HTMLElement {
   const cell = frame.lastElementChild;
@@ -130,7 +140,7 @@ describe("US-QS-32 the growth line reserves its final height in every state (iss
       const loaded = visibleCell(frame).querySelector("p")?.textContent ?? "";
       expect(loaded).toContain("Wachstum:");
       expect(sizers(frame)).toHaveLength(GROWTH_READINGS.length);
-      expect(sizers(frame).map((p) => wording(p.textContent))).toContain(wording(loaded));
+      expect(sizers(frame).map((p) => wording(drawn(p)))).toContain(wording(loaded));
       expect(screen.queryByRole("status")).toBeNull();
     },
   );
@@ -145,16 +155,25 @@ describe("US-QS-32 the growth line reserves its final height in every state (iss
       expect(copy.parentElement?.classList.contains("invisible")).toBe(true);
       expect(copy.getAttribute("role")).toBeNull();
       expect(copy.matches("[tabindex], a, button, input")).toBe(false);
+      // No text node in the copy: its words are attributes that CSS draws (US-QS-32).
+      expect(copy.textContent).toBe("");
     }
-    for (const found of screen.queryAllByText(/Wachstum:/)) {
-      expect(found.closest('[aria-hidden="true"]')).not.toBeNull();
-    }
+    expect(screen.queryAllByText(/Wachstum:|Trend:/)).toHaveLength(0);
+  });
+
+  it("US-QS-32 getByText finds a loaded trend as exactly one element, the reserved copies do not match", async () => {
+    answer.load = loadedWith({ count: 4, ratePerYear: 20, trend: "stable", signal: null });
+    renderGrowth();
+    expect(await screen.findByText("Trend: stabil")).toBeTruthy();
+    expect(screen.getAllByText("Trend: stabil")).toHaveLength(1);
+    expect(screen.getAllByText(/Trend: stabil/)).toHaveLength(1);
+    expect(screen.getByText("Wachstum: 20 cm/Jahr")).toBeTruthy();
   });
 
   it("US-QS-32 the chunk fallback reserves the same sizer and shows one status after the delay", async () => {
     answer.load = never;
     const loading = renderGrowth();
-    const loadingTexts = sizers(loading.container).map((p) => p.textContent);
+    const loadingTexts = sizers(loading.container).map((p) => drawn(p));
     loading.unmount();
 
     const fallback = render(<PlantGrowthSkeleton label="Lädt …" />);
@@ -163,7 +182,7 @@ describe("US-QS-32 the growth line reserves its final height in every state (iss
     const status = await screen.findByRole("status");
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(status.textContent).toContain("Lädt …");
-    expect(sizers(status).map((p) => p.textContent)).toEqual(loadingTexts);
+    expect(sizers(status).map((p) => drawn(p))).toEqual(loadingTexts);
   });
 
   it("US-QS-32 the reserved readings cover every reading the core derives from a course (P-08)", () => {

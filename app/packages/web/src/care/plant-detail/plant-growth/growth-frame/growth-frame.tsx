@@ -73,6 +73,29 @@ function distinctReadings(samples: readonly GrowthTrend[]): GrowthTrend[] {
 export const GROWTH_READINGS: readonly GrowthTrend[] = distinctReadings(SAMPLES);
 
 /**
+ * The hidden copy of a reading: the two spans of `GrowthLines`, with their texts in attributes that CSS draws
+ * (`before:content-[attr(data-reading)]`). The copy holds no text node, so a text query finds only the visible line, and
+ * the generated text wraps like the real one (US-QS-32). The attribute values are the texts `GrowthLines` shows.
+ */
+function ReadingCopy({ growth }: { growth: GrowthTrend }) {
+  const lines = growthLines(growth);
+  return (
+    <div aria-hidden="true" className="invisible col-start-1 row-start-1">
+      <p className="flex flex-wrap gap-x-2 text-sm text-muted-foreground">
+        <span
+          data-reading={t("rate", { rate: lines.rate })}
+          className="before:content-[attr(data-reading)]"
+        />
+        <span
+          data-reading={`·${NBSP}${t("trend", { trend: lines.trend || t("unknown") })}`}
+          className="before:content-[attr(data-reading)]"
+        />
+      </p>
+    </div>
+  );
+}
+
+/**
  * The growth line in the height of its longest reading (US-QS-32): every reading is drawn invisibly in one cell, and the
  * visible content shares that cell. The line keeps the height it reserves in every state (loading, loaded, unknown, error),
  * so nothing moves when the trend arrives. The copies are hidden from assistive technology and cannot be focused.
@@ -81,13 +104,7 @@ export function GrowthFrame({ children }: { children?: ReactNode }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)]">
       {GROWTH_READINGS.map((reading) => (
-        <div
-          key={readingKey(reading)}
-          aria-hidden="true"
-          className="invisible col-start-1 row-start-1"
-        >
-          <GrowthLines growth={reading} />
-        </div>
+        <ReadingCopy key={readingKey(reading)} growth={reading} />
       ))}
       <div className="col-start-1 row-start-1 min-w-0">{children}</div>
     </div>
