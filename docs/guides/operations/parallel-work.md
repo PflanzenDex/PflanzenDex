@@ -14,10 +14,11 @@ make board               # who works on what (optional: RELEASE="R0 Fundament")
 `make claim` (`app/tools/workflow/claim/claim.mjs`) refuses with exit 1 and names the finding when
 
 - the issue has an assignee,
-- a PR (open or merged) closes the issue (`Closes #n` in the body), or an open PR carries the story ID in title or branch (a merged PR that only mentions the ID does not count: it may be one part of a bigger story),
-- a branch on `origin` carries the story ID.
+- an open PR links the issue: its body names it (`Closes #n` or `Refs #n`), or its branch carries the issue number (`issue-<n>`),
+- a merged PR closes the issue (`Closes #n` in the body); a merged PR that only refers to it (`Refs #n`) is printed as a note, see below,
+- a branch on `origin` carries the issue number (`issue-<n>`).
 
-Two details of that check. A PR counts only when its body closes the issue (`Closes #<n>`, `Fixes #<n>`, `Resolves #<n>`); a bare `#<n>` mention refuses nothing. Only `US-`, `FR-` and `TE-` IDs in a title are keys; `NFR-` IDs are not. The check does not compare the titles of other open issues, so two open issues can carry the same story ID: give a new issue a title without a story ID that an open PR or branch already uses.
+Two details of that check. A PR links only through its body or its branch, never through its title: many issues share one story ID (US-QS-32 sits on several issues), so an open PR of another issue never blocks the claim. A bare `#<n>` mention refuses nothing, and a `#<n>` with another number (`#<n>0`) matches nothing. A merged PR whose body only refers to the issue (`Refs #<n>`, `References #<n>`) is not a refusal: `make claim` prints `claim: note: PR #… (merged) refers to it (Refs #<n>): …` and goes on.
 
 Before any write a preflight checks that `node_modules` exists and matches `package-lock.json` (`make setup` records the lock hash in `node_modules/.setup-lock-hash`; `app/tools/check/delivery/supply/check-deps.mjs`; hooks and `make gates` run the same check, so a pull that changed the lock file stops with "run make setup") and that `origin/dev` has a `Makefile` (no ancient checkout). Otherwise it pushes the branch with one empty commit (made without touching your working tree), assigns you, sets the project status "In Progress" (two GraphQL writes; the field and option ids are read at run time, and the board item is added only when the issue is not on the board yet) and opens a draft PR against `dev` whose text has a `## Handoff` section (task, state, done, missing, open decisions, owner decisions, verification, next steps, worktree) and an empty "## Lessons" placeholder that `make pr` refuses until it is filled in (US-DEV-05). Keep that section current; whoever takes over reads it first. The PR title must be completed by the author (`gh api -X PATCH` edits it; `gh pr edit` fails with Projects classic). If another person claimed the issue at the same moment, the later claim steps back and deletes its branch. The claim is atomic: if a step fails, the steps already done are undone (status back to "Todo", assignee removed, branch deleted). Each undo step is tried three times. The branch is deleted only while origin still points at the claim commit, so a branch somebody else pushed under the same name is never deleted. An undo that still fails prints its command, to run by hand (P-10). An undo is registered before its write, so an answer lost on the way (a timeout) is undone too. An issue assigned to you without a branch or PR (half claim of an older run) is continued by a re-run.
 
@@ -35,21 +36,30 @@ All sessions share one account and 5,000 GraphQL points an hour; a failed call r
 - `make issue` creates the issue even when the board cannot be reached. Its output names the board fields that are not set. CI sets Typ, Epic and an empty Status once the labels are valid (`issue-check.yml`, App token); CI does not set Priority or Release, so Priority is set by hand on the board; `make issue` sets the Release by its rule, and `RELEASE=` overrides it.
 - `make pr` reads the PR and runs the title and changelog checks over REST before anything is pushed, pushes the branch, waits until GitHub shows the head, and only then marks the PR ready with GraphQL, which has no REST route (issue 1608). On a rate limit it reads the reset from the failing response's `X-RateLimit-Reset` header, waits for it if that is within five minutes, tries at most three times, and otherwise exits 75 and says when to run `make pr` again. Once the checks passed, the branch is pushed in every case.
 
-**Project status after the claim:** `.github/workflows/project-status.yml` moves it on PR events (merged into `dev` → On dev, closed unmerged → Todo, release PR merged into `main` → Done; rules in `app/tools/workflow/actions/project-status/project-status-lib.mjs`). Only `Closes #n` in the PR body links a PR to an issue. `make status-check` reports drift, missing priorities and open items without a Status. The workflow needs a GitHub App (repository variable `PROJECT_APP_ID`, secret `PROJECT_APP_PRIVATE_KEY`, organization permission "Projects: read and write", installed on this repository); without it the job fails and the status stays as it is. A failed status write at claim time is only a warning, so the status can stay empty while the claim holds; set it by hand with `gh project item-edit`.
+**Project status after the claim:** `.github/workflows/project-status.yml` moves it on PR events (merged into `dev` → On dev, closed unmerged → Todo, release PR merged into `main` → Done; rules in `app/tools/workflow/actions/project-status/project-status-lib.mjs`). Only `Closes #n` in the PR body moves the board (On dev on merge, Todo on a closed PR) and closes the issue on release. The draft PR that `make claim` opens starts with `Refs #n` (a partial step); when the PR finishes the story, its first line becomes `Closes #n`. `make pr` prints a note when the body only refers to the issue, and never refuses for it. `make status-check` reports drift, missing priorities and open items without a Status; an open PR that names the issue with `Refs #n` counts as open there, so a claimed item with its draft is not reported. The workflow needs a GitHub App (repository variable `PROJECT_APP_ID`, secret `PROJECT_APP_PRIVATE_KEY`, organization permission "Projects: read and write", installed on this repository); without it the job fails and the status stays as it is. A failed status write at claim time is only a warning, so the status can stay empty while the claim holds; set it by hand with `gh project item-edit`.
 
 **The board tracks, the issue describes:** release, type and epic are the project fields Release, Typ and Epic, not milestones or labels. `make board` lists the open items whose Typ is Story or Enabler for one Release (default: the first release in board order with open work). The issue templates add new issues to the board; set Typ, Release, Epic and Priority there.
 
-**Priority:** `make claim` prints a warning when the claimed issue has no project priority, and `make board` flags such items `NO-PRIO` (both only warn). The rule is in `CLAUDE.md` ("Priority of tickets").
+**Priority:** every open story or enabler on the board "PflanzenDex Roadmap" needs the field Priority (P0 critical, P1 high, P2 normal, P3 low). Set it when you create the ticket (`make issue PRIORITY=…`). `make claim` prints a warning when the claimed issue has no project priority, `make board` flags such items `NO-PRIO` (both only warn), and `make status-check` lists all gaps. Rule of thumb (starting values, the owner may overrule per ticket):
 
-**Branch naming rule:** `<type>/<epic>-<nn>-<slug>`, e.g. `feat/wac-01-messung`. The story ID is written without `US-`/`FR-`, the slug is up to four words of the issue title, lower case, at most 30 characters. Type: `fix` for the board type (field Typ) Bug, `chore` for Enabler, otherwise `feat`; the labels `bug` / `enabler` count only for an issue that is not on the board. Issues without a story ID use `issue-<n>`, e.g. `chore/issue-243-claim-check`. Matching is by this key, so `feat/us-wac-01-x` and `feat/wac-01-y` count as the same story.
+| Priority | Which tickets                                                                                                 |
+| -------- | ------------------------------------------------------------------------------------------------------------- |
+| P0       | Release R0 with label `blocker` or `kritischer-pfad`; labels `security`, `nightly`                            |
+| P1       | Everything else in R0 and R1; bugs                                                                            |
+| P2       | R2 and R3; tickets without a release (epics only; chores and process tickets get R2 by the `make issue` rule) |
+| P3       | R4, R5, R6 and stage 2                                                                                        |
+
+The status needs no manual care (see "Project status after the claim" above).
+
+**Branch naming rule:** `<type>/issue-<n>-<slug>`, e.g. `chore/issue-243-claim-check`, where `<n>` is the issue number. The slug is up to four words of the issue title, lower case, at most 30 characters. Type: `fix` for the board type (field Typ) Bug, `chore` for Enabler, otherwise `feat`; the labels `bug` / `enabler` count only for an issue that is not on the board. Matching is by the issue number, so a story ID never links issues: many issues share one (US-QS-32), and `feat/issue-2355-x` and `feat/issue-2355-y` are the same issue. Branches made under the older story-ID rule (`feat/wac-01-messung`) carry no issue number: `make worktree` passes them without a check and says so.
 
 Exceptions, all explicit:
 
-- `ALLOW_PRIOR_WORK=1 make claim ISSUE=<n>` waives merged PRs only (follow-up work on a story). Assignee, open PR and live branch are never waived.
+- `ALLOW_PRIOR_WORK=1 make claim ISSUE=<n>` waives merged PRs that close the issue (follow-up work on a story). A merged PR that only refers to it (`Refs #n`) needs no waiver: it is printed as a note. Assignee, open PR and live branch are never waived.
 - `SKIP_CLAIM_CHECK=1` skips the claim check of `make worktree`. Use it only for branches that are not a story.
 - To take over a story, ask the assignee or unassign them on the issue; `make board` marks claims without a commit for `CLAIM_STALE_HOURS` hours (starting value 48, an assumption) as `STALE`.
 
-`make board` flags: `STALE` (see above), `DOUBLE` (more than one assignee, live branch or open PR for one story) and `NO-CLAIM` (a branch or PR exists, but nobody is assigned). Branches whose PR is merged or closed do not count as live.
+`make board` flags: `STALE` (see above), `DOUBLE` (more than one assignee, live branch or open PR for one issue) and `NO-CLAIM` (a branch or PR exists, but nobody is assigned). Branches whose PR is merged or closed do not count as live.
 
 Limits: the check needs `gh` and network; offline it warns and lets go. It is a local check (hook, make target), not a CI gate, so `--no-verify` bypasses it (PRIN-010, maturity `checked`).
 
@@ -59,7 +69,7 @@ Limits: the check needs `gh` and network; offline it warns and lets go. It is a 
 make worktree BRANCH=feat/<task>
 ```
 
-`make worktree` first runs the claim check (`app/tools/workflow/claim/claim-check.mjs`): a branch with a story ID is refused when the story belongs to somebody else or has not been claimed (`make claim` first). If the branch already exists on `origin` (made by `make claim`), the worktree continues it. There is no check on push: anyone with access may push to a branch.
+`make worktree` first runs the claim check (`app/tools/workflow/claim/claim-check.mjs`): a branch with an issue number (`issue-<n>`) is refused when the issue belongs to somebody else or has not been claimed (`make claim` first); a branch with only a story ID passes without a check. If the branch already exists on `origin` (made by `make claim`), the worktree continues it. There is no check on push: anyone with access may push to a branch.
 
 This calls `tools/repo/worktree-new.sh`: it fetches `origin/dev`, creates the branch and a worktree under `.worktrees/<branch>/` (slashes become dashes) and writes `.env.worktree`. The `.worktrees/` folder is the one of the main checkout, also when `make worktree` runs inside another worktree (it used to nest there, #1487).
 
@@ -146,6 +156,16 @@ The UI gates, Lighthouse, the e2e tests and `make ci` load the workstation so mu
 - Do not commit without being asked; do not change other people's files without a task.
 - Touch shared files (Makefile, `package.json`) as little as possible; put your own logic into your own scripts.
 - Report before writing if a file has changed since it was read.
+
+### The orchestrating session (owner decisions 2026-11-09 and 2026-11-14, issues 1747 and 2099)
+
+The roles are indexed in `CLAUDE.md` ("Agent sessions and models"); each subagent's rules are in its `.claude/agents/<name>.md`. The orchestrating session (the main session, Opus at effort medium) has no definition file; its rules are these:
+
+- It picks and claims tickets (`make claim`, `make worktree`), sets the PR title and starts one `ticket-lead` per ticket with only the ticket's facts. When it works a ticket itself, it takes the ticket-lead role and follows `.claude/agents/ticket-lead.md`.
+- One lead runs one implementer. The orchestrator adds implementers by the machine's resources (CPU, free RAM, running heavy jobs); heavy work waits on `make heavy-lock` (see "One heavy job at a time").
+- No hard cap on open PRs; with three open PRs that are all drafts, it finishes them before claiming more.
+- It takes the owner's decisions and relays them to the leads, and spot-checks each lead's report against the merged head on `dev`.
+- It works a batch of tickets this way. At a natural break (a batch is done, or the context grows long) it suggests `/clear` to the owner, once every open PR's Handoff carries the state, open questions and owner decisions.
 
 ## Short output for agents (US-DEV-12)
 

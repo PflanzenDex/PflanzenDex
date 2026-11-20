@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Entry point for all Claude Code hooks of this repo (US-QG-07, US-DEV-02).
-// Usage from .claude/settings.json: node .claude/hooks/run.mjs <guard-edit|guard-bash|after-edit|after-bash|stop|subagent-stop>
+// Usage from .claude/settings.json: node .claude/hooks/run.mjs <guard-edit|guard-bash|guard-read|after-edit|after-bash|stop|subagent-stop>
 // A hook must never hang or break a session: every step has a time limit and unexpected errors end with exit 0.
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -20,6 +20,8 @@ import {
 } from "./gate-confirmations.mjs";
 import {
   asksBeforeEdit,
+  ENV_READ_REASON,
+  envReadRefusal,
   isCodePath,
   isMigrationFile,
   isSpecPath,
@@ -40,7 +42,17 @@ import {
 } from "./subagent-gates.mjs";
 
 const event = process.argv[2];
-const input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
+// A request that cannot be read is denied by guard-read (US-QG-07, issue 2354); every other event fails here as it always did.
+let input = {};
+let unreadable = false;
+try {
+  input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
+  if (input === null || typeof input !== "object")
+    throw new SyntaxError("the request is not an object");
+} catch (error) {
+  if (event !== "guard-read") throw error;
+  unreadable = true;
+}
 const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
 const run = (cmd, args, opts = {}) =>
   execFileSync(cmd, args, {
@@ -398,6 +410,19 @@ const handlers = {
     const where = /\bgit\b|\b(reset|clean)\b/.test(command) ? bashWhere() : {};
     const verdict = judgeCommand(command, where);
     if (verdict) preToolUse(verdict.decision, verdict.reason);
+  },
+  // Read and Grep never open a secret env file (US-QG-07, issue 2354): the path and the glob are judged, not the contents. A request
+  // that cannot be judged is refused, never passed: an unreadable request, or a check that throws.
+  "guard-read"() {
+    let refusal;
+    try {
+      refusal = unreadable
+        ? ENV_READ_REASON
+        : envReadRefusal(input.tool_name, input.tool_input ?? {});
+    } catch {
+      refusal = ENV_READ_REASON;
+    }
+    if (refusal) preToolUse("deny", refusal);
   },
   "after-edit"() {
     const { root: fileRoot, file } = locate(input.tool_input?.file_path);
