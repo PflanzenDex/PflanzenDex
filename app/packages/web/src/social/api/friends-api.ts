@@ -8,7 +8,7 @@ import type {
   SharingRow,
   SpecimenRow,
 } from "@pflanzendex/core";
-import { call, type Response, type WriteOptions, writeFor } from "../../shared/data";
+import { call, createWrite, type Response } from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -52,9 +52,9 @@ export async function loadFriends(
 export async function createFriendCode(
   api: string,
   token: string,
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<CreatedFriendCode>> {
-  const r = await writeFor(api, token, options)("POST", "/friends/invitations", {});
+  const r = await createWrite(api, token, fetchFn)("POST", "/friends/invitations", {});
   return r.ok ? { ok: true, value: r.value as CreatedFriendCode } : r;
 }
 
@@ -63,9 +63,9 @@ export async function sendFriendRequest(
   api: string,
   token: string,
   code: string,
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<FriendRequest>> {
-  const r = await writeFor(api, token, options)("POST", "/friends/requests", { code });
+  const r = await createWrite(api, token, fetchFn)("POST", "/friends/requests", { code });
   return r.ok ? { ok: true, value: r.value as FriendRequest } : r;
 }
 
@@ -74,14 +74,12 @@ export async function answerFriendRequest(
   api: string,
   token: string,
   target: { requestId: string; decision: "accept" | "decline" },
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<{ status: "confirmed" | "declined" }>> {
-  const r = await writeFor(api, token, options)(
+  const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/friends/requests/${encodeURIComponent(target.requestId)}/answer`,
-    {
-      decision: target.decision,
-    },
+    { decision: target.decision },
   );
   return r.ok ? { ok: true, value: r.value as { status: "confirmed" | "declined" } } : r;
 }
@@ -91,9 +89,9 @@ export async function endFriendship(
   api: string,
   token: string,
   friendId: string,
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<{ status: "ended" }>> {
-  const r = await writeFor(api, token, options)(
+  const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/friends/${encodeURIComponent(friendId)}/end`,
     {},
@@ -106,14 +104,12 @@ export async function setSpecimenSharing(
   api: string,
   token: string,
   target: { specimenId: string; share: boolean },
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<{ share: "private" | "friends" }>> {
-  const r = await writeFor(api, token, options)(
+  const r = await createWrite(api, token, fetchFn)(
     "PUT",
     `/sharing/specimens/${encodeURIComponent(target.specimenId)}`,
-    {
-      share: target.share ? "friends" : "private",
-    },
+    { share: target.share ? "friends" : "private" },
   );
   return r.ok ? { ok: true, value: r.value as { share: "private" | "friends" } } : r;
 }
@@ -123,14 +119,12 @@ export async function setSpeciesSharing(
   api: string,
   token: string,
   target: { speciesId: string; share: boolean },
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<{ changed: number }>> {
-  const r = await writeFor(api, token, options)(
+  const r = await createWrite(api, token, fetchFn)(
     "PUT",
     `/sharing/species/${encodeURIComponent(target.speciesId)}`,
-    {
-      share: target.share ? "friends" : "private",
-    },
+    { share: target.share ? "friends" : "private" },
   );
   return r.ok ? { ok: true, value: r.value as { changed: number } } : r;
 }
@@ -150,9 +144,9 @@ export async function addToWishlist(
   api: string,
   token: string,
   latinName: string,
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<unknown>> {
-  return writeFor(api, token, options)("POST", "/wishes", { name: latinName });
+  return createWrite(api, token, fetchFn)("POST", "/wishes", { name: latinName });
 }
 
 /** The devices of one friend (US-EQU-12); `friendId` is the friendship id. Only the whitelist, only what the friend shares. */

@@ -1,6 +1,6 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
-import { LoadFrame, type Response, useRepeatKey } from "../../shared/data";
+import { LoadFrame, type Response } from "../../shared/data";
 import { DeckView } from "../deck-view/deck-view";
 import { DiscoverPageSkeleton } from "./discover-page.skeleton";
 import { decideSuggestion, loadSuggestions, undoSuggestionDecision } from "./discover-api";
@@ -17,11 +17,10 @@ const SIGN_IN_NEEDED = {
 /** Runs a write with the token of the keeper; without a sign-in the answer says so (P-10). */
 async function signedIn<T>(
   token: () => Promise<string | undefined>,
-  keys: ReturnType<typeof useRepeatKey>,
-  write: (t: string, key: string) => Promise<Response<T>>,
+  write: (t: string) => Promise<Response<T>>,
 ): Promise<Response<T>> {
   const t = await token();
-  return t ? keys.run((key) => write(t, key)) : SIGN_IN_NEEDED;
+  return t ? write(t) : SIGN_IN_NEEDED;
 }
 
 /**
@@ -38,20 +37,18 @@ export function DiscoverPage(props: {
 }) {
   const { api, token, embedded, zone } = props;
   const [deck, setDeck] = useState(1);
-  const keys = useRepeatKey();
   const load = useCallback(
     (t: string) => loadSuggestions(api, t, zone === undefined ? { deck } : { deck, zone }),
     [api, deck, zone],
   );
   const decide = useCallback(
     (species: string, decision: "yes" | "no") =>
-      signedIn(token, keys, (t, key) => decideSuggestion(api, t, { species, decision }, { key })),
-    [api, token, keys],
+      signedIn(token, (t) => decideSuggestion(api, t, { species, decision })),
+    [api, token],
   );
   const undo = useCallback(
-    (species: string) =>
-      signedIn(token, keys, (t, key) => undoSuggestionDecision(api, t, species, { key })),
-    [api, token, keys],
+    (species: string) => signedIn(token, (t) => undoSuggestionDecision(api, t, species)),
+    [api, token],
   );
   return (
     <section

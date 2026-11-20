@@ -1,11 +1,5 @@
 import type { ArchivedEntry, SpecimenRow } from "@pflanzendex/core";
-import {
-  call,
-  currentTimeZone,
-  type Response,
-  type WriteOptions,
-  writeFor,
-} from "../../shared/data";
+import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -20,22 +14,19 @@ export async function loadArchived(
 }
 
 /**
- * Archives a specimen with a reason. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" for archived_on (NFR-08). The idempotency key is the action's (`options.key`), else made per call.
+ * Archives a specimen with a reason. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" for archived_on (NFR-08). The idempotency key is created per call.
  */
 export async function archiveSpecimen(
   api: string,
   token: string,
   input: { id: string; reason: string },
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<SpecimenRow>> {
   const timeZone = currentTimeZone();
-  const r = await writeFor(api, token, options)(
+  const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/specimens/${encodeURIComponent(input.id)}/archive`,
-    {
-      reason: input.reason,
-      timeZone,
-    },
+    { reason: input.reason, timeZone },
   );
   return r.ok ? { ok: true, value: r.value as SpecimenRow } : r;
 }
@@ -45,9 +36,9 @@ export async function restoreSpecimen(
   api: string,
   token: string,
   id: string,
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<SpecimenRow>> {
-  const r = await writeFor(api, token, options)(
+  const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/specimens/${encodeURIComponent(id)}/restore`,
     {},

@@ -32,7 +32,7 @@ export function ListLayers(props: {
           busy={answer.running}
           onAnswer={(id, decision) =>
             void answer.run(
-              (t, key) => answerFriendRequest(api, t, { requestId: id, decision }, { key }),
+              (t) => answerFriendRequest(api, t, { requestId: id, decision }),
               decision === "accept"
                 ? tx("friends.accepted", {
                     name: nameOf(
@@ -62,7 +62,7 @@ export function ListLayers(props: {
           busy={ending.running}
           onEnd={(f) =>
             void ending.run(
-              (t, key) => endFriendship(api, t, f.id, { key }),
+              (t) => endFriendship(api, t, f.id),
               tx("friends.ended", { name: nameOf(f.name) }),
             )
           }

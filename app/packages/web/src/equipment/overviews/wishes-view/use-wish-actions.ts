@@ -24,22 +24,22 @@ export function useWishActions(
     busy: write.running,
     onCreate: async (input) => {
       let saved = false;
-      await write.run(async (t, key) => {
-        const r = await createEquipmentWish(api, t, input, { key });
+      await write.run(async (t) => {
+        const r = await createEquipmentWish(api, t, input);
         saved = r.ok;
         return r;
       }, `Equipment-Wunsch „${input.name}“ gespeichert.`);
       return saved;
     },
     onBuy: (wish) =>
-      void write.run(async (t, key) => {
-        const r = await buyEquipmentWish(api, t, wish.id, { key });
+      void write.run(async (t) => {
+        const r = await buyEquipmentWish(api, t, wish.id);
         if (r.ok) onPrefill(r.value.prefill);
         return r;
       }, `„${wish.name}“ ist als gekauft vermerkt. Erfasse es jetzt als Equipment.`),
     onDiscard: (wish) =>
       void write.run(
-        (t, key) => discardEquipmentWish(api, t, wish.id, { key }),
+        (t) => discardEquipmentWish(api, t, wish.id),
         `Wunsch „${wish.name}“ verworfen.`,
       ),
   };

@@ -60,10 +60,7 @@ function TimesForm(props: { api: string; token: Token; saved: ReminderSettings }
       quietTo: quiet[1] === "" ? null : quiet[1],
       measurementDays: Number(days),
     };
-    void write.run(
-      (t, key) => saveReminderSettings(props.api, t, next, { key }),
-      "Erinnerungen gespeichert.",
-    );
+    void write.run((t) => saveReminderSettings(props.api, t, next), "Erinnerungen gespeichert.");
   };
 
   return (
@@ -98,10 +95,7 @@ function PausesForm(props: { api: string; token: Token; saved: ReminderSettings 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const next: ReminderSettings = { ...saved, paused };
-    void write.run(
-      (t, key) => saveReminderSettings(props.api, t, next, { key }),
-      "Pausen gespeichert.",
-    );
+    void write.run((t) => saveReminderSettings(props.api, t, next), "Pausen gespeichert.");
   };
   const pause = (o: ReminderOccasion, until: string) => setPaused((p) => withPause(p, o, until));
 

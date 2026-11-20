@@ -1,11 +1,5 @@
 import type { FertilizingView, ReminderRow, ReminderSettings } from "@pflanzendex/core";
-import {
-  call,
-  currentTimeZone,
-  type Response,
-  type WriteOptions,
-  writeFor,
-} from "../../shared/data";
+import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -26,14 +20,14 @@ export const loadReminderSettings = (
   fetchFn: FetchFn = fetch,
 ): Promise<Response<ReminderSettings>> => call(fetchFn, `${api}/reminders/settings`, token);
 
-/** Saves the settings as a whole; the repeat-guard key is the action's (`options.key`), else made per call. */
+/** Saves the settings as a whole; the repeat-guard key is created per call. */
 export async function saveReminderSettings(
   api: string,
   token: string,
   settings: ReminderSettings,
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<ReminderSettings>> {
-  const r = await writeFor(api, token, options)("PUT", "/reminders/settings", settings);
+  const r = await createWrite(api, token, fetchFn)("PUT", "/reminders/settings", settings);
   return r.ok ? { ok: true, value: r.value as ReminderSettings } : r;
 }
 
@@ -55,8 +49,8 @@ export const removeSubscription = (
   api: string,
   token: string,
   endpoint: string,
-  options: WriteOptions = {},
-) => writeFor(api, token, options)("DELETE", "/reminders/subscriptions", { endpoint });
+  fetchFn: FetchFn = fetch,
+) => createWrite(api, token, fetchFn)("DELETE", "/reminders/subscriptions", { endpoint });
 
 /** A plant that is due to be watered today (US-MON-05). */
 export interface WateringDueRow {
@@ -87,9 +81,9 @@ export const markWatered = (
   api: string,
   token: string,
   specimenIds: readonly string[],
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ) =>
-  writeFor(api, token, options)("POST", "/watering", {
+  createWrite(api, token, fetchFn)("POST", "/watering", {
     specimenIds,
     timeZone: currentTimeZone(),
   });
@@ -108,9 +102,9 @@ export const markFertilized = (
   api: string,
   token: string,
   specimenId: string,
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ) =>
-  writeFor(api, token, options)("POST", "/fertilizing", {
+  createWrite(api, token, fetchFn)("POST", "/fertilizing", {
     specimenId,
     timeZone: currentTimeZone(),
   });

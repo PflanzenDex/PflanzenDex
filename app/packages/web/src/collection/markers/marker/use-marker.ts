@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useRepeatKey, type ApiError } from "../../../shared/data";
+import type { ApiError } from "../../../shared/data";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { markSpecimen } from "../../specimens/model/specimens-api";
@@ -22,22 +22,19 @@ export type MarkTarget = {
  */
 export function useMarker(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<MarkTarget | null>(null);
-  const keys = useRepeatKey();
 
   const send = useCallback(
     async (marker: string): Promise<ApiError | null> => {
       const tok = await token();
       if (!tok || !open) return SIGN_IN;
-      const key = keys.take();
-      const r = await markSpecimen(api, tok, { id: open.id, marker }, { key });
-      keys.settle(key, r);
+      const r = await markSpecimen(api, tok, { id: open.id, marker });
       if (!r.ok) return r.error;
       say(t("renamed", { name: open.name, marker: r.value.name }));
       setOpen(null);
       after();
       return null;
     },
-    [api, token, open, after, say, keys],
+    [api, token, open, after, say],
   );
 
   return { open, send, setOpen };

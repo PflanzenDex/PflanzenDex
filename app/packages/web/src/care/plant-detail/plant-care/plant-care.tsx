@@ -63,7 +63,7 @@ function OpenTreatmentsOfPlant(props: { api: string; token: Token; specimen: Spe
                   busy={write.running}
                   onDone={() =>
                     void write.run(
-                      (t, key) => completeTreatment(api, t, row.id, { key }),
+                      (t) => completeTreatment(api, t, row.id),
                       `„${row.reason}“ bei „${row.specimenName}“ als erledigt eingetragen.`,
                     )
                   }

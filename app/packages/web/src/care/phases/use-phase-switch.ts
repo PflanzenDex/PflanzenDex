@@ -14,7 +14,7 @@ export function usePhaseSwitch(
   const { run, ...state } = useWriteAction(token, after);
   const confirm = useCallback(
     (specimenIds: readonly string[], success: string) =>
-      run((t, key) => confirmPhaseSwitch(api, t, specimenIds, { key }), success),
+      run((t) => confirmPhaseSwitch(api, t, specimenIds), success),
     [api, run],
   );
   return { ...state, confirm };

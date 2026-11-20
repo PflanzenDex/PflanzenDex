@@ -76,12 +76,8 @@ export async function loadZones(
   return r.ok ? { ok: true, value: r.value.zones } : r;
 }
 
-export const createWrite = (
-  api: string,
-  token: string,
-  fetchFn: FetchFn = fetch,
-  key?: string,
-): Write => createKernel<ZoneUser>(api, token, fetchFn, key);
+export const createWrite = (api: string, token: string, fetchFn: FetchFn = fetch): Write =>
+  createKernel<ZoneUser>(api, token, fetchFn);
 
 export interface DerivationRequest {
   lightDemandLux: number;

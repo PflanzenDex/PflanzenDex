@@ -40,15 +40,14 @@ function zoneWrites(api: string, write: Write, toast: ToastApi) {
     busy: write.running,
     onZone: (lamp: LampRef, lightZoneId: string) =>
       void write.run(
-        (t, key) => setLampZone(api, t, { id: lamp.id, lightZoneId }, { key }),
+        (t) => setLampZone(api, t, { id: lamp.id, lightZoneId }),
         `Lampe „${lamp.name}“ umgezogen.`,
       ),
     onStatus: (lamp: LampRef & { status: EquipmentStatus }, status: EquipmentStatus) =>
       void saveWithUndo(write, toast, {
         before: lamp.status,
         after: status,
-        send: (value) => (t, key) =>
-          setEquipmentStatus(api, t, { id: lamp.id, status: value }, { key }),
+        send: (value) => (t) => setEquipmentStatus(api, t, { id: lamp.id, status: value }),
         said: (value) => `Zustand von „${lamp.name}“ ist jetzt „${STATUS_LABELS[value]}“.`,
         saved: `Zustand von „${lamp.name}“ gespeichert.`,
         undone: `Zustand von „${lamp.name}“ zurückgesetzt.`,
@@ -62,8 +61,8 @@ function lightWrites(api: string, write: Write): LampLightActions {
     busy: write.running,
     onMeasure: async (lamp, input) => {
       let saved = false;
-      await write.run(async (t, key) => {
-        const r = await measureLamp(api, t, { id: lamp.id, input }, { key });
+      await write.run(async (t) => {
+        const r = await measureLamp(api, t, { id: lamp.id, input });
         saved = r.ok;
         return r;
       }, `Messung für „${lamp.name}“ gespeichert.`);
@@ -71,12 +70,12 @@ function lightWrites(api: string, write: Write): LampLightActions {
     },
     onData: (lamp, data) =>
       void write.run(
-        (t, key) => describeLamp(api, t, { id: lamp.id, ...data }, { key }),
+        (t) => describeLamp(api, t, { id: lamp.id, ...data }),
         `Herstellerangabe für „${lamp.name}“ gespeichert.`,
       ),
     onLimit: (percent) =>
       void write.run(
-        (t, key) => setDeviationLimit(api, t, percent, { key }),
+        (t) => setDeviationLimit(api, t, percent),
         percent === null ? "Die Prüfung ist aus." : `Grenze von ${percent} % gespeichert.`,
       ),
   };
@@ -88,12 +87,12 @@ function maintenanceWrites(api: string, write: Write): MaintenanceActions {
     busy: write.running,
     onSave: (item, input) =>
       void write.run(
-        (t, key) => setMaintenance(api, t, { id: item.id, input }, { key }),
+        (t) => setMaintenance(api, t, { id: item.id, input }),
         `Betriebsdaten von „${item.name}“ gespeichert.`,
       ),
     onChecked: (item, checkedOn) =>
       void write.run(
-        (t, key) => markChecked(api, t, { id: item.id, checkedOn }, { key }),
+        (t) => markChecked(api, t, { id: item.id, checkedOn }),
         `„${item.name}“ als geprüft vermerkt.`,
       ),
   };
@@ -108,7 +107,7 @@ function supplyWrites(api: string, write: Write, toast: ToastApi): SupplyActions
       void saveWithUndo(write, toast, {
         before: item.supply,
         after: supply,
-        send: (value) => (t, key) => setSupply(api, t, { id: item.id, supply: value }, { key }),
+        send: (value) => (t) => setSupply(api, t, { id: item.id, supply: value }),
         said: (value) => `Vorrat von „${item.name}“ ist jetzt „${SUPPLY_LABELS[value]}“.`,
         saved: `Vorrat von „${item.name}“ gespeichert.`,
         undone: `Vorrat von „${item.name}“ zurückgesetzt.`,
@@ -116,7 +115,7 @@ function supplyWrites(api: string, write: Write, toast: ToastApi): SupplyActions
     },
     onLink: (item, agentLink) =>
       void write.run(
-        (t, key) => linkAgent(api, t, { id: item.id, agentLink }, { key }),
+        (t) => linkAgent(api, t, { id: item.id, agentLink }),
         agentLink === null
           ? `Verknüpfung von „${item.name}“ entfernt.`
           : `„${item.name}“ ist mit „${agentLink}“ verknüpft.`,
@@ -130,7 +129,7 @@ function sensorWrites(api: string, write: Write): SensorActions {
     busy: write.running,
     onTarget: (sensor, target) =>
       void write.run(
-        (t, key) => setSensorTarget(api, t, { id: sensor.id, ...target }, { key }),
+        (t) => setSensorTarget(api, t, { id: sensor.id, ...target }),
         `Zuordnung von „${sensor.name}“ gespeichert.`,
       ),
   };
@@ -147,7 +146,7 @@ function sharingWrites(
     shared,
     onShare: (item, share, note) =>
       void write.run(
-        (t, key) => setEquipmentSharing(api, t, { id: item.id, share, note }, { key }),
+        (t) => setEquipmentSharing(api, t, { id: item.id, share, note }),
         share === "friends"
           ? `„${item.name}“ ist für Freunde sichtbar.`
           : `„${item.name}“ ist wieder privat.`,

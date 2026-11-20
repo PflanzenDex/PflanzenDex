@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import type { LightZone, Species, Specimen } from "@pflanzendex/core";
-import { REFERENCE_STALE_TIME, useRequest, useRepeatKey } from "../../../shared/data";
+import { REFERENCE_STALE_TIME, useRequest } from "../../../shared/data";
 import { ZONES_KEY, loadZones } from "../../../light";
 import type { ApiError } from "../../../shared/data";
 import type { CreateInput } from "./create-input";
@@ -34,17 +34,13 @@ export function useCreate(
   on: { after: () => void; completed: (specimen: Specimen) => void; say: Say },
 ) {
   const [created, setCreated] = useState<Specimen | null>(null);
-  // A repeat after a lost answer repeats the same creation: no second plant (US-QS-03).
-  const keys = useRepeatKey();
   const { after, completed, say } = on;
   const zones = useZones(api, token, !!newSpecies);
   const send = useCallback(
     async (input: CreateInput): Promise<ApiError | null> => {
       const t = await token();
       if (!t || !newSpecies) return SIGN_IN;
-      const key = keys.take();
-      const r = await createSpecimen(api, t, { speciesId: newSpecies.id, ...input }, { key });
-      keys.settle(key, r);
+      const r = await createSpecimen(api, t, { speciesId: newSpecies.id, ...input });
       if (!r.ok) return r.error;
       say(createdText(r.value));
       setCreated(r.value);
@@ -52,7 +48,7 @@ export function useCreate(
       completed(r.value);
       return null;
     },
-    [api, token, newSpecies, after, completed, say, keys],
+    [api, token, newSpecies, after, completed, say],
   );
   return { created, send, zones };
 }

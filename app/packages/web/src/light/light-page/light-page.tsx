@@ -6,7 +6,6 @@ import {
   useQueryClient,
   useReload,
   useRequest,
-  useRepeatKey,
 } from "../../shared/data";
 import { LightView, type LightActions } from "../views/light-view/light-view";
 import { LightPageSkeleton } from "./light-page.skeleton";
@@ -38,7 +37,7 @@ async function derive(api: string, token: Token, a: DerivationRequest) {
 }
 
 function buildActions(
-  { api, token, keys }: { api: string; token: Token; keys: ReturnType<typeof useRepeatKey> },
+  { api, token }: { api: string; token: Token },
   load: () => Promise<void>,
   setLastError: (f: ApiError | undefined) => void,
   saved: (message: string) => void,
@@ -51,7 +50,7 @@ function buildActions(
   ) => {
     const t = await token();
     if (!t) return SIGN_IN;
-    const r = await keys.run((key) => createWrite(api, t, undefined, key)(method, path, body));
+    const r = await createWrite(api, t)(method, path, body);
     if (!r.ok) return r.error;
     setLastError(undefined);
     await load();
@@ -107,12 +106,10 @@ export function LightPage(props: {
   const request = useRequest({ queryKey: [...LIGHT_KEY, "page"], token, load: loadAll });
   const reload = useReload(LIGHT_KEY);
   const load = useCallback(() => reload(), [reload]);
-  const keys = useRepeatKey();
 
   const actions = useMemo(
-    () =>
-      buildActions({ api, token, keys }, load, setLastError, (message) => toast.show({ message })),
-    [api, token, load, toast, keys],
+    () => buildActions({ api, token }, load, setLastError, (message) => toast.show({ message })),
+    [api, token, load, toast],
   );
 
   const loading = "Standorte und Lichtzonen werden geladen …";

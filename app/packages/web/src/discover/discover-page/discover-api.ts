@@ -1,11 +1,5 @@
 import type { DecideResult, SuggestionDeck, UndoDecisionResult } from "@pflanzendex/core";
-import {
-  call,
-  currentTimeZone,
-  type Response,
-  type WriteOptions,
-  writeFor,
-} from "../../shared/data";
+import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
 
 /** Loads deck `deck` of the suggestions (US-ENT-01), optionally only for light zone `zone` (US-ENT-07): derived on every request, in the zone of the profile (NFR-08). */
 export function loadSuggestions(
@@ -29,9 +23,9 @@ export async function decideSuggestion(
   api: string,
   token: string,
   choice: { species: string; decision: "yes" | "no" },
-  options: WriteOptions = {},
+  fetchFn: typeof fetch = fetch,
 ): Promise<Response<DecideResult>> {
-  const r = await writeFor(api, token, options)("POST", "/discover/decisions", {
+  const r = await createWrite(api, token, fetchFn)("POST", "/discover/decisions", {
     ...choice,
     timeZone: currentTimeZone(),
   });
@@ -43,8 +37,8 @@ export async function undoSuggestionDecision(
   api: string,
   token: string,
   species: string,
-  options: WriteOptions = {},
+  fetchFn: typeof fetch = fetch,
 ): Promise<Response<UndoDecisionResult>> {
-  const r = await writeFor(api, token, options)("POST", "/discover/decisions/undo", { species });
+  const r = await createWrite(api, token, fetchFn)("POST", "/discover/decisions/undo", { species });
   return r.ok ? { ok: true, value: r.value as UndoDecisionResult } : r;
 }

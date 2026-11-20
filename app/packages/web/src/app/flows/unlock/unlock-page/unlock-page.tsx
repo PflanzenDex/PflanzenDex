@@ -141,7 +141,7 @@ export function UnlockPage(props: { api: string; token: Token; id?: string }) {
   const unlock = useCallback(
     () =>
       run(
-        (t, key) => unlockFunction(props.api, t, id, { key }),
+        (t) => unlockFunction(props.api, t, id),
         `${name} ist jetzt freigeschaltet. ${functionEmpty(id)}`.trim(),
       ),
     [run, props.api, id, name],

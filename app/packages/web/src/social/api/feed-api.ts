@@ -1,11 +1,5 @@
 import type { Banner, Feed, OpenRequests } from "@pflanzendex/core";
-import {
-  call,
-  currentTimeZone,
-  type Response,
-  type WriteOptions,
-  writeFor,
-} from "../../shared/data";
+import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
 
 export interface FeedFilter {
   /** The friendship id, or `null` for all friends. */
@@ -39,9 +33,9 @@ export async function markFeedSeen(
   api: string,
   token: string,
   upTo: string,
-  options: WriteOptions = {},
+  fetchFn: typeof fetch = fetch,
 ): Promise<Response<{ seenAt: string }>> {
-  const r = await writeFor(api, token, options)("POST", "/feed/seen", { upTo });
+  const r = await createWrite(api, token, fetchFn)("POST", "/feed/seen", { upTo });
   return r.ok ? { ok: true, value: r.value as { seenAt: string } } : r;
 }
 

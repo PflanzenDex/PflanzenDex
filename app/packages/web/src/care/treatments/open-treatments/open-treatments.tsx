@@ -7,13 +7,7 @@ import {
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useAnnounce } from "@/shared/platform/announcer/context";
-import {
-  LoadFrame,
-  SIGN_IN,
-  useInvalidate,
-  useRepeatKey,
-  type ApiError,
-} from "../../../shared/data";
+import { LoadFrame, SIGN_IN, useInvalidate, type ApiError } from "../../../shared/data";
 import { LIST_CLASSES, RefusalAlert, StatusNote } from "../../shared/notices";
 import { PAGE_SIZE, Row } from "./treatment-row/treatment-row";
 import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
@@ -40,7 +34,6 @@ export function nextStepText(rows: readonly TreatmentListRow[]): string | null {
  */
 function useCompletion(api: string, token: Token, onChanged: () => void) {
   const busy = useRef(false);
-  const keys = useRepeatKey();
   const announcer = useAnnounce();
   const [runningId, setRunningId] = useState<string | null>(null);
   // Ticked off here: hidden at once, so a second tap before the list reloads has nothing to hit.
@@ -55,13 +48,9 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
         // No network: the tick-off waits in the buffer, the row is hidden so it cannot be buffered twice (US-QS-10).
         setDoneIds((ids) => [...ids, row.id]);
         busy.current = false;
-        // The key is made when the tick-off is queued; the queue sends that key on every delivery (US-QS-03).
-        const key = keys.take();
-        keys.drop();
         void announcer.buffer({
           token,
-          send: (t, k) => completeTreatment(api, t, row.id, { key: k }),
-          key,
+          send: (t) => completeTreatment(api, t, row.id),
           success: `„${row.specimenName}“: „${row.reason}“ als erledigt eingetragen.`,
           after: onChanged,
         });
@@ -69,11 +58,9 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
       }
       setRunningId(row.id);
       const t = await token();
-      const key = keys.take();
       const r = t
-        ? await completeTreatment(api, t, row.id, { key })
+        ? await completeTreatment(api, t, row.id)
         : { ok: false as const, error: SIGN_IN };
-      keys.settle(key, r);
       busy.current = false;
       setRunningId(null);
       if (r.ok) setDoneIds((ids) => [...ids, row.id]);
@@ -85,7 +72,7 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
       );
       onChanged();
     },
-    [api, token, onChanged, announcer, keys],
+    [api, token, onChanged, announcer],
   );
   return { runningId, doneIds, message, error, complete };
 }

@@ -137,7 +137,7 @@ export function NewTask(props: {
           disabled={!props.connected || write.running}
           onClick={() =>
             void write.run(
-              (t, key) => createTask(props.api, t, { type, reference }, { key }),
+              (t) => createTask(props.api, t, type, reference),
               "Der Auftrag ist angelegt.",
             )
           }

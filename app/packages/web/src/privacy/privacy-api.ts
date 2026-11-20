@@ -1,4 +1,4 @@
-import { call, type ApiError, type Response, type WriteOptions, writeFor } from "../shared/data";
+import { call, createWrite, type ApiError, type Response } from "../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -13,18 +13,18 @@ export const loadDeletion = (api: string, token: string, fetchFn: FetchFn = fetc
 export async function requestDeletion(
   api: string,
   token: string,
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<DeletionState>> {
-  const r = await writeFor(api, token, options)("POST", "/account/deletion", { confirm: true });
+  const r = await createWrite(api, token, fetchFn)("POST", "/account/deletion", { confirm: true });
   return r.ok ? { ok: true, value: r.value as DeletionState } : r;
 }
 
 export async function cancelDeletion(
   api: string,
   token: string,
-  options: WriteOptions = {},
+  fetchFn: FetchFn = fetch,
 ): Promise<Response<DeletionState>> {
-  const r = await writeFor(api, token, options)("DELETE", "/account/deletion");
+  const r = await createWrite(api, token, fetchFn)("DELETE", "/account/deletion");
   return r.ok ? { ok: true, value: r.value as DeletionState } : r;
 }
 

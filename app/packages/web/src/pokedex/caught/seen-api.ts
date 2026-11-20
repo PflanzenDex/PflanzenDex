@@ -1,4 +1,4 @@
-import { call, type Response, type WriteOptions, writeFor } from "../../shared/data";
+import { call, createWrite, type Response } from "../../shared/data";
 
 /** The seen species keys of the account (US-POK-12); `null` while the account has no state yet (first visit). */
 export async function loadSeen(
@@ -15,8 +15,8 @@ export async function markSeen(
   api: string,
   token: string,
   species: readonly string[],
-  options: WriteOptions = {},
+  fetchFn: typeof fetch = fetch,
 ): Promise<Response<{ seen: string[] }>> {
-  const r = await writeFor(api, token, options)("POST", "/pokedex/seen", { species });
+  const r = await createWrite(api, token, fetchFn)("POST", "/pokedex/seen", { species });
   return r.ok ? { ok: true, value: r.value as { seen: string[] } } : r;
 }

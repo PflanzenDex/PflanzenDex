@@ -42,10 +42,7 @@ export function useListActions(api: string, token: Token, a: ListActions) {
   return {
     handlers: {
       onLocate: (specimenId: string, locationId: string, success: string) => {
-        void place.run(
-          (t, key) => setSpecimenLocation(api, t, { id: specimenId, locationId }, { key }),
-          success,
-        );
+        void place.run((t) => setSpecimenLocation(api, t, { id: specimenId, locationId }), success);
       },
       onArchive: (e: Named) => {
         archived.setOpen(e);

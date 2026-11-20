@@ -124,7 +124,7 @@ function Body(props: {
               busy={wish.running}
               onWish={(card) =>
                 void wish.run(
-                  (t, key) => addToWishlist(props.api, t, card.speciesLatin ?? "", { key }),
+                  (t) => addToWishlist(props.api, t, card.speciesLatin ?? ""),
                   `${card.speciesLatin} steht jetzt auf deiner Wunschliste.`,
                 )
               }

@@ -1,5 +1,5 @@
 import type { EquipmentRow, SupplyLevel } from "@pflanzendex/core";
-import { type Response, type WriteOptions, writeFor } from "../shared/data";
+import { createWrite, type Response } from "../shared/data";
 
 /** The operation data of a device; empty ones are `null` (unknown, P-08). A lifetime comes with its source. */
 export interface MaintenanceInput {
@@ -14,9 +14,9 @@ export async function setMaintenance(
   api: string,
   token: string,
   target: { id: string; input: MaintenanceInput },
-  options: WriteOptions = {},
+  fetchFn: typeof fetch = fetch,
 ): Promise<Response<EquipmentRow>> {
-  const r = await writeFor(api, token, options)(
+  const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/equipment/${encodeURIComponent(target.id)}/maintenance`,
     target.input,
@@ -29,9 +29,9 @@ export async function markChecked(
   api: string,
   token: string,
   target: { id: string; checkedOn: string },
-  options: WriteOptions = {},
+  fetchFn: typeof fetch = fetch,
 ): Promise<Response<EquipmentRow>> {
-  const r = await writeFor(api, token, options)(
+  const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/equipment/${encodeURIComponent(target.id)}/checked`,
     { checkedOn: target.checkedOn },
@@ -44,9 +44,9 @@ export async function setSupply(
   api: string,
   token: string,
   target: { id: string; supply: SupplyLevel },
-  options: WriteOptions = {},
+  fetchFn: typeof fetch = fetch,
 ): Promise<Response<EquipmentRow>> {
-  const r = await writeFor(api, token, options)(
+  const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/equipment/${encodeURIComponent(target.id)}/supply`,
     { supply: target.supply },
@@ -59,14 +59,12 @@ export async function linkAgent(
   api: string,
   token: string,
   target: { id: string; agentLink: string | null },
-  options: WriteOptions = {},
+  fetchFn: typeof fetch = fetch,
 ): Promise<Response<EquipmentRow>> {
-  const r = await writeFor(api, token, options)(
+  const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/equipment/${encodeURIComponent(target.id)}/agent-link`,
-    {
-      agentLink: target.agentLink,
-    },
+    { agentLink: target.agentLink },
   );
   return r.ok ? { ok: true, value: r.value as EquipmentRow } : r;
 }
@@ -76,10 +74,10 @@ export async function setSensorTarget(
   api: string,
   token: string,
   target: { id: string; specimenId: string | null; locationId: string | null },
-  options: WriteOptions = {},
+  fetchFn: typeof fetch = fetch,
 ): Promise<Response<EquipmentRow>> {
   const { id, ...data } = target;
-  const r = await writeFor(api, token, options)(
+  const r = await createWrite(api, token, fetchFn)(
     "POST",
     `/equipment/${encodeURIComponent(id)}/sensor-target`,
     data,
