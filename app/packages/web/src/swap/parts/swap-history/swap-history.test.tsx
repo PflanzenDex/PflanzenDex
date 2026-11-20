@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SwapHistory, outcomeLine } from "./swap-history";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
@@ -84,13 +83,8 @@ describe("US-SOZ-13 swap history", () => {
     expect(items[0]).toContain("Steckling · Tauschen");
     expect(items[1]).toContain("Erhalten von Cleo");
     expect(items[1]).toContain("Pflanze · Verschenken");
-    // Entries three and four are on the second page (US-QS-20).
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    const rest = within(screen.getByRole("list", { name: "Tauschverlauf" }))
-      .getAllByRole("listitem")
-      .map((i) => i.textContent ?? "");
-    items[2] = rest[0] ?? "";
-    items[3] = rest[1] ?? "";
+    // On a phone all four entries are in the one list, in order (US-QS-32); the paged view shows them in pages.
+    expect(items).toHaveLength(4);
     expect(items[2]).toContain("Anfrage von Dora abgelehnt");
     expect(items[2]).toContain("Grund: Zu klein");
     expect(items[3]).toContain("Art unbekannt");

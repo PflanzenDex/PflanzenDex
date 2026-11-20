@@ -2,11 +2,14 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Pager } from "../pager";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { dropPageParts, namedEntry, parseFrom, parsePage, position } from "./address";
 
 afterEach(cleanup);
+// The paged view is the one from 768 px (US-QS-32): these tests pin the paging, so they run at a tablet width.
+beforeEach(() => setViewportWidth(1024));
 
 const plants = Array.from({ length: 6 }, (_, i) => `Pflanze ${i + 1}`);
 

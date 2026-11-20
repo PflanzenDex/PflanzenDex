@@ -187,6 +187,7 @@ const friend = (n: number) => ({
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
@@ -583,6 +584,8 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   });
 
   it("US-QS-20 a list longer than the layer is paged with 'Zurück' and 'Weiter'", async () => {
+    // Paging is the tablet and desktop view: the friends page in pages of three from 768 px (on a phone one list).
+    setViewportWidth(1024);
     fakeServer({ friends: [1, 2, 3, 4, 5].map(friend) });
     show("friends");
     const list = await screen.findByRole("list", { name: "Freunde" });
@@ -597,6 +600,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   });
 
   it("US-QS-20 requests are paged too, and an entry past the end shows the last page", async () => {
+    setViewportWidth(1024);
     fakeServer({
       incoming: [1, 2, 3, 4, 5].map((n) => req({ id: `r${n}`, otherName: `Person${n}` })),
     });

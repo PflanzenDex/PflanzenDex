@@ -11,6 +11,7 @@ import { answerCardRead } from "../specimens/tests/cards-fake";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { PlantsScreen } from "./plants-screen";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 
 const card = (id: number, extra: Partial<SpecimenCard> = {}): SpecimenCard => ({
   id: `e${id}`,
@@ -78,6 +79,7 @@ const many = (n: number) => Array.from({ length: n }, (_, i) => card(i + 1));
 
 afterEach(cleanup);
 afterEach(releaseSheetExits);
+afterEach(() => setViewportWidth(360));
 
 /** The rows of the plant list ("Pflanzen"); the light-zone row above it is a list item of its own (F-0114). */
 const plantItems = () =>
@@ -136,15 +138,17 @@ describe("US-QS-19 tiles of the plants", () => {
   });
 
   it("US-QS-19 · FR-BES-23 the plants are paged, the first entry is in the address and an entry past the end shows the last page", async () => {
-    screenWith(many(8));
-    expect(plantItems()).toHaveLength(6);
+    // Paging is the tablet and desktop view (768 px and up); 16 tiles a page from 1024 px (US-QS-32 on a phone: one list).
+    setViewportWidth(1024);
+    screenWith(many(20));
+    expect(plantItems()).toHaveLength(16);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByTestId("address").textContent).toBe("?from=6");
-    expect(plantItems()).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /^Pflanze 7(\s|$)/ })).toBeTruthy();
+    expect(screen.getByTestId("address").textContent).toBe("?from=16");
+    expect(plantItems()).toHaveLength(4);
+    expect(screen.getByRole("button", { name: /^Pflanze 17(\s|$)/ })).toBeTruthy();
     cleanup();
-    screenWith(many(8), {}, "/?from=9");
+    screenWith(many(20), {}, "/?from=21");
     expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
   });
 
@@ -183,7 +187,8 @@ describe("US-QS-19 tiles of the plants", () => {
   });
 
   it("US-QS-19 a swipe turns the page", () => {
-    screenWith(many(8));
+    setViewportWidth(1024);
+    screenWith(many(20));
     const list = screen.getByRole("list", { name: "Pflanzen" });
     fireEvent.pointerDown(list, { clientX: 200, clientY: 10 });
     fireEvent.pointerUp(list, { clientX: 100, clientY: 10 });
@@ -217,6 +222,7 @@ describe("US-QS-19 page size fills the free height of the region (tiles)", () =>
   });
 
   it("US-QS-19 the tiles fill the free height of the region: whole rows per page, the pager below", () => {
+    setViewportWidth(1024);
     region = 532;
     screenWith(many(8));
     expect(plantItems()).toHaveLength(5);

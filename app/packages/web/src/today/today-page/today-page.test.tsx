@@ -185,7 +185,7 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     expect(screen.queryByRole("button", { name: /„Aloe“/ })).toBeNull();
   });
 
-  it("US-QS-18 · A-02 the further tasks are compact rows: the action sentence is not repeated on every row, three per page on a phone", async () => {
+  it("US-QS-18 · A-02 · US-QS-32 the further tasks are compact rows: the action sentence is not repeated on every row, one scrolling list on a phone", async () => {
     const more = Array.from({ length: 5 }, (_, i) =>
       item(
         "phase_deviation",
@@ -199,14 +199,12 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     render(<TodayPage api="http://api" token={token} onOpen={() => undefined} />);
     const list = await screen.findByRole("list", { name: "Weitere Aufgaben" });
     expect(screen.queryAllByText("Stelle es um.")).toHaveLength(0);
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    // On a phone every further task is in the one list; no page is turned (US-QS-32).
+    expect(within(list).getAllByRole("listitem")).toHaveLength(5);
     expect(within(list).getByRole("link", { name: /^Abweichung „Pflanze 1“/ })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
-    expect(
-      within(screen.getByRole("list", { name: "Weitere Aufgaben" })).getAllByRole("listitem"),
-    ).toHaveLength(2);
+    expect(within(list).getByRole("link", { name: /^Abweichung „Pflanze 5“/ })).toBeTruthy();
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
   });
 
   it("US-QS-04 · US-QS-18 an etiolated measurement and a zone below the buffer show their state word and lead to their place", async () => {

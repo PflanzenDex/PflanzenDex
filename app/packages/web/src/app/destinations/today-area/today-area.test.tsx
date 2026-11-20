@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { useInvalidate, useQueryClient, type QueryClient } from "@/shared/data";
@@ -311,6 +312,7 @@ beforeAll(async () => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 describe("US-QS-18 Heute fits one screen", () => {
@@ -618,6 +620,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
   });
 
   it("US-QS-18 · US-BEH-02 the open treatments stand by urgency with a short chip and are paged", async () => {
+    // Paging starts at 768 px; the layer stays a sheet below 1024 px (a pane there has no dialog role).
+    setViewportWidth(768);
     fakeServer({
       treatments: [
         treatment("a", "Aloe", "overdue", "überfällig seit 10 Tagen"),
@@ -637,6 +641,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
   });
 
   it("US-QS-18 · F-0351 ten open treatments, two per page, beside the fitted further tasks of Heute: Weiter moves one page each time to page 5 of 5", async () => {
+    // Paging starts at 768 px; the layer stays a sheet below 1024 px (a pane there has no dialog role).
+    setViewportWidth(768);
     const ten = Array.from({ length: 10 }, (_, i) =>
       treatment(`t${i}`, `Pflanze ${i + 1}`, "overdue", `überfällig seit ${i + 1} Tagen`),
     );
@@ -677,6 +683,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
   });
 
   it("US-QS-18 · US-QS-19 · F-0351 ten due plants, three per page, in the layer Gießen beside the fitted further tasks of Heute: Weiter reaches page 4 of 4 and the further tasks keep their page", async () => {
+    // Paging starts at 768 px; the layer stays a sheet below 1024 px (a pane there has no dialog role).
+    setViewportWidth(768);
     fakeServer({ items: [todayItem, ...FURTHER_TASKS], due: TEN_DUE });
     const restore = stubFittedRegion(100);
     try {
@@ -729,15 +737,15 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     ).toContain("sr-only");
   });
 
-  it("US-BEH-01 · A-04 the planning is a layer with search, a location filter and pages of plants; saving returns to Behandlungen", async () => {
+  it("US-BEH-01 · A-04 · US-QS-32 the planning is a layer with search, a location filter and one list of plants on a phone; saving returns to Behandlungen", async () => {
     const posts = fakeServer({ cards: FIVE });
     const user = userEvent.setup();
     show("/today?sheet=treatments");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
-    // Three plants per page on a phone (owner decision 2026-11-20), the position in text, search and location filter above the list.
-    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(3);
-    expect(within(form).getByText("Seite 1 von 2")).toBeTruthy();
+    // On a phone the plants are one scrolling list, with the search and the location filter above it (US-QS-32).
+    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(5);
+    expect(within(form).queryByText(/^Seite \d+ von \d+$/)).toBeNull();
     await user.type(within(form).getByRole("searchbox", { name: "Pflanze suchen" }), "EFE");
     expect(within(form).queryByRole("checkbox", { name: /^Aloe/ })).toBeNull();
     expect(within(form).getByRole("checkbox", { name: /^Efeu/ })).toBeTruthy();
@@ -745,7 +753,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     await user.selectOptions(within(form).getByRole("combobox", { name: "Standort" }), "Balkon");
     const balcony = within(form).getByRole("list", { name: "Pflanzen" });
     expect(within(balcony).getAllByRole("listitem")).toHaveLength(2);
-    expect(within(form).queryByText("Seite 1 von 2")).toBeNull();
+    expect(within(form).queryByText(/^Seite \d+ von \d+$/)).toBeNull();
     await user.selectOptions(within(form).getByRole("combobox", { name: "Standort" }), "");
     await user.click(within(form).getByRole("checkbox", { name: /^Aloe/ }));
     // The date and the reason are one view further; the save button stays in the layer's footer.

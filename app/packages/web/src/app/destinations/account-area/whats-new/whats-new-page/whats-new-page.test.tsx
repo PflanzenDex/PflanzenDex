@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { newsEntries } from "../news-lines.mjs";
 import { NEWS_ENTRIES, unseenEntries } from "../whats-new";
 import { WhatsNewList, WhatsNewPage } from "./whats-new-page";
@@ -12,6 +13,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
+  setViewportWidth(360);
 });
 
 /** The entries of plain lines, as the page gets them (no fragments, no versions). */
@@ -52,6 +54,7 @@ describe("US-DEV-06 the page Neu in PflanzenDéx", () => {
   });
 
   it("US-DEV-06 shows only the newest page of the lines, not all of them at once (US-QS-15)", () => {
+    setViewportWidth(1024);
     vi.stubEnv("VITE_APP_VERSION", "2.0.0");
     render(
       <MemoryRouter>
@@ -68,6 +71,7 @@ describe("US-DEV-06 the page Neu in PflanzenDéx", () => {
   });
 
   it("US-DEV-06 the pager reaches the older lines, page by page and by address", async () => {
+    setViewportWidth(1024);
     render(
       <MemoryRouter>
         <WhatsNewPage />

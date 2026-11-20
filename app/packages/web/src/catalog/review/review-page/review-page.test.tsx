@@ -397,6 +397,8 @@ describe("US-QS-15 review list on one screen", () => {
   });
 
   it("US-QS-15 each case is a compact row; the list is paged in whole rows with the first entry in the address", async () => {
+    // Paging is the tablet and desktop view: eight compact rows a page from 768 px (on a phone one scrolling list).
+    setViewportWidth(1024);
     const many = Array.from({ length: 10 }, (_, i) =>
       entry({}, "proposal", `c${i + 1}`, { latinName: `Species ${i + 1}` }),
     );
@@ -404,11 +406,11 @@ describe("US-QS-15 review list on one screen", () => {
     const user = userEvent.setup();
     show();
     const rows = await screen.findByRole("list", { name: "Offene Vorschläge" });
-    expect(within(rows).getAllByRole("button")).toHaveLength(4);
-    expect(screen.getByText("Seite 1 von 3")).toBeTruthy();
+    expect(within(rows).getAllByRole("button")).toHaveLength(8);
+    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(address()).toContain("from=4");
-    expect(screen.getByRole("button", { name: /Species 5/ })).toBeTruthy();
+    expect(address()).toContain("from=8");
+    expect(screen.getByRole("button", { name: /Species 9/ })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Species 1$/ })).toBeNull();
   });
 

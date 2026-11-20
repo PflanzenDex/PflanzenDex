@@ -28,7 +28,9 @@ describe("US-QS-14 · page story Heute", () => {
     ).toBeTruthy();
     expect(screen.getAllByRole("button", { name: /Behandlungen/ })).toHaveLength(1);
     expect(screen.getByRole("link", { name: /Efeu/ })).toBeTruthy();
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    // On a phone the further tasks are one scrolling list: the last one is in it, and no page is turned (US-QS-32).
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.getAllByText(/Zeder/).length).toBeGreaterThan(0);
   });
 
   it("US-QS-18 the story with another item first shows the Behandlungen tile once", async () => {

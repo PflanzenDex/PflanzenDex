@@ -5,6 +5,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { CollectorCards } from "./collector-cards";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "./collector-cards.de.json";
@@ -44,10 +45,12 @@ const token = async () => "tok";
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 describe("US-POK-01 collector cards section", () => {
   it("US-POK-01 shows caught and missing cards with the catch chip, loaded with the time zone", async () => {
+    setViewportWidth(1024);
     const fetchFn = vi.fn<typeof fetch>(async () =>
       response(200, {
         cards: [
@@ -69,7 +72,7 @@ describe("US-POK-01 collector cards section", () => {
     vi.stubGlobal("fetch", fetchFn);
     view(<CollectorCards api="http://api" token={token} />);
     const list = await screen.findByRole("list", { name: "Sammlerkarten" });
-    // US-QS-22: two cards per page, the rest on the next page.
+    // US-QS-22: two cards per page, the rest on the next page (the paged view, from 768 px).
     const items = [...list.querySelectorAll<HTMLElement>("li[data-state]")];
     expect(items).toHaveLength(2);
     expect(within(items[0] as HTMLElement).getByText("gefangen 05.03.2026")).toBeTruthy();

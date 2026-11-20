@@ -4,10 +4,14 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { CaughtSpecies, MilestoneTree } from "@pflanzendex/core";
 import { afterEach, describe, expect, it } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { MemoryRouter } from "react-router";
 import { Milestones } from "./milestones";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  setViewportWidth(360);
+});
 
 /** Renders in a router, because the open milestones are paged by the address (US-QS-22). */
 const view = (ui: ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
@@ -112,6 +116,8 @@ describe("US-POK-11 milestones with an instruction for action", () => {
   });
 
   it("US-POK-11 the open milestones come two per page, so the layer fits one screen (DS-58, starting value)", async () => {
+    // Paging is the tablet and desktop view (768 px and up); on a phone the milestones are one scrolling list (US-QS-32).
+    setViewportWidth(1024);
     view(<Milestones caught={[]} tree={tree} />);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     expect(screen.getByText("Kakteen: Entdeckt")).toBeTruthy();

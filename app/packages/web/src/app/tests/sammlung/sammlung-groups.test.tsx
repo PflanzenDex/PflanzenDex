@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { CollectionArea } from "../../destinations/collection-area/collection-area";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
 import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
@@ -132,6 +133,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 const openView = async () =>
@@ -207,6 +209,8 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
   });
 
   it("US-BES-06 · FR-BES-23 grouped by location a group shows its full count, and opening it loads only its own plants", async () => {
+    // Paging is the tablet and desktop view: 16 plants a page from 1024 px (on a phone one scrolling list).
+    setViewportWidth(1024);
     const seen: URL[] = [];
     stubServer(
       [
@@ -218,7 +222,7 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
     renderAt("/collection?view=plants&group=location&part=Wohnzimmer");
     const row = await screen.findByRole("group", { name: "Standort wählen" });
     expect(within(row).getByRole("button", { name: /^Wohnzimmer \(120\)$/ })).toBeTruthy();
-    expect(await screen.findByText("Seite 1 von 20")).toBeTruthy();
+    expect(await screen.findByText("Seite 1 von 8")).toBeTruthy();
     const groupCalls = seen.filter((u) => u.pathname === "/specimens/cards");
     expect(groupCalls.some((u) => u.searchParams.get("location") === "Wohnzimmer")).toBe(true);
     expect(groupCalls.some((u) => u.searchParams.get("location") === "Flur")).toBe(false);

@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { ExchangePage } from "./exchange";
 
@@ -84,6 +85,7 @@ const view = (path = "/") =>
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
@@ -109,12 +111,14 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
   });
 
   it("US-QS-20 my offers are paged and the other parts open one at a time behind a switch", async () => {
+    // Paging is the tablet and desktop view: three cards a page from 768 px (on a phone two a page).
+    setViewportWidth(1024);
     server({
       offers: [1, 2, 3, 4].map((n) => offer({ id: `o${n}`, specimenName: `Pflanze ${n}` })),
     });
     view();
     const list = await screen.findByRole("list", { name: "Meine Angebote" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Tauschverlauf" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Verlauf" }));

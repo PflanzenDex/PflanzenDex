@@ -134,6 +134,7 @@ describe("US-QS-21 the search row at a larger text size (issue 1019)", () => {
 
 describe("US-QS-21 the catalog list is paged", () => {
   it("US-QS-21 shows one page of compact results with name, scientific name and one fact", () => {
+    setViewportWidth(1024);
     search(many(45));
     const list = screen.getByRole("list", { name: "Treffer" });
     expect(within(list).getAllByRole("button")).toHaveLength(HITS_PER_PAGE);
@@ -170,6 +171,7 @@ describe("US-QS-21 the catalog list is paged", () => {
   });
 
   it("US-QS-21 · FR-BES-23 the first entry is in the address, a reload at ?from=3 shows the same entries", async () => {
+    setViewportWidth(1024);
     search(many(10));
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(address()).toBe("/discover?view=catalog&from=3");
@@ -180,6 +182,7 @@ describe("US-QS-21 the catalog list is paged", () => {
   });
 
   it("US-QS-21 a new search starts at the first entry", async () => {
+    setViewportWidth(1024);
     const { rerender } = search(many(10), "/discover?view=catalog&from=6", "a");
     expect(address()).toContain("from=6");
     rerender(
