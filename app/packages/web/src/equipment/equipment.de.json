@@ -27,7 +27,6 @@
   "zones.plants.one": "1 Pflanze",
   "zones.plants.other": "{count} Pflanzen",
   "zones.unknownCount": "Pflanzenzahl unbekannt",
-  "sensors.heading": "Sensoren",
   "sensors.assign": "Zugeordnet zu",
   "sensors.unassigned": "Nicht zugeordnet",
   "sensors.groupPlants": "Pflanzen",

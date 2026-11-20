@@ -120,6 +120,15 @@ describe("US-EQU-04 US-EQU-05 US-EQU-06 upkeep writes from the equipment page", 
     });
   });
 
+  it("US-EQU-06 the Sensoren sheet with a sensor in it shows its heading once (SG-BASE-01, issue 2168)", async () => {
+    fakeServer();
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=sensors");
+    const layer = await screen.findByRole("dialog", { name: "Sensoren" });
+    // The list is loaded once its assignment select is there; only then can its headings be counted.
+    await within(layer).findByRole("combobox", { name: "Zugeordnet zu Feuchtesensor" });
+    expect(within(layer).getAllByRole("heading", { name: "Sensoren" })).toHaveLength(1);
+  });
+
   it("US-EQU-06 choosing a specimen for a sensor sends the assignment", async () => {
     const fetchFn = fakeServer();
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=sensors");

@@ -22,6 +22,13 @@ describe("US-EQU-06 sensors and their place", () => {
     expect(container.textContent).toBe("");
   });
 
+  it("US-EQU-06 the view renders no heading named Sensoren: the sheet owns the title, so it shows once (SG-BASE-01, issue 2168)", () => {
+    const { container } = render(<SensorsView view={view()} actions={actions()} />);
+    expect(screen.queryByRole("heading", { name: "Sensoren" })).toBeNull();
+    // The section names nothing of its own: a reference to a heading that is gone would name it by nothing.
+    expect(container.querySelector("section")?.hasAttribute("aria-labelledby")).toBe(false);
+  });
+
   it("US-EQU-06 an unassigned sensor reads as not assigned and can be put at a specimen", async () => {
     const a = actions();
     render(<SensorsView view={view()} actions={a} />);
