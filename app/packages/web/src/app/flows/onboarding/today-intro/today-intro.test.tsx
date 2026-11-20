@@ -213,7 +213,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     view();
     await pickSpecies();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByText("Schritt 2 von 2: Pflanze speichern")).toBeTruthy();
+    expect(screen.getByText("Schritt 2 von 2: Pflanze sichern")).toBeTruthy();
     const select = (await screen.findByLabelText("Lichtbedarf")) as HTMLSelectElement;
     expect(select.value).toBe("");
     expect(select.selectedOptions[0]?.textContent).toBe("Zone 2 (laut Art)");
@@ -225,7 +225,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     view();
     await pickSpecies();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze sichern" }));
     expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
     const created = w.writes.find((x) => x.path === "/specimens");
     expect(created?.body["speciesId"]).toBe("sp1");
@@ -242,7 +242,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     await pickSpecies();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await userEvent.selectOptions(await screen.findByLabelText("Lichtbedarf"), "z4");
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     await screen.findByRole("heading", { name: /ist angelegt/ });
     expect(w.writes.find((x) => x.path === "/specimens")?.body["lightZoneId"]).toBe("z4");
   });
@@ -289,11 +289,11 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     await pickSpecies();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     const heading = await screen.findByRole("heading", {
-      name: "Schritt 2 von 2: Pflanze speichern",
+      name: "Schritt 2 von 2: Pflanze sichern",
     });
     expect(document.activeElement).toBe(heading);
     expect(liveRegionsSaying("Schritt")).toEqual([]);
-    const marker = screen.getByText("Schritt 2 von 2: Pflanze speichern");
+    const marker = screen.getByText("Schritt 2 von 2: Pflanze sichern");
     expect(marker.className).toMatch(/rounded-full.*border/);
     expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
       "Heute",
@@ -350,7 +350,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     expect(await tasksShown()).toBeTruthy();
     expect(screen.queryByLabelText("Art")).toBeNull();
     const notice = await screen.findByRole("alert");
-    expect(notice.textContent).toContain("nicht gespeichert");
+    expect(notice.textContent).toContain("nicht gesichert");
     expect(notice.textContent).toContain("nicht erreichbar");
     // the retry sends the end again; once it is stored the notice goes away
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
@@ -377,7 +377,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
 async function saveFirstPlant() {
   await pickSpecies();
   await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-  await userEvent.click(await screen.findByRole("button", { name: "Pflanze speichern" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Pflanze sichern" }));
   await screen.findByRole("heading", { name: /ist angelegt/ });
 }
 
@@ -423,7 +423,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     expect(screen.queryByText(/Wo steht sie\?/)).toBeNull();
     expect(screen.getByRole("button", { name: "Pflanze messen" })).toBeTruthy();
     expect((await screen.findByRole("status")).textContent).toBe(
-      "Standort gespeichert: Zuhause, Zone 3.",
+      "Standort gesichert: Zuhause, Zone 3.",
     );
   });
 
@@ -437,7 +437,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     expect(await screen.findByText("Balkon (Zone 4)")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Standort übernehmen" }));
     expect((await screen.findByRole("status")).textContent).toBe(
-      "Standort gespeichert: Balkon, Zone 4.",
+      "Standort gesichert: Balkon, Zone 4.",
     );
   });
 
@@ -551,7 +551,7 @@ describe("US-ONB-07 calm hints on Heute", () => {
       vi.fn<typeof fetch>(async () => response(500, { error: { code: "server.error" } })),
     );
     await userEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("nicht speichern");
+    expect((await screen.findByRole("alert")).textContent).toContain("nicht sichern");
     expect(screen.getByRole("status", { name: "Hinweis" })).toBeTruthy();
   });
 

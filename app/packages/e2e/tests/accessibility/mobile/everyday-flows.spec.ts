@@ -71,18 +71,15 @@ async function startWithPlant(page: Page): Promise<void> {
 }
 
 /** The partial result of a save whose photo could not be stored: the measurement is kept, the photo is not (issue 144). */
-const PHOTO_NOT_STORED = /^Die Messung ist gespeichert, das Foto nicht\./;
+const PHOTO_NOT_STORED = /^Die Messung ist gesichert, das Foto nicht\./;
 
 /**
- * After "Messung speichern" with a photo, the page shows the success toast or the partial result of a photo that could not be
+ * After "Messung sichern" with a photo, the page shows the success toast or the partial result of a photo that could not be
  * stored. The e2e stack has no image store, so the photo is stored only where one exists and the measurement is saved
  * either way; the photo upload is checked on the owner's phone (US-QS-07 state note). Both results are accepted.
  */
 async function settleMeasurementSave(page: Page): Promise<void> {
-  const saved = page
-    .locator('[aria-live="polite"]')
-    .filter({ hasText: "Gespeichert: 12,5" })
-    .first();
+  const saved = page.locator('[aria-live="polite"]').filter({ hasText: "Gesichert: 12,5" }).first();
   const partial = page.getByText(PHOTO_NOT_STORED);
   await expect(saved.or(partial)).toBeVisible();
   if (await partial.isVisible()) {
@@ -94,7 +91,7 @@ async function settleMeasurementSave(page: Page): Promise<void> {
   }
 }
 
-/** 1. Measure with a photo: the photo field sits behind "Mehr Angaben"; "Messung speichern" is the main action. */
+/** 1. Measure with a photo: the photo field sits behind "Mehr Angaben"; "Messung sichern" is the main action. */
 async function measureWithPhoto(page: Page): Promise<void> {
   await openFirstPlant(page);
   await page.getByRole("button", { name: /^Messen: / }).click();
@@ -108,8 +105,8 @@ async function measureWithPhoto(page: Page): Promise<void> {
     mimeType: "image/png",
     buffer: PHOTO,
   });
-  const save = page.getByRole("button", { name: "Messung speichern" });
-  await expectLowerHalf(page, save, "measure: Messung speichern");
+  const save = page.getByRole("button", { name: "Messung sichern" });
+  await expectLowerHalf(page, save, "measure: Messung sichern");
   await save.click();
   await settleMeasurementSave(page);
 }
@@ -149,7 +146,7 @@ async function tickOffTreatment(page: Page): Promise<void> {
     .getByRole("button", { name: "Termin" })
     .click();
   await plan.getByLabel(/^Grund/).fill("Wollläuse");
-  await page.getByRole("button", { name: "Behandlung speichern" }).click();
+  await page.getByRole("button", { name: "Behandlung sichern" }).click();
   // Not in the lower-half check: the layer "Behandlungen" opens from the top of the window, and its first row ("Abhaken")
   // lies in the upper half by design (docs/records/test-logs/qs-one-screen/360x640-heute-behandeln.png).
   await page.getByRole("button", { name: /^Wollläuse bei .* als erledigt abhaken$/ }).click();

@@ -46,6 +46,6 @@
   "pick.retry": "Erneut versuchen",
   "pick.hits": "Treffer",
   "form.section": "Wunsch erfassen",
-  "form.saving": "Speichert …",
-  "form.save": "Wunsch speichern"
+  "form.saving": "Sichert …",
+  "form.save": "Wunsch sichern"
 }

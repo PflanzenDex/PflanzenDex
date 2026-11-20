@@ -492,7 +492,7 @@ export function WishForm({
           size="touch"
           disabled={form.formState.isSubmitting}
         >
-          Speichern
+          Sichern
         </Button>
       </form>
     </Form>

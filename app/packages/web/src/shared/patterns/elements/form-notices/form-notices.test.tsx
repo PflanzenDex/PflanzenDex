@@ -18,11 +18,7 @@ function errorMark(): string {
 describe("FormNotices (US-QS-32 · SG-COLOR-04, SG-STATE-03)", () => {
   it("US-QS-32 · SG-COLOR-04 a refusal that names no field is drawn in the error tone: red border, error mark, no warning token", () => {
     const { container } = render(
-      <FormNotices
-        message={null}
-        alertText="Speichern hat nicht geklappt."
-        alertRef={createRef()}
-      />,
+      <FormNotices message={null} alertText="Sichern hat nicht geklappt." alertRef={createRef()} />,
     );
     const alert = screen.getByRole("alert");
     expect(alert.className).toContain("border-destructive");
@@ -34,9 +30,9 @@ describe("FormNotices (US-QS-32 · SG-COLOR-04, SG-STATE-03)", () => {
   it("US-QS-32 · P-10 the refusal keeps its text and takes the focus through alertRef", () => {
     const alertRef = createRef<HTMLDivElement>();
     render(
-      <FormNotices message={null} alertText="Speichern hat nicht geklappt." alertRef={alertRef} />,
+      <FormNotices message={null} alertText="Sichern hat nicht geklappt." alertRef={alertRef} />,
     );
-    expect(screen.getByRole("alert").textContent).toBe("Speichern hat nicht geklappt.");
+    expect(screen.getByRole("alert").textContent).toBe("Sichern hat nicht geklappt.");
     expect(alertRef.current).toBe(screen.getByRole("alert"));
     expect(alertRef.current?.getAttribute("tabindex")).toBe("-1");
   });
@@ -46,7 +42,7 @@ describe("FormNotices (US-QS-32 · SG-COLOR-04, SG-STATE-03)", () => {
     render(
       <FormNotices
         message={null}
-        alertText="Speichern hat nicht geklappt."
+        alertText="Sichern hat nicht geklappt."
         alertRef={createRef()}
         onRetry={onRetry}
       />,
@@ -57,19 +53,15 @@ describe("FormNotices (US-QS-32 · SG-COLOR-04, SG-STATE-03)", () => {
 
   it("US-QS-32 · SG-STATE-03 without onRetry no retry is offered", () => {
     render(
-      <FormNotices
-        message={null}
-        alertText="Speichern hat nicht geklappt."
-        alertRef={createRef()}
-      />,
+      <FormNotices message={null} alertText="Sichern hat nicht geklappt." alertRef={createRef()} />,
     );
     expect(screen.queryByRole("button", { name: "Erneut versuchen" })).toBeNull();
   });
 
   it("US-QS-32 · P-10 a save status stays a neutral status line, not an alert", () => {
-    render(<FormNotices message="Gespeichert." alertText={null} alertRef={createRef()} />);
+    render(<FormNotices message="Gesichert." alertText={null} alertRef={createRef()} />);
     const status = screen.getByRole("status");
-    expect(status.textContent).toBe("Gespeichert.");
+    expect(status.textContent).toBe("Gesichert.");
     expect(status.className).not.toMatch(/warning|destructive/);
     expect(screen.queryByRole("alert")).toBeNull();
   });

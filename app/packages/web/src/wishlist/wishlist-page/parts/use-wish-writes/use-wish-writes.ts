@@ -29,7 +29,7 @@ export function useWishWrites(
       const r = await createWish(api, t, input);
       saved = r.ok;
       return r;
-    }, `Wunsch „${input.name}“ gespeichert.`);
+    }, `Wunsch „${input.name}“ gesichert.`);
     if (saved) setLast("write");
     return saved;
   };

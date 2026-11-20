@@ -101,7 +101,7 @@ async function toSave() {
 async function untilSaveEnabled() {
   await waitFor(() =>
     expect(
-      (screen.getByRole("button", { name: "Pflanze speichern" }) as HTMLButtonElement).disabled,
+      (screen.getByRole("button", { name: "Pflanze sichern" }) as HTMLButtonElement).disabled,
     ).toBe(false),
   );
 }
@@ -121,7 +121,7 @@ describe("US-ONB-01 offline, the default zones fail with the reason and a retry 
     expect(await screen.findByText(REASON)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
     expect(
-      (screen.getByRole("button", { name: "Pflanze speichern" }) as HTMLButtonElement).disabled,
+      (screen.getByRole("button", { name: "Pflanze sichern" }) as HTMLButtonElement).disabled,
     ).toBe(true);
     expect(screen.queryByRole("combobox", { name: "Lichtbedarf" })).toBeNull();
     // Nothing is sent while the device is offline (US-QS-30): the defaults are not created yet.
@@ -152,7 +152,7 @@ describe("US-ONB-01 offline, the default zones fail with the reason and a retry 
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     await screen.findByRole("combobox", { name: "Lichtbedarf" });
     expect(document.activeElement).toBe(
-      screen.getByRole("heading", { name: "Schritt 2 von 2: Pflanze speichern" }),
+      screen.getByRole("heading", { name: "Schritt 2 von 2: Pflanze sichern" }),
     );
   });
 
@@ -180,12 +180,10 @@ describe("US-ONB-01 offline, the default zones fail with the reason and a retry 
     net.mockReturnValue(true);
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     await screen.findByRole("combobox", { name: "Lichtbedarf" });
-    expect(
-      screen.getByRole("heading", { name: "Schritt 2 von 2: Pflanze speichern" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Schritt 2 von 2: Pflanze sichern" })).toBeTruthy();
     expect(screen.getByText("Monstera deliciosa", { selector: "i" })).toBeTruthy();
     await untilSaveEnabled();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
     expect(writes.find((w) => w.path === "/specimens")?.body).toMatchObject({ speciesId: "sp1" });
   });

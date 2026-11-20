@@ -188,7 +188,7 @@ export function TreatmentForm(props: {
           disabled={props.running || form.formState.isSubmitting}
           needsNetwork
         >
-          {isCourse ? "Kur planen" : "Behandlung speichern"}
+          {isCourse ? "Kur planen" : "Behandlung sichern"}
         </Button>
       </FormRoot>
     </Form>

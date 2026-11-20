@@ -23,7 +23,7 @@ export function useRecord(
       const r = await recordEquipment(api, t, input);
       saved = r.ok;
       return r;
-    }, `Gerät „${input.name}“ gespeichert.`);
+    }, `Gerät „${input.name}“ gesichert.`);
     if (saved) {
       setPrefill(null);
       layer.closeLayer();

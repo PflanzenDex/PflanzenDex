@@ -48,7 +48,7 @@ function LinkForm(props: { item: EquipmentRow; actions: SupplyActions }) {
       {/* One line at 14 px (SG-COPY-05, SG-TYPE-03; the sentence was 12 px); the rest sits behind Mehr erfahren. */}
       <MoreHelp more={t("link.more")}>Dein Behandlungstext bleibt, wie er ist.</MoreHelp>
       <Button type="submit" size="touch" variant="secondary" disabled={actions.busy}>
-        Verknüpfung speichern
+        Verknüpfung sichern
       </Button>
     </FormRoot>
   );

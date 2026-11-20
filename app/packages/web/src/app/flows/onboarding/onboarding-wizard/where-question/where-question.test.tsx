@@ -151,14 +151,14 @@ async function toSaveStep() {
   await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
   await waitFor(() =>
     expect(
-      (screen.getByRole("button", { name: "Pflanze speichern" }) as HTMLButtonElement).disabled,
+      (screen.getByRole("button", { name: "Pflanze sichern" }) as HTMLButtonElement).disabled,
     ).toBe(false),
   );
 }
 
 /** Saves the plant; the question "Wo steht sie?" follows it. */
 async function savePlant() {
-  await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+  await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
   return screen.findByRole("heading", { name: /ist angelegt/ });
 }
 

@@ -21,7 +21,7 @@ export const WithUndo: Story = {
   args: {
     toast: {
       ...base,
-      message: "Messung gespeichert.",
+      message: "Messung gesichert.",
       action: { label: "Rückgängig", onAction: noop },
     },
     onDismiss: noop,
@@ -30,7 +30,7 @@ export const WithUndo: Story = {
 
 export const ErrorToast: Story = {
   args: {
-    toast: { ...base, kind: "error", message: "Das Foto konnte nicht gespeichert werden." },
+    toast: { ...base, kind: "error", message: "Das Foto konnte nicht gesichert werden." },
     onDismiss: noop,
   },
 };
@@ -62,7 +62,7 @@ function Triggers() {
       </Button>
       <Button
         variant="plain"
-        onClick={() => toast.show({ kind: "error", message: "Speichern fehlgeschlagen." })}
+        onClick={() => toast.show({ kind: "error", message: "Sichern fehlgeschlagen." })}
       >
         Fehler
       </Button>

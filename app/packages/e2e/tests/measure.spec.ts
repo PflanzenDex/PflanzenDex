@@ -19,7 +19,7 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
   await proposal.getByLabel("Schwierigkeit").selectOption({ index: 1 });
   await proposal.getByLabel("Standard-Lichtzone").selectOption("3");
   await proposal.getByLabel(/Lichtbedarf/).fill("40000");
-  await proposal.getByRole("button", { name: "Vorschlag speichern" }).click();
+  await proposal.getByRole("button", { name: "Vorschlag sichern" }).click();
   await page.getByRole("button", { name: "Diese Art wählen" }).click();
   await page
     .getByRole("form", { name: "Pflanze anlegen" })
@@ -38,7 +38,7 @@ async function measureFromCollection(page: Page): Promise<void> {
 
 /**
  * The facts and the course of a specimen live in the layer "Messverlauf" of the measure page (US-QS-15); the page keeps the
- * last measurement, the form and "Messung speichern". Escape closes the layer again (`closeCourse`).
+ * last measurement, the form and "Messung sichern". Escape closes the layer again (`closeCourse`).
  */
 async function openCourse(page: Page): Promise<void> {
   await page.getByRole("button", { name: /^Messverlauf \(\d+\)$/ }).click();
@@ -95,10 +95,10 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     // The note is optional and sits behind "Mehr Angaben" (US-QS-24).
     await form.getByText("Mehr Angaben", { exact: true }).click();
     await form.getByLabel("Notiz (optional)").fill("nach dem Umtopfen");
-    await page.getByRole("button", { name: "Messung speichern" }).click();
+    await page.getByRole("button", { name: "Messung sichern" }).click();
 
     // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
-    await expectAnnounced(page, /Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\./);
+    await expectAnnounced(page, /Gesichert: 12,5\scm am \d\d\.\d\d\.\d{4}\./);
     await openMeasurements(page);
     await expect(page.getByRole("heading", { level: 3, name: /^12,5\scm · / })).toBeVisible();
     await expect(page.getByText("nach dem Umtopfen", { exact: true })).toBeVisible();
@@ -109,7 +109,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     await form.getByLabel(/^Messwert/).fill("10");
     await form.getByLabel("Datum").fill("2026-01-02");
     await form.getByLabel("Qualität").selectOption("etiolated");
-    await page.getByRole("button", { name: "Messung speichern" }).click();
+    await page.getByRole("button", { name: "Messung sichern" }).click();
     await openMeasurements(page);
     await expect(page.getByRole("heading", { level: 3, name: "10 cm · 02.01.2026" })).toBeVisible();
     await closeCourse(page);
@@ -133,7 +133,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     const form = page.getByRole("form", { name: "Messung erfassen" });
     for (const value of ["abc", "-3"]) {
       await form.getByLabel(/^Messwert/).fill(value);
-      await page.getByRole("button", { name: "Messung speichern" }).click();
+      await page.getByRole("button", { name: "Messung sichern" }).click();
       await expect(page.getByRole("alert")).toContainText("Gib eine Zahl ab 0 an");
     }
     await openCourse(page);

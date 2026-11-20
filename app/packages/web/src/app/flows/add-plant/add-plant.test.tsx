@@ -115,7 +115,7 @@ describe("US-ONB-01 a further plant uses the two steps of the first plant (#896)
     expect(place.value).toBe("l2");
     // The save waits for the rule of the species, which its section reports after its chunk loads (issue 1638).
     await untilSaveEnabled();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
     const body = writes.find((w) => w.path === "/specimens")?.body;
     expect(body?.["locationId"]).toBe("l2");
@@ -127,7 +127,7 @@ describe("US-ONB-01 a further plant uses the two steps of the first plant (#896)
     view();
     await toSave();
     await userEvent.selectOptions(await screen.findByLabelText("Standort"), "");
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     await screen.findByRole("heading", { name: /ist angelegt/ });
     expect(writes.find((w) => w.path === "/specimens")?.body).not.toHaveProperty("locationId");
   });
@@ -152,7 +152,7 @@ describe("US-ONB-01 a further plant uses the two steps of the first plant (#896)
     server();
     view();
     await toSave();
-    await userEvent.click(await screen.findByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze sichern" }));
     await userEvent.click(await screen.findByRole("button", { name: "Noch eine Pflanze" }));
     expect(await screen.findByLabelText("Art")).toBeTruthy();
   });
@@ -275,7 +275,7 @@ describe("US-BES-18 the entry Aus Datei importieren sits where plants are added"
     server();
     view();
     await toSave();
-    await screen.findByText("Schritt 2 von 2: Pflanze speichern");
+    await screen.findByText("Schritt 2 von 2: Pflanze sichern");
     expect(screen.queryByRole("link", { name: "Aus Datei importieren" })).toBeNull();
   });
 });
@@ -284,7 +284,7 @@ describe("US-BES-18 the entry Aus Datei importieren sits where plants are added"
 async function untilSaveEnabled() {
   await waitFor(() =>
     expect(
-      (screen.getByRole("button", { name: "Pflanze speichern" }) as HTMLButtonElement).disabled,
+      (screen.getByRole("button", { name: "Pflanze sichern" }) as HTMLButtonElement).disabled,
     ).toBe(false),
   );
 }
@@ -318,7 +318,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     const marker = (await screen.findByLabelText("Kennzeichen")) as HTMLInputElement;
     expect(marker.value).toBe("Klammer");
     await untilSaveEnabled();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
     expect(writes.find((w) => w.path === "/specimens")?.body).toMatchObject({ marker: "Klammer" });
   });
@@ -327,7 +327,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     server();
     view();
     await toSave();
-    await screen.findByText("Schritt 2 von 2: Pflanze speichern");
+    await screen.findByText("Schritt 2 von 2: Pflanze sichern");
     await untilSaveEnabled();
     expect(screen.queryByLabelText(/Kennzeichen/)).toBeNull();
   });
@@ -339,7 +339,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     const marker = await screen.findByLabelText("Kennzeichen");
     await userEvent.clear(marker);
     await untilSaveEnabled();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     expect(await screen.findByText(CLIENT_MARKER_TEXT)).toBeTruthy();
     expect(marker.getAttribute("aria-invalid")).toBe("true");
     expect(document.activeElement).toBe(marker);
@@ -355,7 +355,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     const marker = await screen.findByLabelText("Kennzeichen");
     await user.clear(marker);
     await untilSaveEnabled();
-    const save = screen.getByRole("button", { name: "Pflanze speichern" });
+    const save = screen.getByRole("button", { name: "Pflanze sichern" });
     // The press starts: the marker keeps the focus, so its message does not appear and move the button under the finger.
     await user.pointer({ keys: "[MouseLeft>]", target: save });
     expect(document.activeElement).toBe(marker);
@@ -389,7 +389,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     await toSave();
     const answer = await screen.findByLabelText("Kennzeichen für „Alt“");
     await untilSaveEnabled();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     expect(await screen.findByText(MISSING_ANSWERS_TEXT)).toBeTruthy();
     expect(document.activeElement).toBe(answer);
     expect(writes).toEqual([]);
@@ -402,12 +402,12 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     await toSave();
     await untilSaveEnabled();
     expect(screen.queryByLabelText("Kennzeichen")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     const marker = await screen.findByLabelText("Kennzeichen");
     expect(await screen.findByText(REFUSED_MARKER_TEXT)).toBeTruthy();
     expect(document.activeElement).toBe(marker);
     await userEvent.type(marker, "Blau");
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
     expect(writes.at(-1)?.body).toMatchObject({ marker: "Blau" });
   });
@@ -460,7 +460,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     await toSave();
     await userEvent.type(await screen.findByLabelText("Kennzeichen für „Alt“"), "Gelb");
     await untilSaveEnabled();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
     expect(writes.find((w) => w.path === "/specimens")?.body).toMatchObject({
       marker: "Klammer",
@@ -486,7 +486,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     await toSave();
     await untilSaveEnabled();
     signedIn = false;
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     expect((await screen.findByRole("alert")).textContent?.length).toBeGreaterThan(0);
     expect(writes.find((w) => w.path === "/specimens")).toBeUndefined();
   });
@@ -496,7 +496,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     view();
     await toSave();
     await untilSaveEnabled();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     expect((await screen.findByRole("alert")).textContent?.length).toBeGreaterThan(0);
     expect(screen.queryByRole("heading", { name: /ist angelegt/ })).toBeNull();
     expect(screen.queryByLabelText("Kennzeichen")).toBeNull();
@@ -519,7 +519,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     view();
     await toSave();
     await untilSaveEnabled();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     await userEvent.click(await screen.findByRole("button", { name: "Noch eine Pflanze" }));
     expect(await screen.findByText("Schritt 1 von 2: Art wählen")).toBeTruthy();
   });
@@ -529,7 +529,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     view();
     await toSave();
     await untilSaveEnabled();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     const another = await screen.findByRole("button", { name: "Noch eine Pflanze" });
     expect(another.className.split(/\s+/)).toContain("bg-accent");
     const filled = screen
@@ -561,7 +561,7 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     );
     await toSave();
     await untilSaveEnabled();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
     expect(await screen.findByText("Sammlung offen")).toBeTruthy();
   });
@@ -587,7 +587,7 @@ describe("US-ACC-03 · each step of a further plant is announced once (issue 161
     view();
     await toSave();
     const heading = await screen.findByRole("heading", {
-      name: "Schritt 2 von 2: Pflanze speichern",
+      name: "Schritt 2 von 2: Pflanze sichern",
     });
     expect(document.activeElement).toBe(heading);
     expect(liveRegionsSaying("Schritt")).toEqual([]);
@@ -624,7 +624,7 @@ describe("US-ONB-01 · issue 2098 the zones of a further plant when the device i
     expect(await screen.findByText(REASON)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
     expect(
-      (screen.getByRole("button", { name: "Pflanze speichern" }) as HTMLButtonElement).disabled,
+      (screen.getByRole("button", { name: "Pflanze sichern" }) as HTMLButtonElement).disabled,
     ).toBe(true);
     expect(screen.queryByRole("combobox", { name: "Lichtbedarf" })).toBeNull();
     expect(writes.find((w) => w.path === "/light-zones/defaults")).toBeUndefined();
@@ -661,7 +661,7 @@ describe("US-ONB-01 · issue 2098 the zones of a further plant when the device i
     expect(((await screen.findByLabelText("Kennzeichen")) as HTMLInputElement).value).toBe("Blau");
     expect(screen.getByText("Monstera deliciosa", { selector: "i" })).toBeTruthy();
     await untilSaveEnabled();
-    await userEvent.click(screen.getByRole("button", { name: "Pflanze speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze sichern" }));
     expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
     expect(writes.find((w) => w.path === "/specimens")?.body).toMatchObject({ marker: "Blau" });
   });

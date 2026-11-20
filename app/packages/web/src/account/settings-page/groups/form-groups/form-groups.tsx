@@ -15,7 +15,7 @@ import type { ProfileSaver } from "../profile-saver";
 
 type Key = "displayName" | "timeZone" | "replenishBuffer" | "positionThresholds";
 
-const UNCHANGED = "Keine Änderung: Die Werte sind schon gespeichert.";
+const UNCHANGED = "Keine Änderung: Die Werte sind schon gesichert.";
 const INVALID = "Prüfe die markierten Felder.";
 
 /** The form fields a key stands for: the four threshold fields of "positionThresholds" (US-LIC-03). */
@@ -58,7 +58,7 @@ function useGroupForm(saver: ProfileSaver, keys: readonly Key[], saveAlways: boo
       const r = await saver.save(next);
       if (!r) return;
       setError(r.ok ? null : r.error);
-      setMessage(r.ok ? "Einstellungen gespeichert." : null);
+      setMessage(r.ok ? "Einstellungen gesichert." : null);
       if (r.ok) form.reset(toProfileFields(r.value, null));
     },
     () => {
@@ -69,7 +69,7 @@ function useGroupForm(saver: ProfileSaver, keys: readonly Key[], saveAlways: boo
 }
 
 /**
- * One group of the settings with its own "Speichern" (US-QS-17): the form holds the whole profile, but only the
+ * One group of the settings with its own "Sichern" (US-QS-17): the form holds the whole profile, but only the
  * fields of the group are taken over, onto the stored profile (the API saves the profile as a whole). A refusal that
  * names one of the group's fields marks it; any other refusal is an alert (P-10); the input stays.
  */
@@ -78,7 +78,7 @@ function GroupForm(props: {
   keys: readonly Key[];
   saver: ProfileSaver;
   fromDevice?: boolean;
-  /** "Speichern" stays enabled; an unchanged save answers with a message and sends nothing (US-LIC-03, #1022). */
+  /** "Sichern" stays enabled; an unchanged save answers with a message and sends nothing (US-LIC-03, #1022). */
   saveAlways?: boolean;
   children: (control: Control<Fields>) => ReactNode;
 }) {
@@ -118,7 +118,7 @@ function GroupForm(props: {
           disabled={saver.saving || (!saveAlways && !(form.formState.isDirty || fromDevice))}
           needsNetwork
         >
-          {saver.saving ? "Speichert …" : "Speichern"}
+          {saver.saving ? "Sichert …" : "Sichern"}
         </Button>
       </FormRoot>
     </Form>

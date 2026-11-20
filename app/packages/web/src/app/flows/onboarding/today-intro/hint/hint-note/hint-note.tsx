@@ -45,7 +45,7 @@ export function HintNote(props: {
       </NetworkSlot>
       {failed && (
         <p className="m-0 w-full text-sm" role="alert">
-          Das ließ sich gerade nicht speichern. Der Hinweis bleibt noch stehen; versuche es gleich
+          Das ließ sich gerade nicht sichern. Der Hinweis bleibt noch stehen; versuche es gleich
           noch einmal.
         </p>
       )}

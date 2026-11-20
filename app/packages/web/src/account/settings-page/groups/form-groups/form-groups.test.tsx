@@ -179,7 +179,7 @@ describe("US-QS-32 the settings groups say how to fix a field (F-0085, F-0092)",
     renderSettings("profile");
     const name = await screen.findByLabelText<HTMLInputElement>("Anzeigename");
     await userEvent.type(name, " Beispiel");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toBe("Gib einen Namen ein, höchstens 80 Zeichen.");
     expect(name.getAttribute("aria-invalid")).toBe("true");

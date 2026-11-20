@@ -1,7 +1,7 @@
 {
   "loading": "Foto wird geladen …",
   "alt": "Foto der Messung vom {date}",
-  "saved": "Gespeichert: {measurement}.",
-  "photoSaving": "Foto wird gespeichert …",
-  "savedPhotoFailed": "Die Messung ist gespeichert, das Foto nicht. {reason}"
+  "saved": "Gesichert: {measurement}.",
+  "photoSaving": "Foto wird gesichert …",
+  "savedPhotoFailed": "Die Messung ist gesichert, das Foto nicht. {reason}"
 }

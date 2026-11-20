@@ -29,12 +29,12 @@ describe("ErrorNotice of the collection (US-QS-32 · SG-COLOR-04, SG-STATE-03)",
 
   it("US-QS-32 · P-10 the notice keeps the text of its children and its action", () => {
     render(
-      <ErrorNotice title="Der Haken ist nicht gespeichert.">
+      <ErrorNotice title="Der Haken ist nicht gesichert.">
         <p>Der Server ist gerade nicht erreichbar.</p>
       </ErrorNotice>,
     );
     const alert = screen.getByRole("alert");
-    expect(alert.textContent).toContain("Der Haken ist nicht gespeichert.");
+    expect(alert.textContent).toContain("Der Haken ist nicht gesichert.");
     expect(alert.textContent).toContain("Der Server ist gerade nicht erreichbar.");
   });
 });
