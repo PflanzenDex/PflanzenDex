@@ -1,0 +1,6 @@
+{
+  "rate": "Wachstum: {rate}",
+  "trend": "Trend: {trend}",
+  "unknown": "unbekannt",
+  "loading": "Trend wird geladen …"
+}

@@ -16,6 +16,8 @@ export type Handlers = {
 /** What a slot may ask the plant layer for: leave the layer and measure (the layer closes first, P-10). */
 export type SlotContext = { measure: () => void };
 export type SlotRender = (card: SpecimenCard, context: SlotContext) => ReactNode;
+/** The shape of a part while its chunk loads; it gets the layer's loading label, which the layer owns (`slot.loading`). */
+export type SlotFallback = (label: string) => ReactNode;
 
 /**
  * Parts of the plant layer that belong to other modules (US-QS-23): the app wires them, because `collection` does not
@@ -24,6 +26,11 @@ export type SlotRender = (card: SpecimenCard, context: SlotContext) => ReactNode
 export type PlantSlots = {
   /** The growth trend from the own history (`care`). */
   growth?: SlotRender | undefined;
+  /**
+   * The shape of the growth trend while its chunk loads (`care`, US-QS-32): the frame of the loaded line, so the overview
+   * keeps its height. Without it the layer draws its one-line shape.
+   */
+  growthFallback?: SlotFallback | undefined;
   /** The measurements and photos, paged (`care`). */
   history?: SlotRender | undefined;
   /** Open and done treatments and the care phase (`care`). */
