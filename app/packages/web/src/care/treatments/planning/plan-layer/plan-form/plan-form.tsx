@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { localToday } from "@pflanzendex/core";
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useWatch, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
@@ -69,7 +69,8 @@ function usePlanView(form: UseFormReturn<TreatmentFields>) {
   const [view, setView] = useState<View>("pick");
   const [refused, setRefused] = useState<{ field: keyof TreatmentFields } | null>(null);
   const firstPlant = useRef<HTMLInputElement | null>(null);
-  useEffect(() => {
+  // A layout effect: the focus moves in the commit that sets the refusal, not a frame later (SC 2.4.3, P-10).
+  useLayoutEffect(() => {
     if (!refused) return;
     if (refused.field === "specimenIds") firstPlant.current?.focus();
     else form.setFocus(refused.field);
