@@ -62,6 +62,7 @@ export function lazyPage<C extends AnyComponent>(load: Loader<C>): LazyPage<C> {
   // resolved chunk, and the Suspense fallback it commits starts React's hold of about 300 ms on the reveal (issue 1645).
   // The choice is made once per mounted page, so its element type never changes while it is shown.
   const Page = (props: ComponentProps<C>) => {
+    "use no memo"; // React Compiler trial (issue 2300): its hoisting moves the closure below out of lazyPage
     const [ready] = useState<C | null>(() => component);
     return createElement(ready ?? current, props);
   };

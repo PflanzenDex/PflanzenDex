@@ -43,6 +43,7 @@ describe("US-QS-07 · DS-08 preloading of the pages", () => {
     const loader = vi.fn(async () => ({ default: () => null }));
     const page = lazyPage(loader);
     const Harness = () => {
+      "use no memo"; // React Compiler trial (issue 2300): the compiler would hoist the callback below out of this test
       usePreloadOnIntent((href) => (href === "/sammlung" ? [page] : undefined));
       return null;
     };
