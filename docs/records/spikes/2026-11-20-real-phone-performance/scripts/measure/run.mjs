@@ -14,8 +14,11 @@ const OUT = process.env.PERF_OUT ?? "results";
 const [label, mode, repsArg, onlyArg] = process.argv.slice(2);
 const reps = Number(repsArg ?? 5);
 const only = onlyArg?.startsWith("only=") ? onlyArg.slice(5).split(",") : null;
-const ORIGIN = "http://localhost:56508";
-const tab = JSON.parse(fs.readFileSync(here + "tab.json"));
+// Round 3 of issue 2300 measured another worktree: PHONE_ORIGIN (the origin the phone's Chrome uses, reached over adb
+// reverse), DB_CONTAINER (its test database) and TAB_JSON (its tab file) replace the defaults of issue 2299; ONLY_COLD=1
+// runs the cold starts only. Unset, the script is the one of issue 2299.
+const ORIGIN = process.env.PHONE_ORIGIN ?? "http://localhost:56508";
+const tab = JSON.parse(fs.readFileSync(process.env.TAB_JSON ?? here + "tab.json"));
 const c = await connect(tab.webSocketDebuggerUrl);
 await c.send("Page.enable");
 await c.send("Runtime.enable");
@@ -41,7 +44,7 @@ const loadavg = () => execFileSync("sysctl", ["-n", "vm.loadavg"]).toString().tr
 const psql = (sql) =>
   execFileSync("docker", [
     "exec",
-    "pflanzendex-test-db-54508",
+    process.env.DB_CONTAINER ?? "pflanzendex-test-db-54508",
     "psql",
     "-U",
     "postgres",
@@ -438,7 +441,7 @@ try {
       }
     }
   } else {
-    for (const cold of [true, false]) {
+    for (const cold of process.env.ONLY_COLD ? [true] : [true, false]) {
       for (const [name, def] of Object.entries(STARTS)) {
         if (only && !only.includes(name)) continue;
         for (let rep = 0; rep <= reps; rep++) {

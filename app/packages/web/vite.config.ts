@@ -168,7 +168,7 @@ export default defineConfig({
   // The worker `sw.js` (US-QS-27) lists the build's hashed files; the plugin writes that list into it.
   plugins: [
     react(),
-    babel({ presets: [reactCompiler] }),
+    ...(process.env.PDX_REACT_COMPILER === "0" ? [] : [babel({ presets: [reactCompiler] })]),
     tailwindcss(),
     preloadSignInLibrary(),
     serviceWorkerBuild(),
