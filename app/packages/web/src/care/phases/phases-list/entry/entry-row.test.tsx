@@ -64,6 +64,77 @@ describe("US-QS-32 a phase row opens its plant the way the list 'Alle' does (SG-
     expect(screen.getByTestId("where").textContent).toContain("sheet=plant-e1");
   });
 
+  it("US-QS-32 · issue 2355 the row that opens the plant's layer shows the chevron, and a row that opens nothing shows none", () => {
+    const { rerender } = render(
+      <MemoryRouter>
+        <Entry
+          bare
+          row={row()}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+      </MemoryRouter>,
+    );
+    const opener = screen.getByRole("button", { name: /^Bogenhanf(\s|$)/ });
+    const icon = opener.querySelector("svg.lucide-chevron-right");
+    expect(icon).not.toBeNull();
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
+    rerender(
+      <MemoryRouter>
+        <Entry
+          bare
+          opens={false}
+          row={row()}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole("button", { name: /^Bogenhanf(\s|$)/ })).toBeNull();
+    expect(document.querySelector("svg.lucide-chevron-right")).toBeNull();
+  });
+
+  it("US-QS-32 · issue 2355 a phase row with its own trailing badge or its switch action shows no chevron", () => {
+    const { rerender } = render(
+      <MemoryRouter>
+        <Entry
+          bare
+          row={row({ locationId: "s1", targetLocationId: "s2" })}
+          locations={locations}
+          busy={false}
+          onConfirm={() => undefined}
+          access={access}
+        />
+      </MemoryRouter>,
+    );
+    expect(
+      screen
+        .getByRole("button", { name: /^Bogenhanf(\s|$)/ })
+        .querySelector("svg.lucide-chevron-right"),
+    ).toBeNull();
+    rerender(
+      <MemoryRouter>
+        <Entry
+          bare
+          row={row({ locationId: "s2", targetLocationId: "s1" })}
+          locations={locations}
+          busy={false}
+          onConfirm={undefined}
+          access={access}
+        />
+      </MemoryRouter>,
+    );
+    expect(
+      screen
+        .getByRole("button", { name: /^Bogenhanf(\s|$)/ })
+        .querySelector("svg.lucide-chevron-right"),
+    ).toBeNull();
+  });
+
   it("US-QS-32 the switch is a button beside the row, never inside it, and it names its plant", () => {
     render(
       <MemoryRouter>

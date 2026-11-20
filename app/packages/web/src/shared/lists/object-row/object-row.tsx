@@ -41,11 +41,6 @@ export type ObjectRowProps = {
   action?: ReactNode;
   /** The row's own box: a lazy picture watches it (`useObjectPhoto`). */
   rootRef?: Ref<HTMLDivElement> | undefined;
-  /**
-   * The chevron of a link or button row: shown by default unless a trailing element or an action takes its place; set `false`
-   * where the row opens a layer and no other view (SG-TOUCH-02). It cannot be drawn on a row without a link or a button.
-   */
-  chevron?: boolean | undefined;
 };
 
 /** The thumbnail: the picture, or the drawn placeholder while there is none and when it failed (P-10: no empty box). */
@@ -73,7 +68,8 @@ function Thumbnail({ src, alt }: { src: string | undefined; alt: string }) {
 /**
  * One object in a list (US-QS-32, SG-LIST-03). The row is a `GroupedRow` of the object variant without its own list item,
  * because the list of a pager already wraps each row. An action sits beside the link or button, so a button never nests
- * in another one.
+ * in another one. Every row that opens a view or a layer shows the chevron unless a trailing element or an action takes its
+ * place; there is no way to hide it (SG-TOUCH-02, issue 2355).
  */
 export function ObjectRow(props: ObjectRowProps) {
   const hasAction = props.action !== undefined;
@@ -88,7 +84,7 @@ export function ObjectRow(props: ObjectRowProps) {
           onClick={props.onClick}
           haspopup={props.haspopup}
           expanded={props.expanded}
-          chevron={props.chevron ?? (props.trailing === undefined && !hasAction)}
+          hasAction={hasAction}
           leading={<Thumbnail src={props.src} alt={props.alt ?? ""} />}
           title={props.title}
           meta={props.meta}

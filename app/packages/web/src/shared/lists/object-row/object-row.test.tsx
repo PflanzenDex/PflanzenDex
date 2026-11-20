@@ -149,39 +149,74 @@ describe("US-QS-32 ObjectRow: a missing or failed picture shows the drawn placeh
   });
 });
 
-describe("US-QS-32 ObjectRow: a chevron only on a link or button, and a row can only suppress it (SG-TOUCH-02, SG-LIST-03)", () => {
-  const chevron = (el: Element | null) => el?.querySelector("svg.size-4") ?? null;
+describe("US-QS-32 ObjectRow: a chevron on every opener, none on a row with its own trailing element or action or without a target (issue 2355, SG-TOUCH-02, SG-LIST-03)", () => {
+  const chevron = (el: Element | null) => el?.querySelector("svg.lucide-chevron-right") ?? null;
+  const layer = { onClick: () => undefined, haspopup: "dialog" as const };
 
-  it("US-QS-32 a static object row never draws a chevron", () => {
+  it("US-QS-32 · issue 2355 a link row that opens a view shows the chevron, decorative and at the trailing edge", () => {
+    render(wrap(<ObjectRow to="/a" title="Clip" meta="Efeutute" />));
+    const link = screen.getByRole("link", { name: /^Clip(\s|$)/ });
+    const icon = chevron(link);
+    expect(icon).not.toBeNull();
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
+    expect(link.lastElementChild).toBe(icon);
+  });
+
+  it("US-QS-32 · issue 2355 a button row that opens a layer shows the chevron too", () => {
+    render(wrap(<ObjectRow title="Clip" meta="Efeutute" expanded={false} {...layer} />));
+    const button = screen.getByRole("button", { name: /^Clip(\s|$)/ });
+    expect(button.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(chevron(button)).not.toBeNull();
+  });
+
+  it("US-QS-32 · issue 2355 a button row that acts shows the chevron (it is a target)", () => {
+    render(wrap(<ObjectRow title="Clip" onClick={() => undefined} />));
+    expect(chevron(screen.getByRole("button", { name: "Clip" }))).not.toBeNull();
+  });
+
+  it("US-QS-32 · issue 2355 a row with a trailing element shows no chevron, the element takes its place", () => {
+    render(
+      wrap(
+        <ObjectRow title="Clip" trailing={<Badge variant="warning">Weicht ab</Badge>} {...layer} />,
+      ),
+    );
+    expect(chevron(screen.getByRole("button", { name: "Clip Weicht ab" }))).toBeNull();
+  });
+
+  it("US-QS-32 · issue 2355 a row with an action beside it shows no chevron, in a link and in a layer opener alike", () => {
+    const action = (
+      <Button type="button" variant="secondary">
+        Umstellen
+      </Button>
+    );
+    const { container, rerender } = render(
+      wrap(<ObjectRow to="/a" title="Clip" action={action} />),
+    );
+    expect(chevron(container)).toBeNull();
+    rerender(wrap(<ObjectRow title="Clip" action={action} {...layer} />));
+    expect(chevron(container)).toBeNull();
+  });
+
+  it("US-QS-32 · issue 2355 a row without a link or a button shows no chevron", () => {
     const { container } = render(wrap(<ObjectRow title="Clip" meta="Efeutute" />));
     expect(chevron(container)).toBeNull();
   });
 
-  it("US-QS-32 a link row draws the chevron when it has no trailing element or action", () => {
-    render(wrap(<ObjectRow to="/a" title="Clip" />));
+  it("US-QS-32 · issue 2355 a caller cannot suppress the chevron of an opener: the prop is gone", () => {
+    const suppress = { chevron: false } as object;
+    render(wrap(<ObjectRow to="/a" title="Clip" {...suppress} />));
     expect(chevron(screen.getByRole("link", { name: "Clip" }))).not.toBeNull();
   });
 
-  it("US-QS-32 a plain GroupedRow never draws a chevron, even when one is asked for", () => {
+  it("US-QS-32 · issue 2355 a plain GroupedRow without a target never draws a chevron", () => {
     const { container } = render(
       <MemoryRouter>
         <ul>
-          <GroupedRow title="Was die App kann" chevron />
+          <GroupedRow title="Was die App kann" />
         </ul>
       </MemoryRouter>,
     );
     expect(chevron(container)).toBeNull();
-  });
-
-  it("US-QS-32 a link row can suppress its chevron, and a chevron never comes back as a trailing element", () => {
-    render(
-      wrap(
-        <ul>
-          <GroupedRow to="/a" title="Clip" chevron={false} />
-        </ul>,
-      ),
-    );
-    expect(chevron(screen.getByRole("link", { name: "Clip" }))).toBeNull();
   });
 });
 
