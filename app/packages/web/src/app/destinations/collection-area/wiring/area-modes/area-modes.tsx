@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import type { Species, Specimen } from "@pflanzendex/core";
 import {
   CollectionPage,
@@ -46,8 +45,6 @@ export type AreaProps = {
   onOpenSpecies?: (id: string) => void;
   /** Starts the way from a bought wish to its specimen (US-WUN-05); the app wires it. */
   onCreateSpecimen?: (wish: WishToPlant) => void;
-  /** The calm hint at the list of plants (US-ONB-07); the app wires it, because the shell is not imported here. */
-  renderHint?: (applicable: readonly string[]) => ReactNode;
 };
 
 /** What the area passes to the mode it shows: the mode, the arrangement, the plant of the measure view and its forms. */
@@ -142,7 +139,6 @@ function PlantsMode(p: ModeProps) {
       {...(p.onAdd ? { onAdd: p.onAdd } : {})}
       onCompleted={p.onCompleted}
       host={host}
-      {...(p.renderHint ? { renderHint: p.renderHint } : {})}
       {...(p.group === "location" ? { groupBy: "location" as const } : {})}
       onMeasure={p.openMeasure}
       onManage={p.onOpenManage}
