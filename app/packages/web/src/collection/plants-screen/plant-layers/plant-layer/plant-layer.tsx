@@ -1,7 +1,6 @@
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
 import { Menu, type MenuItem } from "@/shared/patterns/display/panels/menu/menu";
 import { Tabs } from "@/shared/patterns/display/panels/tabs/tabs";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
@@ -13,12 +12,13 @@ import {
   PLANT_TAB_PARAM,
   plantLayerId,
 } from "@/shared/patterns/navigation/navigation/navigation";
-import type { Handlers, LayerProps, SlotRender } from "../layer-ids";
+import type { Handlers, LayerProps, SlotFallback, SlotRender } from "../layer-ids";
 import table from "../plant-layers.de.json";
 import { PlantCareTab } from "./plant-care-tab/plant-care-tab";
 import { PlantLocation } from "./plant-location/plant-location";
 import { Chips, MeasureButton, PlantOverview } from "./plant-overview/plant-overview";
-import { PlantSlotSkeleton, type SlotPart } from "./plant-layer.skeleton";
+import type { SlotPart } from "./plant-layer.skeleton";
+import { Slot } from "./plant-layer.slot";
 
 const t = texts(table);
 /** The status names of a plant and a cutting, compared as values (FR-QG-12); a cutting gets no repot plan (US-BES-04). */
@@ -67,45 +67,6 @@ function moreItems(card: SpecimenCard, h: Handlers): MenuItem[] {
   ];
 }
 
-/**
- * "Gießen" while its part loads (SG-STATE-02, F-0082, issue 1889): the same outline button in its place, disabled and
- * busy, from the first frame, so the action row has all its buttons at once and nothing moves when the part arrives.
- */
-function WaterPlaceholder() {
-  return (
-    <Button type="button" variant="outline" disabled aria-busy="true">
-      {t("slot.water")}
-    </Button>
-  );
-}
-
-/**
- * A part from another module, loaded when its tab opens. While its chunk loads it shows the part's shape (US-QS-14), after
- * the delay, so the layer does not move when the part arrives; a shaped skeleton is never held (DS-57). "Gießen" stands
- * as its disabled button at once.
- */
-function Slot(props: {
-  render?: SlotRender | undefined;
-  part: SlotPart;
-  card: SpecimenCard;
-  measure: () => void;
-}) {
-  if (!props.render) return null;
-  return (
-    <Suspense
-      fallback={
-        props.part === "water" ? (
-          <WaterPlaceholder />
-        ) : (
-          <PlantSlotSkeleton part={props.part} label={t("slot.loading")} />
-        )
-      }
-    >
-      {props.render(props.card, { measure: props.measure })}
-    </Suspense>
-  );
-}
-
 type Props = Handlers &
   Pick<LayerProps, "slots" | "locations" | "onLocate" | "onManage"> & {
     card: SpecimenCard;
@@ -116,15 +77,19 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
   const { card } = p;
   const lightZone = p.onLightZone;
   const measure = () => p.onMeasure?.(card);
-  const slot = (render: SlotRender | undefined, part: SlotPart) => (
-    <Slot render={render} part={part} card={card} measure={measure} />
-  );
+  const slot = (
+    render: SlotRender | undefined,
+    part: SlotPart,
+    fallback?: SlotFallback | undefined,
+  ) => <Slot render={render} part={part} fallback={fallback} card={card} measure={measure} />;
   const content: Record<(typeof TABS)[number]["value"], ReactNode> = {
     ueberblick: (
       <PlantOverview
         card={card}
         access={p.photoAccess}
-        growth={p.slots?.growth ? slot(p.slots.growth, "growth") : undefined}
+        growth={
+          p.slots?.growth ? slot(p.slots.growth, "growth", p.slots.growthFallback) : undefined
+        }
         water={p.slots?.water ? slot(p.slots.water, "water") : undefined}
         onTreat={() => tab.choose("pflege")}
       />
