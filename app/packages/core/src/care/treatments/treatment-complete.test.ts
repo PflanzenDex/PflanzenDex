@@ -100,7 +100,11 @@ describe("US-BEH-03 tick off a date", () => {
     const first = await tick(T1, "America/Los_Angeles");
     const again = await tick(T1, "Europe/Berlin");
     expect(again).toMatchObject({ ok: true, value: { treatment: { doneAt: "2026-10-02" } } });
-    expect(again).toEqual(first);
+    // The same row again; only the flag tells that this call changed nothing (US-QS-32).
+    expect(again).toMatchObject({ ok: true, value: { changed: false } });
+    expect(again.ok && first.ok && again.value.treatment).toEqual(
+      first.ok && first.value.treatment,
+    );
     expect(treatments.rows.find((t) => t.id === T1)?.doneAt).toBe("2026-10-02");
   });
 
@@ -182,5 +186,17 @@ describe("US-BEH-03 history per specimen", () => {
   it("US-BEH-03 a foreign or unknown specimen is specimen.not_found, an invalid id input.invalid (P-04)", async () => {
     expect(await history(E3)).toMatchObject({ ok: false, error: { code: "specimen.not_found" } });
     expect(await history("x")).toMatchObject({ ok: false, error: { code: "input.invalid" } });
+  });
+});
+
+describe("US-QS-32 the tick-off says whether this call changed the treatment", () => {
+  it("US-QS-32 the first tick-off is changed; a repeat, or a tap on a row another device ticked off, is not", async () => {
+    const first = await tick(T1);
+    const again = await tick(T1);
+    expect(first).toMatchObject({ ok: true, value: { changed: true } });
+    expect(again).toMatchObject({
+      ok: true,
+      value: { changed: false, treatment: { id: T1, done: true, doneAt: "2026-10-03" } },
+    });
   });
 });

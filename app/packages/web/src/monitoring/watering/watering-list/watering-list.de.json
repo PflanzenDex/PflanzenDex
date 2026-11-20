@@ -15,5 +15,6 @@
   "restored": "Rückgängig gemacht.",
   "bulkResult": "{count} Pflanzen gegossen",
   "bulkSubject": "{count} Pflanzen",
-  "bulkSaid": "{count} Pflanzen gegossen."
+  "bulkSaid": "{count} Pflanzen gegossen.",
+  "nothingToUndo": "Nichts mehr rückgängig zu machen – der Eintrag ist schon weg."
 }

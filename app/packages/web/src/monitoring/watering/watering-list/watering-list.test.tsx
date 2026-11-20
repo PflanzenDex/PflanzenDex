@@ -260,3 +260,33 @@ describe("US-QS-14 issue 1697 · the watering list shows its shaped skeleton onc
     expect(screen.queryByText("Gießliste wird geladen …")).toBeNull();
   });
 });
+
+describe("US-QS-32 the sheet's undo takes the day of its write and says when nothing was left", () => {
+  it("US-QS-32 the undo sends the date of the write and announces the empty removal honestly", async () => {
+    const undone: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url, init) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/watering" && init?.method === "POST")
+          return response(200, { date: "2026-10-10", created: 1 });
+        if (path === "/watering/unwater") {
+          undone.push(String(init?.body));
+          return response(200, { date: "2026-10-10", specimens: ["s1"], removed: 0 });
+        }
+        return response(200, { due: [ficus] });
+      }),
+    );
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: "Ficus als gegossen eintragen" }));
+    await user.click(await screen.findByRole("button", { name: "Rückgängig: Ficus" }));
+    await vi.waitFor(() =>
+      expect(announced()).toBe("Nichts mehr rückgängig zu machen – der Eintrag ist schon weg."),
+    );
+    expect(JSON.parse(undone[0] ?? "{}")).toMatchObject({
+      specimenIds: ["s1"],
+      date: "2026-10-10",
+    });
+  });
+});

@@ -48,6 +48,7 @@ export { treatmentSource } from "./treatments/treatment-source";
 export type { TreatmentSourceDependencies } from "./treatments/treatment-source";
 export { TREATMENT_LIMITS, COURSE_DEFAULTS } from "./treatment-data/treatment-types";
 export type {
+  CompleteOutcome,
   TreatmentRow,
   TreatmentValues,
   TreatmentStore,

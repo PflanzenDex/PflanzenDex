@@ -128,3 +128,26 @@ describe("US-QS-32 undo of 'Gegossen' (monitoring.unwater)", () => {
     expect(watering.entries.size).toBe(1);
   });
 });
+
+describe("US-QS-32 the undo takes the date the write used (midnight safe)", () => {
+  it("US-QS-32 an explicit date of today or yesterday in the time zone is used, not the clock of the undo", async () => {
+    // 23:30 UTC is already 11 October in Berlin: the write was made on 10 October before midnight.
+    watering.entries.add(`anna|${S1}|2026-10-10`);
+    const r = await unwater({ specimenIds: [S1], timeZone: "Europe/Berlin", date: "2026-10-10" });
+    expect(r).toMatchObject({ ok: true, value: { date: "2026-10-10", removed: 1 } });
+    expect(watering.entries.size).toBe(0);
+  });
+
+  it.each([
+    ["two days back", "2026-10-09"],
+    ["tomorrow", "2026-10-12"],
+  ])(
+    "US-QS-32 an explicit date %s is refused as invalid input and removes nothing",
+    async (_, date) => {
+      watering.entries.add(`anna|${S1}|${date}`);
+      const r = await unwater({ specimenIds: [S1], timeZone: "Europe/Berlin", date });
+      expect(r.ok === false && r.error.code).toBe("input.invalid");
+      expect(watering.entries.has(`anna|${S1}|${date}`)).toBe(true);
+    },
+  );
+});

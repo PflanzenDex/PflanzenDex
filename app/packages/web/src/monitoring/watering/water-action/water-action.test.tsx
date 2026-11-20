@@ -160,3 +160,24 @@ describe("US-QS-32 Gießen stays in place with its undo (SG-FEED-03)", () => {
     expect(screen.queryByRole("button", { name: "Rückgängig: Aloe" })).toBeNull();
   });
 });
+
+describe("US-QS-32 the undo takes the day of its write and says when nothing was left", () => {
+  it("US-QS-32 Rückgängig sends the date the write used; removed 0 is said honestly, not as restored", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async (url) =>
+      new URL(String(url)).pathname === "/watering/unwater"
+        ? Response.json({ date: "2026-11-19", specimens: ["e1"], removed: 0 })
+        : Response.json({ date: "2026-11-19", specimens: ["e1"], created: 1 }),
+    );
+    vi.stubGlobal("fetch", fetchFn);
+    show();
+    await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Rückgängig: Aloe" }));
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Nichts mehr rückgängig zu machen – der Eintrag ist schon weg.",
+    );
+    expect(JSON.parse(String(fetchFn.mock.calls[1]?.[1]?.body))).toMatchObject({
+      specimenIds: ["e1"],
+      date: "2026-11-19",
+    });
+  });
+});

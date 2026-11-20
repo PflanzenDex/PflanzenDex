@@ -110,16 +110,24 @@ export const markFertilized = (
   });
 
 /**
- * The undo of "Gegossen" (US-QS-32): takes today's entries of the given plants back through `monitoring.unwater`. The
- * repeat-guard key is created per call; the device's time zone decides which day counts as today (NFR-08).
+ * Whether a write of `count` plants made all of their entries today: only then the undo may take them back, because an
+ * entry that was there before the write must stay (US-QS-32). Shared by the plant layer and the sheet.
+ */
+export const madeEntries = (value: unknown, count: number): boolean =>
+  (value as { created?: unknown } | null)?.created === count;
+
+/**
+ * The undo of "Gegossen" (US-QS-32): takes the entries of the given plants of `date` back through `monitoring.unwater`. `date`
+ * is the day the write used (its response), so an undo after midnight still means that day (NFR-08). The answer says how many
+ * entries were removed (`removed`, 0 when they are gone already). The repeat-guard key is created per call.
  */
 export const unwaterPlants = (
   api: string,
   token: string,
-  specimenIds: readonly string[],
+  input: { specimenIds: readonly string[]; date: string },
   fetchFn: FetchFn = fetch,
 ) =>
   createWrite(api, token, fetchFn)("POST", "/watering/unwater", {
-    specimenIds,
+    ...input,
     timeZone: currentTimeZone(),
   });

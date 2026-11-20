@@ -321,7 +321,10 @@ function doneServer(
         const refused = complete(id);
         if (refused) return refused;
         rows = rows.filter((r) => r.id !== id);
-        return response(200, { treatment: { id, done: true, doneAt: "2026-10-03" } });
+        return response(200, {
+          treatment: { id, done: true, doneAt: "2026-10-03" },
+          changed: true,
+        });
       }
       if (path === "/treatments/history") return response(200, { treatments: history });
       return undefined;
@@ -629,5 +632,46 @@ describe("US-QS-15 the open treatments fit a layer", () => {
     const done = screen.getByRole("button", { name: "Läuse bei Aloe als erledigt abhaken" });
     expect(done.className).toContain("bg-accent");
     expect(done.className).not.toContain("bg-primary");
+  });
+});
+
+describe("US-QS-32 the undo belongs to the tick-off that completed the treatment", () => {
+  it("US-QS-32 a tap on a treatment another device already ticked off holds nothing: no undo row", async () => {
+    const { ticks } = doneServer(() =>
+      response(200, { treatment: { id: "a", done: true, doneAt: "2026-10-02" }, changed: false }),
+    );
+    const user = userEvent.setup();
+    show();
+    await user.click(
+      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    );
+    await vi.waitFor(() => expect(ticks).toHaveLength(1));
+    await act(() => new Promise((done) => setTimeout(done, 30)));
+    expect(screen.queryByRole("button", { name: /^Rückgängig/ })).toBeNull();
+  });
+
+  it("US-QS-32 a second tap while a tick-off is in flight does not move the undo to the other row", async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    const { ticks } = doneServer(async () => {
+      await gate;
+      return response(200, {
+        treatment: { id: "a", done: true, doneAt: "2026-10-03" },
+        changed: true,
+      });
+    });
+    show();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Grund b bei Bogenhanf als erledigt abhaken" }),
+    );
+    release();
+    await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" });
+    expect(screen.queryByRole("button", { name: "Rückgängig: Grund b bei Bogenhanf" })).toBeNull();
+    expect(ticks).toHaveLength(1);
   });
 });

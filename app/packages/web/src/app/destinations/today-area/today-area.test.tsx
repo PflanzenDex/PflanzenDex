@@ -225,7 +225,10 @@ function fakeServer(setup: Setup = {}) {
         const id = completed[1];
         open = open.filter((r) => (r as { id?: string }).id !== id);
         today = today.filter((i) => (i as { id?: string }).id !== `treatment:${id}`);
-        return response(200, { treatment: { id, done: true, doneAt: "2026-10-03" } });
+        return response(200, {
+          treatment: { id, done: true, doneAt: "2026-10-03" },
+          changed: true,
+        });
       }
       return (answers[path] ?? (() => response(404, {})))();
     }),

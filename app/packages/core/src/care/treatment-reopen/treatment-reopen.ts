@@ -40,12 +40,15 @@ export const treatmentReopen = (deps: ReopenDependencies) =>
       if (!specimen) return failed(appError("treatment.not_found"));
       if (!isActive(specimen))
         return failed(appError("specimen.archived", { data: { specimenId: specimen.id } }));
-      if (!found.done) return ok<CompleteResult>({ treatment: found });
-      if (found.doneAt !== localToday(deps.clock(), input.timeZone))
+      const today = localToday(deps.clock(), input.timeZone);
+      if (!found.done) return ok<CompleteResult>({ treatment: found, changed: false });
+      if (found.doneAt !== today)
         return failed(appError("treatment.not_reopenable", { data: { treatmentId: found.id } }));
-      const reopened = await deps.treatments.reopen(userId, input.id);
-      return reopened === "unknown"
-        ? failed(appError("treatment.not_found"))
-        : ok<CompleteResult>({ treatment: reopened });
+      // The store clears the row only while its done date is still today, so a change in between is not overwritten.
+      const reopened = await deps.treatments.reopen(userId, input.id, today);
+      if (reopened === "unknown") return failed(appError("treatment.not_found"));
+      if (reopened === "not_reopenable")
+        return failed(appError("treatment.not_reopenable", { data: { treatmentId: found.id } }));
+      return ok<CompleteResult>({ treatment: reopened, changed: true });
     },
   });

@@ -45,12 +45,20 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
   const announce = useAnnounce();
   const undo = useUndo<TreatmentListRow>();
   const [hidden, setHidden] = useState<readonly string[]>([]);
+  // The tick-off in flight: its row and place (set only when the write starts), and whether this call changed the treatment.
   const tapped = useRef<{ row: TreatmentListRow; index: number } | null>(null);
+  const changed = useRef(false);
   const restoring = useRef<string | null>(null);
   const complete = useWriteAction(token, onChanged, (message, kind) => {
     const done = tapped.current;
     tapped.current = null;
     if (kind === "error" || !done) return;
+    // Already done on another device: nothing to undo, the list shows the server state (US-QS-32).
+    if (!changed.current) {
+      const { specimenName: name, reason } = done.row;
+      announce?.announce(ui("alreadyDone", { name, reason }));
+      return;
+    }
     undo.hold(
       [{ key: done.row.id, group: done.row.id, item: done.row, index: done.index, undoable: true }],
       ui("doneResult"),
@@ -64,12 +72,15 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
     announce?.announce(message);
   });
   const tick = (row: TreatmentListRow, index: number) => {
+    // A tap while a tick-off runs is ignored: the hold and the undo stay with the row that was tapped first (US-QS-32).
+    if (tapped.current !== null) return;
     if (isOnline()) tapped.current = { row, index };
-    else {
-      setHidden((ids) => [...ids, row.id]);
-      tapped.current = null;
-    }
-    void complete.run((t) => completeTreatment(api, t, row.id), ui("doneResult"));
+    else setHidden((ids) => [...ids, row.id]);
+    void complete.run(async (t) => {
+      const r = await completeTreatment(api, t, row.id);
+      changed.current = r.ok && r.value.changed;
+      return r;
+    }, ui("doneResult"));
   };
   const reopen = (id: string) => {
     restoring.current = id;

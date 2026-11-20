@@ -177,7 +177,8 @@ describe("US-BEH-03 ticking off in the database", () => {
     const id = await open(anna, specimenAnna);
     const first = await treatments.complete(anna, id, "2026-10-03");
     const again = await treatments.complete(anna, id, "2026-10-09");
-    expect(again).toEqual(first);
+    // The same row again: only the flag says that this call changed nothing (US-QS-32).
+    expect(again).toEqual({ ...(typeof first === "string" ? {} : first), changed: false });
     expect(await treatments.find(anna, id)).toMatchObject({ doneAt: "2026-10-03" });
   });
 
@@ -345,8 +346,16 @@ describe("US-QS-32 undo of Erledigt in the database", () => {
     ]);
     const id = typeof created === "string" ? "" : (created[0]?.id ?? "");
     await treatments.complete(anna, id, "2026-10-03");
-    expect(await treatments.reopen(anna, id)).toMatchObject({ id, done: false, doneAt: null });
-    expect(await treatments.reopen(anna, id)).toMatchObject({ id, done: false, doneAt: null });
+    expect(await treatments.reopen(anna, id, "2026-10-03")).toMatchObject({
+      id,
+      done: false,
+      doneAt: null,
+    });
+    expect(await treatments.reopen(anna, id, "2026-10-03")).toMatchObject({
+      id,
+      done: false,
+      doneAt: null,
+    });
     expect(await treatments.open(anna, [a])).toEqual(
       new Map([[a, [expect.objectContaining({ id })]]]),
     );
@@ -359,11 +368,42 @@ describe("US-QS-32 undo of Erledigt in the database", () => {
     ]);
     const id = typeof created === "string" ? "" : (created[0]?.id ?? "");
     await treatments.complete(anna, id, "2026-10-03");
-    expect(await treatments.reopen(ben, id)).toBe("unknown");
+    expect(await treatments.reopen(ben, id, "2026-10-03")).toBe("unknown");
     expect(await treatments.find(anna, id)).toMatchObject({ done: true, doneAt: "2026-10-03" });
   });
 
   it("US-QS-32 an unknown id is unknown", async () => {
-    expect(await treatments.reopen(anna, randomUUID())).toBe("unknown");
+    expect(await treatments.reopen(anna, randomUUID(), "2026-10-03")).toBe("unknown");
+  });
+});
+
+describe("US-QS-32 undo of Erledigt: the store is the check", () => {
+  it("US-QS-32 a repeat tick-off reports changed false, the first one changed true", async () => {
+    const a = await specimen(anna, "Changed DB");
+    const created = await treatments.createMany(anna, [
+      values({ specimenId: a, dueAt: "2026-10-14" }),
+    ]);
+    const id = typeof created === "string" ? "" : (created[0]?.id ?? "");
+    expect(await treatments.complete(anna, id, "2026-10-03")).toMatchObject({ id, changed: true });
+    expect(await treatments.complete(anna, id, "2026-10-09")).toMatchObject({
+      id,
+      changed: false,
+      doneAt: "2026-10-03",
+    });
+  });
+
+  it("US-QS-32 a tick-off of another day is not reopenable and stays done (the row is the check)", async () => {
+    const a = await specimen(anna, "Anderer Tag DB");
+    const created = await treatments.createMany(anna, [
+      values({ specimenId: a, dueAt: "2026-10-15" }),
+    ]);
+    const id = typeof created === "string" ? "" : (created[0]?.id ?? "");
+    await treatments.complete(anna, id, "2026-10-03");
+    expect(await treatments.reopen(anna, id, "2026-10-02")).toBe("not_reopenable");
+    expect(await treatments.find(anna, id)).toMatchObject({ done: true, doneAt: "2026-10-03" });
+    expect(await treatments.reopen(anna, id, "2026-10-03")).toMatchObject({
+      done: false,
+      doneAt: null,
+    });
   });
 });

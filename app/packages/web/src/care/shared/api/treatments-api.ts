@@ -72,7 +72,7 @@ export async function completeTreatment(
   token: string,
   id: string,
   fetchFn: FetchFn = fetch,
-): Promise<Response<TreatmentRow>> {
+): Promise<Response<{ treatment: TreatmentRow; changed: boolean }>> {
   const timeZone = currentTimeZone();
   const r = await createWrite(api, token, fetchFn)(
     "POST",
@@ -81,7 +81,7 @@ export async function completeTreatment(
       timeZone,
     },
   );
-  return r.ok ? { ok: true, value: (r.value as { treatment: TreatmentRow }).treatment } : r;
+  return r.ok ? { ok: true, value: r.value as { treatment: TreatmentRow; changed: boolean } } : r;
 }
 
 /** The done treatments of one specimen, latest first (history, US-BEH-03). */

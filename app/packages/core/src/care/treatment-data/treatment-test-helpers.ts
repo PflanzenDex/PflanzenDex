@@ -1,4 +1,9 @@
-import type { TreatmentRow, TreatmentStore, TreatmentValues } from "./treatment-types";
+import type {
+  CompleteOutcome,
+  TreatmentRow,
+  TreatmentStore,
+  TreatmentValues,
+} from "./treatment-types";
 
 const bare = ({ userId: owner, ...row }: TreatmentRow & { userId: string }): TreatmentRow => {
   void owner;
@@ -34,20 +39,26 @@ export class InMemoryTreatments implements TreatmentStore {
     return found ? bare(found) : null;
   }
 
-  async complete(userId: string, id: string, doneAt: string): Promise<TreatmentRow | "unknown"> {
+  async complete(userId: string, id: string, doneAt: string): Promise<CompleteOutcome | "unknown"> {
     this.writes += 1;
     const index = this.rows.findIndex((r) => r.userId === userId && r.id === id);
     const found = this.rows[index];
     if (!found) return "unknown";
     if (!found.done) this.rows[index] = { ...found, done: true, doneAt };
-    return bare(this.rows[index] as typeof found);
+    return { ...bare(this.rows[index] as typeof found), changed: !found.done };
   }
 
-  async reopen(userId: string, id: string): Promise<TreatmentRow | "unknown"> {
+  async reopen(
+    userId: string,
+    id: string,
+    doneOn: string,
+  ): Promise<TreatmentRow | "unknown" | "not_reopenable"> {
     this.writes += 1;
     const index = this.rows.findIndex((r) => r.userId === userId && r.id === id);
     const found = this.rows[index];
     if (!found) return "unknown";
+    if (!found.done) return bare(found);
+    if (found.doneAt !== doneOn) return "not_reopenable";
     this.rows[index] = { ...found, done: false, doneAt: null };
     return bare(this.rows[index] as typeof found);
   }

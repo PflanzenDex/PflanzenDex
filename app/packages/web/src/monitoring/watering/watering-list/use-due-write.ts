@@ -1,10 +1,16 @@
 import { useRef, useState } from "react";
 import { useAnnounce } from "@/shared/platform/announcer/context";
+import { isOnline } from "@/shared/platform/browser/network";
 import { useUndo, type Held, type Undo } from "@/shared/feedback/undo-row/use-undo";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useInvalidate, useWriteAction } from "../../../shared/data";
 import { WATERING_KEY } from "../../api/due-count/due-count";
-import { markWatered, unwaterPlants, type WateringDueRow } from "../../api/reminders-api";
+import {
+  madeEntries,
+  markWatered,
+  unwaterPlants,
+  type WateringDueRow,
+} from "../../api/reminders-api";
 import table from "./watering-list.de.json";
 
 const ui = texts(table);
@@ -22,28 +28,8 @@ export interface BulkUndo {
   readonly onUndo: () => void;
 }
 
-/** Only entries this write made can be taken back: a plant that was entered earlier today keeps its entry (US-QS-32). */
-const madeAll = (value: unknown, count: number): boolean =>
-  (value as { created?: unknown } | null)?.created === count;
-
-/** Holds the rows of a write that made its entries: one plant, or one bulk write whose undo sits below the list (US-QS-32). */
-function holdWritten(
-  hold: Undo<WateringDueRow>["hold"],
-  p: { entries: readonly WaterEntry[]; bulk: boolean },
-  group: string,
-): void {
-  hold(
-    p.entries.map(({ row, index }) => ({
-      key: row.specimenId,
-      group,
-      item: row,
-      index,
-      undoable: !p.bulk,
-    })),
-    ui("wateredResult"),
-    p.bulk ? ui("bulkSaid", { count: p.entries.length }) : undefined,
-  );
-}
+const dateOf = (value: unknown): string | null => (value as { date?: string } | null)?.date ?? null;
+const removedOf = (value: unknown): number => (value as { removed?: number } | null)?.removed ?? 0;
 
 /** The undo of the latest bulk write of the list, if one is held (US-QS-32). */
 function bulkOf(
@@ -60,10 +46,59 @@ function bulkOf(
   };
 }
 
+/** Holds the rows of a write that made its entries: one plant, or one bulk write whose undo sits below the list (US-QS-32). */
+function holdWritten(
+  hold: Undo<WateringDueRow>["hold"],
+  p: { entries: readonly WaterEntry[]; bulk: boolean },
+  group: string,
+) {
+  hold(
+    p.entries.map(({ row, index }) => ({
+      key: row.specimenId,
+      group,
+      item: row,
+      index,
+      undoable: !p.bulk,
+    })),
+    ui("wateredResult"),
+    p.bulk ? ui("bulkSaid", { count: p.entries.length }) : undefined,
+  );
+}
+
+/** The write of the entries; `made` keeps the day of a write that made every entry, for its undo (US-QS-32). */
+async function sendWater(
+  api: string,
+  tok: string,
+  entries: readonly WaterEntry[],
+  made: { current: { date: string } | null },
+) {
+  const r = await markWatered(
+    api,
+    tok,
+    entries.map((e) => e.row.specimenId),
+  );
+  const date = r.ok && madeEntries(r.value, entries.length) ? dateOf(r.value) : null;
+  made.current = date === null ? null : { date };
+  return r;
+}
+
+/** The undo of one day: `removed` keeps how many entries were taken back (0: nothing was left, US-QS-32). */
+async function sendUndo(
+  api: string,
+  tok: string,
+  input: { specimenIds: readonly string[]; date: string },
+  removed: { current: number },
+) {
+  const r = await unwaterPlants(api, tok, input);
+  removed.current = r.ok ? removedOf(r.value) : 0;
+  return r;
+}
+
 /**
- * The write of the sheet "Gegossen" with its undo in place (SG-FEED-03, US-QS-32): a write that made the entries holds
- * their rows (one plant: its row carries the undo; several: one undo below the list), otherwise its result is the line
- * above the list. A refusal is the alert below (P-10).
+ * The write of the sheet "Gegossen" with its undo in place (SG-FEED-03, US-QS-32): a write that made the entries holds their
+ * rows (one plant: its row carries the undo; several: one undo below the list), otherwise its result is the line above the
+ * list. A tap while a write runs is ignored, so the hold belongs to the write that was started. The undo takes the entries
+ * of the day the write used (its answer) and says so when nothing was left to remove. A refusal is the alert below.
  */
 export function useDueWrite(api: string, token: () => Promise<string | undefined>) {
   const again = useInvalidate(WATERING_KEY);
@@ -71,53 +106,48 @@ export function useDueWrite(api: string, token: () => Promise<string | undefined
   const undo = useUndo<WateringDueRow>();
   const [result, setResult] = useState<string | null>(null);
   const pending = useRef<{ entries: readonly WaterEntry[]; bulk: boolean } | null>(null);
-  const made = useRef(false);
+  const made = useRef<{ date: string } | null>(null);
+  const removed = useRef(0);
   const groups = useRef(0);
   const restoring = useRef<string | null>(null);
+  const dates = useRef(new Map<string, string>());
   const write = useWriteAction(token, again, (message, kind) => {
-    if (kind === "error") return;
     const p = pending.current;
     pending.current = null;
+    if (kind === "error") return;
     if (p && made.current) {
-      holdWritten(
-        undo.hold,
-        p,
-        p.bulk ? `bulk:${++groups.current}` : `plant:${p.entries[0]?.row.specimenId}`,
-      );
+      const group = p.bulk ? `bulk:${++groups.current}` : `plant:${p.entries[0]?.row.specimenId}`;
+      dates.current.set(group, made.current.date);
+      holdWritten(undo.hold, p, group);
       return;
     }
     setResult(message);
     announce?.announce(message);
   });
   const restore = useWriteAction(token, again, (message, kind) => {
-    if (kind === "error") return;
-    if (restoring.current !== null) undo.release(restoring.current);
+    const group = restoring.current;
     restoring.current = null;
-    announce?.announce(message);
+    if (kind === "error") return;
+    if (group !== null) undo.release(group);
+    announce?.announce(removed.current === 0 ? ui("nothingToUndo") : message);
   });
   const water = (entries: readonly WaterEntry[]) => {
+    if (pending.current !== null || restoring.current !== null) return;
     setResult(null);
-    pending.current = { entries, bulk: entries.length > 1 };
-    void write.run(async (tok) => {
-      const r = await markWatered(
-        api,
-        tok,
-        entries.map((e) => e.row.specimenId),
-      );
-      made.current = r.ok && madeAll(r.value, entries.length);
-      return r;
-    }, ui("done"));
+    if (isOnline()) pending.current = { entries, bulk: entries.length > 1 };
+    void write.run((tok) => sendWater(api, tok, entries, made), ui("done"));
   };
   const undoPlant = (group: string) => {
-    const ids = undo.held.filter((h) => h.group === group).map((h) => h.key);
+    const date = dates.current.get(group);
+    if (date === undefined || pending.current !== null || restoring.current !== null) return;
+    const specimenIds = undo.held.filter((h) => h.group === group).map((h) => h.key);
     restoring.current = group;
-    void restore.run((tok) => unwaterPlants(api, tok, ids), ui("restored"));
+    void restore.run((tok) => sendUndo(api, tok, { specimenIds, date }, removed), ui("restored"));
   };
-  const bulk = bulkOf(undo.held, undoPlant);
   return {
     result,
     held: undo.held,
-    bulk,
+    bulk: bulkOf(undo.held, undoPlant),
     water,
     undoPlant,
     running: write.running || restore.running,

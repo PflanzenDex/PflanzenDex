@@ -469,3 +469,30 @@ describe("US-QS-32 undo of Erledigt (POST /treatments/:id/reopen)", () => {
     });
   });
 });
+
+describe("US-QS-32 the tick-off and the reopen answer whether they changed the treatment", () => {
+  it("US-QS-32 a repeat tick-off answers 200 with changed false, the first one changed true", async () => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    const id = (t as { id: string }).id;
+    expect(await complete(subA, id)).toMatchObject({ status: 200, body: { changed: true } });
+    expect(await complete(subA, id)).toMatchObject({
+      status: 200,
+      body: { changed: false, treatment: { id, done: true } },
+    });
+  });
+
+  it("US-QS-32 a reopen of a tick-off of another day is 409 treatment.not_reopenable; the row stays done", async () => {
+    const e = await newSpecimen(subA);
+    const [t] = await planned(subA, e);
+    const id = (t as { id: string }).id;
+    await complete(subA, id, { timeZone: "Europe/Berlin" });
+    expect(await reopen(subA, id, { timeZone: "America/Los_Angeles" })).toMatchObject({
+      status: 409,
+      body: { error: { code: "treatment.not_reopenable" } },
+    });
+    expect(await listed(subA)).toEqual(
+      expect.not.arrayContaining([expect.objectContaining({ id })]),
+    );
+  });
+});

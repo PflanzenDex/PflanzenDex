@@ -163,3 +163,24 @@ describe("US-QS-32 undo of 'Erledigt' (treatment.reopen)", () => {
     expect(treatments.writes).toBe(0);
   });
 });
+
+describe("US-QS-32 the reopen says whether it changed the treatment and is atomic in the store", () => {
+  it("US-QS-32 an open treatment answers changed false, a reopened one changed true", async () => {
+    await tick(T1);
+    expect(await reopen({ id: T1, timeZone: "Europe/Berlin" })).toMatchObject({
+      ok: true,
+      value: { changed: true, treatment: { done: false } },
+    });
+    expect(await reopen({ id: T2, timeZone: "Europe/Berlin" })).toMatchObject({
+      ok: true,
+      value: { changed: false, treatment: { done: false } },
+    });
+  });
+
+  it("US-QS-32 the store reopens only a row whose done date is the expected one; another day is not reopenable", async () => {
+    await tick(T1);
+    expect(await treatments.reopen("anna", T1, "2026-10-02")).toBe("not_reopenable");
+    expect(treatments.rows.find((t) => t.id === T1)).toMatchObject({ done: true });
+    expect(await treatments.reopen("anna", T1, "2026-10-03")).toMatchObject({ done: false });
+  });
+});

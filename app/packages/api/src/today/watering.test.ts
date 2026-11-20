@@ -252,3 +252,27 @@ describe("US-QS-32 undo of Gegossen (POST /watering/unwater)", () => {
     expect(r).toMatchObject({ status: 400, body: { error: { code: "input.invalid" } } });
   });
 });
+
+describe("US-QS-32 the undo takes the date of the write (POST /watering/unwater with date)", () => {
+  it("US-QS-32 yesterday's date is accepted: the write made before midnight is taken back", async () => {
+    at("2026-12-05");
+    await call(subA, "POST", "/watering", { specimenIds: [plant], timeZone: "Europe/Berlin" });
+    at("2026-12-06");
+    const undone = await call(subA, "POST", "/watering/unwater", {
+      specimenIds: [plant],
+      timeZone: "Europe/Berlin",
+      date: "2026-12-05",
+    });
+    expect(undone).toMatchObject({ status: 200, body: { date: "2026-12-05", removed: 1 } });
+  });
+
+  it("US-QS-32 a date two days back is refused as input.invalid (400)", async () => {
+    at("2026-12-07");
+    const r = await call(subA, "POST", "/watering/unwater", {
+      specimenIds: [plant],
+      timeZone: "Europe/Berlin",
+      date: "2026-12-04",
+    });
+    expect(r).toMatchObject({ status: 400, body: { error: { code: "input.invalid" } } });
+  });
+});

@@ -2,11 +2,14 @@
 // write it reverts (P-03); the rules of the write (own specimens, not archived, local date, limit) apply to it too.
 import {
   appError,
+  calendarDateField,
+  daysBetween,
   defineOperation,
   failed,
   idListField,
   localToday,
   ok,
+  orNull,
   shape,
   timeZoneField,
 } from "../../kernel";
@@ -32,6 +35,8 @@ export interface UnwaterResult {
 const schema = shape({
   specimenIds: idListField("specimenIds", MAX_WATERED),
   timeZone: timeZoneField("timeZone"),
+  // The date of the write the undo takes back (US-QS-32); without it today.
+  date: orNull(calendarDateField("date")),
 });
 
 /**
@@ -53,7 +58,13 @@ export const monitoringUnwater = (deps: UnwateredDependencies) =>
         if (!isActive(s))
           return failed(appError("specimen.archived", { data: { specimenId: id } }));
       }
-      const date = localToday(deps.clock(), input.timeZone);
+      const today = localToday(deps.clock(), input.timeZone);
+      // Today, or yesterday when the write came before midnight; any other date is invalid input (US-QS-32).
+      if (input.date !== null && ![0, 1].includes(daysBetween(input.date, today)))
+        return failed(
+          appError("input.invalid", { details: [{ field: "date", code: "input.invalid" }] }),
+        );
+      const date = input.date ?? today;
       const { removed } = await deps.watering.unrecord(
         userId,
         ids.map((specimenId) => ({ specimenId, date })),

@@ -32,6 +32,8 @@ function fakeServer(state: {
   confirm: (body: { specimenIds: string[]; timeZone: string }) => Promise<Response>;
   /** The location writes of the undo, in the order they arrived (US-QS-32). */
   moves?: { specimenId: string; locationId: string }[];
+  /** A plant whose location write is refused (US-QS-32, a failed undo). */
+  failLocationFor?: string;
 }) {
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const path = new URL(String(url)).pathname;
@@ -43,6 +45,8 @@ function fakeServer(state: {
     if (/^\/specimens\/[^/]+\/location$/.test(path) && init?.method === "POST") {
       const specimenId = path.split("/")[2] ?? "";
       const locationId = (JSON.parse(String(init.body)) as { locationId: string }).locationId;
+      if (state.failLocationFor === specimenId)
+        return response(409, { error: { code: "specimen.archived", text: "raw" } });
       state.moves?.push({ specimenId, locationId });
       state.phases = state.phases.map((p) =>
         p.specimenId === specimenId ? { ...p, locationId } : p,
@@ -291,5 +295,30 @@ describe("US-QS-32 the bulk move 'Alle n nach … umstellen' can be undone in pl
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("US-QS-32 a failed bulk undo releases its rows and keeps the refusal", () => {
+  it("US-QS-32 the held rows let go, the list shows the reloaded state and the refusal stays on the page", async () => {
+    const state = {
+      phases: [row("e1", "Bogenhanf", "s1", "s2"), row("e3", "Efeu", "s9", "s2")],
+      confirm: async () => {
+        state.phases = state.phases.map((p) => ({ ...p, locationId: p.targetLocationId }));
+        return response(200, { specimens: [] });
+      },
+      moves: [] as { specimenId: string; locationId: string }[],
+      failLocationFor: "e3",
+    };
+    fakeServer(state);
+    render(<CarePhasesPage api="http://api" token={token} />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Alle 2 nach Kühler Flur umstellen" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Rückgängig: 2 Pflanzen nach Kühler Flur" }),
+    );
+    expect(await screen.findByText(/Diese Pflanze ist archiviert/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Rückgängig: 2 Pflanzen/ })).toBeNull();
+    expect(state.moves).toEqual([{ specimenId: "e1", locationId: "s1" }]);
   });
 });
