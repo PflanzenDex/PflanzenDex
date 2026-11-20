@@ -42,8 +42,8 @@ function shownPlants(
 
 /**
  * The search field on its own full-width line at the top, the location filter below it as a labelled field (US-QS-32,
- * issue 1960). "Standort unbekannt" appears only when some plant has none. Both stack at every width, so "Alle Standorte"
- * is never cut.
+ * issue 1960). "Standort unbekannt" appears only when some plant has none. Below 480 px both stack at full width, so
+ * "Alle Standorte" is never cut; from 480 px they share one row.
  */
 function PickFilters(props: {
   specimens: readonly TreatableSpecimen[];

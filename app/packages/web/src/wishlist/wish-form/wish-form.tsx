@@ -20,9 +20,9 @@ import {
   type WishFields,
 } from "../schemas";
 import table from "../wishlist.de.json";
+import type { WishInput } from "../wishlist-api";
 
 const ui = texts(table);
-import type { WishInput } from "../wishlist-api";
 
 /**
  * Every optional field behind "Mehr Angaben": a value or a refusal opens it (P-10). The required name is not among them:
