@@ -44,6 +44,7 @@ import { AppRoutes } from "./routes";
 import { HomeRedirect } from "./destinations/area-parts/simple-routes/route-fallback/home-redirect/home-redirect";
 import { AddPlant } from "@/app/flows";
 import { AccountArea, TodayArea } from "@/app/destinations/area-parts/lazy-areas";
+import { captureExpectedErrors } from "@/shared/testing/test-setup/expected-errors";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -78,6 +79,7 @@ const renderAt = (path: string) => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   loaded.pages.length = 0;
 });
 
@@ -113,11 +115,14 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
   });
 
   it("US-QS-07 · DS-08 a failed page chunk shows an error with retry instead of a blank page", async () => {
+    // The mocked species page chunk throws on purpose; vitest wraps that in its mocking error.
+    const errors = captureExpectedErrors("Failed to fetch dynamically imported module");
     renderAt("/collection?view=species");
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Die Seite konnte nicht geladen werden",
     );
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+    errors.expectBoundaryLogged();
   });
 
   it("US-QS-14 · DS-08 the Sammlung in plants mode does not load the species page chunk", async () => {
@@ -127,11 +132,14 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
   });
 
   it("US-QS-14 · the old Pokédex address and its sub-paths open the species mode of the Sammlung", async () => {
+    // The mocked species page chunk throws on purpose; vitest wraps that in its mocking error.
+    const errors = captureExpectedErrors("Failed to fetch dynamically imported module");
     // The species page chunk is mocked to fail: only the species mode requests it, so an alert proves the redirect.
     renderAt("/pokedex/irgendwas");
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Die Seite konnte nicht geladen werden",
     );
+    errors.expectBoundaryLogged();
   });
 
   it("US-QS-16 · DS-08 the root address leads to Heute, whose chunk is in hand once it shows", async () => {

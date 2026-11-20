@@ -71,7 +71,8 @@ function fakeServer(opts: ServerOptions = {}) {
         key: (init.headers as Record<string, string>)["Idempotency-Key"],
       });
       if (opts.create) return opts.create();
-      const fresh = specimen({ id: "e2", name: "Bogenhanf – rot", marker: "rot" });
+      // An id many() never produces, so the list keys stay unique (#1627).
+      const fresh = specimen({ id: "new-1", name: "Bogenhanf – rot", marker: "rot" });
       specimens.push(fresh);
       return response(201, fresh);
     }

@@ -720,15 +720,12 @@ describe("US-QS-07 browser history", () => {
     await userEvent.click(tab("Sammlung"));
     await userEvent.click(tab("Konto"));
     expect(window.location.pathname).toBe("/account");
-    await act(async () => {
-      window.history.back();
-      await waitFor(() => expect(window.location.pathname).toBe("/collection"));
-    });
+    // waitFor stays outside act: it switches the act environment off while it polls (#1628).
+    act(() => window.history.back());
+    await waitFor(() => expect(window.location.pathname).toBe("/collection"));
     expect((await findTab("Sammlung")).getAttribute("aria-current")).toBe("page");
-    await act(async () => {
-      window.history.back();
-      await waitFor(() => expect(window.location.pathname).toBe("/today"));
-    });
+    act(() => window.history.back());
+    await waitFor(() => expect(window.location.pathname).toBe("/today"));
     await waitFor(() => expectHeute());
   });
 });
