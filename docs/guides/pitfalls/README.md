@@ -373,3 +373,11 @@ IDs are never renumbered.
 - **Fix:** Mark a control that saves in place as busy with `aria-disabled={saving || undefined}` (look: `BUSY_LOOK` in `shared/lib/utils.ts`) and drop a press while busy in its handler or by the saver's busy guard; keep `disabled` for controls that do not hold the focus during the save. In the test, wait a rendering tick before the focus check and check again after the save resolves and after a second key press.
 - **Can it become a gate?** No: whether a control holds the focus while it saves needs judgment; the tests of each such control pin it.
 - **Source:** Issue #2317 (US-QS-32), PR #2356.
+
+## PF-046 A row with `overflow-hidden` in a flex column shrinks to a hairline
+
+- **Symptom:** At 200 % text the rows of a fit-paged list are 2 to 30 px high and only the pager shows; at 100 % on a small window the rows are cut to a third, and the one-screen gate still passes because the cut rows fit.
+- **Cause:** `overflow: hidden` (here `[&>li]:overflow-hidden` of `ROWS_OF_GROUP`) turns a flex item's automatic minimum height into 0, so the default `flex-shrink: 1` squeezes it below its content when the list is shorter than its rows. The fit measure then reads the squeezed row and never recovers.
+- **Fix:** A row of a flex list that clips its content carries `shrink-0` (the `Pager` sets it on every row and placeholder since PR #2367). When the room is shorter than one whole row, the frame scrolls or the layout gives the room back; never let the row shrink.
+- **Can it become a gate?** Partly: a measurement that every row of a list is at least its `scrollHeight` could join the one-screen gate; until R1 a new gate needs a finding that asks for it (E-30).
+- **Source:** Issues #2315 and #2316 (US-QS-32), PR #2367; earlier local fixes #2272 and #2293.
