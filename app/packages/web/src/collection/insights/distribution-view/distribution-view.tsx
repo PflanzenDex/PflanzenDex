@@ -6,8 +6,8 @@ import { zoneLabel } from "@pflanzendex/core";
 import { LightNeedAction } from "@/light";
 
 /**
- * Every bar is neutral, the thinnest zone's too: green is for actions only (FX-16), and a thin zone is no deviation to
- * look at (SG-COLOR-04). The words "am leersten" carry the meaning of the thinnest zone (DS-38, SG-COLOR-05).
+ * Every bar is neutral, the thinnest zone's too: green marks an action or a selection only (SG-COLOR-01), and a thin
+ * zone is no deviation to look at (SG-COLOR-04). The words "am leersten" carry the meaning of the thinnest zone (DS-38, SG-COLOR-05).
  */
 const bar = "block h-full w-[calc(var(--value)*1%)] rounded-full bg-muted-foreground";
 
