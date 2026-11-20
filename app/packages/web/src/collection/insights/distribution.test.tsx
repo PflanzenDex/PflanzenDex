@@ -209,13 +209,15 @@ describe("US-QS-07 · DS-32 distribution bars", () => {
     expect(bars(container).map((b) => b.style.getPropertyValue("--value"))).toEqual(["0"]);
   });
 
-  it("US-QS-32 · SG-COLOR-04 the thinnest zones' bars are neutral, not amber; the other bars stay primary", () => {
+  it("US-QS-32 · SG-COLOR-04 issue 2166 every zone bar is neutral, also the bars of the other zones; the thinnest zones keep their words only", () => {
     const { container } = render(<DistributionView distribution={distribution()} />);
-    const [two, three, four] = bars(container);
-    expect(two?.className.split(" ")).toContain("bg-primary");
-    for (const thin of [three, four]) {
-      expect(thin?.className.split(" ")).toContain("bg-muted-foreground");
-      expect(thin?.className).not.toContain("bg-warning");
+    const found = bars(container);
+    expect(found).toHaveLength(3);
+    for (const bar of found) {
+      const tokens = bar.className.split(" ");
+      expect(tokens).toContain("bg-muted-foreground");
+      expect(tokens).not.toContain("bg-primary");
+      expect(tokens).not.toContain("bg-warning");
     }
   });
 });
