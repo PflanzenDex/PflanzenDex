@@ -223,9 +223,11 @@ function summarizeInteraction(name, rep, tTap, tSettle, d) {
     interactions: ids.length,
   };
   if (longest) {
-    const ps = Math.min(...evs.map((e) => e.ps));
-    const pe = Math.max(...evs.map((e) => e.pe));
-    const start = Math.min(...evs.map((e) => e.start));
+    // Breakdown of the longest entry (the click), as web-vitals does: the group's earliest start would count the
+    // 40 ms touch hold between pointerdown and click as processing.
+    const ps = longest.ps;
+    const pe = longest.pe;
+    const start = longest.start;
     const end = start + longest.dur;
     out.inp = longest.dur;
     out.inputDelay = ps - start;
@@ -308,12 +310,15 @@ async function runStart(name, def, rep, cold) {
     const res = performance.getEntriesByType('resource').map(r => ({ n: r.name.replace(location.origin,'').slice(0,100), type: r.initiatorType, s: r.startTime, e: r.responseEnd, tx: r.transferSize, enc: r.encodedBodySize, dec: r.decodedBodySize }));
     return { nav: { ttfb: nav.responseStart, dcl: nav.domContentLoadedEventEnd, load: nav.loadEventEnd, tx: nav.transferSize }, paint, lcp: P.lcp, wv: P.wv, longtasks: P.longtasks, loafs: P.loafs.map(l => ({ start: l.start, dur: l.dur, blocking: l.blocking, script: l.scripts.reduce((a,x)=>a+x.dur,0), sl: l.styleAndLayoutStart ? l.start + l.dur - l.styleAndLayoutStart : 0, top: l.scripts.sort((a,b)=>b.dur-a.dur).slice(0,3).map(x => x.src + ':' + (x.fn||x.inv||'').slice(0,40) + ':' + Math.round(x.dur)) })), commits: P.commits, res, now: performance.now() }; })()`);
   const lt = d.longtasks.filter((t) => t.start < d.now);
-  // TTI estimate (Lighthouse-like, network quiet not checked): end of the last long task that is followed by >= 5 s
-  // without a long task, not earlier than DCL and FCP.
+  // TTI estimate (Lighthouse-like, network quiet not checked): starting at FCP (not earlier than DCL), the end of the
+  // last long task before the first window of 5 s without a long task. quietOk is false when the capture ends before
+  // such a window was seen.
   let tti = Math.max(d.nav.dcl, d.paint["first-contentful-paint"] ?? 0);
-  for (const t of lt)
-    if (t.start + t.dur > tti && d.now - (t.start + t.dur) >= 0)
-      tti = Math.max(tti, t.start + t.dur);
+  for (const t of [...lt].sort((x, y) => x.start - y.start)) {
+    if (t.start + t.dur <= tti) continue;
+    if (t.start - tti >= 5000) break;
+    tti = t.start + t.dur;
+  }
   const quietOk = d.now - tti >= 5000;
   const js = d.res.filter((r) => /\.js(\?|$)/.test(r.n));
   const fetches = d.res.filter((r) => r.type === "fetch" || r.type === "xmlhttprequest");
