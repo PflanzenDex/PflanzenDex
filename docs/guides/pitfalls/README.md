@@ -325,3 +325,11 @@ IDs are never renumbered.
 - **Fix:** Put every folder a container mounts under the repo, for example a `mkdtemp` under `app/.cache` (gitignored), never under `os.tmpdir()`. A script that rewrites files from a container run writes to a staging folder and swaps only after a passing run, so a failed run destroys nothing.
 - **Can it become a gate?** Partly: the QG-U5 self-test (`ds-snapshots.selftest.mjs`) asserts that the catalog is built under `app/.cache` and that a failed update leaves the baselines as they were. A general rule ("no `os.tmpdir()` next to `docker`") is not worth a gate until a second script mounts folders (E-30).
 - **Source:** Issue #2286, PR #2288.
+
+## PF-040 The devbox phone is offline for Chrome, so the app measures its offline state
+
+- **Symptom:** On the OnePlus of the devbox the app shows "Du bist offline" over every screen and that notice becomes the LCP element, although the API answers over `adb reverse`. Writes may take the offline path.
+- **Cause:** The phone has Wi-Fi on but no connected network and no SIM. Chrome derives `navigator.onLine` from the device's network, not from reachable hosts, so it reports `false`, and the app shows its offline state (US-QS-30). With CDP, `Network.emulateNetworkConditions` with `offline: false` changes nothing as long as no throttling is set.
+- **Fix:** Before measuring, set `Network.emulateNetworkConditions` with `offline: false, latency: 0, downloadThroughput: 1e9, uploadThroughput: 1e9` in the same CDP session (it ends with the session), and check that `navigator.onLine` is `true`. A throughput of `1e10` overflows and stalls every request. The script `docs/records/spikes/2026-11-20-real-phone-performance/scripts/measure/run.mjs` does both.
+- **Can it become a gate?** No: phone measurements run by hand, and no gate drives the phone.
+- **Source:** Issue #2299, record `docs/records/spikes/2026-11-20-real-phone-performance/README.md`.
