@@ -11,6 +11,7 @@ import { MeasurementHeader } from "../measurement-header/measurement-header";
 import { MeasurePageSkeleton } from "./measure-page.skeleton";
 import { CourseLayer } from "./course-layer/course-layer";
 import { GrowthNoteLayer } from "./growth-note-layer/growth-note-layer";
+import { useSaveAnnouncement } from "./growth-note-layer/use-save-announcement";
 import { useMeasureSend } from "../measurement-header/measurement-photo";
 
 type Token = () => Promise<string | undefined>;
@@ -19,8 +20,8 @@ type Token = () => Promise<string | undefined>;
 const LOADING = "Messungen werden geladen …";
 
 /**
- * Measure (US-WAC-01): on the page the one fact line (last measurement, value and date) with the link "Verlauf (n)", the
- * input form and the sticky "Messung speichern". The facts and the course of the specimen live in the layer "Verlauf"
+ * Measure (US-WAC-01): on the page the one fact line (last measurement, value and date) with the link "Messverlauf (n)", the
+ * input form and the sticky "Messung speichern". The facts and the course of the specimen live in the layer "Messverlauf"
  * (US-QS-15). Every view says what to do next (P-09).
  */
 /** `onSaved` is called after a measurement was written; the page stays open (US-QS-15). */
@@ -66,7 +67,7 @@ function MeasuredView(props: MeasuredProps) {
     <>
       <MeasurementHeader
         view={view}
-        action={<LayerOpener id={course}>Verlauf ({view.measurements.length})</LayerOpener>}
+        action={<LayerOpener id={course}>Messverlauf ({view.measurements.length})</LayerOpener>}
       />
       <GrowthNoteLayer note={growthNoteText({ moments, justSaved })} saves={saves}>
         <MeasureForm
@@ -100,7 +101,7 @@ export function MeasurePage(props: MeasurePageProps) {
     [api, specimen.id],
   );
   const say = useSay();
-  const { send, saved, saves, photoStatus } = useMeasureSend({
+  const { send, saved, saves, confirmed, photoStatus } = useMeasureSend({
     api,
     token,
     specimenId: specimen.id,
@@ -109,11 +110,14 @@ export function MeasurePage(props: MeasurePageProps) {
     ...(props.onSaved ? { onSaved: props.onSaved } : {}),
   });
   const moments = useGrowthMoments(api, token, specimen.id);
+  // One announcement per save: the confirmation with its growth note (US-QS-08, issue 2323).
+  useSaveAnnouncement({ saves, confirmed, moments, say });
   return (
     <section aria-labelledby="measure-title" className="flex min-w-0 flex-col gap-3">
       <PageHeader
         headingId="measure-title"
-        title={`Messen: ${specimen.name}`}
+        title="Messen"
+        subject={specimen.name}
         back={{ label: "Zurück zur Sammlung", onBack: props.onBack }}
       />
       <LoadFrame

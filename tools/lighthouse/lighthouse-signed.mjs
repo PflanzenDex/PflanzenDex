@@ -8,7 +8,7 @@ import {
   describeEmulation,
   FORMATS,
   medians,
-} from "../../app/tools/check/release/check-lighthouse-summary.mjs";
+} from "../../app/tools/check/delivery/release/check-lighthouse-summary.mjs";
 
 export const RUNS_PER_SCREEN = 3;
 /** The screens measured signed in: `path` is the address Lighthouse opens, `id` names its report files. */

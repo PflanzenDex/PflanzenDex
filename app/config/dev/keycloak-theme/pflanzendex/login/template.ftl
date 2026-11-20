@@ -26,7 +26,7 @@
 
 <#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false>
 <!DOCTYPE html>
-<html class="${properties.kcHtmlClass!}" lang="${lang}"<#if realm.internationalizationEnabled> dir="${(locale.rtl)?then('rtl','ltr')}"</#if>>
+<html class="${properties.kcHtmlClass!}" lang="${lang}" translate="no"<#if realm.internationalizationEnabled> dir="${(locale.rtl)?then('rtl','ltr')}"</#if>>
 
 <head>
     <meta charset="utf-8">
@@ -36,6 +36,8 @@
     <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <#-- The UI is German only, so no browser translation bar covers the page (US-QS-32, Q-44, style guide SG-SYS-04). -->
+    <meta name="google" content="notranslate">
 
     <#if properties.meta?has_content>
         <#list properties.meta?split(' ') as meta>
@@ -155,7 +157,7 @@
 
 <body id="keycloak-bg" class="${properties.kcBodyClass!}" data-page-id="login-${pageId}">
 <div class="pdx-page">
-  <div class="pdx-side">
+  <div class="pdx-side" role="region" aria-label="${msg('pdxFrameLabel')}">
     <svg class="pdx-drawing" viewBox="0 0 400 120" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
       <path d="M24 98 H376" stroke-width="3"/>
       <path d="M60 98 L54 112 M340 98 L346 112"/>
@@ -186,6 +188,24 @@
       <li>${msg("pdxValue3")}</li>
     </ul>
   </div>
+  <#-- The band is a tab stop only while it scrolls (US-QS-14, issue 2124): a stop that scrolls nothing does nothing. The
+       script watches the band and its drawing and lines, as the welcome page of the web app does (useScrolls in AuthFrame). -->
+  <script>
+    (function () {
+      var band = document.querySelector(".pdx-side");
+      if (!band) return;
+      function measure() {
+        if (band.scrollHeight > band.clientHeight) band.setAttribute("tabindex", "0");
+        else band.removeAttribute("tabindex");
+      }
+      measure();
+      // Without ResizeObserver the band is measured once, as in the web app.
+      if (typeof ResizeObserver === "undefined") return;
+      var observer = new ResizeObserver(measure);
+      observer.observe(band);
+      for (var i = 0; i < band.children.length; i++) observer.observe(band.children[i]);
+    })();
+  </script>
   <div class="pdx-content">
     <div class="pdx-card">
       <header id="kc-header" class="pdx-brand">
@@ -239,6 +259,13 @@
             </div>
         </#if>
 
+        <#-- The reset page explains its button above its field, in one line (US-QS-32, F-0321); the other pages keep their info in the footer. -->
+        <#if displayInfo && pageId == "login-reset-password">
+            <div id="kc-info" class="pdx-info-above">
+                <#nested "info">
+            </div>
+        </#if>
+
         <#nested "form">
 
         <#if auth?has_content && auth.showTryAnotherWayLink()>
@@ -264,7 +291,7 @@
           <div class="pdx-footer">
               <#nested "socialProviders">
 
-              <#if displayInfo>
+              <#if displayInfo && pageId != "login-reset-password">
                   <div id="kc-info" class="pdx-info">
                       <#nested "info">
                   </div>

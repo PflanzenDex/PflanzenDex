@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
+import { Banner, type BannerAction } from "@/shared/patterns/states/banner/banner";
 import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { refusalText } from "@/shared/lib/error-text";
 import { dateText } from "../../model/text";
@@ -11,19 +13,12 @@ import {
 } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
 /**
- * The card of a page of the module: the former `.light` frame, on tokens (DS-27). `className` lets a one-screen page
- * pass its height down to the list (issue 1029).
+ * The page of the module on the page colour, flat (US-QS-32, SG-SHAPE-06): no frame and no border around it, so a group
+ * inside it is not nested in a frame. `className` lets a one-screen page pass its height down to the list (issue 1029).
  */
 export function PageFrame({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div
-      className={cn(
-        "min-w-0 rounded-2xl border border-border bg-card px-4 py-6 text-card-foreground md:p-7",
-        className,
-      )}
-    >
-      {children}
-    </div>
+    <div className={cn("min-w-0 px-4 py-6 text-foreground md:p-7", className)}>{children}</div>
   );
 }
 
@@ -84,15 +79,28 @@ export function Status({ children }: { children: ReactNode }) {
   );
 }
 
-/** A refusal or problem that stays visible until the keeper acts (P-10); the warning tokens, not red alone (DS-38). */
-export function Warning({ children }: { children: ReactNode }) {
+/**
+ * A refusal or a failed load that stays visible until the keeper acts (P-10): the one error tone, a red border and the
+ * error mark, read at once (SG-COLOR-04, SG-STATE-03). Amber is for deviations only, never for an error.
+ */
+export function ErrorNotice({
+  children,
+  title,
+  action,
+}: {
+  children: ReactNode;
+  title?: string;
+  action?: BannerAction;
+}) {
   return (
-    <div
-      role="alert"
-      className="mb-3 grid gap-1 rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
+    <Banner
+      variant="error"
+      className="mb-3"
+      {...(title ? { title } : {})}
+      {...(action ? { action } : {})}
     >
-      {children}
-    </div>
+      <div className="grid gap-1">{children}</div>
+    </Banner>
   );
 }
 
@@ -101,7 +109,10 @@ export function Actions({ children, className }: { children: ReactNode; classNam
   return <div className={cn("mt-3 flex flex-wrap gap-2", className)}>{children}</div>;
 }
 
-/** The buttons of a form: stacked full-width on a phone, side by side from `sm`; the submit shows its pending state (DS-50). */
+/**
+ * The buttons of a form: stacked full-width on a phone, side by side from `sm`; the submit shows its pending state (DS-50).
+ * The submit needs the network (US-QS-30): the forms of this footer send their write at once, not through the buffer.
+ */
 export function FormButtons(props: {
   submit: string;
   cancel: string;
@@ -109,14 +120,16 @@ export function FormButtons(props: {
   onCancel: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row">
-      <Button type="submit" size="touch" pending={props.pending}>
-        {props.submit}
-      </Button>
-      <Button type="button" size="touch" variant="outline" onClick={props.onCancel}>
-        {props.cancel}
-      </Button>
-    </div>
+    <NetworkSlot>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button type="submit" size="touch" pending={props.pending} needsNetwork>
+          {props.submit}
+        </Button>
+        <Button type="button" size="touch" variant="outline" onClick={props.onCancel}>
+          {props.cancel}
+        </Button>
+      </div>
+    </NetworkSlot>
   );
 }
 

@@ -138,6 +138,10 @@ function setup({
   const lessonsCheck = "app/tools/check/docs/agents/pr/pr-lessons.mjs";
   mkdirSync(path.dirname(path.join(repo, lessonsCheck)), { recursive: true });
   copyFileSync(path.join(repoRoot, lessonsCheck), path.join(repo, lessonsCheck));
+  // pr-lessons imports the entry-point helper from the shared folder (US-QG-02): the checkout needs it too.
+  const helper = "app/tools/check/shared/entry-point.mjs";
+  mkdirSync(path.dirname(path.join(repo, helper)), { recursive: true });
+  copyFileSync(path.join(repoRoot, helper), path.join(repo, helper));
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-q", "-m", "init"]);
   const baseSha = git(repo, ["rev-parse", "HEAD"]).trim();

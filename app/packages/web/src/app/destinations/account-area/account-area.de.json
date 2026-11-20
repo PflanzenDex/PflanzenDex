@@ -1,4 +1,5 @@
 {
   "title": "Konto",
-  "index.loading": "Konto wird geladen …"
+  "index.loading": "Konto wird geladen …",
+  "index.retry": "Erneut versuchen"
 }

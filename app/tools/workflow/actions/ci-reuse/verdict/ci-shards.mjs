@@ -8,16 +8,24 @@ export const jobOf = (name) => /^(.+?) \(.+\)$/.exec(name)?.[1] ?? name;
 
 const doneTime = (ev) => Date.parse(ev.at ?? "") || 0;
 
-/** The shards of one job on the head: per check run name its evidence, and whether a run of it is still going. */
+/**
+ * The shards of one job on the head: per check run name its evidence, and whether a run of it is still going. Beside the
+ * expanded shards, the plain job name is no shard when its evidence is a cancelled run (issue 2303): a text-edit run cancels
+ * the matrix job before it expands, and that run leaves a cancelled check run under the plain name. A run of the plain name
+ * still going keeps it in the list (`open`). evidenceOf gives a skipped-only name no evidence, as before.
+ */
 export function shardsOf(checkRuns, job) {
   const names = [
     ...new Set(
       checkRuns.filter((c) => isActionsCheck(c) && jobOf(c.name) === job).map((c) => c.name),
     ),
   ].sort();
+  const expanded = names.some((name) => name !== job);
   return names.map((name) => {
     const runs = checkRuns.filter((c) => c.name === name && isActionsCheck(c));
-    return { ev: evidenceOf(runs), open: runs.some((r) => r.status !== "completed") };
+    const ev = evidenceOf(runs);
+    const cancelledPlain = name === job && expanded && ev?.conclusion === "cancelled";
+    return { ev: cancelledPlain ? null : ev, open: runs.some((r) => r.status !== "completed") };
   });
 }
 
@@ -29,7 +37,8 @@ export function shardsOf(checkRuns, job) {
  */
 export function resultOf(all, fallback) {
   // A name with only skipped runs did no work, as for a plain job: a text-edit run skips the matrix job unexpanded, under
-  // the plain job name (PR 1683), and that check run is no shard.
+  // the plain job name (PR 1683), and that check run is no shard. A cancelled plain run beside the expanded shards is none
+  // either (issue 2303, see shardsOf).
   const shards = all.filter((s) => s.ev || s.open);
   const finished = shards.filter((s) => s.ev);
   const latest = finished.map((s) => s.ev).sort((a, b) => doneTime(b) - doneTime(a))[0] ?? null;

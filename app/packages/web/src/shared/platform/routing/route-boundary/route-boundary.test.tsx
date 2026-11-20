@@ -4,9 +4,13 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 import { preloadPages } from "@/shared/platform/routing/lazy-page/preload";
+import { captureExpectedErrors } from "@/shared/testing/test-setup/expected-errors";
 import { RouteBoundary } from "./route-boundary";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
   it("US-QS-07 · DS-08 shows one loading status until the chunk is there, then the page with its props", async () => {
@@ -26,7 +30,7 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
     // The skeleton shows after the delay (US-QS-14, DS-57, issue 1697), exactly once.
     expect(await screen.findByRole("status")).toBeTruthy();
     expect(screen.getAllByRole("status")).toHaveLength(1);
-    expect(screen.getByText("Lädt…")).toBeTruthy();
+    expect(screen.getByText("Lädt …")).toBeTruthy();
     release({ default: (p) => <h1>{p.title}</h1> });
     expect(await screen.findByRole("heading", { name: "Meine Sammlung" })).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();
@@ -75,6 +79,7 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
   });
 
   it("US-QS-07 · DS-08 a failed chunk shows an error with 'Erneut versuchen' that loads it again, never a blank page", async () => {
+    const errors = captureExpectedErrors("Failed to fetch dynamically imported module");
     let attempts = 0;
     const Page = lazyPage(async () => {
       attempts += 1;
@@ -87,14 +92,16 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
       </RouteBoundary>,
     );
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("Die Seite konnte nicht geladen werden.");
+    expect(alert.textContent).toContain("Die Seite konnte nicht geladen werden");
     expect(alert.textContent).not.toContain("Failed to fetch");
+    errors.expectBoundaryLogged();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("heading", { name: "Geladen" })).toBeTruthy();
     expect(attempts).toBe(2);
   });
 
   it("US-QS-07 · DS-11 a failed chunk while offline says that the device is offline", async () => {
+    const errors = captureExpectedErrors("offline");
     const online = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
     const Page = lazyPage(async () => {
       throw new Error("offline");
@@ -105,12 +112,14 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
       </RouteBoundary>,
     );
     expect((await screen.findByRole("alert")).textContent).toContain("offline");
+    errors.expectBoundaryLogged();
     online.mockRestore();
   });
 
   it("US-QS-07 · DS-08 leaving a failed page by navigating clears the error", async () => {
+    const errors = captureExpectedErrors("broken chunk");
     const Broken = lazyPage(async () => {
-      throw new Error("x");
+      throw new Error("broken chunk");
     });
     const { rerender } = render(
       <RouteBoundary resetKey="a">
@@ -118,6 +127,7 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
       </RouteBoundary>,
     );
     await screen.findByRole("alert");
+    errors.expectBoundaryLogged();
     rerender(
       <RouteBoundary resetKey="b">
         <p>Andere Seite</p>
@@ -142,6 +152,7 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
   });
 
   it("US-QS-07 · DS-08 a chunk that fails to preload still shows the error with retry when its route opens (issue 1645)", async () => {
+    const errors = captureExpectedErrors("Failed to fetch dynamically imported module");
     let attempts = 0;
     const Page = lazyPage(async () => {
       attempts += 1;
@@ -157,7 +168,8 @@ describe("US-QS-07 · DS-08 lazyPage and RouteBoundary", () => {
       </RouteBoundary>,
     );
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("Die Seite konnte nicht geladen werden.");
+    expect(alert.textContent).toContain("Die Seite konnte nicht geladen werden");
+    errors.expectBoundaryLogged();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("heading", { name: "Geladen" })).toBeTruthy();
     expect(attempts).toBe(3);

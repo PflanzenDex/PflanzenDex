@@ -935,17 +935,20 @@ test("US-QG-02 (issue 1608): every failed part is named in the one message of th
 
 // US-QG-02 (issue 1682): the web tests run as two matrix shards, named `app-tests-web (1)` and `(2)`. The verdict reads them as
 // one job. The fixture PR 1476 is a UI change; its plain `app-tests-web` runs are replaced by the shard runs of each test.
-/** PR 1476 with its web tests as shard runs: [check run name, conclusion] per shard, a null conclusion is still running. */
+/**
+ * PR 1476 with its web tests as shard runs: [check run name, conclusion, completed_at] per run; the completed_at is optional
+ * (2026-11-06T08:07:10Z), a null conclusion is still running.
+ */
 function withShards(shards) {
   const s = open(snapOf("pr1476"));
   const web = s.checkRuns.find((c) => c.name === "app-tests-web");
-  const runs = shards.map(([name, conclusion], i) => ({
+  const runs = shards.map(([name, conclusion, completedAt = "2026-11-06T08:07:10Z"], i) => ({
     ...web,
     id: web.id + i + 1,
     name,
     status: conclusion ? "completed" : "in_progress",
     conclusion: conclusion ?? null,
-    completed_at: conclusion ? "2026-11-06T08:07:10Z" : null,
+    completed_at: conclusion ? completedAt : null,
     details_url: `https://github.com/${REPO}/actions/runs/${9100 + i}/job/${web.id + i + 1}`,
   }));
   return { ...s, checkRuns: [...s.checkRuns.filter((c) => c.name !== "app-tests-web"), ...runs] };
@@ -1040,6 +1043,85 @@ test("US-QG-02 (issue 1682): a plain app-tests-web check of an older head still 
   const a = assess(red);
   assert.equal(rowOf(a, "app-tests-web").result, "failure");
   assert.deepEqual(a.problems, ["app-tests-web: failure"]);
+});
+
+// US-DEV-13 (issue 2303): a text-edit run cancels its matrix job before the job expands. Its check run keeps the plain job
+// name beside the expanded shards of the full run; the shards decide, as on PR 2292 (head 462bd1e2).
+test("US-DEV-13 (issue 2303): the cancelled and skipped plain check runs beside passed shards do not fail the job (PR 2292)", () => {
+  const a = assess(
+    withShards([
+      ["app-tests-web (1)", "success"],
+      ["app-tests-web (2)", "success"],
+      ["app-tests-web", "cancelled"],
+      ["app-tests-web", "skipped"],
+      ["app-tests-web", "skipped"],
+    ]),
+  );
+  assert.equal(a.status, "settled");
+  assert.equal(rowOf(a, "app-tests-web").result, "success");
+  assert.equal(rowOf(a, "app-tests-web").problem, null);
+  assert.deepEqual(a.problems, []);
+  assert.equal(exitCodeOf(a), 0);
+});
+
+test("US-DEV-13 (issue 2303): a cancelled plain check run with no shard is still a cancelled job that blocks", () => {
+  const a = assess(withShards([["app-tests-web", "cancelled"]]));
+  assert.equal(rowOf(a, "app-tests-web").result, "cancelled");
+  assert.deepEqual(a.problems, ["app-tests-web: cancelled"]);
+  assert.equal(exitCodeOf(a), 1);
+});
+
+test("US-DEV-13 (issue 2303): a shard whose newest completed run passed is a success, although an older run of it failed", () => {
+  const a = assess(
+    withShards([
+      ["app-tests-web (1)", "success"],
+      ["app-tests-web (2)", "failure", "2026-11-06T08:05:00Z"],
+      ["app-tests-web (2)", "success", "2026-11-06T08:09:00Z"],
+    ]),
+  );
+  assert.equal(rowOf(a, "app-tests-web").result, "success");
+  assert.deepEqual(a.problems, []);
+  assert.equal(exitCodeOf(a), 0);
+});
+
+test("US-DEV-13 (issue 2303): a shard whose newest completed run failed is a failure, although an older run of it passed", () => {
+  const a = assess(
+    withShards([
+      ["app-tests-web (1)", "success"],
+      ["app-tests-web (2)", "success", "2026-11-06T08:05:00Z"],
+      ["app-tests-web (2)", "failure", "2026-11-06T08:09:00Z"],
+    ]),
+  );
+  assert.equal(rowOf(a, "app-tests-web").result, "failure");
+  assert.deepEqual(a.problems, ["app-tests-web: failure"]);
+  assert.equal(exitCodeOf(a), 1);
+});
+
+test("US-DEV-13 (issue 2303): a failed plain check run beside passed shards still fails the job", () => {
+  const a = assess(
+    withShards([
+      ["app-tests-web (1)", "success"],
+      ["app-tests-web (2)", "success"],
+      ["app-tests-web", "failure"],
+    ]),
+  );
+  assert.equal(rowOf(a, "app-tests-web").result, "failure");
+  assert.deepEqual(a.problems, ["app-tests-web: failure"]);
+  assert.equal(exitCodeOf(a), 1);
+});
+
+test("US-DEV-13 (issue 2303): a plain check run still in progress beside passed shards keeps the job running, also after a cancelled one", () => {
+  const a = assess(
+    withShards([
+      ["app-tests-web (1)", "success"],
+      ["app-tests-web (2)", "success"],
+      ["app-tests-web", "cancelled", "2026-11-06T08:06:52Z"],
+      ["app-tests-web", null],
+    ]),
+  );
+  assert.equal(a.status, "running");
+  assert.deepEqual(a.unfinished, ["app-tests-web"]);
+  assert.equal(rowOf(a, "app-tests-web").result, "running");
 });
 
 // US-QG-06: a quarantined job reports its red result and blocks nothing, as ci-status reads it (the same list).

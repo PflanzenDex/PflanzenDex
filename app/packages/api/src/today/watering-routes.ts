@@ -1,4 +1,10 @@
-import { isTimeZone, monitoringWater, appError, type WateredDependencies } from "@pflanzendex/core";
+import {
+  isTimeZone,
+  monitoringUnwater,
+  monitoringWater,
+  appError,
+  type WateredDependencies,
+} from "@pflanzendex/core";
 import { IdempotencyPostgres, SpecimenPostgres, WateringPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
 import type { Pool } from "pg";
@@ -17,6 +23,8 @@ export function wateringRoutes(pool: Pool, clock: () => Date): Hono<AuthEnv> {
     clock,
   };
   const water = monitoringWater(deps);
+  // The undo of "Gegossen" (US-QS-32) takes the same deps: the same rules of the write, reversed.
+  const unwater = monitoringUnwater(deps);
   const writes = { idempotency: new IdempotencyPostgres(pool) };
   const routes = new Hono<AuthEnv>();
   routes.get(
@@ -33,5 +41,9 @@ export function wateringRoutes(pool: Pool, clock: () => Date): Hono<AuthEnv> {
     }),
   );
   routes.post("/watering", async (c) => write(c, writes, water, { input: await body(c) }));
+  // The undo of "Gegossen" (US-QS-32): today's manual entries of the given specimens are removed again.
+  routes.post("/watering/unwater", async (c) =>
+    write(c, writes, unwater, { input: await body(c) }),
+  );
   return routes;
 }

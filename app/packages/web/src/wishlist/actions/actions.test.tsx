@@ -152,6 +152,27 @@ describe("US-WUN-05 the way from the purchase to the specimen", () => {
     expect(onCreateSpecimen).toHaveBeenCalledWith(expect.objectContaining({ id: "w1" }));
   });
 
+  it("US-QS-32 · SG-BTN-02 the Gekauft list has no filled button with two wishes: each row's Pflanze anlegen is tinted", async () => {
+    server({
+      open: [],
+      bought: history([
+        { id: "w1", title: candidate.title, specimenId: null },
+        { id: "w2", title: "Monstera deliciosa", specimenId: null },
+      ]),
+    });
+    view(
+      <WishlistPage api="http://api" token={token} onCreateSpecimen={vi.fn()} />,
+      "/?sheet=bought",
+    );
+    const list = await screen.findByRole("list", { name: "Gekaufte Wünsche" });
+    const buttons = within(list).getAllByRole("button");
+    expect(buttons).toHaveLength(2);
+    for (const b of buttons) {
+      expect(b.className.split(/\s+/)).toContain("bg-accent");
+      expect(b.className.split(/\s+/)).not.toContain("bg-primary");
+    }
+  });
+
   it("US-WUN-05 a linked wish says so ('gekauft → Pflanze') and offers no second specimen", async () => {
     server({ open: [], bought: history([{ id: "w1", title: candidate.title, specimenId: "s1" }]) });
     view(

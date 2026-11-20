@@ -51,4 +51,29 @@ export class WateringPostgres {
     );
     return { created: r.rowCount ?? 0 };
   }
+
+  /**
+   * Removes the manual entries of the given days in one statement (US-QS-32, the undo of "Gegossen"). Only the keeper's
+   * own entries (`manual`) go, never a sensor reading of the same day; a day without an entry removes nothing. Foreign
+   * specimens match nothing (row rules, P-04).
+   */
+  async unrecord(
+    userId: string,
+    entries: readonly WateringEntryRow[],
+  ): Promise<{ readonly removed: number }> {
+    if (entries.length === 0) return { removed: 0 };
+    const specimens = entries.map((e) => e.specimenId);
+    const days = entries.map((e) => e.date);
+    const removed = await withAccount(this.pool, userId, async (c) => {
+      const deleted = await c.query(
+        `delete from watering_log w
+          using unnest($2::uuid[], $3::date[]) as t(specimen_id, watered_on)
+          where w.account_id = $1 and w.specimen_id = t.specimen_id
+            and w.watered_on = t.watered_on and w.source = 'manual'`,
+        [userId, specimens, days],
+      );
+      return deleted.rowCount ?? 0;
+    });
+    return { removed };
+  }
 }

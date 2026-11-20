@@ -1,3 +1,4 @@
+import { Banner } from "@/shared/patterns/states/banner/banner";
 import type { Account } from "../../api/account-api";
 
 const NOTICE = "rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground";
@@ -12,18 +13,14 @@ function Notices(props: { account: Account; error?: string }) {
           erst danach möglich.
         </p>
       )}
-      {props.error && (
-        <p role="alert" className={NOTICE}>
-          {props.error}
-        </p>
-      )}
+      {props.error && <Banner variant="error">{props.error}</Banner>}
     </>
   );
 }
 
 /**
  * The profile card of "Konto" (US-QS-14): avatar tile, name and e-mail. It has no heading of its own: the destination
- * names it "Profil" and carries the one h1. It offers no sign-out: the one way out is "Abmelden…" in the index of
+ * names it "Profil" and carries the one h1. It offers no sign-out: the one way out is "Abmelden …" in the index of
  * "Konto", which always asks first (issue 1098).
  */
 export function AccountView(props: { account: Account; error?: string }) {

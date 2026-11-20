@@ -1,16 +1,15 @@
 import type { CSSProperties } from "react";
 import type { NotCounted, Distribution } from "@pflanzendex/core";
-import { cva } from "class-variance-authority";
 import { cn } from "@/shared/lib/utils";
 import { NextAction, Quiet, SUBTITLE } from "../../specimens/cards/parts/parts";
 import { zoneLabel } from "@pflanzendex/core";
 import { LightNeedAction } from "@/light";
 
-/** The bar of the thinnest zone takes the warning token; the words "am leersten" carry the meaning too (DS-38). */
-const barTone = cva("block h-full w-[calc(var(--value)*1%)] rounded-full", {
-  variants: { thinnest: { true: "bg-warning-border", false: "bg-primary" } },
-  defaultVariants: { thinnest: false },
-});
+/**
+ * Every bar is neutral, the thinnest zone's too: green marks an action or a selection only (SG-COLOR-01), and a thin
+ * zone is no deviation to look at (SG-COLOR-04). The words "am leersten" carry the meaning of the thinnest zone (DS-38, SG-COLOR-05).
+ */
+const bar = "block h-full w-[calc(var(--value)*1%)] rounded-full bg-muted-foreground";
 
 const specimens = (n: number) => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;
 
@@ -58,7 +57,7 @@ export function DistributionView({ distribution }: { distribution: Distribution 
               >
                 <span
                   data-bar=""
-                  className={barTone({ thinnest: thin.has(zone.id) })}
+                  className={bar}
                   style={{ "--value": (count / highest) * 100 } as CSSProperties}
                 />
               </span>

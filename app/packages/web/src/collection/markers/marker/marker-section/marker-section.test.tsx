@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { Suspense } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
-import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SpecimenCard } from "@pflanzendex/core";
 import type { ApiError } from "../../../../shared/data";
@@ -9,6 +8,7 @@ import { answerCardRead } from "../../../specimens/tests/cards-fake";
 import type { CreateFields } from "../../../specimens/model/schemas";
 import { markerFormStart, type MarkerRule } from "../marker-rule";
 import { MarkerSection } from "./marker-section";
+import { useFieldForm } from "@/shared/ui/fields/form/form";
 
 // One plant of the species, without a marker: the keeper owns the species, so the rule requires a marker.
 const OWNED = [
@@ -35,7 +35,7 @@ function stubCards(list: unknown[]) {
 
 /** The flow's side: it owns the form and receives the rule the section reports. */
 function Harness(props: { report: (rule: MarkerRule | null) => void; refusal?: ApiError | null }) {
-  const form = useForm<CreateFields>({ defaultValues: markerFormStart("2026-11-08") });
+  const form = useFieldForm<CreateFields>({ defaultValues: markerFormStart("2026-11-08") });
   return (
     <Suspense fallback={null}>
       <MarkerSection

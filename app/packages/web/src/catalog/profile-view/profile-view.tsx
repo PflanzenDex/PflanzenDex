@@ -28,7 +28,7 @@ function basics(species: Species): Fact[] {
     { label: "Deutscher Name", value: known(species.germanName) },
     { label: "Englischer Name", value: known(species.englishName) },
     { label: "Schwierigkeit", value: text(difficultyText(species.difficulty)) },
-    { label: "Standard-Stufe", value: text(levelText(species.standardLevel)) },
+    { label: "Standard-Lichtzone", value: text(levelText(species.standardLevel)) },
     { label: "Lichtbedarf", value: text(lux(species.lightDemandLux)) },
     { label: "Ruhephase", value: text(dormancyPhase(species)) },
     { label: "Wachstumsmaß", value: text(growthText(species.growthMeasure)) },
@@ -42,15 +42,19 @@ function care(species: Species): Fact[] {
     { label: "Substrat", value: known(species.substrate) },
     { label: "Rückschnitt", value: known(species.pruning) },
     { label: "Wuchs-Hacks", value: known(species.growthHacks) },
-    { label: "Vergeilung-Anzeichen", value: known(species.etiolationSigns) },
+    { label: "Vergeilungsanzeichen", value: known(species.etiolationSigns) },
     { label: "Erfolgskriterien", value: known(species.successCriteria) },
   ];
 }
 
 function origin(species: Species): Fact[] {
-  const family = [species.familyGerman, species.familyLatin].filter(Boolean).join(" · ");
+  // One form for the family: the German name, the scientific one in brackets (US-QS-32).
+  const family =
+    species.familyGerman && species.familyLatin
+      ? `${species.familyGerman} (${species.familyLatin})`
+      : species.familyGerman || species.familyLatin || null;
   return [
-    { label: "Familie", value: family || null },
+    { label: "Familie", value: family },
     { label: "Synonyme", value: species.synonyms.length > 0 ? species.synonyms.join(", ") : null },
     { label: "Botanische Story", value: known(species.botanicalStory) },
     { label: "Quelle", value: known(species.source) },

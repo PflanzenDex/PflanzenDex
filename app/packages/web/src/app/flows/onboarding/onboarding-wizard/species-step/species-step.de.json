@@ -1,0 +1,11 @@
+{
+  "title": "Deine erste Pflanze",
+  "label": "Art",
+  "placeholder": "z. B. Monstera",
+  "help": "Tippe den Namen deiner Pflanze, wir suchen die Art.",
+  "noHit": "Keine Art für „{query}“ gefunden.",
+  "propose": "Art vorschlagen",
+  "hits": "{count} Treffer, wähle eine Art.",
+  "hitsLabel": "Treffer",
+  "failed": "Die Suche hat nicht geklappt. Versuche es noch einmal."
+}

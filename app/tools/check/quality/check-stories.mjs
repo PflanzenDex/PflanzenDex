@@ -11,7 +11,7 @@
 // Light/dark come from the global toolbar, so they are not a story state. Focus has no mechanical trigger.
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../shared/entry-point.mjs";
 
 // Folders below src/ (FR-QG-23 steps 2 and 3): shared/ui, shared/patterns, and the app-shell components of app/frame (formerly
 // components/shared; the scope is the same: only the files directly in a folder are checked, as before).
@@ -164,4 +164,4 @@ function main() {
   );
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main();
+if (isEntryPoint(import.meta.url)) main();

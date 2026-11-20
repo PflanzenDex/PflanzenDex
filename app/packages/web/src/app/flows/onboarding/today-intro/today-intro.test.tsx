@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HINT_MAX_WORDS } from "@pflanzendex/core";
 import { useInvalidate } from "../../../../shared/data";
 import { HINT_TEXTS } from "./hint/hint-texts";
+import { HintNote } from "./hint";
 import { TodayIntro } from "./today-intro";
 
 const response = (status: number, body: unknown) =>
@@ -169,7 +170,7 @@ const tasksShown = () =>
   });
 
 async function pickSpecies() {
-  await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Monstera");
+  await userEvent.type(await screen.findByLabelText("Art"), "Monstera");
   await userEvent.click(await screen.findByRole("button", { name: /Monstera deliciosa/ }));
 }
 
@@ -230,7 +231,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     expect(created?.body["speciesId"]).toBe("sp1");
     expect(created?.body).not.toHaveProperty("lightZoneId");
     expect(created?.body).not.toHaveProperty("locationId");
-    await userEvent.click(screen.getByRole("button", { name: "Miss deine Pflanze" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze messen" }));
     expect(open).toHaveBeenCalledWith("collection");
   });
 
@@ -266,9 +267,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     await pickSpecies();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await userEvent.click(await screen.findByRole("button", { name: "Zurück" }));
-    expect(((await screen.findByLabelText("Name der Pflanze")) as HTMLInputElement).value).toBe(
-      "Monstera",
-    );
+    expect(((await screen.findByLabelText("Art")) as HTMLInputElement).value).toBe("Monstera");
     expect(
       (await screen.findByRole("button", { name: /Monstera deliciosa/ })).getAttribute(
         "aria-pressed",
@@ -279,10 +278,8 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
   it("US-ONB-01 a name without a hit offers the catalog instead of a dead end", async () => {
     fakeServer(world({ hits: [] }));
     view();
-    await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Zzz");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Im Katalog suchen oder vorschlagen" }),
-    );
+    await userEvent.type(await screen.findByLabelText("Art"), "Zzz");
+    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
     expect(open).toHaveBeenCalledWith("species");
   });
 
@@ -314,7 +311,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     cleanup();
     view();
     expect(await tasksShown()).toBeTruthy();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 
   it("US-ONB-07 · DM-ONB-03 ending the guide is stored for the account, not for the device", async () => {
@@ -334,14 +331,14 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     // another device of the same account: the guide stays ended
     view();
     expect(await tasksShown()).toBeTruthy();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 
   it("US-ONB-07 a guide that ended on another device does not come back here", async () => {
     fakeServer(world({ guideEnded: true }));
     view();
     expect(await tasksShown()).toBeTruthy();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 
   it("US-ONB-01 · P-10 an end of the guide that is not stored is shown with a retry, and the retry stores it: the guide does not come back unannounced (#1803)", async () => {
@@ -351,7 +348,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Überspringen" }));
     // the guide is left in this visit, the tasks show, and the keeper is told that the end is not stored
     expect(await tasksShown()).toBeTruthy();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
     const notice = await screen.findByRole("alert");
     expect(notice.textContent).toContain("nicht gespeichert");
     expect(notice.textContent).toContain("nicht erreichbar");
@@ -365,7 +362,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     cleanup();
     view();
     expect(await tasksShown()).toBeTruthy();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 
   it("US-ONB-01 a returning keeper (all plants archived) gets the day's tasks, not the flow (#291)", async () => {
@@ -373,7 +370,7 @@ describe("US-ONB-01 start with the first plant on Heute", () => {
     view();
     expect(await tasksShown()).toBeTruthy();
     expect(screen.queryByText(/Schritt 1 von/)).toBeNull();
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 });
 
@@ -414,7 +411,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     await saveFirstPlant();
     expect(await screen.findByText(/Wo steht sie\?/)).toBeTruthy();
     await userEvent.selectOptions(screen.getByLabelText("Licht bei Zuhause"), "z3");
-    await userEvent.click(screen.getByRole("button", { name: "Hier steht sie" }));
+    await userEvent.click(screen.getByRole("button", { name: "Standort übernehmen" }));
     await vi.waitFor(() =>
       expect(w.writes.find((x) => x.path === "/specimens/e1/location")?.body).toEqual({
         locationId: "l1",
@@ -424,7 +421,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
       lightZoneId: "z3",
     });
     expect(screen.queryByText(/Wo steht sie\?/)).toBeNull();
-    expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze messen" })).toBeTruthy();
     expect((await screen.findByRole("status")).textContent).toBe(
       "Standort gespeichert: Zuhause, Zone 3.",
     );
@@ -438,7 +435,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     view();
     await saveFirstPlant();
     expect(await screen.findByText("Balkon (Zone 4)")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Hier steht sie" }));
+    await userEvent.click(screen.getByRole("button", { name: "Standort übernehmen" }));
     expect((await screen.findByRole("status")).textContent).toBe(
       "Standort gespeichert: Balkon, Zone 4.",
     );
@@ -453,7 +450,7 @@ describe("US-ONB-02 places and light come later, with defaults", () => {
     expect(w.writes.map((x) => x.path)).not.toContain("/specimens/e1/location");
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.queryByText(/Wo steht sie\?/)).toBeNull();
-    expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze messen" })).toBeTruthy();
   });
 
   it("US-ONB-02 Heute shows no permanent card about missing locations or light zones", async () => {
@@ -500,7 +497,7 @@ describe("US-ONB-03 the style question after the first plant", () => {
       }),
     );
     expect(screen.queryByText("Wie nutzt du die App?")).toBeNull();
-    expect(screen.getByRole("button", { name: "Miss deine Pflanze" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pflanze messen" })).toBeTruthy();
     expect(await screen.findByText("Alles ist jetzt offen.")).toBeTruthy();
   });
 
@@ -515,7 +512,7 @@ describe("US-ONB-03 the style question after the first plant", () => {
 });
 
 describe("US-ONB-07 calm hints on Heute", () => {
-  it("US-QS-18 · US-ONB-07 the introduction still shows on Heute: a due hint is a short note without modal; it is recorded as shown and 'Okay' dismisses it for good", async () => {
+  it("US-QS-18 · US-ONB-07 the introduction still shows on Heute: a due hint is a short note without modal; it is recorded as shown and 'Hinweis schließen' dismisses it for good", async () => {
     const w = world({ cards: [{ id: "e1" }], hint: "first_plant_saved" });
     fakeServer(w);
     view();
@@ -530,7 +527,7 @@ describe("US-ONB-07 calm hints on Heute", () => {
     // looking for something is never held back: the tasks stay, the note comes above them
     const tasks = screen.getByText("Aufgaben des Tages");
     expect(note.compareDocumentPosition(tasks) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
     await vi.waitFor(() => expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull());
     expect(w.writes.map((x) => `${x.path}:${String(x.body["state"])}`)).toContain(
       "/onboarding/hints/first_plant_saved:dismissed",
@@ -553,7 +550,7 @@ describe("US-ONB-07 calm hints on Heute", () => {
       "fetch",
       vi.fn<typeof fetch>(async () => response(500, { error: { code: "server.error" } })),
     );
-    await userEvent.click(screen.getByRole("button", { name: "Okay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
     expect((await screen.findByRole("alert")).textContent).toContain("nicht speichern");
     expect(screen.getByRole("status", { name: "Hinweis" })).toBeTruthy();
   });
@@ -581,6 +578,77 @@ describe("US-QS-16 · US-ACC-03 the onboarding parts of Heute", () => {
     await tasksShown();
     expect(paths()).toContain("/specimens/count");
     expect(paths()).not.toContain("/specimens/cards");
+  });
+
+  it("US-QS-32 · issue 2230 a keeper with plants waits for the hints before the tasks show, so a notice never lands above them later", async () => {
+    fakeServer(
+      world({ zones: [], cards: [{ id: "e1" }], hint: "function_unlocked", guideEnded: true }),
+    );
+    const release = holdPath("/onboarding/hints");
+    view();
+    await vi.waitFor(() => expect(paths()).toContain("/onboarding/hints"));
+    expect(tasksHidden()).toBe(true);
+    release();
+    expect(await tasksShown()).toBeTruthy();
+    expect(await screen.findByText(HINT_TEXTS.function_unlocked)).toBeTruthy();
+  });
+
+  it("US-QS-32 · issue 2230 a due note waits for its code, so the note never lands above the tasks later", async () => {
+    fakeServer(
+      world({ zones: [], cards: [{ id: "e1" }], hint: "function_unlocked", guideEnded: true }),
+    );
+    const original = HintNote.load;
+    let release!: () => void;
+    const code = new Promise<void>((done) => (release = done));
+    const load = vi.spyOn(HintNote, "load").mockImplementation(async () => {
+      await code;
+      return original();
+    });
+    const loaded = vi.spyOn(HintNote, "loaded").mockReturnValue(null);
+    try {
+      view();
+      await vi.waitFor(() => expect(paths()).toContain("/onboarding/hints"));
+      await vi.waitFor(() => expect(load).toHaveBeenCalled());
+      expect(tasksHidden()).toBe(true);
+      release();
+      expect(await tasksShown()).toBeTruthy();
+      expect(screen.getByText(HINT_TEXTS.function_unlocked)).toBeTruthy();
+    } finally {
+      load.mockRestore();
+      loaded.mockRestore();
+    }
+  });
+
+  it("US-QS-32 · issue 2230 · P-10 a keeper whose hints cannot be asked still sees the tasks: the answer ends as failed", async () => {
+    fakeServer(world({ zones: [], cards: [{ id: "e1" }] }));
+    // The sign-in is lost right after the count answered: the token of the hints cannot be read.
+    let countAnswered = false;
+    const serve = fetch;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url, init) => {
+        if (new URL(String(url)).pathname === "/specimens/count") countAnswered = true;
+        return serve(url, init);
+      }),
+    );
+    const lost = async () => {
+      if (countAnswered) throw new Error("sign-in lost");
+      return "tok";
+    };
+    render(
+      <MemoryRouter>
+        <TodayIntro
+          lookup={LOOKUP}
+          api="http://api"
+          token={lost}
+          onOpen={open}
+          fallback={<p role="status">Heute wird geladen …</p>}
+        >
+          <p>Aufgaben des Tages</p>
+        </TodayIntro>
+      </MemoryRouter>,
+    );
+    expect(await tasksShown()).toBeTruthy();
   });
 
   it("US-QS-16 when the count is not there the tasks still show, Heute is never blank", async () => {
@@ -704,7 +772,7 @@ describe("US-ONB-01 · #1795 the guide follows the plants of the account, not a 
     expect(await tasksShown()).toBeTruthy();
     await settle();
     expect(guideShown()).toBe(false);
-    expect(screen.queryByLabelText("Name der Pflanze")).toBeNull();
+    expect(screen.queryByLabelText("Art")).toBeNull();
   });
 
   it("US-ONB-01 an account without a plant shows the first-plant guide on Heute (#1795)", async () => {
@@ -765,13 +833,13 @@ describe("US-ONB-01 · #1795 the guide follows the plants of the account, not a 
         <AskAgain />
       </>,
     );
-    await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Monstera");
+    await userEvent.type(await screen.findByLabelText("Art"), "Monstera");
     const release = holdPath("/specimens/count");
     await userEvent.click(screen.getByRole("button", { name: "Neu laden" }));
     // The count is asked again while the guide is open (the hold records the request after the stub).
     await vi.waitFor(() => expect(paths()).toContain("/specimens/count"));
     await settle();
-    const typed = () => (screen.getByLabelText("Name der Pflanze") as HTMLInputElement).value;
+    const typed = () => (screen.getByLabelText("Art") as HTMLInputElement).value;
     expect(typed()).toBe("Monstera");
     release();
     await settle();

@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type UseFormSetError } from "react-hook-form";
+import { type UseFormSetError } from "react-hook-form";
 import { Button } from "@/shared/ui/button/button";
-import { cn } from "@/shared/lib/utils";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Banner } from "@/shared/patterns/states/banner/banner";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../shared/data";
 import { duplicate } from "../form";
 import { MoreDetails } from "../more-details/more-details";
 import { refusalText } from "@/shared/lib/error-text";
-import { ALERT_CLASSES } from "@/shared/ui/fields/form/server-refusal";
 import { NameStepFields, REQUIRED_STEP, TextStepFields } from "../required-fields/required-fields";
 import {
   EMPTY_PROPOSAL,
@@ -33,15 +33,15 @@ function useRefusal(error: ApiError | null, refuse: UseFormSetError<ProposalFiel
   return { alertRef, namesField, existing: error ? duplicate(error) : null };
 }
 
-/** The visibility notice (two lines at most at 360 px, US-QS-21) and the step counter. */
+/**
+ * The visibility line (one neutral line, US-QS-21, F-0246: a plain fact is not a warning) and the step counter.
+ */
 function StepNotice({ step }: { step: 1 | 2 }) {
   return (
     <>
-      <p className="rounded-lg border border-warning-border bg-warning p-2 text-sm text-warning-foreground">
-        Nur für dich sichtbar, bis die Prüfliste sie freigibt.
-      </p>
+      <p className="text-sm text-muted-foreground">Nur du siehst die Art, bis sie geprüft ist.</p>
       <p className="text-sm text-muted-foreground">
-        {step === 1 ? "Schritt 1 von 2 · * = Pflichtfeld" : "Schritt 2 von 2 · alles optional"}
+        {step === 1 ? "Schritt 1 von 2" : "Schritt 2 von 2"}
       </p>
     </>
   );
@@ -59,14 +59,9 @@ function RefusalNotice(props: {
   return (
     <>
       {error && !props.namesField && (
-        <div
-          role="alert"
-          tabIndex={-1}
-          ref={props.alertRef}
-          className={cn(ALERT_CLASSES, "md:col-span-2")}
-        >
-          <p>{refusalText(error)}</p>
-        </div>
+        <Banner variant="error" tabIndex={-1} ref={props.alertRef} className="md:col-span-2">
+          {refusalText(error)}
+        </Banner>
       )}
       {existing && (
         <div className="md:col-span-2">
@@ -97,12 +92,20 @@ function StepActions(props: {
     );
   return (
     <div className="sticky bottom-0 flex flex-col gap-2 bg-card pt-2 md:col-span-2">
-      <Button type="submit" size="touch" pending={props.pending} pendingLabel="Speichert …">
-        Vorschlag speichern
-      </Button>
-      <Button type="button" variant="secondary" onClick={props.onBack}>
-        Zurück
-      </Button>
+      <NetworkSlot>
+        <Button
+          type="submit"
+          size="touch"
+          pending={props.pending}
+          pendingLabel="Speichert …"
+          needsNetwork
+        >
+          Vorschlag speichern
+        </Button>
+        <Button type="button" variant="secondary" onClick={props.onBack}>
+          Zurück
+        </Button>
+      </NetworkSlot>
     </div>
   );
 }
@@ -122,7 +125,7 @@ export function ProposalForm(props: {
   /** The step to start on (tests and stories); the form starts on step 1. */
   startStep?: 1 | 2;
 }) {
-  const form = useForm<ProposalFields>({
+  const form = useFieldForm<ProposalFields>({
     resolver: zodResolver(proposalSchema),
     defaultValues: { ...EMPTY_PROPOSAL, latinName: props.start ?? "" },
   });

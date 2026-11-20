@@ -15,7 +15,7 @@ Median of 3 mobile runs per metric against `lighthouse` in `app/config/gates/qua
 
 ## Checked by
 
-`app/tools/check/release/check-lighthouse-summary.mjs`, `tools/lighthouse/lighthouse-run.sh`, `app/config/gates/quality-limits.json`.
+`app/tools/check/delivery/release/check-lighthouse-summary.mjs`, `tools/lighthouse/lighthouse-run.sh`, `app/config/gates/quality-limits.json`.
 
 ## Gate
 
@@ -23,4 +23,4 @@ Median of 3 mobile runs per metric against `lighthouse` in `app/config/gates/qua
 
 ## Evidence
 
-Tests in `app/tools/check/release/check-lighthouse-summary.test.mjs`. Measured under Lighthouse's simulated mobile throttling, not on a real phone. The same target runs nightly on `dev` in the job `lighthouse` of `.github/workflows/nightly.yml`; a value past its limit turns that job red (the `report` job that opens an issue does not wait for it).
+Tests in `app/tools/check/delivery/release/check-lighthouse-summary.test.mjs`. Measured under Lighthouse's simulated mobile throttling, not on a real phone. The same target runs nightly on `dev` in the job `lighthouse` of `.github/workflows/nightly.yml`; a value past its limit turns that job red (the `report` job that opens an issue does not wait for it).

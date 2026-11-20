@@ -8,7 +8,7 @@ import { ADD_PLANT_PATH, PATHS } from "../../shared/patterns/navigation/navigati
 import {
   taskFilterOf,
   WATERING_TASKS_ADDRESS,
-} from "../../today/today-page/today-filter/task-filter";
+} from "../../app/destinations/today-area/watering-view/today-filter/task-filter";
 
 const here = (path: string) => new URL(path, import.meta.url);
 const publicFile = (path: string) => readFileSync(here(`./public${path}`));
@@ -38,7 +38,6 @@ interface Manifest {
   scope: string;
   display: string;
   lang: string;
-  theme_color: string;
   background_color: string;
   icons: ManifestIcon[];
   screenshots: ManifestScreenshot[];
@@ -94,10 +93,8 @@ describe("US-QS-07 · installable web app and its icon", () => {
     expect(manifest.lang).toBe("de");
   });
 
-  it("US-QS-25 the manifest's theme colour is the light page background, not the brand green", () => {
-    expect(PAGE_LIGHT).toMatch(/^#[0-9a-f]{6}$/);
-    expect(manifest.theme_color).toBe(PAGE_LIGHT);
-    expect(manifest.theme_color).not.toBe(BRAND);
+  it("US-QS-25 the manifest has no theme colour, so the navigation area below the bottom bar follows the system scheme (issue 1894)", () => {
+    expect(manifest).not.toHaveProperty("theme_color");
   });
 
   it("US-QS-25 the splash colour (background_color) stays the brand green of the icon", () => {
@@ -112,6 +109,20 @@ describe("US-QS-07 · installable web app and its icon", () => {
     expect(metas).toHaveLength(2);
     expect(contentFor("light")).toBe(PAGE_LIGHT);
     expect(contentFor("dark")).toBe(PAGE_DARK);
+  });
+
+  it("US-QS-07 the viewport meta lets the on-screen keyboard shrink the layout, so a form's save button stays reachable while typing (issue 1663)", () => {
+    const viewport = htmlTags(indexHtml, META).find((meta) => meta.name === "viewport");
+    const parts = (viewport?.content ?? "").split(",").map((part) => part.trim());
+    expect(parts).toContain("interactive-widget=resizes-content");
+    expect(parts).toContain("viewport-fit=cover");
+  });
+
+  it('US-QS-32 · Q-44 index.html marks the page as not to translate: translate="no" on html and the google notranslate meta', () => {
+    const [htmlTag] = htmlTags(indexHtml, /<html\s([^>]*?)>/g);
+    expect(htmlTag).toMatchObject({ lang: "de", translate: "no" });
+    const google = htmlTags(indexHtml, META).find((meta) => meta.name === "google");
+    expect(google?.content).toBe("notranslate");
   });
 
   it("US-QS-07 the manifest lists 192 and 512 px PNG icons for any, a maskable 512 px icon and a monochrome one", () => {

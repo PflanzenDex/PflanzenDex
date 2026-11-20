@@ -9,7 +9,8 @@
 // Env: KC_URL (default http://keycloak:8080), KC_ADMIN_USER, KC_ADMIN_PASSWORD (compose: KEYCLOAK_SETUP_* if set, else
 // the bootstrap admin KEYCLOAK_ADMIN_*), AI_RESOURCE_URL (`${APP_URL}/api/mcp`).
 // No dependencies: plain Node, so it runs in the pinned node image with this folder mounted read-only.
-import { pathToFileURL } from "node:url";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 
 import { setupMcpRealm } from "./steps.mjs";
 import { SCOPES } from "./target-state.mjs";
@@ -91,7 +92,7 @@ async function main(env = process.env) {
   );
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {
     console.error(`ERROR: mcp realm setup failed: ${error.message}`);
     process.exitCode = 1;

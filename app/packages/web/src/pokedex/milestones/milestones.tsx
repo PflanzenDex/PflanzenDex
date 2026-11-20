@@ -1,6 +1,8 @@
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
+import { SpeciesNameInline } from "@/shared/species-name/species-name";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { dateText } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import {
   milestoneOverview,
@@ -10,6 +12,7 @@ import {
   type MilestoneTree,
 } from "@pflanzendex/core";
 import table from "./milestones.de.json";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 const ui = texts(table);
 
@@ -19,8 +22,6 @@ export const MILESTONES_LAYER = "milestones";
 const PAGE_SIZE = 2;
 
 const label = (m: Milestone) => (m.title === "" ? ui(m.level) : `${m.title}: ${ui(m.level)}`);
-const named = (s: { latin: string; german: string | null }) =>
-  s.german === null ? s.latin : `${s.german} (${s.latin})`;
 
 /** The milestones of the tree with the catch date of each species (US-POK-11). */
 function overviewOf(caught: readonly CaughtSpecies[], tree: MilestoneTree) {
@@ -62,7 +63,13 @@ function Open(props: { milestone: Milestone }) {
         />
       </div>
       <span>
-        {ui("remaining", { remaining: m.remaining, missing: m.missing.map(named).join(", ") })}
+        {ui("remainingLead", { remaining: m.remaining })}{" "}
+        {m.missing.map((s, i) => (
+          <Fragment key={s.latin}>
+            {i > 0 ? ", " : null}
+            <SpeciesNameInline scientific={s.latin} german={s.german} />
+          </Fragment>
+        ))}
       </span>
     </div>
   );
@@ -95,12 +102,18 @@ export function Milestones(props: {
       )}
       {reached.length > 0 && (
         <details>
-          <summary>
+          <DisclosureSummary>
             {reached.length === 1 ? ui("reachedOne") : ui("reachedMany", { count: reached.length })}
-          </summary>
+          </DisclosureSummary>
           <ul className="grid gap-1 pt-2">
             {reached.map((m) => (
-              <li key={m.id}>{m.reachedOn ? `${label(m)} (${m.reachedOn})` : label(m)}</li>
+              // The date is the trailing value of its row, in the form of the keeper's dates (US-QS-32, SG-FMT-01).
+              <li key={m.id} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0">{label(m)}</span>
+                {m.reachedOn && (
+                  <span className="shrink-0 tabular-nums">{dateText(m.reachedOn)}</span>
+                )}
+              </li>
             ))}
           </ul>
         </details>

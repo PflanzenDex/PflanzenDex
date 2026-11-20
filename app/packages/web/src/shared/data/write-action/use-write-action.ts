@@ -11,7 +11,7 @@ const t = texts(table);
 
 export const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte melde dich neu an." };
 
-/** Says the result of a write as a toast: the German text and its kind (`useSay` of the toast provider, US-QS-07). */
+/** Says the result of a write: the German text and its kind (`useSay` of the toast provider: a success is announced, an error is a toast, US-QS-32). */
 export type WriteSay = (message: string, kind?: "success" | "error") => void;
 
 /**
@@ -30,8 +30,8 @@ const refusalTextLazily = (error: ApiError) =>
  * One tap that writes: only one request runs at a time (a double tap sends one), afterwards `after` reloads the page
  * so it shows the real state, and the message says what changed (P-09). A refusal stays visible (P-10) and no message
  * is shown then. Without a token nothing is sent and the user is asked to sign in again. Without a network the write is buffered and
- * sent later (`outbox.ts`, US-QS-10). With `say` the result goes to a toast instead of `message` and `error`, so it inserts
- * nothing above the content (DS-54); the caller then shows no inline notice of its own.
+ * sent later (`outbox.ts`, US-QS-10). With `say` the result goes to `say` instead of `message`: a success is announced and a refusal is a toast
+ * (`useSay`, US-QS-32), so it inserts nothing above the content (DS-54); the caller then shows no inline notice of its own.
  */
 export function useWriteAction(
   token: () => Promise<string | undefined>,

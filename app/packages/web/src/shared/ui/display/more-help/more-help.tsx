@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
+import { DisclosureSummary } from "./disclosure-summary/disclosure-summary";
 
 export type MoreHelpProps = {
   /** The one line of help that is always visible (US-QS-24). */
@@ -18,9 +19,9 @@ export function MoreHelp({ children, more, className }: MoreHelpProps) {
     <div className={cn("text-sm text-muted-foreground", className)}>
       <p className="m-0">{children}</p>
       <details className="mt-1">
-        <summary className="inline-flex min-h-[44px] cursor-pointer items-center text-primary underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+        <DisclosureSummary className="inline-flex w-auto gap-2 text-primary underline underline-offset-2">
           Mehr erfahren
-        </summary>
+        </DisclosureSummary>
         <div className="mt-1">{more}</div>
       </details>
     </div>

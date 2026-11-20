@@ -20,6 +20,7 @@ export const FriendsNewsTile = lazyPage(() =>
 export const FriendsNewsLayer = lazyPage(() =>
   import("./feed/friends-news/friends-news").then((m) => ({ default: m.FriendsNewsLayer })),
 );
-// The route fallbacks of "Freunde" and a friend's collection (US-QS-14, issue 1727): the heading and the page's skeleton.
-export { FriendsRouteSkeleton } from "./pages/friends-page/friends-page.skeleton";
-export { FriendCollectionRouteSkeleton } from "./pages/friend-collection/friend-collection.skeleton";
+// The bodies of the skeletons of "Freunde" and of a friend's collection (US-QS-14, issue 1727, issue 2243): the route's
+// fallbacks in the app draw them under the heading, the start frame draws the body of "Freunde" alone.
+export { FriendsPageBody } from "./pages/friends-page/friends-page-body/friends-page-body";
+export { FriendCollectionSkeleton } from "./pages/friend-collection/friend-collection.skeleton";

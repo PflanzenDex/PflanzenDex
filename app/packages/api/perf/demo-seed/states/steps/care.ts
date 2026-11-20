@@ -90,3 +90,18 @@ export async function specimenWithoutLocation(clara: Ctx): Promise<void> {
     { latin, caughtDaysAgo: 2 },
   ]);
 }
+
+/**
+ * Ben's Zamioculcas "Neu" has neither a location nor a target: its own care profile gives the dormancy window and no
+ * dormancy location (US-BES-09), so the plant row of "Nach Pflegephase" names it "Kein Standort" with "Standort setzen"
+ * under the row (US-QS-32, issue 2322). The base seed leaves this species out of Ben's plants (every 4th catalog row).
+ */
+export async function plantWithoutLocationAndTarget(ben: Ctx): Promise<void> {
+  const latin = "Zamioculcas zamiifolia";
+  const species = await speciesByLatin(ben, [latin]);
+  await ben.api.ok(ben.sub, "PUT", `/care-profiles/${species.get(latin)}`, {
+    dormancyFrom: "10-10",
+    dormancyUntil: "02-28",
+  });
+  await ensureSpecimens(ben, species, new Map(), [{ latin, marker: "Neu", caughtDaysAgo: 12 }]);
+}

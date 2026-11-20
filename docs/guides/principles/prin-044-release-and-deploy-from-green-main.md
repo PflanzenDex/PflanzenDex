@@ -15,7 +15,7 @@ Number of releases created from a commit without a successful CI run on `main`, 
 
 ## Checked by
 
-`app/config/project/release.config.js`, tests in `app/tools/check/release/release-config.test.mjs`.
+`app/config/project/release.config.js`, tests in `app/tools/check/delivery/release/release-config.test.mjs`.
 
 ## Gate
 

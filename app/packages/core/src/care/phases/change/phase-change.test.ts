@@ -5,11 +5,14 @@ import type { PhasesRow } from "../phases";
 const row = (over: Partial<PhasesRow> = {}): PhasesRow => ({
   specimenId: "s1",
   name: "Ficus",
+  marker: null,
+  speciesName: "Ficus",
   speciesId: "sp1",
   phase: "dormancy",
   locationId: "summer",
   targetLocationId: "winter",
   nextChange: { date: "2026-11-01", phase: "dormancy", days: 0 },
+  photo: null,
   ...over,
 });
 

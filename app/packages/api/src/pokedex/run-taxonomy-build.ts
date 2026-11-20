@@ -1,3 +1,4 @@
+import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { orderTaxonomyBuild, runTaxonomyBuild } from "@pflanzendex/core";
 import type { CatalogNames, SourceClient, TaxonomyStore } from "@pflanzendex/core";
@@ -98,7 +99,8 @@ export async function runTaxonomyBuildCommand(
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// eslint-disable-next-line security/detect-non-literal-fs-filename -- argv[1] is the path this file was started with: compared, never read
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [, , ...args] = process.argv; // node and the script path come first
   process.exitCode = await runTaxonomyBuildCommand(args, process.env);
 }

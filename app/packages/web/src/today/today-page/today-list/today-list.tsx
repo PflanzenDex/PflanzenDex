@@ -1,27 +1,29 @@
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
-import { dateText } from "@/shared/lib/format";
-import { texts } from "@/shared/lib/text-rules/texts";
+import { summaryDate } from "@/shared/lib/format";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
+import { GroupedList } from "@/shared/lists/grouped-list/grouped-list";
+import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import type { TodayList } from "@pflanzendex/core";
+import { localToday, type TodayList } from "@pflanzendex/core";
 import type { ReactNode } from "react";
-import type { Request } from "../../../shared/data";
-import { isTreatment, TodayRow, type TodayDestination } from "../today-row/today-row";
+import { currentTimeZone, type Request } from "../../../shared/data";
+import { isTreatment, TodayRow } from "../today-row/today-row";
+import type { TodayDestination } from "../../today-destinations";
 import { NowSkeleton } from "../today-skeleton/today-skeleton";
 import table from "../../today.de.json";
 
 const t = texts(table);
-
-export type { TodayDestination };
+const plural = plurals(table);
 
 /**
  * Rows per page of the further tasks below the tiles and in the layer `?sheet=tasks` (starting values, assumption;
  * US-QS-18): three on a phone, so Heute still fits 360×640 px; six from 768 px.
  */
 const PAGE_SIZE = { phone: 3, md: 6 } as const;
-const laterText = (n: number): string =>
-  n === 1 ? t("later.one") : t("later.other", { count: n });
+/** "Ein weiterer Behandlungstermin …" for one, "{count} weitere …" otherwise, the count with a no-break space (US-QS-32). */
+const laterText = (n: number): string => plural.counted("later", n);
 
 /**
  * The single most urgent item and, below the tiles, the further tasks as compact rows (US-QS-18). Treatment items are
@@ -34,17 +36,19 @@ function Content(props: {
 }) {
   const { list } = props;
   const [first] = list.items;
+  const today = localToday(new Date(), currentTimeZone());
+  // The "Stand" line is left out on the day of the list: it would only repeat "heute" (US-QS-32).
+  const stand = list.date === today ? undefined : summaryDate(list.date, today);
   return (
     <>
       {first ? (
-        <TodayRow
-          item={first}
-          date={dateText(list.date)}
-          onOpen={props.onOpen}
-          {...(isTreatment(first) && props.treatmentsEntry
-            ? { action: props.treatmentsEntry }
-            : {})}
-        />
+        isTreatment(first) && props.treatmentsEntry ? (
+          <TodayRow item={first} date={stand} treatmentEntry={props.treatmentsEntry} />
+        ) : (
+          <GroupedList>
+            <TodayRow item={first} date={stand} />
+          </GroupedList>
+        )
       ) : (
         <EmptyState
           title={t("empty.title")}
@@ -60,7 +64,6 @@ function Content(props: {
 /** The further tasks of the day, treatments excluded: one pager, in the page below the tiles or in the layer. */
 export function FurtherTasks(props: {
   list: TodayList;
-  onOpen: (d: TodayDestination) => void;
   param?: PagerPart;
   /** The page takes the free height below the tiles (the page, not the layer). */
   fit?: boolean;
@@ -76,16 +79,16 @@ export function FurtherTasks(props: {
       // The rows do not count towards the height of the section (size containment): the section keeps one row and the
       // pager at a larger text size without growing with the page it shows, so the page size follows the free height
       // only (issue 1113).
-      {...(props.fit ? { listClassName: "[contain:size]" } : {})}
+      listClassName={props.fit ? `${ROW_GROUP} [contain:size]` : ROW_GROUP}
       getKey={(item) => item.id}
       {...(props.param ? { param: props.param } : {})}
-      renderItem={(item) => <TodayRow item={item} onOpen={props.onOpen} />}
+      renderItem={(item) => <TodayRow item={item} bare />}
     />
   );
 }
 
 /** What stands below the tiles: the further tasks inline and the later treatments in small text (US-QS-18). */
-export function Below(props: { list: TodayList; onOpen: (d: TodayDestination) => void }) {
+export function Below(props: { list: TodayList }) {
   const { list } = props;
   const [first] = list.items;
   const rest = list.items.slice(1).filter((item) => !isTreatment(item));
@@ -98,12 +101,14 @@ export function Below(props: { list: TodayList; onOpen: (d: TodayDestination) =>
           <h2 id="tasks-title" className="text-sm font-semibold">
             {t("tasks.title")}
           </h2>
-          <FurtherTasks list={list} onOpen={props.onOpen} fit />
+          <FurtherTasks list={list} fit />
         </section>
       )}
       {first && list.upcoming > 0 && (
         <p className="text-sm text-muted-foreground">
-          {rest.length > 0 ? t("later.short", { count: list.upcoming }) : laterText(list.upcoming)}
+          {rest.length > 0
+            ? plural.counted("later.short", list.upcoming)
+            : laterText(list.upcoming)}
         </p>
       )}
     </>

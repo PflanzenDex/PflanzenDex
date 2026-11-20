@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { useCallback } from "react";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { texts } from "@/shared/lib/text-rules/texts";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import {
   collectorProgress,
   milestoneTreeOf,
@@ -19,6 +19,7 @@ import table from "./collector-rank.de.json";
 export const PROGRESS_LAYER = "progress";
 
 const ui = texts(table);
+const plural = plurals(table);
 
 /** The text key of each rank: the keys of a message table are camelCase (FR-QG-26). */
 const RANK_KEY: Record<Rank, keyof typeof table> = {
@@ -44,10 +45,13 @@ export function CollectorRank(props: { caught: number; tree?: TreeTotals | null 
   const p = collectorProgress(props.caught, props.tree ?? null);
   const { species, orders } = p;
   const total = species.total === null ? ui("unknown") : String(species.total);
+  // Without the tree the total is unknown: the count names the caught species and says so, never "von unbekannt" (P-08).
   const count =
-    species.percent === null
-      ? ui("countWithoutPercent", { caught: species.caught, total })
-      : ui("countWithPercent", { caught: species.caught, total, percent: species.percent });
+    species.total === null
+      ? plural.counted("unknownTotal", species.caught)
+      : species.percent === null
+        ? ui("countWithoutPercent", { caught: species.caught, total })
+        : ui("countWithPercent", { caught: species.caught, total, percent: species.percent });
   return (
     <section aria-label={ui("sectionLabel")} className="mb-3 grid gap-1 rounded-lg border p-3">
       <p className="text-lg font-semibold">{rankText(p.rank)}</p>
@@ -84,9 +88,11 @@ export function CollectorRank(props: { caught: number; tree?: TreeTotals | null 
 }
 
 /**
- * The progress as one row (US-QS-22): the rank and the caught species; the total only when the tree knows it, otherwise
- * one line says that it follows (P-08). Species that do not count yet are named here, so they do not vanish (P-10).
- * The row opens the layer "Fortschritt" with the bar, the orders and the way to the milestones.
+ * The progress as one row (US-QS-22, US-QS-32): the button carries no count, so its label never shows the total; the
+ * count is in the caption under "Sammlung" and in the layer "Fortschritt". The rank itself can still change once the
+ * tree arrives, because it comes from the tree's count of species. Species that do not count yet are named below the
+ * button, so they do not vanish (P-10). The button opens the layer "Fortschritt" with the bar, the orders and the way
+ * to the milestones.
  */
 export function ProgressRow(props: {
   caught: number;
@@ -94,23 +100,25 @@ export function ProgressRow(props: {
   tree?: TreeTotals | null;
 }) {
   const p = collectorProgress(props.caught, props.tree ?? null);
-  const { species } = p;
-  // One line (US-QS-22): the total only when the tree knows it; why it is unknown and the bar are in the layer.
-  const caught =
-    species.total === null
-      ? ui("rowCaught", { caught: props.caught })
-      : ui("rowOfTotal", { caught: species.caught, total: species.total });
-  const uncounted =
-    props.uncounted === 0
-      ? ""
-      : ` · ${props.uncounted === 1 ? ui("uncountedOne") : ui("uncountedMany", { count: props.uncounted })}`;
   return (
-    <LayerOpener
-      id={PROGRESS_LAYER}
-      className="h-auto min-h-11 w-full justify-start gap-0 whitespace-normal py-1 text-left"
-    >
-      <span className="font-semibold">{`${rankText(p.rank)} · ${caught}${uncounted}`}</span>
-    </LayerOpener>
+    <div className="grid gap-1">
+      <LayerOpener
+        id={PROGRESS_LAYER}
+        className="h-auto min-h-11 w-full justify-start gap-0 whitespace-normal py-1 text-left"
+      >
+        <span className="font-semibold">
+          {rankText(p.rank)} {/* The button says what it opens for screen readers (US-QS-32). */}
+          <span className="sr-only">{ui("rowOpens")}</span>
+        </span>
+      </LayerOpener>
+      {props.uncounted === 0 ? null : (
+        <p className="m-0 text-sm text-muted-foreground">
+          {props.uncounted === 1
+            ? ui("uncountedOne")
+            : ui("uncountedMany", { count: props.uncounted })}
+        </p>
+      )}
+    </div>
   );
 }
 

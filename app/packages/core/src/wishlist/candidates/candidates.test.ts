@@ -141,6 +141,30 @@ describe("US-WUN-01 what a candidate shows", () => {
   });
 });
 
+describe("US-QS-32 one name per wish (F-0067)", () => {
+  it("US-QS-32 a German name equal to the scientific name is no German name: the title is the name once", async () => {
+    wishes.seed("anna", {
+      id: "m",
+      name: "Monstera adansonii",
+      german: "Monstera adansonii",
+      targetZoneId: Z3,
+    });
+    const [c] = (await candidates()).candidates;
+    expect(c).toMatchObject({ title: "Monstera adansonii", german: "Monstera adansonii" });
+  });
+
+  it("US-QS-32 the duplicate and unfit hints name the wish once too", async () => {
+    wishes.seed("anna", {
+      id: "m",
+      name: "Monstera adansonii",
+      german: "Monstera adansonii",
+      targetZoneId: null,
+    });
+    const list = await candidates();
+    expect(list.unfit.map((u) => u.title)).toEqual(["Monstera adansonii"]);
+  });
+});
+
 describe("US-WUN-01 empty list and the next action (P-09)", () => {
   it("US-WUN-01 without open candidates the text is 'Keine offenen Kandidaten in der Wunschliste.'", async () => {
     const list = await candidates();
@@ -155,7 +179,7 @@ describe("US-WUN-01 empty list and the next action (P-09)", () => {
     const { hint, candidates: list } = await candidates();
     expect(list[0]?.priority.kind).toBe("other");
     expect(list[0]?.priority.text).toContain("Hier steht schon 1 Pflanze");
-    expect(hint.nextAction).not.toContain("gleich belegt");
+    expect(hint.nextAction ?? "").not.toContain("gleich belegt");
     stock = new ZoneStockStub({ anna: stockAnna(2, 2, 2) });
     expect((await candidates()).hint.nextAction).toContain("gleich belegt");
   });
@@ -165,14 +189,26 @@ describe("US-WUN-01 empty list and the next action (P-09)", () => {
     const { hint } = await candidates();
     expect(hint.text).toContain("Aloe");
     expect(hint.text).toContain("Zone 3");
-    expect(hint.nextAction).not.toBe("");
+    // The one wish is in the thinnest zone: the row says so, the page repeats nothing (F-0162).
+    expect(hint.nextAction).toBeNull();
+  });
+
+  it("US-QS-32 F-0162 the first row of the thinnest zone keeps its count; the room is said by its priority text", async () => {
+    wishes.seed("anna", { id: "a", name: "Aloe", targetZoneId: Z2 });
+    wishes.seed("anna", { id: "b", name: "Bryophyllum", targetZoneId: Z3 });
+    wishes.seed("anna", { id: "c", name: "Cereus", targetZoneId: Z3 });
+    const [first, second, third] = (await candidates()).candidates;
+    expect(first?.zoneText).toBe("Zone 3 · 1 Pflanze");
+    expect(first?.priority.text).toContain("am meisten Platz");
+    expect(second?.zoneText).toBe("Zone 3 · 1 Pflanze");
+    expect(third?.zoneText).toBe("Zone 2 · 5 Pflanzen");
   });
 
   it("US-WUN-01 if no candidate has a usable zone, the hint asks for a target zone instead of ranking blindly", async () => {
     wishes.seed("anna", { id: "a", name: "Aloe" });
     const { hint } = await candidates();
     expect(hint.text).toContain("Ziel-Lichtzone");
-    expect(hint.nextAction).toContain("Zone");
+    expect(hint.nextAction).toBe("Lege einen Wunsch mit Ziel-Zone an.");
   });
 
   it("US-WUN-01 the zones with their stock come along for the form, also with count 0", async () => {
@@ -255,9 +291,10 @@ describe("FR-WUN-03 hints for wishes without a fitting zone", () => {
     wishes.seed("anna", { id: "a", name: "Aloe", german: "Aloe", targetZoneId: "zone-1" });
     const { unfit } = await candidates();
     expect(unfit).toHaveLength(1);
+    // A German name equal to the scientific one is not doubled in the title (US-QS-32, F-0067).
     expect(unfit[0]).toMatchObject({
       id: "a",
-      title: "Aloe (Aloe)",
+      title: "Aloe",
       kind: "zone_outside",
       zone: "Anzucht",
     });

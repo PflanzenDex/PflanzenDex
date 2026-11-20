@@ -22,16 +22,39 @@ describe("US-EQU-06 sensors and their place", () => {
     expect(container.textContent).toBe("");
   });
 
+  it("US-EQU-06 the view renders no heading named Sensoren: the sheet owns the title, so it shows once (SG-BASE-01, issue 2168)", () => {
+    const { container } = render(<SensorsView view={view()} actions={actions()} />);
+    expect(screen.queryByRole("heading", { name: "Sensoren" })).toBeNull();
+    // The section names nothing of its own: a reference to a heading that is gone would name it by nothing.
+    expect(container.querySelector("section")?.hasAttribute("aria-labelledby")).toBe(false);
+  });
+
   it("US-EQU-06 an unassigned sensor reads as not assigned and can be put at a specimen", async () => {
     const a = actions();
     render(<SensorsView view={view()} actions={a} />);
-    const select = screen.getByLabelText("Zuordnung von Feuchtesensor") as HTMLSelectElement;
+    const select = screen.getByRole("combobox", {
+      name: "Zugeordnet zu Feuchtesensor",
+    }) as HTMLSelectElement;
     expect(select.value).toBe("");
     await userEvent.setup().selectOptions(select, "specimen:p1");
     expect(a.onTarget).toHaveBeenCalledWith(expect.objectContaining({ id: "s1" }), {
       specimenId: "p1",
       locationId: null,
     });
+  });
+
+  it("US-QS-32 the assignment is named by its visible text 'Zugeordnet zu' and the sensor name (WCAG 2.5.3, issue 1981)", () => {
+    render(<SensorsView view={view()} actions={actions()} />);
+    const select = screen.getByRole("combobox", { name: "Zugeordnet zu Feuchtesensor" });
+    expect(select.tagName).toBe("SELECT");
+    // No second, longer name of its own: the name is the visible text and the sensor, not "Zuordnung von …".
+    expect(screen.queryByLabelText(/Zuordnung von/)).toBeNull();
+  });
+
+  it("US-QS-32 · issue 1960 the empty choice reads 'Nicht zugeordnet', not 'Keinem (nicht zugeordnet)'", () => {
+    render(<SensorsView view={view()} actions={actions()} />);
+    expect(screen.getByRole("option", { name: "Nicht zugeordnet" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Keinem (nicht zugeordnet)" })).toBeNull();
   });
 
   it("US-EQU-06 shows the current location and clearing sends none", async () => {
@@ -42,7 +65,9 @@ describe("US-EQU-06 sensors and their place", () => {
         actions={a}
       />,
     );
-    const select = screen.getByLabelText("Zuordnung von Feuchtesensor") as HTMLSelectElement;
+    const select = screen.getByRole("combobox", {
+      name: "Zugeordnet zu Feuchtesensor",
+    }) as HTMLSelectElement;
     expect(select.value).toBe("location:l1");
     await userEvent.setup().selectOptions(select, "");
     expect(a.onTarget).toHaveBeenCalledWith(expect.objectContaining({ id: "s1" }), {

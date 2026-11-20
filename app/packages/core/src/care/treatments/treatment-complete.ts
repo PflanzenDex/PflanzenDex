@@ -20,6 +20,8 @@ export interface CompleteDependencies {
 
 export interface CompleteResult {
   readonly treatment: TreatmentRow;
+  /** Whether this call set done; a tap on a treatment that was already done (another device) changes nothing (US-QS-32). */
+  readonly changed: boolean;
 }
 
 // The client sends the time zone (the one of the profile, else the device's, US-ACC-02); it decides which date "today" is.
@@ -49,8 +51,8 @@ export const treatmentComplete = (deps: CompleteDependencies) =>
         input.id,
         localToday(deps.clock(), input.timeZone),
       );
-      return done === "unknown"
-        ? failed(appError("treatment.not_found"))
-        : ok<CompleteResult>({ treatment: done });
+      if (done === "unknown") return failed(appError("treatment.not_found"));
+      const { changed, ...treatment } = done;
+      return ok<CompleteResult>({ treatment, changed });
     },
   });

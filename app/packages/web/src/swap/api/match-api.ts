@@ -9,6 +9,8 @@ export interface DeckData {
   readonly entries: readonly MatchEntry[];
   /** Why there is no card to decide (US-TAU-07); `null` when there is one. */
   readonly empty?: EmptyReason | null;
+  /** My open requests on matching offers (US-TAU-02); the summary starts from it, absent counts as 0. */
+  readonly requested?: number;
 }
 
 /** The match deck (US-TAU-01): open offers of friends whose species is on the own wishlist, derived on every request. */
@@ -21,7 +23,7 @@ export async function loadMatchDeck(
   return call<DeckData>(fetchFn, `${api}/exchange/match?timeZone=${timeZone}`, token);
 }
 
-/** "Nein" or "Später" on a card (US-TAU-02): stored privately for this account, the giver learns nothing (FR-TAU-02). */
+/** "Ablehnen" or "Später" on a card (US-TAU-02): stored privately for this account, the giver learns nothing (FR-TAU-02). */
 export async function saveAnswer(
   api: string,
   token: string,
@@ -36,7 +38,7 @@ export async function saveAnswer(
   return r.ok ? { ok: true, value: r.value as { answeredOn: string } } : r;
 }
 
-/** "Rückgängig" after Nein or Später, "Wieder ansehen" and "Aus der Liste entfernen" (US-TAU-06): takes the stored answer back. */
+/** "Rückgängig" after Ablehnen or Später, "Wieder ansehen" and "Aus der Liste entfernen" (US-TAU-06): takes the stored answer back. */
 export async function undoAnswer(
   api: string,
   token: string,
@@ -50,7 +52,7 @@ export async function undoAnswer(
   )("DELETE", `/exchange/match/${encodeURIComponent(offerId)}/answer`);
 }
 
-/** "Ja" on a card (US-TAU-03): the swap request of US-SOZ-09; asking twice answers `already_requested`. On a card that fits both ways an own offer can be proposed as the counter-offer (US-TAU-05). */
+/** "Anfragen" on a card (US-TAU-03): the swap request of US-SOZ-09; asking twice answers `already_requested`. On a card that fits both ways an own offer can be proposed as the counter-offer (US-TAU-05). */
 export async function answerYes(
   api: string,
   token: string,

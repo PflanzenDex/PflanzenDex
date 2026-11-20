@@ -1,6 +1,7 @@
 import { LEAF_LIMITS, localToday } from "@pflanzendex/core";
 import { z } from "zod";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { dateValue } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 import { currentTimeZone } from "../../../shared/data";
 import table from "../plant-leaves.de.json";
 import type { LeafInput } from "../leaves-api";
@@ -21,7 +22,7 @@ const sizeOk = (text: string): boolean => {
 
 /** Input of a leaf in the form: fast feedback per field in German; the server validates again (P-03). */
 export const leafSchema = z.object({
-  date: z.string(),
+  date: dateValue(),
   length: z.string().refine(sizeOk, t("error.size")),
   width: z.string().refine(sizeOk, t("error.size")),
   note: z

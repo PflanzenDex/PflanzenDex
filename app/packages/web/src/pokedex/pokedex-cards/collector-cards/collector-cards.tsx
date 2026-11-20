@@ -41,7 +41,7 @@ export function CollectorCards(props: { api: string; token: () => Promise<string
         loadingFallback={<CollectorCardsSkeleton label={ui("loading")} />}
         empty={{
           isEmpty: (cards: Card[]) => cards.length === 0,
-          title: "Noch keine Sammlerkarten.",
+          title: "Noch keine Sammlerkarten",
           description: "Sie erscheinen, sobald der Katalog-Baum aufgebaut ist.",
           action: { label: "Zum Artenkatalog", href: "/species" },
         }}

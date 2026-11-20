@@ -10,6 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { UNMEASURED_ENV, unmeasuredFrom } from "./coverage/coverage-config.mjs";
+import { isEntryPoint } from "../shared/entry-point.mjs";
 
 /** The threshold lives in quality-limits.json (`crap.max`, FR-QG-16/18); a function above it fails. */
 export function readMaxCrap(
@@ -130,4 +131,4 @@ function main() {
   console.log("crap: ok");
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main();
+if (isEntryPoint(import.meta.url)) main();

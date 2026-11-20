@@ -3,7 +3,7 @@
 // catalog, serves it on the host and writes `public/screenshots/*.png` at 390 x 844 px (device scale 1). Rerunning it
 // replaces the files. Usage: `npm run pwa-screenshots -w @pflanzendex/web`.
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -161,7 +161,8 @@ async function main() {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// eslint-disable-next-line security/detect-non-literal-fs-filename -- argv[1] is the path this file was started with: compared, never read
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {
     console.error(error);
     process.exit(1);

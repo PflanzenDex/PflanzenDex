@@ -1,6 +1,6 @@
 import type { EquipmentRow } from "../../../equipment-api";
 import { useFeature } from "../../../../shared/data";
-import { withUnit } from "@/shared/lib/format";
+import { dateText, withUnit } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LAMP_TYPE, POT_TYPE, STATUS_LABELS, TYPE_LABELS } from "../../../labels";
 import table from "../../../equipment.de.json";
@@ -10,11 +10,12 @@ import { Sharing, type SharingActions } from "../../parts/sharing/sharing";
 
 const t = texts(table);
 
+/** A fact is a label and a value; only a word longer than the column breaks (F-0228, US-QS-32). */
 function Fact(props: { label: string; value: string }) {
   return (
     <>
       <dt>{props.label}</dt>
-      <dd className="m-0 break-all">{props.value}</dd>
+      <dd className="m-0 [overflow-wrap:break-word]">{props.value}</dd>
     </>
   );
 }
@@ -49,26 +50,30 @@ export function ItemCard(props: {
   const { item, zone } = props;
   const social = useFeature("social");
   const maker = [item.manufacturer, item.model].filter(Boolean).join(" ");
-  const price = item.priceEur === null ? null : `${item.priceEur.toFixed(2).replace(".", ",")} €`;
+  // The euro sign is the unit of the price: no break before it (US-QS-32, SG-TYPE-07).
+  const price =
+    item.priceEur === null ? null : `${item.priceEur.toFixed(2).replace(".", ",")}\u00a0€`;
   // Known values are rows; what is unknown is folded into one line (P-08), until the shared fold (#1030).
   const all: [string, string | null | undefined][] = [
     ["Hersteller und Modell", maker || null],
     ["Produkt-ID", item.productId],
     ...(item.type === LAMP_TYPE
-      ? ([["Lichtzone", zone ?? "ohne Zone"]] as [string, string][])
+      ? ([["Lichtzone", zone ?? t("zone.missing")]] as [string, string][])
       : []),
     ["Preis", price],
-    ["Gekauft am", item.boughtAt],
+    ["Gekauft am", item.boughtAt ? dateText(item.boughtAt) : null],
   ];
   const facts = [...(all.filter(([, v]) => v) as [string, string][]), ...potRows(item)];
   const unknown = all.filter(([, v]) => !v).map(([l]) => l);
   return (
-    <div className="min-w-0 rounded-lg border border-border p-3">
+    // The facts stack, label over value, in a box narrower than 12 rem: at 200 % text the label column alone took the room
+    // of the value (the same rule as FactGrid, F-0228 and F-0105, US-QS-32).
+    <div className="@container min-w-0 rounded-lg border border-border p-3">
       <p className="text-sm text-muted-foreground">
         {TYPE_LABELS[item.type]}
         {item.status ? ` · ${STATUS_LABELS[item.status]}` : ""}
       </p>
-      <dl className="m-0 mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+      <dl className="m-0 mt-2 grid grid-cols-1 gap-x-3 gap-y-1 text-sm @min-[12rem]:grid-cols-[auto_minmax(0,1fr)]">
         {facts.map(([label, value]) => (
           <Fact key={label} label={label} value={value} />
         ))}

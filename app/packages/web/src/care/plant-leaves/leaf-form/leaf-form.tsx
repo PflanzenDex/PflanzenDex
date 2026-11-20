@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type Control } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import { LEAF_LIMITS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { Field } from "@/shared/ui/fields/form/field/field";
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
@@ -24,13 +24,13 @@ function Fields(props: { control: Control<LeafFields>; today: string }) {
       <Field control={props.control} name="date" label={t("form.date")}>
         {(field) => <DateField {...field} max={props.today} />}
       </Field>
-      <Field control={props.control} name="length" label={t("form.length")}>
+      <Field control={props.control} name="length" label={t("form.length")} optional suffix="mm">
         {(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
       </Field>
-      <Field control={props.control} name="width" label={t("form.width")}>
+      <Field control={props.control} name="width" label={t("form.width")} optional suffix="mm">
         {(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
       </Field>
-      <Field control={props.control} name="note" label={t("form.note")}>
+      <Field control={props.control} name="note" label={t("form.note")} optional>
         {(field) => <Textarea {...field} rows={2} maxLength={LEAF_LIMITS.note.max} />}
       </Field>
     </>
@@ -47,7 +47,7 @@ export function LeafForm(props: {
   onSend: (input: LeafInput) => Promise<ApiError | null>;
   onSaved: () => void;
 }) {
-  const form = useForm<LeafFields>({
+  const form = useFieldForm<LeafFields>({
     resolver: zodResolver(leafSchema),
     defaultValues: leafDefaults(),
   });
@@ -73,6 +73,7 @@ export function LeafForm(props: {
           size="touch"
           className="w-full"
           disabled={form.formState.isSubmitting}
+          needsNetwork
         >
           {t("form.save")}
         </Button>

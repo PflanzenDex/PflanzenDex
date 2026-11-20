@@ -10,7 +10,7 @@ export async function loadSeen(
   return r.ok ? { ok: true, value: r.value.seen } : r;
 }
 
-/** Marks species as seen (US-POK-12): "Okay" on the banner, and the silent creation on the first visit. */
+/** Marks species as seen (US-POK-12): "Als gesehen markieren" on the banner, and the silent creation on the first visit. */
 export async function markSeen(
   api: string,
   token: string,

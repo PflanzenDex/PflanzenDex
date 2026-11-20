@@ -107,24 +107,28 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
   it("without offers it says what to do next (P-09)", async () => {
     server({ offers: [] });
     show();
-    expect(await screen.findByText(/Zurzeit bietet kein Freund etwas an/)).toBeTruthy();
-    expect(screen.getByText(/Lade Freunde ein/)).toBeTruthy();
+    expect(await screen.findByText(/Deine Freunde bieten gerade nichts an\./)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Freund hinzufügen" }).getAttribute("href")).toBe(
+      "/friends?sheet=add",
+    );
   });
 
   it("the filters ask the server: type and 'you lack it'", async () => {
     const { gets } = server();
     show();
     await screen.findByRole("list", { name: "Angebote von Freunden" });
-    await userEvent.selectOptions(screen.getByLabelText("Art des Angebots"), "plant");
+    await userEvent.selectOptions(screen.getByLabelText("Angebotsform"), "plant");
     await vi.waitFor(() => expect(gets.at(-1)).toContain("type=plant"));
-    await userEvent.click(screen.getByLabelText("Fehlt mir"));
+    await userEvent.click(screen.getByLabelText("Nur was dir fehlt"));
     await vi.waitFor(() => expect(gets.at(-1)).toContain("lack=true"));
   });
 
-  it("requesting with free text sends one request, confirms it and marks the offer as requested", async () => {
+  it("US-QS-32 requesting with free text sends one request, confirms it and marks the offer as requested; the button reads Pflanze anfragen", async () => {
     const { posts } = server();
     show();
-    await userEvent.click(await screen.findByRole("button", { name: "Anfragen: Echte Aloe" }));
+    const request = await screen.findByRole("button", { name: "Pflanze anfragen: Echte Aloe" });
+    expect(request.textContent).toBe("Pflanze anfragen");
+    await userEvent.click(request);
     await userEvent.type(screen.getByLabelText(/Was bietest du an/), "Einen Haworthia-Ableger");
     await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));
     expect(await screen.findByText(/Deine Anfrage für Echte Aloe ist gesendet/)).toBeTruthy();
@@ -132,13 +136,15 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
       { path: "/offers/o1/request", body: { counterText: "Einen Haworthia-Ableger" } },
     ]);
     await vi.waitFor(() => expect(screen.getByText("Angefragt")).toBeTruthy());
-    expect(screen.queryByRole("button", { name: /Anfragen: Echte Aloe/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Pflanze anfragen: Echte Aloe/ })).toBeNull();
   });
 
   it("the counter-offer lists only my active specimens that I share, and is sent by id", async () => {
     const { posts } = server();
     show();
-    await userEvent.click(await screen.findByRole("button", { name: "Anfragen: Echte Aloe" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Pflanze anfragen: Echte Aloe" }),
+    );
     const select = screen.getByLabelText("Eigene Pflanze als Gegenangebot");
     const names = within(select)
       .getAllByRole("option")
@@ -153,7 +159,9 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
   it("a gift has no counter-offer fields, only the request", async () => {
     server({ offers: [offer({ mode: "give_away" })] });
     show();
-    await userEvent.click(await screen.findByRole("button", { name: "Anfragen: Echte Aloe" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Pflanze anfragen: Echte Aloe" }),
+    );
     expect(screen.queryByLabelText("Eigene Pflanze als Gegenangebot")).toBeNull();
     expect(screen.queryByLabelText(/Was bietest du an/)).toBeNull();
     expect(screen.getByRole("button", { name: "Anfrage senden" })).toBeTruthy();
@@ -165,7 +173,9 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
         response(409, { error: { code: "swap.already_requested", text: "raw server text" } }),
     });
     show();
-    await userEvent.click(await screen.findByRole("button", { name: "Anfragen: Echte Aloe" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Pflanze anfragen: Echte Aloe" }),
+    );
     await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Du hast dieses Angebot schon angefragt");
@@ -177,7 +187,7 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
     server({ offers: [offer({ requested: true })] });
     show();
     expect(await screen.findByText("Angefragt")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /Anfragen:/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Pflanze anfragen:/ })).toBeNull();
   });
 });
 

@@ -13,7 +13,7 @@ export function SaveFooter(props: {
   children: ReactNode;
 }) {
   return (
-    <div className="sticky bottom-0 z-10 bg-background py-1">
+    <div className="sticky bottom-0 z-10 bg-background pb-1 pt-2">
       <p role="status" className="text-sm text-muted-foreground empty:hidden">
         {props.photoStatus}
       </p>
@@ -23,6 +23,7 @@ export function SaveFooter(props: {
         size="touch"
         className="w-full"
         disabled={props.pending}
+        needsNetwork
       >
         {props.children}
       </Button>

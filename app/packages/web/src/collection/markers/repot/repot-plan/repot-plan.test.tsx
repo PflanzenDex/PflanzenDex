@@ -79,7 +79,7 @@ describe("US-BES-19 the plant layer shows the repot plan as the part Umtopfen of
     const section = within((await openPlan()) as HTMLElement);
     expect(section.getByText("Gerade kein Grund zum Umtopfen.")).toBeTruthy();
     expect(section.getByText("Zuletzt umgetopft: 05.03.2026")).toBeTruthy();
-    expect(section.getByRole("button", { name: "Umgetopft" })).toBeTruthy();
+    expect(section.getByRole("button", { name: "Umtopfen eintragen" })).toBeTruthy();
   });
 
   it("US-BES-19 an interval hint names the months since the last repot and the general starting value (P-08)", async () => {
@@ -262,7 +262,7 @@ describe("US-BES-19 the part stays short: the observations are one line and thei
     renderCollection();
     const section = within((await openPlan()) as HTMLElement);
     expect(section.getByText("Beobachtungen: keine")).toBeTruthy();
-    const umgetopft = section.getByRole("button", { name: "Umgetopft" });
+    const umgetopft = section.getByRole("button", { name: "Umtopfen eintragen" });
     const notieren = section.getByRole("button", { name: "Beobachtungen notieren" });
     expect(umgetopft.parentElement).toBe(notieren.parentElement);
     expect(umgetopft.parentElement?.className).toContain("flex-wrap");
@@ -349,5 +349,58 @@ describe("US-BES-19 the keeper ticks what they see in the layer and the hint fol
       within(alert).getByText("Die Eingabe ist ungültig. Bitte prüfe die markierten Felder."),
     ).toBeTruthy();
     expect(screen.queryByText("Roher Serverkram")).toBeNull();
+  });
+
+  it("US-QS-32 · SG-STATE-03 a failed tick is an error that names its sign, keeps the box unticked and offers Erneut versuchen, which repeats the same change", async () => {
+    const sent = fakeRepotServer({
+      signRefusal: {
+        status: 400,
+        body: { error: { code: "input.invalid", text: "Roher Serverkram" } },
+      },
+      signRefusalOnce: true,
+    });
+    renderCollection();
+    const dialog = await openSigns((await openPlan()) as HTMLElement);
+    const box = within(dialog).getByRole("checkbox", {
+      name: "Wurzeln aus dem Topf",
+    }) as HTMLInputElement;
+    await userEvent.click(box);
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert.className).toContain("border-destructive");
+    expect(alert.className).not.toMatch(/warning/);
+    expect(
+      within(alert).getByText("Der Haken bei „Wurzeln aus dem Topf“ ist nicht gespeichert."),
+    ).toBeTruthy();
+    expect(
+      within(alert).getByText("Die Eingabe ist ungültig. Bitte prüfe die markierten Felder."),
+    ).toBeTruthy();
+    expect(screen.queryByText("Roher Serverkram")).toBeNull();
+    expect(box.checked).toBe(false);
+    await userEvent.click(within(alert).getByRole("button", { name: "Erneut versuchen" }));
+    await waitFor(() => expect(box.checked).toBe(true));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(posts(sent)).toEqual([
+      {
+        path: "/specimens/e1/repot-signs",
+        body: { sign: "roots_out", ticked: true, timeZone: expect.any(String) },
+      },
+      {
+        path: "/specimens/e1/repot-signs",
+        body: { sign: "roots_out", ticked: true, timeZone: expect.any(String) },
+      },
+    ]);
+  });
+});
+
+describe("US-QS-32 the layer Beobachtungen names its plant on the first line under the title (#1971)", () => {
+  it("US-QS-32 the plant's name is the first line under the sheet title, in the content, not a second heading", async () => {
+    fakeRepotServer();
+    renderCollection();
+    const dialog = await openSigns((await openPlan()) as HTMLElement);
+    expect(within(dialog).getByRole("heading", { name: "Beobachtungen" })).toBeTruthy();
+    const subject = within(dialog).getByText("Bogenhanf", { selector: "p" });
+    expect(subject.className).toContain("text-base");
+    expect(subject.className).toContain("line-clamp-2");
+    expect(within(dialog).queryAllByRole("heading")).toHaveLength(1);
   });
 });

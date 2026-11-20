@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { SIGN_IN, type ApiError } from "../../shared/data";
 import { redeemInvitation } from "../api/access-api";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
@@ -19,7 +20,7 @@ const codeField = () => ["code" as const];
  * refusal of the server stays visible at the field and the focus returns to it (P-10).
  */
 function useRedeem(api: string, token: Token, onRegistered: () => void) {
-  const form = useForm<InvitationCodeFields>({
+  const form = useFieldForm<InvitationCodeFields>({
     resolver: zodResolver(invitationCodeSchema),
     defaultValues: { code: "" },
   });
@@ -76,30 +77,41 @@ export function InvitationPage(props: {
             autoCapitalize="characters"
             spellCheck={false}
           />
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button type="submit" size="touch" disabled={pending} className="sm:flex-1">
-              Registrieren
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="touch"
-              onClick={props.onSignOut}
-              className="sm:flex-1"
-            >
-              Abmelden
-            </Button>
-          </div>
-          {props.error && (
-            <p
-              role="alert"
-              className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
-            >
-              {props.error}
-            </p>
-          )}
+          <InvitationButtons pending={pending} onSignOut={props.onSignOut} />
+          {props.error && <Banner variant="error">{props.error}</Banner>}
         </FormRoot>
       </Form>
     </section>
+  );
+}
+
+/**
+ * The row of the form: "Registrieren" needs the network (US-QS-30, the code is redeemed at once); "Abmelden" does not
+ * write to the server and stays active.
+ */
+function InvitationButtons(props: { pending: boolean; onSignOut: () => void }) {
+  return (
+    <NetworkSlot>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button
+          type="submit"
+          size="touch"
+          disabled={props.pending}
+          className="sm:flex-1"
+          needsNetwork
+        >
+          Registrieren
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="touch"
+          onClick={props.onSignOut}
+          className="sm:flex-1"
+        >
+          Abmelden
+        </Button>
+      </div>
+    </NetworkSlot>
   );
 }

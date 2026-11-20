@@ -1,6 +1,6 @@
 // Preflight of `make claim` (US-DEV-08, #251): everything a later claim step needs is checked before the
 // first write, so a claim never stops half way (e.g. the pre-push hook failing without node_modules).
-import { depsFindings } from "../../check/supply/check-deps.mjs";
+import { depsFindings } from "../../check/delivery/supply/check-deps.mjs";
 
 export class PreflightFailed extends Error {
   constructor(findings) {

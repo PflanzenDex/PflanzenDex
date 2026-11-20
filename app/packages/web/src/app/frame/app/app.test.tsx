@@ -32,6 +32,8 @@ vi.mock("oidc-client-ts", () => ({
     getUser = mgr.getUser;
     removeUser = mgr.removeUser;
     signinRedirect = mgr.signinRedirect;
+    // The sign-in manager of the app wraps this method for the shared renewal (issue 2274, api/renewal.ts).
+    signinSilent = vi.fn(async () => undefined);
     signoutRedirect = mgr.signoutRedirect;
   },
 }));
@@ -274,20 +276,54 @@ describe("US-ACC-01 App", () => {
     expect(screen.queryByRole("navigation")).toBeNull();
   });
 
-  it("US-ACC-01 signed out, the welcome page offers 'Anderes Konto', which ends the session at the sign-in service", async () => {
+  it("US-ACC-01 signed out with a live session at the sign-in service, the welcome page offers 'Konto wechseln', which ends it there", async () => {
+    // The tab knows of the live session (US-QS-32): the switch shows only then.
+    window.sessionStorage.setItem("pflanzendex.live_session", "1");
     fakeServer();
     mgr.getUser.mockResolvedValue(null);
     renderApp();
-    await userEvent.click(await screen.findByRole("button", { name: "Anderes Konto" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Konto wechseln" }));
     expect(mgr.signoutRedirect).toHaveBeenCalledOnce();
     expect(mgr.signinRedirect).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 signed out without a live session at the sign-in service, the welcome page offers no 'Konto wechseln' and no 'Du bist abgemeldet.'", async () => {
+    fakeServer();
+    mgr.getUser.mockResolvedValue(null);
+    renderApp();
+    await screen.findByRole("button", { name: "Konto anlegen" });
+    expect(screen.queryByRole("button", { name: "Konto wechseln" })).toBeNull();
+    expect(screen.queryByText("Du bist abgemeldet.")).toBeNull();
   });
 
   it('an error while loading the account offers "Erneut versuchen" and then loads the account', async () => {
     fakeServer(500);
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp();
-    expect((await screen.findByRole("alert")).textContent).toContain("nicht geladen werden");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Dein Konto konnte gerade nicht geladen werden.",
+    );
+    fakeServer();
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
+  });
+
+  it("US-QS-32 a keeper signed in on this device sees a failed account load inside both bars, and a retry that fails again says so", async () => {
+    window.localStorage.setItem(
+      "oidc.user:http://auth/realm:pflanzendex-web",
+      JSON.stringify({ access_token: "tok", expires_at: Math.floor(Date.now() / 1000) + 3600 }),
+    );
+    fakeServer(500);
+    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    const { container } = renderApp();
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Dein Konto konnte gerade nicht geladen werden.",
+    );
+    // The frame stays: the bottom bar is drawn, and the error sits in the page's main column.
+    expect(container.querySelector("[data-start-bar]")).not.toBeNull();
+    expect(screen.getByRole("main").contains(screen.getByRole("alert"))).toBe(true);
+    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Wieder nicht geladen.");
     fakeServer();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("navigation", { name: "Hauptnavigation" })).toBeTruthy();
@@ -351,9 +387,9 @@ describe("US-ACC-01 App", () => {
     expect(await screen.findByRole("heading", { name: "Betreiber" })).toBeTruthy();
     // The numbers are the layer of their row on the overview (US-QS-15).
     await userEvent.click(await screen.findByRole("button", { name: /^Zahlen/ }));
-    expect((await screen.findByText("Kosten pro Nutzer")).nextElementSibling?.textContent).toMatch(
-      /^unbekannt/,
-    );
+    expect(
+      (await screen.findByText("Kosten pro aktivem Konto")).nextElementSibling?.textContent,
+    ).toMatch(/^unbekannt/);
   });
 
   it("US-QS-16 · US-ONB-01 signed in: starts on Heute with the first plant for a new account", async () => {
@@ -474,7 +510,7 @@ describe("US-ACC-01 App", () => {
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/wishlist");
     expect(await screen.findByRole("heading", { name: "Wunschliste" })).toBeTruthy();
-    expect(await screen.findByText("Erfasse einen Wunsch mit Ziel-Lichtzone.")).toBeTruthy();
+    expect(await screen.findByText(/Erfasse einen Wunsch mit Ziel-Lichtzone\./)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Wünsche" }).getAttribute("aria-pressed")).toBe(
       "true",
     );
@@ -494,18 +530,16 @@ describe("US-ACC-01 App", () => {
     expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
   });
 
-  it("US-LIC-03 the empty light overview offers the way to the collection by switching the tab", async () => {
+  it("US-LIC-03 · US-QS-32 the empty light overview offers Pflanze anlegen, a link to the add-plant form", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/light");
     // The overview is a layer of the management (US-QS-19): it opens from its button first.
     await userEvent.click(
-      await screen.findByRole("button", { name: "Lichthunger und Einstufung" }),
+      await screen.findByRole("button", { name: "Lichtbedarf und Einstufung" }),
     );
-    await userEvent.click(await screen.findByRole("button", { name: "Zur Sammlung" }));
-    expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
-    expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
-    expect(screen.queryByRole("heading", { name: "Standorte" })).toBeNull();
+    const add = await screen.findByRole("link", { name: "Pflanze anlegen" });
+    expect(add.getAttribute("href")).toBe("/collection/new");
   });
 
   it('choosing a species in the catalog leads to the form "Pflanze anlegen"; back leads to the catalog (US-BES-02)', async () => {
@@ -629,11 +663,16 @@ describe("US-ACC-01 App", () => {
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
   });
 
-  it("US-QS-07 · an unknown address lands on Heute", async () => {
+  it("US-QS-07 · US-QS-32 an unknown address shows the not-found view inside the frame, with both bars and its way on", async () => {
     fakeServer();
     mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
     renderApp("/gibt-es-nicht");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+    ).toBeTruthy();
+    expect(document.title).toBe("Seite nicht gefunden – PflanzenDéx");
+    await userEvent.click(screen.getByRole("button", { name: "Zu Heute" }));
     await waitFor(() => expectHeute());
   });
 
@@ -681,15 +720,12 @@ describe("US-QS-07 browser history", () => {
     await userEvent.click(tab("Sammlung"));
     await userEvent.click(tab("Konto"));
     expect(window.location.pathname).toBe("/account");
-    await act(async () => {
-      window.history.back();
-      await waitFor(() => expect(window.location.pathname).toBe("/collection"));
-    });
+    // waitFor stays outside act: it switches the act environment off while it polls (#1628).
+    act(() => window.history.back());
+    await waitFor(() => expect(window.location.pathname).toBe("/collection"));
     expect((await findTab("Sammlung")).getAttribute("aria-current")).toBe("page");
-    await act(async () => {
-      window.history.back();
-      await waitFor(() => expect(window.location.pathname).toBe("/today"));
-    });
+    act(() => window.history.back());
+    await waitFor(() => expect(window.location.pathname).toBe("/today"));
     await waitFor(() => expectHeute());
   });
 });

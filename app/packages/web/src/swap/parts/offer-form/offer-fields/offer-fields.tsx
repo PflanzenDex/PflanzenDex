@@ -21,7 +21,7 @@ function TypeModeFields({ value, onChange }: FieldProps) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="flex flex-col gap-1">
-        <Label htmlFor="offer-type">Art des Angebots</Label>
+        <Label htmlFor="offer-type">Angebotsform</Label>
         <Select
           id="offer-type"
           value={value.type}

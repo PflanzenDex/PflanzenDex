@@ -34,14 +34,14 @@ function Done(props: { name: string; onAnother: () => void }) {
   const navigate = useNavigate();
   return (
     <section className="flex flex-col gap-3">
-      <h2 tabIndex={-1} className="text-xl font-semibold" ref={(e) => e?.focus()}>
+      <h2 tabIndex={-1} className="text-base font-semibold" ref={(e) => e?.focus()}>
         {ui("created", { name: props.name })}
       </h2>
       <div className={ACTIONS}>
         <Button type="button" onClick={() => void navigate(PATHS.collection)}>
           {ui("toCollection")}
         </Button>
-        <Button type="button" variant="outline" onClick={props.onAnother}>
+        <Button type="button" variant="tinted" onClick={props.onAnother}>
           {ui("another")}
         </Button>
       </div>
@@ -66,11 +66,14 @@ function Buttons(props: { f: Plant; species: Species | null; onMore: (s: Species
       <Button
         type="button"
         disabled={f.saving || f.zones === null || f.marker.rule === null}
+        // The press keeps a focused marker in place until the save checks it (issue 2216): leaving the field first
+        // would show its message, move the button under the finger and lose the tap (as FormRoot does for a send).
+        onMouseDown={(event) => event.preventDefault()}
         onClick={() => void f.save()}
       >
         {FIRST_PLANT_STEPS[1]?.actionLabel}
       </Button>
-      <Button type="button" variant="outline" onClick={() => f.setIndex(0)}>
+      <Button type="button" variant="plain" onClick={() => f.setIndex(0)}>
         {ui("back")}
       </Button>
       <Button type="button" variant="ghost" onClick={() => props.onMore(species)}>
@@ -101,6 +104,8 @@ function Flow(props: Props & { onAnother: () => void }) {
         <SaveStep
           species={species}
           zones={f.zones}
+          zonesError={f.zonesError}
+          onRetryZones={f.retryZones}
           zoneId={f.zoneId}
           onZone={f.setZoneId}
           error={f.error}

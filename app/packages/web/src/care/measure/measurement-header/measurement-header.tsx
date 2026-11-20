@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
-import type { MeasurementView } from "@pflanzendex/core";
+import { localToday, type MeasurementView } from "@pflanzendex/core";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { GrowthSummary } from "./growth-summary/growth-summary";
-import { dateText, massName, measurementText, QUALITY_NAME } from "../../shared/text";
+import { dateText, massName, QUALITY_NAME, valueText } from "../../shared/text";
+import { onDate } from "@/shared/lib/format";
+import { currentTimeZone } from "../../../shared/data";
 
 /**
  * The one fact line of the measure page (US-WAC-01): the last measurement with its value and date; a cutting is marked
@@ -17,7 +19,9 @@ export function MeasurementHeader({ view, action }: { view: MeasurementView; act
         <dl className="m-0 flex flex-wrap items-baseline gap-x-2">
           <dt className="font-semibold">Letzte Messung</dt>
           <dd className="m-0 text-muted-foreground tabular-nums">
-            {last ? measurementText(last) : "noch keine Messung"}
+            {last
+              ? `${valueText(last.value)} ${onDate(last.date, localToday(new Date(), currentTimeZone()))}`
+              : "noch keine Messung"}
           </dd>
         </dl>
         {view.status === "cutting" && <Badge variant="outline">Steckling</Badge>}
@@ -43,7 +47,7 @@ export function MeasurementFacts({ view }: { view: MeasurementView }) {
       </div>
       <GrowthSummary growth={view.growth} />
       <div>
-        <dt className="font-semibold">Letzte Bewertung</dt>
+        <dt className="font-semibold">Letzte Qualität</dt>
         <dd className="m-0 mt-0.5 text-muted-foreground">
           {lastRating && last
             ? [QUALITY_NAME[lastRating], dateText(last.date), last.note].filter(Boolean).join(" · ")

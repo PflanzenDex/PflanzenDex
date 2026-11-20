@@ -149,12 +149,33 @@ describe("US-QS-19 · US-QS-15 group choices: chips on one or two lines, otherwi
     show(choicesOf(3), "/collection?view=plants&part=g1");
     const measured = Array.from(document.querySelectorAll("[data-group-measure] button"));
     expect(measured).toHaveLength(3);
-    expect(measured.every((b) => b.textContent?.includes("✓"))).toBe(true);
+    expect(measured.every((b) => b.querySelector("svg.lucide-check") !== null)).toBe(true);
     await userEvent.click(screen.getByRole("button", { name: /Gruppe 3/ }));
     expect(formOf()).toBe("chips");
     expect(screen.getByRole("button", { name: /Gruppe 3/ }).getAttribute("aria-pressed")).toBe(
       "true",
     );
+  });
+
+  it("US-QS-32 · SG-ICON-01 the chosen chip is marked by a check icon, the other chips have none and no glyph text", async () => {
+    layout = { row: 300, chips: [90, 90, 90] };
+    show(choicesOf(3), "/collection?view=plants&part=g2");
+    const chips = screen.getAllByRole("button", { name: /Gruppe/ });
+    expect(chips.map((c) => c.querySelector("svg") !== null)).toEqual([false, true, false]);
+    expect(chips.some((c) => c.textContent?.includes("✓"))).toBe(false);
+    expect(chips[1]?.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("US-QS-32 · SG-BTN-01 the chosen chip is secondary, the other chips are plain (no outline look)", async () => {
+    layout = { row: 300, chips: [90, 90, 90] };
+    show(choicesOf(3), "/collection?view=plants&part=g2");
+    const chips = screen.getAllByRole("button", { name: /Gruppe/ });
+    expect(chips[1]?.className.split(/\s+/)).toContain("bg-secondary");
+    for (const i of [0, 2]) {
+      const classes = chips[i]?.className.split(/\s+/) ?? [];
+      expect(classes).toContain("text-primary");
+      expect(classes.some((c) => /^(border|bg)(-|$)/.test(c))).toBe(false);
+    }
   });
 
   it("US-QS-19 choosing in the selection field keeps the selection field", async () => {
@@ -246,6 +267,29 @@ describe("US-QS-19 · US-QS-15 group choices: chips on one or two lines, otherwi
     } finally {
       window.matchMedia = saved;
     }
+  });
+});
+
+describe("US-ACH-02 group choices say what they count (countText)", () => {
+  it("US-ACH-02 countText replaces the count in brackets in the chips, the measure and the selection field", () => {
+    const choices: GroupChoice[] = [
+      { key: "g1", label: "Pflege", count: 3, countText: "2 von 3" },
+      { key: "g2", label: "Wachstum", count: 2, countText: "0 von 2" },
+    ];
+    layout = { row: 300, chips: [90, 90] };
+    show(choices, "/collection?view=plants&part=g1");
+    expect(screen.getByRole("button", { name: "Pflege · 2 von 3" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Wachstum · 0 von 2" })).toBeTruthy();
+    expect(document.querySelector("[data-group-measure]")?.textContent).toBe(
+      "Pflege · 2 von 3Wachstum · 0 von 2",
+    );
+    expect(document.body.textContent).not.toMatch(/\(\d+\)/);
+    cleanup();
+    layout = { row: 300, chips: [200, 200] };
+    show(choices);
+    expect(formOf()).toBe("select");
+    expect(screen.getByRole("option", { name: "Pflege · 2 von 3" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Wachstum · 0 von 2" })).toBeTruthy();
   });
 });
 

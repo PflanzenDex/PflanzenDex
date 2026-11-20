@@ -123,7 +123,7 @@ function thresholdsToSave(texts: readonly string[], stored: number[] | null): nu
 }
 
 export const invitationCodeSchema = z.object({
-  code: z.string().trim().min(1, "Bitte gib deinen Einladungscode ein."),
+  code: z.string().trim().min(1, "Gib deinen Einladungscode ein."),
 });
 export type InvitationCodeFields = z.infer<typeof invitationCodeSchema>;
 

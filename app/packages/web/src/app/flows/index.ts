@@ -1,8 +1,8 @@
-// Public interface of the flows (FR-QG-23 step 3, formerly the `shell` folder): the app root and the onboarding parts of "Heute".
+// Public interface of the flows (FR-QG-23 step 3, formerly the `shell` folder): the onboarding parts of "Heute" and the unlock page.
 // The onboarding forms are their own chunks: they load only when they apply (#451, DS-08, QG-U6).
+// The app root is not here: the entry imports it from its frame, so the start chunk does not carry these lazy parts (issue 2242).
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 
-export { App } from "../frame/app/app";
 export const TodayIntro = lazyPage(() =>
   import("./onboarding/today-intro/today-intro").then((m) => ({ default: m.TodayIntro })),
 );

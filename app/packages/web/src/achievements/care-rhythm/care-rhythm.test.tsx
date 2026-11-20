@@ -24,7 +24,7 @@ const answer = (over: object = {}) => ({
   ...over,
 });
 
-/** The section with one of its layers open by its address: "Pflegerhythmus" (`rhythm`) or "Pause eintragen" (`pause`). */
+/** The section with one of its layers open by its address: "Pflegerhythmus" (`rhythm`) or "Urlaub eintragen" (`pause`). */
 function show(status: number, body: unknown, at = "/?sheet=rhythm") {
   vi.stubGlobal(
     "fetch",
@@ -113,8 +113,8 @@ describe("US-ACH-04 explicit pause", () => {
       answer({ pauses: [pause] }),
       () => new Response("{}", { status: 200 }),
     );
-    fireEvent.click(await screen.findByRole("button", { name: /Pause vom 01.07.2026 entfernen/ }));
-    expect(await screen.findByText("Pause entfernt.")).toBeTruthy();
+    fireEvent.click(await screen.findByRole("button", { name: /Urlaub vom 01.07.2026 entfernen/ }));
+    expect(await screen.findByText("Urlaub entfernt.")).toBeTruthy();
     expect(calls).toEqual(["DELETE /achievements/rhythm/pauses/p1"]);
   });
 
@@ -130,12 +130,12 @@ describe("US-ACH-04 explicit pause", () => {
     fireEvent.change(screen.getByLabelText("Bis (einschließlich)"), {
       target: { value: "2026-07-14" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Pause eintragen" }));
-    expect(await screen.findByText("Pause eingetragen.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
+    expect(await screen.findByText("Urlaub eingetragen.")).toBeTruthy();
     expect(calls).toEqual(["POST /achievements/rhythm/pauses"]);
   });
 
-  it("US-ACH-04 a pause longer than 4 weeks is refused with its reason and stays visible", async () => {
+  it("US-QS-32 · US-ACH-04 a refusal of the server for a too long pause stands at its field Bis, with its reason", async () => {
     showWithWrites(
       answer(),
       () =>
@@ -145,11 +145,77 @@ describe("US-ACH-04 explicit pause", () => {
     );
     await screen.findByLabelText("Von");
     fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-07-01" } });
-    fireEvent.change(screen.getByLabelText("Bis (einschließlich)"), {
-      target: { value: "2026-09-01" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Pause eintragen" }));
-    expect((await screen.findByRole("alert")).textContent).toMatch(/höchstens 4 Wochen/);
+    const until = screen.getByLabelText<HTMLInputElement>("Bis (einschließlich)");
+    fireEvent.change(until, { target: { value: "2026-07-14" } });
+    fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe("Höchstens 4 Wochen: spätestens 28.07.2026.");
+    expect(until.getAttribute("aria-invalid")).toBe("true");
+    expect(until.getAttribute("aria-describedby")?.split(" ")).toContain(alert.id);
+  });
+
+  it("US-QS-32 · US-ACH-04 a pause of seven weeks marks Bis with the last allowed day when it is left, and sends nothing", async () => {
+    const calls = showWithWrites(answer(), () => new Response("{}", { status: 201 }));
+    await screen.findByLabelText("Von");
+    fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-11-24" } });
+    const until = screen.getByLabelText<HTMLInputElement>("Bis (einschließlich)");
+    fireEvent.change(until, { target: { value: "2027-01-12" } });
+    fireEvent.blur(until);
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Höchstens 4 Wochen: spätestens 21.12.2026.",
+    );
+    expect(until.getAttribute("aria-invalid")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(calls).toEqual([]);
+  });
+
+  it("US-QS-32 a new pause starts with today's date (prefilled, US-ACH-04); a typed text that is no day sends nothing", async () => {
+    const calls = showWithWrites(
+      answer(),
+      () => new Response(JSON.stringify({ id: "p3" }), { status: 201 }),
+    );
+    await screen.findByLabelText("Von");
+    const from = screen.getByLabelText("Von") as HTMLInputElement;
+    expect(from.value).toMatch(/^\d{2}\.\d{2}\.\d{4}$/);
+    fireEvent.change(from, { target: { value: "31.02.2026" } });
+    fireEvent.blur(from);
+    fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Kein gültiges Datum. Gib es als TT.MM.JJJJ an.",
+    );
+    expect(calls).toEqual([]);
+  });
+
+  it("US-QS-32 · US-ACH-04 a coarse pointer (the system picker) with a seven-week range marks Bis with the last allowed day, takes the focus and sends no request", async () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query === "(pointer: coarse)",
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia;
+    try {
+      const calls = showWithWrites(answer(), () => new Response("{}", { status: 201 }));
+      await screen.findByLabelText("Von");
+      fireEvent.change(screen.getByLabelText("Von"), { target: { value: "2026-11-24" } });
+      const until = screen.getByLabelText<HTMLInputElement>("Bis (einschließlich)");
+      fireEvent.change(until, { target: { value: "2027-01-12" } });
+      fireEvent.click(screen.getByRole("button", { name: "Urlaub eintragen" }));
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toBe("Höchstens 4 Wochen: spätestens 21.12.2026.");
+      expect(until.getAttribute("aria-invalid")).toBe("true");
+      expect(until.getAttribute("aria-describedby")?.split(" ")).toContain(alert.id);
+      expect(document.activeElement).toBe(until);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(calls).toEqual([]);
+    } finally {
+      window.matchMedia = original;
+    }
   });
 });
 
@@ -162,5 +228,52 @@ describe("US-QS-15 the rhythm beside a pane (issue 1640)", () => {
       expect.arrayContaining(["grid-cols-6", "@md:grid-cols-12"]),
     );
     expect(list.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+  });
+});
+
+describe("US-QS-32 · SG-ICON-01 the weeks are lucide icons with a legend, no glyph text", () => {
+  it("US-QS-32 · SG-ICON-01 each week shows its state as one decorative icon and no glyph; its name stays the sr-only text", async () => {
+    show(200, answer());
+    const items = await screen.findAllByRole("listitem");
+    expect(items).toHaveLength(5);
+    // none, on_time, on_time, open, pending: Minus, Check, Check, CircleDot, Clock (SG-ICON-01).
+    expect(
+      items.map(
+        (li) =>
+          li
+            .querySelector("svg")
+            ?.getAttribute("class")
+            ?.match(/lucide-[a-z-]+/)?.[0],
+      ),
+    ).toEqual([
+      "lucide-minus",
+      "lucide-check",
+      "lucide-check",
+      "lucide-circle-dot",
+      "lucide-clock",
+    ]);
+    for (const li of items) {
+      expect(li.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+      expect(li.textContent).not.toMatch(/[✓•…–]/);
+    }
+    expect(items[1]?.textContent).toBe("Woche vom 01.02.2026: pünktlich");
+  });
+
+  it("US-QS-32 · SG-ICON-01 one visible legend line under the grid pairs each icon with its word", async () => {
+    show(200, answer());
+    const list = await screen.findByRole("list", { name: "Die letzten 12 Wochen" });
+    const legend: [string, string][] = [
+      ["pünktlich", "lucide-check"],
+      ["offen", "lucide-circle-dot"],
+      ["läuft noch", "lucide-clock"],
+      ["nichts fällig", "lucide-minus"],
+    ];
+    for (const [word, icon] of legend) {
+      const entry = screen.getByText(word);
+      expect(entry.querySelector(`svg.${icon}`)).not.toBeNull();
+      expect(entry.closest("ol")).toBeNull();
+      expect(entry.className).not.toContain("sr-only");
+      expect(list.compareDocumentPosition(entry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
   });
 });

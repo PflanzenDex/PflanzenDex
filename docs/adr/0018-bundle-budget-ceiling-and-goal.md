@@ -27,7 +27,7 @@ Measured in the attempts to free room on #929: splitting shared modules of our c
 ## Decision
 
 1. **Hard limit: 140 kB gzipped, a fixed ceiling.** `bundle.initialJsGzipBytes` in `app/config/gates/quality-limits.json` stays at 140 kB when the bundle shrinks; it is no longer lowered after each saving. The gate blocks above it.
-2. **Goal: 125 kB gzipped, report only.** `GOAL_BYTES` in `app/tools/check/supply/report-bundle.mjs`. `make bundle-report` (also in the CI job summary) shows the total against the goal and the limit. Over the goal is not a failure, but the PR says why and the next story that touches the web app looks first for code that can leave the first load (DS-08).
+2. **Goal: 125 kB gzipped, report only.** `GOAL_BYTES` in `app/tools/check/delivery/supply/report-bundle.mjs`. `make bundle-report` (also in the CI job summary) shows the total against the goal and the limit. Over the goal is not a failure, but the PR says why and the next story that touches the web app looks first for code that can leave the first load (DS-08).
 3. **Changing either number is an owner decision:** its own PR, a gate-file change, human merge (US-QG-07). Raising the limit above 140 kB needs a new ADR that names what the extra code buys.
 
 ## Reason
@@ -48,6 +48,6 @@ Measured in the attempts to free room on #929: splitting shared modules of our c
 ## Consequences
 
 - Room on the day of the change: 140 kB − 125.0 kB = 15 kB under the limit; 0 kB under the goal.
-- The gate script, the report and their tests carry the new numbers; the explanation for readers is in `app/tools/check/supply/README.md`. QG-U6 in `18-architecture-and-quality-gates.md` and DS-08 point here.
+- The gate script, the report and their tests carry the new numbers; the explanation for readers is in `app/tools/check/delivery/supply/README.md`. QG-U6 in `18-architecture-and-quality-gates.md` and DS-08 point here.
 - Issue #928 (free up room under 125 kB) closes with this decision instead of a code change. Freeing room stays welcome when a story finds it (DS-08), it is just no longer a precondition for every web change.
 - **Renovate:** a dependency update that grows the first load shows up in the report against the goal; it blocks only above 140 kB.

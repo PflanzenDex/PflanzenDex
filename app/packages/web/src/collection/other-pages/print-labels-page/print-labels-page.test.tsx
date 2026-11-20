@@ -6,7 +6,9 @@ import { encode } from "uqr";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/shared/data";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { PrintLabelsPage } from "./print-labels-page";
+import type { LabelFormat } from "./label-sheet/label-sheet";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "./print-labels-page.de.json";
 import { PrintLabelsSkeleton } from "./print-labels-page.skeleton";
@@ -68,12 +70,19 @@ function Address() {
   return <p data-testid="address">{`${at.pathname}${at.search}`}</p>;
 }
 
-function show(features: Record<string, boolean> = { pot_labels: true }) {
+/** The page at its address; `pageProps` are the format and the callback the route passes (US-QS-32). */
+function show(
+  features: Record<string, boolean> = { pot_labels: true },
+  pageProps: { format?: LabelFormat; onFormat?: (format: LabelFormat) => void } = {},
+) {
   return render(
     <MemoryRouter initialEntries={["/collection/labels"]}>
       <FeaturesProvider features={features}>
         <Routes>
-          <Route path="/collection/labels" element={<PrintLabelsPage api={API} token={TOKEN} />} />
+          <Route
+            path="/collection/labels"
+            element={<PrintLabelsPage api={API} token={TOKEN} {...pageProps} />}
+          />
           <Route path="/collection" element={<Address />} />
         </Routes>
       </FeaturesProvider>
@@ -85,9 +94,14 @@ const printRegion = () => screen.getByRole("region", { name: "Etiketten zum Druc
 const labelsOf = () => within(printRegion()).getAllByRole("article");
 const pick = async (user: ReturnType<typeof userEvent.setup>, name: RegExp) =>
   user.click(await screen.findByRole("checkbox", { name }));
+// The format is a segmented control (US-QS-32): "A4-Bogen" or "Einzeletikett", preselected, never empty.
 const chooseFormat = (user: ReturnType<typeof userEvent.setup>, format: string) =>
-  user.selectOptions(screen.getByRole("combobox", { name: "Format" }), format);
-const printButton = () => screen.getByRole("button", { name: "Drucken" }) as HTMLButtonElement;
+  user.click(screen.getByRole("button", { name: format }));
+// The print button names its count: "Etiketten drucken", "1 Etikett drucken" or "3 Etiketten drucken" (US-QS-32).
+const printButton = () =>
+  screen.getByRole("button", {
+    name: /^(\d+\s+Etikett(en)?|Etiketten) drucken$/,
+  }) as HTMLButtonElement;
 
 beforeEach(() => {
   vi.mocked(encode).mockClear();
@@ -175,20 +189,46 @@ describe("US-BES-17 printing QR pot labels", () => {
     expect(printRegion().parentElement).toBe(document.body);
   });
 
-  it("US-BES-17 with nothing chosen Drucken is disabled and says what to do next (P-09)", async () => {
+  it("US-BES-17 with nothing chosen the button Etiketten drucken is disabled and says what to do next (P-09)", async () => {
     server([card()], { s1: species(null) });
-    const user = userEvent.setup();
     show();
     await screen.findByRole("checkbox", { name: /Aloe vera/ });
     expect(printButton().disabled).toBe(true);
     expect(screen.getByText("Wähle mindestens eine Pflanze aus.")).toBeTruthy();
+  });
+
+  it("US-QS-32 with only a plant chosen the print button is enabled: the format is preselected and the hint asks for nothing else", async () => {
+    server([card()], { s1: species(null) });
+    const user = userEvent.setup();
+    show();
     await pick(user, /Aloe vera/);
-    expect(printButton().disabled).toBe(true);
-    expect(screen.getByText("Wähle das Format: A4-Bogen oder Einzeletikett.")).toBeTruthy();
-    await chooseFormat(user, "Einzeletikett");
     await waitFor(() => expect(printButton().disabled).toBe(false));
     await user.click(printButton());
     expect(window.print).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Das Drucken öffnet das Druckfenster.")).toBeTruthy();
+  });
+
+  it("US-QS-32 the print button counts the chosen plants across the pages: 2, then 3 Etiketten drucken, 1 Etikett drucken", async () => {
+    setViewportWidth(360);
+    server(
+      [1, 2, 3, 4, 5].map((n) => card({ id: `e${n}`, name: `Pflanze ${n}` })),
+      { s1: species(null) },
+    );
+    const user = userEvent.setup();
+    show();
+    await screen.findByRole("checkbox", { name: /Pflanze 1/ });
+    expect(printButton().textContent).toBe("Etiketten drucken");
+    await pick(user, /Pflanze 1/);
+    await pick(user, /Pflanze 2/);
+    await chooseFormat(user, "A4-Bogen");
+    expect(screen.getByRole("button", { name: "2\u00a0Etiketten drucken" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Weiter" }));
+    await pick(user, /Pflanze 5/);
+    expect(screen.getByRole("button", { name: "3\u00a0Etiketten drucken" })).toBeTruthy();
+    await pick(user, /Pflanze 5/);
+    await user.click(screen.getByRole("button", { name: "Zurück" }));
+    await pick(user, /Pflanze 2/);
+    expect(screen.getByRole("button", { name: "1\u00a0Etikett drucken" })).toBeTruthy();
   });
 
   it("US-BES-17 a species that cannot be read leaves its cultivar out and the page says so (P-10)", async () => {
@@ -214,9 +254,9 @@ describe("US-BES-17 printing QR pot labels", () => {
   it("US-BES-17 without plants the page offers the way to the collection (P-09)", async () => {
     server([]);
     show();
-    expect(await screen.findByText("Du hast noch keine Pflanze.")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Zur Sammlung" }).getAttribute("href")).toBe(
-      "/collection",
+    expect(await screen.findByText("Du hast noch keine Pflanze")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Pflanze anlegen" }).getAttribute("href")).toBe(
+      "/collection/new",
     );
   });
 
@@ -225,6 +265,37 @@ describe("US-BES-17 printing QR pot labels", () => {
     show({ pot_labels: false });
     expect((await screen.findByTestId("address")).textContent).toBe("/collection");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("US-QS-32 the print format is a segmented control with a preselected choice", () => {
+  const pressed = (name: string) =>
+    screen.getByRole("button", { name }).getAttribute("aria-pressed");
+
+  it("US-QS-32 the format is a visible choice of A4-Bogen and Einzeletikett, and A4-Bogen is preselected on the first visit", async () => {
+    server([card()], { s1: species(null) });
+    show();
+    expect(await screen.findByRole("group", { name: "Format" })).toBeTruthy();
+    expect(screen.queryByRole("combobox", { name: "Format" })).toBeNull();
+    expect(pressed("A4-Bogen")).toBe("true");
+    expect(pressed("Einzeletikett")).toBe("false");
+    expect(screen.queryByRole("option", { name: "Format wählen" })).toBeNull();
+  });
+
+  it("US-QS-32 a choice is reported to the route at once, and the page starts with the format the route passes", async () => {
+    server([card()], { s1: species(null) });
+    const user = userEvent.setup();
+    const chosen: LabelFormat[] = [];
+    const first = show(undefined, { onFormat: (format) => chosen.push(format) });
+    await screen.findByRole("group", { name: "Format" });
+    await chooseFormat(user, "Einzeletikett");
+    expect(pressed("Einzeletikett")).toBe("true");
+    expect(chosen).toEqual(["single"]);
+    first.unmount();
+    show(undefined, { format: "single" });
+    expect(await screen.findByRole("group", { name: "Format" })).toBeTruthy();
+    expect(pressed("Einzeletikett")).toBe("true");
+    expect(pressed("A4-Bogen")).toBe("false");
   });
 });
 

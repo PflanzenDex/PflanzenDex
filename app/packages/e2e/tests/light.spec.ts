@@ -1,7 +1,8 @@
 import { axeReport } from "../support/axe";
 import {
   addLocation,
-  dismissToast,
+  expectAnnounced,
+  listRow,
   openLocations,
   showLocations,
   signInAtLight,
@@ -29,17 +30,17 @@ test.describe("US-LIC-05 locations and light zones", () => {
   }, info) => {
     await signInAtLight(page, account);
     await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
-    await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
+    await expect(listRow(page, "Zone 2")).toBeVisible();
     await expect(page.getByText("bis 15.000 Lux")).toBeVisible();
 
     await addLocation(page);
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await form.getByLabel("Name").fill("Balkon");
     await form.getByLabel("Lichtzone").selectOption({ label: "Zone 3" });
-    await form.getByLabel("Art").selectOption("outdoor");
+    await form.getByLabel("Innen oder außen").selectOption("outdoor");
     await form.getByRole("button", { name: "Standort anlegen" }).click();
 
-    await expect(page.getByRole("heading", { level: 3, name: "Balkon" })).toBeVisible();
+    await expect(listRow(page, "Balkon")).toBeVisible();
     await expect(page.getByText("Zone 3 · außen")).toBeVisible();
     await axeReport(page, info, "light-eingerichtet", { blocking: true });
 
@@ -47,7 +48,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
     await page.reload();
     await openLocations(page);
     await showLocations(page);
-    await expect(page.getByRole("heading", { level: 3, name: "Balkon" })).toBeVisible();
+    await expect(listRow(page, "Balkon")).toBeVisible();
   });
 
   test("US-LIC-05 location without light zone appears in the hints with the next action", async ({
@@ -59,8 +60,8 @@ test.describe("US-LIC-05 locations and light zones", () => {
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await form.getByLabel("Name").fill("Regal");
     await form.getByRole("button", { name: "Standort anlegen" }).click();
-    // On a phone the toast lies over "Hinweise (1)" (issue 1836).
-    await dismissToast(page, "Standort angelegt");
+    // The result is only announced, no toast lies over "Hinweise (1)" (SG-FEED-01, issue 1836).
+    await expectAnnounced(page, "Standort angelegt");
     await page.getByRole("button", { name: "Hinweise (1)" }).click();
     await expect(page.getByRole("heading", { level: 2, name: "Hinweise" })).toBeVisible();
     await expect(page.getByText("Weise dem Standort eine Lichtzone zu.")).toBeVisible();
@@ -71,9 +72,9 @@ test.describe("US-LIC-05 locations and light zones", () => {
     await page.getByRole("button", { name: "Neue Lichtzone" }).click();
     const form = page.getByRole("form", { name: "Lichtzone anlegen" });
     await form.getByLabel("Name").fill("Fensterbank");
-    await form.getByLabel("Lux-Decke (Lux)").fill("8000");
-    await form.getByRole("button", { name: "Zone anlegen" }).click();
-    await expect(page.getByRole("heading", { level: 3, name: "Fensterbank" })).toBeVisible();
+    await form.getByLabel("Lux-Obergrenze").fill("8000");
+    await form.getByRole("button", { name: "Lichtzone anlegen" }).click();
+    await expect(listRow(page, "Fensterbank")).toBeVisible();
     await expect(page.getByText("bis 8.000 Lux")).toBeVisible();
   });
 });
@@ -85,23 +86,22 @@ test.describe("US-LIC-01 determine the zone of a species", () => {
   }) => {
     await signInAtLight(page, account);
     await page.getByRole("button", { name: "Standard-Zonen übernehmen" }).click();
-    await expect(page.getByRole("heading", { level: 3, name: "Zone 2" })).toBeVisible();
+    await expect(listRow(page, "Zone 2")).toBeVisible();
 
-    // The confirmation is a toast over the bottom of the phone, where the reference button stands. It leaves by itself
-    // after a few seconds; a pointer that hovers it keeps it, so the test waits for it to go (US-QS-07).
-    await expect(page.getByText("Standard-Zonen übernommen.")).toBeHidden();
-    await page.getByRole("button", { name: "Lichthunger und Einstufung" }).click();
-    // The layer opens on the overview "Lichthunger"; the zone of a species is its segment "Art" (US-LIC-01).
+    // The confirmation is only announced (SG-FEED-01, US-QS-32); no toast covers the reference button.
+    await expectAnnounced(page, "Standard-Zonen übernommen.");
+    await page.getByRole("button", { name: "Lichtbedarf und Einstufung" }).click();
+    // The layer opens on the overview "Lichtbedarf"; the zone of a species is its segment "Rechner" (US-LIC-01).
     await page
       .getByRole("group", { name: "Teil der Lichtangaben" })
-      .getByRole("button", { name: "Art", exact: true })
+      .getByRole("button", { name: "Rechner", exact: true })
       .click();
     const form = page.getByRole("form", { name: "Zone ermitteln" });
-    await form.getByLabel("Lux-Bedarf der Art (Lux)").fill("15000");
+    await form.getByLabel("Lichtbedarf der Art").fill("15000");
     await form.getByRole("button", { name: "Zone ermitteln" }).click();
     await expect(form.getByText("Lichtzone: Zone 2")).toBeVisible();
 
-    await form.getByLabel("Lux-Bedarf der Art (Lux)").fill("100000");
+    await form.getByLabel("Lichtbedarf der Art").fill("100000");
     await form.getByLabel("Sonnenliebende C3-Pflanze mit weichem Blatt").check();
     await form.getByRole("button", { name: "Zone ermitteln" }).click();
     await expect(form.getByText("Lichtzone: Zone 2")).toBeVisible();

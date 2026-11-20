@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { SHARE_NOTE_LIMITS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import { Select } from "@/shared/ui/fields/select/select";
+import { texts } from "@/shared/lib/text-rules/texts";
 import type { EquipmentRow } from "../../../equipment-api";
+import table from "../../../equipment.de.json";
+
+const t = texts(table);
 
 export interface SharingActions {
   busy: boolean;
@@ -51,11 +56,8 @@ export function Sharing(props: { item: EquipmentRow; actions: SharingActions }) 
           />
         </label>
       ) : null}
-      <p className="m-0 text-xs text-muted-foreground">
-        Freunde sehen nur Art, Name, Modell, Lichtstufe und deine Erfahrung, nie Preis, Kaufort,
-        Seriennummer, Standort oder Kaufdatum. Zurückziehen wirkt beim nächsten Abruf; was schon
-        angezeigt wurde, lässt sich nicht zurückholen.
-      </p>
+      {/* One line at 14 px (SG-COPY-05, SG-TYPE-03); the full list and the withdrawal sit behind Mehr erfahren. */}
+      <MoreHelp more={t("share.more")}>Freunde sehen nie den Preis.</MoreHelp>
       <Button type="submit" size="touch" variant="secondary" disabled={actions.busy}>
         Freigabe speichern
       </Button>

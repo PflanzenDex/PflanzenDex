@@ -50,6 +50,7 @@ function Body(props: {
         onBuy={candidate.buy}
         onDiscard={candidate.discard}
         busy={candidate.running}
+        access={{ api, token }}
       />
       <WishlistLayers
         data={data}

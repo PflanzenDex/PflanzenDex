@@ -6,6 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const REPO_PATH = /`((?:app|docs|scripts|\.github|\.agents|\.claude)\/[^`\s*<>]+)`/g;
 
@@ -72,7 +73,7 @@ export function checkAgents({ agents, exists }) {
   });
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const root = fileURLToPath(new URL("../../../../..", import.meta.url));
   const dir = (p) => (fs.existsSync(path.join(root, p)) ? fs.readdirSync(path.join(root, p)) : []);
   const skills = Object.fromEntries(

@@ -35,7 +35,7 @@ export const FUNCTION_NAMES: Record<UnlockFunctionId, string> = {
   discover: "Vorschläge entdecken",
   equipment: "Geräte",
   friends: "Freunde",
-  swapping: "Tauschen",
+  swapping: "Tauschbörse",
   ai_access: "KI-Zugang",
   care_rhythm: "Pflegerhythmus",
   anniversaries: "Jahrestage",
@@ -120,7 +120,7 @@ export function waysText(entry: UnlockEntry): string {
   return entry.ways.map((w, i) => wayText(w, entry.reasons[i])).join(" oder ");
 }
 
-/** "Tauschen: lege 3 Pflanzen an" / "Jahresrückblick: noch 112 Tage" (US-ONB-05). */
+/** "Tauschbörse: lege 3 Pflanzen an" / "Jahresrückblick: noch 112 Tage" (US-ONB-05). */
 export const lockLine = (entry: UnlockEntry): string =>
   `${functionName(entry.id)}: ${waysText(entry)}`;
 

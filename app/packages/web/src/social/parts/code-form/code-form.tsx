@@ -1,14 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
 import { refusalText } from "@/shared/lib/error-text";
 import type { ApiError } from "../../../shared/data";
 
-const schema = z.object({ code: z.string().trim().min(1, "Bitte gib den Freundescode ein.") });
+const schema = z.object({ code: z.string().trim().min(1, "Gib den Freundescode ein.") });
 type Fields = z.infer<typeof schema>;
 
 /**
@@ -21,7 +20,7 @@ export function CodeForm(props: {
   refusal: ApiError | null;
   onSend: (code: string) => Promise<boolean>;
 }) {
-  const form = useForm<Fields>({ resolver: zodResolver(schema), defaultValues: { code: "" } });
+  const form = useFieldForm<Fields>({ resolver: zodResolver(schema), defaultValues: { code: "" } });
   const { setError } = form;
   const { refusal } = props;
   useEffect(() => {
@@ -34,7 +33,7 @@ export function CodeForm(props: {
   const pending = props.running || form.formState.isSubmitting;
   return (
     <section aria-label="Code eingeben" className="flex min-w-0 flex-col gap-3">
-      <p className="text-muted-foreground">Dein Code geht als Anfrage an die Person.</p>
+      <p className="text-muted-foreground">Wer dir den Code gegeben hat, bekommt eine Anfrage.</p>
       <Form {...form}>
         <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <TextField

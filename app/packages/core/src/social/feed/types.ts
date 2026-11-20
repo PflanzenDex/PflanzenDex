@@ -47,6 +47,13 @@ export interface Feed {
   readonly events: readonly FeedEvent[];
   /** UTC instant (ISO 8601) the data was read; the screen shows it as "Stand" when it can only show an older copy (FR-SOZ-03). */
   readonly asOf: string;
-  /** What to do next (P-09). */
-  readonly hint: { readonly text: string; readonly nextAction: string };
+  /**
+   * What to do next (P-09). `kind` names the state, so the screen can offer the action that fits it: no friend yet, a
+   * friend shares nothing, nothing new in the period, or new things (US-QS-32, F-0258).
+   */
+  readonly hint: {
+    readonly kind: "no_friends" | "nothing_shared" | "nothing_new" | "new";
+    readonly text: string;
+    readonly nextAction: string;
+  };
 }

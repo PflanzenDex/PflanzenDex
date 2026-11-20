@@ -2,7 +2,9 @@
 // can return the focus here without loading the focus handling of RouteFocus, which is a chunk of its own (DS-08).
 
 // The heading of a route's loading skeleton is not the view's own (issue 1097): focusing it would lose the focus when the page replaces it.
+// Below `md` the page's heading may sit in the top bar (US-QS-32, SG-HEAD-01): the bar's heading is the view's own, then the main one.
 export const mainHeading = () =>
+  document.querySelector<HTMLElement>("[data-app-bar-slot] h1:not([data-route-fallback])") ??
   document.querySelector<HTMLElement>("#inhalt h1:not([data-route-fallback])");
 export const mainRegion = () => document.getElementById("inhalt");
 
@@ -38,3 +40,19 @@ export function returnFocusOnClose(opener: { readonly current: HTMLElement | nul
     returnFocus(opener.current);
   };
 }
+
+// The title a route claims for the page it shows itself (US-QS-09): the not-found view claims its title here, because the address
+// alone does not say that no page exists. RouteFocus reads the claim before it sets the title of an address; the view releases it
+// when it leaves, so the title of the next address counts again.
+let claimed: string | null = null;
+
+/** Claims the title of the page the route shows; the returned function releases it when the route leaves. */
+export function claimTitle(title: string): () => void {
+  claimed = title;
+  return () => {
+    if (claimed === title) claimed = null;
+  };
+}
+
+/** The title a route has claimed, or `null`: the address decides then. */
+export const claimedTitle = (): string | null => claimed;

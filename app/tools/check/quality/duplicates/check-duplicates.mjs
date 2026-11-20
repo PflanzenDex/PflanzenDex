@@ -4,7 +4,7 @@
 // Base: DUPLICATES_BASE, else origin/$GITHUB_BASE_REF (CI pull request), else origin/dev.
 import fs from "node:fs";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 export function fallowArgs(limits, extra = []) {
   return [
@@ -43,7 +43,7 @@ export function describe(groups) {
 const npx = (args, stdio) =>
   spawnSync("npx", ["--no-install", ...args], { encoding: "utf8", stdio });
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const limits = JSON.parse(
     fs.readFileSync(
       new URL("../../../../config/gates/quality-limits.json", import.meta.url),

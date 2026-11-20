@@ -15,7 +15,7 @@ const Skeleton = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
 Skeleton.displayName = "Skeleton";
 
 export type SkeletonGroupProps = React.HTMLAttributes<HTMLDivElement> & {
-  /** Text read out while loading, supplied by the caller (German "Lädt…"). */
+  /** Text read out while loading, supplied by the caller (German "Lädt …"). */
   label: string;
 };
 

@@ -13,7 +13,7 @@ const whole = (text: string, [min, max]: readonly [number, number]) => {
 const between = ([min, max]: readonly [number, number]) =>
   `Gib eine ganze Zahl zwischen ${min} und ${max} ein.`;
 
-const name = z.string().trim().min(1, "Bitte gib einen Namen ein.").max(NAME_MAX);
+const name = z.string().trim().min(1, "Gib einen Namen ein.").max(NAME_MAX);
 const required = (limits: readonly [number, number]) =>
   z.string().refine((t) => whole(t, limits), between(limits));
 const optional = (limits: readonly [number, number]) =>

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { migrate, openFixturePool, openPool, testOwnerUrl, withAccount } from "@pflanzendex/db";
 import { createApp } from "./app";
 
@@ -44,6 +44,26 @@ afterAll(async () => {
   await admin.end();
 });
 
+// Every probe provokes a failure on purpose, and the app logs its cause (P-10). Those lines are captured and asserted
+// instead of printed (issue 1629); any other console error still reaches the output.
+const EXPECTED_LOGS = ["Database unavailable", "Request failed"];
+let logged: unknown[][] = [];
+beforeEach(() => {
+  logged = [];
+  const print = console.error.bind(console);
+  vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
+    const first = args[0];
+    if (typeof first === "string" && EXPECTED_LOGS.some((p) => first.startsWith(p)))
+      logged.push(args);
+    else print(...args);
+  });
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+const loggedAs = (prefix: string) =>
+  logged.some((args) => typeof args[0] === "string" && args[0].startsWith(prefix));
+
 /** The app on `pool`, with two probe routes that are not part of the product: a slow statement and a crash. */
 function appOn(pool: Pool) {
   const app = createApp({ reviewer, pool });
@@ -81,6 +101,7 @@ describe("NFR-12 database limits answer with stable codes", () => {
     expect(r.status).toBe(503);
     expect(r.body).toMatchObject({ error: { code: "system.database_unavailable" } });
     expect(JSON.stringify(r.body)).not.toContain("pg_sleep");
+    expect(loggedAs("Database unavailable")).toBe(true);
   });
 
   it("NFR-12 a write that waits too long for a lock answers 503 with the same code, and nothing changes", async () => {
@@ -102,6 +123,7 @@ describe("NFR-12 database limits answer with stable codes", () => {
       });
       expect(r.status).toBe(503);
       expect(r.body).toMatchObject({ error: { code: "system.database_unavailable" } });
+      expect(loggedAs("Database unavailable")).toBe(true);
     } finally {
       await holder.query("rollback");
       holder.release();
@@ -119,6 +141,7 @@ describe("NFR-12 database limits answer with stable codes", () => {
       expect(Date.now() - started).toBeLessThan(2000);
       expect(r.status).toBe(503);
       expect(r.body).toMatchObject({ error: { code: "system.database_unavailable" } });
+      expect(loggedAs("Database unavailable")).toBe(true);
     } finally {
       held.release();
     }
@@ -129,5 +152,7 @@ describe("NFR-12 database limits answer with stable codes", () => {
     expect(r.status).toBe(500);
     expect(r.body).toMatchObject({ error: { code: "system.unexpected" } });
     expect(JSON.stringify(r.body)).not.toContain("secret detail");
+    // The cause stays on the server: in its log, not in the answer.
+    expect(loggedAs("Request failed")).toBe(true);
   });
 });

@@ -16,6 +16,8 @@ export const SETTINGS_LAYER_IDS: readonly string[] = Object.values(SETTINGS_LAYE
 export const SettingsPage = lazyPage(() =>
   import("./settings-page/settings-page").then((m) => ({ default: m.SettingsPage })),
 );
+// The rows of "Betreiber" while its page loads: the start frame draws the same body (issue 2230).
+export { OperatorRouteBody } from "./operator/operator-page/operator-page.skeleton";
 export const OperatorPage = lazyPage(() =>
   import("./operator/operator-page/operator-page").then((m) => ({ default: m.OperatorPage })),
 );
@@ -28,6 +30,7 @@ export const MeasuredView = lazyPage(() =>
   import("./views/account-views/account-views").then((m) => ({ default: m.MeasuredView })),
 );
 export { apiUrl } from "./api/account-api";
+export { likelySignedIn } from "./api/sign-in-client";
 export type { Account } from "./api/account-api";
 /** The question after the first plant (US-ONB-03): its code loads only when the first plant was saved (DS-08). */
 export const KeeperStyleQuestion = lazyPage(() =>
@@ -42,5 +45,6 @@ export const InvitationPage = lazyPage(() =>
   import("./invitation-page/invitation-page").then((m) => ({ default: m.InvitationPage })),
 );
 export { loadProfile } from "./api/account-api";
+export { nameValue, timeZoneValue } from "./settings-page/groups/group-values";
 // The skeleton of the settings in the shape of their six rows, the section's skeleton of "Konto" (US-QS-14, issue 1697).
 export { SettingsPageSkeleton } from "./settings-page/settings-page.skeleton";

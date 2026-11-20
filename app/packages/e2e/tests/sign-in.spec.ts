@@ -45,7 +45,8 @@ test.describe("US-ACC-01 sign-in", () => {
     await expect(card.getByText(account.email, { exact: true })).toBeVisible();
     await page.reload();
     // After reloading the app is back on Heute, without signing in again at the sign-in service.
-    await expect(page.getByRole("link", { name: "PflanzenDéx, zu Heute" })).toBeVisible();
+    await expect(page.locator("#inhalt")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toHaveCount(0);
   });
 
@@ -58,7 +59,8 @@ test.describe("US-ACC-01 sign-in", () => {
     await page.locator("#username").fill(account.email);
     await page.locator("#password").fill("falsches-Passwort-123");
     await page.locator("#kc-login").click();
-    await expect(page.getByText(/Ungültig/)).toBeVisible();
+    // The sign-in service's text says how to go on (US-QS-32, #2190); the refusal is the same for an unknown account.
+    await expect(page.getByText(/E-Mail, Benutzername oder Passwort stimmen nicht/)).toBeVisible();
     // Still at the sign-in service, whichever port it runs on (E2E_KEYCLOAK_URL).
     await expect(page).toHaveURL(/\/realms\/pflanzendex\//);
   });
@@ -66,7 +68,7 @@ test.describe("US-ACC-01 sign-in", () => {
   test("US-ACC-01 signing out ends the session and says so", async ({ page, account }) => {
     await signIn(page, account);
     await page.getByRole("link", { name: "Konto", exact: true }).click();
-    await page.getByRole("button", { name: "Abmelden…", exact: true }).click();
+    await page.getByRole("button", { name: "Abmelden …", exact: true }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Abmelden", exact: true }).click();
     await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
@@ -82,14 +84,21 @@ test.describe("US-ACC-01 another account", () => {
     const other = await createTestAccount();
     await signIn(page, account);
     // The state of the bug: the app holds no sign-in any more (cleared storage), the sign-in service still does.
-    // The silent attempt was made once in this tab already, so the welcome page shows.
+    // The silent attempt was made once in this tab already, so the welcome page shows. The tab still knows of the live
+    // session: the sign-in returned a token to it, and sessionStorage survives the reload (US-QS-32).
     await page.evaluate(() => window.localStorage.clear());
     await page.reload();
-    await page.getByRole("button", { name: "Anderes Konto" }).click();
-    // Without an id token the sign-in service asks once before it ends the session, then returns to the app.
+    await page.getByRole("button", { name: "Konto wechseln" }).click();
+    // Without an id token the sign-in service asks once before it ends the session. Then the sign-in form opens for the
+    // other account at once, with no welcome page in between (owner decision 2026-11-14).
     await page.getByRole("button", { name: "Abmelden", exact: true }).click();
-    await expect(page.getByText("Du bist abgemeldet.")).toBeVisible();
-    await signIn(page, other);
+    await expect(page).toHaveURL(/\/realms\/pflanzendex\//);
+    await expect(page.locator("#username")).toBeVisible();
+    await page.locator("#username").fill(other.email);
+    await page.locator("#password").fill(other.password);
+    await page.locator("#kc-login").click();
+    await expect(page.locator("#inhalt")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
     await page.getByRole("link", { name: "Konto", exact: true }).click();
     const index = page.getByRole("navigation", { name: "Abschnitte von Konto" });
     await expect(index.getByText(other.email, { exact: true })).toBeVisible();

@@ -78,13 +78,9 @@ export function HintsLayer({ data }: { data: LightData }) {
   );
 }
 
-function OverviewSection(props: {
-  overview: Response<LightOverview>;
-  onOpenCollection: () => void;
-  onRetry: () => void;
-}) {
+function OverviewSection(props: { overview: Response<LightOverview>; onRetry: () => void }) {
   const o = props.overview;
-  if (o.ok) return <LightOverviewView data={o.value} onOpenCollection={props.onOpenCollection} />;
+  if (o.ok) return <LightOverviewView data={o.value} />;
   return (
     <section aria-labelledby="overview-error" className="flex min-w-0 flex-col gap-3">
       <h2 id="overview-error" className="text-xl font-semibold">
@@ -112,13 +108,12 @@ export function ReferenceLayer(props: {
   data: LightData;
   actions: LightActions;
   overview: Response<LightOverview>;
-  onOpenCollection: () => void;
   onRetry: () => void;
 }) {
   const [topic, setTopic] = useState<Topic>("overview");
   return (
     <LayerSheet id={REFERENCE} title={t("layers.reference")}>
-      {/* The species of "Lichthunger" page by the free height of the layer (issue 1155). */}
+      {/* The species of "Lichtbedarf" page by the free height of the layer (issue 1155). */}
       <div className="flex min-h-0 flex-1 flex-col gap-4">
         <SegmentedControl
           label={t("reference.parts")}
@@ -127,11 +122,7 @@ export function ReferenceLayer(props: {
           onChange={setTopic}
         />
         {topic === "overview" && (
-          <OverviewSection
-            overview={props.overview}
-            onOpenCollection={props.onOpenCollection}
-            onRetry={props.onRetry}
-          />
+          <OverviewSection overview={props.overview} onRetry={props.onRetry} />
         )}
         {topic === "rules" && <RulesView zones={props.data.zones} />}
         {topic === "derive" && (

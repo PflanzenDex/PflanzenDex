@@ -10,6 +10,7 @@ import {
   authentication,
   operatorRoutes,
   registrationRoutes,
+  signOutRoutes,
   unlockRoutes,
   type TokenVerifier,
 } from "./account";
@@ -88,6 +89,7 @@ function bindAccount(
   app.route("/account", accountRoutes(pool, opt.access));
   app.route("/account", exportRoutes(pool, opt.media?.store));
   app.route("/account", deletionRoutes(pool, opt.clock));
+  app.route("/account", signOutRoutes(pool, opt.identitySessions));
   for (const path of OPERATOR_PATHS) app.use(`${path}/*`, auth);
   app.route("/", operatorRoutes(pool, opt.clock));
   app.route("/", operatorDeletionRoutes(pool, opt.clock));

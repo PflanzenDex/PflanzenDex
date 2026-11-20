@@ -9,12 +9,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { builtinModules } from "node:module";
-import { fileURLToPath } from "node:url";
 import { MODULE_CONFIG } from "../../../config/lint/modules.config.mjs";
 import { checkModules } from "./modules/check-modules.mjs";
 import * as sql from "./modules/rules/check-modules-sql.mjs";
 import { checkWebLayers } from "./modules/rules/check-modules-graph.mjs";
 import { checkLayerRules } from "./modules/rules/check-layer-rules.mjs";
+import { isEntryPoint } from "../shared/entry-point.mjs";
 
 export const CORE_ALLOWED_IMPORTS = []; // third-party packages allowed in core (empty on purpose; later e.g. zod)
 export const CORE_TEST_ALLOWED_IMPORTS = ["vitest"];
@@ -184,8 +184,8 @@ export function checkProject(appDir, cfg = NO_MODULES) {
   return out;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const appDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+if (isEntryPoint(import.meta.url)) {
+  const appDir = path.resolve(import.meta.dirname, "../../..");
   const violations = checkProject(appDir, MODULE_CONFIG);
   if (violations.length) {
     console.error(violations.join("\n"));

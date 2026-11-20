@@ -4,8 +4,22 @@ import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Input } from "@/shared/ui/fields/input/input";
 import type { EquipmentRow, SupplyLevel } from "../../../equipment-api";
 import { SUPPLY_LABELS } from "../../../labels";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import {
+  SegmentedControl,
+  type SegmentedOption,
+} from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../../equipment.de.json";
+
+const t = texts(table);
 
 const LEVELS = ["available", "low", "empty"] as const satisfies readonly SupplyLevel[];
+const LEVEL_OPTIONS: readonly SegmentedOption<SupplyLevel>[] = LEVELS.map((level) => ({
+  value: level,
+  label: SUPPLY_LABELS[level],
+}));
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";
 
 export interface SupplyActions {
@@ -31,10 +45,8 @@ function LinkForm(props: { item: EquipmentRow; actions: SupplyActions }) {
         Text in der Behandlung (optional)
         <Input value={text} onChange={(e) => setText(e.target.value)} />
       </label>
-      <p className="m-0 text-xs text-muted-foreground">
-        Der freie Text deiner Behandlungen bleibt, wie er ist; die Verknüpfung findet nur den Vorrat
-        dazu.
-      </p>
+      {/* One line at 14 px (SG-COPY-05, SG-TYPE-03; the sentence was 12 px); the rest sits behind Mehr erfahren. */}
+      <MoreHelp more={t("link.more")}>Dein Behandlungstext bleibt, wie er ist.</MoreHelp>
       <Button type="submit" size="touch" variant="secondary" disabled={actions.busy}>
         Verknüpfung speichern
       </Button>
@@ -52,27 +64,23 @@ export function Supply(props: { item: EquipmentRow; actions: SupplyActions }) {
   if (item.supply === null) return null;
   return (
     <div className="mt-2 flex flex-col gap-2 text-sm">
-      <div role="group" aria-label={`Vorrat von ${item.name}`} className="flex flex-wrap gap-2">
-        {LEVELS.map((level) => (
-          <Button
-            key={level}
-            type="button"
-            size="touch"
-            variant={item.supply === level ? "default" : "secondary"}
-            className="w-auto flex-1 px-2"
-            aria-pressed={item.supply === level}
-            disabled={actions.busy}
-            onClick={() => item.supply !== level && actions.onSupply(item, level)}
-          >
-            {SUPPLY_LABELS[level]}
-          </Button>
-        ))}
+      <div className="flex flex-col gap-1">
+        <p className="font-semibold">{t("supply.label")}</p>
+        <SegmentedControl
+          label={`Vorrat von ${item.name}`}
+          options={LEVEL_OPTIONS}
+          value={item.supply}
+          disabled={actions.busy}
+          onChange={(level) => {
+            if (level !== item.supply) actions.onSupply(item, level);
+          }}
+        />
       </div>
       {item.type === "Plant agent" ? (
         <details>
-          <summary className="cursor-pointer">
+          <DisclosureSummary>
             Verknüpfung mit Behandlungen{item.agentLink ? `: ${item.agentLink}` : " (keine)"}
-          </summary>
+          </DisclosureSummary>
           <LinkForm key={`${item.id}:${item.agentLink}`} item={item} actions={actions} />
         </details>
       ) : null}

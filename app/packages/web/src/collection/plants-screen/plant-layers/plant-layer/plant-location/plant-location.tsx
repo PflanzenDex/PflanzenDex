@@ -5,6 +5,9 @@ import { LocateControl } from "../../../../markers/locate/locate-control/locate-
 import { Actions, Quiet } from "../../../../specimens/cards/parts/parts";
 import { UNKNOWN, zoneText } from "../../../../specimens/model/text";
 
+/** A field value of the location: 16 px in the text colour (SG-TYPE-02), not a grey meta line. */
+const FIELD = "text-base text-foreground";
+
 /**
  * "Standort" (US-QS-23): the location and the light zone with where the zone comes from (unknown reads "unbekannt",
  * P-08), and the actions that change them: the own light zone (US-LIC-02) and the location, chosen from the own
@@ -21,8 +24,8 @@ export function PlantLocation(props: {
   const { card } = props;
   return (
     <div className="grid gap-2">
-      <Quiet>Standort: {card.location ?? UNKNOWN}</Quiet>
-      <Quiet>Lichtzone: {zoneText(card)}</Quiet>
+      <Quiet className={FIELD}>Standort: {card.location ?? UNKNOWN}</Quiet>
+      <Quiet className={FIELD}>Lichtzone: {zoneText(card)}</Quiet>
       {card.lightNeedUnknown ? (
         <Actions>
           <LightNeedAction speciesId={card.speciesId} speciesName={card.speciesName ?? card.name} />

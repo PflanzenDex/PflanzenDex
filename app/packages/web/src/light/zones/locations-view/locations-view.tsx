@@ -8,6 +8,7 @@ import {
   useSaveForm,
 } from "../../shared/ui/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
+import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import {
   LOCATION_REFUSABLE,
   NAME_MAX,
@@ -16,6 +17,10 @@ import {
   type LocationFields,
 } from "../../shared/schemas";
 import { zoneLabel } from "@pflanzendex/core";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "../../light.de.json";
+
+const ui = texts(table);
 
 export interface LocationInput {
   name: string;
@@ -40,35 +45,42 @@ export function LocationForm(props: {
     clear: !s,
   });
   const { control } = sent.form;
+  // Typed input that is not saved asks before the layer of the location closes (US-QS-32).
+  useUnsavedInput(sent.form.formState.isDirty);
   return (
     <Form {...sent.form}>
       <FormRoot
         className={FORM_GRID}
         onSubmit={sent.send}
-        aria-label={s ? `${s.name} ändern` : "Standort anlegen"}
+        aria-label={s ? ui("location.editLabel", { name: s.name }) : ui("location.createLabel")}
       >
         <TextField
           control={control}
           name="name"
-          label="Name"
+          label={ui("location.name")}
           maxLength={NAME_MAX}
           autoComplete="off"
         />
-        <SelectField control={control} name="lightZoneId" label="Lichtzone">
-          <option value="">Keine Lichtzone (erscheint in den Hinweisen)</option>
+        <SelectField
+          control={control}
+          name="lightZoneId"
+          label={ui("location.zone")}
+          description={ui("location.zoneHint")}
+        >
+          <option value="">{ui("location.zoneNone")}</option>
           {props.zones.map((z) => (
             <option key={z.id} value={z.id}>
               {zoneLabel(z.name)}
             </option>
           ))}
         </SelectField>
-        <SelectField control={control} name="kind" label="Art">
-          <option value="indoor">innen</option>
-          <option value="outdoor">außen</option>
+        <SelectField control={control} name="kind" label={ui("location.kind")}>
+          <option value="indoor">{ui("location.indoor")}</option>
+          <option value="outdoor">{ui("location.outdoor")}</option>
         </SelectField>
         <RefusalAlert sent={sent} />
         <FormButtons
-          label={s ? "Speichern" : "Standort anlegen"}
+          label={s ? ui("location.save") : ui("location.createLabel")}
           running={sent.running}
           onCancel={props.onCancel}
         />

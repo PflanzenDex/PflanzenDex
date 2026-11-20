@@ -14,9 +14,9 @@ describe("US-WAC-03 growth rate and trend in the view", () => {
     expect(screen.queryByText(/cm\/Jahr/)).toBeNull();
   });
 
-  it('one measurement: "1 Messung — noch keine Rate"', () => {
+  it('one measurement: "noch nicht berechenbar (1 Messung)"', () => {
     show({ count: 1, ratePerYear: null, trend: null, signal: null });
-    expect(screen.getByText("1 Messung — noch keine Rate")).toBeTruthy();
+    expect(screen.getByText("noch nicht berechenbar (1 Messung)")).toBeTruthy();
   });
 
   it("two measurements: rate in cm/year and the hint that the trend comes with the 3rd measurement", () => {
@@ -50,7 +50,9 @@ describe("US-WAC-03 growth rate and trend in the view", () => {
 describe("US-WAC-04 etiolation overrides the trend in the view", () => {
   it("etiolated last measurement: says so instead of the trend, the rate stays", () => {
     show({ count: 3, ratePerYear: 20, trend: "faster", signal: "etiolated" });
-    expect(screen.getByText(/Wuchs vergeilt\/dünn — trotz Rate kein Erfolgssignal/)).toBeTruthy();
+    expect(
+      screen.getByText(/Wuchs vergeilt\/dünn — trotz Wachstum kein Erfolgssignal/),
+    ).toBeTruthy();
     expect(screen.getByText("20 cm/Jahr")).toBeTruthy();
     expect(screen.queryByText(/schneller/)).toBeNull();
   });

@@ -1,8 +1,10 @@
 import { cva } from "class-variance-authority";
-import type { SpecimenCard, MeasurementQuality } from "@pflanzendex/core";
+import { localToday, type SpecimenCard, type MeasurementQuality } from "@pflanzendex/core";
 import { Quiet } from "../parts/parts";
 import { dateText, valueText } from "../../model/text";
-import { overdueChip } from "@/shared/lib/format";
+import { overdueChip, summaryDate } from "@/shared/lib/format";
+import { currentTimeZone } from "../../../../shared/data";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
 // The facts of a specimen card (US-BES-06): the last measurement, the open treatment and the provenance. The plant layer
 // (US-QS-23) places them in its tabs; derived data only.
@@ -38,6 +40,8 @@ const dueMark = cva("", {
 export function Measurement({ card }: { card: SpecimenCard }) {
   const m = card.lastMeasurement;
   if (!m) return <Quiet>noch keine Messung</Quiet>;
+  // Within 7 days the relative word stands alone ("vor 6 Tagen"); beyond, the absolute date keeps its "am" (SG-FMT-01).
+  const when = summaryDate(m.date, localToday(new Date(), currentTimeZone()));
   return (
     <>
       <p>
@@ -45,7 +49,7 @@ export function Measurement({ card }: { card: SpecimenCard }) {
         <strong data-quality={m.quality} className={qualityMark({ quality: m.quality })}>
           {QUALITY_TEXT[m.quality]}
         </strong>{" "}
-        am {dateText(m.date)}
+        {when === dateText(m.date) ? <>am {when}</> : when}
       </p>
       {m.quality === "etiolated" && (
         <p className="border-l-4 border-warning-border bg-warning px-2 py-1.5 text-sm text-warning-foreground">
@@ -54,9 +58,7 @@ export function Measurement({ card }: { card: SpecimenCard }) {
       )}
       {m.note && (
         <details>
-          <summary className="flex min-h-[44px] cursor-pointer items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            Notiz der Messung
-          </summary>
+          <DisclosureSummary className="rounded-md">Notiz der Messung</DisclosureSummary>
           <p>{m.note}</p>
         </details>
       )}
@@ -76,7 +78,7 @@ export function Provenance({ value }: { value: SpecimenCard["provenance"] }) {
 
 export function Treatment({ card }: { card: SpecimenCard }) {
   const b = card.treatment;
-  if (!b) return <Quiet>keine offene Behandlung</Quiet>;
+  if (!b) return <Quiet>Keine offene Behandlung.</Quiet>;
   return (
     <p>
       Behandlung: {b.reason} ·{" "}

@@ -81,7 +81,7 @@ describe("US-QS-23 the growth trend of the overview", () => {
         json(200, view({ growth: growth({ trend: "faster", signal: "etiolated" }) })),
     });
     show();
-    expect(await screen.findByText(/trotz Rate kein Erfolgssignal/)).toBeTruthy();
+    expect(await screen.findByText(/trotz Wachstum kein Erfolgssignal/)).toBeTruthy();
   });
 
   it("US-QS-23 · P-08 without a measurement the trend reads unbekannt", async () => {
@@ -89,6 +89,14 @@ describe("US-QS-23 the growth trend of the overview", () => {
     show();
     expect(await screen.findByText("Trend: unbekannt")).toBeTruthy();
     expect(screen.getByText("Wachstum: noch keine Messung")).toBeTruthy();
+  });
+
+  it("US-QS-32 the dot of the growth line sticks to the trend, so a line never ends with ' ·'", async () => {
+    server({ "GET /specimens/e1/measurements": () => json(200, view({ growth: growth({}) })) });
+    show();
+    const trend = await screen.findByText("Trend: stabil");
+    // The dot is part of the trend's element (with a no-break space), so a line break can come before it, never after it.
+    expect(trend.textContent).toBe("· Trend: stabil");
   });
 
   it("US-QS-23 · P-10 a failed load says so and offers a retry", async () => {
@@ -146,7 +154,7 @@ describe("US-QS-23 Verlauf", () => {
     server({ "GET /specimens/e1/measurements": () => json(200, view()) });
     const onMeasure = vi.fn();
     show(onMeasure);
-    await userEvent.click(await screen.findByRole("button", { name: "Messen" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Messung erfassen" }));
     expect(onMeasure).toHaveBeenCalledOnce();
   });
 
@@ -170,11 +178,14 @@ describe("US-QS-23 Pflege", () => {
   const phase: PhasesRow = {
     specimenId: "e1",
     name: "Aloe",
+    marker: null,
+    speciesName: "Aloe",
     speciesId: "a1",
     phase: "dormancy",
     locationId: "s1",
     targetLocationId: "s2",
     nextChange: null,
+    photo: null,
   };
   const base = {
     "GET /treatments": () =>
@@ -207,6 +218,7 @@ describe("US-QS-23 Pflege", () => {
     render(
       <MemoryRouter>
         <PlantCare api={API} token={TOKEN} specimen={{ id: "e1", name: "Aloe" }} />
+        <Where />
       </MemoryRouter>,
     );
 
@@ -220,16 +232,16 @@ describe("US-QS-23 Pflege", () => {
     expect(await screen.findByText(/Wollläuse · erledigt am 02\.09\.2026/)).toBeTruthy();
   });
 
-  it("US-QS-23 Erledigt ticks the treatment off through the existing operation and says so", async () => {
+  it("US-QS-32 · US-QS-23 Abhaken ticks the treatment off through the existing operation and says so", async () => {
     const posts = server({
       ...base,
       "POST /treatments/t1/complete": () =>
         json(200, { treatment: { ...open("t1", "e1", "Neem"), done: true, doneAt: "2026-10-29" } }),
     });
     show();
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Neem bei Aloe als erledigt abhaken" }),
-    );
+    const tick = await screen.findByRole("button", { name: "Neem bei Aloe als erledigt abhaken" });
+    expect(tick.textContent).toBe("Abhaken");
+    await userEvent.click(tick);
     expect((await screen.findByRole("status")).textContent).toContain("als erledigt eingetragen");
     expect(posts.map((p) => p.path)).toContain("/treatments/t1/complete");
   });
@@ -257,14 +269,21 @@ describe("US-QS-23 Pflege", () => {
     expect(await screen.findByText(/Pflegephase: unbekannt/)).toBeTruthy();
   });
 
-  it("US-QS-23 the care phase shows with Jetzt umgestellt, which confirms through the existing operation", async () => {
+  it("US-QS-32 'Ruhephase eintragen' opens the own care-profile layer of the plant, the one the Pflegeprofil part opens", async () => {
+    server(base);
+    show();
+    await userEvent.click(await screen.findByRole("button", { name: "Ruhephase eintragen" }));
+    expect(screen.getByTestId("address").textContent).toBe("?sheet=profil-e1");
+  });
+
+  it("US-QS-23 the care phase shows with Umstellen, which confirms through the existing operation", async () => {
     const posts = server({
       ...base,
       "GET /care-phases": () => json(200, { phases: [phase] }),
       "POST /care-phases/confirm": () => json(200, { specimens: [] }),
     });
     show();
-    await userEvent.click(await screen.findByRole("button", { name: "Jetzt umgestellt: Aloe" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Umstellen: Aloe" }));
     await vi.waitFor(() => expect(posts.some((p) => p.path === "/care-phases/confirm")).toBe(true));
     expect(posts.find((p) => p.path === "/care-phases/confirm")?.body).toMatchObject({
       specimenIds: ["e1"],

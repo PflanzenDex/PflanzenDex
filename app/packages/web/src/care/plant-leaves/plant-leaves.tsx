@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import {
   localToday,
   type LeafDirection,
@@ -16,6 +17,7 @@ import {
   type Response,
 } from "@/shared/data";
 import { Button } from "@/shared/ui/button/button";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -79,14 +81,8 @@ function useLeafWrites(api: string, token: Token, specimenId: string, onDone: ()
 
 function LeafList(props: { view: LeafLogView; busy: boolean; onRemove: (row: Leaf) => void }) {
   const { view } = props;
-  // Two plain lines, not the empty panel: the buttons above already are the next step (P-09), and the tab fits one screen.
-  if (view.count === 0)
-    return (
-      <div className="grid gap-1">
-        <p className="font-semibold">{t("empty.title")}</p>
-        <p className="text-sm text-muted-foreground">{t("empty.description")}</p>
-      </div>
-    );
+  // One line only: "Neues Blatt" and "Mit Details" stand right above, so the line repeats neither (SG-STATE-01, issue 2233).
+  if (view.count === 0) return <EmptySection text={t("empty.line")} />;
   return (
     <div className="grid gap-3">
       <p className="font-semibold">{countText(view.count)}</p>
@@ -130,20 +126,29 @@ function LeafLog({ api, token, specimenId }: Props) {
   const today = localToday(new Date(), currentTimeZone());
   const quick = async () => setRefusal(await writes.send({}));
   const remove = async (row: Leaf) => setRefusal(await writes.remove(row.id));
+  const drop = (row: Leaf) => void remove(row);
   return (
     <section aria-labelledby="leaf-heading" className="grid gap-3">
       <h3 id="leaf-heading" className="sr-only">
         {t("heading")}
       </h3>
       {/* Two equal columns: both buttons keep their 48 px height and do not wrap on a 360 px phone (US-WAC-07). */}
-      <div className="grid grid-cols-2 gap-2">
-        <Button type="button" size="touch" disabled={writes.busy} onClick={() => void quick()}>
-          {t("newLeaf")}
-        </Button>
-        <Button type="button" variant="outline" size="touch" onClick={() => setFormOpen(true)}>
-          {t("withDetails")}
-        </Button>
-      </div>
+      <NetworkSlot>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            type="button"
+            size="touch"
+            disabled={writes.busy}
+            needsNetwork
+            onClick={() => void quick()}
+          >
+            {t("newLeaf")}
+          </Button>
+          <Button type="button" variant="outline" size="touch" onClick={() => setFormOpen(true)}>
+            {t("withDetails")}
+          </Button>
+        </div>
+      </NetworkSlot>
       {refusal && <RefusalAlert error={refusal} />}
       <LoadFrame
         queryKey={key}
@@ -152,7 +157,7 @@ function LeafLog({ api, token, specimenId }: Props) {
         loadingText={t("loading")}
         loadingFallback={<LeafLogSkeleton label={t("loading")} />}
       >
-        {(view) => <LeafList view={view} busy={writes.busy} onRemove={(row) => void remove(row)} />}
+        {(view) => <LeafList view={view} busy={writes.busy} onRemove={drop} />}
       </LoadFrame>
       <ResponsiveModal
         title={t("form.title")}

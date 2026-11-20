@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
@@ -100,10 +100,11 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     cleanup();
     fakeServer([]);
     show();
-    expect(await screen.findByText(/Lege zuerst eine Pflanze in der Sammlung an/)).toBeTruthy();
-    const links = screen.getAllByRole("link", { name: "Zur Sammlung" });
-    expect(links.length).toBeGreaterThan(0);
-    for (const link of links) expect(link.getAttribute("href")).toBe("/collection");
+    expect(await screen.findByText("Du hast noch keine Pflanze.")).toBeTruthy();
+    const links = screen.getAllByRole("link", { name: "Pflanze anlegen" });
+    // Issue 2233: one step, once on the screen; the empty open list does not repeat the planning's.
+    expect(links).toHaveLength(1);
+    expect(links[0]?.getAttribute("href")).toBe("/collection/new");
   });
 
   it("US-BEH-01 saves one treatment with several specimens, reason, agent and date, with an Idempotency-Key", async () => {
@@ -155,7 +156,7 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     await user.type(screen.getByLabelText("Datum"), "2026-10-10");
     await user.click(screen.getByRole("checkbox", { name: "Kur planen (mehrere Termine)" }));
     expect((screen.getByLabelText("Anzahl der Termine") as HTMLInputElement).value).toBe("3");
-    expect((screen.getByLabelText("Abstand in Tagen") as HTMLInputElement).value).toBe("7");
+    expect((screen.getByLabelText("Abstand") as HTMLInputElement).value).toBe("7");
     await user.click(screen.getByRole("button", { name: "Kur planen" }));
     expect((await screen.findByRole("status")).textContent).toContain("3 Termine");
     expect(posts[0]?.body).toMatchObject({ count: 3, intervalDays: 7 });
@@ -231,18 +232,18 @@ describe("US-BEH-02 offene Behandlungen", () => {
     expect(chip.className).not.toContain("rounded-full");
   });
 
-  it('US-BEH-02 without open treatments it says "Keine offenen Behandlungen." and what to do next (P-09)', async () => {
+  it('US-BEH-02 without open treatments it says "Keine offenen Behandlungen" and what to do next (P-09)', async () => {
     fakeServer([specimen("e1", "Bogenhanf")]);
     show();
-    expect(await screen.findByText("Keine offenen Behandlungen.")).toBeTruthy();
-    expect(screen.getByText(/Plane unten einen Termin/)).toBeTruthy();
+    expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Behandlung planen" })).toBeTruthy();
   });
 
   it("US-BEH-02 · DS-26 the empty list offers an action that moves to the form", async () => {
     fakeServer([specimen("e1", "Bogenhanf")]);
     const user = userEvent.setup();
     show();
-    await screen.findByText("Keine offenen Behandlungen.");
+    await screen.findByText(/^Keine offenen Behandlungen\.$/);
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     expect(document.activeElement).toBe(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
   });
@@ -283,12 +284,12 @@ describe("US-BEH-02 offene Behandlungen", () => {
     );
     const user = userEvent.setup();
     show();
-    await screen.findByText("Keine offenen Behandlungen.");
+    await screen.findByText(/^Keine offenen Behandlungen\.$/);
     await user.click(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
     await user.type(screen.getByLabelText("Grund"), "Wollläuse");
     await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
     expect(await screen.findByRole("list", { name: "Offene Behandlungen" })).toBeTruthy();
-    expect(screen.queryByText("Keine offenen Behandlungen.")).toBeNull();
+    expect(screen.queryByText(/^Keine offenen Behandlungen\.$/)).toBeNull();
   });
 });
 
@@ -320,7 +321,10 @@ function doneServer(
         const refused = complete(id);
         if (refused) return refused;
         rows = rows.filter((r) => r.id !== id);
-        return response(200, { treatment: { id, done: true, doneAt: "2026-10-03" } });
+        return response(200, {
+          treatment: { id, done: true, doneAt: "2026-10-03" },
+          changed: true,
+        });
       }
       if (path === "/treatments/history") return response(200, { treatments: history });
       return undefined;
@@ -341,45 +345,51 @@ const doneEntry = (id: string, doneAt: string, agent: string | null = null) => (
 });
 
 describe("US-BEH-03 Behandlung abhaken", () => {
-  it('US-BEH-03 every open row has an "Erledigt" action that names the row for screen readers', async () => {
+  it('US-QS-32 · US-BEH-03 every open row has an "Abhaken" action that names the row for screen readers', async () => {
     doneServer();
     show();
     const list = await screen.findByRole("list", { name: "Offene Behandlungen" });
     const buttons = within(list).getAllByRole("button");
-    expect(buttons.map((b) => b.textContent)).toEqual(["Erledigt", "Erledigt"]);
+    expect(buttons.map((b) => b.textContent)).toEqual(["Abhaken", "Abhaken"]);
     expect(buttons[0]?.getAttribute("aria-label")).toBe("Grund a bei Aloe als erledigt abhaken");
   });
 
-  it("US-BEH-03 a tap sends the id with the device's time zone and an Idempotency-Key, the row disappears and the page says so", async () => {
+  it("US-BEH-03 a tap sends the id with the device's time zone and an Idempotency-Key; the row stays in its place as 'Erledigt · Rückgängig'", async () => {
     const { ticks } = doneServer();
     const user = userEvent.setup();
     show();
     await user.click(
       await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
     );
-    expect((await screen.findByText(/als erledigt eingetragen/)).textContent ?? "").toContain(
-      "Aloe",
-    );
+    const undo = await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" });
+    expect(undo.closest("p")?.textContent).toBe("Erledigt · Rückgängig");
     expect(ticks).toHaveLength(1);
     expect(ticks[0]?.path).toBe("/treatments/a/complete");
     expect(ticks[0]?.body).toEqual({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
     expect(ticks[0]?.key).toBeTruthy();
     const list = screen.getByRole("list", { name: "Offene Behandlungen" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(1);
-    expect(within(list).queryByText("Aloe")).toBeNull();
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(list).getByText("Aloe")).toBeTruthy();
   });
 
-  it("US-BEH-03 after the last one is done the list says there are none and what to do next (P-09)", async () => {
+  it("US-BEH-03 after the last one is done the list says there are none once the 8 s undo window has ended (P-09)", async () => {
     doneServer();
-    const user = userEvent.setup();
-    show();
-    await user.click(
-      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
-    );
-    await user.click(
-      await screen.findByRole("button", { name: "Grund b bei Bogenhanf als erledigt abhaken" }),
-    );
-    expect(await screen.findByText("Keine offenen Behandlungen.")).toBeTruthy();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      show();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+      );
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Grund b bei Bogenhanf als erledigt abhaken" }),
+      );
+      await screen.findByRole("button", { name: "Rückgängig: Grund b bei Bogenhanf" });
+      expect(screen.queryByText(/^Keine offenen Behandlungen\.$/)).toBeNull();
+      act(() => vi.advanceTimersByTime(8000));
+      expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("US-BEH-03 a double tap sends one request", async () => {
@@ -390,7 +400,7 @@ describe("US-BEH-03 Behandlung abhaken", () => {
       name: "Grund a bei Aloe als erledigt abhaken",
     });
     await user.dblClick(button);
-    await screen.findByText(/als erledigt eingetragen/);
+    await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" });
     expect(ticks).toHaveLength(1);
   });
 
@@ -479,16 +489,15 @@ describe("US-QS-10 Behandlung abhaken wird angesagt", () => {
     );
   const heard = () => document.querySelector("[aria-live=polite]")?.textContent?.trim();
 
-  it("US-QS-10 the result of ticking off is a status message that a screen reader reads, and nothing else takes the focus", async () => {
+  it("US-QS-10 the result of ticking off is said by the live region; the undo row takes the focus the button had, and nothing else does", async () => {
     doneServer();
     const user = userEvent.setup();
-    show();
+    withAnnouncer();
     await user.click(await tickButton());
-    const status = await screen.findByRole("status");
-    expect(status.textContent).toContain("als erledigt eingetragen");
-    // The status is a live region: it never takes the focus (4.1.3).
-    expect(document.activeElement).not.toBe(status);
-    expect(status.closest("[tabindex]")).toBeNull();
+    await waitFor(() => expect(heard()).toBe("„Aloe“: „Grund a“ als erledigt eingetragen."));
+    const undo = await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" });
+    expect(document.activeElement).toBe(undo);
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("US-QS-10 offline a tick-off is buffered, the row is hidden, the state is text and announced, and it is delivered once when online", async () => {
@@ -556,6 +565,21 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
     expect(within(list).getByText("2 Tage überfällig").className).toContain("rounded-control");
   });
 
+  it("US-QS-32 · issue 2233 the empty layer shows Behandlung planen once: the empty line has no second one", async () => {
+    fakeServer([specimen("e1", "Bogenhanf")]);
+    showHost();
+    expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
+    expect(await screen.findAllByRole("button", { name: "Behandlung planen" })).toHaveLength(1);
+  });
+
+  it("US-QS-32 · issue 2233 the empty layer without a plant names Pflanze anlegen once", async () => {
+    fakeServer([]);
+    showHost();
+    expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
+    expect(await screen.findAllByRole("link", { name: "Pflanze anlegen" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Behandlung planen" })).toBeNull();
+  });
+
   it("US-QS-14 · US-BEH-01 · A-04 the host has no form: Behandlung planen hands over to the planning layer", async () => {
     doneServer();
     const onPlan = vi.fn();
@@ -569,7 +593,7 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
 });
 
 describe("US-QS-15 the open treatments fit a layer", () => {
-  it("US-QS-15 · US-BEH-03 a row is compact: reason and agent in one line, the chip, and an outline Erledigt that names the plant", async () => {
+  it("US-QS-15 · US-BEH-03 a row is compact: reason and agent in one line, the chip, and a tinted Erledigt that names the plant", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(
@@ -606,7 +630,48 @@ describe("US-QS-15 the open treatments fit a layer", () => {
     // One heading, no sentence above the list (US-QS-15).
     expect(screen.queryByText(/Behandle diese Pflanzen zuerst/)).toBeNull();
     const done = screen.getByRole("button", { name: "Läuse bei Aloe als erledigt abhaken" });
-    expect(done.className).toContain("border-primary");
+    expect(done.className).toContain("bg-accent");
     expect(done.className).not.toContain("bg-primary");
+  });
+});
+
+describe("US-QS-32 the undo belongs to the tick-off that completed the treatment", () => {
+  it("US-QS-32 a tap on a treatment another device already ticked off holds nothing: no undo row", async () => {
+    const { ticks } = doneServer(() =>
+      response(200, { treatment: { id: "a", done: true, doneAt: "2026-10-02" }, changed: false }),
+    );
+    const user = userEvent.setup();
+    show();
+    await user.click(
+      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    );
+    await vi.waitFor(() => expect(ticks).toHaveLength(1));
+    await act(() => new Promise((done) => setTimeout(done, 30)));
+    expect(screen.queryByRole("button", { name: /^Rückgängig/ })).toBeNull();
+  });
+
+  it("US-QS-32 a second tap while a tick-off is in flight does not move the undo to the other row", async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    const { ticks } = doneServer(async () => {
+      await gate;
+      return response(200, {
+        treatment: { id: "a", done: true, doneAt: "2026-10-03" },
+        changed: true,
+      });
+    });
+    show();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Grund b bei Bogenhanf als erledigt abhaken" }),
+    );
+    release();
+    await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" });
+    expect(screen.queryByRole("button", { name: "Rückgängig: Grund b bei Bogenhanf" })).toBeNull();
+    expect(ticks).toHaveLength(1);
   });
 });

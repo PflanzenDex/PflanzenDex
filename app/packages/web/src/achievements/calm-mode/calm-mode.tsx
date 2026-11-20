@@ -40,7 +40,12 @@ function CalmModeSwitch(props: { api: string; token: Token; settings: Achievemen
   return (
     <fieldset className="m-0 flex min-w-0 flex-col rounded-lg border-2 border-border px-3 pb-2 pt-1">
       <legend className="px-1 font-semibold">Erfolge und Belohnungen</legend>
-      <Checkbox name="calmMode" checked={calm} onChange={(e) => void change(e.target.checked)}>
+      <Checkbox
+        name="calmMode"
+        checked={calm}
+        needsNetwork
+        onChange={(e) => void change(e.target.checked)}
+      >
         Ruhemodus
       </Checkbox>
       <MoreHelp

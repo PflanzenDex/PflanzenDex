@@ -21,8 +21,8 @@ afterEach(() => {
   cleanup();
 });
 
-/** Opens the menu "Mehr" of the open plant and chooses the repot ("Umgetopft" for a plant, "Eingetopft" for a cutting). */
-async function chooseRepot(item: "Umgetopft" | "Eingetopft") {
+/** Opens the menu "Mehr" of the open plant and chooses the repot ("Umtopfen eintragen" for a plant, "Eintopfen eintragen" for a cutting). */
+async function chooseRepot(item: "Umtopfen eintragen" | "Eintopfen eintragen") {
   await openPlant("Bogenhanf");
   const layer = await screen.findByRole("dialog", { name: "Bogenhanf" });
   await userEvent.click(within(layer).getByRole("button", { name: "Mehr" }));
@@ -37,10 +37,10 @@ async function save() {
 }
 
 describe("US-BES-19 the plant's repot names its pot", () => {
-  it("US-BES-19 the menu offers Umgetopft for a plant and the form asks for the day and the pot", async () => {
+  it("US-BES-19 the menu offers Umtopfen eintragen for a plant and the form asks for the day and the pot", async () => {
     fakeRepotServer({ plan: { freePots: [{ id: "p1", name: "Topf A", diameterCm: 14 }] } });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     expect(within(form).getByLabelText("Umgetopft am")).toBeTruthy();
     expect(within(form).getByRole("combobox", { name: "In welchen Topf?" })).toBeTruthy();
@@ -51,7 +51,7 @@ describe("US-BES-19 the plant's repot names its pot", () => {
       plan: { freePots: [{ id: "p1", name: "Topf A", diameterCm: 14 }] },
     });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     await userEvent.selectOptions(
       within(form).getByRole("combobox", { name: "In welchen Topf?" }),
@@ -74,7 +74,7 @@ describe("US-BES-19 the plant's repot names its pot", () => {
       },
     });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     const select = within(form).getByRole("combobox", {
       name: "In welchen Topf?",
@@ -93,7 +93,7 @@ describe("US-BES-19 the plant's repot names its pot", () => {
       },
     });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     await userEvent.selectOptions(
       within(form).getByRole("combobox", { name: "In welchen Topf?" }),
@@ -113,7 +113,7 @@ describe("US-BES-19 the plant's repot names its pot", () => {
       },
     });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     await userEvent.selectOptions(
       within(form).getByRole("combobox", { name: "In welchen Topf?" }),
@@ -140,25 +140,39 @@ describe("US-BES-19 the plant's repot names its pot", () => {
       },
     });
     renderCollection();
-    await chooseRepot("Umgetopft");
+    await chooseRepot("Umtopfen eintragen");
     const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
     expect(within(form).queryByRole("combobox", { name: "In welchen Topf?" })).toBeNull();
-    expect(
-      within(form).getByText(
-        "Ohne Topfauswahl kommt die Pflanze aus einem eingetragenen Topf heraus; der Topf selbst bleibt erhalten.",
-      ),
-    ).toBeTruthy();
+    // No pot select, so no line about pots at all (US-QS-32, F-0200).
+    expect(form.textContent).not.toContain("Topf");
     await save();
     await waitFor(() => expect(repots(sent)).toHaveLength(1));
     expect(repots(sent)[0]?.body).not.toHaveProperty("potId");
   });
 });
 
+describe("US-QS-32 the pot field has no hint of its own (F-0200)", () => {
+  it("US-QS-32 with a pot to choose the select preselects the recorded pot and no line explains the pots", async () => {
+    fakeRepotServer({
+      plan: { currentPot: { id: "p0", name: "Terrakotta", diameterCm: 12 }, freePots: [] },
+    });
+    renderCollection();
+    await chooseRepot("Umtopfen eintragen");
+    const form = await screen.findByRole("form", { name: "Pflanze umtopfen" });
+    const select = within(form).getByRole<HTMLSelectElement>("combobox", {
+      name: "In welchen Topf?",
+    });
+    expect(select.value).toBe("p0");
+    expect(form.textContent).not.toContain("Ohne Topfauswahl");
+    expect(form.textContent).not.toContain("bleibt der alte Topf frei");
+  });
+});
+
 describe("US-BES-04 the cutting keeps its form", () => {
-  it("US-BES-04 the menu offers Eingetopft for a cutting, and its form has no pot and sends none", async () => {
+  it("US-BES-04 the menu offers Eintopfen eintragen for a cutting, and its form has no pot and sends none", async () => {
     const sent = fakeRepotServer({ card: { status: "cutting" } });
     renderCollection();
-    await chooseRepot("Eingetopft");
+    await chooseRepot("Eintopfen eintragen");
     const form = await screen.findByRole("form", { name: "Steckling eintopfen" });
     expect(within(form).getByLabelText("Eingetopft am")).toBeTruthy();
     expect(within(form).queryByRole("combobox", { name: "In welchen Topf?" })).toBeNull();
@@ -166,5 +180,24 @@ describe("US-BES-04 the cutting keeps its form", () => {
     await waitFor(() => expect(repots(sent)).toHaveLength(1));
     expect(repots(sent)[0]?.body).not.toHaveProperty("potId");
     expect(planReads()).toEqual([]);
+  });
+});
+
+describe("US-QS-32 the repot form is a full view: the task in the header, one h1, a back control named after the Sammlung", () => {
+  it("US-QS-32 one h1 with the task and a back control to the Sammlung; the plant's name is the subject line", async () => {
+    fakeRepotServer({ plan: { freePots: [{ id: "p1", name: "Topf A", diameterCm: 14 }] } });
+    renderCollection();
+    await chooseRepot("Umtopfen eintragen");
+    await screen.findByRole("form", { name: "Pflanze umtopfen" });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("heading", { level: 1, name: "Pflanze umtopfen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
+    // The subject line sits in the section, beside the form (PageHeader), not inside it.
+    expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
+    // The chevron closes the form (US-QS-32, SG-HEAD-04).
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { level: 1, name: "Pflanze umtopfen" })).toBeNull(),
+    );
   });
 });

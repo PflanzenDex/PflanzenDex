@@ -1,8 +1,13 @@
 import type { Lamp, ZoneEquipment, ZoneEquipmentView } from "@pflanzendex/core";
 import { EQUIPMENT_STATUSES, zoneLabel } from "@pflanzendex/core";
 import { Select } from "@/shared/ui/fields/select/select";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { STATUS_LABELS } from "../../labels";
 import type { EquipmentStatus } from "../../equipment-api";
+import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import table from "../../equipment.de.json";
+
+const ui = texts(table);
 
 export interface LampActions {
   onZone: (lamp: Lamp, lightZoneId: string) => void;
@@ -20,9 +25,10 @@ function LampRow(props: {
   return (
     <li className="flex min-w-0 flex-col gap-1">
       <span className="break-words text-sm font-semibold">{lamp.name}</span>
-      <div className="grid grid-cols-2 gap-2">
+      {/* One column below 480 px, so the state and the zone never share a row too narrow for their text (issue 1960). */}
+      <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2">
         <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-          Zustand
+          {ui("lamp.state")}
           <Select
             value={lamp.status}
             disabled={actions.busy}
@@ -36,13 +42,13 @@ function LampRow(props: {
           </Select>
         </label>
         <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
-          Lichtzone
+          {ui("lamp.zone")}
           <Select
             value={zoneId}
             disabled={actions.busy}
             onChange={(e) => e.target.value && actions.onZone(lamp, e.target.value)}
           >
-            {zoneId === "" ? <option value="">ohne Zone</option> : null}
+            {zoneId === "" ? <option value="">{ui("zone.missing")}</option> : null}
             {zones.map((z) => (
               <option key={z.zoneId} value={z.zoneId}>
                 {zoneLabel(z.name)}
@@ -55,7 +61,10 @@ function LampRow(props: {
   );
 }
 
-const plants = (n: number) => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;
+const plants = (n: number) =>
+  n === 1 ? ui("zones.plants.one") : ui("zones.plants.other", { count: n });
+const lamps = (n: number) =>
+  n === 1 ? ui("zones.lamps.one") : ui("zones.lamps.other", { count: n });
 
 function ZoneGroup(props: {
   zone: ZoneEquipment;
@@ -64,22 +73,25 @@ function ZoneGroup(props: {
 }) {
   const { zone, all, actions } = props;
   const warning = zone.note?.kind === "no_active_lamp";
-  const lamps = `${zone.lamps.length} ${zone.lamps.length === 1 ? "Lampe" : "Lampen"}`;
-  const counted = zone.specimens === null ? "Pflanzenzahl unbekannt" : plants(zone.specimens);
+  const counted = zone.specimens === null ? ui("zones.unknownCount") : plants(zone.specimens);
   return (
     <details className="min-w-0 rounded-lg border border-border">
-      <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 px-3 py-2">
-        <span className="font-semibold">{zoneLabel(zone.name)}</span>
-        <span className="text-sm text-muted-foreground">
-          {lamps} · {counted}
-        </span>
-        {warning ? (
-          <span className="rounded bg-warning px-1.5 text-sm font-semibold text-warning-foreground">
-            keine aktive Lampe
+      <DisclosureSummary className="px-3 py-2">
+        {/* The text wraps in its own block, so the chevron keeps the first line at 200 % text (SG-ICON-01). */}
+        <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
+          <span className="font-semibold">{zoneLabel(zone.name)}</span>
+          <span className="text-sm text-muted-foreground">
+            {lamps(zone.lamps.length)} · {counted}
           </span>
-        ) : null}
-      </summary>
-      <div className="flex flex-col gap-2 px-3 pb-3">
+          {warning ? (
+            <span className="rounded bg-warning px-1.5 text-sm font-semibold text-warning-foreground">
+              {ui("zones.warning")}
+            </span>
+          ) : null}
+        </span>
+      </DisclosureSummary>
+      {/* The lamp rows start a few pixels under the zone row (issue 1960). */}
+      <div className="flex flex-col gap-2 px-3 pb-3 pt-2">
         {zone.note ? (
           <p
             role={warning ? "alert" : "status"}
@@ -94,12 +106,12 @@ function ZoneGroup(props: {
         ) : null}
         {zone.lamps.length === 0 ? (
           zone.note ? null : (
-            <p className="text-sm">Noch keine Lampe in dieser Zone.</p>
+            <p className="text-sm">{ui("zones.none")}</p>
           )
         ) : (
           <ul
             className="m-0 flex list-none flex-col gap-3 p-0"
-            aria-label={`Lampen in ${zoneLabel(zone.name)}`}
+            aria-label={ui("zones.lampsIn", { zone: zoneLabel(zone.name) })}
           >
             {zone.lamps.map((l) => (
               <LampRow key={l.id} lamp={l} zoneId={zone.zoneId} zones={all} actions={actions} />
@@ -122,13 +134,11 @@ export function ZonesView(props: { view: ZoneEquipmentView; actions: LampActions
   return (
     <section aria-labelledby="equipment-zones-title" className="flex min-w-0 flex-col gap-3">
       <h2 id="equipment-zones-title" className="sr-only">
-        Lampen je Lichtzone
+        {ui("zones.heading")}
       </h2>
       {view.unassigned.length > 0 ? (
         <div className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground">
-          <p className="text-sm">
-            Diese Lampen haben noch keine Lichtzone. Ordne jeder eine Zone zu.
-          </p>
+          <p className="text-sm">{ui("zones.unassigned")}</p>
           <ul className="m-0 mt-2 flex list-none flex-col gap-3 p-0 text-foreground">
             {view.unassigned.map((l) => (
               <LampRow key={l.id} lamp={l} zoneId="" zones={view.zones} actions={actions} />

@@ -32,6 +32,9 @@ rely on the row rule. Row security stays as the second line of defence for the a
 - The rest names the account, is gated by an operator or reviewer check, or is global on purpose (catalog, aggregates).
 - Each fixed function has a test in the superuser-owner database next to its module (`*-superuser-owner.test.ts`) that
   failed before the migration.
+- `confirm_handover` was redefined in migration 0120 (US-BES-07, issue 2294) to return `recipient_name`. The new read of
+  the other side's `other_name` happens in the update that names `account_id = s.other_id`, so it names the account; the
+  function keeps the explicit predicates of 0092.
 
 ## Inventory
 
@@ -75,7 +78,7 @@ rely on the row rule. Row security stays as the second line of defence for the a
 | `cancel_orphaned_swaps`           | 0045      | swap (rw)                                        | explicit `account_id = me`                                                                         | no                                                                         |
 | `cancel_swaps_for_offer`          | 0045      | swap (rw)                                        | explicit                                                                                           | no                                                                         |
 | `cancel_swaps_of_deleted_account` | 0069      | swap (rw)                                        | explicit                                                                                           | no                                                                         |
-| `confirm_handover`                | 0046      | swap, offer (rw)                                 | own row explicit; update by `swap_id` hit both rows and `returning ... into` got two               | YES (confirming failed: "query returned more than one row"); fixed in 0092 |
+| `confirm_handover`                | 0046,0120 | swap, offer (rw)                                 | own row explicit; update by `swap_id` hit both rows and `returning ... into` got two               | YES (confirming failed: "query returned more than one row"); fixed in 0092 |
 | `finish_handover`                 | 0046      | swap, offer (w)                                  | `where swap_id = ...` per switched account: with a bypass BOTH rows get BOTH specimen ids          | YES (foreign specimen id written into the other side's row); fixed in 0092 |
 | `reminder_accounts`               | 0049      | account, account_data (r)                        | worker only (not granted to the app role); `account_id = one`                                      | no                                                                         |
 | `features_of_account`             | 0065      | account_feature (r)                              | explicit                                                                                           | no                                                                         |

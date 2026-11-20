@@ -1,6 +1,7 @@
 export {
   ZONE_DEFAULT,
   zoneLabel,
+  type ZoneLabelOptions,
   lightZoneUpdate,
   lightZoneCreate,
   lightZoneDelete,

@@ -12,6 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const APP_DIR = fileURLToPath(new URL("../../../../", import.meta.url));
 export const RESULTS_ENV = "GATES_ESLINT_RESULTS";
@@ -136,5 +137,5 @@ export function eslintCacheFile(kind, appDir = APP_DIR, rules) {
 }
 
 // `node eslint-shared.mjs --cache-file <kind>` prints the cache file that the lint script names (issue 1608).
-if (process.argv[1] === fileURLToPath(import.meta.url) && process.argv[2] === "--cache-file")
+if (isEntryPoint(import.meta.url) && process.argv[2] === "--cache-file")
   process.stdout.write(`${eslintCacheFile(process.argv[3])}\n`);

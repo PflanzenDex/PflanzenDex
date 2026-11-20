@@ -1,4 +1,5 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
+import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { useState, type RefObject } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
@@ -19,7 +20,7 @@ function largeText(): boolean {
   return parseFloat(getComputedStyle(document.documentElement).fontSize) >= 24;
 }
 
-/** "Nein · Später · Ja" as buttons; they are the way without a swipe gesture (NFR-13). */
+/** "Kein Interesse · Später · Wünschen" as buttons; they are the way without a swipe gesture (NFR-13). */
 export function Actions(props: { onDecide: (d: Decision) => void }) {
   const [large] = useState(largeText);
   return (
@@ -37,25 +38,33 @@ export function Actions(props: { onDecide: (d: Decision) => void }) {
       )}
     >
       <div className="mx-auto flex w-full max-w-md flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="touch"
-          className="min-w-24 flex-1"
-          onClick={() => props.onDecide("no")}
-        >
-          {t("deck.no")}
-        </Button>
-        <Button
-          variant="secondary"
-          size="touch"
-          className="min-w-24 flex-1"
-          onClick={() => props.onDecide("later")}
-        >
-          {t("deck.later")}
-        </Button>
-        <Button size="touch" className="min-w-24 flex-1" onClick={() => props.onDecide("yes")}>
-          {t("deck.yes")}
-        </Button>
+        <NetworkSlot visible={false}>
+          <Button
+            variant="outline"
+            size="touch"
+            className="min-w-24 flex-1"
+            needsNetwork
+            onClick={() => props.onDecide("no")}
+          >
+            {t("deck.no")}
+          </Button>
+          <Button
+            variant="secondary"
+            size="touch"
+            className="min-w-24 flex-1"
+            onClick={() => props.onDecide("later")}
+          >
+            {t("deck.later")}
+          </Button>
+          <Button
+            size="touch"
+            className="min-w-24 flex-1"
+            needsNetwork
+            onClick={() => props.onDecide("yes")}
+          >
+            {t("deck.yes")}
+          </Button>
+        </NetworkSlot>
       </div>
     </div>
   );
@@ -65,7 +74,7 @@ export function Actions(props: { onDecide: (d: Decision) => void }) {
 export function UndoButton(props: { onClick: () => void }) {
   return (
     <div className="text-center">
-      <Button variant="outline" size="touch" onClick={props.onClick}>
+      <Button variant="outline" size="touch" needsNetwork onClick={props.onClick}>
         {t("deck.undo")}
       </Button>
     </div>
@@ -84,8 +93,8 @@ export function DeckEnd(props: {
   return (
     <>
       <EmptyState
-        title={t("deck.end.title", { saved: props.saved })}
-        description={t("deck.end.description")}
+        title={t("deck.end.title")}
+        description={t("deck.end.description", { saved: props.saved })}
         titleRef={props.titleRef}
         action={{ label: t("deck.newDeck"), onClick: props.onNewDeck }}
       />

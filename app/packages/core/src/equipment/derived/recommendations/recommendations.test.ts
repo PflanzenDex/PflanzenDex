@@ -8,6 +8,7 @@ const need = (id: string, kind: Need["kind"]): Need => ({
   reason: `Grund ${id}`,
   source: "Quelle",
   nextAction: "Tu etwas",
+  target: null,
 });
 const product = (over: Partial<ProductEntry> & { productId: string }): ProductEntry => ({
   name: over.productId,

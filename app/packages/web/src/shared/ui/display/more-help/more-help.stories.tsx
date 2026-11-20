@@ -6,7 +6,7 @@ const meta = {
   title: "ui/MoreHelp",
   component: MoreHelp,
   args: {
-    children: "Die Zone folgt dem Lux-Bedarf der Art.",
+    children: "Die Zone folgt dem Lichtbedarf der Art.",
     more: "Stecklingslicht ist nie das Ziel für erwachsene Pflanzen.",
   },
 } satisfies Meta<typeof MoreHelp>;

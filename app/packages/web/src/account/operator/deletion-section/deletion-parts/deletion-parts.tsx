@@ -1,9 +1,9 @@
-import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
+import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { Button } from "@/shared/ui/button/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { DeletionEntry } from "../../../api/access-api";
-import { BUSY_LOOK } from "../../operator-cost/operator-cost";
+import { BUSY_LOOK } from "@/shared/lib/utils";
 import table from "../deletion-section.de.json";
 
 const t = texts(table);
@@ -78,10 +78,7 @@ export function IdentityList(props: {
   running: boolean;
   onMark: (id: string) => void;
 }) {
-  if (props.entries.length === 0)
-    return (
-      <EmptyState title={t("identity.none.title")} description={t("identity.none.description")} />
-    );
+  if (props.entries.length === 0) return <EmptySection text={t("identity.none.line")} />;
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm text-muted-foreground">{t("identity.description")}</p>

@@ -1,24 +1,27 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useState, type ReactNode } from "react";
-import { useForm, type Control, type Path } from "react-hook-form";
+import { type Control, type Path } from "react-hook-form";
 import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { deviceTimeZone, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
-import { ALERT_CLASSES, useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
-import {
-  profileSchema,
-  toProfile,
-  toProfileFields,
-  type ProfileFields as Fields,
-} from "../../../schemas";
+import { Banner } from "@/shared/patterns/states/banner/banner";
+import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
+import { toProfile, toProfileFields, type ProfileFields as Fields } from "../../../schemas";
+import { fixText, groupSchema } from "./group-rules";
 import { BufferField, NameFields, ThresholdsField } from "../../../settings-fields/settings-fields";
+import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { useAnnounce } from "@/shared/platform/announcer/context";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./form-groups.de.json";
 import type { ProfileSaver } from "../profile-saver";
+
+const t = texts(table);
 
 type Key = "displayName" | "timeZone" | "replenishBuffer" | "positionThresholds";
 
 const UNCHANGED = "Keine Änderung: Die Werte sind schon gespeichert.";
-const INVALID = "Bitte prüfe die markierten Felder.";
+const INVALID = "Prüfe die markierten Felder.";
 
 /** The form fields a key stands for: the four threshold fields of "positionThresholds" (US-LIC-03). */
 function fieldPathsOf(key: Key): Path<Fields>[] {
@@ -34,40 +37,45 @@ function sameAsSaved(next: AccountProfile, keys: readonly Key[], saved: AccountP
   return keys.every((k) => JSON.stringify(shown[k]) === JSON.stringify(stored[k]));
 }
 
-/** The form of one group and its save: the group's fields go onto the stored profile; a refusal marks them (P-10). */
+/**
+ * The form of one group and its save: the group's fields go onto the stored profile; a refusal marks them (P-10). The
+ * result of a save is said by the announcer and shows nowhere else: the saved value is the result (SG-FEED-01, SG-FEED-05).
+ */
 function useGroupForm(saver: ProfileSaver, keys: readonly Key[], saveAlways: boolean) {
-  const form = useForm<Fields>({
-    resolver: zodResolver(profileSchema),
+  const form = useFieldForm<Fields>({
+    resolver: zodResolver(groupSchema(saver.saved.displayName)),
     defaultValues: toProfileFields(saver.saved, deviceTimeZone()),
   });
-  const [message, setMessage] = useState<string | null>(null);
+  const announce = useAnnounce();
   const [error, setError] = useState<ApiError | null>(null);
   const fieldsOf = useCallback(
     (e: ApiError) =>
       keys.filter((k) => e.details?.some((d) => d.field === k)).flatMap(fieldPathsOf),
     [keys],
   );
-  const { alertText, alertRef } = useServerRefusal(error, form.setError, fieldsOf);
+  const { alertText, alertRef } = useServerRefusal(error, form.setError, fieldsOf, fixText);
 
   const send = form.handleSubmit(
     async (values) => {
       const own = Object.fromEntries(keys.map((k) => [k, values[k]])) as Partial<Fields>;
       const next = toProfile({ ...toProfileFields(saver.saved, null), ...own }, saver.saved);
       if (saveAlways && sameAsSaved(next, keys, saver.saved)) {
-        setMessage(UNCHANGED);
+        announce?.announce(UNCHANGED);
         return;
       }
       const r = await saver.save(next);
       if (!r) return;
       setError(r.ok ? null : r.error);
-      setMessage(r.ok ? "Einstellungen gespeichert." : null);
-      if (r.ok) form.reset(toProfileFields(r.value, null));
+      if (r.ok) {
+        announce?.announce(t("saved"));
+        form.reset(toProfileFields(r.value, null));
+      }
     },
     () => {
-      if (saveAlways) setMessage(INVALID);
+      if (saveAlways) announce?.announce(INVALID);
     },
   );
-  return { form, message, setMessage, alertText, alertRef, send };
+  return { form, alertText, alertRef, send };
 }
 
 /**
@@ -80,42 +88,31 @@ function GroupForm(props: {
   keys: readonly Key[];
   saver: ProfileSaver;
   fromDevice?: boolean;
-  /** "Speichern" stays enabled; an unchanged save answers with a message and sends nothing (US-LIC-03, #1022). */
+  /** "Speichern" stays enabled; an unchanged save is announced and sends nothing (US-LIC-03, #1022). */
   saveAlways?: boolean;
   children: (control: Control<Fields>) => ReactNode;
 }) {
   const { saver, keys } = props;
   const fromDevice = props.fromDevice === true;
   const saveAlways = props.saveAlways === true;
-  const { form, message, setMessage, alertText, alertRef, send } = useGroupForm(
-    saver,
-    keys,
-    saveAlways,
-  );
+  const { form, alertText, alertRef, send } = useGroupForm(saver, keys, saveAlways);
+  // Typed input that is not saved asks before the layer of the group closes (US-QS-32).
+  useUnsavedInput(form.formState.isDirty);
 
   return (
     <Form {...form}>
-      <FormRoot
-        aria-label={props.label}
-        onSubmit={send}
-        onChange={() => setMessage(null)}
-        className="flex flex-col gap-4"
-      >
+      <FormRoot aria-label={props.label} onSubmit={send} className="flex flex-col gap-4">
         {props.children(form.control)}
         {alertText !== null && (
-          <div role="alert" tabIndex={-1} ref={alertRef} className={ALERT_CLASSES}>
-            <p>{alertText}</p>
-          </div>
-        )}
-        {message && (
-          <p role="status" className="rounded-lg border border-border p-3">
-            {message}
-          </p>
+          <Banner variant="error" tabIndex={-1} ref={alertRef}>
+            {alertText}
+          </Banner>
         )}
         <Button
           type="submit"
           size="touch"
           disabled={saver.saving || (!saveAlways && !(form.formState.isDirty || fromDevice))}
+          needsNetwork
         >
           {saver.saving ? "Speichert …" : "Speichern"}
         </Button>

@@ -1,0 +1,79 @@
+import type { MouseEvent } from "react";
+import { NavLink, useLocation, useNavigate, type NavLinkProps } from "react-router";
+import { writeStored } from "@/shared/platform/browser/storage";
+import { motionReduced } from "@/shared/platform/device/motion/motion-setting";
+import { mainRegion } from "@/shared/platform/routing/route-focus/view-start";
+import { DISCOVER_VIEW_KEY, type NavItem } from "../../nav-item";
+
+/**
+ * The per-device copy of the mode of "Sammlung" and "Entdecken" (DS-10; the address always wins). The view modules read the
+ * keys from here, beside the link that writes them (issue 2242). The key of "Entdecken" lives in the light navigation module,
+ * which the start frame reads (issue 2243).
+ */
+export const SAMMLUNG_VIEW_KEY = "pflanzendex.collection-view";
+
+/**
+ * What a tap on the current destination does besides going to its start (SG-NAV-03, US-QS-32): "Sammlung" opens its plants
+ * and remembers them, "Entdecken" its suggestions. The addresses are those of `PATHS` in the navigation; the other
+ * destinations start at their own address. Here, with the link that applies it, so the start frame does not carry it (issue 2242).
+ */
+export const START_MODES: Partial<Record<string, Pick<NavItem, "start" | "remember">>> = {
+  collection: {
+    start: "/collection?view=plants",
+    remember: { key: SAMMLUNG_VIEW_KEY, value: "plants" },
+  },
+  discover: {
+    start: "/discover?view=suggestions",
+    remember: { key: DISCOVER_VIEW_KEY, value: "suggestions" },
+  },
+};
+
+export const isActivePath = (pathname: string, href: string) =>
+  href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
+
+/** A plain click: the primary button without a modifier. A modified click (a new tab) is left to the link. */
+const plainClick = (event: MouseEvent) =>
+  event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+
+/**
+ * Scrolls the page to its top: the window, the main region and the filling view of a one-screen destination (DS-61), which
+ * scrolls inside itself. Smooth, unless the person asked for reduced motion (US-QS-33).
+ */
+function scrollToTop(): void {
+  const behavior = motionReduced() ? "auto" : "smooth";
+  window.scrollTo({ top: 0, behavior });
+  const fill = document.querySelector<HTMLElement>("main > div > [data-fit-fill]");
+  for (const el of [mainRegion(), fill]) el?.scrollTo({ top: 0, behavior });
+}
+
+/**
+ * A link to a destination of the navigation (SG-NAV-03, owner answer Q07, US-QS-32). A tap on the destination that is current
+ * does not follow the link: away from its start page it goes there, and the mode it remembers on this device is set (the
+ * plants of "Sammlung", the suggestions of "Entdecken"); on the start page the page scrolls to the top. The focus stays on
+ * the link (the state `keepFocus`, RouteFocus moves nothing). Other destinations and modified clicks follow the link. The
+ * address is the destination's `href`; `onClick` runs first, as on a NavLink. Shared by the bottom bar, the "Mehr" drawer
+ * and the side navigation.
+ */
+export function ReselectLink({
+  item,
+  onClick,
+  ...props
+}: Omit<NavLinkProps, "to"> & { item: NavItem }) {
+  const { pathname, search } = useLocation();
+  const navigate = useNavigate();
+  return (
+    <NavLink
+      {...props}
+      to={item.href}
+      onClick={(event) => {
+        onClick?.(event);
+        if (!plainClick(event) || !isActivePath(pathname, item.href)) return;
+        event.preventDefault();
+        if (item.remember) writeStored(item.remember.key, item.remember.value);
+        const start = item.start ?? item.href;
+        if (pathname + search === start) scrollToTop();
+        else navigate(start, { state: { keepFocus: true } });
+      }}
+    />
+  );
+}

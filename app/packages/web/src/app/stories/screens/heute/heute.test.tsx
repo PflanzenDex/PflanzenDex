@@ -27,19 +27,19 @@ describe("US-QS-14 · page story Heute", () => {
       await screen.findByRole("button", { name: /^Behandlungen 2 · 1.überfällig$/ }),
     ).toBeTruthy();
     expect(screen.getAllByRole("button", { name: /Behandlungen/ })).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Zu Pflegephasen: Efeu" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Efeu/ })).toBeTruthy();
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
   });
 
   it("US-QS-18 the story with another item first shows the Behandlungen tile once", async () => {
     await PhaseFirst.run();
-    expect(await screen.findByRole("button", { name: /^2Behandlungen$/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^2 Behandlungen$/ })).toBeTruthy();
     expect(screen.getAllByRole("button", { name: /Behandlungen/ })).toHaveLength(1);
   });
 
   it("US-QS-14 · the empty story says that nothing is due and offers the collection", async () => {
     await NothingDue.run();
-    expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
+    expect(await screen.findByText("Heute steht nichts an")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: "Zur Sammlung" }).length).toBeGreaterThan(0);
   });
 });

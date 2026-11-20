@@ -40,19 +40,17 @@ function ProfilePage(props: {
   const { profile } = props;
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+      {/* A saved proposal is a success: the neutral status look of StatusNote, no amber (F-0246, SG-COLOR-04). */}
       {props.fresh && (
-        <p
-          role="status"
-          className="rounded-lg border border-warning-border bg-warning p-3 text-warning-foreground"
-        >
-          Dein Vorschlag ist gespeichert und liegt in der Prüfliste.
+        <p role="status" className="rounded-lg border border-border p-3">
+          Vorschlag gesichert. Nur du siehst ihn, bis er geprüft ist.
         </p>
       )}
       {profile.status === "pending" && <ProfileSkeleton />}
       {profile.status === "error" && profile.error && (
         <EmptyState
           variant="error"
-          title="Die Art konnte nicht geladen werden."
+          title="Die Art konnte nicht geladen werden"
           description={refusalText(profile.error)}
           action={{ label: "Zurück zur Suche", onClick: props.onBack }}
         />
@@ -92,7 +90,7 @@ function SearchFailure(props: { error: ApiError; onRetry: () => void }) {
   return (
     <EmptyState
       variant="error"
-      title="Die Suche hat nicht geklappt."
+      title="Die Suche hat nicht geklappt"
       description={refusalText(props.error)}
       action={{ label: "Erneut versuchen", onClick: props.onRetry }}
     />

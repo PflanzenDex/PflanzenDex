@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { useInvalidate, useQueryClient, type QueryClient } from "@/shared/data";
 import { AnniversaryLayer, AnniversaryTile } from "@/achievements";
+import { TREATMENTS } from "@/care";
+import { TODAY_LIST_KEY } from "@/today";
 import { TodayArea } from "./today-area";
 
 const response = (status: number, body: unknown) =>
@@ -20,6 +24,7 @@ const treatment = (id: string, name: string, kind: string, text: string) => ({
   dueAt: "2026-10-01",
   status: { kind, text },
 });
+/** A hint about incomplete specimens, as the API lists it under Fehlt noch (`SpecimenHint`). */
 const noLocation = {
   kind: "location_missing",
   specimenId: "e1",
@@ -28,8 +33,19 @@ const noLocation = {
   text: "„Bogenhanf“ hat noch keinen Standort.",
   nextAction: "Weise der Pflanze einen Standort zu.",
 };
+/** The same missing location on the list of "Heute": kind `specimen_incomplete`, id `hint:<specimen>:<kind>` (core `todayStatus`). */
+const noLocationItem = {
+  id: "hint:e1:location_missing",
+  kind: "specimen_incomplete",
+  specimenId: "e1",
+  specimenName: "Bogenhanf",
+  text: noLocation.text,
+  nextAction: noLocation.nextAction,
+  target: "hints",
+};
+/** The overdue treatment "a" of Aloe on the list of "Heute": id `treatment:<id>` (core `treatmentItem`). */
 const todayItem = {
-  id: "t1",
+  id: "treatment:a",
   kind: "treatment_overdue",
   specimenId: "s-a",
   specimenName: "Aloe",
@@ -37,6 +53,55 @@ const todayItem = {
   nextAction: "Hake den Termin ab.",
   target: "treatments",
 };
+
+/** Four further tasks below the tiles (not treatments): the fitted list of "Heute" that shares the address (F-0351). */
+const FURTHER_TASKS = [
+  {
+    id: "f1",
+    kind: "specimen_incomplete",
+    specimenId: "s-f1",
+    specimenName: "Bogenhanf",
+    text: "„Bogenhanf“ hat noch keinen Standort.",
+    nextAction: "Weise der Pflanze einen Standort zu.",
+    target: "hints",
+  },
+  {
+    id: "f2",
+    kind: "phase_deviation",
+    specimenId: "s-f2",
+    specimenName: "Efeu",
+    text: "„Efeu“ steht nicht am Soll-Standort.",
+    nextAction: "Stelle es um.",
+    target: "care_phases",
+  },
+  {
+    id: "f3",
+    kind: "measurement_etiolated",
+    specimenId: "s-f3",
+    specimenName: "Farn",
+    text: "„Farn“: Die letzte Messung ist vergeilt/dünn.",
+    nextAction: "Stelle die Pflanze heller.",
+    target: "measurements",
+  },
+  {
+    id: "f4",
+    kind: "specimen_incomplete",
+    specimenId: "s-f4",
+    specimenName: "Zeder",
+    text: "„Zeder“ hat noch keine Lichtzone.",
+    nextAction: "Weise eine Lichtzone zu.",
+    target: "hints",
+  },
+];
+
+/** Ten plants due to be watered (US-MON-05): the layer Gießen pages three per page on a phone (issue 2070). */
+const TEN_DUE = Array.from({ length: 10 }, (_, i) => ({
+  specimenId: `w${i + 1}`,
+  name: `Gieß ${i + 1}`,
+  intervalDays: 7,
+  lastWateredOn: "2026-09-30",
+  daysSince: 8 + i,
+}));
 
 type Setup = {
   treatments?: unknown[];
@@ -79,23 +144,68 @@ const LOCATIONS = [{ id: "l1", name: "Regal", lightZoneId: null }];
 
 /** A server for the three sections; it returns what is posted. */
 function fakeServer(setup: Setup = {}) {
-  let open = setup.treatments ?? [treatment("a", "Aloe", "overdue", "überfällig seit 2 Tagen")];
+  // The rows the server holds: a write takes its row away or adds one, so the next read shows the change (SG-FEED-01).
+  let open: unknown[] = setup.treatments ?? [
+    treatment("a", "Aloe", "overdue", "überfällig seit 2 Tagen"),
+  ];
+  let today: unknown[] = [...(setup.items ?? [])];
+  let hintRows: unknown[] = [...(setup.hints ?? [noLocation])];
   const posts: string[] = [];
   const hints = () =>
     setup.hintsStatus && setup.hintsStatus !== 200
       ? response(setup.hintsStatus, { error: { code: "server.error", text: "x" } })
-      : response(200, { hints: setup.hints ?? [noLocation] });
+      : response(200, { hints: hintRows });
+  const names = (setup.cards ?? setup.specimens ?? CARDS) as { id: string; name: string }[];
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url, init) => {
       const path = new URL(String(url)).pathname;
       const post = init?.method === "POST";
       if (post) posts.push(path);
+      const located = /^\/specimens\/([^/]+)\/location$/.exec(path);
+      if (post && located) {
+        const id = located[1];
+        hintRows = hintRows.filter((h) => (h as { specimenId?: string }).specimenId !== id);
+        today = today.filter((i) => (i as { id?: string }).id !== `hint:${id}:location_missing`);
+        return response(200, {});
+      }
       const answers: Record<string, () => Promise<Response>> = {
-        "/today": () =>
-          response(200, { date: "2026-10-03", upcoming: 0, items: setup.items ?? [] }),
-        "/treatments": () =>
-          post ? response(201, { treatments: [{}] }) : response(200, { treatments: open }),
+        "/today": () => response(200, { date: "2026-10-03", upcoming: 0, items: today }),
+        "/treatments": () => {
+          if (!post) return response(200, { treatments: open });
+          const body = JSON.parse(String(init?.body)) as {
+            specimenIds: string[];
+            reason: string;
+            agent?: string;
+            date: string;
+          };
+          const nameOf = (specimenId: string) =>
+            names.find((n) => n.id === specimenId)?.name ?? specimenId;
+          const rows = body.specimenIds.map((specimenId) => ({
+            id: `new-${specimenId}`,
+            specimenId,
+            specimenName: nameOf(specimenId),
+            reason: body.reason,
+            agent: body.agent ?? null,
+            dueAt: body.date,
+            status: { kind: "today", text: "heute fällig" },
+          }));
+          open = [...open, ...rows];
+          // The server lists a treatment due today on the first card of Heute, as `treatment:<id>` (SG-FEED-01).
+          today = [
+            ...today,
+            ...rows.map((r) => ({
+              id: `treatment:${r.id}`,
+              kind: "treatment_due",
+              specimenId: r.specimenId,
+              specimenName: r.specimenName,
+              text: `„${r.specimenName}“: ${r.reason} – heute fällig.`,
+              nextAction: "Behandle die Pflanze und hake den Termin als erledigt ab.",
+              target: "treatments",
+            })),
+          ];
+          return response(201, { treatments: [{}] });
+        },
         "/watering/due": () => response(200, { due: setup.due ?? [] }),
         "/specimens/count": () => response(200, { count: 1, archived: 0 }),
         "/onboarding/hints": () => response(200, { hint: null, guideEnded: false }),
@@ -107,13 +217,18 @@ function fakeServer(setup: Setup = {}) {
           response(200, { specimens: setup.cards ?? setup.specimens ?? CARDS }),
         "/specimens/hints": hints,
         "/locations": () => response(200, { locations: LOCATIONS }),
-        "/specimens/e1/location": () => response(200, {}),
         "/achievements/anniversaries": () =>
           response(200, setup.anniversaries ?? { calmMode: true }),
       };
-      if (/^\/treatments\/[^/]+\/complete$/.test(path)) {
-        open = [];
-        return response(200, { treatment: { id: "a", done: true, doneAt: "2026-10-03" } });
+      const completed = /^\/treatments\/([^/]+)\/complete$/.exec(path);
+      if (completed) {
+        const id = completed[1];
+        open = open.filter((r) => (r as { id?: string }).id !== id);
+        today = today.filter((i) => (i as { id?: string }).id !== `treatment:${id}`);
+        return response(200, {
+          treatment: { id, done: true, doneAt: "2026-10-03" },
+          changed: true,
+        });
       }
       return (answers[path] ?? (() => response(404, {})))();
     }),
@@ -139,6 +254,36 @@ const show = (path = "/today", onOpen?: (v: string) => void) =>
     </ToastProvider>,
   );
 const dialog = (name: string) => screen.findByRole("dialog", { name });
+
+/**
+ * Gives every fitted list (`data-page-fit`) a region of `height` px with rows of `row` px: jsdom has no layout, and the page
+ * size of a fitted list comes from its region (US-QS-19). Returns the restore of the spy.
+ */
+function stubFittedRegion(height: number, row = height): () => void {
+  const measured = Element.prototype.getBoundingClientRect;
+  const spy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+    this: Element,
+  ) {
+    const region = this.tagName === "UL" && this.hasAttribute("data-page-fit");
+    const fittedRow =
+      this.tagName === "LI" && this.parentElement?.hasAttribute("data-page-fit") === true;
+    if (!region && !fittedRow) return measured.call(this);
+    const h = region ? height : row;
+    return { height: h, width: 0, top: 0, left: 0, right: 0, bottom: h, x: 0, y: 0 } as DOMRect;
+  });
+  return () => spy.mockRestore();
+}
+
+/**
+ * The "Seite n von m" texts outside the layer: the lists of the screen behind it stay in the document while the layer is
+ * open, so a page change in the layer must leave them where they are (issue 2070).
+ */
+function positionsBehind(layer: HTMLElement): (string | null)[] {
+  return screen
+    .getAllByText(/^Seite \d+ von \d+$/)
+    .filter((el) => !layer.contains(el))
+    .map((el) => el.textContent);
+}
 
 beforeAll(async () => {
   Element.prototype.setPointerCapture ??= () => undefined;
@@ -181,8 +326,8 @@ describe("US-QS-18 Heute fits one screen", () => {
     const tiles = within(screen.getByRole("list", { name: "Themen" }));
     expect(tiles.queryByRole("button", { name: /Behandeln|Behandlungen/ })).toBeNull();
     expect(tiles.getAllByRole("listitem")).toHaveLength(2);
-    expect(tiles.getByRole("button", { name: /^0Gießen$/ })).toBeTruthy();
-    expect(tiles.getByRole("button", { name: /^1Fehlt noch$/ })).toBeTruthy();
+    expect(tiles.getByRole("button", { name: /^0 Gießen$/ })).toBeTruthy();
+    expect(tiles.getByRole("button", { name: /^1 Fehlt noch$/ })).toBeTruthy();
     expect(screen.getAllByRole("button", { name: /^Behandlungen/ })).toHaveLength(1);
     // The topics are layers: no section of them stands on the page.
     expect(screen.queryByRole("heading", { level: 2, name: "Behandlungen" })).toBeNull();
@@ -195,11 +340,11 @@ describe("US-QS-18 Heute fits one screen", () => {
     });
     show();
     const tiles = within(await screen.findByRole("list", { name: "Themen" }));
-    expect((await tiles.findByRole("button", { name: /^1Behandlungen$/ })).textContent).toBe(
-      "1Behandlungen",
+    expect((await tiles.findByRole("button", { name: /^1 Behandlung$/ })).textContent).toBe(
+      "1 Behandlung",
     );
     expect(tiles.getAllByRole("listitem")).toHaveLength(3);
-    expect(screen.getAllByRole("button", { name: /Behandlungen$/ })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /Behandlung(en)?$/ })).toHaveLength(1);
     expect(screen.getByText(/1 Behandlung offen, davon 1 überfällig/)).toBeTruthy();
   });
 
@@ -255,7 +400,7 @@ describe("US-QS-18 Heute fits one screen", () => {
     const names = within(tiles)
       .getAllByRole("button")
       .map((b) => b.textContent);
-    expect(names.at(-1)).toBe("2Neu bei Freunden");
+    expect(names.at(-1)).toBe("2 Neu bei Freunden");
     // The most urgent item is a treatment: its entry stands on the row, so the tiles are the two categories and the news.
     expect(names).toHaveLength(3);
     await user.click(within(tiles).getByRole("button", { name: /Neu bei Freunden$/ }));
@@ -267,7 +412,7 @@ describe("US-QS-18 Heute fits one screen", () => {
     fakeServer();
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: /Behandlungen$/ }));
+    await user.click(await screen.findByRole("button", { name: /Behandlung(en)?$/ }));
     const layer = await dialog("Behandlungen");
     expect(address()).toBe("/today?sheet=treatments");
     expect(
@@ -316,23 +461,23 @@ describe("US-QS-18 Heute fits one screen", () => {
     expect(address()).toBe("/today?sheet=treatments");
   });
 
-  it("US-QS-18 · TE-07 the other actions of Jetzt dran still open their view", async () => {
+  it("US-QS-32 · TE-07 the other actions of Jetzt dran are links to their view", async () => {
     fakeServer({
       items: [{ ...todayItem, id: "p", kind: "phase_deviation", target: "care_phases" }],
     });
     const open = vi.fn();
-    const user = userEvent.setup();
     show("/today", open);
-    await user.click(await screen.findByRole("button", { name: "Zu Pflegephasen: Aloe" }));
-    expect(open).toHaveBeenCalledWith("carePhases");
+    const link = await screen.findByRole("link", { name: /^Abweichung/ });
+    expect(link.getAttribute("href")).toBe("/collection?view=plants&group=phase");
+    expect(open).not.toHaveBeenCalled();
   });
 
   it("US-QS-18 nothing open says so with the next step, and the tiles stay", async () => {
     fakeServer({ treatments: [], hints: [] });
     show();
-    expect(await screen.findByText("Heute steht nichts an.")).toBeTruthy();
+    expect(await screen.findByText("Heute steht nichts an")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: "Zur Sammlung" }).length).toBeGreaterThan(0);
-    expect(await screen.findByRole("button", { name: /^0Behandlungen$/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^0 Behandlungen$/ })).toBeTruthy();
   });
 });
 
@@ -374,14 +519,14 @@ describe("US-QS-26 Heute narrowed to the watering tasks by its address", () => {
     await user.click(await screen.findByRole("button", { name: "Alle Aufgaben zeigen" }));
     expect(address()).toBe("/today");
     const tiles = within(await screen.findByRole("list", { name: "Themen" }));
-    expect(tiles.getByRole("button", { name: /^2Gießen$/ })).toBeTruthy();
+    expect(tiles.getByRole("button", { name: /^2 Gießen$/ })).toBeTruthy();
     expect(screen.queryByText(FILTER_NOTICE)).toBeNull();
   });
 
   it("US-QS-26 with nothing due the filtered page still says what it shows and why the list is empty (P-09, P-10)", async () => {
     fakeServer({ due: [] });
     show("/today?tasks=watering");
-    expect(await screen.findByText("Heute nichts zu gießen")).toBeTruthy();
+    expect(await screen.findByText(/^Heute nichts zu gießen\./)).toBeTruthy();
     expect(screen.getByText(FILTER_NOTICE)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Alle Aufgaben zeigen" })).toBeTruthy();
   });
@@ -434,20 +579,14 @@ describe("US-QS-18 Heute stays one column, with or without an anniversary", () =
                 tile: (draw) => (
                   <AnniversaryTile api="http://api" token={async () => "tok"} tile={draw} />
                 ),
-                layer: (
-                  <AnniversaryLayer
-                    api="http://api"
-                    token={async () => "tok"}
-                    onOpen={() => undefined}
-                  />
-                ),
+                layer: <AnniversaryLayer api="http://api" token={async () => "tok"} />,
               },
             ]}
           />
         </MemoryRouter>
       </ToastProvider>,
     );
-    const tile = await screen.findByRole("button", { name: "1Jubiläen" });
+    const tile = await screen.findByRole("button", { name: "1 Jubiläum" });
     const { content, pane } = columns(container);
     expect(content.contains(tile)).toBe(true);
     expect(pane.contains(tile)).toBe(false);
@@ -465,16 +604,17 @@ describe("US-QS-18 Heute stays one column, with or without an anniversary", () =
 });
 
 describe("US-QS-18 the layers keep the actions of their items", () => {
-  it("US-QS-18 · US-BEH-03 Erledigt works in the layer Behandlungen, says what was ticked off and the tile count follows", async () => {
+  it("US-QS-18 · US-BEH-03 Erledigt works in the layer Behandlungen, says what was ticked off and the row keeps its undo", async () => {
     const posts = fakeServer();
     const user = userEvent.setup();
     show("/today?sheet=treatments");
     await user.click(
       await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
     );
-    expect((await screen.findByText(/als erledigt eingetragen/)).textContent).toContain("Aloe");
+    expect(
+      await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" }),
+    ).toBeTruthy();
     expect(posts).toEqual(["/treatments/a/complete"]);
-    expect(await screen.findByText("Keine offenen Behandlungen.")).toBeTruthy();
   });
 
   it("US-QS-18 · US-BEH-02 the open treatments stand by urgency with a short chip and are paged", async () => {
@@ -494,6 +634,80 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
       "10\u00a0Tage überfällig",
     );
     expect(within(layer).getByText("Seite 1 von 2")).toBeTruthy();
+  });
+
+  it("US-QS-18 · F-0351 ten open treatments, two per page, beside the fitted further tasks of Heute: Weiter moves one page each time to page 5 of 5", async () => {
+    const ten = Array.from({ length: 10 }, (_, i) =>
+      treatment(`t${i}`, `Pflanze ${i + 1}`, "overdue", `überfällig seit ${i + 1} Tagen`),
+    );
+    // Four further tasks under the tiles: a fitted list of one row per page on the same screen (US-QS-19).
+    fakeServer({ treatments: ten, items: [todayItem, ...FURTHER_TASKS] });
+    const restore = stubFittedRegion(100);
+    try {
+      const user = userEvent.setup();
+      show("/today?sheet=treatments");
+      const layer = await dialog("Behandlungen");
+      const list = await within(layer).findByRole("list", { name: "Offene Behandlungen" });
+      const names = () =>
+        within(list)
+          .getAllByRole("heading", { level: 4 })
+          .map((h) => h.textContent);
+      const position = () => within(layer).getByText(/^Seite \d+ von \d+$/).textContent;
+      const pages: string[][] = [];
+      for (let page = 1; page <= 5; page++) {
+        expect(position()).toBe(`Seite ${page} von 5`);
+        pages.push(names());
+        if (page < 5) await user.click(within(layer).getByRole("button", { name: "Weiter" }));
+      }
+      expect(pages).toEqual([
+        ["Pflanze 1", "Pflanze 2"],
+        ["Pflanze 3", "Pflanze 4"],
+        ["Pflanze 5", "Pflanze 6"],
+        ["Pflanze 7", "Pflanze 8"],
+        ["Pflanze 9", "Pflanze 10"],
+      ]);
+      expect(within(layer).getByRole("button", { name: "Weiter" }).hasAttribute("disabled")).toBe(
+        true,
+      );
+      // The further tasks behind the layer keep their page: the two lists do not share the address (issue 2070).
+      expect(positionsBehind(layer)).toEqual(["Seite 1 von 4"]);
+    } finally {
+      restore();
+    }
+  });
+
+  it("US-QS-18 · US-QS-19 · F-0351 ten due plants, three per page, in the layer Gießen beside the fitted further tasks of Heute: Weiter reaches page 4 of 4 and the further tasks keep their page", async () => {
+    fakeServer({ items: [todayItem, ...FURTHER_TASKS], due: TEN_DUE });
+    const restore = stubFittedRegion(100);
+    try {
+      const user = userEvent.setup();
+      show("/today?sheet=watering");
+      const layer = await dialog("Gießen");
+      const list = await within(layer).findByRole("list", { name: "Zu gießen" });
+      const names = () =>
+        within(list)
+          .getAllByText(/^Gieß \d+$/)
+          .map((el) => el.textContent);
+      const position = () => within(layer).getByText(/^Seite \d+ von \d+$/).textContent;
+      const pages: string[][] = [];
+      for (let page = 1; page <= 4; page++) {
+        expect(position()).toBe(`Seite ${page} von 4`);
+        pages.push(names());
+        expect(positionsBehind(layer)).toEqual(["Seite 1 von 4"]);
+        if (page < 4) await user.click(within(layer).getByRole("button", { name: "Weiter" }));
+      }
+      expect(pages).toEqual([
+        ["Gieß 1", "Gieß 2", "Gieß 3"],
+        ["Gieß 4", "Gieß 5", "Gieß 6"],
+        ["Gieß 7", "Gieß 8", "Gieß 9"],
+        ["Gieß 10"],
+      ]);
+      expect(within(layer).getByRole("button", { name: "Weiter" }).hasAttribute("disabled")).toBe(
+        true,
+      );
+    } finally {
+      restore();
+    }
   });
 
   it("US-QS-18 · A-05 the layer Behandlungen switches between Offen and Erledigt; the history shows only under Erledigt", async () => {
@@ -521,8 +735,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     show("/today?sheet=treatments");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
-    // Four plants per page on a phone, the position in text, search and location filter above the list.
-    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(4);
+    // Three plants per page on a phone (owner decision 2026-11-20), the position in text, search and location filter above the list.
+    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(3);
     expect(within(form).getByText("Seite 1 von 2")).toBeTruthy();
     await user.type(within(form).getByRole("searchbox", { name: "Pflanze suchen" }), "EFE");
     expect(within(form).queryByRole("checkbox", { name: /^Aloe/ })).toBeNull();
@@ -549,25 +763,32 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(await screen.findByText(/Termin.* geplant/)).toBeTruthy();
   });
 
-  it("US-BEH-01 · A-04 an invalid plan opens the view of the first missing entry: no plant, then no reason", async () => {
+  it("US-BEH-01 · A-04 · US-QS-32 an invalid plan opens the view of the first missing entry: no plant, then no reason", async () => {
     fakeServer({ cards: FIVE });
     const user = userEvent.setup();
     show("/today?sheet=treatments");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
     await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
-    expect(await within(form).findByText(/Wähle mindestens eine Pflanze/)).toBeTruthy();
+    expect(await within(form).findByText("Wähle mindestens eine Pflanze.")).toBeTruthy();
     expect(
-      within(form).getByRole("button", { name: "Pflanzen (0)" }).getAttribute("aria-pressed"),
+      within(form)
+        .getByRole("button", { name: "Pflanzen (0), 1 Angabe fehlt" })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
     // A plant is chosen, the reason is missing: the view moves to the reason and names it.
     await user.click(within(form).getByRole("checkbox", { name: /^Aloe/ }));
     await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
-    expect(await within(form).findByText(/Bitte nenne einen Grund/)).toBeTruthy();
-    expect(within(form).getByRole("button", { name: "Termin" }).getAttribute("aria-pressed")).toBe(
-      "true",
-    );
-    expect(within(form).getByLabelText(/Grund/)).toBe(document.activeElement);
+    expect(
+      await within(form).findByText("Nenne einen Grund, zum Beispiel Wollläuse."),
+    ).toBeTruthy();
+    expect(
+      within(form)
+        .getByRole("button", { name: "Termin, 1 Angabe fehlt" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    // The text is committed before the view moves and the reason takes the focus, one commit later: wait for the focus.
+    await waitFor(() => expect(within(form).getByLabelText(/Grund/)).toBe(document.activeElement));
   });
 
   it("US-QS-18 · US-BEH-03 the history per plant stays reachable in the layer under Erledigt", async () => {
@@ -590,9 +811,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
   it("US-QS-18 · US-MON-05 the layer Gießen shows the empty state with its next step", async () => {
     fakeServer();
     show("/today?sheet=watering");
-    expect(
-      await screen.findByRole("heading", { level: 3, name: "Heute nichts zu gießen" }),
-    ).toBeTruthy();
+    expect(await screen.findByText(/^Heute nichts zu gießen\./)).toBeTruthy();
   });
 });
 
@@ -602,37 +821,37 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     const open = vi.fn();
     const user = userEvent.setup();
     show("/today?sheet=hints", open);
-    const empty = await screen.findByRole("heading", { level: 3, name: "Keine Hinweise" });
+    const empty = await screen.findByRole("heading", { level: 3, name: "Nichts fehlt" });
     await user.click(
       within(empty.parentElement as HTMLElement).getByRole("button", { name: "Zur Sammlung" }),
     );
     expect(open).toHaveBeenCalledWith("collection");
   });
 
-  it("US-QS-18 · US-BEH-02 no open treatment offers planning one", async () => {
+  it("US-QS-18 · US-BEH-02 · issue 2233 no open treatment offers planning one, once: the empty line does not repeat it", async () => {
     fakeServer({ treatments: [] });
     show("/today?sheet=treatments");
-    const empty = await screen.findByRole("heading", {
-      level: 3,
-      name: "Keine offenen Behandlungen.",
-    });
+    const layer = await dialog("Behandlungen");
+    const empty = await within(layer).findByText(/^Keine offenen Behandlungen\.$/);
+    expect(await within(layer).findAllByRole("button", { name: "Behandlung planen" })).toHaveLength(
+      1,
+    );
     expect(
-      within(empty.parentElement as HTMLElement).getByRole("button", { name: "Behandlung planen" }),
-    ).toBeTruthy();
+      within(empty.parentElement as HTMLElement).queryByRole("button", {
+        name: "Behandlung planen",
+      }),
+    ).toBeNull();
   });
 
-  it("US-QS-18 · US-BEH-01 without a plant the treatments point to the collection", async () => {
+  it("US-QS-18 · US-BEH-01 without a plant the treatments offer Pflanze anlegen", async () => {
     fakeServer({ treatments: [], specimens: [] });
     show("/today?sheet=treatments");
-    const empty = await screen.findByRole("heading", {
-      level: 3,
-      name: "Keine offenen Behandlungen.",
-    });
+    const empty = await screen.findByText(/^Keine offenen Behandlungen\.$/);
     expect(
       within(empty.parentElement as HTMLElement)
-        .getByRole("link", { name: "Zur Sammlung" })
+        .getByRole("link", { name: "Pflanze anlegen" })
         .getAttribute("href"),
-    ).toBe("/collection");
+    ).toBe("/collection/new");
   });
 
   it("US-QS-18 · P-10 a failing category says so on its tile and in its layer; the other tiles stay usable", async () => {
@@ -640,7 +859,7 @@ describe("US-QS-18 every category keeps its next action (P-09, P-10)", () => {
     const user = userEvent.setup();
     show();
     const tiles = within(await screen.findByRole("list", { name: "Themen" }));
-    expect(await tiles.findByRole("button", { name: /^nicht geladenFehlt noch$/ })).toBeTruthy();
+    expect(await tiles.findByRole("button", { name: /^nicht geladen Fehlt noch$/ })).toBeTruthy();
     expect(screen.getByText(/Fehlt noch: nicht geladen|Hinweise: nicht geladen/)).toBeTruthy();
     await user.click(tiles.getByRole("button", { name: /Fehlt noch$/ }));
     const alert = await within(await dialog("Fehlt noch")).findByRole("alert");
@@ -677,7 +896,7 @@ describe("US-QS-14 issue 1697 · Heute loads its counts behind one skeleton", ()
     expect(screen.queryByText("lädt …")).toBeNull();
     release();
     const tiles = within(await screen.findByRole("list", { name: "Themen" }));
-    expect(tiles.getByRole("button", { name: /^0Gießen$/ })).toBeTruthy();
+    expect(tiles.getByRole("button", { name: /^0 Gießen$/ })).toBeTruthy();
     expect(loadingStatuses()).toHaveLength(0);
   });
 
@@ -686,5 +905,225 @@ describe("US-QS-14 issue 1697 · Heute loads its counts behind one skeleton", ()
     show();
     expect(await screen.findByRole("list", { name: "Themen" })).toBeTruthy();
     expect(loadingStatuses()).toHaveLength(0);
+  });
+});
+
+/** How many GET requests the test server got for `path`: the server is the global fetch mock. */
+const requestsTo = (path: string) =>
+  vi
+    .mocked(fetch)
+    .mock.calls.filter(
+      ([url, init]) => new URL(String(url)).pathname === path && (init?.method ?? "GET") === "GET",
+    ).length;
+
+/**
+ * A tick-off made outside the sheets of Heute, the way the plant detail's care path makes one: it completes the treatment
+ * and invalidates the treatments with the key of the open list (`useInvalidate(TREATMENTS)`, SG-FEED-01).
+ */
+function OutsideTickOff() {
+  const invalidate = useInvalidate(TREATMENTS);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        void fetch("http://api/treatments/a/complete", { method: "POST" }).then(() => invalidate());
+      }}
+    >
+      Außerhalb abhaken
+    </button>
+  );
+}
+
+describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card of the day", () => {
+  it("US-QS-18 · SG-FEED-01 after a tick-off in the layer Behandlungen the first card no longer names that treatment", async () => {
+    fakeServer({ items: [todayItem] });
+    const user = userEvent.setup();
+    show();
+    expect(await screen.findByText(/Läuse/)).toBeTruthy();
+    await user.click(await screen.findByRole("button", { name: /^Behandlungen/ }));
+    const layer = await dialog("Behandlungen");
+    await user.click(
+      await within(layer).findByRole("button", {
+        name: "Grund a bei Aloe als erledigt abhaken",
+      }),
+    );
+    expect(
+      await within(layer).findByRole("button", { name: "Rückgängig: Grund a bei Aloe" }),
+    ).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText(/Läuse/)).toBeNull());
+  });
+
+  it("US-QS-18 · SG-FEED-01 after a location is set from Fehlt noch the first card no longer asks for it", async () => {
+    fakeServer({ items: [noLocationItem] });
+    const user = userEvent.setup();
+    show();
+    expect(await screen.findByText(/keinen\s+Standort/)).toBeTruthy();
+    await user.click(await screen.findByRole("button", { name: /^1 Fehlt noch$/ }));
+    const layer = await dialog("Fehlt noch");
+    await user.selectOptions(await within(layer).findByLabelText("Standort für „Bogenhanf“"), "l1");
+    await user.click(within(layer).getByRole("button", { name: "Standort setzen: Bogenhanf" }));
+    expect(
+      await within(layer).findByRole("heading", { level: 3, name: "Nichts fehlt" }),
+    ).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText(/keinen\s+Standort/)).toBeNull());
+  });
+
+  it("US-QS-18 · SG-FEED-01 a planned treatment is listed in Offen of the layer Behandlungen at once, without a reload", async () => {
+    fakeServer({ treatments: [] });
+    const user = userEvent.setup();
+    show("/today?sheet=treatments");
+    const layer = await dialog("Behandlungen");
+    const empty = await within(layer).findByText(/^Keine offenen Behandlungen\.$/);
+    expect(empty).toBeTruthy();
+    // The one "Behandlung planen" of the layer; the empty line does not repeat it (SG-STATE-01, issue 2233).
+    await user.click(await within(layer).findByRole("button", { name: "Behandlung planen" }));
+    const form = await dialog("Behandlung planen");
+    await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
+    await user.click(within(form).getByRole("button", { name: "Termin" }));
+    await user.type(within(form).getByLabelText(/Grund/), "Läuse");
+    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Behandlung planen" })).toBeNull(),
+    );
+    const open = within(await dialog("Behandlungen"));
+    const list = await open.findByRole("list", { name: "Offene Behandlungen" });
+    expect(open.queryByText(/^Keine offenen Behandlungen\.$/)).toBeNull();
+    expect(within(list).getByRole("heading", { level: 4, name: "Aloe" })).toBeTruthy();
+    expect(within(list).getByText(/Läuse/)).toBeTruthy();
+  });
+
+  it("US-QS-18 · SG-FEED-01 a treatment planned for today is the first card of Heute at once, with the tiles", async () => {
+    fakeServer({ treatments: [], items: [] });
+    const user = userEvent.setup();
+    show("/today");
+    expect(await screen.findByText("Heute steht nichts an")).toBeTruthy();
+    await user.click(await screen.findByRole("button", { name: /^0 Behandlungen$/ }));
+    const layer = await dialog("Behandlungen");
+    const empty = await within(layer).findByText(/^Keine offenen Behandlungen\.$/);
+    expect(empty).toBeTruthy();
+    // The one "Behandlung planen" of the layer; the empty line does not repeat it (SG-STATE-01, issue 2233).
+    await user.click(await within(layer).findByRole("button", { name: "Behandlung planen" }));
+    const form = await dialog("Behandlung planen");
+    await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
+    await user.click(within(form).getByRole("button", { name: "Termin" }));
+    await user.type(within(form).getByLabelText(/Grund/), "Läuse");
+    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    // The card of Heute names the planned treatment as due today, without a reload.
+    expect(await screen.findByText("Heute fällig")).toBeTruthy();
+    expect(screen.queryByText("Heute steht nichts an")).toBeNull();
+  });
+
+  it("US-QS-18 · SG-FEED-01 a planned treatment shows in Offen when the answer of the list comes after the layer opened again", async () => {
+    const posts = fakeServer({ treatments: [] });
+    const fetchFn = vi.mocked(fetch);
+    const base = fetchFn.getMockImplementation() as typeof fetch;
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    let held = false;
+    fetchFn.mockImplementation(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (
+        path === "/treatments" &&
+        init?.method !== "POST" &&
+        posts.includes("/treatments") &&
+        !held
+      ) {
+        held = true;
+        await gate;
+      }
+      return base(url, init);
+    });
+    const user = userEvent.setup();
+    show("/today?sheet=treatments");
+    const layer = await dialog("Behandlungen");
+    const empty = await within(layer).findByText(/^Keine offenen Behandlungen\.$/);
+    expect(empty).toBeTruthy();
+    // The one "Behandlung planen" of the layer; the empty line does not repeat it (SG-STATE-01, issue 2233).
+    await user.click(await within(layer).findByRole("button", { name: "Behandlung planen" }));
+    const form = await dialog("Behandlung planen");
+    await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
+    await user.click(within(form).getByRole("button", { name: "Termin" }));
+    await user.type(within(form).getByLabelText(/Grund/), "Läuse");
+    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    await waitFor(() => expect(held).toBe(true));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Behandlung planen" })).toBeNull(),
+    );
+    const reopened = within(await dialog("Behandlungen"));
+    release();
+    const list = await reopened.findByRole("list", { name: "Offene Behandlungen" });
+    expect(within(list).getByText(/Läuse/)).toBeTruthy();
+  });
+
+  it("US-QS-18 · SG-FEED-01 a tick-off outside the sheets (the plant detail's care path invalidates the treatments) changes the first card of Heute", async () => {
+    fakeServer({ items: [todayItem] });
+    const user = userEvent.setup();
+    render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={["/today"]}>
+          {area()}
+          <OutsideTickOff />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+    expect(await screen.findByText(/Läuse/)).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Außerhalb abhaken" }));
+    await waitFor(() => expect(screen.queryByText(/Läuse/)).toBeNull());
+  });
+
+  it("US-QS-18 · SG-FEED-01 a watering does not load the first card of Heute again, because no kind of the list derives from it", async () => {
+    const posts = fakeServer({ due: DUE, items: [todayItem] });
+    const user = userEvent.setup();
+    show("/today?sheet=watering");
+    expect(await screen.findByText(/Läuse/)).toBeTruthy();
+    const watering = await screen.findByRole("button", { name: "Ficus als gegossen eintragen" });
+    const todayBefore = requestsTo("/today");
+    const dueBefore = requestsTo("/watering/due");
+    await user.click(watering);
+    await waitFor(() => expect(posts).toContain("/watering"));
+    // The watering list loads again after its write; the card of Heute does not.
+    await waitFor(() => expect(requestsTo("/watering/due")).toBeGreaterThan(dueBefore));
+    expect(requestsTo("/today")).toBe(todayBefore);
+  });
+
+  it("US-QS-18 · SG-FEED-01 once Heute is closed it no longer follows the writes of the app", async () => {
+    fakeServer({ items: [todayItem] });
+    const user = userEvent.setup();
+    let client: QueryClient | undefined;
+    function Harness() {
+      const [open, setOpen] = useState(true);
+      client = useQueryClient();
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(false)}>
+            Heute schließen
+          </button>
+          {open && area()}
+          <OutsideTickOff />
+        </>
+      );
+    }
+    render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={["/today"]}>
+          <Harness />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+    expect(await screen.findByText(/Läuse/)).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Heute schließen" }));
+    await user.click(screen.getByRole("button", { name: "Außerhalb abhaken" }));
+    // The write reached the cache (the treatments are invalidated); the list of Heute must not hear of it.
+    await waitFor(() =>
+      expect(
+        client?.getQueryCache().find({ queryKey: ["care", "treatments", "open"], exact: true })
+          ?.state.isInvalidated,
+      ).toBe(true),
+    );
+    const list = client?.getQueryCache().find({ queryKey: TODAY_LIST_KEY, exact: true });
+    expect(list).toBeDefined();
+    expect(list?.state.isInvalidated).toBe(false);
   });
 });

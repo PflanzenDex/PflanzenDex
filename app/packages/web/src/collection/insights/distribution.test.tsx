@@ -208,6 +208,18 @@ describe("US-QS-07 · DS-32 distribution bars", () => {
     );
     expect(bars(container).map((b) => b.style.getPropertyValue("--value"))).toEqual(["0"]);
   });
+
+  it("US-QS-32 · SG-COLOR-04 issue 2166 every zone bar is neutral, also the bars of the other zones; the thinnest zones keep their words only", () => {
+    const { container } = render(<DistributionView distribution={distribution()} />);
+    const found = bars(container);
+    expect(found).toHaveLength(3);
+    for (const bar of found) {
+      const tokens = bar.className.split(" ");
+      expect(tokens).toContain("bg-muted-foreground");
+      expect(tokens).not.toContain("bg-primary");
+      expect(tokens).not.toContain("bg-warning");
+    }
+  });
 });
 
 describe("US-LIC-02 collection page shows the distribution", () => {
@@ -236,7 +248,9 @@ describe("US-LIC-02 collection page shows the distribution", () => {
       }),
     );
     render(page());
-    await userEvent.click(await screen.findByRole("button", { name: /Am leersten: Zone 3/ }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: /^Lichtzonen Zone 3, Zone 4 am leersten/ }),
+    );
     expect(
       await screen.findByRole("heading", { name: "Verteilung auf die Lichtzonen" }),
     ).toBeTruthy();

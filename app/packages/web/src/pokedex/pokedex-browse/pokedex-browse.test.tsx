@@ -59,7 +59,7 @@ const open = async (list = caught) => {
     ),
   );
   view(<PokedexPage api="http://api" token={token} />);
-  await screen.findByRole("heading", { level: 1, name: "Pokédex" });
+  await screen.findByRole("heading", { level: 1, name: "Arten" });
 };
 const shown = () =>
   [...document.querySelectorAll("[data-species]")].map((el) => el.getAttribute("data-species"));
@@ -99,13 +99,13 @@ describe("US-POK-08 search", () => {
     expect(shown()).toEqual(["Aloe vera"]);
     await userEvent.clear(screen.getByRole("searchbox", { name: /Suche/ }));
     await search("ficus");
-    expect(shown()).toEqual(["Ficus elastica", "Ficus lyrata"]);
+    expect(shown()).toEqual(["Ficus lyrata", "Ficus elastica"]);
   });
 
-  it("US-POK-08 without a hit it says 'Keine Art gefunden.' and offers the reset (P-09)", async () => {
+  it("US-POK-08 without a hit it says 'Keine Art gefunden' and offers the reset (P-09)", async () => {
     await open();
     await search("zzz");
-    expect(screen.getByText("Keine Art gefunden.")).toBeTruthy();
+    expect(screen.getByText("Keine Art gefunden")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Suche zurücksetzen" }));
     expect(shown()).toHaveLength(3);
     expect(document.activeElement).toBe(screen.getByRole("searchbox", { name: /Suche/ }));
@@ -119,20 +119,21 @@ describe("US-POK-08 search", () => {
 });
 
 describe("US-POK-08 filter in the layer 'Filter' (US-QS-22)", () => {
-  it("US-POK-08 'Alle' and 'Gefangen' are available and the chosen one is marked", async () => {
+  it("US-POK-08 · US-QS-32 · SG-ICON-01 'Alle' and 'Gefangen' are available and the chosen one is marked by a check icon", async () => {
     await open();
     const layer = await openFilters();
     expect(screen.queryByText("Fehlend")).toBeNull();
     const all = within(layer).getByRole("button", { name: "Alle" });
     expect(all.getAttribute("aria-pressed")).toBe("true");
-    // The marker is a visible check mark, not only aria-pressed (US-POK-08, DS-19).
-    expect(all.textContent).toContain("✓");
+    // The marker is a visible check icon, not only aria-pressed (US-POK-08, DS-19; SG-ICON-01: no glyph).
+    expect(all.querySelector("svg.lucide-check")?.getAttribute("aria-hidden")).toBe("true");
+    expect(all.textContent).not.toContain("✓");
     await userEvent.click(within(layer).getByRole("button", { name: "Gefangen" }));
     const caughtChip = within(layer).getByRole("button", { name: "Gefangen" });
     expect(caughtChip.getAttribute("aria-pressed")).toBe("true");
-    expect(caughtChip.textContent).toContain("✓");
+    expect(caughtChip.querySelector("svg.lucide-check")).not.toBeNull();
     expect(all.getAttribute("aria-pressed")).toBe("false");
-    expect(all.textContent).not.toContain("✓");
+    expect(all.querySelector("svg")).toBeNull();
     expect(shown()).toHaveLength(3);
   });
 
@@ -142,7 +143,7 @@ describe("US-POK-08 filter in the layer 'Filter' (US-QS-22)", () => {
     expect(screen.queryByRole("button", { name: "Fehlend" })).toBeNull();
     expect(
       within(layer).getByText(
-        /Fehlende Arten zeigt der Pokédex erst, wenn der Artenkatalog aufgebaut ist/,
+        /Fehlende Arten zeigt „Arten“ erst, wenn der Artenkatalog aufgebaut ist/,
       ),
     ).toBeTruthy();
   });
@@ -167,7 +168,7 @@ describe("US-POK-08 filter in the layer 'Filter' (US-QS-22)", () => {
 describe("US-POK-08 sort", () => {
   it("US-POK-08 alphabetical is the default flat list", async () => {
     await open();
-    expect(shown()).toEqual(["Aloe vera", "Ficus elastica", "Ficus lyrata"]);
+    expect(shown()).toEqual(["Aloe vera", "Ficus lyrata", "Ficus elastica"]);
   });
 
   it("US-POK-08 by catch date: newest first, without date last", async () => {
@@ -187,19 +188,23 @@ describe("US-POK-08 sort", () => {
     expect(within(layer).getByText(/Artenzahl der Gattungen ist noch unbekannt/)).toBeTruthy();
   });
 
-  it("US-POK-08 · US-QS-22 by family: the family is chosen from a row with its count, 'n / unbekannt' is named", async () => {
+  it("US-POK-08 · US-QS-22 · US-QS-32 · SG-ICON-01 by family: the family is chosen from a row with its count, 'n / unbekannt' is named", async () => {
     await open();
     await sortBy("Familie");
     const choices = screen.getByRole("group", { name: "Familie wählen" });
+    // The chosen family carries a check icon, the others none (SG-ICON-01).
     expect(
       within(choices)
         .getAllByRole("button")
-        .map((b) => b.textContent),
-    ).toEqual(["✓Asphodelaceae (1)", "Moraceae (2)"]);
+        .map((b) => [b.textContent, b.querySelector("svg") !== null]),
+    ).toEqual([
+      ["Asphodelaceae (1)", true],
+      ["Moraceae (2)", false],
+    ]);
     expect(shown()).toEqual(["Aloe vera"]);
     await userEvent.click(within(choices).getByRole("button", { name: /Moraceae/ }));
     expect(screen.getByText(/Moraceae \(Maulbeergewächse\) · 2 \/ unbekannt/)).toBeTruthy();
-    expect(shown()).toEqual(["Ficus elastica", "Ficus lyrata"]);
+    expect(shown()).toEqual(["Ficus lyrata", "Ficus elastica"]);
   });
 
   it("US-POK-08 a species without a known family is grouped under 'Ohne bekannte Familie', last", async () => {
@@ -225,21 +230,86 @@ describe("US-POK-09 · US-QS-22 the details of a species are a layer", () => {
     expect(screen.queryByText(/Familie unbekannt/)).toBeNull();
   });
 
-  it("US-QS-08 · WCAG 2.5.3 the species entry's accessible name is its visible text (no aria-label, no chevron in the text)", async () => {
+  it("US-QS-08 · WCAG 2.5.3 · US-QS-32 · SG-ICON-01 the species entry's accessible name is its visible text (no aria-label, the chevron is an icon, not text)", async () => {
     await open();
-    const entry = screen.getByRole("button", { name: /^Aloe vera/ });
+    const entry = screen.getByRole("button", { name: /Aloe vera/ });
     expect(entry.hasAttribute("aria-label")).toBe(false);
     expect(entry.textContent).not.toContain("›");
+    // The placeholder is an icon too; the chevron is the icon that marks the row as opening its layer.
+    expect(entry.querySelector("svg.lucide-chevron-right")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
   });
 
   it("US-POK-09 · US-QS-22 a species opens its details in a layer and Escape returns the focus to its entry", async () => {
     await open();
-    const entry = screen.getByRole("button", { name: /^Aloe vera/ });
+    const entry = screen.getByRole("button", { name: /Aloe vera/ });
     await userEvent.click(entry);
     const layer = await screen.findByRole("dialog", { name: "Echte Aloe" });
     expect(within(layer).getByText("Gattung: Aloe")).toBeTruthy();
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(entry);
+  });
+});
+
+describe("US-QS-32 the species list names a species the SG-TYPE-08 way (F-0119)", () => {
+  it("US-QS-32 the entry leads with the German name, upright; the scientific name is italic on the meta line before the catch date", async () => {
+    await open();
+    const entry = document.querySelector('[data-species="Ficus lyrata"]') as HTMLElement;
+    expect(within(entry).getByText("Geigenfeige").closest("i")).toBeNull();
+    const latin = within(entry).getByText("Ficus lyrata");
+    expect(latin.tagName).toBe("I");
+    expect(latin.parentElement?.textContent).toBe("Ficus lyrata · gefangen 05.03.2026");
+  });
+
+  it("US-QS-32 without a German name the scientific name is the one italic title, once", async () => {
+    await open([species("Opuntia ficus", { caughtDate: { date: null, source: "unknown" } })]);
+    const entry = document.querySelector('[data-species="Opuntia ficus"]') as HTMLElement;
+    expect(within(entry).getAllByText("Opuntia ficus")).toHaveLength(1);
+    expect(within(entry).getByText("Opuntia ficus").tagName).toBe("I");
+    expect(entry.textContent).toContain("Datum unbekannt");
+  });
+});
+
+describe("US-QS-32 the species sheet's title follows the rule of its body (F-0119)", () => {
+  it("US-QS-32 an empty German name titles the sheet with the scientific name, never an empty title", async () => {
+    await open([species("Opuntia ficus", { germanName: "" })]);
+    await userEvent.click(screen.getByRole("button", { name: /Opuntia ficus/ }));
+    expect(await screen.findByRole("dialog", { name: "Opuntia ficus" })).toBeTruthy();
+  });
+
+  it("US-QS-32 a German name equal to the scientific one titles the sheet once, with the scientific name", async () => {
+    await open([species("Ficus carica", { germanName: "Ficus carica" })]);
+    await userEvent.click(screen.getByRole("button", { name: /Ficus carica/ }));
+    await screen.findByRole("dialog", { name: "Ficus carica" });
+    // The title is the dialog's heading; the details below it do not repeat the name.
+    const details = screen.getByRole("region", { name: /Details/ });
+    expect(within(details).queryByText("Ficus carica")).toBeNull();
+  });
+});
+
+describe("US-QS-32 each caught species is one object row in one group (FX-35, SG-LIST-03)", () => {
+  it("US-QS-32 each caught species is one row with a 56 px placeholder thumbnail, in one group of object rows", async () => {
+    await open();
+    const group = screen.getByRole("list", { name: "Gefangene Arten" });
+    expect(within(group).getAllByRole("listitem")).toHaveLength(3);
+    // The group of object rows: the card and its corners sit on the rows (OBJECT_GROUP), not on tiles in a grid.
+    expect(group.className).toContain("[&>li:first-child]:rounded-t-card");
+    expect(group.className).not.toContain("md:grid-cols-2");
+    // CaughtSpecies has no photo: the drawn placeholder stands in the 56 px box, never an invented picture (P-08).
+    const entry = document.querySelector('[data-species="Ficus lyrata"]') as HTMLElement;
+    expect(entry.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
+    expect(entry.querySelector("img")).toBeNull();
+  });
+
+  it("US-QS-32 a species row says it opens a dialog and a tap opens the species layer", async () => {
+    await open();
+    const row = screen.getByRole("button", { name: /Aloe vera/ });
+    expect(row.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(row.getAttribute("aria-expanded")).toBe("false");
+    await userEvent.click(row);
+    expect(await screen.findByRole("dialog", { name: "Echte Aloe" })).toBeTruthy();
+    expect(row.getAttribute("aria-expanded")).toBe("true");
   });
 });

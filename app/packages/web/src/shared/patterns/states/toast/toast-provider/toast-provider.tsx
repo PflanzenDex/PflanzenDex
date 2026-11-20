@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useAnnounce } from "@/shared/platform/announcer/context";
 import {
   ToastItem,
   type ToastAction,
@@ -39,25 +40,34 @@ export function useToast(): ToastApi {
   return api;
 }
 
-/** Says a result as a toast: `success` (default) is read politely, `error` at once. */
+/** Says a result: a `success` (default) goes to the announcer, an `error` is a toast at once (US-QS-32). */
 export type Say = (message: string, kind?: ToastKind) => void;
 
 /**
- * The result of a write as a toast (US-QS-07, DS-54): a confirmation appears over the page and inserts nothing above the
- * content. The function is stable, so it can be passed to a write hook.
+ * The result of a write (US-QS-07, US-QS-32). A success is not a toast: the change shows in place (SG-FEED-01) and the
+ * shared announcer says the text to screen readers (SG-FEED-04, DS-69). An error stays a toast with its assertive
+ * region, because a refusal must stay visible (P-10) until it shows at its place (FX-09). Without an announcer above
+ * (stories, isolated tests) a success is a toast too, so nothing is lost. The function is stable, so it can be passed
+ * to a write hook.
  */
 export function useSay(): Say {
   const toast = useToast();
+  const announcer = useAnnounce();
   return useCallback(
     (message, kind) => {
+      if (kind !== "error" && announcer) {
+        announcer.announce(message);
+        return;
+      }
       toast.show(kind ? { message, kind } : { message });
     },
-    [toast],
+    [toast, announcer],
   );
 }
 
 /**
- * Owns the toast queue and the viewport (US-QS-07). Both live regions (plain `aria-live`, no role, so an empty region never counts as an alert or status) exist before the first toast, because a screen
+ * Owns the toast queue and the viewport (US-QS-07). Toasts now carry the refusals of writes and the undo actions (until
+ * FX-09 puts them in place, US-QS-32); a success is said by `useSay`, not shown here. Both live regions (plain `aria-live`, no role, so an empty region never counts as an alert or status) exist before the first toast, because a screen
  * reader only notices changes in a region it already knows: confirmations in the polite one, errors in the assertive
  * one. The viewport stacks above the bottom bar on a phone and sits bottom right from `md`; it lies above an open layer
  * (its overlay and drawer are `z-50`), so an undo offered there can be seen and taken (US-QS-07, issue 1028).

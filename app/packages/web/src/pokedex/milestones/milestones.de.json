@@ -6,7 +6,7 @@
   "sectionLabel": "Meilensteine",
   "openList": "Offene Meilensteine",
   "progressOf": "Fortschritt {name}",
-  "remaining": "Noch {remaining}: {missing}",
+  "remainingLead": "Noch {remaining}:",
   "needTree": "Meilensteine brauchen den Baum der Arten, der noch nicht aufgebaut ist.",
   "none": "Keine offenen Meilensteine.",
   "reachedOne": "1 Meilenstein erreicht",

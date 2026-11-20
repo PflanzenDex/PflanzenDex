@@ -6,6 +6,15 @@ import { zoneLabel } from "../../../light";
 
 export type NeedKind = "supply_low" | "zone_without_lamp" | "wish_without_lamp" | "no_replacement";
 
+/**
+ * Where the step of a need is done in the app (US-QS-32): a device's record, or the form of a new lamp for a light zone.
+ * `null` when the step happens outside the app (buying a consumable): nothing in the app opens for it.
+ */
+export type NeedTarget =
+  | { readonly kind: "device"; readonly id: string }
+  | { readonly kind: "zone"; readonly zoneId: string }
+  | null;
+
 /** One thing that is missing: why (reason and source in the keeper's own data) and what to do next (P-09). */
 export interface Need {
   /** Stable per cause (`supply:<id>`, `zone:<id>`, `wish-zone:<zone>`, `replace:<id>`), so lists can be compared. */
@@ -15,6 +24,8 @@ export interface Need {
   /** Where the reason comes from, in the keeper's words. */
   readonly source: string;
   readonly nextAction: string;
+  /** The place where the next action is done; the title and the target always agree (US-QS-32). */
+  readonly target: NeedTarget;
 }
 
 export interface NeedsDependencies {
@@ -36,6 +47,7 @@ function supplyNeeds(items: readonly EquipmentRow[]): Need[] {
             reason: `„${e.name}“ ${SUPPLY_WORD[e.supply]}.`,
             source: "Vorrat unter Geräte",
             nextAction: "Kaufe Nachschub und stelle den Vorrat danach wieder auf „Vorhanden“.",
+            target: null,
           },
         ]
       : [],
@@ -60,6 +72,7 @@ function replacementNeeds(items: readonly EquipmentRow[]): Need[] {
       reason: `„${e.name}“ ist ${e.status === "defective" ? "defekt" : "ausgemustert"} und kein anderes aktives Gerät übernimmt.`,
       source: "Zustand unter Geräte",
       nextAction: "Repariere das Gerät, erfasse ein Ersatzgerät oder wünsche dir eines.",
+      target: { kind: "device", id: e.id },
     }));
 }
 
@@ -85,6 +98,7 @@ export async function equipmentNeeds(deps: NeedsDependencies, userId: string): P
             reason: z.note.text,
             source: "Pflanzen je Lichtzone",
             nextAction: z.note.nextAction,
+            target: { kind: "zone", zoneId: z.zoneId },
           },
         ]
       : [],
@@ -108,6 +122,7 @@ export async function equipmentNeeds(deps: NeedsDependencies, userId: string): P
             reason: `${n === 1 ? "Ein Wunsch zielt" : `${n} Wünsche zielen`} auf die Lichtzone ${zoneLabel(z.name)}, die keine aktive Lampe hat.`,
             source: "Wunschliste",
             nextAction: "Erfasse eine Lampe für diese Zone, bevor die Pflanze einzieht.",
+            target: { kind: "zone", zoneId: z.id },
           },
         ]
       : [];

@@ -607,21 +607,16 @@ test("US-DEV-13 issue 1716 the five targets are in .PHONY, run only the CLI, and
   );
 });
 
-test("US-DEV-13 issue 1716 .claude/settings.json allows exactly the five forms of the read-only targets, once each", () => {
+test("US-DEV-13 issue 1716 .claude/settings.json allows the read-only targets through Bash(make *) only (issue 2210)", () => {
   const settings = JSON.parse(readFileSync(join(ROOT, ".claude", "settings.json"), "utf8"));
   const allow = settings.permissions.allow;
-  const five = [
-    "Bash(make run-jobs RUN=*)",
-    "Bash(make conflicts PR=*)",
-    "Bash(make test-files FILES=*)",
-    "Bash(make format-check FILES=*)",
-    "Bash(make board-item ISSUE=*)",
-  ];
-  for (const rule of five) {
-    assert.equal(allow.filter((r) => r === rule).length, 1, `${rule} is not allowed exactly once`);
-  }
+  assert.equal(
+    allow.filter((r) => r === "Bash(make *)").length,
+    1,
+    "Bash(make *) is not allowed once",
+  );
   const ours = allow.filter((r) =>
     /^Bash\(make (run-jobs|conflicts|test-files|format-check|board-item)\b/.test(r),
   );
-  assert.deepEqual(ours.sort(), [...five].sort(), "no other rule for these targets");
+  assert.deepEqual(ours, [], "no separate rule for these targets");
 });

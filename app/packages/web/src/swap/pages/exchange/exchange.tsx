@@ -9,6 +9,7 @@ import {
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { Button } from "@/shared/ui/button/button";
+import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { errorText } from "@/shared/lib/error-text";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
@@ -55,6 +56,7 @@ function OfferOpener() {
   return (
     <Button
       type="button"
+      variant="tinted"
       size="touch"
       className="w-auto"
       aria-haspopup="dialog"
@@ -69,6 +71,7 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
   const { api } = props;
   const withdraw = useWriteAction(props.token, props.onWritten);
   const layer = useLayer(OFFER_LAYER);
+  const say = useSay();
   const [part, choose] = usePart();
   return (
     // The part's list takes the free height of the page, page by page (US-QS-20, issue 1157).
@@ -107,14 +110,16 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
       {part === "friends" && <FriendOffers api={api} token={props.token} />}
       {part === "history" && <SwapHistory api={api} token={props.token} />}
       <LayerSheet id={OFFER_LAYER} title={t("exchange.offer")}>
-        {layer.open ? (
-          <OfferForm
-            api={api}
-            token={props.token}
-            specimens={props.data.specimens}
-            onChanged={props.onWritten}
-          />
-        ) : null}
+        <OfferForm
+          api={api}
+          token={props.token}
+          specimens={props.data.specimens}
+          onChanged={props.onWritten}
+          onCreated={(message) => {
+            layer.closeLayer();
+            say(message);
+          }}
+        />
       </LayerSheet>
     </div>
   );
@@ -140,7 +145,7 @@ export function ExchangePage(props: { api: string; token: Token }) {
         action={<OfferOpener />}
       >
         <div>
-          <Button asChild variant="outline" size="touch" className="w-auto">
+          <Button asChild variant="plain" size="touch" className="w-auto">
             <Link to="/friends/match">{t("exchange.match")}</Link>
           </Button>
         </div>

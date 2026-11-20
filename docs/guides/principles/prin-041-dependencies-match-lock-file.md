@@ -15,12 +15,12 @@ Equality of the SHA-256 of `app/package-lock.json` with the value stamped into `
 
 ## Checked by
 
-`app/tools/check/supply/check-deps.mjs`, `.githooks/_lib.sh` (the hooks call it too).
+`app/tools/check/delivery/supply/check-deps.mjs`, `.githooks/_lib.sh` (the hooks call it too).
 
 ## Gate
 
-`make gates` runs `node tools/check/supply/check-deps.mjs` before `npm run gates`. The CI job `app-gates` runs `make ci-gates`, which does not include this step: CI installs the dependencies in `make setup` itself.
+`make gates` runs `node tools/check/delivery/supply/check-deps.mjs` before `npm run gates`. The CI job `app-gates` runs `make ci-gates`, which does not include this step: CI installs the dependencies in `make setup` itself.
 
 ## Evidence
 
-Tests in `app/tools/check/supply/check-deps.test.mjs`. In practice the check bites locally (after a pull that changed the lock file); CI installs its own dependencies in `make setup`.
+Tests in `app/tools/check/delivery/supply/check-deps.test.mjs`. In practice the check bites locally (after a pull that changed the lock file); CI installs its own dependencies in `make setup`.

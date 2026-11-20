@@ -6,13 +6,15 @@ import {
   apiUrl,
   useSession,
   InvitationPage,
+  likelySignedIn,
   type State,
 } from "../../../account";
 import { useClearOnSignOut } from "../../../shared/data";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
-import { pageTitle } from "../../../shared/patterns/navigation/navigation/navigation";
+import { pageTitle } from "@/shared/patterns/navigation/nav-item";
 import { useAccountMotion } from "@/shared/platform/device/motion/motion-setting";
+import { StartFrame } from "./start-frame/start-frame";
 
 /** The route table is its own chunk: the sign-in screens do not carry it (DS-08, US-QS-14). */
 const loadRoutes = () => import("../../routes").then((m) => ({ default: m.AppRoutes }));
@@ -76,13 +78,14 @@ function EntryStates({ state: z, session: s }: { state: State; session: Session 
   );
 }
 
-/** The welcome page with the session's actions: sign in, register, another account (US-ACC-01). */
+/** The welcome page with the session's actions: sign in, register, switch the account (US-ACC-01, US-QS-32). */
 function SignedOutWelcome({ session: s, state: z }: { session: Session; state: SignedOut }) {
   return (
     <Welcome
       onRegister={s.register}
       onSignIn={s.signIn}
-      onAnotherAccount={s.useAnotherAccount}
+      onSwitchAccount={s.switchAccount}
+      canSwitch={z.canSwitch}
       hint={z.hint}
       error={z.error}
     />
@@ -115,6 +118,12 @@ export function App() {
   useAccountMotion(motionOf(z));
   // The welcome page is the sign-in frame of its own (US-QS-14); loading, errors and the invitation keep the padded main.
   if (z.kind === "signedOut") return <SignedOutWelcome session={s} state={z} />;
+  // A keeper who was signed in on this device sees the signed-in frame with the page skeleton from the first paint, through
+  // the session check and the shell's code, without an empty frame (SG-STATE-02, issue 1876); the card stays for sign-in.
+  if (z.kind === "loading" && likelySignedIn()) return <StartFrame />;
+  // A keeper who was signed in on this device sees a failed account load inside both bars, where the page would be (F-0059, Q03).
+  if (z.kind === "error" && !z.reloadPage && likelySignedIn())
+    return <StartFrame body={<AppError text={z.text} onReload={() => void s.reload()} />} />;
   if (z.kind !== "signedIn")
     return (
       <main className="flex min-h-dvh flex-col items-center px-4 py-6 md:pt-20">
@@ -122,8 +131,14 @@ export function App() {
       </main>
     );
   return (
-    <RouteBoundary resetKey="signed-in">
-      <SignedInFrame session={s} account={z.account} {...(z.error ? { error: z.error } : {})} />
+    <RouteBoundary resetKey="signed-in" fallback={<StartFrame />}>
+      <SignedInFrame
+        session={s}
+        account={z.account}
+        {...(z.error ? { error: z.error } : {})}
+        {...(z.everywhereBusy ? { everywhereBusy: true } : {})}
+        {...(z.everywhereError ? { everywhereError: z.everywhereError } : {})}
+      />
     </RouteBoundary>
   );
 }

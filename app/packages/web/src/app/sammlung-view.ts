@@ -3,15 +3,16 @@ import { readStored, writeStored } from "@/shared/platform/browser/storage";
 import { useFeatures } from "@/shared/data";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { GROUP_PARAM, MANAGE_PARAM } from "../shared/patterns/navigation/navigation/navigation";
+import { SAMMLUNG_VIEW_KEY } from "../shared/patterns/navigation/navigation/reselect-link/reselect-link";
 
 export type SammlungView = "plants" | "species" | "wishlist" | "equipment";
-/** How the species mode is arranged: the Pokédex, or the comparison by difficulty (US-BES-05). */
+/** How the species mode is arranged: the name order, or the comparison by difficulty (US-BES-05). */
 export type SpeciesSort = "pokedex" | "difficulty";
 
 /** The query parameter of the mode in the address, e.g. `/collection?view=species` (US-QS-14). */
 export const VIEW_PARAM = "view";
-/** Per-device convenience only: the address always wins, and a failing storage changes nothing (DS-10). */
-export const VIEW_KEY = "pflanzendex.collection-view";
+/** Per-device convenience only: the address always wins, and a failing storage changes nothing (DS-10). The key lives in the navigation (SG-NAV-03). */
+export const VIEW_KEY = SAMMLUNG_VIEW_KEY;
 
 /**
  * The four modes of the switch. The labels are short so that the switch stands in one row on a 360 px phone at normal
@@ -27,7 +28,7 @@ export const SAMMLUNG_VIEWS: readonly { value: SammlungView; label: string }[] =
 /** The query parameter of the arrangement of the species, e.g. `/collection?view=species&sort=difficulty` (US-QS-14). */
 export const SORT_PARAM = "sort";
 export const SPECIES_SORTS: readonly { value: SpeciesSort; label: string }[] = [
-  { value: "pokedex", label: "Pokédex" },
+  { value: "pokedex", label: "Name" },
   { value: "difficulty", label: "Schwierigkeit" },
 ];
 
@@ -61,7 +62,7 @@ export function sammlungViewOf(
   return offered(asked) ? asked : "plants";
 }
 
-/** The arrangement of the species from the address: `sort=difficulty` or the Pokédex (US-BES-05). */
+/** The arrangement of the species from the address: `sort=difficulty` or the name order (US-BES-05). */
 const speciesSortOf = (params: URLSearchParams): SpeciesSort =>
   params.get(SORT_PARAM) === "difficulty" ? "difficulty" : "pokedex";
 
@@ -117,7 +118,7 @@ export function useSammlungView(): { view: SammlungView; choose: (v: SammlungVie
 
 /**
  * The arrangement of the species mode (US-QS-14, US-BES-05): only the address decides, `sort=difficulty` shows the
- * comparison by difficulty, anything else the Pokédex. Choosing keeps the mode and the focus on the control.
+ * comparison by difficulty, anything else the name order. Choosing keeps the mode and the focus on the control.
  */
 export function useSpeciesSort(): { sort: SpeciesSort; choose: (s: SpeciesSort) => void } {
   const [params, setParams] = useSearchParams();

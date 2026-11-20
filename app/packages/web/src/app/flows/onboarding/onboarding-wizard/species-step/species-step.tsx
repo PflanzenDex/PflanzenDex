@@ -5,6 +5,10 @@ import { Button } from "@/shared/ui/button/button";
 import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
 import { Label } from "@/shared/ui/display/label/label";
 import { errorText } from "@/shared/lib/error-text";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./species-step.de.json";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 type Found<T> = { ok: true; value: T } | { ok: false; error: { code: string } };
@@ -19,12 +23,16 @@ export interface SpeciesLookup {
   readonly load: (api: string, token: string, id: string) => Promise<Found<Species>>;
 }
 
-/** Hits for the typed text after a short pause; an empty text asks nothing. */
+/**
+ * Hits for the typed text after a short pause; an empty text asks nothing. `answered` says that the answer belongs to the
+ * text typed now: until then no "no hit" line is shown for it (issue 1964).
+ */
 function useHits(lookup: SpeciesLookup, api: string, token: Token, text: string) {
-  const [state, setState] = useState<{ hits: readonly SpeciesHit[]; failed: boolean }>({
-    hits: [],
-    failed: false,
-  });
+  const [state, setState] = useState<{
+    term: string;
+    hits: readonly SpeciesHit[];
+    failed: boolean;
+  }>({ term: "", hits: [], failed: false });
   useEffect(() => {
     const term = text.trim();
     if (!term) return;
@@ -34,7 +42,7 @@ function useHits(lookup: SpeciesLookup, api: string, token: Token, text: string)
         const t = await token();
         if (!t) return;
         const r = await lookup.search(api, t, term);
-        if (current) setState({ hits: r.ok ? r.value : [], failed: !r.ok });
+        if (current) setState({ term, hits: r.ok ? r.value : [], failed: !r.ok });
       })();
     }, 250);
     return () => {
@@ -42,7 +50,12 @@ function useHits(lookup: SpeciesLookup, api: string, token: Token, text: string)
       clearTimeout(timer);
     };
   }, [lookup, api, token, text]);
-  return text.trim() ? state : { hits: [], failed: false };
+  const term = text.trim();
+  return {
+    hits: term ? state.hits : [],
+    failed: term ? state.failed : false,
+    answered: term !== "" && state.term === term,
+  };
 }
 
 function HitList(props: {
@@ -52,7 +65,7 @@ function HitList(props: {
 }) {
   if (props.hits.length === 0) return null;
   return (
-    <ul className="m-0 grid list-none gap-2 p-0" aria-label="Treffer">
+    <ul className="m-0 grid list-none gap-2 p-0" aria-label={ui("hitsLabel")}>
       {props.hits.slice(0, 8).map((h) => (
         <li key={h.id}>
           <Button
@@ -75,13 +88,46 @@ function HitList(props: {
   );
 }
 
-/** What a screen reader hears about the hits. */
-const announcement = (text: string, failed: boolean, count: number) =>
-  !text.trim() || failed
-    ? ""
-    : count === 0
-      ? "Nichts gefunden."
-      : `${Math.min(count, 8)} Treffer, wähle eine Art.`;
+/** The step's heading: "Schritt n von m" is said once, by the focused heading (US-ACC-03, issue 1612). */
+function StepHeading(props: { title?: string | undefined; stepLabel?: string | undefined }) {
+  return (
+    <h2 tabIndex={-1} className="text-base font-semibold">
+      {props.stepLabel && <span className="sr-only">{`${props.stepLabel}:`}</span>}
+      {props.stepLabel && " "}
+      {props.title ?? ui("title")}
+    </h2>
+  );
+}
+
+/**
+ * The search's status: a search without a hit names the query in one visible line, with "Art vorschlagen" below it; any
+ * other state says only the hit count to a screen reader (issue 1964).
+ */
+function SearchStatus(props: {
+  noHit: boolean;
+  query: string;
+  hits: number;
+  onCatalog: () => void;
+}) {
+  if (!props.noHit)
+    return (
+      <p role="status" className="sr-only">
+        {props.hits > 0 ? ui("hits", { count: Math.min(props.hits, 8) }) : ""}
+      </p>
+    );
+  return (
+    <>
+      <p role="status" className="m-0 text-sm">
+        {ui("noHit", { query: props.query })}
+      </p>
+      <div className="flex flex-col items-start gap-2">
+        <Button type="button" variant="secondary" onClick={props.onCatalog}>
+          {ui("propose")}
+        </Button>
+      </div>
+    </>
+  );
+}
 
 /** Step 1 of the first plant (US-ONB-01): search the species by name; picking one loads its profile. */
 export function SpeciesStep(props: {
@@ -98,50 +144,43 @@ export function SpeciesStep(props: {
   stepLabel?: string;
 }) {
   const { api, token, text, species } = props;
-  const { hits, failed } = useHits(props.lookup, api, token, text);
+  const { hits, failed, answered } = useHits(props.lookup, api, token, text);
   const [refused, setRefused] = useState<string | null>(null);
+  // Only the answer for the text typed now counts: no no-hit line and no failure for an older text (issue 1964).
+  const noHit = answered && hits.length === 0 && !failed;
+  const alert = refused ?? (answered && failed ? ui("failed") : null);
   const pick = async (id: string) => {
     const t = await token();
     if (!t) return;
     const r = await props.lookup.load(api, t, id);
-    if (r.ok) {
-      setRefused(null);
-      props.onPick(r.value);
-    } else setRefused(errorText(r.error.code));
+    if (!r.ok) {
+      setRefused(errorText(r.error.code));
+      return;
+    }
+    setRefused(null);
+    props.onPick(r.value);
   };
   return (
     <section className="flex flex-col gap-3">
-      <h2 tabIndex={-1} className="text-xl font-semibold">
-        {props.stepLabel && <span className="sr-only">{`${props.stepLabel}:`}</span>}
-        {props.stepLabel && " "}
-        {props.title ?? "Deine erste Pflanze"}
-      </h2>
-      <Label htmlFor="first-plant-search">Name der Pflanze</Label>
+      <StepHeading title={props.title} stepLabel={props.stepLabel} />
+      <Label htmlFor="first-plant-search">{ui("label")}</Label>
       <SearchInput
         id="first-plant-search"
+        placeholder={ui("placeholder")}
         autoComplete="off"
         value={text}
         onChange={(e) => props.onText(e.target.value)}
         onClear={() => props.onText("")}
       />
-      <p className="m-0 text-sm text-muted-foreground">
-        Tippe den Namen deiner Pflanze, wir suchen die Art.
-      </p>
-      {(failed || refused) && (
-        <p role="alert">{refused ?? "Die Suche hat nicht geklappt. Versuche es noch einmal."}</p>
-      )}
-      <p role="status" className="sr-only">
-        {announcement(text, failed, hits.length)}
-      </p>
+      <p className="m-0 text-sm text-muted-foreground">{ui("help")}</p>
+      {alert && <p role="alert">{alert}</p>}
+      <SearchStatus
+        noHit={noHit}
+        query={text.trim()}
+        hits={hits.length}
+        onCatalog={props.onCatalog}
+      />
       <HitList hits={hits} chosen={species?.id} onPick={(id) => void pick(id)} />
-      {text.trim() && hits.length === 0 && !failed && (
-        <p className="m-0 text-sm">
-          Nichts gefunden. Ist der Katalog noch leer oder fehlt die Art?{" "}
-          <Button type="button" variant="link" onClick={props.onCatalog}>
-            Im Katalog suchen oder vorschlagen
-          </Button>
-        </p>
-      )}
     </section>
   );
 }

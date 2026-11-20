@@ -1,10 +1,12 @@
 import { useCallback, type ReactNode } from "react";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { useRequest } from "../../shared/data";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { loadToday } from "../today-api";
-import { isTreatment, type TodayDestination } from "./today-row/today-row";
+import { loadToday, TODAY_LIST_KEY } from "../today-api";
+import { isTreatment } from "./today-row/today-row";
+import type { TodayDestination } from "../today-destinations";
 import { NowSkeleton, TodaySkeleton } from "./today-skeleton/today-skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../today.de.json";
@@ -12,9 +14,7 @@ import { FurtherTasks, Below, ListState } from "./today-list/today-list";
 
 const t = texts(table);
 
-export type { TodayDestination };
-
-const KEY = ["today", "list"] as const;
+const KEY = TODAY_LIST_KEY;
 const TASKS = "tasks";
 /**
  * The central "Today" list (TE-07): what needs action today, most urgent first: treatments overdue or due, plants
@@ -53,9 +53,7 @@ export function TodayPage(props: {
     // No min-h-0 here either (issue 1662): the page never shrinks below its content. With min-h-0 the page took the free
     // height and the content past it lay under whatever followed it (the anniversary card then, a tile now).
     <div className="flex min-w-0 flex-1 flex-col gap-2">
-      <h1 id="today-title" className="text-2xl font-semibold">
-        {t("page.title")}
-      </h1>
+      <PageHeader headingId="today-title" title={t("page.title")} />
       {props.summary?.(treatmentFirst)}
       <section aria-labelledby="now-title" className="flex min-w-0 flex-col gap-2">
         <h2 id="now-title" className="sr-only">
@@ -69,7 +67,7 @@ export function TodayPage(props: {
         />
       </section>
       {props.tiles?.(treatmentFirst)}
-      {today.value && <Below list={today.value} onOpen={props.onOpen} />}
+      {today.value && <Below list={today.value} />}
       {/* The former address of the further tasks stays valid: the layer lists the same rows. */}
       <LayerSheet id={TASKS} title={t("tasks.title")}>
         {/* The same request as the page (no second observer, see above). The rows page by the free height of the layer,
@@ -81,9 +79,7 @@ export function TodayPage(props: {
           offline={today.offline}
           skeleton={<NowSkeleton label={loading} />}
         >
-          {today.value ? (
-            <FurtherTasks list={today.value} onOpen={props.onOpen} param={LAYER_PARAM} fit />
-          ) : null}
+          {today.value ? <FurtherTasks list={today.value} param={LAYER_PARAM} fit /> : null}
         </RequestState>
       </LayerSheet>
     </div>

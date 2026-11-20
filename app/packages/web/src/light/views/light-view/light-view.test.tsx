@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { renderToString as render } from "react-dom/server";
 import { cleanup, render as plainRender } from "@testing-library/react";
+import { OctagonAlert } from "lucide-react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { LightView, type LightActions } from "./light-view";
@@ -30,13 +31,7 @@ const overview = { ok: true as const, value: { rows: [] } };
 const html = (data: LightData) => {
   const { container } = plainRender(
     <MemoryRouter>
-      <LightView
-        data={data}
-        actions={actions}
-        overview={overview}
-        onOpenCollection={() => undefined}
-        onRetry={() => undefined}
-      />
+      <LightView data={data} actions={actions} overview={overview} onRetry={() => undefined} />
     </MemoryRouter>,
   );
   // Non-breaking spaces come out as entities; the text checks compare the characters.
@@ -70,6 +65,28 @@ describe("US-LIC-05 view locations and light zones", () => {
     expect(h).toContain("Zone 2 · außen");
   });
 
+  it("US-QS-32 a location names its cutting light in brackets; a location without zone reads 'Lichtzone fehlt' first in its meta", () => {
+    const cutting = {
+      id: "z0",
+      name: "Zone 1 · Stecklingslicht",
+      luxCeiling: 1500,
+      ppfd: 36,
+      sortOrder: 1,
+    };
+    const h = html({
+      ...empty,
+      zones: [cutting],
+      locations: [
+        { id: "s1", name: "Fensterbank", lightZoneId: "z0", kind: "indoor" },
+        { id: "s2", name: "Regal", lightZoneId: null, kind: "indoor" },
+      ],
+    });
+    expect(h).toContain("Zone 1 (Stecklingslicht) · innen");
+    expect(h).not.toContain("Zone 1 · Stecklingslicht · innen");
+    expect(h).toContain("Lichtzone fehlt · innen");
+    expect(h).not.toContain("Keine Lichtzone · innen");
+  });
+
   it("US-QS-19 location without zone: the notice counts the hints, the layer says what to do (P-09)", () => {
     const h = html({
       zones: [zone],
@@ -84,8 +101,8 @@ describe("US-LIC-05 view locations and light zones", () => {
       ],
     });
     expect(h).toContain("Hinweise (1)");
-    expect(h).toContain("Keine Lichtzone");
-    expect(h).toContain("Lichthunger und Einstufung");
+    expect(h).toContain("Lichtzone fehlt");
+    expect(h).toContain("Lichtbedarf und Einstufung");
   });
 
   it("US-QS-19 without affected locations there is no hints notice", () => {
@@ -94,10 +111,10 @@ describe("US-LIC-05 view locations and light zones", () => {
 
   it("forms carry visible labels and input aids for numbers", () => {
     const h = renderToString(<ZoneForm onSave={nothing} />);
-    expect(h).toContain("Lux-Decke (Lux)");
+    expect(h).toContain("Lux-Obergrenze");
     expect(h).toContain('inputMode="numeric"');
     expect(renderToString(<LocationForm zones={[zone]} onSave={nothing} />)).toContain(
-      "Keine Lichtzone (erscheint in den Hinweisen)",
+      "Keine Lichtzone",
     );
   });
 });
@@ -125,6 +142,25 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
     expect(h).toContain("Pflegeprofil der Art: Bogenhanf"); // US-BES-09: the zone override of a care profile
   });
 
+  it("US-QS-32 · SG-COLOR-04 a refused zone deletion is drawn in the error tone: red border, error mark, no warning token, the users stay listed", () => {
+    const h = renderToString(
+      <ErrorMessage
+        error={{
+          code: "light_zone.in_use",
+          text: "",
+          data: [{ kind: "location", id: "s1", name: "Regal" }],
+        }}
+      />,
+    );
+    const mark = renderToString(<OctagonAlert />).match(/<svg[^>]*>(.*)<\/svg>/)?.[1] ?? "";
+    expect(mark).not.toBe("");
+    expect(h).toContain("border-destructive");
+    expect(h).not.toContain("bg-warning");
+    expect(h).not.toContain("border-warning-border");
+    expect(h).toContain(mark);
+    expect(h).toContain("Standort: Regal");
+  });
+
   it("translates complained-about fields into words", () => {
     const h = renderToString(
       <ErrorMessage
@@ -135,15 +171,15 @@ describe("US-LIC-05 error message when deleting a used zone", () => {
         }}
       />,
     );
-    expect(h).toContain("Bitte prüfe: Lux-Decke.");
+    expect(h).toContain("Prüfe: Lux-Obergrenze.");
   });
 });
 
 describe("US-LIC-01 view: derive the zone of a species", () => {
   it("offers lux need, default level and the C3 hint and explains why", () => {
     const h = renderToString(<DerivationForm onDerive={actions.zoneDerive} />);
-    expect(h).toContain("Lux-Bedarf der Art (Lux)");
-    expect(h).toContain("Stufe 4");
+    expect(h).toContain("Lichtbedarf der Art");
+    expect(h).toContain("Zone 4");
     expect(h).toContain("Sonnenliebende C3-Pflanze mit weichem Blatt");
   });
 

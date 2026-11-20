@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/core.tsbuildinfo",
+    "typecheck": "node ../../node_modules/@typescript/native/bin/tsc --noEmit -p . --incremental --tsBuildInfoFile ../../.cache/gates/tsc/core.tsbuildinfo",
     "test": "vitest run"
   }
 }

@@ -19,7 +19,7 @@ export type ListActions = {
   marked: ReturnType<typeof useMarker>;
   caught: ReturnType<typeof useCatchDate>;
   zoned: ReturnType<typeof useLightZone>;
-  /** Shows the result of a write as a toast (US-QS-07, DS-54). */
+  /** Says the result of a write, or shows it as a toast where the row leaves the list (US-QS-07, US-QS-32). */
   say: Say;
   /** Opens the address of a form of a plant, so Back and a reload reach it (US-QS-15). */
   open: (kind: FormKind, plantId: string) => void;
@@ -29,8 +29,8 @@ type Named = { id: string; name: string };
 
 /**
  * What the plants screen calls when a plant's layer asks for an action (US-BES-03, US-BES-04, US-BES-07, US-BES-11,
- * US-LIC-02, US-PHA-03): each opens its flow or writes through its operation (P-03). The result of a write is a toast,
- * so the list keeps its place (DS-54).
+ * US-LIC-02, US-PHA-03): each opens its flow or writes through its operation (P-03). The result of a write is said or
+ * shown as a toast, so the list keeps its place (DS-54).
  */
 export function useListActions(api: string, token: Token, a: ListActions) {
   const { archived, potted, marked, caught, zoned, say, open } = a;

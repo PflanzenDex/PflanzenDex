@@ -1,8 +1,11 @@
 import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-groups";
 import type { CarePhase, LightLocation, PhasesRow } from "@pflanzendex/core";
-import { useIsLg, useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
+import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { PHASE_TEXT } from "../../shared/text";
-import { Groups, type Confirm } from "../phases-list/phases-list";
+import { Groups, type Confirm, type GroupUndo } from "../phases-list/phases-list";
 import { Entry } from "../phases-list/entry/entry";
 
 const PHASES: readonly CarePhase[] = ["dormancy", "growth"];
@@ -16,7 +19,7 @@ function usePageSize(): number {
 
 /**
  * The plants with a care phase as the grouping "Nach Pflegephase" (US-QS-19): the phase is chosen from a row with its
- * count and the plants of that phase page. "Jetzt umgestellt" and the group buttons work as in the list (US-PHA-03).
+ * count and the plants of that phase page. "Umstellen" and the group buttons work as in the list (US-PHA-03).
  * The paging is the shared `PagedGroups`, which the plants use too.
  */
 export function PhasesPaged(props: {
@@ -24,6 +27,10 @@ export function PhasesPaged(props: {
   locations: readonly LightLocation[];
   busy: boolean;
   onConfirm: Confirm;
+  /** The photos of the rows' thumbnails (US-QS-32); without it the thumbnails show the drawn placeholder. */
+  access?: PhotoAccess;
+  /** The undo of a bulk move held in place (US-QS-32). */
+  groupUndo?: GroupUndo | undefined;
 }) {
   const size = usePageSize();
   const groups = PHASES.map((phase) => ({
@@ -38,7 +45,7 @@ export function PhasesPaged(props: {
         listLabel="Pflanzen mit Pflegephase"
         groups={groups}
         pageSize={size}
-        listClassName="lg:grid lg:grid-cols-2"
+        listClassName={OBJECT_GROUP}
         getKey={(z) => z.specimenId}
         intro={(g) => (
           <Groups
@@ -46,6 +53,7 @@ export function PhasesPaged(props: {
             locations={props.locations}
             busy={props.busy}
             onConfirm={props.onConfirm}
+            groupUndo={props.groupUndo}
           />
         )}
         renderItem={(z) => (
@@ -55,6 +63,7 @@ export function PhasesPaged(props: {
             locations={props.locations}
             busy={props.busy}
             onConfirm={props.onConfirm}
+            access={props.access}
           />
         )}
       />

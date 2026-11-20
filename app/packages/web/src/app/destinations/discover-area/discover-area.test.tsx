@@ -185,8 +185,8 @@ describe("US-QS-14 the destination Entdecken with its switch Vorschläge | Katal
   });
 });
 
-describe("US-ONB-09 the keeper's switch of the wishlist hides the suggestions with Ja and Nein", () => {
-  /** One suggestion on the deck: a card with its buttons Nein, Später and Ja. */
+describe("US-ONB-09 the keeper's switch of the wishlist hides the suggestions with Wünschen and Kein Interesse", () => {
+  /** One suggestion on the deck: a card with its buttons Kein Interesse, Später and Wünschen. */
   const deckWithCard = {
     deck: 1,
     suggestions: [
@@ -207,23 +207,23 @@ describe("US-ONB-09 the keeper's switch of the wishlist hides the suggestions wi
     zoneFilter: null,
   };
 
-  it("US-ONB-09 with wishlist off Entdecken offers the catalog only: no Vorschläge, no Ja and no Nein, and no suggestion is asked", async () => {
+  it("US-ONB-09 with wishlist off Entdecken offers the catalog only: no Vorschläge, no Wünschen and no Kein Interesse, and no suggestion is asked", async () => {
     stubServer(deckWithCard);
     renderAt("/discover?view=suggestions", { wishlist: false });
     await catalogShown();
     expect(screen.queryByRole("button", { name: "Vorschläge" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Ja" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Nein" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Wünschen" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Kein Interesse" })).toBeNull();
     const asked = vi.mocked(fetch).mock.calls.map(([u]) => new URL(String(u)).pathname);
     expect(asked).not.toContain("/discover/suggestions");
   });
 
-  it("US-ONB-09 with wishlist on Entdecken shows the card with Nein and Ja", async () => {
+  it("US-ONB-09 with wishlist on Entdecken shows the card with Kein Interesse and Wünschen", async () => {
     stubServer(deckWithCard);
     renderAt("/discover", { wishlist: true });
     expect(await screen.findByRole("article")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Nein" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Ja" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Kein Interesse" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Wünschen" })).toBeTruthy();
   });
 
   it("US-ONB-09 with discover off Entdecken offers the catalog only, as before", async () => {

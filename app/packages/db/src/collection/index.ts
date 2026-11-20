@@ -22,6 +22,7 @@ export {
   archiveSpecimenOn,
   createSpecimenOn,
   findSpecimenOn,
+  specimenNamesOn,
   specimenStatusesOn,
   listSpecimensOn,
   type NewSpecimen,

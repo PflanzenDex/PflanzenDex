@@ -2,7 +2,7 @@ import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet"
 import { useEffect, useRef, type ReactNode } from "react";
 import { Navigate, useLocation, useSearchParams } from "react-router";
 import { useFeature } from "@/shared/data";
-import { useIsLg } from "@/shared/platform/browser/use-breakpoint";
+import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { AreaSection } from "@/app/destinations/area-parts/area-section/area-section";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
@@ -29,6 +29,10 @@ type Props = {
   token: Token;
   account: Account;
   error?: string;
+  /** "Auf allen Geräten abmelden" runs (US-ACC-01): its control shows busy and ignores a second press. */
+  everywhereBusy?: boolean;
+  /** Its failure, with the retry that repeats it (US-QS-32). */
+  everywhereError?: string;
   onSignOut: () => void;
   onEverywhereSignOut: () => void;
   /** The overview "Was die App kann" (US-ONB-06) from the shell, which no area imports; without it the section is missing. */
@@ -62,11 +66,11 @@ function SectionView(props: Props & { section: AccountSection; byDefault?: boole
         title={info.title}
         skeleton={<AccountSectionSkeleton section={rest.section} label={info.loading} />}
         heading={
-          // The section's name is the one h1; the way back "Zurück zu Konto" is the page header's (issue 1031). From
-          // 1280 px the index stands beside the section, so the way back is hidden there.
+          // The section's name is the one h1, "Zurück zu Konto" its way back (issue 1031); only Einstellungen's are in the bar (#2231).
           <PageHeader
             headingId={id}
             title={info.title}
+            inContent={rest.section !== "settings"}
             // The help entry of the keyboard shortcuts sits beside the title, in the row the way back already takes (US-QS-11).
             {...(rest.section === "functions" ? { action: <ShortcutHelpButton /> } : {})}
             {...(byDefault
@@ -181,6 +185,8 @@ export function AccountArea(props: Props) {
             onSignOut={props.onSignOut}
             onEverywhereSignOut={props.onEverywhereSignOut}
             {...(props.error ? { error: props.error } : {})}
+            {...(props.everywhereBusy ? { everywhereBusy: true } : {})}
+            {...(props.everywhereError ? { everywhereError: props.everywhereError } : {})}
           />
         </div>
         {open !== undefined ? (

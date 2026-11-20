@@ -1,6 +1,7 @@
 import { REMINDER_LIMITS, type ReminderOccasion, type ReminderSettings } from "@pflanzendex/core";
 import { useCallback, useState, type FormEvent, type ReactNode } from "react";
 import { FormRoot } from "@/shared/ui/fields/form/form";
+import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadReminderSettings, saveReminderSettings } from "../../api/reminders-api";
 import { PauseRows, withPause, type Paused } from "../pause-rows/pause-rows";
@@ -18,13 +19,13 @@ const { min, max } = REMINDER_LIMITS.measurementDays;
 
 /** The id of the form of "Wann erinnern?": its footer button submits it from outside the scroll region (US-QS-15). */
 export const TIMES_FORM = "reminder-times-form";
-/** The id of the form of "Pausen je Anlass". */
+/** The id of the form of "Erinnerungen aussetzen". */
 export const PAUSES_FORM = "reminder-pauses-form";
 
 /** A complaint about the input that the server would refuse too, in words that name the fix (P-09); `null` when fine. */
 function complaint(quietFrom: string, quietTo: string, days: string): string | null {
   if ((quietFrom === "") !== (quietTo === ""))
-    return "Die Erinnerungspause braucht Beginn und Ende. Fülle beide Zeiten aus oder lösche beide.";
+    return "Die Ruhezeit braucht Beginn und Ende. Fülle beide Zeiten aus oder lösche beide.";
   if (!/^\d+$/.test(days) || Number(days) < min || Number(days) > max)
     return `Die Tage bis zur überfälligen Messung sind eine ganze Zahl von ${min} bis ${max}.`;
   return null;
@@ -94,6 +95,8 @@ function PausesForm(props: { api: string; token: Token; saved: ReminderSettings 
   const write = useWriteAction(props.token, useInvalidate(KEY));
   const submit = (e: FormEvent) => {
     e.preventDefault();
+    // A typed text that is no day: its field shows the message on leaving it (US-QS-32), nothing is saved.
+    if (!Object.values(paused).every(isHandedDate)) return;
     const next: ReminderSettings = { ...saved, paused };
     void write.run((t) => saveReminderSettings(props.api, t, next), "Pausen gespeichert.");
   };
@@ -102,7 +105,7 @@ function PausesForm(props: { api: string; token: Token; saved: ReminderSettings 
   return (
     <FormRoot
       id={PAUSES_FORM}
-      aria-label="Pausen je Anlass einstellen"
+      aria-label="Erinnerungen aussetzen"
       onSubmit={submit}
       className="flex min-w-0 flex-col gap-4"
     >
@@ -148,7 +151,7 @@ export function ReminderTimesForm(props: { api: string; token: Token }) {
   );
 }
 
-/** "Pausen je Anlass" (US-MON-08): a pause per occasion, in pages inside its layer. */
+/** "Erinnerungen aussetzen" (US-MON-08): a pause per occasion, in pages inside its layer. */
 export function ReminderPausesForm(props: { api: string; token: Token }) {
   return (
     <WithSettings {...props} loading={ui("pauses.loading")}>

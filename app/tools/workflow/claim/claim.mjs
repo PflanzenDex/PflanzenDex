@@ -9,7 +9,6 @@
 // ends its process group, so no gate run is left behind.
 // RESERVE_MIGRATION=1 also reserves the next migration number in the Handoff (issue #831).
 // Waive merged PRs only (follow-up work on a story): ALLOW_PRIOR_WORK=1. Everything else needs a human decision.
-import { fileURLToPath } from "node:url";
 import {
   fetchBranches,
   fetchIssue,
@@ -25,6 +24,7 @@ import { rollBack } from "./lib/writes/claim-undo.mjs";
 import { writeClaim } from "./lib/writes/claim-writes.mjs";
 import { preflight, PreflightFailed } from "./claim-preflight.mjs";
 import { PRIORITY_HINT } from "../actions/project-status/project-status-lib.mjs";
+import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 
 export { ClaimRefused };
 
@@ -113,7 +113,7 @@ export async function claim(
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const number = Number(process.argv[2]);
   if (!Number.isInteger(number) || number <= 0) {
     console.error("usage: make claim ISSUE=<issue number>");
