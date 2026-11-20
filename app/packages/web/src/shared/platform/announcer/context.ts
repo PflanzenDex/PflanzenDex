@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import type { Response } from "@/shared/data/api";
 import type { Write } from "./outbox";
 
 /** The announcer's channel: what a sender calls. Stable for the life of the provider. */
@@ -6,7 +7,7 @@ export type Channel = {
   /** Says `text` to screen readers; `shown` also puts a text on screen as a note, `null` takes the note away. */
   announce: (text: string, shown?: string | null) => void;
   /** Holds a write until the network is back and says so; loads the buffer on first use (DS-08). Settles on delivery. */
-  buffer: (write: Write) => Promise<void>;
+  buffer: (write: Write) => Promise<Response<unknown>>;
 };
 
 /** The channel plus the note on screen (the buffered-write state or a delivery result), `null` when there is none. */
