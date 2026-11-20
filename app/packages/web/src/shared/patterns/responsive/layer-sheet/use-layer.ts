@@ -2,6 +2,7 @@ import * as React from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import {
   PARAM,
+  dropLayerParts,
   isGuarded,
   setClosing,
   walkOverGuard,
@@ -41,10 +42,11 @@ type LayerControl = {
    */
   openLayer: (from?: HTMLElement | null, extra?: Record<string, string>) => void;
   /**
-   * Closes the layer: back when the app opened it, otherwise it only removes the address part. A layer that a reload or a
-   * link opened gets its list below it first (`useLayerOrdering`, issue 2145), so it is back too; the replace is the
-   * fallback. On the guard entry above the layer (typed input, US-QS-32) the guard becomes the list and the step back
-   * reaches it (`walkOverGuard`), so no guard entry is left ahead (issue 2158).
+   * Closes the layer: back when the app opened it, otherwise it only removes the address parts of the layer (`sheet` and
+   * `LAYER_PARTS`, issue 2147). A layer that a reload or a link opened gets its list below it first (`useLayerOrdering`,
+   * issue 2145), so it is back too; the replace is the fallback. On the guard entry above the layer (typed input,
+   * US-QS-32) the guard becomes the list and the step back reaches it (`walkOverGuard`), so no guard entry is left ahead
+   * (issue 2158).
    */
   closeLayer: () => void;
 };
@@ -128,7 +130,7 @@ export function useLayer(id: string): LayerControl {
         return;
       }
       const next = new URLSearchParams(params);
-      next.delete(PARAM);
+      dropLayerParts(next);
       setParams(next, { replace: true });
     },
   };

@@ -7,6 +7,7 @@ import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { EMPTY_DISTRIBUTION } from "../../../insights/distribution-test-helpers";
 import { PlantsScreen } from "../../plants-screen";
 import { pagesOf, summaryOf } from "../../../specimens/tests/plants-test-helpers";
@@ -518,5 +519,43 @@ describe("US-QS-32 the action row of a plant has all its buttons from the first 
     expect(water.getAttribute("aria-busy")).toBe("true");
     const treat = within(layer).getByRole("button", { name: /Behandeln/ });
     expect(water.nextElementSibling).toBe(treat);
+  });
+});
+
+/** The Pflege tab with a paged list of three treatments: its own page part `ofrom`, as the care part pages its list. */
+function PagedCare() {
+  return (
+    <Pager
+      items={["Erste Behandlung", "Zweite Behandlung", "Dritte Behandlung"]}
+      pageSize={1}
+      label="Behandlungen"
+      param="ofrom"
+      renderItem={(item) => <p>{item}</p>}
+    />
+  );
+}
+
+describe("US-QS-15 issue 2147 · a plant opened by a reload closes to its list without the layer's tab and page", () => {
+  it("US-QS-15 issue 2147 · a reload on Pflege at a later page, closed, leaves no tab or page in the list: the next plant opens on Überblick and its first page", async () => {
+    setViewportWidth(360);
+    show(
+      [card(), card({ id: "e2", name: "Basilikum", speciesName: "Ocimum basilicum" })],
+      { slots: { ...SLOTS, care: () => <PagedCare /> } },
+      "/?sheet=plant-e1&tab=pflege&ofrom=2",
+    );
+    const aloe = await screen.findByRole("dialog", { name: "Aloe" });
+    // The reload shows the stored tab and page: the setup of the report.
+    expect(within(aloe).getByRole("tab", { name: "Pflege", selected: true })).toBeTruthy();
+    expect(within(aloe).getByText("Seite 3 von 3")).toBeTruthy();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull());
+    // The list the layer closes to carries no part of the layer.
+    expect(screen.getByTestId("address").textContent).toBe("");
+    await userEvent.click(await screen.findByRole("button", { name: /^Basilikum(\s|$)/ }));
+    const basilikum = await screen.findByRole("dialog", { name: "Basilikum" });
+    expect(screen.getByTestId("address").textContent).toBe("?sheet=plant-e2");
+    expect(within(basilikum).getByRole("tab", { name: "Überblick", selected: true })).toBeTruthy();
+    await userEvent.click(within(basilikum).getByRole("tab", { name: "Pflege" }));
+    expect(within(basilikum).getByText("Seite 1 von 3")).toBeTruthy();
   });
 });
