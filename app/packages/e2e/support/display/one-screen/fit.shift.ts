@@ -6,8 +6,8 @@ import type { Shift } from "./judge.shift";
 import type { Screen } from "./register";
 
 // Layout shift of the one-screen project (US-QS-14, DS-52, issue 1697): a cold load per size (a new context, never a resize),
-// the API slow on purpose (a GET answers after SLOW_API_MS, a write aborts as in one-screen), and every layout shift the
-// page reports. Browser side only: the number is judged in judge.shift.ts.
+// the API slow on purpose (a GET answers after SLOW_API_MS, a write aborts as in one-screen), motion reduced, and every
+// layout shift the page reports. Browser side only: the number is judged in judge.shift.ts.
 
 export const SLOW_API_MS = 1500;
 // The quiet time of the settle: 1 s, the session-window gap of the layout-shift score (judge.shift.ts clsOf).
@@ -65,9 +65,13 @@ async function slowApi(context: BrowserContext, api: string, watch: Watch): Prom
     if (route.request().method() !== "GET") return route.abort();
     watch.pending++;
     watch.last = Date.now();
+    // The answer is fetched at once and handed over SLOW_API_MS after the request, so the speed of the API itself does not
+    // spread the answers of one wave over several frames (#1729).
+    const due = Date.now() + SLOW_API_MS;
     try {
-      await new Promise((done) => setTimeout(done, SLOW_API_MS));
-      await route.continue();
+      const response = await route.fetch();
+      await new Promise((done) => setTimeout(done, Math.max(0, due - Date.now())));
+      await route.fulfill({ response });
     } catch (error) {
       watch.errors.push(String(error));
     } finally {
@@ -128,6 +132,10 @@ export async function coldLoad(browser: Browser, target: ColdLoadTarget): Promis
   const context = await browser.newContext({
     locale: "de-DE",
     colorScheme: "light",
+    // Reduced motion (#1729): a sheet ends its slide at once. A layout shift during the slide counts only the part of the
+    // sheet inside the window, so the value depended on how far the slide had run on that runner (0.17 and 0.008 for one
+    // load). Without the slide the whole move counts: the stricter measure, the same on every runner.
+    reducedMotion: "reduce",
     viewport: { width: size.width, height: size.height },
     ...(storageState ? { storageState } : {}),
   });
