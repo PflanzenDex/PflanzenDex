@@ -8,11 +8,11 @@ import { growthLines } from "../../measure/measurement-header/growth-summary/gro
 type Token = () => Promise<string | undefined>;
 
 /** Wachstum and trend against the own history only, never a species average (P-08, US-WAC-03); etiolated growth is no success. */
-export function GrowthLines({ growth }: { growth: GrowthTrend }) {
+function GrowthLines({ growth }: { growth: GrowthTrend }) {
   const lines = growthLines(growth);
   return (
     // One line (US-QS-23); it wraps only when the trend sentence needs more room.
-    <p className="flex flex-wrap gap-x-2 text-base text-foreground">
+    <p className="flex flex-wrap gap-x-2 text-sm text-muted-foreground">
       <span>Wachstum: {lines.rate}</span>
       {/* The dot sticks to the trend (US-QS-32): a line never ends with " ·" and the trend starts the next line. */}
       <span>

@@ -85,15 +85,15 @@ export function PlantOverview(props: {
       {/* The last measurement sits beside the photo; when its longest word no longer fits there, it moves below the photo. */}
       <div className="flex flex-wrap gap-3">
         <Photo card={card} access={props.access} compact />
-        <div className="grid min-w-min flex-1 content-start gap-1 text-base">
+        <div className="grid min-w-min flex-1 content-start gap-1 text-sm">
           <Measurement card={card} />
         </div>
       </div>
       {props.growth ?? <Quiet>{t("overview.trend", { value: UNKNOWN })}</Quiet>}
-      <div className="grid gap-1.5 text-base">
+      <div className="grid gap-1.5 text-sm">
         <Treatment card={card} />
       </div>
-      <div className="flex flex-wrap items-baseline gap-x-3 text-base">
+      <div className="flex flex-wrap items-baseline gap-x-3 text-sm">
         <p>
           {t("overview.state")} <strong data-attention={state.attention}>{state.text}</strong>
         </p>
