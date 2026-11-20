@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { captureExpectedErrors } from "@/shared/testing/test-setup/expected-errors";
 import { ResponsiveModal } from "../../responsive-modal";
 
 // The chunk request fails while `broken` is set (offline, or a deployment replaced the file), then works.
@@ -20,10 +21,14 @@ vi.mock("@/shared/platform/routing/lazy-page/lazy-page", async (importOriginal) 
   };
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe("Dialog chunk (NFR-12, DS-08)", () => {
   it("NFR-12 · DS-08 a failed dialog chunk shows an error with 'Erneut versuchen' that loads it again, never nothing", async () => {
+    const errors = captureExpectedErrors("Failed to fetch dynamically imported module");
     setViewportWidth(1024);
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
@@ -34,6 +39,7 @@ describe("Dialog chunk (NFR-12, DS-08)", () => {
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Das Fenster konnte nicht geladen werden.");
     expect(alert.textContent).not.toContain("Failed to fetch");
+    errors.expectBoundaryLogged();
     chunk.broken = false;
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("dialog", { name: "Pflanze bearbeiten" })).toBeTruthy();
