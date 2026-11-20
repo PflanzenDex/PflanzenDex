@@ -4,7 +4,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { migrationsAt } from "./git-view.mjs";
 import { findProblems, MIGRATIONS_DIR, numberOf } from "./migration-lib.mjs";
 
@@ -45,4 +45,5 @@ function main() {
   return 0;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) process.exit(main());
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
+  process.exit(main());

@@ -3,7 +3,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { collect } from "./git-view.mjs";
 import { MIGRATIONS_DIR, nextNumber, numberOf, pad } from "./migration-lib.mjs";
 
@@ -39,5 +39,5 @@ function main(name) {
   return 0;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href)
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
   process.exit(main(process.argv[2]));

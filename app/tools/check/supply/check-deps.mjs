@@ -4,7 +4,7 @@
 // Usage: node check-deps.mjs          exit 1 and name the reason when node_modules is missing or stale
 //        node check-deps.mjs --stamp  record the current lock file (called by `make setup` after npm ci)
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -36,7 +36,7 @@ export function stamp(appDir = APP_DIR) {
     writeFileSync(path.join(appDir, STAMP), `${lockHash(appDir)}\n`);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv[2] === "--stamp") stamp();
   else {
     const findings = depsFindings();

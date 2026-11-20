@@ -3,6 +3,7 @@
 // title or body. Editing or deleting an existing entry does not count. Inputs come from environment variables, never from
 // the command line (PR titles and bodies are untrusted input).
 import { execFileSync } from "node:child_process";
+import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
   FRAGMENT_DIR,
@@ -98,4 +99,5 @@ function main(env) {
   return result.ok ? 0 : 1;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) process.exit(main(process.env));
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
+  process.exit(main(process.env));

@@ -170,4 +170,5 @@ function main() {
 }
 
 // Runs only as the script: a test that imports findDrift or readRepo must not run the check.
-if (process.argv[1] === fileURLToPath(import.meta.url)) process.exitCode = main();
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
+  process.exitCode = main();

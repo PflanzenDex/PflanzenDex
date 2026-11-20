@@ -1,5 +1,12 @@
 /* eslint-disable security/detect-non-literal-fs-filename -- the shard folders are the artifacts of this CI run; the paths come from the arguments and the register */
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SCREENS } from "../../../support/display/one-screen/register";
@@ -156,5 +163,5 @@ export function mergeGate(gate: string, shardsDir: string): number {
   return 0;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url))
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
   process.exitCode = mergeGate(process.argv[2] ?? "", process.argv[3] ?? "");

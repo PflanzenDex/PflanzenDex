@@ -72,7 +72,7 @@ export function checkAgents({ agents, exists }) {
   });
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const root = fileURLToPath(new URL("../../../../..", import.meta.url));
   const dir = (p) => (fs.existsSync(path.join(root, p)) ? fs.readdirSync(path.join(root, p)) : []);
   const skills = Object.fromEntries(

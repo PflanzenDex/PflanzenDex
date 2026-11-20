@@ -8,7 +8,7 @@
 //   5. the PR grows no baseline (app/config/gates/baselines/, US-QG-07): the merge base and the head are compared; a
 //      baseline that only shrinks merges, and a version that cannot be read refuses the PR
 import { execFileSync, spawnSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, realpathSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { baselineChanges, baselineProblems } from "../../../.claude/hooks/baseline-growth.mjs";
@@ -167,5 +167,5 @@ async function main(number) {
   return 0;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url))
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
   process.exitCode = await main(process.argv[2]);

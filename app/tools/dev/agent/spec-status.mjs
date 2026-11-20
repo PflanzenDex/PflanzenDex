@@ -134,7 +134,7 @@ export function replaceBlock(readme, table) {
   return `${readme.slice(0, s)}${START}\n\n${table}\n\n${readme.slice(e)}`;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const mode = process.argv[2] ?? "--write";
   const dir = fileURLToPath(new URL("../../../../docs/specs/product/", import.meta.url));
   const texts = fs

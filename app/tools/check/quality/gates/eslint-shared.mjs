@@ -136,5 +136,9 @@ export function eslintCacheFile(kind, appDir = APP_DIR, rules) {
 }
 
 // `node eslint-shared.mjs --cache-file <kind>` prints the cache file that the lint script names (issue 1608).
-if (process.argv[1] === fileURLToPath(import.meta.url) && process.argv[2] === "--cache-file")
+if (
+  process.argv[1] &&
+  fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url) &&
+  process.argv[2] === "--cache-file"
+)
   process.stdout.write(`${eslintCacheFile(process.argv[3])}\n`);

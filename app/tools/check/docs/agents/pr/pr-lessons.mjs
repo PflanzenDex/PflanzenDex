@@ -4,7 +4,8 @@
 // `make pr` runs this check before anything is pushed (tools/repo/pr-ready.sh). The section is written with the skill
 // recap-and-learnings. HTML comments (the placeholder of a fresh draft) count as nothing.
 //   PR_BODY="<body>" node app/tools/check/docs/agents/pr/pr-lessons.mjs   exit 1 with the problems, exit 0 when the section passes
-import { pathToFileURL } from "node:url";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const LESSON_FORMAT = "- <lesson> → gate <name> | skill <name> | PF-<nnn> | none (<why>)";
 const NONE = /^(?:- )?none$/i;
@@ -53,4 +54,5 @@ export function main(env = process.env) {
   return 1;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) process.exit(main());
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
+  process.exit(main());

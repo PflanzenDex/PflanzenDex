@@ -151,7 +151,7 @@ export function run(root) {
   return { stories, errors, hints: [...trace.hints, ...byModule.hints], refs, byModule };
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { stories, errors, hints, refs, byModule } = run(
     fileURLToPath(new URL("../../../../..", import.meta.url)),
   );

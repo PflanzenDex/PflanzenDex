@@ -4,7 +4,7 @@
 // main checkout) the two commands run exactly as before: no variables, no port flags.
 // Usage: npm run dev   (in app/, as `make dev` does)
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import { dirname, join, resolve } from "node:path";
@@ -149,7 +149,7 @@ async function main() {
   return runConcurrently(plan.args, plan.variables);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main()
     .then((code) => process.exit(code))
     .catch((e) => {

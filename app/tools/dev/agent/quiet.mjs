@@ -1,9 +1,17 @@
 #!/usr/bin/env node
 // US-DEV-12: run a command with shortened output. The full output goes to a log file.
 import { spawnSync } from "node:child_process";
-import { closeSync, fstatSync, mkdirSync, openSync, readSync, writeSync } from "node:fs";
+import {
+  closeSync,
+  fstatSync,
+  mkdirSync,
+  openSync,
+  readSync,
+  realpathSync,
+  writeSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 const DEFAULT_TAIL = 15; // assumption, decided by the PO
 const MAX_FAILURE_LINES = 20; // assumption, decided by the PO
@@ -54,7 +62,7 @@ export function runQuiet({ tail, log, command }) {
   return { code, report: parts.join("\n") };
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const res = runQuiet(parseArgs(process.argv.slice(2)));
     console.log(res.report);

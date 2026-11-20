@@ -4,7 +4,7 @@
 // origin added with web-port.mjs and break the sign-in of every other session).
 import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { devConfigDir, envValue, inMainCheckout } from "./dev-env.mjs";
@@ -74,4 +74,4 @@ function main() {
   execFileSync("docker", compose, { stdio: "inherit" });
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main();
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) main();

@@ -2,6 +2,7 @@
 // Lists every gated and checked entry whose Evidence has no Caught line dated within the last three months.
 // Report only: it prints the list and exits 0, so it never fails CI. The owner keeps each listed entry with a reason
 // in its Evidence or lowers its maturity in a PR of its own. Run it with `make principles-review`.
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -63,7 +64,7 @@ export function reviewToMarkdown({ cutoff, now, total, rows }) {
   return [...head, ...table].join("\n");
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
   console.log(reviewToMarkdown(reviewRows(readRegister(root), today())));
 }

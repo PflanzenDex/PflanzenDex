@@ -184,7 +184,7 @@ export function checkProject(appDir, cfg = NO_MODULES) {
   return out;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const appDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
   const violations = checkProject(appDir, MODULE_CONFIG);
   if (violations.length) {

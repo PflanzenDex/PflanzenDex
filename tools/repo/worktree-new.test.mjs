@@ -13,6 +13,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -57,7 +58,8 @@ function installed(app) {
 
 /** A main checkout with a bare origin that has `dev`, the script files and an installed node_modules (unless `withDeps` is false). */
 function fixture({ withDeps = true } = {}) {
-  const root = mkdtempSync(path.join(tmpdir(), "worktree-new-"));
+  // The real folder: git and the script name the checkout by its real path, and macOS links /var to /private/var (#2290).
+  const root = mkdtempSync(path.join(realpathSync(tmpdir()), "worktree-new-"));
   made.push(root);
   const origin = path.join(root, "origin.git");
   const main = path.join(root, "main");

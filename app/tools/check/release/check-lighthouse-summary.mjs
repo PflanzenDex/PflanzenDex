@@ -171,7 +171,7 @@ export function readReports(dir) {
   return files.sort().map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   const check = args.includes("--check");
   try {

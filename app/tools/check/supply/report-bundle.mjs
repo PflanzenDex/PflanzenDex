@@ -196,5 +196,5 @@ function main(argv) {
   process.stdout.write(renderMarkdown(buildReport(dist))); // always exit 0: report only
   return 0;
 }
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) process.exit(main(process.argv.slice(2)));
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
+  process.exit(main(process.argv.slice(2)));

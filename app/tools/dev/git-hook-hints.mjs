@@ -1,6 +1,7 @@
 // Hints after `post-merge`/`post-checkout` (US-DEV-02): names the follow-up steps but never runs them.
 // Usage: node git-hook-hints.mjs <old-commit> <new-commit>
 import { execFileSync } from "node:child_process";
+import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const RULES = [
@@ -19,7 +20,7 @@ export function hintsFor(changedFiles) {
   );
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [from, to] = process.argv.slice(2);
   if (!from || !to || from === to) process.exit(0);
   try {

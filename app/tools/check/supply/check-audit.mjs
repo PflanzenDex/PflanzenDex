@@ -2,7 +2,7 @@
 // `audit-allowlist.json`, or whose allowlist entry has expired. Moderate and low advisories are ignored
 // (same as `npm audit --audit-level=high`). Allowlisted advisories that no longer appear only produce a hint.
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const BLOCKING = new Set(["high", "critical"]);
@@ -76,4 +76,5 @@ function main() {
   return result.ok ? 0 : 1;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) process.exit(main());
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
+  process.exit(main());

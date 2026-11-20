@@ -4,6 +4,7 @@
 // B-nn) live in other documents or are labels and are deliberately not checked (no false positives).
 // A definition is a heading `### US-…` or a table row `| FR-… |` at the start of a line (as in check-specs).
 // IDs of the dropped epic MIG stay reserved and are accepted without a definition.
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readSpecFiles } from "./check-specs.mjs";
@@ -29,7 +30,7 @@ export function findDanglingRefs(files) {
   return problems;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const files = readSpecFiles();
   const problems = findDanglingRefs(files);
   problems.forEach((p) => console.error(`check-spec-refs: ${p}`));

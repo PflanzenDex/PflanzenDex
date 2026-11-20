@@ -9,9 +9,9 @@
 // created when it is missing. GitHub lists at most 3000 files of a pull request: at that cap the label is set, because a gate
 // file may be cut off from the list.
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { isGateFile } from "../../../../../../.claude/hooks/rules.mjs";
 
 const TAXONOMY = path.join(
@@ -139,4 +139,5 @@ function main(env) {
   }
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) process.exit(main(process.env));
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
+  process.exit(main(process.env));

@@ -177,4 +177,4 @@ function main() {
   console.log(`Design system check passed (${entries.length} known violations in the baseline).`);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main();
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) main();

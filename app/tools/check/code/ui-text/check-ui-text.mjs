@@ -52,7 +52,7 @@ async function currentCounts() {
   return counts;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const counts = await currentCounts();
   if (process.argv.includes("--write")) {
     fs.writeFileSync(BASELINE_FILE, `${JSON.stringify(toBaseline(counts), null, 2)}\n`);

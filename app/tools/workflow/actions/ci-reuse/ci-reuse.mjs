@@ -7,7 +7,7 @@
 // Usage (ci.yml, job `reuse`): node ci-reuse.mjs <job name>... with GH_TOKEN, GITHUB_REPOSITORY, HEAD_SHA, PR_NUMBER,
 // GITHUB_RUN_ID and GITHUB_OUTPUT set. Writes `<job name>=success|none` per job, and `superseded=true` when superseded.
 // The check-run evidence that `make ci-wait` judges (evidenceOf, scanRowsOf, US-DEV-13) is here too, next to runIdOf.
-import { appendFileSync } from "node:fs";
+import { appendFileSync, realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const POLL_SECONDS = 30;
@@ -181,4 +181,5 @@ async function main(names) {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) await main(process.argv.slice(2));
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
+  await main(process.argv.slice(2));

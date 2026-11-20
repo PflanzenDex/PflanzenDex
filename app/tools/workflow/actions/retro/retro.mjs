@@ -3,6 +3,7 @@
 // The process share (E-30) comes with every run. The implementer rework is computed only by the scheduled and manual runs
 // (RETRO_EVENT is `schedule` or `workflow_dispatch`, or the flag --rework); other runs keep it from the report body.
 // Usage: node retro.mjs [--write] [--rework]
+import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { json, realClient } from "../../claim/lib/claim-client.mjs";
 import {
@@ -172,5 +173,5 @@ export async function main(
   return 0;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url))
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
   process.exit(await main(process.argv.slice(2)));

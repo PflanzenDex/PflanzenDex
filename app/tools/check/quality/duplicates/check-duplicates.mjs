@@ -43,7 +43,7 @@ export function describe(groups) {
 const npx = (args, stdio) =>
   spawnSync("npx", ["--no-install", ...args], { encoding: "utf8", stdio });
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const limits = JSON.parse(
     fs.readFileSync(
       new URL("../../../../config/gates/quality-limits.json", import.meta.url),

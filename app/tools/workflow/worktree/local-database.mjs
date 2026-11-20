@@ -3,6 +3,7 @@
 // production, a worktree database URL that is not on this machine, and a DATABASE_URL that is set to anything but that
 // database (a staging URL left in the shell cannot reach a reset, a seed or a build).
 // Usage: node tools/workflow/worktree/local-database.mjs <worktree database URL>   (the Makefile passes $(PFLANZENDEX_TEST_DATABASE_URL))
+import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
 export const LOCAL_ENVIRONMENTS = ["local", "test"];
@@ -44,7 +45,7 @@ export function localDatabaseRefusal(env, worktreeUrl) {
   return undefined;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const reason = localDatabaseRefusal(process.env, process.argv[2] ?? "");
   if (reason) {
     console.error(`local-database: refused: ${reason}.`);

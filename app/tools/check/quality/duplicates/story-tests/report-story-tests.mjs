@@ -82,5 +82,5 @@ export function run(root) {
   return render(stories, areaRows(AREAS, coreFiles));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url))
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
   console.log(run(fileURLToPath(new URL("../../../../../..", import.meta.url))));

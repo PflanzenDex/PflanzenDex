@@ -48,7 +48,7 @@ export function markersToMarkdown(counts) {
   ].join("\n");
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { ESLint } = await import("eslint");
   const eslint = new ESLint({
     overrideConfig: [{ rules: { "sonarjs/cognitive-complexity": ["warn", 0] } }],

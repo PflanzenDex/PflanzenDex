@@ -421,6 +421,30 @@ ci-ui: ## Part 3
     assert.equal(result.status, 0, result.stdout);
     assert.match(result.stdout, /checked against .*Makefile/);
   });
+
+  test("US-QG-02: the check runs when it is started through a symlinked path, and does not pass silently", (t) => {
+    // The tree is built from the real temporary folder (macOS: /var is a link to /private/var). The script is started through a
+    // link to that tree: node resolves the link in import.meta.url but keeps the path as typed in process.argv[1], so the
+    // entry-point guard resolves argv[1] to its real path (US-QG-02).
+    const real = fs.realpathSync(os.tmpdir());
+    const tree = fs.mkdtempSync(path.join(real, "ci-drift-link-"));
+    const link = `${tree}-link`;
+    t.after(() => {
+      fs.rmSync(link, { force: true });
+      fs.rmSync(tree, { recursive: true, force: true });
+    });
+    const folder = path.join(tree, "app", "tools", "check", "release");
+    fs.mkdirSync(folder, { recursive: true });
+    fs.copyFileSync(SCRIPT, path.join(folder, "check-ci-drift.mjs"));
+    fs.symlinkSync(tree, link, "dir");
+    const result = spawnSync(
+      process.execPath,
+      [path.join(link, "app", "tools", "check", "release", "check-ci-drift.mjs")],
+      { cwd: real, encoding: "utf8" },
+    );
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, /^check-ci-drift: error: no Makefile at /);
+  });
 });
 
 describe("FR-QG-01: the Makefile", () => {

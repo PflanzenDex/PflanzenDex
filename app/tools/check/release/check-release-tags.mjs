@@ -69,7 +69,7 @@ function collect(root) {
   return { tags, releases, onMain, packageJsons };
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const root = fileURLToPath(new URL("../../../..", import.meta.url));
   // semantic-release pushes the tag shortly before the release exists; on a tag push the workflow allows a short wait.
   const attempts = Number(process.env.RELEASE_TAG_CHECK_ATTEMPTS ?? 1);

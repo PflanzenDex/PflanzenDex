@@ -3,6 +3,7 @@
 // decides when the PR is final. A PR is final when nothing on its head is unfinished for SETTLE_MS, because a run can start
 // shortly after another one finishes (ci.yml cancels and queues runs of one concurrency group).
 // Usage: node ci-wait.mjs <pr number>; env CI_WAIT_TIMEOUT_MINUTES (default 60) bounds the wait.
+import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { json, realClient, repoName, restList } from "../../claim/lib/claim-client.mjs";
 import { report } from "./ci-report.mjs";
@@ -182,7 +183,7 @@ async function main(number) {
   return exitCodeOf(a);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   process.exitCode = await main(process.argv[2]).catch((err) => {
     console.error(`ci-wait: ${err.message}`);
     return 1;

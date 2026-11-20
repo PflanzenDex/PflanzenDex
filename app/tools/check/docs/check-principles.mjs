@@ -191,7 +191,7 @@ export function run(root) {
   });
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const problems = run(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../.."));
   for (const p of problems) console.error(p);
   if (problems.length) process.exit(1);

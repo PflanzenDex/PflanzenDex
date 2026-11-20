@@ -6,7 +6,7 @@
 //   quarantined <job> <result>     results job: exit 0 when the job is quarantined and its result is red, else 1
 //   add                            make quarantine: adds the entry, raises maxEntries by one, prints the next steps
 // Exit 0 ok, 1 a failed or not quarantined job, 2 usage or an input or list that does not read or fit (fail closed).
-import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { jobsDefinedIn } from "./ci-verdict.mjs";
@@ -117,6 +117,6 @@ export function main(argv, env, root, now = new Date()) {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   process.exitCode = main(process.argv.slice(2), process.env, process.cwd());
 }

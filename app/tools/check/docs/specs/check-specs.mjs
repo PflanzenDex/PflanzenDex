@@ -39,7 +39,7 @@ export function readSpecFiles() {
   );
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const files = readSpecFiles();
   const problems = findProblems(files);
   problems.forEach((p) => console.error(`check-specs: ${p}`));

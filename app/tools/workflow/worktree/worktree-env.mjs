@@ -182,7 +182,7 @@ async function depsMain(args) {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv[2] === "--deps") {
     await depsMain(process.argv.slice(3));
   } else {
