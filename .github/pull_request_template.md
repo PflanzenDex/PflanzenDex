@@ -3,7 +3,9 @@ The title becomes the commit message after the squash: Conventional Commits with
 e.g. `feat(pha): derive care phase from measurement (US-PHA-02)`. One PR, one task, one branch (E-13, US-DEV-08).
 -->
 
-Closes #
+Refs #
+
+<!-- `Refs #n` for a partial step; `Closes #n` when this PR finishes the issue (only Closes moves the board to On dev and closes the issue on release). -->
 
 ## What and why
 

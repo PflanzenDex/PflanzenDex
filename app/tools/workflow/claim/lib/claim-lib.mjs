@@ -1,6 +1,8 @@
 // Pure rules of the claim check (US-DEV-08): who works on which story, how a branch is named,
 // which findings forbid a second claim. No I/O here; the clients live in claim-client.mjs.
 import { EPIC_SCOPES } from "../../../../config/project/commitlint.config.js";
+// The PR keyword rules (Closes #n, Refs #n) live with the project status; the claim reuses them, one source (US-DEV-08).
+import { closedIssues, referredIssues } from "../../actions/project-status/project-status-lib.mjs";
 
 // Assumption (starting value, not measured): a claim without a commit for 48 hours counts as stale.
 export const DEFAULT_STALE_HOURS = 48;
@@ -12,7 +14,6 @@ export const REPORT_LABEL = "report";
 export const TRIAGE_LABEL = "needs-triage";
 
 const ID_PATTERN = /\b(US-[A-Z]{2,4}-\d{2}|FR-[A-Z]{2,4}-\d{2}|TE-\d{2})\b/i;
-const CLOSING = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+#(\d+)\b/gi;
 const UMLAUTS = { ä: "ae", ö: "oe", ü: "ue", ß: "ss" };
 
 /** Story ID such as "US-DEV-08" from a title or branch text, or null. */
@@ -21,14 +22,12 @@ export function storyIdOf(text) {
   return m ? m[1].toUpperCase() : null;
 }
 
-/** Search key for branch and PR matching: the story ID without US-/FR- and in lower case (wac-01, as in
- * feat/wac-01-messung), or issue-<n> without an ID. FR-WAC-01 and US-WAC-01 share a key on purpose. */
+/** Claim key: the issue number (issue-<n>). A story ID is shared by many issues, so it never keys a claim (US-DEV-08). */
 export function claimKey(issue) {
-  const id = storyIdOf(issue.title);
-  return id ? id.toLowerCase().replace(/^(us|fr)-/, "") : `issue-${issue.number}`;
+  return `issue-${issue.number}`;
 }
 
-/** Claim key of a branch name such as feat/wac-01-messung or chore/issue-243-x, or null. */
+/** Claim key of a branch name such as chore/issue-243-x (or a story key of an old branch, feat/wac-01-x), or null. */
 export function keyOfBranch(branch) {
   const m = /(?:^|\/)(?:us-|fr-)?([a-z]{2,4}-\d{2}|issue-\d+)(?=-|$)/i.exec(branch ?? "");
   return m ? m[1].toLowerCase() : null;
@@ -69,7 +68,7 @@ function branchType(issue) {
   return labels.includes("bug") ? "fix" : labels.includes("enabler") ? "chore" : "feat";
 }
 
-/** Branch naming rule: <type>/<story-id>-<slug>. */
+/** Branch naming rule: <type>/issue-<n>-<slug>, the issue number is the key (US-DEV-08). */
 export function branchName(issue) {
   return `${branchType(issue)}/${claimKey(issue)}-${slugOf(issue.title) || "work"}`;
 }
@@ -97,16 +96,21 @@ export function scopeOf(issue) {
   return EPIC_SCOPES.includes(epic) ? epic : "dev";
 }
 
-/**
- * Whether a PR belongs to the issue. A closing keyword ("Closes #n") in the body is the link for every PR. A story
- * key in title or branch counts for open PRs only (live work that skipped the keyword): a merged PR that merely
- * mentions the key (a part of a bigger story) must not make the story look taken (#393).
- */
+const closesIssue = (pr, issue) => closedIssues(pr).includes(issue.number);
+const refersToIssue = (pr, issue) => referredIssues(pr).includes(issue.number);
+
+/** Whether a PR links to the issue (US-DEV-08): its body closes or refers to it, or its branch carries its issue number. Titles never link. */
 export function prReferences(pr, issue) {
-  const closes = [...(pr.body ?? "").matchAll(CLOSING)].some((m) => Number(m[1]) === issue.number);
-  if (closes) return true;
-  const key = claimKey(issue);
-  return prState(pr) === "open" && (hasKey(pr.title, key) || hasKey(pr.headRefName, key));
+  return (
+    closesIssue(pr, issue) || refersToIssue(pr, issue) || hasKey(pr.headRefName, claimKey(issue))
+  );
+}
+
+/** Notes, never refusals (US-DEV-08): merged PRs whose body only refers to the issue with Refs #n; a closing PR is a finding. */
+export function priorNotes({ issue, prs }) {
+  return prs
+    .filter((pr) => prState(pr) === "merged" && !closesIssue(pr, issue) && refersToIssue(pr, issue))
+    .map((pr) => `PR #${pr.number} (merged) refers to it (Refs #${issue.number}): ${pr.title}`);
 }
 
 /** What `make claim` prints for a refusal `e` (its findings and message): the triage hint, or the owner hint. */
@@ -122,7 +126,7 @@ export function prState(pr) {
 
 /**
  * All reasons why `issue` must not be claimed (empty list: free). Each finding names where to look.
- * allowPrior waives merged PRs only (a story may need a follow-up PR); never open work.
+ * allowPrior waives merged PRs that close the issue (a story may need a follow-up PR); never open work.
  */
 export function findConflicts({ issue, prs, branches, allowPrior = false }) {
   const key = claimKey(issue);
@@ -149,7 +153,9 @@ export function findConflicts({ issue, prs, branches, allowPrior = false }) {
   }
   for (const pr of prs.filter((p) => prReferences(p, issue))) {
     const state = prState(pr);
-    if (state === "closed" || (state === "merged" && allowPrior)) continue;
+    // A merged PR counts only when it closes the issue: a Refs-only one is a note (priorNotes), a branch-only one is retired.
+    if (state === "closed" || (state === "merged" && (allowPrior || !closesIssue(pr, issue))))
+      continue;
     found.push({ kind: "pr", text: `PR #${pr.number} (${state}) references it: ${pr.title}` });
   }
   for (const b of branches.filter((name) => hasKey(name, key))) {
@@ -175,7 +181,7 @@ export class ClaimRefused extends Error {
   }
 }
 
-/** The claim rules over the data read for one issue (no I/O). Throws ClaimRefused with every finding. */
+/** The claim rules over the data read for one issue (no I/O). Throws ClaimRefused with every finding, else returns { notes }. */
 export function checkFree({ issue, prs, branches, number, login, allowPrior }) {
   if (issue.state !== "OPEN")
     throw new ClaimRefused([{ text: `issue #${number} is ${issue.state}` }]);
@@ -186,4 +192,5 @@ export function checkFree({ issue, prs, branches, number, login, allowPrior }) {
   const branch = branchName(issue);
   if (branches.includes(branch)) findings.push({ text: `branch origin/${branch} exists` });
   if (findings.length) throw new ClaimRefused(findings);
+  return { notes: priorNotes({ issue, prs }) };
 }

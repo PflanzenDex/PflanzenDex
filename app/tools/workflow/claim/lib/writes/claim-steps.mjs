@@ -76,10 +76,13 @@ export async function openDraftPr(client, issue, branch, body) {
  * Draft PR text; the "## Handoff" section is what the next person (or agent) reads first. Its lines are the ones the next
  * session needs (US-DEV-05, issue 1747): state, open decisions, owner decisions and the worktree. The "## Lessons" placeholder
  * is a comment only, so `make pr` refuses the draft until the section is filled in (app/tools/check/docs/agents/pr/pr-lessons.mjs).
+ * The first line is `Refs #n` (US-DEV-08): a claim is a partial step until its PR finishes the story. Only `Closes #n` moves the
+ * board to On dev on merge and closes the issue on release, so the comment under the line tells the author to switch it then.
  */
 export function handoffBody(issue, branch, login, migrationNumber) {
   return [
-    `Closes #${issue.number}`,
+    `Refs #${issue.number}`,
+    "<!-- When this PR finishes the issue, replace the line above with `Closes #<n>`: only Closes moves the board to On dev and closes the issue on release. -->",
     "",
     "## What and why",
     "",
