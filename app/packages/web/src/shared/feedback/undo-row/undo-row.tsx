@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./undo-row.de.json";
@@ -21,9 +21,10 @@ export function UndoRow(props: {
   busy?: boolean | undefined;
 }) {
   const undo = useRef<HTMLButtonElement>(null);
-  // The focus is moved once, when the row mounts as the undo row (the control it came from is gone by then).
+  // The focus is moved once, when the row mounts as the undo row (the control it came from is gone by then). A layout
+  // effect, so the focus is on the undo in the commit that removes that control, not a frame later.
   const [mountedWithUndo] = useState(() => props.onUndo !== undefined);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const active = document.activeElement;
     if (mountedWithUndo && (active === null || active === document.body)) undo.current?.focus();
   }, [mountedWithUndo]);
