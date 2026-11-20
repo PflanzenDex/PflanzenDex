@@ -10,5 +10,11 @@
   "pickedCount": "{count} eintragen",
   "pager": "Zu gießen",
   "done": "Als gegossen eingetragen.",
-  "days": "{count} Tage"
+  "days": "{count} Tage",
+  "wateredResult": "Gegossen",
+  "restored": "Rückgängig gemacht.",
+  "bulkResult": "{count} Pflanzen gegossen",
+  "bulkSubject": "{count} Pflanzen",
+  "bulkSaid": "{count} Pflanzen gegossen.",
+  "nothingToUndo": "Nichts mehr rückgängig zu machen – der Eintrag ist schon weg."
 }

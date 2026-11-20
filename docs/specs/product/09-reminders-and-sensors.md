@@ -66,6 +66,8 @@ Assumptions, decided by the PO (revisable):
 - **"Watered":** `POST /watering` (`monitoring.water`, `Idempotency-Key`) takes one or several specimen IDs; all or nothing (an unknown or foreign specimen is `specimen.not_found`, an archived one `specimen.archived`); a repeat or a double tap writes once. In the app it is the section "Gießen" of "Heute" (`GET /watering/due`, derived on every request): a button per plant and marking several for one step. The button in the message waits for the real push channel.
 - The occasion is `watering:<specimen>` and part of the daily reminder; the switch "Gießen" of the profile (US-ACC-02) and a pause (US-MON-08) apply. The central Today list ("Jetzt dran") does not show it yet, as for the overdue measurement; the section "Gießen" below it does.
 
+State of implementation (issue 1878, US-QS-32): "Gegossen" and "Gießen" can be undone for 8 s in place. `monitoring.unwater` (`POST /watering/unwater`, `Idempotency-Key`) removes the keeper's manual entries of today (local date, NFR-08) of the given own specimens; entries of other days and sensor readings stay, and a day without an entry is no error. The undo is offered only when the write made the entry: a repeat on a day that already has one has no undo, so an earlier entry is never removed.
+
 ### US-MON-06 · Capture soil moisture by sensor · ⬜ new (later)
 
 Acceptance criteria:
@@ -98,7 +100,7 @@ Assumptions, decided by the PO (revisable): saved as one settings row per accoun
 
 As a **plant keeper** I want to log with one tap that I fertilized a plant, and see when I last did, so that I do not fertilize it twice or forget it.
 
-Owner decisions: issue 1605 (2026-11-06 and 2026-11-07). Fertilizing is a log of its own, like watering (US-MON-05), not a treatment: treatments are planned dates that get ticked off (US-BEH-01). The entry is "fertilized today" with no planned date, no interval and no reminder. The first version offers the action only on the page a scanned pot label opens (US-BES-17). There is no undo, as for watering.
+Owner decisions: issue 1605 (2026-11-06 and 2026-11-07). Fertilizing is a log of its own, like watering (US-MON-05), not a treatment: treatments are planned dates that get ticked off (US-BEH-01). The entry is "fertilized today" with no planned date, no interval and no reminder. The first version offers the action only on the page a scanned pot label opens (US-BES-17). There is no undo for fertilizing yet; the undo of US-QS-32 covers watering only.
 
 Acceptance criteria:
 

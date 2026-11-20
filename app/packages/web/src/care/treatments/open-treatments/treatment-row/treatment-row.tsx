@@ -1,5 +1,6 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
+import { UndoRow } from "@/shared/feedback/undo-row/undo-row";
 import { keepTogether, overdueChip } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { ATTENTION_CLASSES } from "../../../shared/notices";
@@ -11,12 +12,22 @@ export const PAGE_SIZE = 2;
 /** The status chip of an overdue or due-today row: the status text says it first, the tint only underlines it (never by colour alone). */
 const CHIP = new Set(["overdue", "today"]);
 
+/** A row that stays in its place for the undo window (SG-FEED-03, US-QS-32): its result and the undo replace "Abhaken". */
+export interface HeldRowState {
+  readonly result: string;
+  /** What the undo is about, for the name of its button. */
+  readonly subject: string;
+  readonly busy: boolean;
+  readonly onUndo: () => void;
+}
+
 export function Row(props: {
   row: TreatmentListRow;
   running: boolean;
   onDone: () => void;
   /** Shown as a section of another page: the specimen name is one heading level lower (US-QS-14). */
   host: boolean;
+  held?: HeldRowState | undefined;
 }) {
   const { row } = props;
   const Name = props.host ? "h4" : "h3";
@@ -39,16 +50,27 @@ export function Row(props: {
           <p className="text-label tabular-nums text-muted-foreground">{dateText(row.dueAt)}</p>
         </div>
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        className="shrink-0"
-        disabled={props.running}
-        aria-label={`${row.reason} bei ${row.specimenName} als erledigt abhaken`}
-        onClick={props.onDone}
-      >
-        Abhaken
-      </Button>
+      {props.held ? (
+        <UndoRow
+          result={props.held.result}
+          subject={props.held.subject}
+          busy={props.held.busy}
+          onUndo={props.held.onUndo}
+        />
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          className="shrink-0"
+          aria-disabled={props.running || undefined}
+          aria-label={`${row.reason} bei ${row.specimenName} als erledigt abhaken`}
+          onClick={() => {
+            if (!props.running) props.onDone();
+          }}
+        >
+          Abhaken
+        </Button>
+      )}
     </div>
   );
 }

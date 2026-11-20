@@ -5,7 +5,7 @@ import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { PHASE_TEXT } from "../../shared/text";
-import { Groups, type Confirm } from "../phases-list/phases-list";
+import { Groups, type Confirm, type GroupUndo } from "../phases-list/phases-list";
 import { Entry } from "../phases-list/entry/entry";
 
 const PHASES: readonly CarePhase[] = ["dormancy", "growth"];
@@ -29,6 +29,8 @@ export function PhasesPaged(props: {
   onConfirm: Confirm;
   /** The photos of the rows' thumbnails (US-QS-32); without it the thumbnails show the drawn placeholder. */
   access?: PhotoAccess;
+  /** The undo of a bulk move held in place (US-QS-32). */
+  groupUndo?: GroupUndo | undefined;
 }) {
   const size = usePageSize();
   const groups = PHASES.map((phase) => ({
@@ -51,6 +53,7 @@ export function PhasesPaged(props: {
             locations={props.locations}
             busy={props.busy}
             onConfirm={props.onConfirm}
+            groupUndo={props.groupUndo}
           />
         )}
         renderItem={(z) => (
