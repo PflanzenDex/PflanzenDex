@@ -16,6 +16,13 @@ export function closedIssues(pr) {
   return [...new Set([...(pr.body ?? "").matchAll(CLOSING)].map((m) => Number(m[1])))];
 }
 
+const REFERS = /\b(?:refs?|references?)\s*:?\s+#(\d+)\b/gi;
+
+/** Issue numbers a PR refers to with `Refs #n` (a partial step). They link the PR for the drift check, never close it. */
+export function referredIssues(pr) {
+  return [...new Set([...(pr.body ?? "").matchAll(REFERS)].map((m) => Number(m[1])))];
+}
+
 /**
  * Status changes for a closed pull request.
  * `items`: project items as { issue, status }; `openPrs`: other open PRs as { number, body }.
@@ -51,7 +58,10 @@ export function drift(items, prs) {
   for (const item of items) {
     if (!item.status && item.open) out.push({ issue: item.issue, problem: "no status" });
     const refs = prs.filter((p) => closedIssues(p).includes(item.issue));
-    const open = refs.some((p) => p.state === "open");
+    // An open PR counts when it closes the issue or refers to it (Refs #n, a partial step, US-DEV-08); a merge counts only with a closing keyword.
+    const open = prs.some(
+      (p) => p.state === "open" && (refs.includes(p) || referredIssues(p).includes(item.issue)),
+    );
     const merged = refs.some((p) => p.state === "merged" && p.base === "dev");
     if (item.status === STATUS.inProgress && !open)
       out.push({ issue: item.issue, problem: "In Progress without an open PR" });

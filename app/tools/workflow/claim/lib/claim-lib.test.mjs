@@ -49,7 +49,7 @@ test("US-DEV-08: a merged PR with Refs #n and Closes #n for the same issue is a 
   assert.deepEqual(priorNotes({ issue: story, prs }), []);
 });
 
-test("US-DEV-08: an open PR with Refs #n still refuses when the story key is in its title", () => {
+test("US-DEV-08: an open PR with Refs #n refuses the claim, whatever its title says", () => {
   const prs = [
     {
       number: 4,
@@ -112,11 +112,11 @@ test("US-DEV-08: checkFree returns the notes of a merged Refs-only PR and throws
   );
 });
 
-test("US-DEV-08: story ID, key, slug, branch and scope derive from the issue title", () => {
+test("US-DEV-08: the claim key is the issue number, never the story ID (a story ID is shared by many issues)", () => {
   assert.equal(storyIdOf(story.title), "US-BES-06");
-  assert.equal(claimKey(story), "bes-06");
+  assert.equal(claimKey(story), "issue-62");
   assert.equal(slugOf(story.title), "delete-or-merge-specimen");
-  assert.equal(branchName(story), "feat/bes-06-delete-or-merge-specimen");
+  assert.equal(branchName(story), "feat/issue-62-delete-or-merge-specimen");
   assert.equal(scopeOf(story), "bes");
 });
 
@@ -159,17 +159,64 @@ test("US-DEV-08: PRs closing the issue block (open, merged), closed ones do not"
   );
 });
 
-test("US-DEV-08: a story key alone blocks only while the PR is open, never after the merge (#393)", () => {
+test("US-DEV-08: a story ID in a title links no PR; an open PR whose branch carries the issue number blocks (#393)", () => {
   const prs = [
     { number: 1, title: "wip (US-BES-06)", body: "", state: "OPEN", headRefName: "x" },
     { number: 2, title: "part of it (US-BES-06)", body: "", state: "MERGED", headRefName: "y" },
-    { number: 3, title: "z", body: "", state: "OPEN", headRefName: "feat/bes-06-remove" },
+    { number: 3, title: "z", body: "", state: "OPEN", headRefName: "feat/issue-62-remove" },
   ];
   const found = findConflicts({ issue: story, prs, branches: [] });
   assert.deepEqual(
     found.map((f) => f.text.match(/PR #(\d+)/)[1]),
-    ["1", "3"],
+    ["3"],
   );
+});
+
+const sharedStory = {
+  number: 2355,
+  title: "US-QS-32 · Settings groups",
+  state: "OPEN",
+  labels: [{ name: "story" }],
+  assignees: [],
+};
+
+test("US-DEV-08: open PRs of other issues that share the story ID US-QS-32 never block the claim of #2355", () => {
+  const prs = [2339, 2340, 2359].map((n) => ({
+    number: n,
+    title: "fix(qs): settings group (US-QS-32)",
+    body: `Refs #${n}`,
+    state: "OPEN",
+    headRefName: `fix/issue-${n}-settings`,
+  }));
+  const branches = ["fix/issue-2339-settings", "feat/us-qs-32-old"];
+  assert.deepEqual(findConflicts({ issue: sharedStory, prs, branches }), []);
+});
+
+test("US-DEV-08: an open PR that refers to the issue (Refs #2355) or carries its branch (issue-2355) blocks; Refs #23550 does not", () => {
+  const prs = [
+    { number: 1, title: "x", body: "Refs #2355", state: "OPEN", headRefName: "a" },
+    { number: 2, title: "y", body: "", state: "OPEN", headRefName: "fix/issue-2355-x" },
+    { number: 3, title: "z", body: "Refs #23550", state: "OPEN", headRefName: "fix/issue-23550-z" },
+  ];
+  const found = findConflicts({ issue: sharedStory, prs, branches: [] });
+  assert.deepEqual(
+    found.map((f) => f.text.match(/PR #(\d+)/)[1]),
+    ["1", "2"],
+  );
+});
+
+test("US-DEV-08: a merged PR linked only by its branch is no finding; a live origin branch with the issue number blocks, the story ID does not", () => {
+  const prs = [
+    { number: 4, title: "x", body: "", state: "MERGED", headRefName: "fix/issue-2355-x" },
+  ];
+  assert.deepEqual(findConflicts({ issue: sharedStory, prs, branches: [] }), []);
+  const found = findConflicts({
+    issue: sharedStory,
+    prs: [],
+    branches: ["feat/issue-2355-y", "feat/us-qs-32-z"],
+  });
+  assert.equal(found.length, 1);
+  assert.match(found[0].text, /origin\/feat\/issue-2355-y/);
 });
 
 test("US-DEV-08: ALLOW_PRIOR_WORK waives merged PRs but never open ones", () => {
@@ -182,11 +229,11 @@ test("US-DEV-08: ALLOW_PRIOR_WORK waives merged PRs but never open ones", () => 
   assert.match(found[0].text, /PR #1/);
 });
 
-test("US-DEV-08: an origin branch with the story ID blocks, a similar ID does not", () => {
-  const branches = ["feat/bes-06-remove", "feat/bes-060-other", "feat/us-bes-07-x"];
+test("US-DEV-08: an origin branch with the issue number blocks; a similar number and a story-ID branch do not", () => {
+  const branches = ["feat/issue-62-remove", "feat/issue-620-other", "feat/bes-06-remove"];
   const found = findConflicts({ issue: story, prs: [], branches });
   assert.equal(found.length, 1);
-  assert.match(found[0].text, /feat\/bes-06-remove/);
+  assert.match(found[0].text, /feat\/issue-62-remove/);
 });
 
 test("US-DEV-08: the stale limit is a setting with a documented start value of 48 hours", () => {
@@ -198,6 +245,7 @@ test("US-DEV-08: the stale limit is a setting with a documented start value of 4
 test("US-DEV-08: the claim key of a branch name, with or without US-/FR- prefix", () => {
   assert.equal(keyOfBranch("feat/wac-01-measurement"), "wac-01");
   assert.equal(keyOfBranch("feat/us-wac-01-measurement"), "wac-01");
+  assert.equal(keyOfBranch("feat/issue-62-delete"), "issue-62");
   assert.equal(keyOfBranch("chore/issue-243-claim"), "issue-243");
   assert.equal(keyOfBranch("feat/gate-global-reference"), null);
   assert.equal(keyOfBranch("dev"), null);

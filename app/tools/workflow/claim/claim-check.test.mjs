@@ -29,31 +29,37 @@ test("US-DEV-08: a branch without story ID passes without asking GitHub", async 
   assert.deepEqual(v, { ok: true, message: null });
 });
 
-test("US-DEV-08: a story claimed by somebody else is refused for a worktree", async () => {
-  const v = await checkBranch(client([issue(["konradhe14"])]), "feat/bes-06-x");
+test("US-DEV-08: an issue claimed by somebody else is refused for a worktree", async () => {
+  const v = await checkBranch(client([issue(["konradhe14"])]), "feat/issue-62-x");
   assert.equal(v.ok, false);
   assert.match(v.message, /belongs to @konradhe14/);
 });
 
 test("US-DEV-08: my own claim passes", async () => {
-  assert.equal((await checkBranch(client([issue(["max"])]), "feat/bes-06-x")).ok, true);
+  assert.equal((await checkBranch(client([issue(["max"])]), "feat/issue-62-x")).ok, true);
 });
 
-test("US-DEV-08: an unclaimed story is refused for a worktree", async () => {
-  const v = await checkBranch(client([issue([])]), "feat/bes-06-x");
+test("US-DEV-08: an unclaimed issue is refused for a worktree", async () => {
+  const v = await checkBranch(client([issue([])]), "feat/issue-62-x");
   assert.equal(v.ok, false);
   assert.match(v.message, /make claim ISSUE=62/);
 });
 
 test("US-DEV-08: offline, the check warns and lets go", async () => {
-  const v = await checkBranch(client([], { offline: true }), "feat/bes-06-x");
+  const v = await checkBranch(client([], { offline: true }), "feat/issue-62-x");
   assert.equal(v.ok, true);
-  assert.match(v.message, /skipped for BES-06: network down/);
+  assert.match(v.message, /skipped for ISSUE-62: network down/);
 });
 
-test("US-DEV-08: run reports the verdict of a foreign story", async () => {
+test("US-DEV-08: a branch with only a story ID is not checked and asks GitHub nothing, the ID may belong to many issues", async () => {
+  const v = await checkBranch(client([], { offline: true }), "feat/bes-06-x");
+  assert.equal(v.ok, true);
+  assert.match(v.message, /carries no issue number/);
+});
+
+test("US-DEV-08: run reports the verdict of a foreign issue", async () => {
   const messages = [];
-  const ok = await run(client([issue(["konradhe14"])]), "feat/bes-06-x", (m) => messages.push(m));
+  const ok = await run(client([issue(["konradhe14"])]), "feat/issue-62-x", (m) => messages.push(m));
   assert.equal(ok, false);
   assert.match(messages[0], /konradhe14/);
 });

@@ -23,14 +23,12 @@ export function storyIdOf(text) {
   return m ? m[1].toUpperCase() : null;
 }
 
-/** Search key for branch and PR matching: the story ID without US-/FR- and in lower case (wac-01, as in
- * feat/wac-01-messung), or issue-<n> without an ID. FR-WAC-01 and US-WAC-01 share a key on purpose. */
+/** Claim key: the issue number (issue-<n>). A story ID is shared by many issues, so it never keys a claim (US-DEV-08). */
 export function claimKey(issue) {
-  const id = storyIdOf(issue.title);
-  return id ? id.toLowerCase().replace(/^(us|fr)-/, "") : `issue-${issue.number}`;
+  return `issue-${issue.number}`;
 }
 
-/** Claim key of a branch name such as feat/wac-01-messung or chore/issue-243-x, or null. */
+/** Claim key of a branch name such as chore/issue-243-x (or a story key of an old branch, feat/wac-01-x), or null. */
 export function keyOfBranch(branch) {
   const m = /(?:^|\/)(?:us-|fr-)?([a-z]{2,4}-\d{2}|issue-\d+)(?=-|$)/i.exec(branch ?? "");
   return m ? m[1].toLowerCase() : null;
@@ -71,7 +69,7 @@ function branchType(issue) {
   return labels.includes("bug") ? "fix" : labels.includes("enabler") ? "chore" : "feat";
 }
 
-/** Branch naming rule: <type>/<story-id>-<slug>. */
+/** Branch naming rule: <type>/issue-<n>-<slug>, the issue number is the key (US-DEV-08). */
 export function branchName(issue) {
   return `${branchType(issue)}/${claimKey(issue)}-${slugOf(issue.title) || "work"}`;
 }
@@ -103,11 +101,11 @@ const numbersIn = (pattern, body) => [...(body ?? "").matchAll(pattern)].map((m)
 const closesIssue = (pr, issue) => numbersIn(CLOSING, pr.body).includes(issue.number);
 const refersToIssue = (pr, issue) => numbersIn(REFERS, pr.body).includes(issue.number);
 
-/** Whether a PR belongs to the issue: a closing keyword links every PR, a story key in title or branch open PRs only (#393). */
+/** Whether a PR links to the issue (US-DEV-08): its body closes or refers to it, or its branch carries its issue number. Titles never link. */
 export function prReferences(pr, issue) {
-  if (closesIssue(pr, issue)) return true;
-  const key = claimKey(issue);
-  return prState(pr) === "open" && (hasKey(pr.title, key) || hasKey(pr.headRefName, key));
+  return (
+    closesIssue(pr, issue) || refersToIssue(pr, issue) || hasKey(pr.headRefName, claimKey(issue))
+  );
 }
 
 /** Notes, never refusals (US-DEV-08): merged PRs whose body only refers to the issue with Refs #n; a closing PR is a finding. */
@@ -157,7 +155,9 @@ export function findConflicts({ issue, prs, branches, allowPrior = false }) {
   }
   for (const pr of prs.filter((p) => prReferences(p, issue))) {
     const state = prState(pr);
-    if (state === "closed" || (state === "merged" && allowPrior)) continue;
+    // A merged PR counts only when it closes the issue: a Refs-only one is a note (priorNotes), a branch-only one is retired.
+    if (state === "closed" || (state === "merged" && (allowPrior || !closesIssue(pr, issue))))
+      continue;
     found.push({ kind: "pr", text: `PR #${pr.number} (${state}) references it: ${pr.title}` });
   }
   for (const b of branches.filter((name) => hasKey(name, key))) {
