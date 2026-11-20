@@ -48,3 +48,15 @@ export const OBJECT_GROUP = `${PAGER_LIST} ${ROWS_OF_GROUP} ${OBJECT_HAIRLINE}`;
  * are `GroupedRow`s with `bare`, because the list wraps each one.
  */
 export const ROW_GROUP = `${PAGER_LIST} ${ROWS_OF_GROUP} ${ROW_HAIRLINE}`;
+
+/**
+ * The wrap of a row with an action beside its text (US-QS-32, issue 2322, SG-LIST-03): the row wraps when the text and the
+ * action do not fit beside each other, and the action then moves below the text on a line of its own. The text part keeps at
+ * least its basis, given in rem so it grows with the text size: a name keeps two lines beside the action.
+ */
+/** The text part of an object row: the 56 px thumbnail and two lines of name (starting value, tuned by measurement). */
+export const OBJECT_TEXT = "grow basis-[calc(56px_+_8rem)]";
+/** The text part of a treatment row: about two lines of its name (starting value, tuned by measurement). */
+export const TREATMENT_TEXT = "grow basis-36";
+/** An action beside a row: it keeps its size and sits at the trailing edge of its own line when the row wraps. */
+export const ROW_ACTION = "ml-auto max-w-full shrink-0";

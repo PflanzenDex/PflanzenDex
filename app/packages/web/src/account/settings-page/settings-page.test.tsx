@@ -103,7 +103,7 @@ describe("US-ACC-02 settings page: display name", () => {
     await user.clear(name);
     await user.type(name, "Anna Beispiel");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
     expect(puts).toHaveLength(1);
     expect(puts[0]?.key).toBeTruthy();
     expect(puts[0]?.body["displayName"]).toBe("Anna Beispiel");
@@ -152,7 +152,7 @@ describe("US-ACC-02 settings page: time zone", () => {
     await user.clear(zone);
     await user.type(zone, "America/New_York");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await screen.findByRole("status");
+    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
     expect(currentTimeZone()).toBe("America/New_York");
   });
 
@@ -162,7 +162,7 @@ describe("US-ACC-02 settings page: time zone", () => {
     show("profile");
     await user.clear(await screen.findByLabelText("Zeitzone"));
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await screen.findByRole("status");
+    await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body["timeZone"]).toBeNull();
   });
 
@@ -450,7 +450,7 @@ describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
     await user.clear(input);
     await user.type(input, "5");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
     expect(puts[0]?.body["replenishBuffer"]).toBe(5);
   });
 
@@ -515,8 +515,8 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     const save = screen.getByRole("button", { name: "Speichern" });
     expect(save.hasAttribute("disabled")).toBe(false);
     await user.click(save);
-    expect((await screen.findByRole("status")).textContent).toBe(
-      "Keine Änderung: Die Werte sind schon gespeichert.",
+    await waitFor(() =>
+      expect(announced()).toBe("Keine Änderung: Die Werte sind schon gespeichert."),
     );
     expect(puts).toHaveLength(0);
   });
@@ -533,7 +533,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     await user.clear(fourth);
     await user.type(fourth, "3.000");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
     expect(puts[0]?.body["positionThresholds"]).toEqual([50000, 16000, 8000, 3000]);
     expect(await values()).toEqual(["50.000", "16.000", "8.000", "3.000"]);
   });
@@ -785,7 +785,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     await user.type(name, "Berta");
     expect(puts).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gespeichert.");
+    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
     expect(puts).toHaveLength(1);
     expect((await row("Profil")).textContent).toContain("Berta · Europe/\u200bBerlin");
   });
@@ -798,7 +798,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     await user.clear(input);
     await user.type(input, "4");
     await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await screen.findByRole("status");
+    await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body).toMatchObject({
       replenishBuffer: 4,
       displayName: null,

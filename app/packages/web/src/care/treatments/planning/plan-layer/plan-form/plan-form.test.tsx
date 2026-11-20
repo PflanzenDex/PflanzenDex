@@ -50,7 +50,8 @@ describe("US-BEH-01 the plan form marks the segments of a refused send (US-QS-32
     submitPlan();
     expect(await screen.findByRole("button", { name: "Termin, 1 Angabe fehlt" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Pflanzen (1)" })).toBeTruthy();
-    expect(screen.getByLabelText(/Grund/)).toBe(document.activeElement);
+    // The text is committed before the view moves and the reason takes the focus, one commit later: wait for the focus.
+    await waitFor(() => expect(screen.getByLabelText(/Grund/)).toBe(document.activeElement));
     expect(screen.getByText("Nenne einen Grund, zum Beispiel Wollläuse.")).toBeTruthy();
     await userEvent.type(screen.getByLabelText(/Grund/), "Wollläuse");
     await waitFor(() => expect(screen.getByRole("button", { name: "Termin" })).toBeTruthy());

@@ -93,9 +93,9 @@ function TreatmentCard(props: { item: TodayItem; date?: string | undefined; entr
           <p className="w-fit rounded-control border border-current px-2 text-sm font-semibold tabular-nums">
             {chipOf(props.item)}
           </p>
-          {props.date && <p className="text-xs opacity-80">{t("stand", { date: props.date })}</p>}
+          {props.date && <p className="text-sm opacity-80">{t("stand", { date: props.date })}</p>}
         </div>
-        <p className="line-clamp-2 text-sm">{lineOf(props.item)}</p>
+        <p className="line-clamp-2 text-base">{lineOf(props.item)}</p>
       </div>
       {props.entry}
     </div>
