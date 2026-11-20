@@ -79,6 +79,9 @@ describe("US-QS-32 · issue 2355 a full-width row that opens a layer shows the c
     expect(text.className).toContain("flex-wrap");
     expect(text.className).toContain("min-w-0");
     expect(text.className).toContain("flex-1");
+    // A long word breaks instead of running under the chevron (measured at 180 px width and 200 % text).
+    expect(screen.getByText("Meine Freunde").className).toContain("[overflow-wrap:anywhere]");
+    expect(screen.getByText("3 Freunde").className).toContain("[overflow-wrap:anywhere]");
   });
 
   it("US-QS-32 · issue 2355 a tile is a tile, not a row: it shows no chevron", () => {

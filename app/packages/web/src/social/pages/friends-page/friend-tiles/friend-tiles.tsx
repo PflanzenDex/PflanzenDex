@@ -95,9 +95,11 @@ export function LayerRow(props: { id: string; name: string; state: ReactNode }) 
       onClick={(event) => openLayer(event.currentTarget)}
     >
       <span className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span className="font-semibold">{props.name}</span>
+        <span className="min-w-0 font-semibold [overflow-wrap:anywhere]">{props.name}</span>
         {/* No truncation: at a larger text size the state wraps below the name instead of being cut (issue 1019). */}
-        <span className="min-w-0 text-sm tabular-nums text-muted-foreground">{props.state}</span>
+        <span className="min-w-0 text-sm tabular-nums text-muted-foreground [overflow-wrap:anywhere]">
+          {props.state}
+        </span>
       </span>
       <RowChevron />
     </Button>
