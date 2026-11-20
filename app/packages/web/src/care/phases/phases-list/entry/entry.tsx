@@ -70,7 +70,7 @@ function metaOf(z: PhasesRow, locations: readonly LightLocation[], moves: boolea
 /**
  * The hints under a phase row, the next step of an entry that is missing (P-09, P-10): a missing location with a target
  * keeps the switch hint (the place fact moves into the action), a missing location without one says "Kein Standort" (the
- * action "Standort setzen" sits beside the row, US-QS-32), and a plant without a target names what to choose.
+ * action "Standort setzen" sits beside the chip under the row, US-QS-32), and a plant without a target names what to choose.
  */
 function rowHints(z: PhasesRow, status: PhaseStatus, canSwitch: boolean): string[] {
   const location =
