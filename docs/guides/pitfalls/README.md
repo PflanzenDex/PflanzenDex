@@ -333,3 +333,11 @@ IDs are never renumbered.
 - **Fix:** Before measuring, set `Network.emulateNetworkConditions` with `offline: false, latency: 0, downloadThroughput: 1e9, uploadThroughput: 1e9` in the same CDP session (it ends with the session), and check that `navigator.onLine` is `true`. A throughput of `1e10` overflows and stalls every request. The script `docs/records/spikes/2026-11-20-real-phone-performance/scripts/measure/run.mjs` does both.
 - **Can it become a gate?** No: phone measurements run by hand, and no gate drives the phone.
 - **Source:** Issue #2299, record `docs/records/spikes/2026-11-20-real-phone-performance/README.md`.
+
+## PF-041 A second `vite preview` on a taken port leaves the old build in place
+
+- **Symptom:** An A/B measurement shows build B with the numbers of build A. The series meant for the second build run against the first one.
+- **Cause:** A `vite preview` started through `npx` for build B found its port held by the still-running preview of build A. It logged "Port … is already in use" and stopped, and the old server went on answering on that port.
+- **Fix:** Stop the previous preview by its own PID and wait until nothing listens on the port before you start the next one. Before each series, check that the page loads the entry chunk of the build you mean (its hashed `index-*.js` name). The trial runner of issue 2300 did both.
+- **Can it become a gate?** No: A/B measurements on the phone run by hand, and no gate builds two variants.
+- **Source:** Issue #2300, record `docs/records/spikes/2026-11-20-react-compiler/README.md` (two discarded sessions).
