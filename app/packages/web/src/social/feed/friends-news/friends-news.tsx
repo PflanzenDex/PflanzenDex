@@ -181,11 +181,9 @@ export function FriendsNewsLayer(props: { api: string; token: Token }) {
             groups={groupsOf(banner)}
             pageSize={PAGE_SIZE}
             fit
-            // The plant rows never shrink below their content (issue 2293, as the needs of issue 2272): their clipped overflow
-            // lets a squeezed fit list collapse them to their borders, and the page size follows that height. Measured: the
-            // shrink rule alone fixes it; size containment and the wrapper's `min-h-0` changed nothing. The shared rows of the
-            // Heute lists keep their shrink, so the rule is local to this list.
-            listClassName={`${ROW_GROUP} [&>li]:shrink-0`}
+            // The plant rows never shrink below their content (issue 2293, as the needs of issue 2272): the pager gives every row
+            // `shrink-0` (issue 2315), so a squeezed fit list cannot collapse a clipped row to its borders.
+            listClassName={ROW_GROUP}
             getKey={(row) => row.key}
             renderItem={(row) => <NewsRowLink row={row} />}
           />
