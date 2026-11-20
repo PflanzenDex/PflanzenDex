@@ -40,8 +40,13 @@ export async function typeInto(page: Page, field: Locator, text: string): Promis
  */
 export async function chooseOption(page: Page, select: Locator, index: number): Promise<void> {
   await tabTo(page, select);
-  const label = (await select.locator("option").nth(index).textContent())?.trim() ?? "";
+  const option = select.locator("option").nth(index);
+  const label = (await option.textContent())?.trim() ?? "";
+  if (label === "") throw new Error(`chooseOption: option ${index} of the select has no text`);
+  const value = await option.evaluate((el) => (el as HTMLOptionElement).value);
   await page.keyboard.type(label);
+  // A type-ahead that misses leaves the old value: the helper fails here, not in a later step.
+  await expect(select).toHaveValue(value);
 }
 
 /** Signs in at the sign-in service with the keyboard only. */
