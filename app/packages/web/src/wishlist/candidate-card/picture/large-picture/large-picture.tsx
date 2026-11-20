@@ -1,4 +1,3 @@
-import { Button } from "@/shared/ui/button/button";
 import {
   DelayedSkeleton,
   useHeldLoader,
@@ -6,7 +5,6 @@ import {
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import table from "../../../wishlist.de.json";
 
@@ -15,8 +13,8 @@ const t = texts(table);
 /**
  * The large view of a stored picture (US-WUN-06). It is mounted only while it is open, so the full copy (no size) is asked
  * for only after the tap (NFR-12); the cache keeps it for the next opening. Escape and the close button call `onClose`.
- * The image never forces a sideways scroll: it is bounded to the visible height and width. A phone sheet has no close
- * button of its own, so it gets one in the content; the dialog from md has its close button already.
+ * The image never forces a sideways scroll: it is bounded to the visible height and width. The close button is the one of
+ * the sheet or the dialog (`ResponsiveModal`, SG-SHEET-02): below md the sheet's own, beside the title (US-QS-32).
  */
 export function LargePicture(props: {
   access: PhotoAccess;
@@ -29,7 +27,6 @@ export function LargePicture(props: {
   const state = useStoredPhoto(access, path);
   // The picture's loading status holds once shown (US-QS-14, D5, issue 1772); the picture waits for the hold.
   const loading = useHeldLoader(!state);
-  const isMd = useIsMd();
   return (
     <ResponsiveModal
       title={t("large.title", { title })}
@@ -55,11 +52,6 @@ export function LargePicture(props: {
         </p>
       ) : null}
       <p className="text-sm text-muted-foreground">{sourceLine}</p>
-      {!isMd && (
-        <Button type="button" variant="outline" size="touch" onClick={onClose}>
-          {t("large.close")}
-        </Button>
-      )}
     </ResponsiveModal>
   );
 }

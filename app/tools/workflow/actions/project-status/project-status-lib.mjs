@@ -5,15 +5,22 @@
 // No I/O here; project-status.mjs reads the event and writes the project.
 export const STATUS = { todo: "Todo", inProgress: "In Progress", onDev: "On dev", done: "Done" };
 
-/** What to do about a ticket without a priority; the rule itself is in CLAUDE.md ("Priority of tickets"). */
+/** What to do about a ticket without a priority; the rule itself is in docs/guides/operations/parallel-work.md ("Priority"). */
 export const PRIORITY_HINT =
-  "no priority: set the project field Priority (P0 critical, P1 high, P2 normal, P3 low; rule in CLAUDE.md)";
+  "no priority: set the project field Priority (P0 critical, P1 high, P2 normal, P3 low; rule in docs/guides/operations/parallel-work.md)";
 
 const CLOSING = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+#(\d+)\b/gi;
 
 /** Issue numbers a PR closes, from its body. Only closing keywords count: a story key in a title is too loose. */
 export function closedIssues(pr) {
   return [...new Set([...(pr.body ?? "").matchAll(CLOSING)].map((m) => Number(m[1])))];
+}
+
+const REFERS = /\b(?:refs?|references?)\s*:?\s+#(\d+)\b/gi;
+
+/** Issue numbers a PR refers to with `Refs #n` (a partial step). They link the PR for the drift check, never close it. */
+export function referredIssues(pr) {
+  return [...new Set([...(pr.body ?? "").matchAll(REFERS)].map((m) => Number(m[1])))];
 }
 
 /**
@@ -51,7 +58,10 @@ export function drift(items, prs) {
   for (const item of items) {
     if (!item.status && item.open) out.push({ issue: item.issue, problem: "no status" });
     const refs = prs.filter((p) => closedIssues(p).includes(item.issue));
-    const open = refs.some((p) => p.state === "open");
+    // An open PR counts when it closes the issue or refers to it (Refs #n, a partial step, US-DEV-08); a merge counts only with a closing keyword.
+    const open = prs.some(
+      (p) => p.state === "open" && (refs.includes(p) || referredIssues(p).includes(item.issue)),
+    );
     const merged = refs.some((p) => p.state === "merged" && p.base === "dev");
     if (item.status === STATUS.inProgress && !open)
       out.push({ issue: item.issue, problem: "In Progress without an open PR" });

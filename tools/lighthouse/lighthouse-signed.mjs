@@ -1,7 +1,7 @@
 // FR-QG-09 (issue 1251): Lighthouse on the signed-in screens /today and /collection, mobile, median of 3 runs each.
 // Report only: nothing here judges a score. This file holds what runs without a browser: the reports of a screen, the check
-// that a report shows the signed-in screen, and the Markdown summary. The browser part is lighthouse-signed-run.mjs (entry:
-// lighthouse-signed.sh). Medians and number formats come from the Lighthouse gate, read only.
+// that a report shows the signed-in screen, and the Markdown summary. The browser part is preview/lighthouse-signed-run.mjs
+// (entry: lighthouse-signed.sh). Medians and number formats come from the Lighthouse gate, read only.
 import fs from "node:fs";
 import path from "node:path";
 import {

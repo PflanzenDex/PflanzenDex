@@ -202,7 +202,7 @@ Acceptance criteria:
 
 ## Dependencies and build order
 
-Release split (owner decision 2026-11-05): R2 for US-SUB-01 to US-SUB-07; R5 for US-SUB-08 to US-SUB-10, the supports and their reminders, because they need EQU, which is placed in R5 (`16-releases-and-decisions.md`). Priority P2 for R2 and P3 for R5 by the rule of thumb in `CLAUDE.md`; the owner may overrule per ticket.
+Release split (owner decision 2026-11-05): R2 for US-SUB-01 to US-SUB-07; R5 for US-SUB-08 to US-SUB-10, the supports and their reminders, because they need EQU, which is placed in R5 (`16-releases-and-decisions.md`). Priority P2 for R2 and P3 for R5 by the rule of thumb in `docs/guides/operations/parallel-work.md`; the owner may overrule per ticket.
 
 US-SUB-01 keeps the equipment wish in R2: it uses the wish type `Equipment` of DM-WUN-01, not the equipment items of EQU. The order of the R5 stories follows EQU.
 

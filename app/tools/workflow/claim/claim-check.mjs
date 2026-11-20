@@ -1,5 +1,6 @@
 // Claim check by branch name (US-DEV-08), used by `make worktree`:
-//   node claim-check.mjs worktree <branch>   refuses unclaimed or foreign stories
+//   node claim-check.mjs worktree <branch>   refuses unclaimed or foreign issues
+// Only a branch with an issue number (issue-<n>) is checked: a story ID may belong to many issues, so a branch with only a story ID passes.
 // There is no push check: who may push to a branch is decided by GitHub, not by a local hook.
 // Opt-out, always explicit: SKIP_CLAIM_CHECK=1 (make worktree BRANCH=x SKIP_CLAIM_CHECK=1).
 // A check that cannot reach GitHub warns and lets go: offline work must stay possible.
@@ -11,6 +12,11 @@ import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 export async function checkBranch(client, branch) {
   const key = keyOfBranch(branch);
   if (!key) return { ok: true, message: null };
+  if (!key.startsWith("issue-"))
+    return {
+      ok: true,
+      message: `claim check skipped for ${branch}: the branch carries no issue number (a story ID may belong to many issues); nothing to check`,
+    };
   const id = key.toUpperCase();
   let issue, login;
   try {

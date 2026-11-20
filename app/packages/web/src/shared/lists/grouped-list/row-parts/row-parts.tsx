@@ -22,6 +22,22 @@ export type RowContentProps = {
 };
 
 /**
+ * The chevron of a row that opens a view or a layer (SG-TOUCH-02, SG-ICON-01): 16 px, neutral, decorative, at the trailing
+ * edge. One part for every row, so a row of another look (`LayerRow` of Freunde) draws the same mark (issue 2355).
+ */
+export function RowChevron(props: { warning?: boolean | undefined }) {
+  return (
+    <ChevronRight
+      aria-hidden="true"
+      className={cn(
+        "size-4 shrink-0",
+        props.warning ? "text-warning-foreground" : "text-muted-foreground",
+      )}
+    />
+  );
+}
+
+/**
  * The inside of a row: the leading mark, the title and meta line, the trailing value and the chevron. The accessible name of
  * a link or button comes from this content, so it holds every visible text in its visible order (WCAG 2.5.3, US-QS-32).
  */
@@ -65,15 +81,7 @@ export function RowContent(props: RowContentProps) {
           </span>
         </>
       )}
-      {props.chevron && (
-        <ChevronRight
-          aria-hidden="true"
-          className={cn(
-            "size-4 shrink-0",
-            props.warning ? "text-warning-foreground" : "text-muted-foreground",
-          )}
-        />
-      )}
+      {props.chevron && <RowChevron warning={props.warning} />}
     </>
   );
 }

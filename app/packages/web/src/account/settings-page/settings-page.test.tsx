@@ -86,13 +86,16 @@ afterEach(() => {
 });
 
 describe("US-ACC-02 settings page: display name", () => {
-  it("US-ACC-02 shows the saved profile and keeps Save disabled until something changes", async () => {
+  it("US-ACC-02 shows the saved profile and keeps Save inactive until something changes", async () => {
     fakeServer();
     delayLoads();
     show("profile");
     expect((await screen.findByRole("status")).textContent).toContain("werden geladen");
     expect((await screen.findByLabelText<HTMLInputElement>("Anzeigename")).value).toBe("Anna");
-    expect(screen.getByRole("button", { name: "Sichern" }).hasAttribute("disabled")).toBe(true);
+    // Inactive, not disabled: a focused button that turns disabled loses the focus (US-QS-32, PF-045).
+    const save = screen.getByRole("button", { name: "Sichern" });
+    expect(save.hasAttribute("disabled")).toBe(false);
+    expect(save.getAttribute("aria-disabled")).toBe("true");
   });
 
   it("US-ACC-02 saves a free display name with an Idempotency-Key and confirms it", async () => {

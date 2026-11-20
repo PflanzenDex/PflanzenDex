@@ -701,6 +701,47 @@ describe("US-QS-32 a layer asks before it discards typed input (SG-FORM-06, SG-S
     await waitFor(() => expect(layer.style.transform).toBe("translate3d(0px, 0px, 0px)"));
   });
 
+  it("US-QS-32 · SG-SHEET-02 the close button of a sheet with typed input asks; Weiter bearbeiten keeps the sheet and its input", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    const layer = await openAndType("Basilikum");
+    await userEvent.click(within(layer).getByRole("button", { name: "Schließen" }));
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Weiter bearbeiten" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", QUESTION)).toBeNull());
+    expect(screen.getByRole("dialog", { name: "Notiz" })).toBeTruthy();
+    expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(seen.search).toContain("sheet=notiz");
+  });
+
+  it("US-QS-32 · SG-SHEET-02 the close button, then Verwerfen, closes the sheet and its address loses ?sheet", async () => {
+    setViewportWidth(360);
+    renderTyping(["/start"], 0);
+    const layer = await openAndType("Basilikum");
+    await userEvent.click(within(layer).getByRole("button", { name: "Schließen" }));
+    const question = await screen.findByRole("dialog", QUESTION);
+    await userEvent.click(within(question).getByRole("button", { name: "Eingabe verwerfen" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
+    expect(seen.pathname).toBe("/start");
+    expect(seen.search).toBe("");
+  });
+
+  it("US-QS-32 · SG-SHEET-07 a sheet opens with the focus on its title, not on its close button, below md", async () => {
+    setViewportWidth(360);
+    render(
+      <MemoryRouter initialEntries={["/?sheet=friends"]}>
+        <LayerHost>
+          <LayerSheet id="friends" title="Meine Freunde">
+            <button type="button">Freundschaft beenden</button>
+          </LayerSheet>
+        </LayerHost>
+      </MemoryRouter>,
+    );
+    const title = await screen.findByRole("heading", { name: "Meine Freunde" });
+    await waitFor(() => expect(document.activeElement).toBe(title));
+    expect(document.activeElement).not.toBe(screen.getByRole("button", { name: "Schließen" }));
+  });
+
   it("US-QS-32 outside a layer useUnsavedInput is a no-op: leave runs its action at once", () => {
     let ran = false;
     function Bare() {
