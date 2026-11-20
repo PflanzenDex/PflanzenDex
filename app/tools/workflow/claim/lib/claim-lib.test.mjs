@@ -3,10 +3,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   branchName,
+  checkFree,
   claimKey,
+  ClaimRefused,
   findConflicts,
   firstOpenRelease,
   keyOfBranch,
+  priorNotes,
   refusalReport,
   scopeOf,
   slugOf,
@@ -21,6 +24,93 @@ const story = {
   labels: [{ name: "story" }],
   assignees: [],
 };
+
+test("US-DEV-08: a merged PR that only refers to the issue with Refs #n is a note, never a refusal", () => {
+  const prs = [
+    { number: 2180, title: "feat(bes): first part (US-BES-06)", body: "Refs #62", state: "MERGED" },
+  ];
+  assert.deepEqual(findConflicts({ issue: story, prs, branches: [] }), []);
+  assert.deepEqual(priorNotes({ issue: story, prs }), [
+    "PR #2180 (merged) refers to it (Refs #62): feat(bes): first part (US-BES-06)",
+  ]);
+});
+
+test("US-DEV-08: a merged PR that closes the issue is a finding, and ALLOW_PRIOR_WORK waives it; it is no note", () => {
+  const prs = [{ number: 2, title: "feat(bes): y", body: "Closes #62", state: "MERGED" }];
+  const [f] = findConflicts({ issue: story, prs, branches: [] });
+  assert.match(f.text, /PR #2 \(merged\)/);
+  assert.deepEqual(findConflicts({ issue: story, prs, branches: [], allowPrior: true }), []);
+  assert.deepEqual(priorNotes({ issue: story, prs }), []);
+});
+
+test("US-DEV-08: a merged PR with Refs #n and Closes #n for the same issue is a finding, not a note", () => {
+  const prs = [{ number: 3, title: "feat(bes): y", body: "Refs #62\nCloses #62", state: "MERGED" }];
+  assert.equal(findConflicts({ issue: story, prs, branches: [] }).length, 1);
+  assert.deepEqual(priorNotes({ issue: story, prs }), []);
+});
+
+test("US-DEV-08: an open PR with Refs #n still refuses when the story key is in its title", () => {
+  const prs = [
+    {
+      number: 4,
+      title: "feat(bes): wip (US-BES-06)",
+      body: "Refs #62",
+      state: "OPEN",
+      headRefName: "x",
+    },
+  ];
+  const found = findConflicts({ issue: story, prs, branches: [] });
+  assert.equal(found.length, 1);
+  assert.match(found[0].text, /PR #4 \(open\)/);
+  assert.deepEqual(priorNotes({ issue: story, prs }), []);
+});
+
+test("US-DEV-08: a Refs number of another issue (Refs #620, Refs #6) is no note and no finding", () => {
+  const prs = [
+    { number: 5, title: "a", body: "Refs #620", state: "MERGED" },
+    { number: 6, title: "b", body: "Refs #6", state: "MERGED" },
+  ];
+  assert.deepEqual(findConflicts({ issue: story, prs, branches: [] }), []);
+  assert.deepEqual(priorNotes({ issue: story, prs }), []);
+});
+
+test("US-DEV-08: the Refs keyword is case-insensitive, accepts References and an optional colon", () => {
+  const prs = [
+    { number: 7, title: "a", body: "refs #62", state: "MERGED" },
+    { number: 8, title: "b", body: "References: #62", state: "MERGED" },
+    { number: 9, title: "c", body: "Prefs #62", state: "MERGED" },
+  ];
+  assert.deepEqual(
+    priorNotes({ issue: story, prs }).map((n) => n.match(/PR #(\d+)/)[1]),
+    ["7", "8"],
+  );
+});
+
+test("US-DEV-08: checkFree returns the notes of a merged Refs-only PR and throws only for findings", () => {
+  const open = { ...story, state: "OPEN" };
+  const prs = [{ number: 2180, title: "x", body: "Refs #62", state: "MERGED" }];
+  const { notes } = checkFree({
+    issue: open,
+    prs,
+    branches: [],
+    number: 62,
+    login: "max",
+    allowPrior: false,
+  });
+  assert.equal(notes.length, 1);
+  assert.throws(
+    () =>
+      checkFree({
+        issue: open,
+        prs: [{ number: 2, title: "y", body: "Closes #62", state: "MERGED" }],
+        branches: [],
+        number: 62,
+        login: "max",
+        allowPrior: false,
+      }),
+    ClaimRefused,
+  );
+});
 
 test("US-DEV-08: story ID, key, slug, branch and scope derive from the issue title", () => {
   assert.equal(storyIdOf(story.title), "US-BES-06");

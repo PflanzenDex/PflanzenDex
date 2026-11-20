@@ -384,6 +384,25 @@ test("US-DEV-05 (issue 1747): a Lessons section with well-formed lines passes, a
   assert.equal(remoteHead(ctx), localHead(ctx), "the push went through");
 });
 
+test("US-DEV-08: a body that only refers to the issue with Refs #n is still pushed and marked; stderr gets a note that names Closes", () => {
+  const ctx = setup({ unpushed: 1, body: "Refs #13\n\n## Lessons\n\nnone\n" });
+  const out = runScript(ctx);
+  assert.equal(out.status, 0, out.stderr);
+  assert.match(
+    out.stderr,
+    /pr-ready: note: the body only refers to #13 \(Refs\); write Closes #13 if this PR finishes the issue \(make pr-text BODY=<file>\)\./,
+  );
+  assert.deepEqual(readyCalls(out), ["pr ready 7"]);
+  assert.equal(remoteHead(ctx), localHead(ctx), "the push went through");
+});
+
+test("US-DEV-08: a body that closes the number it refers to prints no Refs note", () => {
+  const ctx = setup({ unpushed: 1, body: "Closes #13\nRefs #13\n\n## Lessons\n\nnone\n" });
+  const out = runScript(ctx);
+  assert.equal(out.status, 0, out.stderr);
+  assert.doesNotMatch(out.stderr, /pr-ready: note/);
+});
+
 test("US-DEV-13 (issue 1608): the title and body reach the checks only as environment variables, never in a command line", () => {
   const title = 'feat(x): $(touch PWNED) "quoted" ; echo injected';
   const body = "Story: US-DEV-13\n\n## Lessons\n\n- $(touch PWNED) → skill recap-and-learnings";

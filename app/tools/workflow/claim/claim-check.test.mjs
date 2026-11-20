@@ -58,13 +58,19 @@ test("US-DEV-08: run reports the verdict of a foreign story", async () => {
   assert.match(messages[0], /konradhe14/);
 });
 
-test("US-DEV-08: the handoff text has the four parts and closes the issue", () => {
+test("US-DEV-08: the handoff text starts with Refs #n, carries the Closes hint and never closes the issue itself", () => {
   const body = handoffBody(
     { number: 62, title: "US-BES-06 · Delete specimen", url: "https://x/62" },
     "feat/bes-06-x",
     "max",
   );
-  assert.match(body, /^Closes #62/);
+  assert.match(body, /^Refs #62\n/);
+  assert.match(
+    body,
+    /<!--[^]*Closes #<n>[^]*-->/,
+    "the hint to switch to Closes when the PR finishes",
+  );
+  assert.doesNotMatch(body, /Closes #\d/, "a claim draft must not close the issue on merge");
   for (const part of [
     "## Handoff",
     "**Task:**",

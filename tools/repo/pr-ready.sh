@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # `make pr [PR=<n>]` (US-DEV-13, issue 1608): the step before a pull request goes to review. Order: the refusals, the pull
 # request read over REST, a preflight (commitlint on the title, `make changelog-check`, the Lessons section of the body
-# (US-DEV-05), the checks of CI's `metadata` job), the push, a wait until GitHub shows the pushed head, and only then the PR is marked ready. A draft runs no CI
+# (US-DEV-05), the checks of CI's `metadata` job), a note when the body only refers to its issue with Refs #n (US-DEV-08, never a refusal), the push, a wait until GitHub shows the pushed head, and only then the PR is marked ready. A draft runs no CI
 # (ci.yml), so the `ready_for_review` run is the one CI run of the PR, and it tests the head that was pushed.
 # It does not touch README.md: the statistics block changes with every merge into dev, so regenerating it per PR made
 # parallel PRs conflict (owner decision 2026-10-05). The block is regenerated once per release PR (skill release-checklist)
@@ -80,6 +80,16 @@ if ! PR_BODY="$body" node app/tools/check/docs/agents/pr/pr-lessons.mjs; then
   echo "pr-ready: the Lessons section of the PR body fails; nothing was pushed or marked. Fill it with make pr-text BODY=<file> (the lessons come from the skill recap-and-learnings), then run make pr again." >&2
   exit 1
 fi
+
+# A note, never a refusal (US-DEV-08): a body that refers to an issue with `Refs #n` and closes no such number links nothing
+# on merge (only Closes moves the board to On dev and closes the issue). The keyword patterns follow claim-lib.mjs (REFERS, CLOSING).
+refs_found="$(printf '%s\n' "$body" | grep -oiE '(^|[^[:alnum:]_])(refs?|references?)[[:space:]]*:?[[:space:]]+#[0-9]+' | grep -oE '#[0-9]+' || true)"
+closes_found="$(printf '%s\n' "$body" | grep -oiE '(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]*:?[[:space:]]+#[0-9]+' | grep -oE '#[0-9]+' || true)"
+while IFS= read -r ref; do
+  [ -n "$ref" ] || continue
+  grep -qxF "$ref" <<<"$closes_found" && continue
+  echo "pr-ready: note: the body only refers to $ref (Refs); write Closes $ref if this PR finishes the issue (make pr-text BODY=<file>)." >&2
+done <<<"$refs_found"
 
 if ! git push; then
   echo "pr-ready: the push failed; the PR is not marked ready and no CI started. Fix the cause, then run make pr${pr:+ PR=$pr} again." >&2

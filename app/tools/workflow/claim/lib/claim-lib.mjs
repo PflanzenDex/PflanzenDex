@@ -13,6 +13,8 @@ export const TRIAGE_LABEL = "needs-triage";
 
 const ID_PATTERN = /\b(US-[A-Z]{2,4}-\d{2}|FR-[A-Z]{2,4}-\d{2}|TE-\d{2})\b/i;
 const CLOSING = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+#(\d+)\b/gi;
+// `Refs #n` names a partial step: it links the PR to the issue without closing it (US-DEV-08).
+const REFERS = /\b(?:refs?|references?)\s*:?\s+#(\d+)\b/gi;
 const UMLAUTS = { ä: "ae", ö: "oe", ü: "ue", ß: "ss" };
 
 /** Story ID such as "US-DEV-08" from a title or branch text, or null. */
@@ -97,16 +99,22 @@ export function scopeOf(issue) {
   return EPIC_SCOPES.includes(epic) ? epic : "dev";
 }
 
-/**
- * Whether a PR belongs to the issue. A closing keyword ("Closes #n") in the body is the link for every PR. A story
- * key in title or branch counts for open PRs only (live work that skipped the keyword): a merged PR that merely
- * mentions the key (a part of a bigger story) must not make the story look taken (#393).
- */
+const numbersIn = (pattern, body) => [...(body ?? "").matchAll(pattern)].map((m) => Number(m[1]));
+const closesIssue = (pr, issue) => numbersIn(CLOSING, pr.body).includes(issue.number);
+const refersToIssue = (pr, issue) => numbersIn(REFERS, pr.body).includes(issue.number);
+
+/** Whether a PR belongs to the issue: a closing keyword links every PR, a story key in title or branch open PRs only (#393). */
 export function prReferences(pr, issue) {
-  const closes = [...(pr.body ?? "").matchAll(CLOSING)].some((m) => Number(m[1]) === issue.number);
-  if (closes) return true;
+  if (closesIssue(pr, issue)) return true;
   const key = claimKey(issue);
   return prState(pr) === "open" && (hasKey(pr.title, key) || hasKey(pr.headRefName, key));
+}
+
+/** Notes, never refusals (US-DEV-08): merged PRs whose body only refers to the issue with Refs #n; a closing PR is a finding. */
+export function priorNotes({ issue, prs }) {
+  return prs
+    .filter((pr) => prState(pr) === "merged" && !closesIssue(pr, issue) && refersToIssue(pr, issue))
+    .map((pr) => `PR #${pr.number} (merged) refers to it (Refs #${issue.number}): ${pr.title}`);
 }
 
 /** What `make claim` prints for a refusal `e` (its findings and message): the triage hint, or the owner hint. */
@@ -122,7 +130,7 @@ export function prState(pr) {
 
 /**
  * All reasons why `issue` must not be claimed (empty list: free). Each finding names where to look.
- * allowPrior waives merged PRs only (a story may need a follow-up PR); never open work.
+ * allowPrior waives merged PRs that close the issue (a story may need a follow-up PR); never open work.
  */
 export function findConflicts({ issue, prs, branches, allowPrior = false }) {
   const key = claimKey(issue);
@@ -175,7 +183,7 @@ export class ClaimRefused extends Error {
   }
 }
 
-/** The claim rules over the data read for one issue (no I/O). Throws ClaimRefused with every finding. */
+/** The claim rules over the data read for one issue (no I/O). Throws ClaimRefused with every finding, else returns { notes }. */
 export function checkFree({ issue, prs, branches, number, login, allowPrior }) {
   if (issue.state !== "OPEN")
     throw new ClaimRefused([{ text: `issue #${number} is ${issue.state}` }]);
@@ -186,4 +194,5 @@ export function checkFree({ issue, prs, branches, number, login, allowPrior }) {
   const branch = branchName(issue);
   if (branches.includes(branch)) findings.push({ text: `branch origin/${branch} exists` });
   if (findings.length) throw new ClaimRefused(findings);
+  return { notes: priorNotes({ issue, prs }) };
 }

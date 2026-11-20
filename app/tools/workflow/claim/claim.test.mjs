@@ -3,6 +3,7 @@
 // origin would show (#1487).
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { claim, ClaimRefused, timeoutsOf } from "./claim.mjs";
 import { PreflightFailed } from "./claim-preflight.mjs";
 import { PUSH_LIMIT } from "./lib/claim-client.mjs";
@@ -81,6 +82,7 @@ function fake(options = {}) {
     board,
   } = { ...DEFAULTS, ...options };
   const calls = [];
+  const drafts = []; // the body text of every draft PR the claim opened (US-DEV-08)
   const limits = []; // every call with the limit option it was given (undefined for the default)
   let views = 0;
   let undoFailuresLeft = undoFails;
@@ -188,9 +190,12 @@ function fake(options = {}) {
     ],
     [
       `gh api -X POST repos/${REPO}/pulls`,
-      prFails
-        ? fail("gh down")
-        : () => JSON.stringify({ html_url: "https://github.com/o/r/pull/9" }),
+      (line) => {
+        // The draft body travels as a file (-F body=@<file>); the file is removed after the call, so it is read here.
+        drafts.push(readFileSync(line.match(/body=@(\S+)/)[1], "utf8"));
+        if (prFails) throw new Error("gh down");
+        return JSON.stringify({ html_url: "https://github.com/o/r/pull/9" });
+      },
     ],
     ["git rev-parse", () => "tree\n"],
     ["git commit-tree", () => "abc123\n"],
@@ -216,6 +221,7 @@ function fake(options = {}) {
   return {
     calls,
     limits,
+    drafts,
     async run(cmd, args, options = {}) {
       const line = `${cmd} ${args.join(" ")}`;
       calls.push(line);
@@ -299,6 +305,53 @@ test("US-DEV-08: an origin branch with the story ID refuses the claim", async ()
 test("US-DEV-08: the exact branch name already on origin refuses the claim", async () => {
   const branches = "sha1\trefs/heads/feat/bes-06-delete-specimen\n";
   await assert.rejects(claim(fake({ branches }), 62, quiet), ClaimRefused);
+});
+
+test("US-DEV-08: the draft PR body starts with Refs #n, carries the Closes hint and never closes the issue by itself", async () => {
+  const client = fake();
+  await claim(client, 62, quiet);
+  assert.equal(client.drafts.length, 1);
+  assert.match(client.drafts[0], /^Refs #62\n/);
+  assert.match(client.drafts[0], /Closes #<n>/, "the hint to switch to Closes");
+  assert.doesNotMatch(client.drafts[0], /Closes #\d/);
+});
+
+test("US-DEV-08: a merged PR that only refers to the issue (Refs #n) does not refuse the claim; its note is logged before the writes", async () => {
+  const logs = [];
+  const prs = [
+    {
+      number: 2180,
+      title: "feat(bes): first part (US-BES-06)",
+      body: "Refs #62",
+      state: "CLOSED",
+      mergedAt: "2026-11-01T00:00:00Z",
+    },
+  ];
+  const result = await claim(fake({ prs }), 62, { log: (l) => logs.push(l), retryDelayMs: 0 });
+  assert.equal(result.branch, "feat/bes-06-delete-specimen");
+  const note = logs.indexOf(
+    "claim: note: PR #2180 (merged) refers to it (Refs #62): feat(bes): first part (US-BES-06)",
+  );
+  assert.ok(note >= 0, "the note is logged");
+  assert.ok(
+    note < logs.findIndex((l) => l.startsWith("claim: assigning #62")),
+    "the note comes before the writes",
+  );
+});
+
+test("US-DEV-08: a merged PR that closes the issue refuses the claim, and ALLOW_PRIOR_WORK=1 waives it", async () => {
+  const prs = [
+    {
+      number: 6,
+      title: "feat(bes): x",
+      body: "Closes #62",
+      state: "CLOSED",
+      mergedAt: "2026-11-01T00:00:00Z",
+    },
+  ];
+  await assert.rejects(claim(fake({ prs }), 62, quiet), /PR #6 \(merged\)/);
+  const result = await claim(fake({ prs }), 62, { ...quiet, env: { ALLOW_PRIOR_WORK: "1" } });
+  assert.equal(result.branch, "feat/bes-06-delete-specimen");
 });
 
 // Every refusal of the claim check, once with the branches from the remote-tracking refs and once with ls-remote (#1487).
