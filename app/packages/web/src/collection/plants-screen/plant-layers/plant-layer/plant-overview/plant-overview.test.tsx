@@ -81,4 +81,10 @@ describe("PlantOverview (NFR-13, US-QS-23)", () => {
     render(<MeasureButton card={CARD} onMeasure={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Messen: Birkenfeige" }).textContent).toBe("Messen");
   });
+
+  it("US-QS-32 the state of a plant is primary content at 16 px, the facts beside it stay secondary at 14 px (SG-TYPE-02)", () => {
+    overview();
+    expect(screen.getByText(/Qualität:/).parentElement?.className).toContain("text-base");
+    expect(screen.getByText(/Ficus benjamina/).className).toContain("text-sm");
+  });
 });

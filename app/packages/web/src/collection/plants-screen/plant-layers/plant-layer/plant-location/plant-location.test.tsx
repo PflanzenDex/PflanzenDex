@@ -50,3 +50,19 @@ describe("US-LIC-01 the plant card names the next step of an unknown light need 
     expect(screen.queryByRole("link", { name: /Lichtbedarf eintragen/ })).toBeNull();
   });
 });
+
+describe("US-QS-32 the location and the light zone are field values at 16 px (SG-TYPE-02)", () => {
+  it("US-QS-32 'Standort' and 'Lichtzone' show their value in the primary text size and colour", () => {
+    render(
+      <MemoryRouter>
+        <PlantLocation card={{ ...CARD, location: "Regal Süd" }} />
+      </MemoryRouter>,
+    );
+    for (const label of [/^Standort:/, /^Lichtzone:/]) {
+      const line = screen.getByText(label);
+      expect(line.className).toContain("text-base");
+      expect(line.className).toContain("text-foreground");
+      expect(line.className).not.toContain("text-sm");
+    }
+  });
+});
