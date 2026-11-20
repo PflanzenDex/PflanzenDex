@@ -39,7 +39,16 @@ All sessions share one account and 5,000 GraphQL points an hour; a failed call r
 
 **The board tracks, the issue describes:** release, type and epic are the project fields Release, Typ and Epic, not milestones or labels. `make board` lists the open items whose Typ is Story or Enabler for one Release (default: the first release in board order with open work). The issue templates add new issues to the board; set Typ, Release, Epic and Priority there.
 
-**Priority:** `make claim` prints a warning when the claimed issue has no project priority, and `make board` flags such items `NO-PRIO` (both only warn). The rule is in `CLAUDE.md` ("Priority of tickets").
+**Priority:** every open story or enabler on the board "PflanzenDex Roadmap" needs the field Priority (P0 critical, P1 high, P2 normal, P3 low). Set it when you create the ticket (`make issue PRIORITY=…`). `make claim` prints a warning when the claimed issue has no project priority, `make board` flags such items `NO-PRIO` (both only warn), and `make status-check` lists all gaps. Rule of thumb (starting values, the owner may overrule per ticket):
+
+| Priority | Which tickets                                                                                                 |
+| -------- | ------------------------------------------------------------------------------------------------------------- |
+| P0       | Release R0 with label `blocker` or `kritischer-pfad`; labels `security`, `nightly`                            |
+| P1       | Everything else in R0 and R1; bugs                                                                            |
+| P2       | R2 and R3; tickets without a release (epics only; chores and process tickets get R2 by the `make issue` rule) |
+| P3       | R4, R5, R6 and stage 2                                                                                        |
+
+The status needs no manual care (see "Project status after the claim" above).
 
 **Branch naming rule:** `<type>/<epic>-<nn>-<slug>`, e.g. `feat/wac-01-messung`. The story ID is written without `US-`/`FR-`, the slug is up to four words of the issue title, lower case, at most 30 characters. Type: `fix` for the board type (field Typ) Bug, `chore` for Enabler, otherwise `feat`; the labels `bug` / `enabler` count only for an issue that is not on the board. Issues without a story ID use `issue-<n>`, e.g. `chore/issue-243-claim-check`. Matching is by this key, so `feat/us-wac-01-x` and `feat/wac-01-y` count as the same story.
 
@@ -146,6 +155,16 @@ The UI gates, Lighthouse, the e2e tests and `make ci` load the workstation so mu
 - Do not commit without being asked; do not change other people's files without a task.
 - Touch shared files (Makefile, `package.json`) as little as possible; put your own logic into your own scripts.
 - Report before writing if a file has changed since it was read.
+
+### The orchestrating session (owner decisions 2026-11-09 and 2026-11-14, issues 1747 and 2099)
+
+The roles are indexed in `CLAUDE.md` ("Agent sessions and models"); each subagent's rules are in its `.claude/agents/<name>.md`. The orchestrating session (the main session, Opus at effort medium) has no definition file; its rules are these:
+
+- It picks and claims tickets (`make claim`, `make worktree`), sets the PR title and starts one `ticket-lead` per ticket with only the ticket's facts. When it works a ticket itself, it takes the ticket-lead role and follows `.claude/agents/ticket-lead.md`.
+- One lead runs one implementer. The orchestrator adds implementers by the machine's resources (CPU, free RAM, running heavy jobs); heavy work waits on `make heavy-lock` (see "One heavy job at a time").
+- No hard cap on open PRs; with three open PRs that are all drafts, it finishes them before claiming more.
+- It takes the owner's decisions and relays them to the leads, and spot-checks each lead's report against the merged head on `dev`.
+- It works a batch of tickets this way. At a natural break (a batch is done, or the context grows long) it suggests `/clear` to the owner, once every open PR's Handoff carries the state, open questions and owner decisions.
 
 ## Short output for agents (US-DEV-12)
 
