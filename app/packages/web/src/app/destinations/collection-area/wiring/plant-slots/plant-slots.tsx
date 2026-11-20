@@ -1,5 +1,5 @@
 import type { PlantSlots } from "@/collection";
-import { PlantCare, PlantCourse, PlantGrowth } from "@/care";
+import { PlantCare, PlantCourse, PlantGrowth, PlantGrowthSkeleton } from "@/care";
 import { WaterAction } from "@/monitoring";
 
 type Token = () => Promise<string | undefined>;
@@ -12,6 +12,8 @@ type Token = () => Promise<string | undefined>;
 export function plantSlots(api: string, token: Token): PlantSlots {
   return {
     growth: (card) => <PlantGrowth api={api} token={token} specimenId={card.id} />,
+    // The growth line keeps the height of its loaded line while its chunk loads (US-QS-32, issue 2318).
+    growthFallback: (label) => <PlantGrowthSkeleton label={label} />,
     history: (card, ctx) => (
       <PlantCourse api={api} token={token} specimenId={card.id} onMeasure={ctx.measure} />
     ),

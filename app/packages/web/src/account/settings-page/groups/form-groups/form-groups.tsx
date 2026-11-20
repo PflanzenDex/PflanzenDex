@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useState, type FormEvent, type ReactNode } from "react";
 import { type Control, type Path } from "react-hook-form";
 import { Button } from "@/shared/ui/button/button";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
+import { BUSY_LOOK } from "@/shared/lib/utils";
 import { deviceTimeZone, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
 import { Banner } from "@/shared/patterns/states/banner/banner";
@@ -11,7 +12,12 @@ import { toProfile, toProfileFields, type ProfileFields as Fields } from "../../
 import { fixText, groupSchema } from "./group-rules";
 import { BufferField, NameFields, ThresholdsField } from "../../../settings-fields/settings-fields";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { useAnnounce } from "@/shared/platform/announcer/context";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./form-groups.de.json";
 import type { ProfileSaver } from "../profile-saver";
+
+const t = texts(table);
 
 type Key = "displayName" | "timeZone" | "replenishBuffer" | "positionThresholds";
 
@@ -32,13 +38,24 @@ function sameAsSaved(next: AccountProfile, keys: readonly Key[], saved: AccountP
   return keys.every((k) => JSON.stringify(shown[k]) === JSON.stringify(stored[k]));
 }
 
-/** The form of one group and its save: the group's fields go onto the stored profile; a refusal marks them (P-10). */
-function useGroupForm(saver: ProfileSaver, keys: readonly Key[], saveAlways: boolean) {
+/**
+ * The form of one group and its save: the group's fields go onto the stored profile; a refusal marks them (P-10). The
+ * result of a save is said by the announcer and shows nowhere else: the saved value is the result (SG-FEED-01, SG-FEED-05).
+ * While the group is `inactive` (it saves, or it has nothing to save) a submit sends nothing and says nothing. The
+ * button is `aria-disabled`, not `disabled`, so it keeps the focus (PF-045); Enter in a field submits the form too, so
+ * the guard sits here and not on the button.
+ */
+function useGroupForm(
+  saver: ProfileSaver,
+  keys: readonly Key[],
+  saveAlways: boolean,
+  fromDevice: boolean,
+) {
   const form = useFieldForm<Fields>({
     resolver: zodResolver(groupSchema(saver.saved.displayName)),
     defaultValues: toProfileFields(saver.saved, deviceTimeZone()),
   });
-  const [message, setMessage] = useState<string | null>(null);
+  const announce = useAnnounce();
   const [error, setError] = useState<ApiError | null>(null);
   const fieldsOf = useCallback(
     (e: ApiError) =>
@@ -47,75 +64,78 @@ function useGroupForm(saver: ProfileSaver, keys: readonly Key[], saveAlways: boo
   );
   const { alertText, alertRef } = useServerRefusal(error, form.setError, fieldsOf, fixText);
 
-  const send = form.handleSubmit(
+  // A group that saves on change has nothing to save while its form is clean (the device's zone counts as to be saved).
+  const nothingToSave = !saveAlways && !(form.formState.isDirty || fromDevice);
+  const inactive = saver.saving || nothingToSave;
+
+  const submit = form.handleSubmit(
     async (values) => {
       const own = Object.fromEntries(keys.map((k) => [k, values[k]])) as Partial<Fields>;
       const next = toProfile({ ...toProfileFields(saver.saved, null), ...own }, saver.saved);
       if (saveAlways && sameAsSaved(next, keys, saver.saved)) {
-        setMessage(UNCHANGED);
+        announce?.announce(UNCHANGED);
         return;
       }
       const r = await saver.save(next);
       if (!r) return;
       setError(r.ok ? null : r.error);
-      setMessage(r.ok ? "Einstellungen gespeichert." : null);
-      if (r.ok) form.reset(toProfileFields(r.value, null));
+      if (r.ok) {
+        announce?.announce(t("saved"));
+        form.reset(toProfileFields(r.value, null));
+      }
     },
     () => {
-      if (saveAlways) setMessage(INVALID);
+      if (saveAlways) announce?.announce(INVALID);
     },
   );
-  return { form, message, setMessage, alertText, alertRef, send };
+  const send = (event: FormEvent<HTMLFormElement>) => {
+    if (inactive) return;
+    return submit(event);
+  };
+  return { form, alertText, alertRef, send, inactive };
 }
 
 /**
  * One group of the settings with its own "Speichern" (US-QS-17): the form holds the whole profile, but only the
  * fields of the group are taken over, onto the stored profile (the API saves the profile as a whole). A refusal that
- * names one of the group's fields marks it; any other refusal is an alert (P-10); the input stays.
+ * names one of the group's fields marks it; any other refusal is an alert (P-10); the input stays. The button is
+ * `aria-disabled` while the group is inactive, never `disabled`, so the focus stays on it (US-QS-32, PF-045).
  */
 function GroupForm(props: {
   label: string;
   keys: readonly Key[];
   saver: ProfileSaver;
   fromDevice?: boolean;
-  /** "Speichern" stays enabled; an unchanged save answers with a message and sends nothing (US-LIC-03, #1022). */
+  /** "Speichern" stays enabled; an unchanged save is announced and sends nothing (US-LIC-03, #1022). */
   saveAlways?: boolean;
   children: (control: Control<Fields>) => ReactNode;
 }) {
   const { saver, keys } = props;
   const fromDevice = props.fromDevice === true;
   const saveAlways = props.saveAlways === true;
-  const { form, message, setMessage, alertText, alertRef, send } = useGroupForm(
+  const { form, alertText, alertRef, send, inactive } = useGroupForm(
     saver,
     keys,
     saveAlways,
+    fromDevice,
   );
   // Typed input that is not saved asks before the layer of the group closes (US-QS-32).
   useUnsavedInput(form.formState.isDirty);
 
   return (
     <Form {...form}>
-      <FormRoot
-        aria-label={props.label}
-        onSubmit={send}
-        onChange={() => setMessage(null)}
-        className="flex flex-col gap-4"
-      >
+      <FormRoot aria-label={props.label} onSubmit={send} className="flex flex-col gap-4">
         {props.children(form.control)}
         {alertText !== null && (
           <Banner variant="error" tabIndex={-1} ref={alertRef}>
             {alertText}
           </Banner>
         )}
-        {message && (
-          <p role="status" className="rounded-lg border border-border p-3">
-            {message}
-          </p>
-        )}
         <Button
           type="submit"
           size="touch"
-          disabled={saver.saving || (!saveAlways && !(form.formState.isDirty || fromDevice))}
+          aria-disabled={inactive || undefined}
+          className={BUSY_LOOK}
           needsNetwork
         >
           {saver.saving ? "Speichert …" : "Speichern"}
