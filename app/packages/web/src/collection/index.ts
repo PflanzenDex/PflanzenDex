@@ -63,6 +63,8 @@ export { createStart } from "./specimens/model/create-start";
 export type { CreateFields } from "./specimens/model/schemas";
 export { createSchema } from "./specimens/model/schemas";
 export type { PlantSlots } from "./plants-screen/plant-layers/layer-ids";
+/** The layer of the archive of the Sammlung (US-BES-07): its address is `?sheet=<ARCHIVE_LAYER>`, read by the swap requests. */
+export { ARCHIVE_LAYER } from "./plants-screen/plant-layers/layer-ids";
 export { VIEW_LAYER, ViewLayer } from "./plants-screen/plant-layers/view-layer/view-layer";
 export {
   formText,

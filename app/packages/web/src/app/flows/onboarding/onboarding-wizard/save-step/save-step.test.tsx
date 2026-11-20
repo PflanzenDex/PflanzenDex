@@ -92,7 +92,7 @@ const view = () =>
   );
 
 async function toSave() {
-  await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Monstera");
+  await userEvent.type(await screen.findByLabelText("Art"), "Monstera");
   await userEvent.click(await screen.findByRole("button", { name: /Monstera deliciosa/ }));
   await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
 }

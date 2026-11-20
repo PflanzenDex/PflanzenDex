@@ -147,9 +147,23 @@ describe("US-WUN-01 page of the candidate list", () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />);
     const btn = await screen.findByRole("button", { name: /^1\. Korbmarante/ });
-    const label = btn.getAttribute("aria-label") ?? "";
+    // The name is the visible text in its visible order (no aria-label that could differ from it).
+    expect(btn.hasAttribute("aria-label")).toBe(false);
+    const label = btn.textContent ?? "";
     for (const text of ["1. Korbmarante Calathea orbifolia", "Fenster 3 — 1 Pflanze", "Mittel"])
       expect(label).toContain(text);
+  });
+
+  it("US-QS-32 each wish is one object row in one group, with the drawn placeholder and its actions beside it", async () => {
+    fakeServer(list([candidate({ image: null })]));
+    view(<WishlistPage api="http://api" token={token} />);
+    const group = await screen.findByRole("list", { name: "Offene Kandidaten" });
+    expect(group.className).toContain("[&>li:first-child]:rounded-t-card");
+    const item = within(group).getAllByRole("listitem")[0] as HTMLElement;
+    expect(item.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
+    expect(
+      within(item).getByRole("button", { name: "Gekauft: Korbmarante (Calathea orbifolia)" }),
+    ).toBeTruthy();
   });
 
   it("US-WUN-01 · US-QS-22 · issue 1154 the candidates page by the free height below the controls", async () => {

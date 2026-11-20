@@ -178,11 +178,14 @@ describe("US-QS-23 Pflege", () => {
   const phase: PhasesRow = {
     specimenId: "e1",
     name: "Aloe",
+    marker: null,
+    speciesName: "Aloe",
     speciesId: "a1",
     phase: "dormancy",
     locationId: "s1",
     targetLocationId: "s2",
     nextChange: null,
+    photo: null,
   };
   const base = {
     "GET /treatments": () =>

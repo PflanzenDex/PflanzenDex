@@ -64,6 +64,8 @@ export const GROUPS_1: Config<string, string>["classGroups"] = {
   inset: [{ inset: scaleInset() }],
   "inset-x": [{ "inset-x": scaleInset() }],
   "inset-y": [{ "inset-y": scaleInset() }],
+  // Logical inset at the start of a field: the search icon sits there (SG-SEARCH-01, US-QS-32, issue 1960).
+  start: [{ "inset-s": scaleInset(), start: scaleInset() }],
   // Logical inset at the end of a field: the unit of Input sits there (US-QS-32).
   end: [{ "inset-e": scaleInset(), end: scaleInset() }],
   top: [{ top: scaleInset() }],

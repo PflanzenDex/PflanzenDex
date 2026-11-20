@@ -87,7 +87,7 @@ const view = () =>
     </MemoryRouter>,
   );
 async function toSave() {
-  await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Monstera");
+  await userEvent.type(await screen.findByLabelText("Art"), "Monstera");
   await userEvent.click(await screen.findByRole("button", { name: /Monstera deliciosa/ }));
   await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
 }
@@ -154,7 +154,7 @@ describe("US-ONB-01 a further plant uses the two steps of the first plant (#896)
     await toSave();
     await userEvent.click(await screen.findByRole("button", { name: "Pflanze speichern" }));
     await userEvent.click(await screen.findByRole("button", { name: "Noch eine Pflanze" }));
-    expect(await screen.findByLabelText("Name der Pflanze")).toBeTruthy();
+    expect(await screen.findByLabelText("Art")).toBeTruthy();
   });
 });
 
@@ -183,7 +183,7 @@ describe("US-ONB-01 · US-BES-04 the first-plant steps (issue 1045)", () => {
   it("US-ONB-01 the chosen species is marked by a check mark and aria-pressed, not by colour alone", async () => {
     server();
     view();
-    await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Monstera");
+    await userEvent.type(await screen.findByLabelText("Art"), "Monstera");
     const hit = await screen.findByRole("button", { name: /Monstera deliciosa/ });
     expect(hit.getAttribute("aria-pressed")).toBe("false");
     await userEvent.click(hit);

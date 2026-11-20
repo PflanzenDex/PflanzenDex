@@ -4,10 +4,11 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import config from "../../../../config/lint/layout.config.mjs";
 import { compareBaseline, toBaseline } from "./layout-baseline.mjs";
 import { findLayout } from "./layout-rules.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const app = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 const root = path.resolve(app, "..");
@@ -96,4 +97,4 @@ function main() {
   console.log(`check-layout: OK (${findings.length} baselined directories)`);
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) main();
+if (isEntryPoint(import.meta.url)) main();

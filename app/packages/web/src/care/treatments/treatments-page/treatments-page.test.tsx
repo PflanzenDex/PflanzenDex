@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
@@ -321,7 +321,10 @@ function doneServer(
         const refused = complete(id);
         if (refused) return refused;
         rows = rows.filter((r) => r.id !== id);
-        return response(200, { treatment: { id, done: true, doneAt: "2026-10-03" } });
+        return response(200, {
+          treatment: { id, done: true, doneAt: "2026-10-03" },
+          changed: true,
+        });
       }
       if (path === "/treatments/history") return response(200, { treatments: history });
       return undefined;
@@ -351,36 +354,42 @@ describe("US-BEH-03 Behandlung abhaken", () => {
     expect(buttons[0]?.getAttribute("aria-label")).toBe("Grund a bei Aloe als erledigt abhaken");
   });
 
-  it("US-BEH-03 a tap sends the id with the device's time zone and an Idempotency-Key, the row disappears and the page says so", async () => {
+  it("US-BEH-03 a tap sends the id with the device's time zone and an Idempotency-Key; the row stays in its place as 'Erledigt · Rückgängig'", async () => {
     const { ticks } = doneServer();
     const user = userEvent.setup();
     show();
     await user.click(
       await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
     );
-    expect((await screen.findByText(/als erledigt eingetragen/)).textContent ?? "").toContain(
-      "Aloe",
-    );
+    const undo = await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" });
+    expect(undo.closest("p")?.textContent).toBe("Erledigt · Rückgängig");
     expect(ticks).toHaveLength(1);
     expect(ticks[0]?.path).toBe("/treatments/a/complete");
     expect(ticks[0]?.body).toEqual({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
     expect(ticks[0]?.key).toBeTruthy();
     const list = screen.getByRole("list", { name: "Offene Behandlungen" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(1);
-    expect(within(list).queryByText("Aloe")).toBeNull();
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(list).getByText("Aloe")).toBeTruthy();
   });
 
-  it("US-BEH-03 after the last one is done the list says there are none and what to do next (P-09)", async () => {
+  it("US-BEH-03 after the last one is done the list says there are none once the 8 s undo window has ended (P-09)", async () => {
     doneServer();
-    const user = userEvent.setup();
-    show();
-    await user.click(
-      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
-    );
-    await user.click(
-      await screen.findByRole("button", { name: "Grund b bei Bogenhanf als erledigt abhaken" }),
-    );
-    expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      show();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+      );
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Grund b bei Bogenhanf als erledigt abhaken" }),
+      );
+      await screen.findByRole("button", { name: "Rückgängig: Grund b bei Bogenhanf" });
+      expect(screen.queryByText(/^Keine offenen Behandlungen\.$/)).toBeNull();
+      act(() => vi.advanceTimersByTime(8000));
+      expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("US-BEH-03 a double tap sends one request", async () => {
@@ -391,7 +400,7 @@ describe("US-BEH-03 Behandlung abhaken", () => {
       name: "Grund a bei Aloe als erledigt abhaken",
     });
     await user.dblClick(button);
-    await screen.findByText(/als erledigt eingetragen/);
+    await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" });
     expect(ticks).toHaveLength(1);
   });
 
@@ -480,16 +489,15 @@ describe("US-QS-10 Behandlung abhaken wird angesagt", () => {
     );
   const heard = () => document.querySelector("[aria-live=polite]")?.textContent?.trim();
 
-  it("US-QS-10 the result of ticking off is a status message that a screen reader reads, and nothing else takes the focus", async () => {
+  it("US-QS-10 the result of ticking off is said by the live region; the undo row takes the focus the button had, and nothing else does", async () => {
     doneServer();
     const user = userEvent.setup();
-    show();
+    withAnnouncer();
     await user.click(await tickButton());
-    const status = await screen.findByRole("status");
-    expect(status.textContent).toContain("als erledigt eingetragen");
-    // The status is a live region: it never takes the focus (4.1.3).
-    expect(document.activeElement).not.toBe(status);
-    expect(status.closest("[tabindex]")).toBeNull();
+    await waitFor(() => expect(heard()).toBe("„Aloe“: „Grund a“ als erledigt eingetragen."));
+    const undo = await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" });
+    expect(document.activeElement).toBe(undo);
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("US-QS-10 offline a tick-off is buffered, the row is hidden, the state is text and announced, and it is delivered once when online", async () => {
@@ -624,5 +632,46 @@ describe("US-QS-15 the open treatments fit a layer", () => {
     const done = screen.getByRole("button", { name: "Läuse bei Aloe als erledigt abhaken" });
     expect(done.className).toContain("bg-accent");
     expect(done.className).not.toContain("bg-primary");
+  });
+});
+
+describe("US-QS-32 the undo belongs to the tick-off that completed the treatment", () => {
+  it("US-QS-32 a tap on a treatment another device already ticked off holds nothing: no undo row", async () => {
+    const { ticks } = doneServer(() =>
+      response(200, { treatment: { id: "a", done: true, doneAt: "2026-10-02" }, changed: false }),
+    );
+    const user = userEvent.setup();
+    show();
+    await user.click(
+      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    );
+    await vi.waitFor(() => expect(ticks).toHaveLength(1));
+    await act(() => new Promise((done) => setTimeout(done, 30)));
+    expect(screen.queryByRole("button", { name: /^Rückgängig/ })).toBeNull();
+  });
+
+  it("US-QS-32 a second tap while a tick-off is in flight does not move the undo to the other row", async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    const { ticks } = doneServer(async () => {
+      await gate;
+      return response(200, {
+        treatment: { id: "a", done: true, doneAt: "2026-10-03" },
+        changed: true,
+      });
+    });
+    show();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Grund b bei Bogenhanf als erledigt abhaken" }),
+    );
+    release();
+    await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" });
+    expect(screen.queryByRole("button", { name: "Rückgängig: Grund b bei Bogenhanf" })).toBeNull();
+    expect(ticks).toHaveLength(1);
   });
 });

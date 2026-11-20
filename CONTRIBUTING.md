@@ -2,6 +2,8 @@
 
 Short version for humans and agents. The rules themselves live in the specs; this file only shows the path.
 
+**Platforms:** the tooling runs on macOS and Linux (CI runs on Ubuntu). It needs bash, GNU make and `flock` (util-linux); on macOS put the Homebrew GNU tools first on `PATH`. On Windows, work inside WSL 2: native Windows is not supported and not tested (owner decision 2026-11-20, issue 2310).
+
 1. **Spec first.** Every change belongs to a story or requirement in `docs/specs/product/` (start with `README.md`). If it is missing, extend the spec first. Everything is written in English (specs, docs, code, commits, PRs); only the texts users see in the app are German.
 2. **One task, one branch, one worktree** (E-13, US-DEV-08): `make worktree BRANCH=feat/pha-02-care-phase`. Branches start from `dev`.
    Create issues with `make issue` (type, epic and priority labels and board fields, Release included unless `RELEASE=` overrides the rule; FR-DEV-10): a type or epic label outside `app/config/project/issue-taxonomy.json` is refused, and an issue without both gets `needs-triage`. If the board cannot be reached, the issue is still created: the output names the board fields that are not set (`docs/guides/operations/parallel-work.md`, "The GraphQL budget").

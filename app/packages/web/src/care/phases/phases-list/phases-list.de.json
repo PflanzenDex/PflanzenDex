@@ -1,4 +1,19 @@
 {
   "none": "Noch keine Pflanze hat eine Phase.",
-  "addPlant": "Pflanze anlegen"
+  "addPlant": "Pflanze anlegen",
+  "switch": "Umstellen",
+  "switchLabel": "Umstellen: {name}",
+  "switchHint": "Stelle die Pflanze an den Soll-Standort und tippe dann „Umstellen“.",
+  "moreHints": "+{count} weitere",
+  "hintReview": "Prüfe den Ruhephasen-Zeitraum im Pflegeprofil der Art.",
+  "hintLocation": "Weise der Pflanze unter „Hinweise“ einen Standort zu.",
+  "hintTarget": "Wähle im Pflegeprofil der Art einen Soll-Standort für die {phase}.",
+  "deviates": "Weicht ab",
+  "locationMissing": "Standort fehlt",
+  "phaseLine": "Pflegephase heute: {phase}",
+  "place": "Standort: {place}",
+  "targetPlace": "Soll-Standort: {place}",
+  "deviationFull": "Weicht ab: steht am Standort „{here}“, Soll ist „{target}“.",
+  "movedResult": "Umgestellt",
+  "groupSubject": "{count} Pflanzen nach {place}"
 }

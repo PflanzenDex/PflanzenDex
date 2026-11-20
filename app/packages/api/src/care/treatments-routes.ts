@@ -3,6 +3,7 @@ import {
   treatmentHistory,
   treatmentOpenList,
   treatmentPlan,
+  treatmentReopen,
 } from "@pflanzendex/core";
 import { IdempotencyPostgres, SpecimenPostgres, TreatmentsPostgres } from "@pflanzendex/db";
 import { Hono } from "hono";
@@ -34,6 +35,12 @@ export function treatmentRoutes(pool: Pool, opt: TreatmentOptions = {}): Hono<Au
     specimens: new SpecimenPostgres(pool),
     clock: opt.clock ?? (() => new Date()),
   });
+  // The undo of "Erledigt" (US-QS-32): the same ports and clock as the tick-off it reverts.
+  const reopen = treatmentReopen({
+    treatments: new TreatmentsPostgres(pool),
+    specimens: new SpecimenPostgres(pool),
+    clock: opt.clock ?? (() => new Date()),
+  });
   const deps = { idempotency: new IdempotencyPostgres(pool) };
   const list = {
     specimens: new SpecimenPostgres(pool),
@@ -56,6 +63,9 @@ export function treatmentRoutes(pool: Pool, opt: TreatmentOptions = {}): Hono<Au
   });
   routes.post("/treatments/:id/complete", async (c) =>
     write(c, deps, complete, { input: { ...(await body(c)), id: c.req.param("id") } }),
+  );
+  routes.post("/treatments/:id/reopen", async (c) =>
+    write(c, deps, reopen, { input: { ...(await body(c)), id: c.req.param("id") } }),
   );
   routes.post("/treatments", async (c) =>
     write(c, deps, plan, { input: await body(c), success: 201 }),

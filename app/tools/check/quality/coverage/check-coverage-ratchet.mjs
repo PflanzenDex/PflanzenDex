@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { MODULE_CONFIG } from "../../../../config/lint/modules.config.mjs";
 import { coverageByModule } from "../../code/modules/module-report.mjs";
 import { UNMEASURED_ENV, unmeasuredFrom } from "./coverage-config.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 export const METRICS = ["lines", "branches", "functions", "statements"];
 export const RAISE_HINT_GAP = 2;
@@ -95,4 +96,4 @@ function main() {
   console.log("coverage ratchet: ok");
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main();
+if (isEntryPoint(import.meta.url)) main();

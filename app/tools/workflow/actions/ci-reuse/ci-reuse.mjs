@@ -8,7 +8,7 @@
 // GITHUB_RUN_ID and GITHUB_OUTPUT set. Writes `<job name>=success|none` per job, and `superseded=true` when superseded.
 // The check-run evidence that `make ci-wait` judges (evidenceOf, scanRowsOf, US-DEV-13) is here too, next to runIdOf.
 import { appendFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { isEntryPoint } from "../../../check/shared/entry-point.mjs";
 
 const POLL_SECONDS = 30;
 // Each `app-*` job has a 15 minute timeout; a little more covers queueing (starting value, assumption).
@@ -181,4 +181,4 @@ async function main(names) {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) await main(process.argv.slice(2));
+if (isEntryPoint(import.meta.url)) await main(process.argv.slice(2));

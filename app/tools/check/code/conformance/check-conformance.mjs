@@ -26,6 +26,7 @@ import {
   parseAllowlist,
   targetFindings,
 } from "./conformance-rules.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 const allowlistFile = path.join(appRoot, "config/gates/conformance-allowlist.json");
@@ -182,7 +183,7 @@ async function main() {
   if (!report) process.exit(1);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main().catch((e) => {
     console.error(e);
     process.exit(1);

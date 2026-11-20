@@ -65,6 +65,14 @@ export const LEGACY_SPECIES_PATH = "/species";
 export const CATALOG_ADDRESS = `${PATHS.discover}?view=catalog`;
 export const PROFILE_BASE = `${PATHS.discover}/species`;
 export const profileAddress = (id: string) => `${PROFILE_BASE}/${encodeURIComponent(id)}`;
+/** The layer of one plant is named after the plant: `plant-<id>` (US-QS-19); the plant rows open it, and so does every link to it. */
+export const plantLayerId = (id: string): string => `plant-${id}`;
+/**
+ * The address of one plant: its layer in the plants of the Sammlung, `?view=plants&sheet=plant-<id>`, the id URI-encoded. A row
+ * or a link that names a plant opens it with this address (US-QS-32, SG-NAV-04); a direct link reads the plant by its id.
+ */
+export const plantAddress = (id: string): string =>
+  `${PATHS.collection}?view=plants&sheet=${encodeURIComponent(plantLayerId(id))}`;
 
 /** The former addresses of "Wunschliste" and "Artenvergleich": the third mode and an arrangement of the species of the Sammlung (US-QS-14). */
 export const LEGACY_WISHLIST_PATH = "/wishlist";

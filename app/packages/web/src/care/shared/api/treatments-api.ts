@@ -72,7 +72,7 @@ export async function completeTreatment(
   token: string,
   id: string,
   fetchFn: FetchFn = fetch,
-): Promise<Response<TreatmentRow>> {
+): Promise<Response<{ treatment: TreatmentRow; changed: boolean }>> {
   const timeZone = currentTimeZone();
   const r = await createWrite(api, token, fetchFn)(
     "POST",
@@ -81,7 +81,7 @@ export async function completeTreatment(
       timeZone,
     },
   );
-  return r.ok ? { ok: true, value: (r.value as { treatment: TreatmentRow }).treatment } : r;
+  return r.ok ? { ok: true, value: r.value as { treatment: TreatmentRow; changed: boolean } } : r;
 }
 
 /** The done treatments of one specimen, latest first (history, US-BEH-03). */
@@ -112,4 +112,22 @@ export async function loadOpenTreatments(
     token,
   );
   return r.ok ? { ok: true, value: r.value.treatments } : r;
+}
+
+/**
+ * The undo of "Erledigt" (US-QS-32): opens the treatment again when it was ticked off today in the device's time zone
+ * (NFR-08); a tick-off of another day is refused by its code. The repeat-guard key is created per call.
+ */
+export async function reopenTreatment(
+  api: string,
+  token: string,
+  id: string,
+  fetchFn: FetchFn = fetch,
+): Promise<Response<TreatmentRow>> {
+  const r = await createWrite(api, token, fetchFn)(
+    "POST",
+    `/treatments/${encodeURIComponent(id)}/reopen`,
+    { timeZone: currentTimeZone() },
+  );
+  return r.ok ? { ok: true, value: (r.value as { treatment: TreatmentRow }).treatment } : r;
 }

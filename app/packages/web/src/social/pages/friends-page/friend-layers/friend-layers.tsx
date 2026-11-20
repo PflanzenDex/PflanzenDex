@@ -1,4 +1,4 @@
-import { answerFriendRequest, endFriendship, type FriendsData } from "../../../api/friends-api";
+import { answerFriendRequest, type FriendsData } from "../../../api/friends-api";
 import { FeedBlock } from "../../../feed/feed-block/feed-block";
 import { FriendsBanner } from "../../../feed/friends-banner/friends-banner";
 import { FriendList } from "../../../parts/friend-list/friend-list";
@@ -22,7 +22,6 @@ export function ListLayers(props: {
 }) {
   const { api, token, data } = props;
   const answer = useWriteAction(token, props.onWritten);
-  const ending = useWriteAction(token, props.onWritten);
   return (
     <>
       <Layer id="requests" title={tx("layers.requests")}>
@@ -56,17 +55,7 @@ export function ListLayers(props: {
         </div>
       </Layer>
       <Layer id="friends" title={tx("layers.friends")}>
-        <Outcome message={ending.message} error={ending.error} />
-        <FriendList
-          friends={data.friends}
-          busy={ending.running}
-          onEnd={(f) =>
-            void ending.run(
-              (t) => endFriendship(api, t, f.id),
-              tx("friends.ended", { name: nameOf(f.name) }),
-            )
-          }
-        />
+        <FriendList friends={data.friends} />
       </Layer>
       <Layer id="sharing" title={tx("layers.sharing")}>
         <SharingSection data={data} api={api} token={token} onWritten={props.onWritten} />

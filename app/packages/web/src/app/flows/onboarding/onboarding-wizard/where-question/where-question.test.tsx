@@ -146,7 +146,7 @@ const view = () =>
 
 /** From the species to the save step; the save is enabled once the zones are loaded (the zone step, issue 2098). */
 async function toSaveStep() {
-  await userEvent.type(await screen.findByLabelText("Name der Pflanze"), "Monstera");
+  await userEvent.type(await screen.findByLabelText("Art"), "Monstera");
   await userEvent.click(await screen.findByRole("button", { name: /Monstera deliciosa/ }));
   await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
   await waitFor(() =>

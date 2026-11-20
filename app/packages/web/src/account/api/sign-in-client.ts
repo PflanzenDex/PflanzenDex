@@ -1,6 +1,7 @@
 import type { UserManager, User } from "oidc-client-ts";
 import { runWithoutEndingStart } from "../../shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { addressFromState, oidcSettings, returnAddress, returnState } from "./account-api";
+import { shareSilentSignin } from "./renewal";
 
 const env = import.meta.env as Record<string, string | undefined>;
 
@@ -10,11 +11,14 @@ const library = import("oidc-client-ts");
 
 export async function newManager(): Promise<UserManager> {
   const { UserManager: Manager, WebStorageStateStore } = await library;
-  return new Manager({
+  const manager = new Manager({
     ...oidcSettings(env, window.location.origin),
     // The sign-in stays on the device (US-ACC-01); revocable via "sign out on all devices".
     userStore: new WebStorageStateStore({ store: window.localStorage }),
   });
+  // The renewal runs once for all tabs and installed apps of the origin, not once per tab (issue 2274, renewal.ts).
+  manager.signinSilent = shareSilentSignin(manager);
+  return manager;
 }
 
 /** The key prefix under which the sign-in library keeps a signed-in user in `localStorage` (oidc-client-ts). */

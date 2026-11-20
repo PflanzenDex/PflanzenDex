@@ -8,6 +8,7 @@ import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields"
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import { FormNotices } from "@/shared/patterns/elements/form-notices/form-notices";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { texts } from "@/shared/lib/text-rules/texts";
 import type { ApiError } from "../../shared/data";
 import { SpeciesPick } from "./species-pick/species-pick";
 import { ChoiceFields, GermanNameField, ImageFields, NameField } from "./wish-fields/wish-fields";
@@ -18,7 +19,10 @@ import {
   wishSchema,
   type WishFields,
 } from "../schemas";
+import table from "../wishlist.de.json";
 import type { WishInput } from "../wishlist-api";
+
+const ui = texts(table);
 
 /**
  * Every optional field behind "Mehr Angaben": a value or a refusal opens it (P-10). The required name is not among them:
@@ -55,6 +59,11 @@ function FieldGroups(props: {
           form.setValue("name", h.latinName, { shouldValidate: true, shouldDirty: true });
           form.setValue("german", h.germanName ?? "");
           setChosen(h.germanName ? `${h.latinName} (${h.germanName})` : h.latinName);
+        }}
+        onOwnName={(text) => {
+          // The searched text is the wish's own name: the name field takes it and the keeper types on there (issue 1964).
+          form.setValue("name", text, { shouldValidate: true, shouldDirty: true });
+          form.setFocus("name");
         }}
       />
       <NameField control={form.control} />
@@ -95,7 +104,7 @@ export function WishForm(props: {
   });
   return (
     // The layer "Neuer Wunsch" already names the form, so the section has no heading of its own (US-QS-24, issue 1032).
-    <section aria-label="Wunsch erfassen" className="mt-7 flex flex-col gap-3">
+    <section aria-label={ui("form.section")} className="mt-7 flex flex-col gap-3">
       <FormNotices
         message={refused ? null : props.message}
         alertText={alertText}
@@ -107,7 +116,7 @@ export function WishForm(props: {
           {/* Sticky: the form scrolls inside the layer while the save button stays in view (US-QS-15). */}
           <div className="sticky bottom-0 bg-card py-2">
             <Button type="submit" size="touch" className="w-full" disabled={pending}>
-              {pending ? "Speichert …" : "Wunsch speichern"}
+              {pending ? ui("form.saving") : ui("form.save")}
             </Button>
           </div>
         </FormRoot>

@@ -1,7 +1,14 @@
-import type { ReminderRow, ReminderStatus } from "@pflanzendex/core";
+import type { Occasion, ReminderOccasion, ReminderRow, ReminderStatus } from "@pflanzendex/core";
 import { useCallback } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
+import {
+  EXCHANGE_PATH,
+  PATHS,
+  PHASES_ADDRESS,
+  todayAddress,
+} from "@/shared/patterns/navigation/navigation/navigation";
 import { LoadFrame } from "../../shared/data";
 import { loadInbox } from "../api/reminders-api";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -10,12 +17,29 @@ import { InboxSkeleton } from "./inbox.skeleton";
 
 const ui = texts(table);
 
-const STATUS_TEXT: Record<ReminderStatus, string> = {
-  none: "Nichts zu tun",
-  pending: "Wird zugestellt",
-  in_app: "Nur im Posteingang",
-  delivered: "Zugestellt",
-  failed: "Zustellung fehlgeschlagen",
+const STATUS_TEXT: Record<
+  ReminderStatus,
+  "status.none" | "status.pending" | "status.inApp" | "status.delivered" | "status.failed"
+> = {
+  none: "status.none",
+  pending: "status.pending",
+  in_app: "status.inApp",
+  delivered: "status.delivered",
+  failed: "status.failed",
+};
+
+/**
+ * Where the step of each occasion is done (US-QS-32): the Heute list of its topic, or the place of its phase, its devices
+ * and its plants. A treatment opens the treatments of "Heute", where the appointment is ticked off.
+ */
+const OPENS: Record<ReminderOccasion, string> = {
+  treatment: todayAddress("treatments"),
+  watering: todayAddress("watering"),
+  phase: PHASES_ADDRESS,
+  measurement: `${PATHS.collection}?view=plants`,
+  equipment: `${PATHS.collection}?view=equipment`,
+  swap: EXCHANGE_PATH,
+  friends: PATHS.friends,
 };
 
 /** Days per page inside the layer (starting value, assumption; US-QS-15). */
@@ -27,28 +51,47 @@ const dayText = (localDate: string) =>
     new Date(`${localDate}T00:00:00Z`),
   );
 
+/**
+ * One day of the inbox (US-QS-32): its entries are one flat group of rows, each row the entry's text and the link to where
+ * its step is done. The step is said once under the group, not under every entry.
+ */
+/** The entries of one day grouped by occasion, in the order each occasion first appears (US-QS-32). */
+function byOccasion(items: readonly Occasion[]): Occasion[][] {
+  const groups = new Map<ReminderOccasion, Occasion[]>();
+  for (const item of items) groups.set(item.occasion, [...(groups.get(item.occasion) ?? []), item]);
+  return [...groups.values()];
+}
+
+/** The distinct steps of a group, each once: identical entries say their step once, different steps are all kept (P-09). */
+const stepsOf = (group: readonly Occasion[]) => [...new Set(group.map((item) => item.nextAction))];
+
+/**
+ * One day of the inbox (US-QS-32): its entries are grouped by occasion, one flat group of rows per occasion. Each row is the
+ * entry's text and the link to where its step is done; the group names its step once, as its footer.
+ */
 function Reminder({ row }: { row: ReminderRow }) {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
+    <section className="flex min-w-0 flex-col gap-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h4 className="m-0 text-base font-semibold">{dayText(row.localDate)}</h4>
-        <span className="text-sm text-muted-foreground">{STATUS_TEXT[row.status]}</span>
+        <span className="text-sm text-muted-foreground">{ui(STATUS_TEXT[row.status])}</span>
       </div>
-      <ul className="m-0 flex list-none flex-col gap-2 p-0">
-        {row.items.map((item) => (
-          <li key={item.id}>
-            <p className="m-0">{item.text}</p>
-            <p className="m-0 text-sm text-muted-foreground">{item.nextAction}</p>
-          </li>
-        ))}
-      </ul>
-      {row.status === "failed" && (
-        <p className="m-0 text-sm">
-          Die Erinnerung steht hier, weil der Versand nicht geklappt hat. Die Aufgaben findest du
-          auch in der Heute-Liste.
-        </p>
-      )}
-    </div>
+      {byOccasion(row.items).map((group) => (
+        <GroupedList
+          key={group[0]?.occasion}
+          footer={stepsOf(group).map((step) => (
+            <span key={step} className="block">
+              {step}
+            </span>
+          ))}
+        >
+          {group.map((item) => (
+            <GroupedRow key={item.id} to={OPENS[item.occasion]} title={item.text} />
+          ))}
+        </GroupedList>
+      ))}
+      {row.status === "failed" && <p className="m-0 text-sm">{ui("inbox.failed")}</p>}
+    </section>
   );
 }
 
@@ -71,14 +114,14 @@ export function Inbox(props: { api: string; token: () => Promise<string | undefi
         rows.length === 0 ? (
           <EmptyState
             level={3}
-            title="Keine Erinnerungen"
-            description="Es gibt nichts zu erinnern. Sobald etwas fällig wird, steht es hier und in der Heute-Liste."
+            title={ui("inbox.none.title")}
+            description={ui("inbox.none.description")}
           />
         ) : (
           <Pager
             items={rows}
             pageSize={PAGE}
-            label="Erinnerungen"
+            label={ui("inbox.label")}
             param={LAYER_PARAM}
             getKey={(row) => row.id}
             renderItem={(row) => <Reminder row={row} />}

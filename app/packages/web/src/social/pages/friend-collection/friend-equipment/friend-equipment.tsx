@@ -3,6 +3,8 @@ import type { SharedDevice } from "@pflanzendex/core";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { withUnit } from "@/shared/lib/format";
 import { LoadFrame } from "../../../../shared/data";
+import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { Button } from "@/shared/ui/button/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { loadFriendEquipment } from "../../../api/friends-api";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -28,6 +30,25 @@ const TYPE_LABELS: Record<string, string> = {
 const DEVICES_PER_PAGE = 2;
 
 const label = (type: string) => TYPE_LABELS[type] ?? type;
+
+/** The layer of a friend's devices on the friend's collection page (US-EQU-12). */
+export const EQUIPMENT_LAYER = "equipment";
+
+/** "Geräte" opens the devices the friend shares in a layer (US-EQU-12), so they no longer stand below the cards. */
+export function FriendEquipmentOpener() {
+  const layer = useLayer(EQUIPMENT_LAYER);
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      aria-haspopup="dialog"
+      onClick={(event) => layer.openLayer(event.currentTarget)}
+    >
+      {t("friendCollection.devices")}
+    </Button>
+  );
+}
 
 function Device({ d }: { d: SharedDevice }) {
   return (

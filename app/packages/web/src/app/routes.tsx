@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router";
+import { Route, Routes, useLocation } from "react-router";
 import { useFeature } from "../shared/data";
 import { FriendsNewsLayer, FriendsNewsTile } from "../social";
 import {
@@ -18,6 +18,7 @@ import { isShownLocked, lockMark, useUnlocks } from "./flows/unlock";
 import { RouteBoundary } from "@/shared/platform/routing/route-boundary/route-boundary";
 import { useRouteFallback } from "./destinations/area-parts/simple-routes/route-fallback/route-fallback";
 import { HomeRedirect } from "./destinations/area-parts/simple-routes/route-fallback/home-redirect/home-redirect";
+import { NotFoundView } from "./destinations/area-parts/simple-routes/not-found-view/not-found-view";
 import {
   AccountArea,
   TodayArea,
@@ -85,7 +86,7 @@ function TodayRoute(props: { api: string; token: Token; onOpen: (v: LinkTarget) 
   const social = useFeature("social");
   const { api, token } = props;
   const tiles: TodayTile[] = [
-    anniversaryTile({ api, token, onOpen: () => props.onOpen("collection") }),
+    anniversaryTile({ api, token }),
     ...(social
       ? [
           {
@@ -190,7 +191,7 @@ export function AppRoutes(props: {
         {legacyRoutes()}
         {simpleRoutes(api, s.token, roles)}
         {handOverRoutes(api, s.token, h, props.onOpenProfile)}
-        <Route path="*" element={<Navigate to={PATHS.today} replace />} />
+        <Route path="*" element={<NotFoundView />} />
       </Routes>
     </RouteBoundary>
   );

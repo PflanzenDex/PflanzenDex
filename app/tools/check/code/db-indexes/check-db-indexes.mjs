@@ -8,9 +8,10 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { compareBaseline, toBaseline } from "./db-indexes-baseline.mjs";
 import { replay } from "./db-indexes-schema.mjs";
+import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const app = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 export const MIGRATIONS = path.join(app, "packages", "db", "migrations");
@@ -101,5 +102,4 @@ function main(argv) {
   return 0;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href)
-  process.exit(main(process.argv.slice(2)));
+if (isEntryPoint(import.meta.url)) process.exit(main(process.argv.slice(2)));

@@ -6,6 +6,7 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { adminPassword, envValue } from "./dev-env.mjs";
+import { isEntryPoint } from "../check/shared/entry-point.mjs";
 
 const REALM = "pflanzendex";
 const CLIENT_ID = "pflanzendex-web";
@@ -77,7 +78,7 @@ async function main(args) {
   console.log(`Allowed redirect origin(s): ${ports.map(origin).join(", ")}`);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main(process.argv.slice(2)).catch((e) => {
     console.error(`keycloak web-port: ${e.message}`);
     process.exit(1);

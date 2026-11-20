@@ -3,9 +3,9 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 import { collect } from "./git-view.mjs";
 import { MIGRATIONS_DIR, nextNumber, numberOf, pad } from "./migration-lib.mjs";
+import { isEntryPoint } from "../../../check/shared/entry-point.mjs";
 
 const NAME = /^[a-z][a-z0-9]*_[a-z0-9_]+$/;
 
@@ -39,5 +39,4 @@ function main(name) {
   return 0;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href)
-  process.exit(main(process.argv[2]));
+if (isEntryPoint(import.meta.url)) process.exit(main(process.argv[2]));

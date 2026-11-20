@@ -52,6 +52,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
         lamps={lamps}
         wishes={wishes}
         prefill={prefill}
+        fill={fill}
         outcome={layered ? outcome : null}
         running={write.running}
         error={write.error}

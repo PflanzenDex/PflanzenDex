@@ -4,9 +4,10 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { migrationsAt } from "./git-view.mjs";
 import { findProblems, MIGRATIONS_DIR, numberOf } from "./migration-lib.mjs";
+import { isEntryPoint } from "../../../check/shared/entry-point.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../..");
 const baseRef = process.env.MIGRATION_BASE ?? "origin/dev";
@@ -45,4 +46,4 @@ function main() {
   return 0;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) process.exit(main());
+if (isEntryPoint(import.meta.url)) process.exit(main());

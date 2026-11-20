@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import type { ApiError } from "../../../../../shared/data";
 import { EquipmentForm } from "../../../../equipment-form/equipment-form";
@@ -12,7 +13,7 @@ import { RecommendationsView } from "../../../../overviews/needs-view/recommenda
 import { SensorsView } from "../../../../overviews/sensors-view/sensors-view";
 import { NEW_WISH_LAYER, WishesView } from "../../../../overviews/wishes-view/wishes-view";
 import { WishForm } from "../../../../overviews/wishes-view/wish-form/wish-form";
-import type { EquipmentPrefill } from "../../../../overviews/wishes-view/wishes-api";
+import type { EquipmentFill } from "../../../../equipment-form/equipment-form";
 import { ZonesView } from "../../../../overviews/zones-view/zones-view";
 import type { useLampActions } from "../../../lamp-actions/lamp-actions";
 import type { useWishActions } from "../../../../overviews/wishes-view/use-wish-actions";
@@ -32,8 +33,11 @@ import table from "../../../../equipment.de.json";
 
 const t = texts(table);
 
-/** Rows per page of the list of what I own (starting value, assumption; the page size from the free height is #1029). */
-const ITEMS_PER_PAGE = 6;
+/**
+ * Rows per page of the list of what I own (starting value, assumption; the page size from the free height is issue 1029).
+ * Five object rows of 76 px and the page bar fit the layer at 360 x 640 px (one-screen, US-QS-22, US-QS-32).
+ */
+const ITEMS_PER_PAGE = 5;
 
 type Lamps = ReturnType<typeof useLampActions>;
 type Wishes = ReturnType<typeof useWishActions>;
@@ -57,6 +61,7 @@ function Items(props: { data: EquipmentData; lamps: Lamps }) {
       pageSize={ITEMS_PER_PAGE}
       label={t("items.label")}
       param={LAYER_PARAM}
+      listClassName={OBJECT_GROUP}
       getKey={(item) => item.id}
       renderItem={(item) => <ItemRow item={item} zone={zoneNames.get(item.lightZoneId ?? "")} />}
     />
@@ -138,7 +143,9 @@ export function EquipmentLayers(props: {
   data: EquipmentData;
   lamps: Lamps;
   wishes: Wishes;
-  prefill: EquipmentPrefill | null;
+  prefill: EquipmentFill | null;
+  /** Opens the form with what a need names (a lamp of its light zone, US-QS-32). */
+  fill: (prefill: EquipmentFill, from: HTMLElement) => void;
   /** The outcome of a write inside a layer; the screen behind it is covered (P-10). */
   outcome: ReactNode;
   running: boolean;
@@ -161,7 +168,7 @@ export function EquipmentLayers(props: {
       <LayerSheet id={NEEDS_LAYER} title={t("layers.needs")}>
         {/* The needs page by the free height of the layer; the recommendations stay below them (issue 1154). */}
         <div className="flex min-h-0 flex-1 flex-col gap-4">
-          <NeedsView needs={data.needs} />
+          <NeedsView needs={data.needs} fill={props.fill} />
           <RecommendationsView data={data} />
         </div>
       </LayerSheet>

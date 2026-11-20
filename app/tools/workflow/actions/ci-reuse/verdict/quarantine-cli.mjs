@@ -8,7 +8,6 @@
 // Exit 0 ok, 1 a failed or not quarantined job, 2 usage or an input or list that does not read or fit (fail closed).
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { jobsDefinedIn } from "./ci-verdict.mjs";
 import {
   addEntry,
@@ -21,6 +20,7 @@ import {
   unknownJobs,
   utcDay,
 } from "./quarantine.mjs";
+import { isEntryPoint } from "../../../../check/shared/entry-point.mjs";
 
 const CI_YML = ".github/workflows/ci.yml";
 
@@ -117,6 +117,6 @@ export function main(argv, env, root, now = new Date()) {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   process.exitCode = main(process.argv.slice(2), process.env, process.cwd());
 }

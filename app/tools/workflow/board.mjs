@@ -3,7 +3,6 @@
 // one assignee, live branch or open PR for one story) and NO-CLAIM (work exists but nobody is assigned).
 // Release and type come from the project board (fields Release and Typ), not from milestones or labels.
 // Usage: node board.mjs [release]   (default: the first release in board order with open work)
-import { fileURLToPath } from "node:url";
 import { fetchOpenIssues, fetchPrs, realClient } from "./claim/lib/claim-client.mjs";
 import { PRIORITY_HINT } from "./actions/project-status/project-status-lib.mjs";
 import {
@@ -21,6 +20,7 @@ import {
   staleHoursFrom,
   workItems,
 } from "./claim/lib/claim-lib.mjs";
+import { isEntryPoint } from "../check/shared/entry-point.mjs";
 
 const latest = (dates) => dates.filter(Boolean).sort().at(-1) ?? null;
 
@@ -96,7 +96,7 @@ async function branchDatesOf(client) {
   );
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const client = realClient();
   try {
     await client.run("git", ["fetch", "--quiet", "--prune", "origin"]);

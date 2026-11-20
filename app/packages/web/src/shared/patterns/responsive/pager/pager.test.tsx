@@ -290,6 +290,26 @@ describe("US-QS-19 page size fills the free height of the region", () => {
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByRole("status").textContent).toBe("Seite 3 von 3");
   });
+
+  it("US-QS-19 · US-QS-32 · issue 2280 the least height of the list is the rows of its page, not the tallest row of all pages", async () => {
+    // Pflanze 4 is taller than the others. The page size still follows the tallest row seen at this width (the test above),
+    // but the list keeps only the height of the rows it shows: a sheet is as tall as its list, so a taller row of another page
+    // would leave a blank band under the rows of this one (issue 2280).
+    tall = { name: "Pflanze 4", row: 300 };
+    resizeTo(50, 100);
+    render(<FitExample />);
+    const list = screen.getByRole("list", { name: "Pflanzen" });
+    expect(list.style.minHeight).toBe("100px");
+    for (let i = 0; i < 3; i++)
+      await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(screen.getByRole("status").textContent).toBe("Seite 4 von 7");
+    expect(list.style.minHeight).toBe("300px");
+    for (let i = 0; i < 3; i++)
+      await userEvent.click(screen.getByRole("button", { name: "Zurück" }));
+    expect(screen.getByRole("status").textContent).toBe("Seite 1 von 7");
+    expect(list.style.minHeight).toBe("100px");
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+  });
 });
 
 // Issue 1492: the address names the first entry on screen, so a reload, a remount or a resize shows the same entries. An

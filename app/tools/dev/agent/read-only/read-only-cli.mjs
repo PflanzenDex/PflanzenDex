@@ -12,6 +12,7 @@ import { realClient, repoName } from "../../../workflow/claim/lib/claim-client.m
 import { boardItemOf } from "../../../workflow/claim/lib/board-client.mjs";
 import { pagedKey } from "../../../workflow/actions/ci-reuse/ci-wait.mjs";
 import { filesOf, numberOf, requireFiles, runnerOf, UsageError } from "./read-only-lib.mjs";
+import { isEntryPoint } from "../../../check/shared/entry-point.mjs";
 
 const ROOT = fileURLToPath(new URL("../../../../../", import.meta.url));
 const APP = join(ROOT, "app");
@@ -183,7 +184,7 @@ async function cli(argv) {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   cli(process.argv.slice(2)).then((code) => {
     process.exitCode = code;
   });

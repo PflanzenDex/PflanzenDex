@@ -3,27 +3,32 @@
 // is read before the keeper is signed in (the app shows the sign-in first), and a foreign id looks like an unknown one.
 import { useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
+import { Tag } from "lucide-react";
 import { isActive, type Specimen } from "@pflanzendex/core";
 import { MeasurePage } from "@/care";
 import { markFertilized, markWatered } from "@/monitoring";
 import { call, useFeature, useInvalidate, useRequest, useWriteAction } from "@/shared/data";
 import { errorText } from "@/shared/lib/error-text";
+import { UNKNOWN, dateText } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
+import {
+  ADD_PLANT_PATH,
+  PATHS,
+  plantAddress,
+} from "@/shared/patterns/navigation/navigation/navigation";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
+import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { Button } from "@/shared/ui/button/button";
-import { plantLayerId } from "../../plants-screen/rows/plant-tile/plant-tile";
+import { restoreSpecimen } from "../../archived/archived-api";
+import { COLLECTION_KEY } from "../../specimens/hooks/use-collection";
 import table from "./pot-label-page.de.json";
 import { LastFertilized } from "./last-fertilized/last-fertilized";
 import { PotLabelSkeleton } from "./pot-label-page.skeleton";
 
 type Token = () => Promise<string | undefined>;
 const ui = texts(table);
-
-/** The normal view of the plant: its layer in the plants of the Sammlung (US-QS-19). */
-const plantAddress = (id: string) => `${PATHS.collection}?view=plants&sheet=${plantLayerId(id)}`;
 
 const loadSpecimen = (api: string, token: string, id: string) =>
   call<Specimen>(fetch, `${api}/specimens/${encodeURIComponent(id)}`, token);
@@ -54,6 +59,8 @@ function LabelPlant(props: { api: string; token: Token; id: string }) {
   const specimen = plant.value;
   // The same answer for a foreign and an unknown id (P-05): one view, no name, no hint that the plant exists.
   if (plant.error?.code === "specimen.not_found") return <NotFound />;
+  if (specimen && !measuring && !isActive(specimen))
+    return <Archived api={api} token={token} id={id} specimen={specimen} />;
   return (
     <RequestState
       status={plant.status}
@@ -78,7 +85,7 @@ function LabelPlant(props: { api: string; token: Token; id: string }) {
 }
 
 /**
- * The plant with its two quick actions; an archived plant says so and offers no action (US-BES-17, P-09, P-10).
+ * The active plant with its quick actions (US-BES-17, P-09); an archived plant opens `Archived` instead (see `LabelPlant`).
  * "Gegossen" and "Gedüngt" refresh all monitoring data, so the watering and the fertilizing line show the new state (US-MON-05, US-MON-09).
  */
 function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure: () => void }) {
@@ -87,69 +94,103 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
   return (
     <section aria-labelledby="pot-label-title" className="flex min-w-0 flex-col gap-4">
       <PageHeader headingId="pot-label-title" title={specimen.name} />
-      {!isActive(specimen) ? (
-        <>
-          <p className="text-sm">{errorText("specimen.archived")}</p>
-          <Button asChild variant="outline" size="touch">
-            <Link to={PATHS.collection}>{ui("toCollection")}</Link>
+      <>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Button
+            type="button"
+            size="touch"
+            disabled={write.running}
+            onClick={() => void write.run((t) => markWatered(api, t, [specimen.id]), ui("watered"))}
+          >
+            {ui("water")}
           </Button>
-        </>
-      ) : (
-        <>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Button
-              type="button"
-              size="touch"
-              disabled={write.running}
-              onClick={() =>
-                void write.run((t) => markWatered(api, t, [specimen.id]), ui("watered"))
-              }
-            >
-              {ui("water")}
-            </Button>
-            <Button
-              type="button"
-              size="touch"
-              variant="outline"
-              disabled={write.running}
-              onClick={() =>
-                void write.run((t) => markFertilized(api, t, specimen.id), ui("fertilized"))
-              }
-            >
-              {ui("fertilize")}
-            </Button>
-            <Button type="button" size="touch" variant="outline" onClick={onMeasure}>
-              {ui("measure")}
-            </Button>
-          </div>
-          <LastFertilized api={api} token={token} specimenId={specimen.id} />
-          {write.message ? (
-            <p role="status" className="text-sm">
-              {write.message}
-            </p>
-          ) : null}
-          {write.error ? (
-            <p role="alert" className="rounded-lg border border-destructive p-2 text-sm">
-              {errorText(write.error.code)}
-            </p>
-          ) : null}
-          <Button asChild variant="link">
-            <Link to={plantAddress(specimen.id)}>{ui("toPlant")}</Link>
+          <Button
+            type="button"
+            size="touch"
+            variant="outline"
+            disabled={write.running}
+            onClick={() =>
+              void write.run((t) => markFertilized(api, t, specimen.id), ui("fertilized"))
+            }
+          >
+            {ui("fertilize")}
           </Button>
-        </>
-      )}
+          <Button type="button" size="touch" variant="outline" onClick={onMeasure}>
+            {ui("measure")}
+          </Button>
+        </div>
+        <LastFertilized api={api} token={token} specimenId={specimen.id} />
+        {write.message ? (
+          <p role="status" className="text-sm">
+            {write.message}
+          </p>
+        ) : null}
+        {write.error ? (
+          <p role="alert" className="rounded-lg border border-destructive p-2 text-sm">
+            {errorText(write.error.code)}
+          </p>
+        ) : null}
+        <Button asChild variant="link">
+          <Link to={plantAddress(specimen.id)}>{ui("toPlant")}</Link>
+        </Button>
+      </>
     </section>
   );
 }
 
-/** Foreign and unknown labels: the same text, nothing of a collection (P-05). The way on leads to the collection. */
+/** Foreign and unknown labels (P-05): one view with no name, its own mark, the cause in one line, and the two ways on (US-QS-32). */
 function NotFound() {
+  const navigate = useNavigate();
+  return (
+    <EmptyState
+      level={1}
+      icon={Tag}
+      title={ui("notFound")}
+      description={ui("notFoundCause")}
+      action={{ label: ui("addPlant"), onClick: () => void navigate(ADD_PLANT_PATH) }}
+      secondary={{ label: ui("toCollection"), onClick: () => void navigate(PATHS.collection) }}
+    />
+  );
+}
+
+const dateOf = (iso: string | null) => (iso ? dateText(iso) : UNKNOWN);
+/** An archived plant (owner answers Q-85 and Q-137, US-QS-32): read-only, "Archiviert am …" on top, and the one action "Pflanze wiederherstellen". */
+function Archived(props: { api: string; token: Token; id: string; specimen: Specimen }) {
+  const { api, token, id, specimen } = props;
+  const refresh = useInvalidate(COLLECTION_KEY);
+  const reloadLabel = useInvalidate(["label", "specimen", id]);
+  const write = useWriteAction(token, () => {
+    refresh();
+    reloadLabel();
+  });
   return (
     <section aria-labelledby="pot-label-title" className="flex min-w-0 flex-col gap-4">
-      <PageHeader headingId="pot-label-title" title={ui("notFound")} />
-      <p className="text-sm">{errorText("specimen.not_found")}</p>
-      <Button asChild variant="outline" size="touch">
-        <Link to={PATHS.collection}>{ui("toCollection")}</Link>
+      <PageHeader headingId="pot-label-title" title={specimen.name} />
+      <p className="text-sm">{ui("archivedOn", { date: dateOf(specimen.archivedAt) })}</p>
+      <p className="text-sm">{ui("reason", { reason: specimen.archivedReason ?? UNKNOWN })}</p>
+      <p className="text-sm">
+        {specimen.caughtAt
+          ? ui("caughtOn", { date: dateOf(specimen.caughtAt) })
+          : ui("caughtUnknown")}
+      </p>
+      {write.message ? (
+        <p role="status" className="text-sm">
+          {write.message}
+        </p>
+      ) : null}
+      {write.error ? (
+        <p role="alert" className="rounded-lg border border-destructive p-2 text-sm">
+          {errorText(write.error.code)}
+        </p>
+      ) : null}
+      <Button
+        type="button"
+        size="touch"
+        variant="tinted"
+        disabled={write.running}
+        onClick={() => void write.run((t) => restoreSpecimen(api, t, specimen.id), ui("restored"))}
+      >
+        {ui("restore")}
       </Button>
     </section>
   );

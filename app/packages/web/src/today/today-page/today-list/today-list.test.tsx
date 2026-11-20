@@ -26,7 +26,7 @@ const list = (upcoming: number, count: number): TodayList => ({
 function renderBelow(value: TodayList) {
   render(
     <MemoryRouter>
-      <Below list={value} onOpen={() => undefined} />
+      <Below list={value} />
     </MemoryRouter>,
   );
 }

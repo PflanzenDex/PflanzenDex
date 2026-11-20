@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { realClient } from "../../claim/lib/claim-client.mjs";
 import { checkIssue, createIssue, IssueRefused, syncIssue } from "./issue.mjs";
+import { isEntryPoint } from "../../../check/shared/entry-point.mjs";
 
 const TAXONOMY_FILE = fileURLToPath(
   new URL("../../../../config/project/issue-taxonomy.json", import.meta.url),
@@ -83,7 +84,7 @@ export async function main(
   return 0;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main(process.argv.slice(2), { env: process.env })
     .then((code) => process.exit(code))
     .catch((e) => {

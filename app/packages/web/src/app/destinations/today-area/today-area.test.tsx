@@ -225,7 +225,10 @@ function fakeServer(setup: Setup = {}) {
         const id = completed[1];
         open = open.filter((r) => (r as { id?: string }).id !== id);
         today = today.filter((i) => (i as { id?: string }).id !== `treatment:${id}`);
-        return response(200, { treatment: { id, done: true, doneAt: "2026-10-03" } });
+        return response(200, {
+          treatment: { id, done: true, doneAt: "2026-10-03" },
+          changed: true,
+        });
       }
       return (answers[path] ?? (() => response(404, {})))();
     }),
@@ -458,15 +461,15 @@ describe("US-QS-18 Heute fits one screen", () => {
     expect(address()).toBe("/today?sheet=treatments");
   });
 
-  it("US-QS-18 · TE-07 the other actions of Jetzt dran still open their view", async () => {
+  it("US-QS-32 · TE-07 the other actions of Jetzt dran are links to their view", async () => {
     fakeServer({
       items: [{ ...todayItem, id: "p", kind: "phase_deviation", target: "care_phases" }],
     });
     const open = vi.fn();
-    const user = userEvent.setup();
     show("/today", open);
-    await user.click(await screen.findByRole("button", { name: "Zu Pflegephasen: Aloe" }));
-    expect(open).toHaveBeenCalledWith("carePhases");
+    const link = await screen.findByRole("link", { name: /^Abweichung/ });
+    expect(link.getAttribute("href")).toBe("/collection?view=plants&group=phase");
+    expect(open).not.toHaveBeenCalled();
   });
 
   it("US-QS-18 nothing open says so with the next step, and the tiles stay", async () => {
@@ -576,20 +579,14 @@ describe("US-QS-18 Heute stays one column, with or without an anniversary", () =
                 tile: (draw) => (
                   <AnniversaryTile api="http://api" token={async () => "tok"} tile={draw} />
                 ),
-                layer: (
-                  <AnniversaryLayer
-                    api="http://api"
-                    token={async () => "tok"}
-                    onOpen={() => undefined}
-                  />
-                ),
+                layer: <AnniversaryLayer api="http://api" token={async () => "tok"} />,
               },
             ]}
           />
         </MemoryRouter>
       </ToastProvider>,
     );
-    const tile = await screen.findByRole("button", { name: "1 Jubiläen" });
+    const tile = await screen.findByRole("button", { name: "1 Jubiläum" });
     const { content, pane } = columns(container);
     expect(content.contains(tile)).toBe(true);
     expect(pane.contains(tile)).toBe(false);
@@ -607,16 +604,17 @@ describe("US-QS-18 Heute stays one column, with or without an anniversary", () =
 });
 
 describe("US-QS-18 the layers keep the actions of their items", () => {
-  it("US-QS-18 · US-BEH-03 Erledigt works in the layer Behandlungen, says what was ticked off and the tile count follows", async () => {
+  it("US-QS-18 · US-BEH-03 Erledigt works in the layer Behandlungen, says what was ticked off and the row keeps its undo", async () => {
     const posts = fakeServer();
     const user = userEvent.setup();
     show("/today?sheet=treatments");
     await user.click(
       await screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" }),
     );
-    expect((await screen.findByText(/als erledigt eingetragen/)).textContent).toContain("Aloe");
+    expect(
+      await screen.findByRole("button", { name: "Rückgängig: Grund a bei Aloe" }),
+    ).toBeTruthy();
     expect(posts).toEqual(["/treatments/a/complete"]);
-    expect(await screen.findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
   });
 
   it("US-QS-18 · US-BEH-02 the open treatments stand by urgency with a short chip and are paged", async () => {
@@ -737,8 +735,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     show("/today?sheet=treatments");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
-    // Four plants per page on a phone, the position in text, search and location filter above the list.
-    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(4);
+    // Three plants per page on a phone (owner decision 2026-11-20), the position in text, search and location filter above the list.
+    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(3);
     expect(within(form).getByText("Seite 1 von 2")).toBeTruthy();
     await user.type(within(form).getByRole("searchbox", { name: "Pflanze suchen" }), "EFE");
     expect(within(form).queryByRole("checkbox", { name: /^Aloe/ })).toBeNull();
@@ -948,7 +946,9 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
         name: "Grund a bei Aloe als erledigt abhaken",
       }),
     );
-    expect(await within(layer).findByText(/^Keine offenen Behandlungen\.$/)).toBeTruthy();
+    expect(
+      await within(layer).findByRole("button", { name: "Rückgängig: Grund a bei Aloe" }),
+    ).toBeTruthy();
     await waitFor(() => expect(screen.queryByText(/Läuse/)).toBeNull());
   });
 

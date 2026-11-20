@@ -309,3 +309,43 @@ IDs are never renumbered.
 - **Fix:** A shared slot has one owner: `AppBarSlot` keeps the claims in mount order, and only the first claim draws in the bar (`useBarClaim`). Any new portal target that several mounted components can fill needs the same rule.
 - **Can it become a gate?** No: whether two claimants can be mounted at once depends on the page's Suspense structure. The claim-order test in `app-bar-slot.test.tsx` and the hand-over test in `start-frame/handover.test.tsx` pin this case.
 - **Source:** Issue #2230 (recheck of FX-08 on four devices).
+
+## PF-038 A layout read right after a text-size or viewport change races the app's ResizeObserver
+
+- **Symptom:** An e2e layout test fails now and then on a phone size with 200 % text (Heute, issue 2281: the scrolling frame ends 28 px under the bottom bar, or the frame is not taller than the window), and passes when run again or watched in the trace.
+- **Cause:** The test injects `html { font-size: 200% }` and reads boxes in the same task. The shell writes the bar's real height to `--bar-reserve` on `main` from a ResizeObserver, a few frames later (5 frames, 541 ms in one local run), and the lazy tiles load later still. Until then the frame still reserves the old bar height. A fixed wait of n frames only moves the race to a slower runner.
+- **Fix:** Wait for the state the app writes, not for time or frames: `expect.poll` until `--bar-reserve` equals the height of `nav[data-bottom-bar]`, after the lazily loaded parts are visible (`settleOverview` in `e2e/tests/accessibility/display/today-layout.spec.ts`). Never poll the assertion under test.
+- **Can it become a gate?** No: which value a test must wait for depends on the view. The helper is the pattern to copy.
+- **Source:** Issue #2281, PR #2282.
+
+## PF-039 A Docker bind mount from the system temp folder is empty on a Mac
+
+- **Symptom:** A check that runs a container passes in CI but hangs or times out on a Mac: `make ds-snapshots-check` timed out on every story, and the container saw an empty catalog.
+- **Cause:** Colima (and Docker Desktop by default) share only `$HOME` into their VM. `os.tmpdir()` on macOS is `/var/folders/…`, outside it, so `docker run -v <tmp>:/x` silently mounts an empty, root-owned folder instead of failing. GitHub runners use `/tmp`, which Docker sees, so CI stays green.
+- **Fix:** Put every folder a container mounts under the repo, for example a `mkdtemp` under `app/.cache` (gitignored), never under `os.tmpdir()`. A script that rewrites files from a container run writes to a staging folder and swaps only after a passing run, so a failed run destroys nothing.
+- **Can it become a gate?** Partly: the QG-U5 self-test (`ds-snapshots.selftest.mjs`) asserts that the catalog is built under `app/.cache` and that a failed update leaves the baselines as they were. A general rule ("no `os.tmpdir()` next to `docker`") is not worth a gate until a second script mounts folders (E-30).
+- **Source:** Issue #2286, PR #2288.
+
+## PF-040 The devbox phone is offline for Chrome, so the app measures its offline state
+
+- **Symptom:** On the OnePlus of the devbox the app shows "Du bist offline" over every screen and that notice becomes the LCP element, although the API answers over `adb reverse`. Writes may take the offline path.
+- **Cause:** The phone has Wi-Fi on but no connected network and no SIM. Chrome derives `navigator.onLine` from the device's network, not from reachable hosts, so it reports `false`, and the app shows its offline state (US-QS-30). With CDP, `Network.emulateNetworkConditions` with `offline: false` changes nothing as long as no throttling is set.
+- **Fix:** Before measuring, set `Network.emulateNetworkConditions` with `offline: false, latency: 0, downloadThroughput: 1e9, uploadThroughput: 1e9` in the same CDP session (it ends with the session), and check that `navigator.onLine` is `true`. A throughput of `1e10` overflows and stalls every request. The script `docs/records/spikes/2026-11-20-real-phone-performance/scripts/measure/run.mjs` does both.
+- **Can it become a gate?** No: phone measurements run by hand, and no gate drives the phone.
+- **Source:** Issue #2299, record `docs/records/spikes/2026-11-20-real-phone-performance/README.md`.
+
+## PF-041 A second `vite preview` on a taken port leaves the old build in place
+
+- **Symptom:** An A/B measurement shows build B with the numbers of build A. The series meant for the second build run against the first one.
+- **Cause:** A `vite preview` started through `npx` for build B found its port held by the still-running preview of build A. It logged "Port … is already in use" and stopped, and the old server went on answering on that port.
+- **Fix:** Stop the previous preview by its own PID and wait until nothing listens on the port before you start the next one. Before each series, check that the page loads the entry chunk of the build you mean (its hashed `index-*.js` name). The trial runner of issue 2300 did both.
+- **Can it become a gate?** No: A/B measurements on the phone run by hand, and no gate builds two variants.
+- **Source:** Issue #2300, record `docs/records/spikes/2026-11-20-react-compiler/README.md` (two discarded sessions).
+
+## PF-042 A symlinked temp path breaks entry-point guards and path comparisons on a Mac
+
+- **Symptom:** A tool test passes in CI and fails on the devbox: an expected path is not found in the output, or a check script started from a temporary copy exits 0 without output.
+- **Cause:** On macOS `os.tmpdir()` can be `/var/folders/…`, a symlink to `/private/var/folders/…` (a shell that skips `~/.zshrc` keeps the unresolved `TMPDIR`). Git and Node resolve the link: `git rev-parse` and `import.meta.url` give `/private/var/…`, while `process.argv[1]` and `os.tmpdir()` keep `/var/…`. A guard `process.argv[1] === fileURLToPath(import.meta.url)` is then false and the script skips `main()`, so a check passes silently. GitHub runners use `/tmp`, no symlink, so CI stays green.
+- **Fix:** Start a script's `main()` through `isEntryPoint(import.meta.url)` (`app/tools/check/shared/entry-point.mjs`, which compares realpaths); package scripts that cannot import it compare `realpathSync(process.argv[1])`. A test that compares paths builds its temp folder from `realpathSync(os.tmpdir())`. A test that copies a script into a temp tree copies the helper with it.
+- **Can it become a gate?** Not now (E-30): the shared helper removes the copies under `app/tools/` and `tools/`, and the symlink tests (`check-ci-drift.test.mjs`, `entry-point.test.mjs`) fail when the guard regresses.
+- **Source:** Issue #2290, PR #2309.

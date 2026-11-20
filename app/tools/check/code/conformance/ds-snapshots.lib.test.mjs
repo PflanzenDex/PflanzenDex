@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { describe, it } from "node:test";
 import {
   baselineFindings,
@@ -9,6 +12,7 @@ import {
   pageStoryIds,
   PAGE_SIZES,
   quarantineFindings,
+  replacePngs,
   snapshotStoryIds,
 } from "./ds-snapshots.lib.mjs";
 
@@ -103,5 +107,29 @@ describe("QG-U5 · FR-QG-27 · page states and their baselines", () => {
     assert.deepEqual(quarantineFindings({ maxEntries: 1, entries: [entry1] }, ["p"]), []);
     assert.match(quarantineFindings({ maxEntries: 0, entries: [entry1] }, ["p"])[0], /maxEntries/);
     assert.match(quarantineFindings({ maxEntries: 1, entries: [entry1] }, ["q"])[0], /remove it/);
+  });
+});
+
+describe("QG-U5 · US-QS-07 · an update replaces the baselines only when it passes", () => {
+  it("QG-U5 · US-QS-07 · replacePngs moves the staged pictures in, removes stale ones and keeps other files (#2286)", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "ds-swap-"));
+    try {
+      const staged = path.join(root, "staged");
+      const target = path.join(root, "baselines");
+      fs.mkdirSync(staged);
+      fs.mkdirSync(target);
+      fs.writeFileSync(path.join(target, "a.png"), "old-a"); // replaced by the staged picture
+      fs.writeFileSync(path.join(target, "stale.png"), "old"); // no story renders it any more
+      fs.writeFileSync(path.join(target, "README.md"), "keep"); // not a picture, stays
+      fs.writeFileSync(path.join(staged, "a.png"), "new-a");
+      fs.writeFileSync(path.join(staged, "b.png"), "new-b"); // a new story
+      replacePngs(staged, target);
+      assert.deepEqual(fs.readdirSync(target).sort(), ["README.md", "a.png", "b.png"]);
+      assert.equal(fs.readFileSync(path.join(target, "a.png"), "utf8"), "new-a");
+      assert.equal(fs.readFileSync(path.join(target, "b.png"), "utf8"), "new-b");
+      assert.equal(fs.readFileSync(path.join(target, "README.md"), "utf8"), "keep");
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });

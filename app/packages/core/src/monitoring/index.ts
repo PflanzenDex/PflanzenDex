@@ -37,3 +37,5 @@ export { MAX_WATERED, monitoringWater, wateringDue, wateringOccasions } from "./
 export { fertilizingOf, monitoringFertilize } from "./fertilizing/fertilizing";
 export type { FertilizedDependencies } from "./fertilizing/fertilizing";
 export type { WateredDependencies, WateringCandidate, WateringDue } from "./watering/watering";
+export { monitoringUnwater } from "./watering/unwater";
+export type { UnwateredDependencies, UnwaterResult } from "./watering/unwater";

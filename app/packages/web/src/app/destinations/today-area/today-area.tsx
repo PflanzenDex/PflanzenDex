@@ -9,7 +9,7 @@ import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { HintsPage } from "@/collection";
 import { PlanLayer, TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
-import { TodayPage, TodaySkeleton, type TodayDestination } from "@/today";
+import { OPENS, TodayPage, TodaySkeleton, type TodayDestination } from "@/today";
 import {
   HintsLayerSkeleton,
   TreatmentsLayerSkeleton,
@@ -39,16 +39,6 @@ export type TodayTile = {
   layer: ReactNode;
 };
 
-/** Where the actions of "Jetzt dran" lead (TE-07): treatments and hints open their layer, the rest are views. */
-const VIEW: Partial<Record<TodayDestination, LinkTarget>> = {
-  care_phases: "carePhases",
-  collection: "collection",
-  // Measuring and the wishlist live in the Sammlung (US-QS-14, US-QS-04).
-  measurements: "collection",
-  wishlist: "collection",
-  equipment: "collection",
-};
-
 /**
  * The destination "Heute" as one screen (US-QS-18): the date, a summary, the most urgent item of "Jetzt dran" (`today`)
  * and one tile per category. A tile opens its items as a layer above the overview (`?sheet=treatments|watering|hints`):
@@ -72,15 +62,12 @@ export function TodayArea(props: {
   usePreloadParts();
   // The list follows every write that changes what it derives from, wherever it is made (SG-FEED-01).
   useTodayFollowsWrites();
-  const treatments = useLayer("treatments");
-  const hints = useLayer("hints");
   // The layer `plan` is the planning layer of the treatments (`PlanLayer`, its address value is `plan`).
   const plan = useLayer("plan");
+  // The rows that open a layer of the page open it themselves (`TodayRow`, from the row's element); the others go to a view.
   const open = (d: TodayDestination) => {
-    if (d === "treatments") return treatments.openLayer();
-    if (d === "hints") return hints.openLayer();
-    const view = VIEW[d];
-    if (view) props.onOpen(view);
+    const to = OPENS[d];
+    if ("view" in to) props.onOpen(to.view);
   };
   return (
     <LayerHost className="min-h-0" contentClassName="gap-4" data-fit-screen="" data-fit-fill="">

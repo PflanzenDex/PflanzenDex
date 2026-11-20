@@ -13,7 +13,7 @@ import { PhasesPaged } from "../phases-paged/phases-paged";
 import { loadCarePhases } from "../../shared/api/care-phases-api";
 import { CarePhasesSkeleton } from "./care-phases-page.skeleton";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
-import { usePhaseSwitch } from "../use-phase-switch";
+import { useBulkMove } from "./use-bulk-move";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./care-phases-page.de.json";
 
@@ -49,16 +49,56 @@ function ReportCount({ host, count }: { host: PhasesHost | undefined; count: num
   return null;
 }
 
+/** The loaded phase list with its notes, alerts and the grouping the host asks for (US-PHA-01, US-QS-14). */
+function PhasesBody(props: {
+  api: string;
+  token: Token;
+  host: PhasesHost | undefined;
+  data: Loaded;
+  bulk: ReturnType<typeof useBulkMove>;
+}) {
+  const { api, token, data, bulk } = props;
+  // A held bulk move shows its rows as they stood before it, so the list keeps its shape for the undo window.
+  const rows = data.rows.map((r) => bulk.snapshot.get(r.specimenId) ?? r);
+  return (
+    <>
+      <ReportCount host={props.host} count={data.rows.length} />
+      {bulk.note && <StatusNote>{bulk.note}</StatusNote>}
+      {bulk.move.error && <RefusalAlert error={bulk.move.error} />}
+      {bulk.restore.error && <RefusalAlert error={bulk.restore.error} />}
+      {props.host && rows.length > 0 ? (
+        <PhasesPaged
+          rows={rows}
+          locations={data.locations}
+          busy={bulk.busy}
+          onConfirm={bulk.confirm}
+          groupUndo={bulk.groupUndo}
+          access={{ api, token }}
+        />
+      ) : (
+        <PhasesList
+          rows={rows}
+          locations={data.locations}
+          busy={bulk.busy}
+          onConfirm={bulk.confirm}
+          groupUndo={bulk.groupUndo}
+        />
+      )}
+    </>
+  );
+}
+
 /**
  * Care phases (US-PHA-01) with "Umstellen" (US-PHA-03): loads phases and locations; if one fails, the loading
  * fails as a whole. After a confirmation the list is loaded again, so the rows show the new location at once. It is
  * shown as the grouping "nach Pflegephase" of the plants in the Sammlung (US-QS-14): below the title of that
- * destination, so its own heading is a section name for screen readers.
+ * destination, so its own heading is a section name for screen readers. A bulk move stays in place for the undo window
+ * (`useBulkMove`, SG-FEED-03, US-QS-32).
  */
 export function CarePhasesPage(props: { api: string; token: Token; host?: PhasesHost }) {
   const { api, token } = props;
   const again = useInvalidate(KEY);
-  const move = usePhaseSwitch(api, token, again);
+  const bulk = useBulkMove(api, token, again);
   const client = useQueryClient();
   const load = useCallback((t: string) => loadBoth(client, api, t), [api, client]);
   const loading = ui("loading");
@@ -74,28 +114,7 @@ export function CarePhasesPage(props: { api: string; token: Token; host?: Phases
         loadingText={loading}
         loadingFallback={<CarePhasesSkeleton label={loading} />}
       >
-        {(data) => (
-          <>
-            <ReportCount host={props.host} count={data.rows.length} />
-            {move.message && <StatusNote>{move.message}</StatusNote>}
-            {move.error && <RefusalAlert error={move.error} />}
-            {props.host && data.rows.length > 0 ? (
-              <PhasesPaged
-                rows={data.rows}
-                locations={data.locations}
-                busy={move.running}
-                onConfirm={(ids, text) => void move.confirm(ids, text)}
-              />
-            ) : (
-              <PhasesList
-                rows={data.rows}
-                locations={data.locations}
-                busy={move.running}
-                onConfirm={(ids, text) => void move.confirm(ids, text)}
-              />
-            )}
-          </>
-        )}
+        {(data) => <PhasesBody api={api} token={token} host={props.host} data={data} bulk={bulk} />}
       </LoadFrame>
     </div>
   );

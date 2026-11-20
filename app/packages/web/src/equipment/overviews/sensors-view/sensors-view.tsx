@@ -53,7 +53,7 @@ export function SensorsView(props: { view: SensorView; actions: SensorActions })
                 {s.name}
               </span>
               <label className="flex min-w-0 flex-col gap-1 text-sm">
-                <span id={labelId}>{t("sensors.assigned")}</span>
+                <span id={labelId}>{t("sensors.assign")}</span>
                 <Select
                   aria-labelledby={`${labelId} ${nameId}`}
                   value={valueOf(s.target)}
@@ -61,14 +61,14 @@ export function SensorsView(props: { view: SensorView; actions: SensorActions })
                   onChange={(e) => actions.onTarget(s, toTarget(e.target.value))}
                 >
                   <option value="">{t("sensors.unassigned")}</option>
-                  <optgroup label={t("sensors.group.specimens")}>
+                  <optgroup label={t("sensors.groupPlants")}>
                     {view.specimens.map((x) => (
                       <option key={x.id} value={`specimen:${x.id}`}>
                         {x.name}
                       </option>
                     ))}
                   </optgroup>
-                  <optgroup label={t("sensors.group.locations")}>
+                  <optgroup label={t("sensors.groupLocations")}>
                     {view.locations.map((x) => (
                       <option key={x.id} value={`location:${x.id}`}>
                         {x.name}

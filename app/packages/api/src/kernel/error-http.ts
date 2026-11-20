@@ -28,6 +28,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "specimen.repotted_before_caught": 400,
   "specimen.not_found": 404,
   "treatment.not_found": 404,
+  "treatment.not_reopenable": 409,
   "measurement.not_found": 404,
   "measurement.photo_not_found": 404,
   "measurement.photo_exists": 409,

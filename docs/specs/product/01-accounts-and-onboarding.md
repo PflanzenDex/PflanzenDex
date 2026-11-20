@@ -26,7 +26,8 @@ Acceptance criteria:
 - Given the sign-in service cannot be reached when the app opens, then the welcome page shows and says so and what to do next, and nothing blames the account.
 - Given the sign-in library cannot be loaded, when the app opens, then the page says so and offers "Seite neu laden", and it never stays on the loading state.
 - Given the sign-in service does not answer, then a sign-in call gives up after 15 s (starting value, assumption) and the failure is shown as above.
-- Given our API does not answer while the account loads, then the call gives up after 15 s (starting value, assumption), the page says "Konto nicht geladen" and offers "Erneut versuchen", and it never stays on the loading state.
+- Given our API does not answer while the account loads, then the call gives up after 15 s (starting value, assumption), the page says what failed in plain German from the message table (no connection, or the server is not reachable, or the account could not be loaded, with the text of a known refusal code) and offers "Erneut versuchen", and it never stays on the loading state. A retry that fails again says so ("Wieder keine Verbindung."), and a keeper signed in on this device sees the failure inside the frame with both bars (US-QS-32, finding F-0059).
+- Given I am signed in in two tabs, or in the installed app and a tab of the same device, when the access token is renewed, then the session goes on in both, and "Deine Sitzung wurde beendet" shows only when the session really ended (issue 2274).
 
 ### US-ACC-02 · Profile and settings · 🟨 new
 

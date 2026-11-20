@@ -1,5 +1,5 @@
 {
-  "maxTotal": 1081,
+  "maxTotal": 959,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -48,10 +48,6 @@
     {
       "file": "packages/web/src/account/views/account-views/account-views.tsx",
       "count": 4
-    },
-    {
-      "file": "packages/web/src/achievements/anniversaries/anniversaries.tsx",
-      "count": 10
     },
     {
       "file": "packages/web/src/achievements/calm-mode/calm-mode.tsx",
@@ -126,10 +122,6 @@
       "count": 5
     },
     {
-      "file": "packages/web/src/app/flows/onboarding/onboarding-wizard/species-step/species-step.tsx",
-      "count": 7
-    },
-    {
       "file": "packages/web/src/app/flows/onboarding/today-intro/hint/hint-note/hint-note.tsx",
       "count": 3
     },
@@ -170,10 +162,6 @@
       "count": 6
     },
     {
-      "file": "packages/web/src/care/phases/phases-list/entry/entry.tsx",
-      "count": 20
-    },
-    {
       "file": "packages/web/src/care/phases/phases-list/phases-list.tsx",
       "count": 2
     },
@@ -208,10 +196,6 @@
     {
       "file": "packages/web/src/care/treatments/planning/plan-layer/plan-layer.tsx",
       "count": 2
-    },
-    {
-      "file": "packages/web/src/care/treatments/planning/plan-layer/specimen-picker/specimen-picker.tsx",
-      "count": 8
     },
     {
       "file": "packages/web/src/care/treatments/treatment-form/treatment-form.tsx",
@@ -414,16 +398,8 @@
       "count": 4
     },
     {
-      "file": "packages/web/src/equipment/overviews/zones-view/zones-view.tsx",
-      "count": 8
-    },
-    {
       "file": "packages/web/src/light/shared/ui/message/message.tsx",
       "count": 1
-    },
-    {
-      "file": "packages/web/src/light/views/light-view/light-row/light-row.tsx",
-      "count": 2
     },
     {
       "file": "packages/web/src/light/views/rules-view/rules-view.tsx",
@@ -438,20 +414,12 @@
       "count": 1
     },
     {
-      "file": "packages/web/src/light/zones/locations-view/locations-view.tsx",
-      "count": 10
-    },
-    {
       "file": "packages/web/src/light/zones/zone-layer/zone-layer.tsx",
       "count": 7
     },
     {
       "file": "packages/web/src/light/zones/zones-view/zones-view.tsx",
       "count": 8
-    },
-    {
-      "file": "packages/web/src/monitoring/inbox/inbox.tsx",
-      "count": 4
     },
     {
       "file": "packages/web/src/monitoring/reminders-section/reminders-section.tsx",
@@ -558,20 +526,8 @@
       "count": 1
     },
     {
-      "file": "packages/web/src/shared/ui/fields/input/search-input/search-input.tsx",
-      "count": 1
-    },
-    {
       "file": "packages/web/src/social/feed/requests-notice/requests-notice.tsx",
       "count": 4
-    },
-    {
-      "file": "packages/web/src/social/pages/friend-collection/friend-card/friend-card.tsx",
-      "count": 8
-    },
-    {
-      "file": "packages/web/src/social/pages/friend-collection/friend-collection.tsx",
-      "count": 7
     },
     {
       "file": "packages/web/src/social/pages/friend-collection/friend-equipment/friend-equipment.tsx",
@@ -592,10 +548,6 @@
     {
       "file": "packages/web/src/social/parts/code-form/code-form.tsx",
       "count": 5
-    },
-    {
-      "file": "packages/web/src/social/parts/friend-list/friend-list.tsx",
-      "count": 14
     },
     {
       "file": "packages/web/src/social/parts/invite-card/invite-card.tsx",
@@ -646,20 +598,12 @@
       "count": 6
     },
     {
-      "file": "packages/web/src/swap/parts/swap-requests/handover-box/handover-box.tsx",
-      "count": 7
-    },
-    {
       "file": "packages/web/src/swap/parts/swap-requests/reason-form/reason-form.tsx",
       "count": 2
     },
     {
       "file": "packages/web/src/swap/parts/swap-requests/swap-card/swap-card.tsx",
       "count": 17
-    },
-    {
-      "file": "packages/web/src/today/today-page/today-row/today-row.tsx",
-      "count": 1
     },
     {
       "file": "packages/web/src/wishlist/actions/actions.tsx",
@@ -690,20 +634,8 @@
       "count": 2
     },
     {
-      "file": "packages/web/src/wishlist/wish-form/species-pick/species-pick.tsx",
-      "count": 4
-    },
-    {
       "file": "packages/web/src/wishlist/wish-form/wish-fields/wish-fields.tsx",
       "count": 13
-    },
-    {
-      "file": "packages/web/src/wishlist/wish-form/wish-form.tsx",
-      "count": 3
-    },
-    {
-      "file": "packages/web/src/wishlist/wishlist-page/rows/wish-row/wish-row.tsx",
-      "count": 4
     }
   ]
 }

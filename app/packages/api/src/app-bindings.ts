@@ -2,6 +2,7 @@ import type { Hono, MiddlewareHandler } from "hono";
 import type { Pool } from "pg";
 import type {
   PhaseLocationSource,
+  MeasurementSource,
   ObjectStore,
   ImageProcessor,
   ZoneStockSource,
@@ -41,6 +42,7 @@ export function bindCareOne(
     clock?: () => Date;
     phaseLocation?: PhaseLocationSource;
     media?: { store: ObjectStore; processor: ImageProcessor };
+    measurements?: MeasurementSource;
   },
 ) {
   for (const path of CARE_PATHS) app.use(path, auth);
@@ -92,12 +94,13 @@ export function bindEquipment(
   );
 }
 
-/** What `care` takes from the app options: clock, location per phase and the media port (photos, US-WAC-06). */
+/** What `care` takes from the app options: clock, location per phase, the media port (photos, US-WAC-06) and the measurements (the rows' photos, US-QS-32). */
 export function careOptions(opt: AppOptions) {
   return {
     ...(opt.clock ? { clock: opt.clock } : {}),
     ...(opt.phaseLocation ? { phaseLocation: opt.phaseLocation } : {}),
     ...(opt.media ? { media: opt.media } : {}),
+    ...(opt.measurements ? { measurements: opt.measurements } : {}),
   };
 }
 

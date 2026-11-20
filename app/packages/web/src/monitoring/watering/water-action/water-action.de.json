@@ -1,5 +1,8 @@
 {
   "watered": "„{name}“ als gegossen eingetragen.",
   "action": "Gießen",
-  "label": "Gießen: {name}"
+  "label": "Gießen: {name}",
+  "resultToday": "Gegossen heute",
+  "restored": "Rückgängig gemacht.",
+  "nothingToUndo": "Nichts mehr rückgängig zu machen – der Eintrag ist schon weg."
 }

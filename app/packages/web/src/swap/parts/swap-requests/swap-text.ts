@@ -1,5 +1,8 @@
 import type { SwapSide } from "@pflanzendex/core";
 
+/** The offer type of a plant: the one type whose specimen goes into the archive on handover (US-SOZ-11, Q-149). */
+export const PLANT_TYPE: SwapSide["type"] = "plant";
+
 export const STATUS_TEXT: Record<SwapSide["status"], string> = {
   requested: "Angefragt",
   accepted: "Zugesagt",

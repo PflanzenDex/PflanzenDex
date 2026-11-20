@@ -53,7 +53,7 @@ describe("US-PHA-01 the phase of a plant and the grouping share the query cache"
         </MemoryRouter>
       </QueryClientProvider>,
     );
-    expect(await screen.findByText("Soll-Phase heute: Ruhephase")).toBeTruthy();
+    expect(await screen.findByText("Pflegephase heute: Ruhephase")).toBeTruthy();
     plant.unmount();
 
     render(

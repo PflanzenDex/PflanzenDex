@@ -7,7 +7,7 @@ import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { answerSwap, confirmHandover, loadSwaps, type AnswerInput } from "../../api/swaps-api";
 import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
 import { SwapCard } from "./swap-card/swap-card";
-import { swapTitle } from "./swap-text";
+import { PLANT_TYPE, swapTitle } from "./swap-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
 import { SwapRequestsSkeleton } from "./swap-requests.skeleton";
@@ -35,13 +35,16 @@ function doneText(s: SwapSide, a: AnswerInput): string {
   }
 }
 
-/** What the keeper reads after confirming the handover: waiting for the other side, or done (P-09, P-10). */
+/**
+ * What the keeper reads after confirming the handover: waiting for the other side, or done (P-09, P-10). The archive fact of
+ * a plant is not repeated here: the giver's card names it once, while the plant is archived (US-SOZ-11, Q-149). A cutting or
+ * offshoot stays in the collection, and the text says so.
+ */
 function handoverText(s: SwapSide, status: "waiting" | "handed_over"): string {
-  if (status === "waiting")
-    return `Deine Bestätigung ist gespeichert. Sobald ${s.otherName ?? "der Freund"} auch bestätigt hat, wird übergeben.`;
-  return s.role === "recipient"
-    ? "Die Übergabe ist abgeschlossen. Die Pflanze ist jetzt in deiner Sammlung."
-    : "Die Übergabe ist abgeschlossen. Deine Pflanze ist jetzt im Archiv.";
+  if (status === "waiting") return t("handover.waiting", { who: s.otherName ?? "der Freund" });
+  if (s.role === "recipient") return t("handover.doneRecipient");
+  if (s.type === PLANT_TYPE) return t("handover.done");
+  return t("handover.doneKept");
 }
 
 /** The requests for my offers and the ones I sent in one list, each marked, so one pager serves both (US-QS-20). */

@@ -2,6 +2,7 @@ import {
   careProfileLocations,
   carePhasesList,
   phaseSwitchConfirm,
+  type MeasurementSource,
   type PhaseLocationSource,
 } from "@pflanzendex/core";
 import {
@@ -13,6 +14,7 @@ import {
 import { Hono } from "hono";
 import type { Pool } from "pg";
 import { body, errorBody, statusFor, write, type AuthEnv } from "../kernel";
+import { measurementSourceFor } from "./source";
 
 /** Paths the sign-in guard (bearer token) must cover. */
 export const CARE_PHASES_PATHS = ["/care-phases"] as const;
@@ -22,6 +24,8 @@ export type CarePhasesOptions = {
   clock?: () => Date;
   /** Replaces the care profile as source of the location per phase (tests); by default it is the keeper's own care profile (US-BES-09). */
   phaseLocation?: PhaseLocationSource | undefined;
+  /** Replaces the photo source of the rows' thumbnails (tests); by default the measurements of `care` (US-QS-32). */
+  measurements?: MeasurementSource | undefined;
 };
 
 /**
@@ -37,6 +41,7 @@ export function carePhasesRoutes(pool: Pool, opt: CarePhasesOptions = {}): Hono<
     species: new SpeciesPostgres(pool),
     profiles,
     targets: opt.phaseLocation ?? careProfileLocations(profiles),
+    photos: opt.measurements ?? measurementSourceFor(pool),
     clock: opt.clock ?? (() => new Date()),
   };
   const confirm = phaseSwitchConfirm(deps);

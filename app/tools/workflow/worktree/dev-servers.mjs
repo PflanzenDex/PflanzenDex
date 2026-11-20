@@ -11,6 +11,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { envValue } from "../../keycloak/dev-env.mjs";
 import { parsePort } from "../../keycloak/web-port.mjs";
+import { isEntryPoint } from "../../check/shared/entry-point.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 // tools/workflow/worktree -> tools/workflow -> tools -> app -> worktree root
@@ -149,7 +150,7 @@ async function main() {
   return runConcurrently(plan.args, plan.variables);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main()
     .then((code) => process.exit(code))
     .catch((e) => {

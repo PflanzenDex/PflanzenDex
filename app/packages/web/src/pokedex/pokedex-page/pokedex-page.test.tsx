@@ -126,12 +126,51 @@ describe("US-POK-06 page of the caught species", () => {
     expect(onCaption).toHaveBeenLastCalledWith("2 Arten gefangen");
   });
 
-  it("US-POK-06 an unidentified specimen is named with the action that fixes it (P-09, P-10)", async () => {
+  it("US-QS-32 an uncounted plant is one row that opens the plant, and the explanation with its next action is said once (P-09, P-10)", async () => {
     fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified } }));
     view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
-    expect(await screen.findByText(riddle.text)).toBeTruthy();
-    expect(screen.getByText("Bestimme die Art, dann zählt sie.")).toBeTruthy();
+    const row = await screen.findByRole("link", { name: /Amaryllis/ });
+    expect(row.getAttribute("href")).toBe("/collection?view=plants&sheet=plant-e1");
+    // The Latin name as it is stored, with no "Gattung" label (P-08); the next action is in the shared explanation.
+    expect(row.textContent).toBe("Amaryllis Hippeastrum");
+    expect(row.querySelector("svg.lucide-chevron-right")).not.toBeNull();
+    expect(screen.queryByText(riddle.text)).toBeNull();
+    expect(
+      screen.getAllByText(
+        /Diese Pflanzen haben noch keine bestimmte Art und zählen noch nicht\. Bestimme die Art, dann zählt sie\./,
+      ),
+    ).toHaveLength(1);
     expect(screen.getByRole("dialog", { name: "Noch nicht gezählt" })).toBeTruthy();
+  });
+
+  it("US-QS-32 an uncounted plant whose species cannot be read says so instead of naming a genus (P-08)", async () => {
+    const unreadable = { ...riddle, latinName: null, text: "x" };
+    fakeServer(() => response(200, { ownership: { caught: [lemon], unidentified: [unreadable] } }));
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
+    const row = await screen.findByRole("link", { name: /Amaryllis/ });
+    expect(row.textContent).toContain("Art nicht lesbar");
+    expect(row.textContent).not.toContain("Gattung");
+  });
+
+  it("US-QS-32 rows whose next action differs each say their own; the shared explanation holds only what is common (P-09)", async () => {
+    const second = {
+      specimenId: "e2",
+      specimenName: "Kaktus",
+      latinName: null,
+      text: "x",
+      nextAction: "Lege die Art fest.",
+    };
+    fakeServer(() =>
+      response(200, { ownership: { caught: [lemon], unidentified: [riddle, second] } }),
+    );
+    view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
+    const first = await screen.findByRole("link", { name: /Amaryllis/ });
+    expect(first.textContent).toBe("Amaryllis Hippeastrum · Bestimme die Art, dann zählt sie.");
+    const other = screen.getByRole("link", { name: /Kaktus/ });
+    expect(other.textContent).toBe("Kaktus Art nicht lesbar · Lege die Art fest.");
+    expect(
+      screen.getByText("Diese Pflanzen haben noch keine bestimmte Art und zählen noch nicht."),
+    ).toBeTruthy();
   });
 
   it("US-POK-06 · P-09 the layer of the uncounted plants opened by address without any says that all of them count (issue 1653, F24)", async () => {
@@ -149,7 +188,7 @@ describe("US-POK-06 page of the caught species", () => {
     expect(row.textContent).not.toMatch(/Pflanze zählt/);
     await userEvent.click(row);
     await userEvent.click(await screen.findByRole("button", { name: "Noch nicht gezählt (1)" }));
-    expect(await screen.findByText(riddle.text)).toBeTruthy();
+    expect(await screen.findByRole("link", { name: /Amaryllis/ })).toBeTruthy();
   });
 
   it("US-POK-06 without caught species it says what to do next (P-09)", async () => {
@@ -446,13 +485,15 @@ describe("US-QS-22 the species fit one screen", () => {
 });
 
 describe("US-QS-22 neutral species entries", () => {
-  it("US-QS-22 · US-QS-32 · SG-ICON-01 a species entry has a neutral border and a chevron icon, no primary outline (ADR 0017)", async () => {
+  it("US-QS-22 · US-QS-32 · SG-ICON-01 a species entry is a flat object row with a chevron icon and no primary outline (ADR 0017)", async () => {
     fakeServer(() => response(200, { ownership: { caught, unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />);
     const entry = (await screen.findAllByRole("button", { name: /^Opuntia microdasys/ }))[0];
-    expect(entry?.className).toContain("border-border");
+    // An object row is flat: its group draws the card, the row has no outline of its own (FX-35 step 5).
     expect(entry?.className).not.toMatch(/border-primary|text-primary/);
-    expect(entry?.querySelector("svg[data-chevron]")?.getAttribute("aria-hidden")).toBe("true");
+    expect(entry?.querySelector("svg.lucide-chevron-right")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
   });
 });
 

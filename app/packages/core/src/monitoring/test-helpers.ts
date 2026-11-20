@@ -148,6 +148,12 @@ export class InMemoryWatering implements WateringStore {
     for (const e of entries) this.entries.add(`${userId}|${e.specimenId}|${e.date}`);
     return { created: this.entries.size - before };
   }
+
+  async unrecord(userId: string, entries: readonly WateringEntry[]) {
+    const before = this.entries.size;
+    for (const e of entries) this.entries.delete(`${userId}|${e.specimenId}|${e.date}`);
+    return { removed: before - this.entries.size };
+  }
 }
 
 /** In-memory fertilizing log for tests: one entry per account, specimen and day (US-MON-09). */

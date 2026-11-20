@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { areaRows, countByStoryId, parseStatuses, storyRows } from "./story-tests-lib.mjs";
+import { isEntryPoint } from "../../../shared/entry-point.mjs";
 
 export const AREAS = [
   { name: "Care phase", match: /\/care\/phases\// },
@@ -82,5 +83,5 @@ export function run(root) {
   return render(stories, areaRows(AREAS, coreFiles));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url))
+if (isEntryPoint(import.meta.url))
   console.log(run(fileURLToPath(new URL("../../../../../..", import.meta.url))));

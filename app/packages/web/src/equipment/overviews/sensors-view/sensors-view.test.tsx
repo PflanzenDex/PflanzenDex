@@ -51,6 +51,12 @@ describe("US-EQU-06 sensors and their place", () => {
     expect(screen.queryByLabelText(/Zuordnung von/)).toBeNull();
   });
 
+  it("US-QS-32 · issue 1960 the empty choice reads 'Nicht zugeordnet', not 'Keinem (nicht zugeordnet)'", () => {
+    render(<SensorsView view={view()} actions={actions()} />);
+    expect(screen.getByRole("option", { name: "Nicht zugeordnet" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Keinem (nicht zugeordnet)" })).toBeNull();
+  });
+
   it("US-EQU-06 shows the current location and clearing sends none", async () => {
     const a = actions();
     render(

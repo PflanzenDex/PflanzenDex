@@ -3,8 +3,8 @@
 //   node tools/dev/health-summary.mjs >> "$GITHUB_STEP_SUMMARY"
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { MARKERS, markersOf, walkCode } from "../check/code/check-boundaries.mjs";
+import { isEntryPoint } from "../check/shared/entry-point.mjs";
 
 export function worstFive(findings) {
   return [...findings].sort((a, b) => b.value - a.value).slice(0, 5);
@@ -48,7 +48,7 @@ export function markersToMarkdown(counts) {
   ].join("\n");
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const { ESLint } = await import("eslint");
   const eslint = new ESLint({
     overrideConfig: [{ rules: { "sonarjs/cognitive-complexity": ["warn", 0] } }],

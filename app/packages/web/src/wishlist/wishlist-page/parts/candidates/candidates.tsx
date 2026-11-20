@@ -4,6 +4,8 @@ import { LayerOpener, useLayer } from "@/shared/patterns/responsive/layer-sheet/
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { Button } from "@/shared/ui/button/button";
+import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
+import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { Wishlist } from "../../../wishlist-api";
 import table from "../../../wishlist.de.json";
@@ -23,6 +25,8 @@ export function Candidates(props: {
   onBuy: (c: Candidate) => void;
   onDiscard: (c: Candidate) => void;
   busy: boolean;
+  /** How the stored pictures of the wishes are fetched privately (US-WUN-04, P-05). */
+  access: PhotoAccess;
 }) {
   const { list } = props;
   // The starting value until the layout measures the free height; then the page holds the whole rows that fit (issue 1154).
@@ -42,6 +46,7 @@ export function Candidates(props: {
         pageSize={size}
         fit
         label={t("candidates.label")}
+        listClassName={OBJECT_GROUP}
         getKey={(c) => c.id}
         renderItem={(c, i) => (
           <WishRow
@@ -50,6 +55,7 @@ export function Candidates(props: {
             onBuy={props.onBuy}
             onDiscard={props.onDiscard}
             busy={props.busy}
+            access={props.access}
           />
         )}
       />

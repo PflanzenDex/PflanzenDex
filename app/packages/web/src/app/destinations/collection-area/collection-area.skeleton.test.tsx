@@ -73,3 +73,25 @@ describe("CollectionModeSkeleton (US-QS-14, DS-57, issue 1727)", () => {
     expect(screen.getByRole("status").textContent).toContain("Geräte werden geladen");
   });
 });
+
+describe("US-QS-14 · US-QS-32 the loading shape of the Sammlung lists is the loaded shape (FX-35 step 5)", () => {
+  it.each([
+    ["the species", shape({ view: "species" })],
+    ["the wishlist", shape({ view: "wishlist" })],
+  ])(
+    "US-QS-14 · US-QS-32 %s: the loading rows are 56 px thumbnails in one group, so the cold load does not shift",
+    async (_name, mode) => {
+      const { container } = render(<CollectionModeSkeleton shape={mode} />);
+      await screen.findByRole("status");
+      expect(container.querySelectorAll('[class~="size-[56px]"]').length).toBeGreaterThan(0);
+      expect(container.querySelectorAll("ul")).toHaveLength(1);
+    },
+  );
+
+  it("US-QS-14 · US-QS-32 the equipment: the loading shows the six parts as rows of one group, as the overview does", async () => {
+    const { container } = render(<CollectionModeSkeleton shape={shape({ view: "equipment" })} />);
+    await screen.findByRole("status");
+    expect(container.querySelectorAll("ul")).toHaveLength(1);
+    expect(container.querySelectorAll("ul > li")).toHaveLength(6);
+  });
+});

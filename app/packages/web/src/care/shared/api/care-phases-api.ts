@@ -38,3 +38,24 @@ export async function confirmPhaseSwitch(
   });
   return r.ok ? { ok: true, value: (r.value as { specimens: SwitchedSpecimen[] }).specimens } : r;
 }
+
+/**
+ * The undo of a bulk move (US-QS-32): each plant gets its earlier location back through the location write of
+ * `specimen.set_location` (P-03), one after the other. The first refusal stops the undo and is returned.
+ */
+export async function restorePhaseLocations(
+  api: string,
+  token: string,
+  moves: readonly { specimenId: string; locationId: string }[],
+  fetchFn: FetchFn = fetch,
+): Promise<Response<unknown>> {
+  for (const move of moves) {
+    const r = await createWrite(api, token, fetchFn)(
+      "POST",
+      `/specimens/${encodeURIComponent(move.specimenId)}/location`,
+      { locationId: move.locationId },
+    );
+    if (!r.ok) return r;
+  }
+  return { ok: true, value: null };
+}
