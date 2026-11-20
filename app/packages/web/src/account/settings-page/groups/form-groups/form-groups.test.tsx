@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { setProfileTimeZone } from "../../../../shared/data";
 import { SettingsPage } from "../../settings-page";
 
@@ -186,5 +187,28 @@ describe("US-QS-32 the settings groups say how to fix a field (F-0085, F-0092)",
     expect(
       screen.queryByText("Die Eingabe ist ungültig. Bitte prüfe die markierten Felder."),
     ).toBeNull();
+  });
+});
+
+/** What the announcer says (its polite live region, `sr-only`). */
+const announced = () =>
+  document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]')?.textContent ?? "";
+
+describe("US-QS-32 · F-0048 a saved group is its own result", () => {
+  it("US-QS-32 · F-0048 after a save no status box is in the page and the announcer says 'Einstellungen gespeichert.'", async () => {
+    fakeServer();
+    render(
+      <MemoryRouter initialEntries={["/?sheet=profile"]}>
+        <AnnouncerProvider>
+          <SettingsPage api="http://api" token={token} />
+        </AnnouncerProvider>
+      </MemoryRouter>,
+    );
+    const name = await screen.findByLabelText("Anzeigename");
+    await userEvent.clear(name);
+    await userEvent.type(name, "Lena L");
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
+    expect(screen.queryByRole("status")).toBeNull();
   });
 });

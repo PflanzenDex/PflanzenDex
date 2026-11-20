@@ -70,7 +70,7 @@ function WishActions(props: {
 }) {
   const { c, busy } = props;
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex min-w-0 flex-wrap items-center gap-1">
       <Button
         type="button"
         variant="outline"
@@ -108,30 +108,27 @@ export function WishRow(props: {
   const [ref, src] = useObjectPhoto(access, storedPicturePath(c));
   const discard = useDiscardQuestion();
   return (
-    <div data-priority={c.priority.kind} data-scroll-x="row" className="min-w-0 overflow-x-auto">
-      {/* The row keeps 18 rem (US-QS-32): at 200 % text the actions take more than the list has, so the row is wider than the
-          list and this wrapper scrolls sideways, instead of the name shrinking to a few characters. */}
-      <div className="min-w-[18rem]">
-        <ObjectRow
-          rootRef={ref}
-          src={src}
-          title={titleOf(c, rank)}
-          meta={metaOf(c)}
-          haspopup="dialog"
-          expanded={open}
-          onClick={(event) => openLayer(event.currentTarget)}
-          action={
-            <WishActions
-              c={c}
-              busy={props.busy}
-              onBuy={props.onBuy}
-              asking={discard.asking}
-              onAsk={discard.ask}
-              trigger={discard.triggerRef}
-            />
-          }
-        />
-      </div>
+    <div data-priority={c.priority.kind} className="min-w-0">
+      {/* The actions wrap below the name at 200 % text (the object row rule, issue 2322): the row never needs a sideways scroll. */}
+      <ObjectRow
+        rootRef={ref}
+        src={src}
+        title={titleOf(c, rank)}
+        meta={metaOf(c)}
+        haspopup="dialog"
+        expanded={open}
+        onClick={(event) => openLayer(event.currentTarget)}
+        action={
+          <WishActions
+            c={c}
+            busy={props.busy}
+            onBuy={props.onBuy}
+            asking={discard.asking}
+            onAsk={discard.ask}
+            trigger={discard.triggerRef}
+          />
+        }
+      />
       {discard.asking ? (
         <div className="px-3 pb-3">
           <DiscardQuestion

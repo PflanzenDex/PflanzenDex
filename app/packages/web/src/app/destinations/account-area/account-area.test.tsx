@@ -240,8 +240,8 @@ describe("US-QS-17 Konto with its sections as views", () => {
     await userEvent.clear(name);
     await userEvent.type(name, "Lena L");
     await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Einstellungen gesichert.");
-    expect(puts).toHaveLength(1);
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(screen.queryByRole("status")).toBeNull();
     expect(puts[0]?.["displayName"]).toBe("Lena L");
   });
 

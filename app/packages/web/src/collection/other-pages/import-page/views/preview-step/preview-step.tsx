@@ -1,6 +1,6 @@
 // The preview of the CSV import (US-BES-18): the counts, the locations that will be created, the markers the file still
 // needs, every row with its state and reasons, and the one filled action. Nothing is written before "importieren".
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import type { ImportPreview } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
@@ -81,7 +81,8 @@ export function PreviewStep(props: { view: ImportFlow; moved: boolean }) {
   const { flow } = view;
   const heading = useRef<HTMLHeadingElement>(null);
   const rows = useRowPageSize();
-  useEffect(() => {
+  // A layout effect: the heading takes the focus in the commit of the arrival (SC 2.4.3), before anything reads the page.
+  useLayoutEffect(() => {
     if (moved && heading.current) focusIt(heading.current);
   }, [moved]);
   const preview = flow.preview;
