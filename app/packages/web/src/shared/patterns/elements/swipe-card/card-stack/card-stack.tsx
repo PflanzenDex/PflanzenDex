@@ -57,7 +57,7 @@ export function StackLevels(props: {
         inert
         data-level={level}
         className={cn(
-          "pointer-events-none absolute inset-0 flex origin-bottom flex-col overflow-hidden rounded-xl border border-border bg-card translate-y-(--level-y) scale-(--level-scale)",
+          "pointer-events-none absolute inset-0 flex origin-bottom flex-col overflow-hidden rounded-card border border-border bg-card translate-y-(--level-y) scale-(--level-scale)",
           props.dragging ? "transition-none" : MOTION,
         )}
         style={cssVars({ "--level-scale": String(pose.scale), "--level-y": `${pose.y}px` })}
