@@ -1,11 +1,27 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { test } from "node:test";
 import { baselineChanges } from "../../../.claude/hooks/baseline-growth.mjs";
 import { assess, JOBS, problemsNow } from "./actions/ci-reuse/verdict/ci-verdict.mjs";
 import { idsIn, problems, specIds } from "./merge-pr.mjs";
+import {
+  dropMergedTestDb,
+  testDbDirOf,
+  testDbPortOf,
+  worktreeOf,
+} from "./worktree/local-database.mjs";
 
 const known = new Set(["US-BES-06", "FR-QG-11"]);
 const ok = {
@@ -380,4 +396,181 @@ test("US-DEV-13: make merge refuses a required job that never ran", () => {
       "CI: app-gates: never ran, but ci.yml requires it for this PR",
     ),
   );
+});
+
+// US-DEV-08 (issue 2325): after a merge, make merge removes the test database of the merged branch's worktree. `git worktree
+// list --porcelain` prints the main checkout first; `make db-down` there would remove the shared test database, so it never
+// counts as a worktree to clean.
+const MAIN = "/work/PflanzenDex";
+const LISTED = [
+  `worktree ${MAIN}`,
+  "HEAD 1111111",
+  "branch refs/heads/dev",
+  "",
+  `worktree ${MAIN}/.worktrees/fix-a`,
+  "HEAD 2222222",
+  "branch refs/heads/fix/issue-1-a",
+  "",
+  `worktree ${MAIN}/.worktrees/fix-b`,
+  "HEAD 3333333",
+  "branch refs/heads/fix/issue-2-b",
+  "",
+].join("\n");
+
+test("US-DEV-08: the linked worktree of the merged branch is found, neither the main checkout nor another worktree", () => {
+  assert.equal(worktreeOf(LISTED, "fix/issue-2-b"), `${MAIN}/.worktrees/fix-b`);
+  assert.equal(worktreeOf(LISTED, "fix/issue-1-a"), `${MAIN}/.worktrees/fix-a`);
+});
+
+test("US-DEV-08: a branch checked out only in the main checkout has no worktree to clean", () => {
+  assert.equal(worktreeOf(LISTED, "dev"), null);
+});
+
+test("US-DEV-08: a branch without a worktree, a detached worktree, a name that only starts like another and empty output give none", () => {
+  assert.equal(worktreeOf(LISTED, "fix/gone"), null);
+  assert.equal(worktreeOf(LISTED, "fix/issue-2"), null);
+  assert.equal(worktreeOf(LISTED, undefined), null);
+  assert.equal(worktreeOf("", "fix/issue-2-b"), null);
+  const detached = `worktree ${MAIN}\nHEAD 1\nbranch refs/heads/dev\n\nworktree ${MAIN}/.worktrees/fix-c\nHEAD 4444444\ndetached\n`;
+  assert.equal(worktreeOf(detached, "fix/issue-3-c"), null);
+});
+
+test("US-DEV-08: a worktree names its own test database only with a port of digits in its .env.worktree", () => {
+  assert.equal(testDbPortOf("PFLANZENDEX_TEST_DB_PORT=54330\n"), "54330");
+  assert.equal(
+    testDbPortOf("PFLANZENDEX_E2E_WEB_PORT=5173\nPFLANZENDEX_TEST_DB_PORT=54331\n"),
+    "54331",
+  );
+  // An empty port would make db-down name the shared container `pflanzendex-test-db`, so it is no port.
+  assert.equal(testDbPortOf("PFLANZENDEX_TEST_DB_PORT=\n"), null);
+  assert.equal(testDbPortOf("PFLANZENDEX_TEST_DB_PORT=abc\n"), null);
+  assert.equal(testDbPortOf(""), null);
+  assert.equal(testDbPortOf(null), null);
+});
+
+test("US-DEV-08: the test database of a worktree is removed only when its own .env.worktree sets a port", (t) => {
+  const root = mkdtempSync(join(tmpdir(), "merge-db-env-"));
+  // The folder goes again, also when the assertion fails (#1297).
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const dirs = {
+    withPort: join(root, "with-port"),
+    noPort: join(root, "no-port"),
+    noFile: join(root, "no-file"),
+  };
+  for (const dir of Object.values(dirs)) mkdirSync(dir);
+  writeFileSync(join(dirs.withPort, ".env.worktree"), "PFLANZENDEX_TEST_DB_PORT=54330\n");
+  writeFileSync(join(dirs.noPort, ".env.worktree"), "PFLANZENDEX_E2E_WEB_PORT=5173\n");
+  const listed = [
+    `worktree ${MAIN}`,
+    "HEAD 1",
+    "branch refs/heads/dev",
+    "",
+    ...Object.entries(dirs).flatMap(([name, dir]) => [
+      `worktree ${dir}`,
+      "HEAD 2",
+      `branch refs/heads/${name}`,
+      "",
+    ]),
+  ].join("\n");
+  assert.equal(testDbDirOf(listed, "withPort"), dirs.withPort);
+  assert.equal(testDbDirOf(listed, "noPort"), null);
+  assert.equal(testDbDirOf(listed, "noFile"), null);
+});
+
+// The real db-down recipe in miniature: the same container name, the same `-` prefix, a fake docker that only logs its call.
+const MAKEFILE = [
+  "-include .env.worktree",
+  "DB_CONTAINER := pflanzendex-test-db$(if $(PFLANZENDEX_TEST_DB_PORT),-$(PFLANZENDEX_TEST_DB_PORT))",
+  "db-down:",
+  "\t-docker rm -f -v $(DB_CONTAINER)",
+  "",
+].join("\n");
+// The variables of an outer git hook (GIT_DIR in a pre-push run) would point the fixture at another checkout.
+const DROPPED_GIT_VARS = new Set(["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE"]);
+const fixtureEnv = () =>
+  Object.fromEntries(Object.entries(process.env).filter(([name]) => !DROPPED_GIT_VARS.has(name)));
+function git(cwd, ...args) {
+  execFileSync(
+    "git",
+    ["-c", "user.name=t", "-c", "user.email=t@example.org", "-c", "commit.gpgsign=false", ...args],
+    { cwd, env: fixtureEnv(), stdio: "ignore" },
+  );
+}
+
+/**
+ * A checkout (`main`, on branch trunk) with a linked worktree (`linked`) on `branch`. The linked worktree has its own
+ * .env.worktree with `port` (none when empty) and, unless `linkedMakefile` is false, the Makefile; a fake docker in `bin`
+ * writes its arguments to `log`.
+ */
+function mergedCheckout(
+  t,
+  { branch = "fix/issue-2325-x", port = "54330", linkedMakefile = true } = {},
+) {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "merge-db-")));
+  // The folder goes again, also when the assertion fails (#1297).
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const main = join(root, "main");
+  const linked = join(root, "linked");
+  const bin = join(root, "bin");
+  const log = join(root, "docker.log");
+  mkdirSync(main);
+  mkdirSync(bin);
+  writeFileSync(join(bin, "docker"), `#!/bin/sh\necho "$*" >> '${log}'\n`);
+  chmodSync(join(bin, "docker"), 0o755);
+  git(main, "init", "-q", "-b", "trunk");
+  writeFileSync(join(main, "Makefile"), MAKEFILE);
+  git(main, "add", "Makefile");
+  git(main, "commit", "-q", "-m", "init");
+  git(main, "worktree", "add", "-q", "-b", branch, linked);
+  if (port) writeFileSync(join(linked, ".env.worktree"), `PFLANZENDEX_TEST_DB_PORT=${port}\n`);
+  if (!linkedMakefile) rmSync(join(linked, "Makefile"));
+  return { root, main, linked, bin, log, branch };
+}
+
+/** Runs `fn` with the fake docker first on PATH; the PATH is restored afterwards. */
+function withFakeDocker(fixture, fn) {
+  const before = process.env.PATH;
+  process.env.PATH = `${fixture.bin}${delimiter}${before}`;
+  try {
+    return fn();
+  } finally {
+    process.env.PATH = before;
+  }
+}
+
+test("US-DEV-08: after a merge, make db-down runs in the merged branch's worktree and only there, and one line names it", (t) => {
+  const f = mergedCheckout(t);
+  const line = withFakeDocker(f, () => dropMergedTestDb(f.branch, f.main));
+  assert.equal(line, `merge-pr: removed the test database of ${f.linked} (make db-down)`);
+  assert.equal(readFileSync(f.log, "utf8"), "rm -f -v pflanzendex-test-db-54330\n");
+});
+
+test("US-DEV-08: a branch checked out only in the main checkout, or a worktree without a port, leaves the shared database alone and the merge silent", (t) => {
+  const onMain = mergedCheckout(t);
+  assert.equal(
+    withFakeDocker(onMain, () => dropMergedTestDb("trunk", onMain.main)),
+    null,
+  );
+  assert.equal(existsSync(onMain.log), false, "docker must not run for the main checkout");
+  const noPort = mergedCheckout(t, { port: "" });
+  assert.equal(
+    withFakeDocker(noPort, () => dropMergedTestDb(noPort.branch, noPort.main)),
+    null,
+  );
+  assert.equal(existsSync(noPort.log), false, "docker must not run without a port");
+});
+
+test("US-DEV-08: a failing make, a failing git and a missing branch leave the merge silent: nothing throws", (t) => {
+  const noMakefile = mergedCheckout(t, { linkedMakefile: false });
+  assert.equal(
+    withFakeDocker(noMakefile, () => dropMergedTestDb(noMakefile.branch, noMakefile.main)),
+    null,
+  );
+  assert.equal(existsSync(noMakefile.log), false);
+  // A folder that is no checkout: git worktree list fails.
+  assert.equal(
+    withFakeDocker(noMakefile, () => dropMergedTestDb(noMakefile.branch, noMakefile.root)),
+    null,
+  );
+  assert.equal(dropMergedTestDb(undefined, noMakefile.main), null);
 });

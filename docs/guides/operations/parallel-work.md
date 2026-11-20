@@ -130,7 +130,7 @@ The UI gates, Lighthouse, the e2e tests and `make ci` load the workstation so mu
 - Two timed-out runs on one head: rerun each one with `gh run rerun <id> --failed`.
 - Rerunning an `edited` run replays the original title.
 - `gh run view --log` shows the latest attempt for every attempt of a run: download the logs of the earlier attempts before a rerun.
-- `make merge` deletes the PR's remote branch (`gh pr merge --squash --delete-branch`); it does not remove the local worktree, so remove that by hand after the merge.
+- `make merge` deletes the PR's remote branch (`gh pr merge --squash --delete-branch`) and, after a successful merge, removes the test database of the merged branch's worktree (`make db-down` in that worktree, US-DEV-08, issue 2325); the main checkout's database is never touched. It does not remove the local worktree, so remove that by hand after the merge. When the owner merges a PR by hand, run `make db-down` in its worktree before `git worktree remove`, or the worktree's test database container keeps running.
 - Never chain merges in a script while the owner may merge by hand, and agents never arm auto-merge. In a merge chain, check `make merge`'s exit code before any cleanup: `make merge … | tail -1 && cleanup` ran the cleanup after a failed merge, because `tail` decides the exit code.
 - Two PRs that shrink the same baseline conflict: take dev's file, re-apply your own removals, and set `maxEntries` to dev's value minus your removals. A change that grows a baseline needs a human; `make gate-plan` refuses baseline files, because they are not gate files.
 
