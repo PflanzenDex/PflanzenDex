@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { cn } from "@/shared/lib/utils";
 import { ObjectPlaceholder } from "@/shared/lists/object-placeholder/object-placeholder";
 
 /**
@@ -15,15 +16,20 @@ export function CardPicture(props: {
   alt: string;
   /** The credit of the picture (a source line, a link), shown under it when given. */
   credit?: ReactNode;
+  /** Classes of the box that keep its 4:3 ratio (a width derived from a height cap), set by the caller. */
+  boxClassName?: string | undefined;
 }) {
   // The address that failed: the placeholder stays until another address comes.
   const [failed, setFailed] = useState<string | null>(null);
   const picture = props.src !== null && props.src !== failed ? props.src : null;
   return (
-    // The box gives way first when the card is short of room (a flex column, `min-h-0`, US-QS-21); at large text the card has
-    // its own height and nothing gives way.
-    <figure data-card-picture="" className="m-0 flex min-h-0 min-w-0 flex-col gap-1">
-      <div className="relative aspect-[4/3] min-h-12 w-full shrink overflow-hidden rounded-tile bg-muted">
+    <figure data-card-picture="" className="m-0 flex min-w-0 flex-col gap-1">
+      <div
+        className={cn(
+          "relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-tile bg-muted",
+          props.boxClassName,
+        )}
+      >
         {picture === null ? (
           <ObjectPlaceholder className="absolute top-0 left-0" />
         ) : (

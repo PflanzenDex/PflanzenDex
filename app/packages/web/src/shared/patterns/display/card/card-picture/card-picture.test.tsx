@@ -24,6 +24,18 @@ describe("US-QS-32 · SG-PHOTO-01 the card picture has a 4:3 box, and its room i
   });
 });
 
+describe("US-QS-32 · SG-PHOTO-01 the 4:3 box keeps its ratio when the card is short of room", () => {
+  it("US-QS-32 · SG-PHOTO-01 the box does not shrink (shrink-0), so the picture keeps 4:3 at every card height and text size", () => {
+    const { container } = render(<CardPicture src="https://example.org/a.jpg" alt="Bild" />);
+    const box = container.querySelector("figure")?.firstElementChild as HTMLElement;
+    const classes = box.className.split(" ");
+    expect(classes).toContain("aspect-[4/3]");
+    expect(classes).toContain("shrink-0");
+    expect(classes).not.toContain("shrink");
+    expect(box.className).not.toContain("min-h-");
+  });
+});
+
 describe("US-QS-32 · SG-PHOTO-02 a missing or failed picture shows the drawn placeholder in the same box", () => {
   it("US-QS-32 · SG-PHOTO-02 without a picture address the drawn sprout stands in: no image, no emoji, the box keeps its 4:3 room", () => {
     const { container } = render(<CardPicture src={null} alt="Bild von Aloe vera" />);
