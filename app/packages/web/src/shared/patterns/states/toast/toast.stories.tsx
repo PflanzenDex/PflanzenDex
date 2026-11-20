@@ -40,7 +40,7 @@ export const LongTextNarrow: Story = {
     toast: {
       ...base,
       message:
-        "Die Änderung an der Monstera Deliciosa Thai Constellation wurde auf diesem Gerät gesichert.",
+        "Die Änderung an der Monstera Deliciosa Thai Constellation wurde auf diesem Gerät gespeichert.",
       action: { label: "Rückgängig", onAction: noop },
     },
     onDismiss: noop,
