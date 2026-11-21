@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
@@ -123,5 +123,95 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
     rerender(<Controlled refusals={1} />);
     await waitFor(() => expect(sheet.style.transform).toBe("translate3d(0px, 0px, 0px)"));
     expect(sheet.style.transition).toContain("transform");
+  });
+});
+
+function Labelled({ closeLabel }: { closeLabel?: string }) {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <button>Öffnen</button>
+      </SheetTrigger>
+      <SheetContent title="Filter" {...(closeLabel ? { closeLabel } : {})}>
+        <button>Anwenden</button>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+describe("US-QS-32 · SG-SHEET-02 a sheet has a visible close control beside its title", () => {
+  it("US-QS-32 · SG-SHEET-02 the sheet shows a button named Schließen inside it", async () => {
+    render(<Example />);
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const dialog = await screen.findByRole("dialog", { name: "Filter" });
+    expect(within(dialog).getByRole("button", { name: "Schließen" })).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-SHEET-02 the close button takes the label the caller gives", async () => {
+    render(<Labelled closeLabel="Filter schließen" />);
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const dialog = await screen.findByRole("dialog", { name: "Filter" });
+    expect(within(dialog).getByRole("button", { name: "Filter schließen" })).toBeTruthy();
+    expect(within(dialog).queryByRole("button", { name: "Schließen" })).toBeNull();
+  });
+
+  it("US-QS-32 · SG-SHEET-02 the close button closes the sheet and returns the focus to the trigger", async () => {
+    render(<Example />);
+    const trigger = screen.getByRole("button", { name: "Öffnen" });
+    await userEvent.click(trigger);
+    const dialog = await screen.findByRole("dialog", { name: "Filter" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Schließen" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+  });
+
+  it("US-QS-32 · SG-TOUCH-03 the close button is at least 44 px square", async () => {
+    render(<Example />);
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const dialog = await screen.findByRole("dialog", { name: "Filter" });
+    const close = within(dialog).getByRole("button", { name: "Schließen" });
+    expect(close.className).toContain("min-h-[44px]");
+    expect(close.className).toContain("min-w-[44px]");
+    expect(close.className).toContain("focus-visible:ring-2");
+  });
+
+  it("US-QS-32 · SG-SHEET-07 on open the focus stays on the first control of the sheet, never on the close button", async () => {
+    render(<Labelled />);
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const dialog = await screen.findByRole("dialog", { name: "Filter" });
+    const first = within(dialog).getByRole("button", { name: "Anwenden" });
+    await waitFor(() => expect(document.activeElement).toBe(first));
+    expect(document.activeElement).not.toBe(
+      within(dialog).getByRole("button", { name: "Schließen" }),
+    );
+  });
+
+  it("US-QS-32 · SG-SHEET-07 a sheet of links only (the menu Mehr) keeps the focus on the sheet, not on its close button", async () => {
+    render(
+      <Sheet>
+        <SheetTrigger asChild>
+          <button>Öffnen</button>
+        </SheetTrigger>
+        <SheetContent title="Mehr">
+          <a href="#einstellungen">Einstellungen</a>
+        </SheetContent>
+      </Sheet>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const dialog = await screen.findByRole("dialog", { name: "Mehr" });
+    await waitFor(() => expect(document.activeElement).toBe(dialog));
+    expect(document.activeElement).not.toBe(
+      within(dialog).getByRole("button", { name: "Schließen" }),
+    );
+  });
+
+  it("US-QS-32 · SG-COLOR-06 the grabber is drawn in the input boundary token, not in the muted surface", async () => {
+    render(<Example />);
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const dialog = await screen.findByRole("dialog", { name: "Filter" });
+    const grabber = dialog.querySelector("[aria-hidden='true'].rounded-full");
+    expect(grabber).not.toBeNull();
+    expect(grabber?.classList.contains("bg-input")).toBe(true);
+    expect(grabber?.classList.contains("bg-muted")).toBe(false);
   });
 });

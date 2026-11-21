@@ -1,37 +1,50 @@
-import { useEffect, useState } from "react";
-import { loadHints } from "../hint-api";
-import { HintNote } from "../hint-note/hint-note";
-import { HINT_TEXTS } from "../hint-texts";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { isNoteOccasion, loadHints, type NoteOccasion } from "../hint-api";
+import { HintNote } from "..";
 
 type Token = () => Promise<string | undefined>;
 
+/** The note of one occasion for its place: the note while the server picks that occasion, else nothing. */
+type Note = (occasion: string) => ReactNode;
+
 /**
- * The calm hint of one view other than the start page (US-ONB-07): the view says which occasions apply, the server
- * decides which single one is due (fixed order, once, 7 days, none in calm mode or style `many`). It sits at the place
- * where it helps, blocks nothing and fails open: when the request fails, no hint shows (P-10 is kept by the page).
+ * The calm hint of a view with places of its own (US-ONB-07, the plant layer): one request asks the server which of the
+ * applicable occasions is due, and `children` gets the note of each occasion for its place, so only the due one shows,
+ * where it helps. The content renders at once; the note's code loads on its own (DS-08). It never blocks, and a failed
+ * request fails open: no note shows, the view keeps its content (P-10).
  */
-export function ContextHint(props: { api: string; token: Token; applicable: readonly string[] }) {
-  const { api, token } = props;
-  const key = props.applicable.join(",");
-  const [due, setDue] = useState<string | null>(null);
+export function ContextHint(props: {
+  api: string;
+  token: Token;
+  applicable: readonly string[];
+  children: (note: Note) => ReactNode;
+}) {
+  const { api, token, applicable } = props;
+  const key = applicable.join(",");
+  const [picked, setPicked] = useState<NoteOccasion | null>(null);
   useEffect(() => {
+    if (key === "") return;
+    const asked = key.split(",");
     let current = true;
     void (async () => {
       const t = await token();
-      const r = t ? await loadHints(api, t, key.split(",")) : null;
-      if (current) setDue(r?.ok ? r.value.hint : null);
+      const r = t ? await loadHints(api, t, asked) : null;
+      const hint = r?.ok ? r.value.hint : null;
+      if (current) setPicked(isNoteOccasion(hint) && asked.includes(hint) ? hint : null);
     })();
     return () => {
       current = false;
     };
   }, [api, token, key]);
-  if (!due || !(due in HINT_TEXTS)) return null;
-  return (
-    <HintNote
-      occasion={due as keyof typeof HINT_TEXTS}
-      api={api}
-      token={token}
-      onGone={() => setDue(null)}
-    />
-  );
+  // The picked occasion counts only while the view still lists it: a write may have ended it meanwhile.
+  const due = picked !== null && applicable.includes(picked) ? picked : null;
+  const note: Note = (occasion) => {
+    if (due === null || due !== occasion) return null;
+    return (
+      <Suspense fallback={null}>
+        <HintNote occasion={due} api={api} token={token} onGone={() => setPicked(null)} />
+      </Suspense>
+    );
+  };
+  return <>{props.children(note)}</>;
 }

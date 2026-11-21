@@ -109,7 +109,12 @@ describe("US-BES-07 client of the archive API", () => {
 
   it("archives with reason, time zone of the device and replay-protection key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(200, {}));
-    await archiveSpecimen("http://api", "tok", { id: "e1", reason: "verkauft" }, fetchFn);
+    await archiveSpecimen(
+      "http://api",
+      "tok",
+      { id: "e1", reason: "verkauft" },
+      { fetchFn: fetchFn, key: "test-key" },
+    );
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/specimens/e1/archive");
     expect(JSON.parse(String(init?.body))).toEqual({
@@ -122,7 +127,9 @@ describe("US-BES-07 client of the archive API", () => {
   it("a server error stays an error with code (P-10)", async () => {
     const error = { code: "specimen.already_archived", text: "Schon archiviert." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(409, { error }));
-    expect(await restoreSpecimen("http://api", "tok", "e1", fetchFn)).toMatchObject({
+    expect(
+      await restoreSpecimen("http://api", "tok", "e1", { fetchFn: fetchFn, key: "test-key" }),
+    ).toMatchObject({
       ok: false,
       error: { code: "specimen.already_archived" },
     });
@@ -224,7 +231,7 @@ describe("US-BES-07 archive and restore", () => {
     const field = (await screen.findByLabelText("Fangdatum")) as HTMLInputElement;
     expect(field.value).toBe("05.01.2026");
     fireEvent.change(field, { target: { value: "2025-12-24" } });
-    await userEvent.click(screen.getByRole("button", { name: "Fangdatum speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Fangdatum sichern" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.path).toBe("/specimens/e9/catch-date");
     expect(posts[0]?.body["catchDate"]).toBe("2025-12-24");
@@ -252,9 +259,9 @@ describe("US-BES-07 archive and restore", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Fangdatum ändern: Alter Ficus" }),
     );
-    await userEvent.click(await screen.findByRole("button", { name: "Fangdatum speichern" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Fangdatum sichern" }));
     expect(await screen.findByText(/nach dem Tag, an dem die Pflanze archiviert/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Fangdatum speichern" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Fangdatum sichern" })).toBeTruthy();
   });
 
   it("restoring sends the request and brings the specimen back into the cards", async () => {

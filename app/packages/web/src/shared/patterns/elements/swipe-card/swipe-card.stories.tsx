@@ -20,7 +20,7 @@ const meta = {
     onSwipe: () => undefined,
     onExited: () => undefined,
     children: (
-      <div className="flex flex-1 flex-col gap-2 rounded-xl border border-border bg-card p-3">
+      <div className="flex flex-1 flex-col gap-2 rounded-card border border-border bg-card p-3">
         <p className="m-0 text-xl font-semibold">Monstera deliciosa</p>
         <p className="m-0 text-sm">Ziehe die Karte nach links, rechts, oben oder unten.</p>
       </div>

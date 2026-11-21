@@ -54,7 +54,7 @@ export function CareProfileCard(props: {
       setParams(withPage(params, DORMANCY_PAGE), { replace: true, state: location.state });
       form.setError(first, { type: "problem", message: result.problem }, { shouldFocus: true });
     } else if (result.changes) {
-      props.onSave(result.changes, `Pflegeprofil für „${name}“ gespeichert.`);
+      props.onSave(result.changes, `Pflegeprofil für „${name}“ gesichert.`);
     }
   });
   const shared = { entry, control: form.control, reset, busy };
@@ -77,9 +77,9 @@ export function CareProfileCard(props: {
             size="touch"
             className="sticky bottom-0 z-10 bg-background"
             disabled={busy || !(outcome.changes || outcome.problem)}
-            aria-label={`Speichern: ${name}`}
+            aria-label={`Sichern: ${name}`}
           >
-            Speichern
+            Sichern
           </Button>
         </FormRoot>
       </Form>

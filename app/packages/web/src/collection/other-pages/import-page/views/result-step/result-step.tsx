@@ -92,7 +92,7 @@ export function ResultStep(props: { view: ImportFlow; moved: boolean }) {
         <Link to={PATHS.collection} className={buttonVariants()}>
           {ui("toCollection")}
         </Link>
-        <Button type="button" variant="outline" onClick={view.again}>
+        <Button type="button" variant="tinted" onClick={view.again}>
           {ui("importAnother")}
         </Button>
       </div>

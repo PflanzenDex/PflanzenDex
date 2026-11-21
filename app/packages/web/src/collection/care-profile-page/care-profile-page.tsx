@@ -5,7 +5,13 @@ import type {
   LightLocation,
   LightZone,
 } from "@pflanzendex/core";
-import { LoadFrame, useInvalidate, useQueryClient, useWriteAction } from "../../shared/data";
+import {
+  entityKey,
+  LoadFrame,
+  useInvalidate,
+  useQueryClient,
+  useWriteAction,
+} from "../../shared/data";
 import { sharedLocations, sharedZones } from "../../light";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { loadCareProfiles, saveCareProfile } from "../care-profile/care-profile-api";
@@ -62,7 +68,12 @@ export function CareProfileSection(props: {
     [api, speciesId, client],
   );
   const save = (speciesId: string, changes: CareProfileChanges, success: string) =>
-    void write.run((t) => saveCareProfile(api, t, { speciesId, changes }), success);
+    void write.run(
+      (t, opts) => saveCareProfile(api, t, { speciesId, changes }, opts),
+      success,
+      // Set-state on the care profile form (a whole form): the operation only, the changes are the body (US-QS-03).
+      entityKey("species", speciesId, "care-profile"),
+    );
   return (
     <div className="min-w-0">
       <LoadFrame

@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { Banner } from "@pflanzendex/core";
-import { SCREEN_STALE_TIME, useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
+import {
+  SCREEN_STALE_TIME,
+  useInvalidate,
+  useRequest,
+  useWriteAction,
+  newRepeatKey,
+} from "../../../shared/data";
 import { loadBanner, markFeedSeen } from "../../api/feed-api";
 
 const KEY = ["social", "banner"] as const;
@@ -17,7 +23,8 @@ function useFirstVisit(api: string, token: Token, banner: Banner | undefined, re
     done.current = true;
     void (async () => {
       const t = await token();
-      if (t) await markFeedSeen(api, t, banner.asOf);
+      // A per-send key: the banner mark is silent and idempotent; nothing the keeper did is repeated (US-QS-03)
+      if (t) await markFeedSeen(api, t, banner.asOf, { key: newRepeatKey() });
       reload();
     })();
   }, [api, token, banner, reload]);

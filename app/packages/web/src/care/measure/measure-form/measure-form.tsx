@@ -191,7 +191,7 @@ export function MeasureForm(props: {
         pending={form.formState.isSubmitting}
         photoStatus={props.photoStatus ?? null}
       >
-        Messung speichern
+        Messung sichern
       </SaveFooter>
     </Form>
   );

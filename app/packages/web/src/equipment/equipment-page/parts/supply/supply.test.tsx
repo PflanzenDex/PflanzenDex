@@ -120,11 +120,11 @@ describe("US-EQU-05 supply of a consumable", () => {
     const { rerender } = render(<Supply item={consumable()} actions={a} />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("Text in der Behandlung (optional)"), " Neemöl ");
-    await user.click(screen.getByRole("button", { name: "Verknüpfung speichern" }));
+    await user.click(screen.getByRole("button", { name: "Verknüpfung sichern" }));
     expect(a.onLink).toHaveBeenLastCalledWith(expect.objectContaining({ id: "c1" }), "Neemöl");
     rerender(<Supply item={consumable({ agentLink: "Neemöl" })} actions={a} />);
     await user.clear(screen.getByLabelText("Text in der Behandlung (optional)"));
-    await user.click(screen.getByRole("button", { name: "Verknüpfung speichern" }));
+    await user.click(screen.getByRole("button", { name: "Verknüpfung sichern" }));
     expect(a.onLink).toHaveBeenLastCalledWith(expect.objectContaining({ id: "c1" }), null);
     rerender(<Supply item={consumable({ type: "Substrate" })} actions={a} />);
     expect(screen.queryByLabelText("Text in der Behandlung (optional)")).toBeNull();

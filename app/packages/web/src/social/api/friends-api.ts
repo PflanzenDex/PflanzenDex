@@ -8,7 +8,7 @@ import type {
   SharingRow,
   SpecimenRow,
 } from "@pflanzendex/core";
-import { call, createWrite, type Response } from "../../shared/data";
+import { call, createWrite, type Response, type WriteOptions } from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -52,9 +52,9 @@ export async function loadFriends(
 export async function createFriendCode(
   api: string,
   token: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<CreatedFriendCode>> {
-  const r = await createWrite(api, token, fetchFn)("POST", "/friends/invitations", {});
+  const r = await createWrite(api, token, options)("POST", "/friends/invitations", {});
   return r.ok ? { ok: true, value: r.value as CreatedFriendCode } : r;
 }
 
@@ -63,9 +63,9 @@ export async function sendFriendRequest(
   api: string,
   token: string,
   code: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<FriendRequest>> {
-  const r = await createWrite(api, token, fetchFn)("POST", "/friends/requests", { code });
+  const r = await createWrite(api, token, options)("POST", "/friends/requests", { code });
   return r.ok ? { ok: true, value: r.value as FriendRequest } : r;
 }
 
@@ -74,9 +74,9 @@ export async function answerFriendRequest(
   api: string,
   token: string,
   target: { requestId: string; decision: "accept" | "decline" },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<{ status: "confirmed" | "declined" }>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/friends/requests/${encodeURIComponent(target.requestId)}/answer`,
     { decision: target.decision },
@@ -89,9 +89,9 @@ export async function endFriendship(
   api: string,
   token: string,
   friendId: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<{ status: "ended" }>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/friends/${encodeURIComponent(friendId)}/end`,
     {},
@@ -104,9 +104,9 @@ export async function setSpecimenSharing(
   api: string,
   token: string,
   target: { specimenId: string; share: boolean },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<{ share: "private" | "friends" }>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "PUT",
     `/sharing/specimens/${encodeURIComponent(target.specimenId)}`,
     { share: target.share ? "friends" : "private" },
@@ -119,9 +119,9 @@ export async function setSpeciesSharing(
   api: string,
   token: string,
   target: { speciesId: string; share: boolean },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<{ changed: number }>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "PUT",
     `/sharing/species/${encodeURIComponent(target.speciesId)}`,
     { share: target.share ? "friends" : "private" },
@@ -144,9 +144,9 @@ export async function addToWishlist(
   api: string,
   token: string,
   latinName: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<unknown>> {
-  return createWrite(api, token, fetchFn)("POST", "/wishes", { name: latinName });
+  return createWrite(api, token, options)("POST", "/wishes", { name: latinName });
 }
 
 /** The devices of one friend (US-EQU-12); `friendId` is the friendship id. Only the whitelist, only what the friend shares. */

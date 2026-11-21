@@ -1,5 +1,12 @@
 import { useCallback, useRef, useState } from "react";
-import { SIGN_IN, type ApiError } from "../../../../shared/data";
+import {
+  appendKey,
+  todayLocal,
+  SIGN_IN,
+  type ApiError,
+  useRepeatKey,
+  newRepeatKey,
+} from "../../../../shared/data";
 import { recordMeasurement, type MeasurementInput } from "../../../shared/api/measurements-api";
 import { measurementText } from "../../../shared/text";
 import { refusalText } from "@/shared/lib/error-text";
@@ -12,7 +19,7 @@ const t = texts(table);
 
 /**
  * Saves a measurement and then its optional photo (US-WAC-01, US-WAC-05, US-WAC-06). The measurement is written first and
- * the fact line shows it at once. The confirmation "Gespeichert" comes only when the photo is stored as well: while it
+ * the fact line shows it at once. The confirmation "Gesichert" comes only when the photo is stored as well: while it
  * uploads, `photoStatus` says so. A refused photo is an error toast that names the measurement as kept and the photo as
  * not, with the text of its code (P-10, DS-54); the form resets either way, because the measurement is stored.
  * This hook does not announce the confirmation: `confirmed` is the confirmed text of the current save (`null` while the
@@ -36,12 +43,17 @@ export function useMeasureSend(props: {
   // The confirmation keeps the number of its save, so a confirmation never counts for a later save (US-QS-08).
   const [confirmation, setConfirmation] = useState<{ save: number; text: string } | null>(null);
   const [photoPending, setPhotoPending] = useState(false);
+  const keys = useRepeatKey();
   const count = useRef(0);
   const send = useCallback(
     async (input: MeasurementInput, photo?: File): Promise<ApiError | null> => {
       const tok = await token();
       if (!tok) return SIGN_IN;
-      const r = await recordMeasurement({ api, token: tok }, specimenId, input);
+      const r = await keys.run(
+        (key) => recordMeasurement({ api, token: tok }, specimenId, input, { key }),
+        // An append (a measurement is added to the plant): the operation and the local day, the values are the body (US-QS-03).
+        appendKey("specimen", specimenId, `measure:${todayLocal()}`),
+      );
       if (!r.ok) return r.error;
       const text = measurementText(r.value);
       count.current += 1;
@@ -56,10 +68,17 @@ export function useMeasureSend(props: {
         return null;
       }
       setPhotoPending(true);
-      const p = await uploadPhoto({ api, token: tok }, specimenId, {
-        file: photo,
-        date: r.value.date,
-      });
+      // A per-send key: the form resets after the measurement, so this form never repeats a lost photo answer (US-WAC-06).
+      const photoKey = newRepeatKey();
+      const p = await uploadPhoto(
+        { api, token: tok },
+        specimenId,
+        {
+          file: photo,
+          date: r.value.date,
+        },
+        photoKey,
+      );
       setPhotoPending(false);
       if (p.ok) setConfirmation({ save, text: t("saved", { measurement: text }) });
       else say(t("savedPhotoFailed", { reason: refusalText(p.error) }), "error");

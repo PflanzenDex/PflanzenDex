@@ -94,14 +94,24 @@ afterEach(() => {
 describe("US-BES-04 client of the specimen API", () => {
   it("US-BES-04: creates a cutting with a status", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(201, { id: "e1" }));
-    await createSpecimen("http://api", "tok", { speciesId: "a1", status: "cutting" }, fetchFn);
+    await createSpecimen(
+      "http://api",
+      "tok",
+      { speciesId: "a1", status: "cutting" },
+      { fetchFn: fetchFn, key: "test-key" },
+    );
     const [, init] = fetchFn.mock.calls[0] ?? [];
     expect(JSON.parse(String(init?.body))).toMatchObject({ speciesId: "a1", status: "cutting" });
   });
 
   it("US-BES-04: repots with a bearer token and a fresh Idempotency-Key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(200, { id: "e1", status: "plant" }));
-    const r = await repotSpecimen("http://api", "tok", { id: "e1" }, fetchFn);
+    const r = await repotSpecimen(
+      "http://api",
+      "tok",
+      { id: "e1" },
+      { fetchFn: fetchFn, key: "test-key" },
+    );
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/specimens/e1/repot");
     expect(init?.method).toBe("POST");
@@ -113,19 +123,26 @@ describe("US-BES-04 client of the specimen API", () => {
   it("US-BES-04: a server error stays an error with a code (P-10)", async () => {
     const error = { code: "specimen.not_a_cutting", text: "Kein Steckling." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(409, { error }));
-    expect(await repotSpecimen("http://api", "tok", { id: "e1" }, fetchFn)).toMatchObject({
+    expect(
+      await repotSpecimen("http://api", "tok", { id: "e1" }, { fetchFn: fetchFn, key: "test-key" }),
+    ).toMatchObject({
       ok: false,
       error: { code: "specimen.not_a_cutting" },
     });
   });
   it("US-BES-04: a chosen date goes with the time zone; without one the date stays out (older clients)", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(200, { id: "e1", status: "plant" }));
-    await repotSpecimen("http://api", "tok", { id: "e1", date: "2026-10-01" }, fetchFn);
+    await repotSpecimen(
+      "http://api",
+      "tok",
+      { id: "e1", date: "2026-10-01" },
+      { fetchFn: fetchFn, key: "test-key" },
+    );
     const [, init] = fetchFn.mock.calls[0] ?? [];
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
     expect(body["date"]).toBe("2026-10-01");
     expect(body["timeZone"]).toBeTruthy();
-    await repotSpecimen("http://api", "tok", { id: "e1" }, fetchFn);
+    await repotSpecimen("http://api", "tok", { id: "e1" }, { fetchFn: fetchFn, key: "test-key" });
     const [, plain] = fetchFn.mock.calls[1] ?? [];
     expect(JSON.parse(String(plain?.body))).not.toHaveProperty("date");
   });
@@ -178,7 +195,7 @@ describe("US-BES-04 repotted on the card", () => {
     expect(screen.queryByRole("menuitem", { name: "Eintopfen eintragen" })).toBeNull();
   });
 
-  it("US-BES-04: tapping Eintopfen eintragen changes nothing until Speichern, Abbrechen changes nothing either", async () => {
+  it("US-BES-04: tapping Eintopfen eintragen changes nothing until Sichern, Abbrechen changes nothing either", async () => {
     const { posts } = fakeServer();
     render(page());
     await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
@@ -202,14 +219,14 @@ describe("US-BES-04 repotted on the card", () => {
     );
   });
 
-  it("US-BES-04: Speichern repots with the chosen date, reloads and says what happens next (P-09)", async () => {
+  it("US-BES-04: Sichern repots with the chosen date, reloads and says what happens next (P-09)", async () => {
     const { posts } = fakeServer();
     render(page());
     await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
     fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
       target: { value: "2026-10-01" },
     });
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({ path: "/specimens/e1/repot", body: { date: "2026-10-01" } });
     expect(posts[0]?.key).toBeTruthy();
@@ -238,7 +255,7 @@ describe("US-BES-04 repotted on the card", () => {
     fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
       target: { value: "2026-12-24" },
     });
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(await screen.findByText(/liegt in der Zukunft/)).toBeTruthy();
     expect(screen.getByLabelText("Eingetopft am").getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
@@ -262,7 +279,7 @@ describe("US-BES-04 repotted on the card", () => {
     fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
       target: { value: "2026-08-31" },
     });
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(await screen.findByText(/liegt vor dem Fangdatum/)).toBeTruthy();
     expect(screen.getByLabelText("Eingetopft am").getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
@@ -279,7 +296,7 @@ describe("US-BES-04 repotted on the card", () => {
     });
     render(page());
     await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
-    await userEvent.click(await screen.findByRole("button", { name: "Speichern" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("kein Steckling");
     expect(screen.getByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
   });

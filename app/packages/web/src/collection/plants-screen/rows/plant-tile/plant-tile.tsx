@@ -54,8 +54,8 @@ const ATTENTION =
 /**
  * A plant in the list "Alle" (US-PHA-01, US-QS-19, US-QS-32): one `ObjectRow` with the photo's thumbnail (the drawn
  * placeholder while there is none), the title of `tileLines`, and the meta line led by the state that needs attention
- * (an open treatment, etiolated growth). Choosing the row opens the plant in its layer (`?sheet=plant-<id>`); the photo
- * is asked once the row is near the viewport (NFR-12).
+ * (an open treatment, etiolated growth). Choosing the row opens the plant in its layer (`?sheet=plant-<id>`), which the
+ * trailing chevron says like on every opener (SG-TOUCH-02, issue 2355); the photo is asked once the row is near the viewport (NFR-12).
  */
 export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoAccess }) {
   const { openLayer, open } = useLayer(plantLayerId(card.id));
@@ -80,7 +80,6 @@ export function PlantTile({ card, access }: { card: SpecimenCard; access: PhotoA
       }
       haspopup="dialog"
       expanded={open}
-      chevron={false}
       onClick={(event) => openLayer(event.currentTarget)}
     />
   );

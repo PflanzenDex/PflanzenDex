@@ -90,7 +90,7 @@ describe("US-EQU-04 operation and maintenance of a device", () => {
     render(<Maintenance item={device()} actions={a} />);
     const user = userEvent.setup();
     await user.type(screen.getByRole("textbox", { name: "Prüfintervall (optional)" }), "90");
-    await user.click(screen.getByRole("button", { name: "Betriebsdaten speichern" }));
+    await user.click(screen.getByRole("button", { name: "Betriebsdaten sichern" }));
     expect(a.onSave).toHaveBeenCalledWith(expect.objectContaining({ id: "d1" }), {
       inOperationSince: null,
       checkIntervalDays: 90,
@@ -104,11 +104,11 @@ describe("US-EQU-04 operation and maintenance of a device", () => {
     render(<Maintenance item={device()} actions={a} />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("Lebensdauer laut Hersteller (optional)"), "10 Jahre");
-    await user.click(screen.getByRole("button", { name: "Betriebsdaten speichern" }));
+    await user.click(screen.getByRole("button", { name: "Betriebsdaten sichern" }));
     expect(await screen.findByText(/braucht ihre Quelle/)).toBeTruthy();
     await user.type(screen.getByLabelText("Quelle der Lebensdauer"), "Datenblatt");
     await user.type(screen.getByRole("textbox", { name: "Prüfintervall (optional)" }), "0");
-    await user.click(screen.getByRole("button", { name: "Betriebsdaten speichern" }));
+    await user.click(screen.getByRole("button", { name: "Betriebsdaten sichern" }));
     expect(await screen.findByText(/von 1 bis 3650 Tagen/)).toBeTruthy();
     expect(a.onSave).not.toHaveBeenCalled();
   });

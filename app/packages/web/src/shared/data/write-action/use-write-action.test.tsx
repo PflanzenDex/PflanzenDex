@@ -29,7 +29,8 @@ function Probe() {
       onClick={() =>
         void write.run(
           async () => ({ ok: false, error: { code: "server.unexpected", text: "raw" } }),
-          "Gespeichert.",
+          "Gesichert.",
+          { target: "probe", action: "save" },
         )
       }
     >

@@ -25,7 +25,7 @@ import table from "../plant-notes.de.json";
 
 const t = texts(table);
 
-/** The form of the notes: the filled "Notiz speichern" in the footer of the layer submits it by this id (US-QS-15). */
+/** The form of the notes: the filled "Notiz sichern" in the footer of the layer submits it by this id (US-QS-15). */
 export const NOTES_FORM = "notes-form";
 
 /** True when the server refused the text itself (field `notes`, for example over the limit). */
@@ -98,7 +98,7 @@ export function NotesForm(props: {
             <p>{alertText}</p>
           </ErrorNotice>
         )}
-        <Button type="button" variant="outline" onClick={() => leave(props.onCancel)}>
+        <Button type="button" variant="plain" onClick={() => leave(props.onCancel)}>
           {t("form.cancel")}
         </Button>
       </FormRoot>

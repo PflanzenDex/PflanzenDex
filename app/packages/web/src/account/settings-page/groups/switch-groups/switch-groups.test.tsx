@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 describe("US-QS-32 · F-0048 a switch is its own result", () => {
-  it("US-QS-32 · F-0048 after a switch save no status box is in the DOM and the announcer says 'Gespeichert.'", async () => {
+  it("US-QS-32 · F-0048 after a switch save no status box is in the DOM and the announcer says 'Gesichert.'", async () => {
     const save = vi.fn<ProfileSaver["save"]>(async (next) => ({ ok: true, value: next }));
     const user = userEvent.setup();
     render(
@@ -52,7 +52,7 @@ describe("US-QS-32 · F-0048 a switch is its own result", () => {
     );
     await user.click(screen.getByRole("checkbox", { name: "Alles privat" }));
     await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
-    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
+    await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
     expect(screen.queryByRole("status")).toBeNull();
     expect(save.mock.calls[0]?.[0]).toMatchObject({ everythingPrivate: true });
   });
@@ -156,7 +156,7 @@ describe("US-QS-32 · F-0048 a switch keeps its focus while it saves", () => {
       expect(document.activeElement).toBe(box);
 
       await api.answerNext();
-      await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
+      await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
       await renderingUpdate();
       expect(box.checked).toBe(!before);
       expect(document.activeElement).toBe(box);
@@ -192,7 +192,7 @@ describe("US-QS-32 · F-0048 a switch keeps its focus while it saves", () => {
     expect(second.checked).toBe(false);
 
     await api.answerNext();
-    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
+    await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
     expect(first.checked).toBe(true);
     expect(second.checked).toBe(false);
   });

@@ -4,8 +4,12 @@ import { ChevronRight } from "lucide-react";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 
-/** An object's name wraps to two lines before it is cut (SG-TYPE-05); its meta line is one line that truncates. */
-export const OBJECT_TITLE = "line-clamp-2";
+/**
+ * An object's name wraps to two lines before it is cut (SG-TYPE-05) and breaks at German syllables, not at any letter, when
+ * one word is wider than the column at 200 % text ("Schmetterlings-orchidee", `lang="de"` on the document, issue 2366). A
+ * scientific name in the title is italic and carries `hyphens-manual` itself. Its meta line is one line that truncates.
+ */
+export const OBJECT_TITLE = "line-clamp-2 hyphens-auto";
 export const OBJECT_META = "truncate";
 
 export type RowContentProps = {
@@ -20,6 +24,22 @@ export type RowContentProps = {
   chevron: boolean;
   object: boolean;
 };
+
+/**
+ * The chevron of a row that opens a view or a layer (SG-TOUCH-02, SG-ICON-01): 16 px, neutral, decorative, at the trailing
+ * edge. One part for every row, so a row of another look (`LayerRow` of Freunde) draws the same mark (issue 2355).
+ */
+export function RowChevron(props: { warning?: boolean | undefined }) {
+  return (
+    <ChevronRight
+      aria-hidden="true"
+      className={cn(
+        "size-4 shrink-0",
+        props.warning ? "text-warning-foreground" : "text-muted-foreground",
+      )}
+    />
+  );
+}
 
 /**
  * The inside of a row: the leading mark, the title and meta line, the trailing value and the chevron. The accessible name of
@@ -65,15 +85,7 @@ export function RowContent(props: RowContentProps) {
           </span>
         </>
       )}
-      {props.chevron && (
-        <ChevronRight
-          aria-hidden="true"
-          className={cn(
-            "size-4 shrink-0",
-            props.warning ? "text-warning-foreground" : "text-muted-foreground",
-          )}
-        />
-      )}
+      {props.chevron && <RowChevron warning={props.warning} />}
     </>
   );
 }

@@ -12,8 +12,8 @@ function Save() {
   return (
     <>
       <input aria-label="Name" />
-      <button type="button" onClick={() => announcer?.announce("Gespeichert")}>
-        Speichern
+      <button type="button" onClick={() => announcer?.announce("Gesichert")}>
+        Sichern
       </button>
       <button type="button" onClick={() => announcer?.announce("Behandlung abgehakt")}>
         Abhaken
@@ -64,10 +64,10 @@ describe("US-QS-10 · one polite live region for every announcement (4.1.3)", ()
     );
     await userEvent.click(screen.getByLabelText("Name"));
     await userEvent.keyboard("{Tab}");
-    const button = screen.getByRole("button", { name: "Speichern" });
+    const button = screen.getByRole("button", { name: "Sichern" });
     expect(document.activeElement).toBe(button);
     await userEvent.keyboard("{Enter}");
-    expect(region()?.textContent).toBe("Gespeichert");
+    expect(region()?.textContent).toBe("Gesichert");
     expect(document.activeElement).toBe(button);
   });
 
@@ -88,19 +88,19 @@ describe("US-QS-10 · one polite live region for every announcement (4.1.3)", ()
         <Save />
       </AnnouncerProvider>,
     );
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     const first = region()?.textContent;
     await act(async () => {
-      await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+      await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     });
     const second = region()?.textContent;
-    expect(second?.trim()).toBe("Gespeichert");
+    expect(second?.trim()).toBe("Gesichert");
     expect(second).not.toBe(first);
   });
 
   it("US-QS-10 without a provider an announcement does nothing and does not fail", async () => {
     render(<Save />);
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(region()).toBeNull();
   });
 });

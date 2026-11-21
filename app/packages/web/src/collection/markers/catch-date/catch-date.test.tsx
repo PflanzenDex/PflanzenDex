@@ -124,7 +124,7 @@ describe("US-BES-02 FR-BES-04 client of the specimen API", () => {
       "http://api",
       "tok",
       { speciesId: "a1", catchDate: "2022-02-03" },
-      fetchFn,
+      { fetchFn: fetchFn, key: "test-key" },
     );
     const body = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
     expect(body).toMatchObject({ catchDate: "2022-02-03", timeZone: "Europe/Berlin" });
@@ -140,7 +140,7 @@ describe("US-BES-11 client: correct the catch date", () => {
       "http://api",
       "tok",
       { id: "e 1", catchDate: "2021-04-12" },
-      fetchFn,
+      { fetchFn: fetchFn, key: "test-key" },
     );
     expect(r.ok).toBe(true);
     const [url, init] = fetchFn.mock.calls[0] ?? [];
@@ -240,7 +240,7 @@ describe("US-BES-11 correct the catch date on the card", () => {
     );
     render(page());
     fireEvent.change(await openForm(), { target: { value: "2021-04-12" } });
-    await userEvent.click(screen.getByRole("button", { name: "Fangdatum speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Fangdatum sichern" }));
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toEqual({
       path: "/specimens/e1/catch-date",
@@ -255,7 +255,7 @@ describe("US-BES-11 correct the catch date on the card", () => {
     const posts = fakeServer([card()], () => json(200, {}));
     render(page());
     fireEvent.change(await openForm(), { target: { value: "" } });
-    await userEvent.click(screen.getByRole("button", { name: "Fangdatum speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Fangdatum sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Fangdatum");
     expect(posts).toHaveLength(0);
   });
@@ -273,7 +273,7 @@ describe("US-BES-11 correct the catch date on the card", () => {
     render(page());
     const input = await openForm();
     fireEvent.change(input, { target: { value: "2026-10-04" } });
-    await userEvent.click(screen.getByRole("button", { name: "Fangdatum speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Fangdatum sichern" }));
     await waitFor(() => expect(input.getAttribute("aria-invalid")).toBe("true"));
     expect(document.body.textContent).toContain("Das Fangdatum liegt in der Zukunft.");
     expect(document.body.textContent).not.toContain("server text");
@@ -286,7 +286,7 @@ describe("US-BES-11 correct the catch date on the card", () => {
     );
     render(page());
     await openForm();
-    await userEvent.click(screen.getByRole("button", { name: "Fangdatum speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Fangdatum sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Diese Pflanze gibt es nicht.",
     );

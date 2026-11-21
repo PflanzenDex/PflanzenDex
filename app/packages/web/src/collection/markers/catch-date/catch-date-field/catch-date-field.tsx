@@ -1,3 +1,4 @@
+import { entityKey, useRepeatKey } from "@/shared/data";
 import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Control } from "react-hook-form";
@@ -71,12 +72,16 @@ export type CatchDateTarget = { id: string; name: string; caughtAt: string | nul
  */
 export function useCatchDate(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<CatchDateTarget | null>(null);
+  const keys = useRepeatKey();
 
   const send = useCallback(
     async (catchDate: string): Promise<ApiError | null> => {
       const t = await token();
       if (!t || !open) return SIGN_IN;
-      const r = await correctCatchDate(api, t, { id: open.id, catchDate });
+      const r = await keys.run(
+        (key) => correctCatchDate(api, t, { id: open.id, catchDate }, { key }),
+        entityKey("specimen", open.id, `catch-date:${catchDate}`),
+      );
       if (!r.ok) return r.error;
       const date = r.value.caughtAt ? dateText(r.value.caughtAt) : UNKNOWN;
       say(tx("corrected", { name: open.name, date }));
@@ -158,7 +163,7 @@ export function CatchDateForm(props: {
             </ErrorNotice>
           )}
           <FormButtons
-            submit="Fangdatum speichern"
+            submit="Fangdatum sichern"
             cancel="Abbrechen"
             pending={form.formState.isSubmitting}
             onCancel={() => setOpen(null)}

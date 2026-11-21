@@ -37,7 +37,7 @@ export function ArchivedList(props: {
                 {props.onCatchDate && (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="plain"
                     size="sm"
                     aria-label={`Fangdatum ändern: ${e.name}`}
                     onClick={() => props.onCatchDate?.(e)}
@@ -48,7 +48,7 @@ export function ArchivedList(props: {
                 <NetworkSlot visible={false}>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="tinted"
                     size="sm"
                     needsNetwork
                     aria-label={`Wiederherstellen: ${e.name}`}

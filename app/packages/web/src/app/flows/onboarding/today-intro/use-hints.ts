@@ -1,9 +1,9 @@
+import { accountKey, useRepeatKey } from "@/shared/data";
 import { useEffect, useState } from "react";
 import { FIRST_PLANT_GUIDE, UNLOCK_FUNCTIONS, type OnboardingCounts } from "@pflanzendex/core";
 import { useUnlocks } from "../../unlock";
 import type { ApiError } from "../../../../shared/data";
 import { loadHints, saveHint, type HintState } from "./hint/hint-api";
-import { HintNote } from "./hint";
 
 type Token = () => Promise<string | undefined>;
 
@@ -13,24 +13,21 @@ const STAGED = new Set<string>(
 );
 
 /**
- * The occasions of Heute (US-ONB-07): the first plant exists, a staged function is open. The server decides
- * whether one is due.
+ * The occasions of Heute (US-ONB-07): a staged function is open, and only that one (the plant occasions are notes of the
+ * plant layer). The server decides whether it is due.
  */
-const applicableOf = (counts: OnboardingCounts, unlocked: boolean): string[] => [
-  ...(counts.specimens === 1 ? ["first_plant_saved"] : []),
-  ...(unlocked ? ["function_unlocked"] : []),
-];
+const applicableOf = (unlocked: boolean): string[] => (unlocked ? ["function_unlocked"] : []);
 
 /**
  * The hint state and the end of the guide of the account (DM-ONB-03), read once per visit of Heute. `null` while loading
- * or while the count the occasions depend on is not there (nothing is asked before it is known, issue 1244); a failed
+ * or while the count is not there (nothing is asked before it is known, issue 1244); a failed
  * request fails open: no hint, and the guide counts as not ended, so nothing is held back (P-10).
  */
 export function useHints(api: string, token: Token, counts: OnboardingCounts | undefined) {
   const [state, setState] = useState<HintState | "failed" | null>(null);
   const unlocks = useUnlocks();
   const unlocked = unlocks.entries.some((e) => e.state === "open" && STAGED.has(e.id));
-  const key = counts === undefined ? null : applicableOf(counts, unlocked).join(",");
+  const key = counts === undefined ? null : applicableOf(unlocked).join(",");
   useEffect(() => {
     if (key === null) return;
     let current = true;
@@ -60,9 +57,15 @@ const NOT_SIGNED_IN: ApiError = { code: "access.not_signed_in", text: "" };
 export function useGuideEnd(api: string, token: Token, hints: HintState | "failed" | null) {
   const [endedHere, setEndedHere] = useState(false);
   const [failed, setFailed] = useState<ApiError | null>(null);
+  const keys = useRepeatKey();
   const store = async () => {
     const t = await token();
-    const r = t ? await saveHint(api, t, FIRST_PLANT_GUIDE, "dismissed") : null;
+    const r = t
+      ? await keys.run(
+          (key) => saveHint(api, t, { occasion: FIRST_PLANT_GUIDE, state: "dismissed" }, { key }),
+          accountKey(`guide-end:${FIRST_PLANT_GUIDE}`),
+        )
+      : null;
     setFailed(r === null ? NOT_SIGNED_IN : r.ok ? null : r.error);
   };
   return {
@@ -74,21 +77,4 @@ export function useGuideEnd(api: string, token: Token, hints: HintState | "faile
     },
     retry: () => void store(),
   };
-}
-
-/** The code of a due note is in hand before Heute shows (issue 2230): a lazy note would arrive after the tasks. */
-export function useNoteCode(note: "first_plant_saved" | "function_unlocked" | null): boolean {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    if (note === null) return;
-    let alive = true;
-    const done = () => {
-      if (alive) setReady(true);
-    };
-    void HintNote.load().then(done, done);
-    return () => {
-      alive = false;
-    };
-  }, [note]);
-  return note === null || ready || HintNote.loaded() !== null;
 }

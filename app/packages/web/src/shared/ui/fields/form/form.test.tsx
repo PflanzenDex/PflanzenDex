@@ -59,7 +59,7 @@ function Demo({
           )}
         />
         <FormMessage name="root.server" />
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>
     </Form>
   );
@@ -79,7 +79,7 @@ describe("Form (US-QS-07 · DS-47, DS-48)", () => {
   it("US-QS-07 · DS-47 submitting empty focuses the first invalid field and announces the message", async () => {
     const onValid = vi.fn();
     render(<Demo onValid={onValid} />);
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     const input = screen.getByRole("textbox", { name: "Name" });
     await waitFor(() => expect(document.activeElement).toBe(input));
     const alert = await screen.findByRole("alert");
@@ -92,10 +92,10 @@ describe("Form (US-QS-07 · DS-47, DS-48)", () => {
   it("US-QS-07 · DS-47 clears the message once the field is valid", async () => {
     const onValid = vi.fn();
     render(<Demo onValid={onValid} />);
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await screen.findByRole("alert");
     await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "Monstera");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(onValid).toHaveBeenCalledWith({ name: "Monstera" }));
     expect(screen.queryByRole("alert")).toBeNull();
   });
@@ -103,7 +103,7 @@ describe("Form (US-QS-07 · DS-47, DS-48)", () => {
   it("US-QS-07 · DS-49 shows the German text of a server error on its field and on the form", async () => {
     render(<Demo serverFail />);
     await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "x");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     const alerts = await screen.findAllByRole("alert");
     const texts = alerts.map((a) => a.textContent);
     expect(texts).toContain("Darauf hast du keinen Zugriff.");
@@ -134,7 +134,7 @@ function Bare({ withMessageText = false }: { withMessageText?: boolean }) {
             </FormItem>
           )}
         />
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>
     </Form>
   );
@@ -154,7 +154,7 @@ describe("Form aria-describedby (US-QS-14)", () => {
 
   it("US-QS-14 · a field without description points only at its error message", async () => {
     render(<Bare />);
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     const alert = await screen.findByRole("alert");
     expect(describedIds(screen.getByRole("textbox", { name: "Name" }))).toEqual([alert.id]);
   });
@@ -169,7 +169,7 @@ describe("Form aria-describedby (US-QS-14)", () => {
     render(<Demo />);
     const input = screen.getByRole("textbox", { name: "Name" });
     expect(describedIds(input)).toHaveLength(1);
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await screen.findByRole("alert");
     expect(describedIds(input)).toHaveLength(2);
     for (const id of describedIds(input)) expect(document.getElementById(id)).not.toBeNull();
@@ -187,13 +187,13 @@ describe("FormRoot (US-QS-07 · DS-48)", () => {
   it("US-QS-07 · DS-48 sends the values through the provider's submit and blocks invalid ones", async () => {
     const onValid = vi.fn();
     render(<Demo onValid={onValid} />);
-    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect((await screen.findByRole("alert")).textContent).toBe("Bitte einen Namen eingeben.");
     expect(onValid).not.toHaveBeenCalled();
     fireEvent.change(screen.getByRole("textbox", { name: "Name" }), {
       target: { value: "Monstera" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(onValid).toHaveBeenCalledTimes(1));
     expect(onValid.mock.calls[0]?.[0]).toEqual({ name: "Monstera" });
   });
@@ -232,7 +232,7 @@ function NetworkForm({ onValid }: { onValid: (v: Values) => void }) {
           )}
         />
         <Button type="submit" needsNetwork>
-          Speichern
+          Sichern
         </Button>
       </FormRoot>
     </Form>
@@ -250,7 +250,7 @@ describe("Form needs the network (US-QS-30 · SG-BTN-05)", () => {
     await userEvent.type(input, "Monstera");
     state.mockReturnValue(false);
     act(() => window.dispatchEvent(new Event("offline")));
-    const button = screen.getByRole("button", { name: "Speichern" });
+    const button = screen.getByRole("button", { name: "Sichern" });
     await userEvent.click(button);
     await userEvent.type(input, "{enter}");
     expect(onValid).not.toHaveBeenCalled();
@@ -267,7 +267,7 @@ describe("Form needs the network (US-QS-30 · SG-BTN-05)", () => {
     await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "Monstera");
     state.mockReturnValue(true);
     act(() => window.dispatchEvent(new Event("online")));
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(onValid).toHaveBeenCalledTimes(1));
     expect(onValid.mock.calls[0]?.[0]).toEqual({ name: "Monstera" });
   });
@@ -313,7 +313,7 @@ function Pair({ onValid = () => {} }: { onValid?: (v: PairValues) => void }) {
             </FormItem>
           )}
         />
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>
     </Form>
   );
@@ -367,7 +367,7 @@ describe("useFieldForm (US-QS-32 · SG-FORM-05)", () => {
   it("US-QS-32 · SG-FORM-05 a send marks every empty field and moves the focus to the first wrong one", async () => {
     const onValid = vi.fn();
     render(<Pair onValid={onValid} />);
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     const name = screen.getByRole("textbox", { name: "Name" });
     const note = screen.getByRole("textbox", { name: "Notiz" });
     await waitFor(() => expect(document.activeElement).toBe(name));
@@ -383,7 +383,7 @@ describe("useFieldForm (US-QS-32 · SG-FORM-05)", () => {
 
   it("US-QS-32 · SG-FORM-05 after a send, correcting one field clears its frame, label and message together and keeps the other error", async () => {
     render(<Pair />);
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     const name = screen.getByRole("textbox", { name: "Name" });
     const note = screen.getByRole("textbox", { name: "Notiz" });
     await waitFor(() => expect(document.activeElement).toBe(name));
@@ -401,7 +401,7 @@ describe("useFieldForm (US-QS-32 · SG-FORM-05)", () => {
     render(<Pair onValid={onValid} />);
     const name = screen.getByRole("textbox", { name: "Name" });
     const note = screen.getByRole("textbox", { name: "Notiz" });
-    const send = screen.getByRole("button", { name: "Speichern" });
+    const send = screen.getByRole("button", { name: "Sichern" });
     const user = userEvent.setup();
     await user.click(note);
     // The press starts: the field keeps the focus, so no message appears and nothing moves under the finger.
@@ -423,9 +423,9 @@ describe("useFieldForm (US-QS-32 · SG-FORM-05)", () => {
     await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "Monstera");
     const note = screen.getByRole("textbox", { name: "Notiz" });
     await userEvent.type(note, "Fenster");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(onValid).toHaveBeenCalled());
     expect(onValid.mock.calls[0]?.[0]).toEqual({ name: "Monstera", note: "Fenster" });
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Speichern" }));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Sichern" }));
   });
 });

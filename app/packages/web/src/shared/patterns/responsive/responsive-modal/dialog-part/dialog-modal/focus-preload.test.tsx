@@ -38,7 +38,7 @@ describe("NFR-12 · DS-08 the dialog chunk is requested before the first click",
         title="Pflanze bearbeiten"
         trigger={<button onFocus={onFocus}>Öffnen</button>}
       >
-        <button>Speichern</button>
+        <button>Sichern</button>
       </ResponsiveModal>,
     );
     expect(chunk.requests).toBe(0);

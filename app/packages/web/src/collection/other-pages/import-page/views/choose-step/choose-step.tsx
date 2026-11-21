@@ -80,7 +80,7 @@ export function ChooseStep(props: { view: ImportFlow; moved: boolean }) {
         />
       </div>
       <div>
-        <Button type="button" variant="outline" onClick={downloadTemplate}>
+        <Button type="button" variant="tinted" onClick={downloadTemplate}>
           {ui("template")}
         </Button>
       </div>

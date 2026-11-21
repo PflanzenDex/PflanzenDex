@@ -41,7 +41,7 @@ export function HintCard(props: {
       )}
       {action && (
         <Actions>
-          <Button type="button" variant="outline" onClick={() => props.onOpen(action.target)}>
+          <Button type="button" variant="tinted" onClick={() => props.onOpen(action.target)}>
             {action.label}
           </Button>
         </Actions>

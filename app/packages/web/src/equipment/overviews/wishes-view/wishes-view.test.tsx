@@ -128,12 +128,12 @@ describe("US-EQU-08 equipment wishes in the equipment page", () => {
     await user.click(await screen.findByRole("button", { name: "Geräte-Wunsch erfassen" }));
     const form = await screen.findByRole("form", { name: "Geräte-Wunsch erfassen" });
     await user.selectOptions(within(form).getByLabelText("Art des Wunsches"), "Timer");
-    await user.click(within(form).getByRole("button", { name: "Wunsch speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Wunsch sichern" }));
     expect(await within(form).findByText("Gib einen Namen ein.")).toBeTruthy();
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
     await user.type(within(form).getByLabelText("Name des Wunsches"), "Zeitschaltuhr");
-    await user.click(within(form).getByRole("button", { name: "Wunsch speichern" }));
-    await screen.findByText("Geräte-Wunsch „Zeitschaltuhr“ gespeichert.");
+    await user.click(within(form).getByRole("button", { name: "Wunsch sichern" }));
+    await screen.findByText("Geräte-Wunsch „Zeitschaltuhr“ gesichert.");
     // Saving closes the form layer, so the keeper is back at the wishes (issue 1154).
     await waitFor(() =>
       expect(screen.queryByRole("form", { name: "Geräte-Wunsch erfassen" })).toBeNull(),

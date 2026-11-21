@@ -80,57 +80,75 @@ export async function call<T, D = unknown>(
   }
 }
 
-/** Answers that do not say whether the server applied the write: its key stays for the repeat (US-QS-03). */
-const UNANSWERED = new Set(["network.not_reachable", "idempotency.in_progress"]);
+/**
+ * Answers that leave the write open (US-QS-03): the server may have applied it (no answer, `in_progress`), or it never
+ * got the write (no token, `access.not_signed_in`: the sign-in check comes before the key is stored, so nothing was
+ * stored for it). The key of the action is kept for the repeat.
+ */
+const UNANSWERED = new Set([
+  "network.not_reachable",
+  "idempotency.in_progress",
+  "access.not_signed_in",
+]);
 
 /**
- * The repeat-guard key (`Idempotency-Key`) of each write whose answer is still open, by its logical write (method, URL
- * and body; a photo upload uses its URL and the hash of the file), oldest first. A repeat of that write carries the same key, so the server writes it once (US-QS-03). A
- * refusal frees its own key. A success frees its own key and every older one: the user moved on, and replaying an
- * older write would swallow the newer one (archive, restore, archive). The token is not part of the key: the server
- * scopes keys per account.
+ * Whether an answer leaves the write open: the key of the action is kept for the repeat. A refusal of the operation ends
+ * the action (its key is discarded by the server, US-QS-03).
  */
-const openKeys = new Map<string, string>();
+export const isUnanswered = (error: ApiError): boolean => UNANSWERED.has(error.code);
 
-/** A success: frees the write's own key and every older open key; newer open keys stay (see `openKeys`). */
-function settle(logical: string): void {
-  if (!openKeys.has(logical)) return;
-  for (const k of openKeys.keys()) {
-    openKeys.delete(k);
-    if (k === logical) return;
-  }
+/**
+ * The repeat-guard key (`Idempotency-Key`) of one user action (US-QS-03). It is made once, when the user acts, and every
+ * send of that action carries it, so a repeat after a lost answer reaches the server as the same write and the server
+ * answers it with the stored answer. The server scopes a key per account and operation and refuses the same key with
+ * another body (`idempotency.key_conflict`). The client compares no content.
+ */
+export const newRepeatKey = (): string => crypto.randomUUID();
+
+/**
+ * A write that waits in the buffer while the device is offline (US-QS-10): plain data, so every delivery sends the same
+ * request with the same key (US-QS-03).
+ */
+export type BufferedRequest = {
+  method: "POST" | "PUT" | "DELETE";
+  url: string;
+  body?: unknown;
+  key: string;
+};
+
+/**
+ * The options of a write API call. `key` is the repeat-guard key of the user action the write belongs to (see
+ * `newRepeatKey`) and is required: a write without one would get a key of its own on every send, so a repeat after a
+ * lost answer could write twice. `fetchFn` is the transport (tests inject one). `buffer` is set by `useWriteAction` only:
+ * while the device is offline, the write is handed to it as plain data instead of being refused (US-QS-10).
+ */
+export interface WriteOptions {
+  readonly fetchFn?: FetchFn | undefined;
+  readonly key: string;
+  readonly buffer?: ((request: BufferedRequest) => Promise<Response<unknown>>) | undefined;
 }
 
 /**
- * Sends one logical write under its repeat-guard key (see `openKeys`). `logical` names the write (its identity, e.g. the
- * method, URL and body); `send` sends it with the key it is given. A repeat of an open write gets the same key, so the
- * server answers it with the stored answer (US-QS-03).
- */
-export async function withRepeatKey<T, D = unknown>(
-  logical: string,
-  send: (key: string) => Promise<Response<T, D>>,
-): Promise<Response<T, D>> {
-  const key = openKeys.get(logical) ?? crypto.randomUUID();
-  openKeys.set(logical, key);
-  const r = await send(key);
-  if (r.ok) settle(logical);
-  else if (!UNANSWERED.has(r.error.code)) openKeys.delete(logical);
-  return r;
-}
-
-/**
- * Writes carry the repeat-guard key of their logical write (see `withRepeatKey`). A write that succeeded tells quiet
- * observers (lock states, achievement banner) to look again: `call` announces it, whichever screen sent it (US-ONB-05).
- * A write that is not buffered is refused here while the device is offline, before anything is sent (US-QS-30, P-10): a
- * form submit, a key or a background mark cannot send it past the button. The buffer of `useWriteAction` (US-QS-03) holds
- * its writes and sends them through this function only once the network is back.
+ * Writes carry the repeat-guard key of their action (see `WriteOptions`). A write that succeeded tells quiet observers
+ * (lock states, achievement banner) to look again: `call` announces it, whichever screen sent it (US-ONB-05). While the
+ * device is offline a write is handed to the buffer when the caller gives one (US-QS-10, the buffer sends it once the
+ * network is back); otherwise it is refused here before anything is sent (US-QS-30, P-10): a form submit, a key or a
+ * background mark cannot send it past the button.
  */
 export const createWrite =
-  <D = unknown>(api: string, token: string, fetchFn: FetchFn = fetch): Write<D> =>
+  <D = unknown>(api: string, token: string, options: WriteOptions): Write<D> =>
   (method, path, body) => {
-    if (!isOnline())
+    const url = `${api}${path}`;
+    if (!isOnline()) {
+      if (options.buffer)
+        return options.buffer({ method, url, body, key: options.key }) as Promise<
+          Response<unknown, D>
+        >;
       return Promise.resolve({ ok: false, error: OFFLINE_WRITE_ERROR as ApiError<D> });
-    return withRepeatKey<unknown, D>(JSON.stringify([api, method, path, body ?? null]), (key) =>
-      call<unknown, D>(fetchFn, `${api}${path}`, token, { method, body, key }),
-    );
+    }
+    return call<unknown, D>(options.fetchFn ?? fetch, url, token, {
+      method,
+      body,
+      key: options.key,
+    });
   };

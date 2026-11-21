@@ -98,7 +98,7 @@ function RepotFrame(props: { open: RepotTarget; onBack: () => void; children: Re
 
 /**
  * The form with its fields. A cutting is potted (US-BES-04), a plant is repotted and may name its pot (US-BES-19); a
- * refusal stays in the form by its code (P-10), and "Speichern" writes nothing before it is pressed.
+ * refusal stays in the form by its code (P-10), and "Sichern" writes nothing before it is pressed.
  */
 function RepotFormBody(props: FormState & { plan: RepotPlanView | null; reload: () => void }) {
   const { open, send, setOpen, plan, reload } = props;
@@ -181,7 +181,7 @@ function PlantRepotForm(props: FormState & { open: RepotTarget }) {
           <Button type="button" size="touch" onClick={plan.retry}>
             {t("form.retry")}
           </Button>
-          <Button type="button" size="touch" variant="outline" onClick={() => setOpen(null)}>
+          <Button type="button" size="touch" variant="plain" onClick={() => setOpen(null)}>
             {t("form.cancel")}
           </Button>
         </div>
@@ -190,7 +190,7 @@ function PlantRepotForm(props: FormState & { open: RepotTarget }) {
   return <RepotFormBody {...props} plan={plan.value} reload={plan.retry} />;
 }
 
-/** Pot a cutting (US-BES-04) or repot a plant (US-BES-19): the day preset to today; "Speichern" writes, "Abbrechen" does not. */
+/** Pot a cutting (US-BES-04) or repot a plant (US-BES-19): the day preset to today; "Sichern" writes, "Abbrechen" does not. */
 export function RepotForm(props: { state: FormState }) {
   const { state } = props;
   if (state.open.status === CUTTING_STATUS)

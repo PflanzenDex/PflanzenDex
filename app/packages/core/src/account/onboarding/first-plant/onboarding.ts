@@ -26,8 +26,8 @@ export const FIRST_PLANT_STEPS: readonly OnboardingStep[] = [
   },
   {
     id: "save",
-    title: "Pflanze speichern",
-    actionLabel: "Pflanze speichern",
+    title: "Pflanze sichern",
+    actionLabel: "Pflanze sichern",
     nextAction: "Der Lichtbedarf kommt von der Art. Du kannst ihn ändern.",
   },
 ];

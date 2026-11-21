@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { useWriteAction } from "../../../../shared/data";
+import { createKey, useWriteAction } from "../../../../shared/data";
 import { recordEquipment, type EquipmentInput } from "../../../equipment-api";
 import type { EquipmentFill } from "../../../equipment-form/equipment-form";
 import { NEW_LAYER } from "../tiles/equipment-tiles/equipment-tiles";
@@ -19,11 +19,16 @@ export function useRecord(
   const [prefill, setPrefill] = useState<EquipmentFill | null>(null);
   const send = async (input: EquipmentInput): Promise<boolean> => {
     let saved = false;
-    await write.run(async (t) => {
-      const r = await recordEquipment(api, t, input);
-      saved = r.ok;
-      return r;
-    }, `Gerät „${input.name}“ gespeichert.`);
+    await write.run(
+      async (t, opts) => {
+        const r = await recordEquipment(api, t, input, opts);
+        saved = r.ok;
+        return r;
+      },
+      `Gerät „${input.name}“ gesichert.`,
+      // A create (a record is added): the operation only, the form is the body (US-QS-03).
+      createKey("equipment", "record"),
+    );
     if (saved) {
       setPrefill(null);
       layer.closeLayer();

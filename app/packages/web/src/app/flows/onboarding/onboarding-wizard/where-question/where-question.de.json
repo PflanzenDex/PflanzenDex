@@ -2,7 +2,7 @@
   "zoneFor": "Licht bei {name}",
   "noZone": "Keine Angabe",
   "where": "Wo steht sie?",
-  "saved": "Standort gespeichert: {name}{zone}.",
+  "saved": "Standort gesichert: {name}{zone}.",
   "save": "Standort übernehmen",
   "later": "Später"
 }

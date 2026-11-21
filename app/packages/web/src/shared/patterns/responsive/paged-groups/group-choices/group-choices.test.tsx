@@ -170,7 +170,8 @@ describe("US-QS-19 · US-QS-15 group choices: chips on one or two lines, otherwi
     layout = { row: 300, chips: [90, 90, 90] };
     show(choicesOf(3), "/collection?view=plants&part=g2");
     const chips = screen.getAllByRole("button", { name: /Gruppe/ });
-    expect(chips[1]?.className.split(/\s+/)).toContain("bg-secondary");
+    // Secondary is tinted without a border (owner decision 2026-11-20, SG-BTN-01).
+    expect(chips[1]?.className.split(/\s+/)).toContain("bg-accent");
     for (const i of [0, 2]) {
       const classes = chips[i]?.className.split(/\s+/) ?? [];
       expect(classes).toContain("text-primary");

@@ -3,15 +3,8 @@ import {
   useToast,
   type ToastApi,
 } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
-import { useWriteAction } from "../../../shared/data";
-import {
-  describeLamp,
-  measureLamp,
-  setDeviationLimit,
-  setEquipmentStatus,
-  setLampZone,
-  type EquipmentStatus,
-} from "../../equipment-api";
+import { entityKey, useWriteAction } from "../../../shared/data";
+import { setEquipmentStatus, setLampZone, type EquipmentStatus } from "../../equipment-api";
 import { STATUS_LABELS, SUPPLY_LABELS } from "../../labels";
 import { saveWithUndo } from "./save-with-undo";
 import {
@@ -22,7 +15,7 @@ import {
   setSupply,
 } from "../../upkeep-api";
 import type { SensorActions } from "../../overviews/sensors-view/sensors-view";
-import type { LampLightActions } from "../../lamp-light/lamp-light";
+import { lightWrites } from "./light-writes";
 import type { MaintenanceActions } from "../parts/maintenance/maintenance";
 import type { SupplyActions } from "../parts/supply/supply";
 import { setEquipmentSharing } from "../parts/sharing/sharing-api";
@@ -40,44 +33,21 @@ function zoneWrites(api: string, write: Write, toast: ToastApi) {
     busy: write.running,
     onZone: (lamp: LampRef, lightZoneId: string) =>
       void write.run(
-        (t) => setLampZone(api, t, { id: lamp.id, lightZoneId }),
+        (t, opts) => setLampZone(api, t, { id: lamp.id, lightZoneId }, opts),
         `Lampe „${lamp.name}“ umgezogen.`,
+        entityKey("lamp", lamp.id, `zone:${lightZoneId}`),
       ),
     onStatus: (lamp: LampRef & { status: EquipmentStatus }, status: EquipmentStatus) =>
       void saveWithUndo(write, toast, {
         before: lamp.status,
         after: status,
-        send: (value) => (t) => setEquipmentStatus(api, t, { id: lamp.id, status: value }),
+        send: (value) => (t, opts) =>
+          setEquipmentStatus(api, t, { id: lamp.id, status: value }, opts),
+        scope: (value) => entityKey("lamp", lamp.id, `status:${value}`),
         said: (value) => `Zustand von „${lamp.name}“ ist jetzt „${STATUS_LABELS[value]}“.`,
-        saved: `Zustand von „${lamp.name}“ gespeichert.`,
+        saved: `Zustand von „${lamp.name}“ gesichert.`,
         undone: `Zustand von „${lamp.name}“ zurückgesetzt.`,
       }),
-  };
-}
-
-/** The writes on the light intensity (US-EQU-03): a measurement, the manufacturer's statement, the limit. */
-function lightWrites(api: string, write: Write): LampLightActions {
-  return {
-    busy: write.running,
-    onMeasure: async (lamp, input) => {
-      let saved = false;
-      await write.run(async (t) => {
-        const r = await measureLamp(api, t, { id: lamp.id, input });
-        saved = r.ok;
-        return r;
-      }, `Messung für „${lamp.name}“ gespeichert.`);
-      return saved;
-    },
-    onData: (lamp, data) =>
-      void write.run(
-        (t) => describeLamp(api, t, { id: lamp.id, ...data }),
-        `Herstellerangabe für „${lamp.name}“ gespeichert.`,
-      ),
-    onLimit: (percent) =>
-      void write.run(
-        (t) => setDeviationLimit(api, t, percent),
-        percent === null ? "Die Prüfung ist aus." : `Grenze von ${percent} % gespeichert.`,
-      ),
   };
 }
 
@@ -87,13 +57,16 @@ function maintenanceWrites(api: string, write: Write): MaintenanceActions {
     busy: write.running,
     onSave: (item, input) =>
       void write.run(
-        (t) => setMaintenance(api, t, { id: item.id, input }),
-        `Betriebsdaten von „${item.name}“ gespeichert.`,
+        (t, opts) => setMaintenance(api, t, { id: item.id, input }, opts),
+        `Betriebsdaten von „${item.name}“ gesichert.`,
+        // Set-state on the operation data (a whole form): the operation only (US-QS-03).
+        entityKey("equipment", item.id, "maintenance"),
       ),
     onChecked: (item, checkedOn) =>
       void write.run(
-        (t) => markChecked(api, t, { id: item.id, checkedOn }),
+        (t, opts) => markChecked(api, t, { id: item.id, checkedOn }, opts),
         `„${item.name}“ als geprüft vermerkt.`,
+        entityKey("equipment", item.id, `checked:${checkedOn}`),
       ),
   };
 }
@@ -107,18 +80,20 @@ function supplyWrites(api: string, write: Write, toast: ToastApi): SupplyActions
       void saveWithUndo(write, toast, {
         before: item.supply,
         after: supply,
-        send: (value) => (t) => setSupply(api, t, { id: item.id, supply: value }),
+        send: (value) => (t, opts) => setSupply(api, t, { id: item.id, supply: value }, opts),
+        scope: (value) => entityKey("equipment", item.id, `supply:${value}`),
         said: (value) => `Vorrat von „${item.name}“ ist jetzt „${SUPPLY_LABELS[value]}“.`,
-        saved: `Vorrat von „${item.name}“ gespeichert.`,
+        saved: `Vorrat von „${item.name}“ gesichert.`,
         undone: `Vorrat von „${item.name}“ zurückgesetzt.`,
       });
     },
     onLink: (item, agentLink) =>
       void write.run(
-        (t) => linkAgent(api, t, { id: item.id, agentLink }),
+        (t, opts) => linkAgent(api, t, { id: item.id, agentLink }, opts),
         agentLink === null
           ? `Verknüpfung von „${item.name}“ entfernt.`
           : `„${item.name}“ ist mit „${agentLink}“ verknüpft.`,
+        entityKey("equipment", item.id, `link:${agentLink}`),
       ),
   };
 }
@@ -129,8 +104,10 @@ function sensorWrites(api: string, write: Write): SensorActions {
     busy: write.running,
     onTarget: (sensor, target) =>
       void write.run(
-        (t) => setSensorTarget(api, t, { id: sensor.id, ...target }),
-        `Zuordnung von „${sensor.name}“ gespeichert.`,
+        (t, opts) => setSensorTarget(api, t, { id: sensor.id, ...target }, opts),
+        `Zuordnung von „${sensor.name}“ gesichert.`,
+        // Set-state on the sensor's place: the operation only, the target is the body (US-QS-03).
+        entityKey("sensor", sensor.id, "target"),
       ),
   };
 }
@@ -146,10 +123,12 @@ function sharingWrites(
     shared,
     onShare: (item, share, note) =>
       void write.run(
-        (t) => setEquipmentSharing(api, t, { id: item.id, share, note }),
+        (t, opts) => setEquipmentSharing(api, t, { id: item.id, share, note }, opts),
         share === "friends"
           ? `„${item.name}“ ist für Freunde sichtbar.`
           : `„${item.name}“ ist wieder privat.`,
+        // Set-state with a free-text note: the operation only, the note is the body (US-QS-03).
+        entityKey("equipment", item.id, "share"),
       ),
   };
 }
