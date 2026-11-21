@@ -52,7 +52,7 @@ export function EntryPlaceholders(props: {
   paging: PagerPaging | undefined;
 }) {
   return Array.from({ length: props.count }, (_, i) => (
-    <li key={`placeholder-${props.from + i}`} aria-hidden="true">
+    <li key={`placeholder-${props.from + i}`} aria-hidden="true" className="shrink-0">
       <DelayedSkeleton>{props.paging?.placeholder}</DelayedSkeleton>
     </li>
   ));

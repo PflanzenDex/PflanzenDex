@@ -173,7 +173,6 @@ export function Pager<T>({
   const shown = items.slice(first, first + size);
   const room = Math.min(first + size, count) - first - shown.length;
   const holes = placeholderCount(paging, missing, room);
-
   return (
     <div
       className={cn("flex flex-col gap-3 [touch-action:pan-y]", fit && "min-h-0 flex-1")}
@@ -188,7 +187,9 @@ export function Pager<T>({
         className={cn("flex flex-col gap-2", fit && "min-h-0 flex-1 content-start", listClassName)}
       >
         {shown.map((item, i) => (
-          <li key={getKey ? getKey(item, first + i) : first + i}>{renderItem(item, first + i)}</li>
+          <li key={getKey ? getKey(item, first + i) : first + i} className="shrink-0">
+            {renderItem(item, first + i)}
+          </li>
         ))}
         <EntryPlaceholders count={holes} from={first + shown.length} paging={paging} />
       </ul>
