@@ -7,7 +7,7 @@ import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { placeHeld, useUndo } from "@/shared/feedback/undo-row/use-undo";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { LIST_CLASSES, RefusalAlert } from "../../shared/notices";
 import { PAGE_SIZE, Row } from "./treatment-row/treatment-row";
 import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
@@ -21,7 +21,6 @@ import table from "./open-treatments.de.json";
 
 // `t` names the token in the callbacks of this file, so the texts are `ui`.
 const ui = texts(table);
-
 type Token = () => Promise<string | undefined>;
 /** One sentence that says what to do next (P-09): the overdue and the due-today dates first. */
 export function nextStepText(rows: readonly TreatmentListRow[]): string | null {
@@ -76,15 +75,17 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
     if (tapped.current !== null) return;
     if (isOnline()) tapped.current = { row, index };
     else setHidden((ids) => [...ids, row.id]);
-    void complete.run(async (t) => {
-      const r = await completeTreatment(api, t, row.id);
+    const send: Parameters<typeof complete.run>[0] = async (t, opts) => {
+      const r = await completeTreatment(api, t, row.id, opts);
       changed.current = r.ok && r.value.changed;
       return r;
-    }, ui("doneResult"));
+    };
+    void complete.run(send, ui("doneResult"), entityKey("treatment", row.id, "complete"));
   };
   const reopen = (id: string) => {
     restoring.current = id;
-    void restore.run((t) => reopenTreatment(api, t, id), ui("restored"));
+    const key = entityKey("treatment", id, "reopen");
+    void restore.run((t, opts) => reopenTreatment(api, t, id, opts), ui("restored"), key);
   };
   return {
     tick,
@@ -97,7 +98,6 @@ function useCompletion(api: string, token: Token, onChanged: () => void) {
 }
 
 type Completion = ReturnType<typeof useCompletion>;
-
 function OpenList(props: {
   all: readonly TreatmentListRow[];
   completion: Completion;

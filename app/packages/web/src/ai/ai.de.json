@@ -1,4 +1,7 @@
 {
+  "rights.read": "Lesen",
+  "rights.drafts": "Lesen und Entwürfe anlegen",
+  "rights.write": "Lesen, Entwürfe anlegen und Umkehrbares schreiben",
   "clients.loading": "Verbundene KI-Clients werden geladen …",
   "howTo.add": "Füge in deinem KI-Client eine eigene Anbindung (MCP) mit dieser Adresse hinzu:",
   "howTo.copied": "Adresse kopiert",

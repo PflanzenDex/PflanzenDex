@@ -2,8 +2,13 @@ import { useCallback, useMemo, useState } from "react";
 import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import {
+  createKey,
+  entityKey,
+  newRepeatKey,
   SIGN_IN as KERNEL_SIGN_IN,
+  type KeyScope,
   useQueryClient,
+  useRepeatKey,
   useReload,
   useRequest,
 } from "../../shared/data";
@@ -39,8 +44,8 @@ async function derive(api: string, token: Token, a: DerivationRequest) {
 /** Where a result of a write goes: `said` to the announcer (`useSay`), `shown` to a toast that stays until FX-09. */
 type Notify = { said: (message: string) => void; shown: (message: string) => void };
 
-/** One write's options: its body, and where its result goes (the announcer by default). */
-type WriteOptions = { body?: unknown; notify?: (message: string) => void };
+/** One write's options: its body, where its result goes (the announcer by default) and its repeat-guard key (US-QS-03). */
+type WriteOptions = { body?: unknown; notify?: (message: string) => void; scope?: KeyScope };
 
 /** Where the results of this page's writes go (US-QS-32): said by the announcer, a toast only where the row leaves. */
 function useNotify(): Notify {
@@ -50,7 +55,7 @@ function useNotify(): Notify {
 }
 
 function buildActions(
-  { api, token }: { api: string; token: Token },
+  { api, token, keys }: { api: string; token: Token; keys: ReturnType<typeof useRepeatKey> },
   load: () => Promise<void>,
   setLastError: (f: ApiError | undefined) => void,
   notify: Notify,
@@ -59,11 +64,14 @@ function buildActions(
     method: "POST" | "PUT" | "DELETE",
     path: string,
     message: string,
-    { body, notify: to = notify.said }: WriteOptions = {},
+    { body, notify: to = notify.said, scope }: WriteOptions,
   ) => {
     const t = await token();
     if (!t) return SIGN_IN;
-    const r = await createWrite(api, t)(method, path, body);
+    // The key belongs to the write's target and operation (US-QS-03); the body is never part of it. A write without a scope
+    // is a background write (the zone defaults): its own key, it frees no held key of the page.
+    const send = (key: string) => createWrite(api, t, { key })(method, path, body);
+    const r = scope ? await keys.run(send, scope) : await send(newRepeatKey());
     if (!r.ok) return r.error;
     setLastError(undefined);
     await load();
@@ -71,11 +79,24 @@ function buildActions(
     return null;
   };
   return {
-    zoneCreate: (e) => write("POST", "/light-zones", "Lichtzone angelegt.", { body: e }),
-    zoneUpdate: (id, e) => write("PUT", `/light-zones/${id}`, "Lichtzone gesichert.", { body: e }),
+    zoneCreate: (e) =>
+      write("POST", "/light-zones", "Lichtzone angelegt.", {
+        body: e,
+        // A create: the operation only, the zone's fields are the body (US-QS-03).
+        scope: createKey("zone", "create"),
+      }),
+    zoneUpdate: (id, e) =>
+      write("PUT", `/light-zones/${id}`, "Lichtzone gesichert.", {
+        body: e,
+        // Set-state on the zone form (a whole form): the operation only (US-QS-03).
+        scope: entityKey("zone", id, "update"),
+      }),
     // The zone leaves the list: its result stays a toast until the in-place row of FX-09 (SG-FEED-03).
     zoneDelete: (id) =>
-      write("DELETE", `/light-zones/${id}`, "Lichtzone gelöscht.", { notify: notify.shown }),
+      write("DELETE", `/light-zones/${id}`, "Lichtzone gelöscht.", {
+        notify: notify.shown,
+        scope: entityKey("zone", id, "delete"),
+      }),
     defaults: async () => {
       const f = await write("POST", "/light-zones/defaults", "Standard-Zonen übernommen.", {
         body: {},
@@ -83,8 +104,18 @@ function buildActions(
       setLastError(f ?? undefined);
       return f;
     },
-    locationCreate: (e) => write("POST", "/locations", "Standort angelegt.", { body: e }),
-    locationUpdate: (id, e) => write("PUT", `/locations/${id}`, "Standort gesichert.", { body: e }),
+    locationCreate: (e) =>
+      write("POST", "/locations", "Standort angelegt.", {
+        body: e,
+        // A create: the operation only, the location's fields are the body (US-QS-03).
+        scope: createKey("location", "create"),
+      }),
+    locationUpdate: (id, e) =>
+      write("PUT", `/locations/${id}`, "Standort gesichert.", {
+        body: e,
+        // Set-state on the location form (a whole form): the operation only (US-QS-03).
+        scope: entityKey("location", id, "update"),
+      }),
     zoneDerive: (a) => derive(api, token, a),
   };
 }
@@ -123,9 +154,10 @@ export function LightPage(props: {
   const reload = useReload(LIGHT_KEY);
   const load = useCallback(() => reload(), [reload]);
 
+  const keys = useRepeatKey();
   const actions = useMemo(
-    () => buildActions({ api, token }, load, setLastError, notify),
-    [api, token, load, notify],
+    () => buildActions({ api, token, keys }, load, setLastError, notify),
+    [api, token, load, notify, keys],
   );
 
   const loading = "Standorte und Lichtzonen werden geladen …";

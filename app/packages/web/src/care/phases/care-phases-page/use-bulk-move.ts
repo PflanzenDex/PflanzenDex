@@ -3,7 +3,7 @@ import type { PhasesRow } from "@pflanzendex/core";
 import { useUndo } from "@/shared/feedback/undo-row/use-undo";
 import { isOnline } from "@/shared/platform/browser/network";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useWriteAction } from "../../../shared/data";
+import { accountKey, useWriteAction } from "../../../shared/data";
 import { restorePhaseLocations } from "../../shared/api/care-phases-api";
 import { usePhaseSwitch } from "../use-phase-switch";
 import table from "./care-phases-page.de.json";
@@ -61,8 +61,7 @@ export function useBulkMove(api: string, token: Token, again: () => void) {
     if (writing.current) return;
     setNote(null);
     const online = isOnline();
-    const undoable =
-      before !== undefined && online && before.every((row) => row.locationId !== null);
+    const undoable = before !== undefined && online && before.every((r) => r.locationId !== null);
     bulk.current = undoable ? before : null;
     if (online) writing.current = true;
     void move.confirm(ids, text);
@@ -71,7 +70,10 @@ export function useBulkMove(api: string, token: Token, again: () => void) {
     const moves = movesOf(undo.held, group);
     restoring.current = group;
     setNote(null);
-    void restore.run((t) => restorePhaseLocations(api, t, moves), ui("restored"));
+    // The undo names the plants and their earlier places (ids, not content): the same undo repeats the same key, and
+    // `restorePhaseLocations` derives one key per plant from it (US-QS-03, US-QS-32).
+    const key = accountKey(`undo:${moves.map((m) => `${m.specimenId}>${m.locationId}`).join(",")}`);
+    void restore.run((t, opts) => restorePhaseLocations(api, t, moves, opts), ui("restored"), key);
   };
   const groupUndo = (target: string) =>
     undo.held.some((h) => h.group === target)

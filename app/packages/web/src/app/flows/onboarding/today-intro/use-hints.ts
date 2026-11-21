@@ -1,3 +1,4 @@
+import { accountKey, useRepeatKey } from "@/shared/data";
 import { useEffect, useState } from "react";
 import { FIRST_PLANT_GUIDE, UNLOCK_FUNCTIONS, type OnboardingCounts } from "@pflanzendex/core";
 import { useUnlocks } from "../../unlock";
@@ -56,9 +57,15 @@ const NOT_SIGNED_IN: ApiError = { code: "access.not_signed_in", text: "" };
 export function useGuideEnd(api: string, token: Token, hints: HintState | "failed" | null) {
   const [endedHere, setEndedHere] = useState(false);
   const [failed, setFailed] = useState<ApiError | null>(null);
+  const keys = useRepeatKey();
   const store = async () => {
     const t = await token();
-    const r = t ? await saveHint(api, t, FIRST_PLANT_GUIDE, "dismissed") : null;
+    const r = t
+      ? await keys.run(
+          (key) => saveHint(api, t, { occasion: FIRST_PLANT_GUIDE, state: "dismissed" }, { key }),
+          accountKey(`guide-end:${FIRST_PLANT_GUIDE}`),
+        )
+      : null;
     setFailed(r === null ? NOT_SIGNED_IN : r.ok ? null : r.error);
   };
   return {

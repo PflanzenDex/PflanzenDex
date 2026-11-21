@@ -30,13 +30,15 @@ export function NewlyCaught(props: {
   useEffect(() => {
     if (!missing || created.current) return;
     created.current = true;
-    // Silent creation (US-POK-12): no message, no banner; a failure is retried at the next visit.
-    void write.run(
-      (t) =>
+    // Silent creation (US-POK-12): no message, no banner; a failure is retried at the next visit. A background write: its own
+    // key, it frees no held key of the page (US-QS-03).
+    void write.runSilent(
+      (t, opts) =>
         markSeen(
           api,
           t,
           caught.map((c) => c.species),
+          opts,
         ),
       "",
     );
@@ -62,7 +64,10 @@ export function NewlyCaught(props: {
         variant="outline"
         pending={write.running}
         pendingLabel="Sichert …"
-        onClick={() => void write.run((t) => markSeen(api, t, names), "")}
+        onClick={() =>
+          // A seen mark: a background write with its own key, it frees no held key (US-QS-03).
+          void write.runSilent((t, opts) => markSeen(api, t, names, opts), "")
+        }
       >
         Als gesehen markieren
       </Button>

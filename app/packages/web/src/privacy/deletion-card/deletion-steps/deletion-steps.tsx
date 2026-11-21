@@ -3,7 +3,7 @@ import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { Input } from "@/shared/ui/fields/input/input";
 import { errorText } from "@/shared/lib/error-text";
 import { keepTogether } from "@/shared/lib/format";
-import type { ApiError } from "../../../shared/data";
+import { accountKey, type ApiError } from "../../../shared/data";
 import { cancelDeletion, requestDeletion, type DeletionState } from "../../privacy-api";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
@@ -36,6 +36,12 @@ function DeletionSummary() {
 }
 
 /** The content of the step, or the state when the deletion is requested or cannot be read (P-10). */
+/** The keys of the two deletion writes: a request and its cancel share the account target (US-QS-03). */
+const REQUEST = accountKey("deletion:request");
+const CANCEL = accountKey("deletion:cancel");
+const cancelWrite = (act: Act) =>
+  void act.send(cancelDeletion, "Die Löschung ist zurückgenommen. Dein Konto bleibt.", CANCEL);
+
 function StepContent(props: {
   state: DeletionState | undefined;
   loadError: ApiError | undefined;
@@ -71,9 +77,7 @@ function StepContent(props: {
           className="self-start"
           disabled={act.running}
           needsNetwork
-          onClick={() =>
-            void act.send(cancelDeletion, "Die Löschung ist zurückgenommen. Dein Konto bleibt.")
-          }
+          onClick={() => cancelWrite(act)}
         >
           Löschung zurücknehmen
         </Button>
@@ -153,7 +157,7 @@ export function DeletionFooter(props: {
           className="w-full"
           disabled={props.typed.trim() !== CONFIRM_WORD || act.running}
           needsNetwork
-          onClick={() => void act.send(requestDeletion, "Die Löschung ist vorgemerkt.")}
+          onClick={() => void act.send(requestDeletion, "Die Löschung ist vorgemerkt.", REQUEST)}
         >
           {act.running ? "Wird vorgemerkt …" : keepTogether("Konto in 7 Tagen löschen")}
         </Button>
