@@ -18,7 +18,7 @@ export type PlantNote = (occasion: PlantHintOccasion) => ReactNode;
 
 /**
  * The calm hint of the plant layer (US-ONB-07), wired by the app: it asks the server once which of the `applicable`
- * occasions is due, and `children` places its note ("Messen", the growth line). It renders the content at once.
+ * occasions is due, and `children` places its note ("Messen", the tab "Verlauf"). It renders the content at once.
  */
 export type PlantHint = (props: {
   applicable: readonly PlantHintOccasion[];
@@ -71,7 +71,7 @@ export type PlantSlots = {
   care?: SlotRender | undefined;
   /** The button "Gießen" (`monitoring`). */
   water?: SlotRender | undefined;
-  /** The calm hint of the layer (US-ONB-07, `today-intro`): its note stands under "Messen" or at the growth line. */
+  /** The calm hint of the layer (US-ONB-07, `today-intro`): its note stands under "Messen" or first in "Verlauf". */
   hint?: PlantHint | undefined;
 };
 

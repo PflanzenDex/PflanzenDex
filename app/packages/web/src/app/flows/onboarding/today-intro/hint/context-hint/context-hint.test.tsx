@@ -55,7 +55,7 @@ describe("US-ONB-07 · US-QS-32 the calm hint of the plant layer asks once for i
     const calls = server("first_plant_saved");
     render(places(["first_plant_saved", "first_measurement"]));
     const note = await screen.findByRole("status", { name: "Hinweis" });
-    expect(note.textContent).toBe("Miss sie, dann siehst du ihr Wachstum.");
+    expect(note.textContent).toBe("Miss sie, um ihr Wachstum zu sehen.");
     expect(note.parentElement?.getAttribute("data-place")).toBe("messen");
     const asked = calls.filter((c) => c.startsWith("GET /onboarding/hints"));
     expect(asked).toHaveLength(1);
@@ -70,7 +70,7 @@ describe("US-ONB-07 · US-QS-32 the calm hint of the plant layer asks once for i
     expect(screen.getByText("Der Rest der Ansicht")).toBeTruthy();
   });
 
-  it("US-ONB-07 · US-QS-32 the growth note stands at the growth line when first_measurement is due", async () => {
+  it("US-ONB-07 · US-QS-32 the growth note stands in its own place when first_measurement is due", async () => {
     server("first_measurement");
     render(places(["first_plant_saved", "first_measurement"]));
     const note = await screen.findByRole("status", { name: "Hinweis" });

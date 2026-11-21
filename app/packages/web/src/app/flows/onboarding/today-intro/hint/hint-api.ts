@@ -4,7 +4,7 @@ import { call, createWrite, currentTimeZone, type Response } from "../../../../.
 export type HintState = { hint: string | null; guideEnded: boolean };
 
 /**
- * The occasions that have a note in the web (US-ONB-07): the plant occasions at the plant layer ("Messen", the growth line)
+ * The occasions that have a note in the web (US-ONB-07): the plant occasions at the plant layer ("Messen", the tab "Verlauf")
  * and the function occasion on "Heute". Core keeps `plant_without_place` in its list for stored rows; the web shows no note for it.
  */
 const NOTE_OCCASIONS = ["first_plant_saved", "first_measurement", "function_unlocked"] as const;

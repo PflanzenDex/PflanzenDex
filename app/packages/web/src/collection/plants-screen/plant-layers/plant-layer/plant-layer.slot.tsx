@@ -53,3 +53,16 @@ export function Slot(props: {
     </Suspense>
   );
 }
+
+/**
+ * "Verlauf": the calm note of the first measurement (US-ONB-07) stands first, where the measurements will show. It is no
+ * part of the overview, which fits the layer without scroll while a note is due (US-QS-23, owner decision 2026-11-21).
+ */
+export function HistoryTab(props: { note: ReactNode; children: ReactNode }) {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
+      {props.note}
+      {props.children}
+    </div>
+  );
+}
