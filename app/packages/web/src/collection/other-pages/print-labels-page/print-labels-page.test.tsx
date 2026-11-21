@@ -255,6 +255,15 @@ describe("US-BES-17 printing QR pot labels", () => {
     expect(list.hasAttribute("data-page-fit")).toBe(true);
   });
 
+  it("US-QS-32 · SG-LIST-01 the text of a plant row breaks inside the row, so at 200 % text a long name or place never widens the list sideways", async () => {
+    server([card({ name: "Birkenfeige", location: "Fensterbank-Ostseite" })]);
+    show();
+    const row = (await screen.findByRole("checkbox", { name: /Birkenfeige/ })).closest("label");
+    expect(row?.className).toContain("min-w-0");
+    expect(row?.className).toContain("[&>span]:min-w-0");
+    expect(row?.className).toContain("[&>span]:break-words");
+  });
+
   it("US-BES-17 without plants the page offers the way to the collection (P-09)", async () => {
     server([]);
     show();
