@@ -1,4 +1,4 @@
-import { accountKey, entityKey, useWriteAction } from "../../../shared/data";
+import { createKey, entityKey, useWriteAction } from "../../../shared/data";
 import type { WishActions } from "./wishes-view";
 import {
   buyEquipmentWish,
@@ -32,7 +32,7 @@ export function useWishActions(
         },
         `Geräte-Wunsch „${input.name}“ gesichert.`,
         // A create: the operation only, the form is the body (US-QS-03).
-        accountKey("equipment-wish:create"),
+        createKey("equipment-wish", "create"),
       );
       return saved;
     },

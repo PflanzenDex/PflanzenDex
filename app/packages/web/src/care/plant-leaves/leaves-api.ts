@@ -38,7 +38,7 @@ export function loadLeafLog(
   );
 }
 
-/** Records a leaf; the repeat-guard key stays with the write until it is answered (US-QS-03). */
+/** Records a leaf; the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function recordLeaf(
   access: LeafAccess,
   specimenId: string,

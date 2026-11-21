@@ -24,7 +24,7 @@ export interface AnswerInput {
   proposal?: string;
 }
 
-/** Answers or changes a swap (US-SOZ-10); the repeat-guard key is created per call. */
+/** Answers or changes a swap (US-SOZ-10); the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function answerSwap(
   access: { api: string; token: string },
   swapId: string,

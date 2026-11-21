@@ -57,7 +57,7 @@ export interface RequestInput {
   counterText?: string;
 }
 
-/** Requests an offer of a friend (US-SOZ-09); the repeat-guard key is created per call. */
+/** Requests an offer of a friend (US-SOZ-09); the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function requestOffer(
   access: { api: string; token: string },
   offerId: string,

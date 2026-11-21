@@ -4,7 +4,7 @@ import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigati
 import { texts } from "@/shared/lib/text-rules/texts";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import {
-  accountKey,
+  createKey,
   SIGN_IN,
   type ApiError,
   type Request,
@@ -44,7 +44,7 @@ export function usePlanning(api: string, token: Token, onPlanned: (message: stri
         ? await keys.run(
             (key) => planTreatments(api, t, input, { key }),
             // A create (treatments are added to the plan): the operation only, the plan is the body (US-QS-03).
-            accountKey("plan"),
+            createKey("treatment", "plan"),
           )
         : { ok: false as const, error: SIGN_IN };
       busy.current = false;

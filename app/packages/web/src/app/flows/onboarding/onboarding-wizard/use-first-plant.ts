@@ -16,7 +16,7 @@ import {
   type MarkerRule,
 } from "../../../../collection";
 import {
-  accountKey,
+  createKey,
   currentTimeZone,
   SIGN_IN,
   type ApiError,
@@ -50,15 +50,16 @@ async function createPlant(args: {
   api: string;
   token: Token;
   species: Species;
-  marker: { form: UseFormReturn<CreateFields>; rule: MarkerRule | null };
+  marker: { form: UseFormReturn<CreateFields> };
+  // The rule is known when the save starts (`save` rules out a missing one before anything is sent).
+  rule: MarkerRule;
   zoneId: string;
   locationId: string;
   keys: ReturnType<typeof useRepeatKey>;
 }) {
-  const { api, token, species, marker, zoneId, locationId, keys } = args;
+  const { api, token, species, marker, rule, zoneId, locationId, keys } = args;
   const t = await token();
-  const rule = marker.rule;
-  if (!t || !rule) return { ok: false as const, error: SIGN_IN };
+  if (!t) return { ok: false as const, error: SIGN_IN };
   // A create: the action names the operation only. The first plant as typed (species, marker, zone, place) is the body:
   // a changed form after a lost answer gets `idempotency.key_conflict`, not a second plant (US-QS-03).
   return keys.run(
@@ -74,7 +75,7 @@ async function createPlant(args: {
         },
         { key },
       ),
-    accountKey("first-plant:create"),
+    createKey("specimen", "first-plant"),
   );
 }
 
@@ -152,11 +153,12 @@ export function useFirstPlant(api: string, token: Token) {
     setRefusal(null);
   };
   const save = async () => {
-    if (!species || !marker.rule || !(await markerChecked(marker.form))) return;
+    // Ruled out before anything is sent: no species or no marker rule yet, nothing is saved (the rule comes with step 2).
+    const rule = marker.rule;
+    if (!species || !rule || !(await markerChecked(marker.form))) return;
     setSaving(true);
-    const r = await createPlant({ api, token, species, marker, zoneId, locationId, keys });
+    const r = await createPlant({ api, token, species, marker, rule, zoneId, locationId, keys });
     setSaving(false);
-    if (!r) return setError(errorText(SIGN_IN.code));
     if (!r.ok)
       return refusesMarker(r.error) ? setRefusal(r.error) : setError(errorText(r.error.code));
     setCreated({ name: specimenName(speciesDisplayName(species), null), id: r.value.id });

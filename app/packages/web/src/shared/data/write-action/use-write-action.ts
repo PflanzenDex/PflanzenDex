@@ -4,12 +4,15 @@ import { isOnline } from "@/shared/platform/browser/network";
 import { texts } from "@/shared/lib/text-rules/texts";
 import {
   WRITE_SUCCEEDED,
+  newRepeatKey,
   type ApiError,
   type BufferedRequest,
   type Response,
   type WriteOptions,
 } from "../api";
-import { entityKey, useRepeatKey, type KeyScope, type RepeatEntity } from "./repeat-key";
+import { localToday } from "@pflanzendex/core";
+import { currentTimeZone } from "../time-zone";
+import { appendKey, entityKey, useRepeatKey, type KeyScope, type RepeatEntity } from "./repeat-key";
 import table from "./write-action.de.json";
 
 export { WRITE_SUCCEEDED };
@@ -17,6 +20,9 @@ export { WRITE_SUCCEEDED };
 const t = texts(table);
 
 export const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte melde dich neu an." };
+
+/** The answer of a write that was not sent: no token. The client made it, so the held key stays (US-QS-03). */
+const NO_TOKEN = { ok: false as const, error: SIGN_IN };
 
 /** Says the result of a write: the German text and its kind (`useSay` of the toast provider: a success is announced, an error is a toast, US-QS-32). */
 export type WriteSay = (message: string, kind?: "success" | "error") => void;
@@ -49,6 +55,15 @@ const refusalTextLazily = (error: ApiError) =>
  *
  * The repeat-guard key belongs to the action (US-QS-03): `run` takes it for the action in `scope` (the row or item id,
  * when this hook serves many), so a lost answer keeps its key for the next tap of that same action and nothing else.
+ *
+ * Offline the write goes to the buffer before the token is asked: the buffer reads the token again when it delivers, so an
+ * expired token does not cost the write (US-QS-10). The buffer sends the request later with the same key and settles the
+ * key on its answer. A refusal that is still said is also followed by `after`: the page may have been stale.
+ *
+ * `runSilent` is a background write (a seen mark, a feed mark, the zone defaults): a fresh key per send, held nothing, so
+ * it frees no held key of the page (US-QS-03). `runQuiet` is a bulk write that says each of its results itself (the
+ * buffered entries of a bulk share): it calls no `after` and says nothing, and it keeps the page busy until the bulk is
+ * answered, so a second tap cannot queue it again (P-10).
  */
 export function useWriteAction(
   token: () => Promise<string | undefined>,
@@ -62,13 +77,11 @@ export function useWriteAction(
   const keys = useRepeatKey();
   const announcer = useAnnounce();
 
-  const run = useCallback(
-    async (send: WriteSend, success: string, scope: KeyScope) => {
+  const perform = useCallback(
+    async (send: WriteSend, success: string, pick: () => string, scope: KeyScope | null) => {
       if (busy.current) return;
       busy.current = true;
-      const key = keys.take(scope);
-      // The buffer takes the write when the device is offline: it sends the request later with this key, says the result
-      // and calls `after` on delivery. Its answer is the delivery's answer, so the key is settled then.
+      const key = pick();
       let buffered = false;
       const buffer = announcer
         ? (request: BufferedRequest) => {
@@ -76,26 +89,46 @@ export function useWriteAction(
             return announcer.buffer({ token, request, success, after });
           }
         : undefined;
-      if (isOnline()) setRunning(true);
-      const tok = await token();
-      const r = tok ? await send(tok, { key, buffer }) : { ok: false as const, error: SIGN_IN };
-      keys.settle(key, r, scope);
+      const offline = !isOnline();
+      if (!offline) setRunning(true);
+      const tok = buffer && offline ? "" : await token();
+      const r = tok === undefined ? NO_TOKEN : await send(tok, { key, buffer });
+      if (scope) keys.settle(key, r, scope);
       busy.current = false;
       setRunning(false);
-      // A write taken by the buffer is said by the buffer on delivery.
       if (buffered) return;
       setError(r.ok ? null : r.error);
       if (say) {
         if (r.ok) say(success);
         else void refusalTextLazily(r.error).then((text) => say(text, "error"));
       } else setMessage(r.ok ? success : null);
-      // Also after a refusal: the page may have been stale (e.g. archived elsewhere), the error stays on screen.
       after();
     },
     [token, after, announcer, say, keys],
   );
 
-  return { running, message, error, run };
+  const run = useCallback(
+    (send: WriteSend, success: string, scope: KeyScope) =>
+      perform(send, success, () => keys.take(scope), scope),
+    [perform, keys],
+  );
+
+  const runSilent = useCallback(
+    (send: WriteSend, success: string) => perform(send, success, newRepeatKey, null),
+    [perform],
+  );
+
+  const runQuiet = useCallback((send: (key: string) => Promise<unknown>) => {
+    if (busy.current) return Promise.resolve();
+    busy.current = true;
+    setRunning(true);
+    return send(newRepeatKey()).finally(() => {
+      busy.current = false;
+      setRunning(false);
+    });
+  }, []);
+
+  return { running, message, error, run, runSilent, runQuiet };
 }
 
 /**
@@ -106,3 +139,16 @@ export const entityRun =
   (write: ReturnType<typeof useWriteAction>, entity: RepeatEntity, id: string) =>
   (send: WriteSend, success: string, action: string) =>
     void write.run(send, success, entityKey(entity, id, action));
+
+/**
+ * The runner of a daily append about one entity (a watering, a fertilizing): the action names the operation and the local
+ * day (the keeper's time zone), which names the occasion, so the next day's write is a write of its own (US-QS-03).
+ */
+export const dailyRun =
+  (write: ReturnType<typeof useWriteAction>, entity: RepeatEntity, id: string) =>
+  (send: WriteSend, success: string, action: string) =>
+    void write.run(
+      send,
+      success,
+      appendKey(entity, id, `${action}:${localToday(new Date(), currentTimeZone())}`),
+    );

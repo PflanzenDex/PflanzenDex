@@ -75,7 +75,7 @@ export async function markIdentityRemoved(
     : r;
 }
 
-/** Registration with or without invitation code; the repeat-guard key is created per call. */
+/** Registration with or without invitation code; the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function setRegistrationMode(
   api: string,
   token: string,

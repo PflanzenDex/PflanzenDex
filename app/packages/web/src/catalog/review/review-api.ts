@@ -16,7 +16,7 @@ export type Decision = { caseId: string } & (
   { status: "reviewed" } | { status: "rejected"; reason: string }
 );
 
-/** Approve or reject (with the reason the creator will see); the repeat-guard key is created per call. */
+/** Approve or reject (with the reason the creator will see); the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function decideProposal(
   api: string,
   token: string,

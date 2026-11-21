@@ -103,7 +103,7 @@ export interface WishInput {
   imageSource?: string;
 }
 
-/** Records a wish (FR-WUN-01). The repeat-guard key is created per call, so a double tap writes once. */
+/** Records a wish (FR-WUN-01). The repeat-guard key is the caller's (`options.key`, US-QS-03), so a double tap writes once. */
 export async function createWish(
   api: string,
   token: string,

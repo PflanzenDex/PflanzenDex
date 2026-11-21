@@ -8,6 +8,7 @@ import {
   type LeafRow as Leaf,
 } from "@pflanzendex/core";
 import {
+  appendKey,
   entityKey,
   LoadFrame,
   SIGN_IN,
@@ -15,6 +16,7 @@ import {
   useFeature,
   useInvalidate,
   type ApiError,
+  type KeyScope,
   type Response,
   useRepeatKey,
   type WriteOptions,
@@ -68,31 +70,31 @@ function useLeafWrites(api: string, token: Token, specimenId: string, onDone: ()
         access: { api: string; token: string },
         opts: WriteOptions,
       ) => Promise<Response<unknown>>,
-      action: string,
+      scope: KeyScope,
     ) => {
       const current = await token();
       if (!current) return SIGN_IN;
       setBusy(true);
-      const r = await keys.run(
-        (key) => write({ api, token: current }, { key }),
-        entityKey("specimen", specimenId, action),
-      );
+      const r = await keys.run((key) => write({ api, token: current }, { key }), scope);
       setBusy(false);
       if (r.ok) onDone();
       return r.ok ? null : r.error;
     },
-    [api, token, specimenId, onDone, keys],
+    [api, token, onDone, keys],
   );
   return {
     busy,
+    // An append (a leaf is added to the plant): the operation only, the leaf's input is the body (US-QS-03).
     send: (input: LeafInput): Promise<ApiError | null> =>
       run(
         (access, opts) => recordLeaf(access, specimenId, input, opts),
-        // A create (a leaf is added): the operation only, the leaf's input is the body (US-QS-03).
-        "leaf:record",
+        appendKey("specimen", specimenId, "leaf:record"),
       ),
     remove: (leafId: string): Promise<ApiError | null> =>
-      run((access, opts) => removeLeaf(access, specimenId, leafId, opts), `remove:${leafId}`),
+      run(
+        (access, opts) => removeLeaf(access, specimenId, leafId, opts),
+        entityKey("specimen", specimenId, `remove:${leafId}`),
+      ),
   };
 }
 

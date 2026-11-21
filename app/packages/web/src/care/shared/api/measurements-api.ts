@@ -39,7 +39,7 @@ export interface Access {
 }
 
 /**
- * Records a measurement. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" (NFR-08). The repeat-guard key stays with the write until it is answered (`createWrite`); sending the same call again after a lost answer does not write twice.
+ * Records a measurement. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" (NFR-08). The repeat-guard key is the caller's (`options.key`, US-QS-03): sending the same call again after a lost answer repeats it under that key.
  */
 export async function recordMeasurement(
   access: Access,

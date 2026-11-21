@@ -7,10 +7,13 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   accountKey,
+  appendKey,
+  createKey,
   createQueryClient,
   createWrite,
   entityKey,
   forgetRepeatKeys,
+  runRepeat,
   useClearOnSignOut,
   type KeyScope,
   type WriteOptions,
@@ -245,7 +248,7 @@ describe("US-QS-03 · the repeat-guard key of an action, held per target", () =>
     expect(result.current.error).toBeNull();
   });
 
-  it("US-QS-03 a key_conflict keeps the held key: another edited tap is refused too, the original body replays the stored answer", async () => {
+  it("US-QS-03 an append's conflict keeps its key: another edited tap is refused too, the original body replays the stored answer", async () => {
     const server = keyServer(1);
     const { result } = renderHook(() =>
       useWriteAction(
@@ -253,7 +256,7 @@ describe("US-QS-03 · the repeat-guard key of an action, held per target", () =>
         () => undefined,
       ),
     );
-    const scope = entityKey("specimen", "e6", "measure");
+    const scope = appendKey("specimen", "e6", "measure");
     const measure = (value: number) =>
       send(server.fetchFn, "POST", "/specimens/e6/measurements", { value });
     await tap(result.current, measure(1), scope);
@@ -268,7 +271,7 @@ describe("US-QS-03 · the repeat-guard key of an action, held per target", () =>
     expect(server.applied).toEqual(["POST /specimens/e6/measurements"]);
   });
 
-  it("US-QS-03 a success on the target frees a conflicting key: the edited write after it is a write of its own", async () => {
+  it("US-QS-03 a set-state's conflict frees its key: the next edited tap is a fresh write and is applied (it only sets state)", async () => {
     const server = keyServer(1);
     const { result } = renderHook(() =>
       useWriteAction(
@@ -276,29 +279,44 @@ describe("US-QS-03 · the repeat-guard key of an action, held per target", () =>
         () => undefined,
       ),
     );
-    const scope = entityKey("specimen", "e6", "measure");
-    const measure = (value: number) =>
-      send(server.fetchFn, "POST", "/specimens/e6/measurements", { value });
-    await tap(result.current, measure(1), scope);
-    await tap(result.current, measure(2), scope);
+    const scope = entityKey("specimen", "e6", "notes");
+    const notes = (text: string) =>
+      send(server.fetchFn, "PUT", "/specimens/e6/notes", { notes: text });
+    await tap(result.current, notes("A"), scope);
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await tap(result.current, notes("B"), scope);
     expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    await tap(result.current, notes("B"), scope);
+    expect(result.current.error).toBeNull();
+    expect(server.keys[2]).not.toBe(server.keys[0]);
+    expect(server.applied).toEqual(["PUT /specimens/e6/notes", "PUT /specimens/e6/notes"]);
+  });
+
+  it("US-QS-03 a set-state success on the target does not free a held append's key: the retap repeats it, one record", async () => {
+    const server = keyServer(1);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const scope = appendKey("specimen", "e6", "measure");
+    const measure = send(server.fetchFn, "POST", "/specimens/e6/measurements", { value: 1 });
+    await tap(result.current, measure, scope);
+    expect(result.current.error?.code).toBe("network.not_reachable");
     await tap(
       result.current,
       send(server.fetchFn, "PUT", "/specimens/e6/notes", { notes: "x" }),
       entityKey("specimen", "e6", "notes"),
     );
     expect(result.current.error).toBeNull();
-    await tap(result.current, measure(2), scope);
+    await tap(result.current, measure, scope);
     expect(result.current.error).toBeNull();
-    expect(server.keys[3]).not.toBe(server.keys[0]);
-    expect(server.applied).toEqual([
-      "POST /specimens/e6/measurements",
-      "PUT /specimens/e6/notes",
-      "POST /specimens/e6/measurements",
-    ]);
+    expect(server.keys[2]).toBe(server.keys[0]);
+    expect(server.applied).toEqual(["POST /specimens/e6/measurements", "PUT /specimens/e6/notes"]);
   });
 
-  it("US-QS-03 another refusal of the same action frees its conflicting key: the next edited write gets a key of its own", async () => {
+  it("US-QS-03 another refusal of the same action frees its conflicting append key: the next edited write gets a key of its own", async () => {
     const server = keyServer(1);
     const refusing = vi.fn<typeof fetch>(
       async () =>
@@ -312,7 +330,7 @@ describe("US-QS-03 · the repeat-guard key of an action, held per target", () =>
         () => undefined,
       ),
     );
-    const scope = entityKey("specimen", "e7", "measure");
+    const scope = appendKey("specimen", "e7", "measure");
     const measure = (value: number) =>
       send(server.fetchFn, "POST", "/specimens/e7/measurements", { value });
     await tap(result.current, measure(1), scope);
@@ -331,6 +349,90 @@ describe("US-QS-03 · the repeat-guard key of an action, held per target", () =>
       "POST /specimens/e7/measurements",
       "POST /specimens/e7/measurements",
     ]);
+  });
+
+  it("US-QS-03 a lost create, a silent seen mark, then a retap of the create: one record (a silent write frees nothing)", async () => {
+    const server = keyServer(1);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const create = createKey("specimen", "create");
+    await tap(result.current, send(server.fetchFn, "POST", "/specimens", { name: "a" }), create);
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await act(async () =>
+      result.current.runSilent(send(server.fetchFn, "PUT", "/seen", { ids: ["x"] }), ""),
+    );
+    await tap(result.current, send(server.fetchFn, "POST", "/specimens", { name: "a" }), create);
+    expect(result.current.error).toBeNull();
+    expect(server.keys[2]).toBe(server.keys[0]);
+    expect(server.applied).toEqual(["POST /specimens", "PUT /seen"]);
+  });
+
+  it("US-QS-03 a lost create keeps its key when a successful write of another entity lands: the create lives on its own target", async () => {
+    const server = keyServer(1);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const create = createKey("specimen", "create");
+    await tap(result.current, send(server.fetchFn, "POST", "/specimens", { name: "a" }), create);
+    await tap(
+      result.current,
+      send(server.fetchFn, "POST", "/wishes", { name: "w" }),
+      createKey("wish", "create"),
+    );
+    expect(result.current.error).toBeNull();
+    await tap(result.current, send(server.fetchFn, "POST", "/specimens", { name: "a" }), create);
+    expect(result.current.error).toBeNull();
+    expect(server.keys[2]).toBe(server.keys[0]);
+    expect(server.applied).toEqual(["POST /specimens", "POST /wishes"]);
+  });
+
+  it("US-QS-03 a tap without a token (nothing sent) keeps the held key: the next tap with a token repeats it, one record", async () => {
+    const server = keyServer(1);
+    let token: string | undefined = "tok";
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => token,
+        () => undefined,
+      ),
+    );
+    const scope = appendKey("specimen", "e9", "measure");
+    const save = send(server.fetchFn, "POST", "/specimens/e9/measurements", { value: 1 });
+    await tap(result.current, save, scope);
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    token = undefined;
+    await tap(result.current, save, scope);
+    expect(result.current.error?.code).toBe("access.not_signed_in");
+    expect(server.keys).toHaveLength(1);
+    token = "tok";
+    await tap(result.current, save, scope);
+    expect(result.current.error).toBeNull();
+    expect(new Set(server.keys).size).toBe(1);
+    expect(server.applied).toEqual(["POST /specimens/e9/measurements"]);
+  });
+
+  it("US-QS-03 the sign-out-everywhere press is held by the registry: a repeat repeats its key, forgetRepeatKeys frees it", async () => {
+    const server = keyServer(1);
+    const press = () =>
+      runRepeat(accountKey("sign-out-everywhere"), (key) =>
+        createWrite("http://api", "tok", { key, fetchFn: server.fetchFn })(
+          "POST",
+          "/account/sessions/end",
+        ),
+      );
+    await press();
+    await press();
+    expect(server.keys[1]).toBe(server.keys[0]);
+    forgetRepeatKeys();
+    await press();
+    expect(server.keys[2]).not.toBe(server.keys[0]);
+    expect(server.applied).toEqual(["POST /account/sessions/end", "POST /account/sessions/end"]);
   });
 });
 

@@ -2,8 +2,9 @@ import { useCallback, useMemo, useState } from "react";
 import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import {
-  accountKey,
+  createKey,
   entityKey,
+  newRepeatKey,
   SIGN_IN as KERNEL_SIGN_IN,
   type KeyScope,
   useQueryClient,
@@ -44,7 +45,7 @@ async function derive(api: string, token: Token, a: DerivationRequest) {
 type Notify = { said: (message: string) => void; shown: (message: string) => void };
 
 /** One write's options: its body, where its result goes (the announcer by default) and its repeat-guard key (US-QS-03). */
-type WriteOptions = { body?: unknown; notify?: (message: string) => void; scope: KeyScope };
+type WriteOptions = { body?: unknown; notify?: (message: string) => void; scope?: KeyScope };
 
 /** Where the results of this page's writes go (US-QS-32): said by the announcer, a toast only where the row leaves. */
 function useNotify(): Notify {
@@ -67,8 +68,10 @@ function buildActions(
   ) => {
     const t = await token();
     if (!t) return SIGN_IN;
-    // The key belongs to the write's target and operation (US-QS-03); the body is never part of it.
-    const r = await keys.run((key) => createWrite(api, t, { key })(method, path, body), scope);
+    // The key belongs to the write's target and operation (US-QS-03); the body is never part of it. A write without a scope
+    // is a background write (the zone defaults): its own key, it frees no held key of the page.
+    const send = (key: string) => createWrite(api, t, { key })(method, path, body);
+    const r = scope ? await keys.run(send, scope) : await send(newRepeatKey());
     if (!r.ok) return r.error;
     setLastError(undefined);
     await load();
@@ -80,7 +83,7 @@ function buildActions(
       write("POST", "/light-zones", "Lichtzone angelegt.", {
         body: e,
         // A create: the operation only, the zone's fields are the body (US-QS-03).
-        scope: accountKey("zone:create"),
+        scope: createKey("zone", "create"),
       }),
     zoneUpdate: (id, e) =>
       write("PUT", `/light-zones/${id}`, "Lichtzone gesichert.", {
@@ -97,7 +100,6 @@ function buildActions(
     defaults: async () => {
       const f = await write("POST", "/light-zones/defaults", "Standard-Zonen übernommen.", {
         body: {},
-        scope: accountKey("zone:defaults"),
       });
       setLastError(f ?? undefined);
       return f;
@@ -106,7 +108,7 @@ function buildActions(
       write("POST", "/locations", "Standort angelegt.", {
         body: e,
         // A create: the operation only, the location's fields are the body (US-QS-03).
-        scope: accountKey("location:create"),
+        scope: createKey("location", "create"),
       }),
     locationUpdate: (id, e) =>
       write("PUT", `/locations/${id}`, "Standort gesichert.", {

@@ -80,12 +80,20 @@ export async function call<T, D = unknown>(
   }
 }
 
-/** Answers that do not say whether the server applied the write: its key stays for the repeat (US-QS-03). */
-const UNANSWERED = new Set(["network.not_reachable", "idempotency.in_progress"]);
+/**
+ * Answers that leave the write open (US-QS-03): the server may have applied it (no answer, `in_progress`), or it never
+ * got the write (no token, `access.not_signed_in`: the sign-in check comes before the key is stored, so nothing was
+ * stored for it). The key of the action is kept for the repeat.
+ */
+const UNANSWERED = new Set([
+  "network.not_reachable",
+  "idempotency.in_progress",
+  "access.not_signed_in",
+]);
 
 /**
- * Whether an answer leaves the write open: the server may have applied it, so the key of the action is kept for the
- * repeat. A refusal or any other answer ends the action (US-QS-03).
+ * Whether an answer leaves the write open: the key of the action is kept for the repeat. A refusal of the operation ends
+ * the action (its key is discarded by the server, US-QS-03).
  */
 export const isUnanswered = (error: ApiError): boolean => UNANSWERED.has(error.code);
 

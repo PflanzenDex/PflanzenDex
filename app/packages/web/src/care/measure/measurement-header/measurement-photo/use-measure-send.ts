@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from "react";
+import { localToday } from "@pflanzendex/core";
 import {
-  entityKey,
+  appendKey,
+  currentTimeZone,
   SIGN_IN,
   type ApiError,
   useRepeatKey,
@@ -50,8 +52,8 @@ export function useMeasureSend(props: {
       if (!tok) return SIGN_IN;
       const r = await keys.run(
         (key) => recordMeasurement({ api, token: tok }, specimenId, input, { key }),
-        // An append (a measurement is added to the plant): the operation only, the values are the body (US-QS-03).
-        entityKey("specimen", specimenId, "measure"),
+        // An append (a measurement is added to the plant): the operation and the local day, the values are the body (US-QS-03).
+        appendKey("specimen", specimenId, `measure:${localToday(new Date(), currentTimeZone())}`),
       );
       if (!r.ok) return r.error;
       const text = measurementText(r.value);

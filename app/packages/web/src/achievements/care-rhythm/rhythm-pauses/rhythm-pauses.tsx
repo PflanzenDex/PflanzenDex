@@ -7,7 +7,7 @@ import { dateText } from "@/shared/lib/format";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import {
-  accountKey,
+  createKey,
   currentTimeZone,
   entityKey,
   useInvalidate,
@@ -98,7 +98,7 @@ function usePauseWrites(api: string, token: Token) {
       (t, o) => addRhythmPause(api, t, { from, until }, o),
       "Urlaub eingetragen.",
       // A create (a pause is added): the operation only, the dates are the body (US-QS-03).
-      accountKey("pause:add"),
+      createKey("pause", "add"),
     );
   const remove = (id: string) =>
     void write.run(

@@ -34,7 +34,7 @@ export const loadSpecies = (
 ): Promise<Response<Species>> =>
   call<Species>(fetchFn, `${api}/species/${encodeURIComponent(id)}`, token);
 
-/** Creates the proposal; the repeat-guard key is created per call. */
+/** Creates the proposal; the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function propose(
   api: string,
   token: string,

@@ -6,7 +6,7 @@ import { Button } from "@/shared/ui/button/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { errorText } from "@/shared/lib/error-text";
-import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { appendKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import {
   loadFriendOffers,
   requestOffer,
@@ -136,7 +136,7 @@ function Offers(props: {
                 (t, opts) => requestOffer({ api, token: t }, o.offerId, input, opts),
                 t("friends.sent", { title: title(o) }),
                 // A create (a request is added to the offer): the operation only, the counter-offer is the body (US-QS-03).
-                entityKey("offer", o.offerId, "request"),
+                appendKey("offer", o.offerId, "request"),
               )
             }
           />

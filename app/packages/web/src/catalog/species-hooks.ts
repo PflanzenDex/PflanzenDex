@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Species, SpeciesSearch } from "@pflanzendex/core";
 import {
-  accountKey,
+  createKey,
   SIGN_IN,
   useInvalidate,
   useRequest,
@@ -66,7 +66,7 @@ export function useSend(api: string, token: Token, onSaved: (id: string) => void
       ? await keys.run(
           (key) => propose(api, t, input, { key }),
           // A create (a species proposal is added): the operation only, the form is the body (US-QS-03).
-          accountKey("propose"),
+          createKey("species", "propose"),
         )
       : { ok: false as const, error: SIGN_IN };
     if (!r.ok) return r.error;

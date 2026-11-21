@@ -64,7 +64,7 @@ export interface OfferInput {
   confirmTreatment?: boolean;
 }
 
-/** Creates an offer (US-SOZ-08); the repeat-guard key is created per call. */
+/** Creates an offer (US-SOZ-08); the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function createOffer(
   api: string,
   token: string,

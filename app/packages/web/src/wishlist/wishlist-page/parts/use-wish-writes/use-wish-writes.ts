@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { accountKey, useWriteAction } from "../../../../shared/data";
+import { createKey, useWriteAction } from "../../../../shared/data";
 import { useCandidateWrite } from "../../../actions/actions";
 import { useRepair } from "../../../hints/duplicate-wishes/duplicate-wishes";
 import { createWish, type WishInput } from "../../../wishlist-api";
@@ -33,7 +33,7 @@ export function useWishWrites(
       },
       `Wunsch „${input.name}“ gesichert.`,
       // A create: the operation only, the wish's fields are the body (US-QS-03).
-      accountKey("wish:create"),
+      createKey("wish", "create"),
     );
     if (saved) setLast("write");
     return saved;

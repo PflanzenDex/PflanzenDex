@@ -158,28 +158,26 @@ export const SIGN_OUT_UNREACHABLE = "network.not_reachable";
  * the observers would fetch again with the token that is being removed. A refusal comes back with its code and the server's
  * text (none when the answer has no text); no answer comes back as `SIGN_OUT_UNREACHABLE`.
  */
-export function signOutEverywhere(
+export async function signOutEverywhere(
   api: string,
   token: string,
   options: WriteOptions,
 ): Promise<Response<unknown>> {
-  return (async (key: string): Promise<Response<unknown>> => {
-    try {
-      const res = await (options.fetchFn ?? fetch)(`${api}/account/sessions/end`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Idempotency-Key": key },
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
-      });
-      const body = (await res.json().catch(() => ({}))) as { error?: ApiError };
-      if (res.ok) return { ok: true, value: body };
-      return {
-        ok: false,
-        error: body.error ?? { code: "account.sign_out_everywhere_failed", text: "" },
-      };
-    } catch {
-      return { ok: false, error: { code: SIGN_OUT_UNREACHABLE, text: "" } };
-    }
-  })(options.key);
+  try {
+    const res = await (options.fetchFn ?? fetch)(`${api}/account/sessions/end`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Idempotency-Key": options.key },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_SECONDS * 1000),
+    });
+    const body = (await res.json().catch(() => ({}))) as { error?: ApiError };
+    if (res.ok) return { ok: true, value: body };
+    return {
+      ok: false,
+      error: body.error ?? { code: "account.sign_out_everywhere_failed", text: "" },
+    };
+  } catch {
+    return { ok: false, error: { code: SIGN_OUT_UNREACHABLE, text: "" } };
+  }
 }
 
 export const loadProfile = (
@@ -188,7 +186,7 @@ export const loadProfile = (
   fetchFn: FetchFn = fetch,
 ): Promise<Response<AccountProfile>> => call(fetchFn, `${api}/account/profile`, token);
 
-/** Saves the profile as a whole; the repeat-guard key is created per call. */
+/** Saves the profile as a whole; the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function saveProfile(
   api: string,
   token: string,

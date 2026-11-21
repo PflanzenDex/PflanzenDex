@@ -7,7 +7,7 @@ import { Tag } from "lucide-react";
 import { isActive, type Specimen } from "@pflanzendex/core";
 import { MeasurePage } from "@/care";
 import { markFertilized, markWatered } from "@/monitoring";
-import { call, entityRun, useFeature, useRequest } from "@/shared/data";
+import { call, dailyRun, entityRun, useFeature, useRequest } from "@/shared/data";
 import { useInvalidate, useWriteAction } from "@/shared/data";
 import { errorText } from "@/shared/lib/error-text";
 import { UNKNOWN, dateText } from "@/shared/lib/format";
@@ -92,7 +92,7 @@ function LabelPlant(props: { api: string; token: Token; id: string }) {
 function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure: () => void }) {
   const { api, token, specimen, onMeasure } = props;
   const write = useWriteAction(token, useInvalidate(["monitoring"]));
-  const run = entityRun(write, "specimen", specimen.id);
+  const daily = dailyRun(write, "specimen", specimen.id);
   return (
     <section aria-labelledby="pot-label-title" className="flex min-w-0 flex-col gap-4">
       <PageHeader headingId="pot-label-title" title={specimen.name} />
@@ -102,7 +102,7 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
           size="touch"
           disabled={write.running}
           onClick={() =>
-            run((t, o) => markWatered(api, t, [specimen.id], o), ui("watered"), "water")
+            daily((t, o) => markWatered(api, t, [specimen.id], o), ui("watered"), "water")
           }
         >
           {ui("water")}
@@ -113,7 +113,7 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
           variant="outline"
           disabled={write.running}
           onClick={() =>
-            run((t, o) => markFertilized(api, t, specimen.id, o), ui("fertilized"), "fertilize")
+            daily((t, o) => markFertilized(api, t, specimen.id, o), ui("fertilized"), "fertilize")
           }
         >
           {ui("fertilize")}

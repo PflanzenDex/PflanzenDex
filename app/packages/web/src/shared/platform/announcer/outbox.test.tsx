@@ -3,6 +3,7 @@ import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-libr
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  appendKey,
   createWrite,
   useWriteAction,
   type KeyScope,
@@ -332,7 +333,7 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
       ),
     );
     // The action names the operation only (a create or an append): the edited value is the body, not the action.
-    const scope: KeyScope = { target: "specimen:e1", action: "measure" };
+    const scope: KeyScope = appendKey("specimen", "e1", "measure");
     await act(async () => result.current.run(measureOn(server, 9), "a", scope));
     expect(result.current.error?.code).toBe("network.not_reachable");
     await act(async () => result.current.run(measureOn(server, 10), "b", scope));
@@ -435,6 +436,41 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
     expect(server.keys[2]).toBe(server.keys[0]);
     expect(server.keys[3]).toBe(server.keys[1]);
     expect(server.records.size).toBe(2);
+  });
+});
+
+describe("US-QS-03 · an offline tap is buffered before the token is asked", () => {
+  it("US-QS-03 an offline tap with an expired token is buffered and delivered once, with its key, when the token is back", async () => {
+    online(false);
+    const server = serverLosing(0, true);
+    vi.stubGlobal("fetch", server.fetchFn);
+    // The token of the tab is gone (expired): it is read again only when the buffer delivers (outbox.ts).
+    const tokenOf: { current?: string } = {};
+    function ExpiredPage(props: { send: WriteSend }) {
+      const write = useWriteAction(
+        async () => tokenOf.current,
+        () => undefined,
+      );
+      return (
+        <button type="button" onClick={() => void write.run(props.send, "Gesichert.", page)}>
+          Sichern
+        </button>
+      );
+    }
+    render(
+      <AnnouncerProvider>
+        <ExpiredPage send={measureOn(server, 9)} />
+      </AnnouncerProvider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
+    await buffered();
+    expect(server.keys).toHaveLength(0);
+    tokenOf.current = "token";
+    online(true);
+    await deliverBuffered();
+    expect(server.keys).toHaveLength(1);
+    expect(server.records.size).toBe(1);
+    await waitFor(() => expect(heard()).toMatch(/^Nachträglich gesendet/));
   });
 });
 

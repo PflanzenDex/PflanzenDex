@@ -28,9 +28,9 @@ async function failure(res: globalThis.Response): Promise<{ ok: false; error: Ap
 }
 
 /**
- * Sends the raw image file for the measurement of `date` (US-WAC-06). The repeat guard (US-QS-03) takes the write's
- * identity from the path (measurement date, time zone, `replace`) and the file's content: the same file sent again after
- * a lost answer carries the same key and the server answers it with the stored answer, not a second photo; another
+ * Sends the raw image file for the measurement of `date` (US-WAC-06). The repeat-guard key is the caller's (`key`, the key of
+ * the action, US-QS-03): the action names the photo's identity (its file name, size and date modified), so the same file sent
+ * again after a lost answer carries the same key and the server answers it with the stored answer, not a second photo; another
  * photo gets its own key. A deliberate replace is another path (`replace=true`), so it is another write.
  */
 export async function uploadPhoto(
@@ -43,26 +43,24 @@ export async function uploadPhoto(
   if (photo.date) query.set("date", photo.date);
   if (photo.replace) query.set("replace", "true");
   const path = `/specimens/${encodeURIComponent(specimenId)}/measurements/photo?${query}`;
-  return (async (): Promise<Response<unknown>> => {
-    try {
-      const res = await (access.fetchFn ?? fetch)(`${access.api}${path}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${access.token}`,
-          "Content-Type": photo.file.type,
-          "Idempotency-Key": key,
-        },
-        body: photo.file,
-      });
-      if (!res.ok) return await failure(res);
-      // The replaced picture leaves the picture cache at once; the next view asks its new address (NFR-12).
-      forgetPhotos(access.api, `/specimens/${encodeURIComponent(specimenId)}/`);
-      announceWrite();
-      return { ok: true, value: await res.json().catch(() => ({})) };
-    } catch {
-      return { ok: false, error: NETWORK };
-    }
-  })();
+  try {
+    const res = await (access.fetchFn ?? fetch)(`${access.api}${path}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${access.token}`,
+        "Content-Type": photo.file.type,
+        "Idempotency-Key": key,
+      },
+      body: photo.file,
+    });
+    if (!res.ok) return await failure(res);
+    // The replaced picture leaves the picture cache at once; the next view asks its new address (NFR-12).
+    forgetPhotos(access.api, `/specimens/${encodeURIComponent(specimenId)}/`);
+    announceWrite();
+    return { ok: true, value: await res.json().catch(() => ({})) };
+  } catch {
+    return { ok: false, error: NETWORK };
+  }
 }
 
 /** Quick check before sending (the server checks again, P-03): type and size. `null` means fine. */

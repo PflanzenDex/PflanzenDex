@@ -15,7 +15,7 @@ export async function loadCareProfiles(
 
 /**
  * Changes fields of my care profile of one species (US-BES-09): a value sets, `null` resets to the catalog, a field
- * that is not named stays. The repeat-guard key is created per call.
+ * that is not named stays. The repeat-guard key is the caller's (`options.key`, US-QS-03).
  */
 export async function saveCareProfile(
   api: string,

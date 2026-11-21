@@ -4,7 +4,7 @@ import { Input } from "@/shared/ui/fields/input/input";
 import { Select } from "@/shared/ui/fields/select/select";
 import { copyText } from "@/shared/platform/browser/clipboard";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { accountKey, useWriteAction } from "../../../shared/data";
+import { createKey, useWriteAction } from "../../../shared/data";
 import { createTask, previewTask, type AiTaskType } from "../../api/connections-api";
 import { HOWTO_LAYER, StepButton } from "../../clients-section/connect-step/connect-step";
 import table from "../../ai.de.json";
@@ -160,7 +160,7 @@ export function NewTask(props: {
               (t, opts) => createTask(props.api, t, { type, reference }, opts),
               "Der Auftrag ist angelegt.",
               // A create (an AI task is added): the operation only, the type and the reference are the body (US-QS-03).
-              accountKey("task:create"),
+              createKey("task", "create"),
             )
           }
         >

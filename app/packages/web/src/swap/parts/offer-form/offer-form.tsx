@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { errorText } from "@/shared/lib/error-text";
 import {
-  accountKey,
+  createKey,
   entityKey,
   useInvalidate,
   useRequest,
@@ -69,7 +69,7 @@ function useOfferForm(
       return r;
     };
     // A create: the operation only, the offer's fields are the body (US-QS-03).
-    await write.run(send, CREATED, accountKey("offer:create"));
+    await write.run(send, CREATED, createKey("offer", "create"));
     setConfirm(false);
     // A form in a layer ends on success: the host closes the layer and confirms with a toast (issue 1696, D10).
     if (created) onCreated?.(CREATED);

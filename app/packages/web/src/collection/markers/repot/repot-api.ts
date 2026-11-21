@@ -39,7 +39,7 @@ export async function loadRepotPlan(
   );
 }
 
-/** Ticks or clears one observation of a plant (US-BES-19); the repeat-guard key is created per call. */
+/** Ticks or clears one observation of a plant (US-BES-19); the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function setRepotSign(
   api: string,
   token: string,

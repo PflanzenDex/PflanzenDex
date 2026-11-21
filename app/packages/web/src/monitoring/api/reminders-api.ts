@@ -26,7 +26,7 @@ export const loadReminderSettings = (
   fetchFn: FetchFn = fetch,
 ): Promise<Response<ReminderSettings>> => call(fetchFn, `${api}/reminders/settings`, token);
 
-/** Saves the settings as a whole; the repeat-guard key is created per call. */
+/** Saves the settings as a whole; the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function saveReminderSettings(
   api: string,
   token: string,
@@ -125,7 +125,7 @@ export const madeEntries = (value: unknown, count: number): boolean =>
 /**
  * The undo of "Gegossen" (US-QS-32): takes the entries of the given plants of `date` back through `monitoring.unwater`. `date`
  * is the day the write used (its response), so an undo after midnight still means that day (NFR-08). The answer says how many
- * entries were removed (`removed`, 0 when they are gone already). The repeat-guard key is created per call.
+ * entries were removed (`removed`, 0 when they are gone already). The repeat-guard key is the caller's (`options.key`, US-QS-03).
  */
 export const unwaterPlants = (
   api: string,

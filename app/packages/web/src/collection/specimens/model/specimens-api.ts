@@ -12,7 +12,7 @@ import {
 type FetchFn = typeof fetch;
 
 /**
- * Creates a specimen. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" for caught_at (NFR-08). The repeat-guard key is created per call.
+ * Creates a specimen. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" for caught_at (NFR-08). The repeat-guard key is the caller's (`options.key`, US-QS-03).
  */
 export async function createSpecimen(
   api: string,
@@ -41,7 +41,7 @@ export async function createSpecimen(
 /**
  * Repots a cutting (US-BES-04) or a plant (US-BES-19): the specimen becomes or stays a plant on the chosen local day
  * `date` (`YYYY-MM-DD`, not after today in the profile's time zone). Without a date the server records today. A `potId`
- * places the plant into that pot on the same day; without it the plant leaves its pot. The key is created per call.
+ * places the plant into that pot on the same day; without it the plant leaves its pot. The key is the caller's (`options.key`).
  */
 export async function repotSpecimen(
   api: string,
@@ -63,7 +63,7 @@ export async function repotSpecimen(
 
 /**
  * Sets the location of a specimen from the own locations (US-PHA-03, BES-08 "Standort fehlt"). The location is chosen
- * from a list, never typed. The repeat-guard key is created per call.
+ * from a list, never typed. The repeat-guard key is the caller's (`options.key`, US-QS-03).
  */
 /** The repeat-guard key of a locate write (US-QS-03): the plant, and the place it is set to. */
 export const locateKey = (specimenId: string, locationId: string): KeyScope =>
@@ -83,7 +83,7 @@ export async function setSpecimenLocation(
   return r.ok ? { ok: true, value: r.value as Specimen } : r;
 }
 
-/** Gives a specimen a marker or changes it (US-BES-03). The repeat-guard key is created per call. */
+/** Gives a specimen a marker or changes it (US-BES-03). The repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function markSpecimen(
   api: string,
   token: string,
@@ -100,7 +100,7 @@ export async function markSpecimen(
 
 /**
  * Corrects the catch date of a specimen (US-BES-11). The profile's time zone (US-ACC-02; the device's as fallback)
- * decides what "in the future" means (NFR-08). The repeat-guard key is created per call.
+ * decides what "in the future" means (NFR-08). The repeat-guard key is the caller's (`options.key`, US-QS-03).
  */
 export async function correctCatchDate(
   api: string,
@@ -118,7 +118,7 @@ export async function correctCatchDate(
 
 /**
  * Sets the own light zone of a specimen or, with `null`, clears it so the zone is derived again (US-LIC-02,
- * US-BES-04). The zone is chosen by ID; the repeat-guard key is created per call.
+ * US-BES-04). The zone is chosen by ID; the repeat-guard key is the caller's (`options.key`, US-QS-03).
  */
 export async function setLightZone(
   api: string,
@@ -152,7 +152,7 @@ export async function loadSpecimenNotes(
 
 /**
  * Sets the private notes of a specimen (US-BES-18, P-03); an empty text clears them. The text is sent as typed, the
- * server trims it and checks the length. The repeat-guard key is created per call.
+ * server trims it and checks the length. The repeat-guard key is the caller's (`options.key`, US-QS-03).
  */
 export async function setSpecimenNotes(
   api: string,

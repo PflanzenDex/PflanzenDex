@@ -3,7 +3,7 @@ import { newlyCaught } from "@pflanzendex/core";
 import { useCallback, useEffect, useRef } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { errorText } from "@/shared/lib/error-text";
-import { accountKey, useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
+import { useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
 import { loadSeen, markSeen } from "../seen-api";
 
 const SEEN_KEY = ["pokedex", "seen"] as const;
@@ -30,8 +30,9 @@ export function NewlyCaught(props: {
   useEffect(() => {
     if (!missing || created.current) return;
     created.current = true;
-    // Silent creation (US-POK-12): no message, no banner; a failure is retried at the next visit.
-    void write.run(
+    // Silent creation (US-POK-12): no message, no banner; a failure is retried at the next visit. A background write: its own
+    // key, it frees no held key of the page (US-QS-03).
+    void write.runSilent(
       (t, opts) =>
         markSeen(
           api,
@@ -40,7 +41,6 @@ export function NewlyCaught(props: {
           opts,
         ),
       "",
-      accountKey(`seen:${caught.map((c) => c.species).join(",")}`),
     );
   }, [missing, api, caught, write]);
 
@@ -65,11 +65,8 @@ export function NewlyCaught(props: {
         pending={write.running}
         pendingLabel="Sichert …"
         onClick={() =>
-          void write.run(
-            (t, opts) => markSeen(api, t, names, opts),
-            "",
-            accountKey(`seen:${names.join(",")}`),
-          )
+          // A seen mark: a background write with its own key, it frees no held key (US-QS-03).
+          void write.runSilent((t, opts) => markSeen(api, t, names, opts), "")
         }
       >
         Als gesehen markieren

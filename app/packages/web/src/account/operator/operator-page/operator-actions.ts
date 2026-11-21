@@ -1,10 +1,12 @@
 import type { CreatedInvitation, OperatorCostFigure } from "@pflanzendex/core";
 import { useRef, useState } from "react";
 import {
+  createKey,
   SIGN_IN,
   useInvalidate,
   useRepeatKey,
   type ApiError,
+  type KeyScope,
   type Response,
   type WriteOptions,
 } from "../../../shared/data";
@@ -30,19 +32,28 @@ export type Scope = "cost" | "mode" | "codes" | "deletion";
 export type Notice = { scope: Scope; message: string | null; error: ApiError | null };
 
 /**
- * The repeat-guard target of the operator's writes (US-QS-03). One settings page is one target: the writes are not
- * about one row, and a success of any of them frees the keys the others still hold.
+ * The repeat-guard target of the operator's set-state writes (US-QS-03). One settings page is one target: a success of any
+ * of them frees the keys the others still hold.
  */
 const OPERATOR = "operator";
 
-/** Sends a write of the action under its held key (US-QS-03): a lost answer repeats the same write under that key. */
+/**
+ * The key of an operator write (US-QS-03): the invitation codes are a create (their own target, `new:invite`), the other
+ * writes set state on the page. The input is a discrete value or empty: never the body.
+ */
+const keyOf = (scope: Scope, input: string): KeyScope =>
+  scope === "codes"
+    ? createKey("invite", "codes")
+    : { target: OPERATOR, action: `${scope}:${input}` };
+
+/** Sends a write under its held key (US-QS-03): a lost answer repeats the same write under that key. */
 function sendHeld<T>(
   keys: ReturnType<typeof useRepeatKey>,
-  action: string,
+  scope: KeyScope,
   t: string,
   send: (t: string, opts: WriteOptions) => Promise<Response<T>>,
 ): Promise<Response<T>> {
-  return keys.run((key) => send(t, { key }), { target: OPERATOR, action });
+  return keys.run((key) => send(t, { key }), scope);
 }
 
 const modeText = (v: { invitationOnly: boolean }) =>
@@ -75,7 +86,7 @@ export function useOperatorActions(api: string, token: Token) {
     setRunning(true);
     const t = await token();
     const r = t
-      ? await sendHeld(keys, `${scope}:${input}`, t, send)
+      ? await sendHeld(keys, keyOf(scope, input), t, send)
       : { ok: false as const, error: SIGN_IN };
     busy.current = false;
     setRunning(false);

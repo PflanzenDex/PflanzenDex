@@ -10,7 +10,7 @@ import {
   type PagedGroup,
 } from "@/shared/patterns/responsive/paged-groups/paged-groups";
 import { errorText } from "@/shared/lib/error-text";
-import { accountKey, LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
+import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import {
   loadAchievements,
   markSeen,
@@ -80,7 +80,6 @@ function NewNotice(props: { api: string; token: Token; ids: string[] }) {
   const { api, token, ids } = props;
   const reload = useInvalidate(["achievements"]);
   const write = useWriteAction(token, reload);
-  const seen = accountKey(`seen:${ids.join(",")}`);
   return (
     <div
       role="status"
@@ -94,7 +93,8 @@ function NewNotice(props: { api: string; token: Token; ids: string[] }) {
         variant="outline"
         pending={write.running}
         pendingLabel="Sichert …"
-        onClick={() => void write.run((t, opts) => markSeen(api, t, ids, opts), "", seen)}
+        // A seen mark: a background write with its own key, it frees no held key (US-QS-03).
+        onClick={() => void write.runSilent((t, opts) => markSeen(api, t, ids, opts), "")}
       >
         Als gesehen markieren
       </Button>

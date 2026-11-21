@@ -20,7 +20,7 @@ export async function loadArchived(
 }
 
 /**
- * Archives a specimen with a reason. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" for archived_on (NFR-08). The idempotency key is created per call.
+ * Archives a specimen with a reason. The profile's time zone (US-ACC-02; the device's as fallback) determines "today" for archived_on (NFR-08). The repeat-guard key is the caller's (`options.key`, US-QS-03).
  */
 export async function archiveSpecimen(
   api: string,

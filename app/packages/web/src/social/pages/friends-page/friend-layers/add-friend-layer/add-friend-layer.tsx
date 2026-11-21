@@ -3,7 +3,7 @@ import type { CreatedFriendCode } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import {
-  accountKey,
+  createKey,
   useWriteAction,
   type ApiError,
   type WriteOptions,
@@ -33,7 +33,7 @@ function useSendRequest(
   const send = async (code: string): Promise<boolean> => {
     let ok = false;
     // A create (a request is sent): the operation only, the code is the body (US-QS-03).
-    const key = accountKey("friend-request");
+    const key = createKey("friend", "request");
     await write.run(
       async (t, opts) => {
         const r = await sendFriendRequest(api, t, code, opts);
@@ -52,7 +52,7 @@ function useSendRequest(
 type Tab = "invite" | "code";
 
 /** The invitation code: the write of one code, keyed to the action of creating one (US-QS-03). */
-const CODE_KEY = accountKey("friend-code:create");
+const CODE_KEY = createKey("invite", "friend-code");
 const createCode =
   (api: string, onCreated: (code: CreatedFriendCode) => void) =>
   async (t: string, opts: WriteOptions) => {

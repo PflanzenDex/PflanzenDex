@@ -3,8 +3,11 @@ import { useAnnounce } from "@/shared/platform/announcer/context";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useUndo, type Held, type Undo } from "@/shared/feedback/undo-row/use-undo";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { localToday } from "@pflanzendex/core";
 import {
   accountKey,
+  appendKey,
+  currentTimeZone,
   entityKey,
   useInvalidate,
   useWriteAction,
@@ -36,6 +39,17 @@ const waterKey = (specimenIds: readonly string[], action: string): KeyScope =>
   specimenIds.length === 1 && specimenIds[0] !== undefined
     ? entityKey("specimen", specimenIds[0], action)
     : accountKey(`${action}:${specimenIds.join(",")}`);
+
+/**
+ * The key of a watering (US-QS-03): a daily append, named by the local day, so a watering the next day is a write of its
+ * own. A bulk watering is an append to several plants: its own target, not the account (set-state).
+ */
+const waterAppend = (specimenIds: readonly string[]): KeyScope => {
+  const day = localToday(new Date(), currentTimeZone());
+  return specimenIds.length === 1 && specimenIds[0] !== undefined
+    ? appendKey("specimen", specimenIds[0], `water:${day}`)
+    : { target: "bulk:watering", action: `${day}:${specimenIds.join(",")}`, adds: true };
+};
 
 /** The undo of a bulk write, shown below the list where its button was (US-QS-32). */
 export interface BulkUndo {
@@ -155,7 +169,7 @@ export function useDueWrite(api: string, token: () => Promise<string | undefined
     setResult(null);
     if (isOnline()) pending.current = { entries, bulk: entries.length > 1 };
     const specimenIds = entries.map((e) => e.row.specimenId);
-    const key = waterKey(specimenIds, "water");
+    const key = waterAppend(specimenIds);
     void write.run((tok, opts) => sendWater(api, tok, { entries, made }, opts), ui("done"), key);
   };
   const undoPlant = (group: string) => {

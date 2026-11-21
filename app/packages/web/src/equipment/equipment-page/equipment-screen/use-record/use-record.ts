@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { accountKey, useWriteAction } from "../../../../shared/data";
+import { createKey, useWriteAction } from "../../../../shared/data";
 import { recordEquipment, type EquipmentInput } from "../../../equipment-api";
 import type { EquipmentFill } from "../../../equipment-form/equipment-form";
 import { NEW_LAYER } from "../tiles/equipment-tiles/equipment-tiles";
@@ -27,7 +27,7 @@ export function useRecord(
       },
       `Gerät „${input.name}“ gesichert.`,
       // A create (a record is added): the operation only, the form is the body (US-QS-03).
-      accountKey("equipment:record"),
+      createKey("equipment", "record"),
     );
     if (saved) {
       setPrefill(null);

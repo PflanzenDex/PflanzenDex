@@ -5,7 +5,6 @@ import {
   accountKey,
   entityKey,
   useWriteAction,
-  newRepeatKey,
   type WriteOptions,
 } from "../../../../../shared/data";
 import {
@@ -19,70 +18,34 @@ import { Outcome } from "../outcome/outcome";
 
 type Token = () => Promise<string | undefined>;
 type Announce = ReturnType<typeof useAnnounce>;
+type Species = readonly { speciesId: string; name: string }[];
 
 /**
- * The options of one species write of a bulk action (US-QS-03, P-10): each species is its own write with a key of its own,
- * and, while the device is offline, its own buffered entry that says its own result when it is delivered.
+ * The key of one species write of a bulk action (US-QS-03): derived from the key of the action, so a repeat of the bulk after
+ * a lost answer carries the same key per species (as the undo of a bulk move does, `restorePhaseLocations`).
  */
-function speciesOptions(
-  o: WriteOptions,
-  announce: Announce,
-  parts: { token: Token; after: () => void; success: string },
-): WriteOptions {
-  return {
-    ...o,
-    key: newRepeatKey(),
-    buffer: announce
-      ? (request) =>
-          announce.buffer({
-            token: parts.token,
-            request,
-            success: parts.success,
-            after: parts.after,
-          })
-      : undefined,
-  };
-}
+const speciesKey = (actionKey: string, speciesId: string): string => `${actionKey}:${speciesId}`;
 
 /**
- * One bulk share over every species (US-SOZ-04). Online the species go one after the other, and the first refusal stops the
- * action (P-10, US-QS-20). Offline all species are written at once: each is its own buffered entry under its own key, and
- * says its own result when it is delivered (US-QS-03, US-QS-10).
+ * One bulk share over every species, online (US-SOZ-04): the species go one after the other, and the first refusal stops the
+ * action and is reported with the count of the species that changed (P-10, US-QS-20). A species write has no buffer: a
+ * connection lost in between is refused here, never queued under the bulk's own result.
  */
 async function shareAll(
   api: string,
   t: string,
   opts: WriteOptions,
-  p: {
-    species: readonly { speciesId: string; name: string }[];
-    share: boolean;
-    announce: Announce;
-    token: Token;
-    after: () => void;
-    onPartial: (text: string) => void;
-  },
+  p: { species: Species; share: boolean; onPartial: (text: string) => void },
 ) {
-  const write = ({ speciesId, name }: { speciesId: string; name: string }) =>
-    setSpeciesSharing(
+  let last: Awaited<ReturnType<typeof setSpeciesSharing>> | undefined;
+  let done = 0;
+  for (const { speciesId } of p.species) {
+    last = await setSpeciesSharing(
       api,
       t,
       { speciesId, share: p.share },
-      speciesOptions(opts, p.announce, {
-        token: p.token,
-        after: p.after,
-        success: p.share ? `Freigegeben: „${name}“.` : `Zurückgezogen: „${name}“.`,
-      }),
+      { ...opts, key: speciesKey(opts.key, speciesId), buffer: undefined },
     );
-  if (!isOnline()) {
-    const results = await Promise.all(p.species.map(write));
-    const failed = results.find((r) => !r.ok);
-    if (failed) p.onPartial(partialText(results.filter((r) => r.ok).length, results.length));
-    return failed ?? results[0] ?? { ok: true as const, value: { changed: 0 } };
-  }
-  let last: Awaited<ReturnType<typeof write>> | undefined;
-  let done = 0;
-  for (const species of p.species) {
-    last = await write(species);
     if (!last.ok) {
       p.onPartial(partialText(done, p.species.length));
       return last;
@@ -90,6 +53,44 @@ async function shareAll(
     done += 1;
   }
   return last ?? { ok: true as const, value: { changed: 0 } };
+}
+
+/**
+ * A bulk share while the device is offline (US-QS-03, US-QS-10): each species is its own buffered entry under its own key,
+ * and each says its own result when it is delivered. Only the last entry reloads the page, so the bulk costs one reload. No
+ * entry claims the bulk as a whole, so a refused species is never hidden behind a success (P-10).
+ */
+function queueAll(p: {
+  api: string;
+  key: string;
+  species: Species;
+  share: boolean;
+  announce: Announce;
+  token: Token;
+  after: () => void;
+}) {
+  const { api, key, species, share, announce, token, after } = p;
+  return Promise.all(
+    species.map(({ speciesId, name }, index) =>
+      setSpeciesSharing(
+        api,
+        "",
+        { speciesId, share },
+        {
+          key: speciesKey(key, speciesId),
+          buffer: announce
+            ? (request) =>
+                announce.buffer({
+                  token,
+                  request,
+                  success: share ? `Freigegeben: „${name}“.` : `Zurückgezogen: „${name}“.`,
+                  after: index === species.length - 1 ? after : () => undefined,
+                })
+            : undefined,
+        },
+      ),
+    ),
+  );
 }
 
 /** The species of the keeper's active plants, with the name of one of their plants (US-SOZ-04). */
@@ -110,6 +111,7 @@ export function SharingSection(props: {
   const { api, data } = props;
   const announce = useAnnounce();
   const sharing = useWriteAction(props.token, props.onWritten);
+  const bulk = { api, announce, token: props.token, after: props.onWritten };
   // How far a refused bulk action got: the page reloads, so the switches show the real state (P-10).
   const [partial, setPartial] = useState<string | null>(null);
   const set = (specimenId: string, share: boolean) =>
@@ -123,16 +125,12 @@ export function SharingSection(props: {
   const setAll = (share: boolean) => {
     const species = activeSpecies(data);
     setPartial(null);
+    if (!isOnline()) {
+      void sharing.runQuiet((key) => queueAll({ ...bulk, key, species, share }));
+      return;
+    }
     void sharing.run(
-      (t, opts) =>
-        shareAll(api, t, opts, {
-          species,
-          share,
-          announce,
-          token: props.token,
-          after: props.onWritten,
-          onPartial: setPartial,
-        }),
+      (t, opts) => shareAll(api, t, opts, { species, share, onPartial: setPartial }),
       share
         ? "Alle Pflanzen sind für Freunde freigegeben."
         : "Alle Pflanzen sind zurückgezogen: Freunde sehen sie ab dem nächsten Abruf nicht mehr.",
