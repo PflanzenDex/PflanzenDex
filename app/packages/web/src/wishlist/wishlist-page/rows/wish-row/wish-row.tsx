@@ -38,7 +38,7 @@ function titleOf(c: Candidate, rank: number) {
   return (
     <>
       {`${rank}. `}
-      {german ?? <i>{c.name}</i>}
+      {german ?? <i className="hyphens-manual">{c.name}</i>}
     </>
   );
 }
@@ -53,7 +53,7 @@ function metaOf(c: Candidate) {
   if (germanNameOf(c.name, c.german) === null) return zone;
   return (
     <>
-      <i>{c.name}</i>
+      <i className="hyphens-manual">{c.name}</i>
       {` · ${zone}`}
     </>
   );

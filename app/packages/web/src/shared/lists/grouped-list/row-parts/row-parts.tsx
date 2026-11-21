@@ -4,8 +4,12 @@ import { ChevronRight } from "lucide-react";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
 
-/** An object's name wraps to two lines before it is cut (SG-TYPE-05); its meta line is one line that truncates. */
-export const OBJECT_TITLE = "line-clamp-2";
+/**
+ * An object's name wraps to two lines before it is cut (SG-TYPE-05) and breaks at German syllables, not at any letter, when
+ * one word is wider than the column at 200 % text ("Schmetterlings-orchidee", `lang="de"` on the document, issue 2366). A
+ * scientific name in the title is italic and carries `hyphens-manual` itself. Its meta line is one line that truncates.
+ */
+export const OBJECT_TITLE = "line-clamp-2 hyphens-auto";
 export const OBJECT_META = "truncate";
 
 export type RowContentProps = {

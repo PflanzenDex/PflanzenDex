@@ -29,6 +29,14 @@ describe("US-QS-32 ObjectRow: the name wraps to two lines, the meta is one line 
     expect(name.className).not.toMatch(/\bline-clamp-1\b/);
   });
 
+  it("US-QS-32 the name hyphenates at German syllables, so a long word breaks as 'Schmetterlings-orchidee' (issue 2366)", () => {
+    render(wrap(<ObjectRow to="/plant/s1" title="Schmetterlingsorchidee" meta="Phalaenopsis" />));
+    const name = screen.getByText("Schmetterlingsorchidee");
+    expect(name.className.split(" ")).toContain("hyphens-auto");
+    // The meta line is no name: it keeps the default (manual) break.
+    expect(screen.getByText("Phalaenopsis").className.split(" ")).not.toContain("hyphens-auto");
+  });
+
   it("US-QS-32 the meta line is one line that truncates, so it never adds a second line to the row", () => {
     render(
       wrap(

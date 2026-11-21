@@ -39,12 +39,12 @@ export const speciesLayerId = (species: string): string => `species-${species}`;
 function speciesLines(c: CaughtSpecies): { title: ReactNode; meta: ReactNode } {
   const german = germanNameOf(c.species, c.germanName);
   const date = catchText(c.caughtDate);
-  if (german === null) return { title: <i>{c.species}</i>, meta: date };
+  if (german === null) return { title: <i className="hyphens-manual">{c.species}</i>, meta: date };
   return {
     title: german,
     meta: (
       <>
-        <i>{c.species}</i>
+        <i className="hyphens-manual">{c.species}</i>
         {` · ${date}`}
       </>
     ),
