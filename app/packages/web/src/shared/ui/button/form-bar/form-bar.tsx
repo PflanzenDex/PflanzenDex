@@ -42,9 +42,10 @@ export type FormBarProps = {
   /** Extra classes of the bar drawn in place (a dialog, a pane or a page), e.g. to span the columns of a grid form. */
   className?: string;
   /**
-   * The status line of the action ("Foto wird gespeichert …", US-WAC-06): it stands right under the bar, wherever the bar is
-   * drawn, so below `md` at the top of the form under the sticky bar, from `md` under the row. Given (also as `null`), the
-   * line is always in the DOM, so a status that appears is announced, and empty it takes no room; left out, there is none.
+   * The status line of the action ("Foto wird gespeichert …", US-WAC-06): it stands right under the pair, wherever the bar is
+   * drawn: inside the bar of a phone sheet, under the sticky bar at the top of a page form, under the row from `md`. Given
+   * (also as `null`), the line is always in the DOM, so a status that appears is announced, and empty it takes no room; left
+   * out, there is none.
    */
   status?: string | null;
 };
@@ -106,19 +107,16 @@ function SheetBar(props: FormBarProps & { slot: HTMLElement | null; close: () =>
   const register = host?.register;
   const attached = props.slot !== null;
   React.useLayoutEffect(() => (attached ? register?.() : undefined), [attached, register]);
-  // The status line stays in the form, at the place of the `FormBar`: the sheet's bar slot holds the pair only.
-  return (
+  // The status line goes into the bar with the pair, right under it, so it stays next to the button that was pressed.
+  if (!props.slot) return null;
+  return createPortal(
     <>
-      {props.slot
-        ? createPortal(
-            <div data-form-bar="" className={ROW}>
-              <Pair {...props} cancel={props.onCancel ?? props.close} />
-            </div>,
-            props.slot,
-          )
-        : null}
+      <div data-form-bar="" className={ROW}>
+        <Pair {...props} cancel={props.onCancel ?? props.close} />
+      </div>
       <Status text={props.status} />
-    </>
+    </>,
+    props.slot,
   );
 }
 

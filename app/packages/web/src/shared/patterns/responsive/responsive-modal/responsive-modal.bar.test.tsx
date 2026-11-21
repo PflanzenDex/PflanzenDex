@@ -15,7 +15,7 @@ beforeAll(() => {
 afterEach(cleanup);
 
 /** A form that draws its bar through the container, as the forms of the layers do: the bar after the last field (US-QS-32, SG-SHEET-04). */
-function BarForm(props: { onSubmit?: () => void; pending?: boolean }) {
+function BarForm(props: { onSubmit?: () => void; pending?: boolean; status?: string | null }) {
   return (
     <form
       id="bar-form"
@@ -29,7 +29,11 @@ function BarForm(props: { onSubmit?: () => void; pending?: boolean }) {
         Text
         <input />
       </label>
-      <FormBar formId="bar-form" pending={props.pending ?? false}>
+      <FormBar
+        formId="bar-form"
+        pending={props.pending ?? false}
+        {...(props.status !== undefined ? { status: props.status } : {})}
+      >
         Sichern
       </FormBar>
     </form>
@@ -74,6 +78,43 @@ describe("US-QS-32 · SG-SHEET-04 a phone sheet puts the actions of its form in 
     // Row 1 is the bar, row 2 the title (it still names the sheet).
     const title = within(sheet).getByRole("heading", { name: "Notiz" });
     expect(position(bar, title) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+  });
+
+  it("US-QS-32 · SG-SHEET-04 the status line of the action stands inside the sheet's bar, right under the pair, and is the only status in the sheet", async () => {
+    setViewportWidth(360);
+    render(
+      <ResponsiveModal title="Notiz" open onOpenChange={() => undefined}>
+        <BarForm status="Foto wird gespeichert …" />
+      </ResponsiveModal>,
+    );
+    const sheet = await screen.findByRole("dialog", { name: "Notiz" });
+    const save = await within(sheet).findByRole("button", { name: "Sichern" });
+    const row = save.parentElement as HTMLElement;
+    const status = within(sheet).getByRole("status");
+    expect(status.textContent).toBe("Foto wird gespeichert …");
+    expect(within(sheet).getAllByRole("status")).toHaveLength(1);
+    // The row of the pair and the status share the bar slot of the sheet (above the title), the status right after the row.
+    expect(row.hasAttribute("data-form-bar")).toBe(true);
+    expect(row.parentElement?.hasAttribute("data-sheet-bar")).toBe(true);
+    expect(row.nextElementSibling).toBe(status);
+    // It is not in the scroll region with the fields.
+    const field = within(sheet).getByLabelText("Text");
+    expect((field.closest(".overflow-y-auto") as HTMLElement).contains(status)).toBe(false);
+  });
+
+  it("US-QS-32 · SG-SHEET-04 an empty status line in the sheet's bar is there for a status that appears and takes no room", async () => {
+    setViewportWidth(360);
+    render(
+      <ResponsiveModal title="Notiz" open onOpenChange={() => undefined}>
+        <BarForm status={null} />
+      </ResponsiveModal>,
+    );
+    const sheet = await screen.findByRole("dialog", { name: "Notiz" });
+    await within(sheet).findByRole("button", { name: "Sichern" });
+    const status = within(sheet).getByRole("status");
+    expect(status.textContent).toBe("");
+    expect(status.className.split(/\s+/)).toContain("empty:hidden");
+    expect(status.parentElement?.hasAttribute("data-sheet-bar")).toBe(true);
   });
 
   it("US-QS-32 · SG-SHEET-04 with bar actions the close X is gone: Abbrechen is the one close control", async () => {
