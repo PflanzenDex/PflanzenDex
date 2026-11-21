@@ -16,7 +16,7 @@ Read `AGENTS.md` and `CLAUDE.md` in the directory of the brief first; they hold.
 - Never read, print, copy or search any `.env` file or other secret file.
 - Write a command's output to a file in the scratchpad and print `$?`; `cmd | tail` hides the exit code.
 - Shell traps (zsh): `pkill -f <pattern>` can kill your own shell, so kill by PID. `$var` does not word-split in zsh: use an array or `xargs`. Quote globs. `echo "$json"` mangles escapes: use `printf '%s'`. `ls` is an alias that hangs in pipes: use `find`.
-- Heavy runs (a dev server with the demo seed, Playwright over many pages, `make one-screen`, `make a11y-routes`) take `make heavy-lock` first or go through a target that takes it. At the end, stop every dev server and browser you started, by PID, and say so in the report.
+- Heavy runs (a dev server with the demo seed, Playwright over many pages, `make one-screen`, `make a11y-routes`) go through `make heavy RUN="<command>"`, which takes the lock around that one command, or through a target that takes it. At the end, stop every dev server and browser you started, by PID, and say so in the report.
 
 ## Devices
 
