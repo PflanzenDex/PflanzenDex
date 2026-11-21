@@ -1,6 +1,5 @@
 import { expect } from "@playwright/test";
 import { test } from "../../../support/display/one-screen/sign-in";
-import { buildBaseline, judgeScreen } from "../../../support/display/one-screen/baseline";
 import {
   evaluate,
   type First,
@@ -10,8 +9,10 @@ import {
 } from "../../../support/display/one-screen/judge";
 
 // Self-test of the first-screen rule of the one-screen gate (issue 1854, QG-U8, US-QS-15): pure, no browser. Below 768 px
-// a list and the Heute frame may scroll vertically; the page title, the first rows and the primary action must be fully
-// in the window at load and not under a fixed bar. Registered from one-screen.spec.ts, the only spec the project runs.
+// only a view with a list and the Heute frame may scroll vertically; every phone view shows its page title, the first rows
+// and the primary action in the window at load, not under a fixed bar. At 200 % text the title is whole and the first row
+// starts in the first screen; the primary action is not looked at. Registered from one-screen.spec.ts, the only spec the
+// project runs.
 
 /** A box in the window of 360x640; with a `bar` the first screen ends at 584 px there, else at the window's 640 px. */
 export const spot = (top: number, bottom: number, el: string, bar = ""): Spot => ({
@@ -23,10 +24,11 @@ export const goodFirst = (): First => ({
   title: spot(16, 48, "h1 Heute"),
   rows: [spot(60, 120, "li.row-1"), spot(130, 190, "li.row-2")],
   action: spot(560, 604, "button.bg-primary Speichern"),
+  heute: false,
 });
 
-type Raws = (over: Partial<Raw>) => Raw;
-type Sizes = (name: string) => Size;
+export type Raws = (over: Partial<Raw>) => Raw;
+export type Sizes = (name: string) => Size;
 
 /** The window at 768x1024 or 1024x768 with a page that fits unless `over` says otherwise. */
 const wideRaw = (raw: Raws, size: Size, over: Partial<Raw>): Raw =>
@@ -64,7 +66,6 @@ function scrollTests(raw: Raws, sizeOf: Sizes): void {
     const region = { scrollHeight: 900, clientHeight: 300, el: "div.tabs" };
     const inner = evaluate("s", tablet, wideRaw(raw, tablet, { region }));
     expect(inner.failures[0]).toContain("inner 3.00");
-    expect(evaluate("s", phone, raw({ region })).failures).toEqual([]);
   });
 
   test("QG-U8 US-QS-15 sideways scroll still fails at 360 px, and the 2560 px cap is unchanged", () => {
@@ -82,7 +83,6 @@ function scrollTests(raw: Raws, sizeOf: Sizes): void {
 
 function cutTests(raw: Raws, sizeOf: Sizes): void {
   const phone = sizeOf("360x640");
-  const zoomed = sizeOf("360x640@200%");
   const withFirst = (first: Partial<First>) => raw({ first: { ...goodFirst(), ...first } });
 
   test("QG-U8 US-QS-15 a title under a fixed bar or missing fails and names itself", () => {
@@ -101,16 +101,15 @@ function cutTests(raw: Raws, sizeOf: Sizes): void {
     expect(evaluate("s", phone, above).failures).toHaveLength(1);
   });
 
-  test("QG-U8 US-QS-15 two rows are needed at 360x640, one at 200 % text; a short list needs what it has", () => {
+  test("QG-U8 US-QS-15 two rows are needed at 360x640; a short list needs what it has", () => {
     const cut = { rows: [spot(60, 120, "li.row-1"), spot(540, 600, "li.row-2", "nav.fixed")] };
     const one = evaluate("s", phone, withFirst(cut));
     expect(one.failures).toHaveLength(1);
     expect(one.failures[0]).toContain("li.row-2");
-    expect(evaluate("s", zoomed, withFirst(cut)).failures).toEqual([]);
-    const first = { rows: [spot(540, 600, "li.row-1", "nav.fixed")] };
-    expect(evaluate("s", zoomed, withFirst(first)).failures[0]).toContain("li.row-1");
     const single = withFirst({ rows: [spot(60, 120, "li.row-1")] });
     expect(evaluate("s", phone, single).failures).toEqual([]);
+    const tall = withFirst({ rows: [spot(60, 900, "li.card")] });
+    expect(evaluate("s", phone, tall).failures[0]).toContain("li.card");
   });
 
   test("QG-U8 US-QS-15 a primary action below the fold fails and names itself", () => {
@@ -132,35 +131,11 @@ function cutTests(raw: Raws, sizeOf: Sizes): void {
   });
 }
 
-function listedTests(raw: Raws, sizeOf: Sizes): void {
-  const phone = sizeOf("360x640");
-  test("QG-U8 US-QS-15 a listed phone entry ignores vertical ratios; a first-screen failure leaves it when fixed", () => {
-    const listed = buildBaseline([evaluate("s", phone, raw({ scrollWidth: 400 }))]);
-    const taller = evaluate("s", phone, raw({ scrollWidth: 400, scrollHeight: 1600 }));
-    expect(judgeScreen([taller], listed)).toEqual([]);
-    const wider = evaluate("s", phone, raw({ scrollWidth: 520 }));
-    expect(judgeScreen([wider], listed)[0]).toContain("pageX");
-    const hidden = evaluate("s", phone, raw({ first: { ...goodFirst(), title: null } }));
-    const entry = buildBaseline([hidden]);
-    expect(judgeScreen([hidden], entry)).toEqual([]);
-    expect(judgeScreen([evaluate("s", phone, raw({}))], entry)[0]).toContain("fits now");
-  });
-
-  test("QG-U8 US-QS-15 a phone entry that is only borderline sideways is not reported as fixed", () => {
-    const borderline = buildBaseline([evaluate("s", phone, raw({ scrollWidth: 368 }))]);
-    expect(borderline.entries[0]?.pageX).toBe(1.02);
-    expect(judgeScreen([evaluate("s", phone, raw({}))], borderline)).toEqual([]);
-  });
-}
-
 export function firstSelfTests(raw: Raws, sizeOf: Sizes): void {
-  test.describe("QG-U8 US-QS-15 self-test: phones scroll, the first screen stays", () => {
+  test.describe("QG-U8 US-QS-15 self-test: phones scroll, from 768 px nothing changes", () => {
     scrollTests(raw, sizeOf);
   });
   test.describe("QG-U8 US-QS-15 self-test: the first screen of a phone", () => {
     cutTests(raw, sizeOf);
-  });
-  test.describe("QG-U8 US-QS-15 self-test: the baseline on a phone", () => {
-    listedTests(raw, sizeOf);
   });
 }

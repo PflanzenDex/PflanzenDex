@@ -14,6 +14,7 @@ import {
   type Result,
 } from "../../../support/display/one-screen/judge";
 import { firstSelfTests, goodFirst } from "./one-screen.first";
+import { phoneSelfTests } from "./one-screen.phone";
 import { sidewaysSelfTests } from "./one-screen-sideways";
 import { shiftJudgeSelfTests, shiftSelfTests, shiftTests } from "./one-screen.shift";
 import {
@@ -183,6 +184,7 @@ test("QG-U8 self-test: a borderline entry that fits in one run does not flip the
 
 sidewaysSelfTests(raw, sizeOf);
 firstSelfTests(raw, sizeOf);
+phoneSelfTests(raw, sizeOf);
 
 test("QG-U8 self-test: a screen that lands on Heute instead of its path is named", () => {
   expect(lostScreen("http://x/account/data", "http://x/today")).toContain("landed on /today");

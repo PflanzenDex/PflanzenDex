@@ -101,5 +101,7 @@ export async function firstOf(page: Page): Promise<First> {
     title: await spot(spots.title, (await content.getProperty("title")) as Found),
     rows: (await Promise.all(spots.rows.map((m, i) => spot(m, rows[i])))) as Spot[],
     action: await spot(spots.action, (await content.getProperty("action")) as Found),
+    // The register names every Heute screen and layer with the path /today (ids today, today-sheet-*, today-tasks).
+    heute: new URL(page.url()).pathname === "/today",
   };
 }

@@ -1,7 +1,6 @@
 // The pure part of the one-screen gate (US-QS-15, DS-58, issue 1137, QG-U8): what a measurement means. The comparison
 // with the baseline is in baseline.ts. No browser here, so the self-test in tests/accessibility/routes/one-screen.spec.ts runs
-// without one. Below 768 px a list and the Heute frame may scroll vertically; the first screen is judged instead (owner
-// decision 2026-11-20, issue 1854).
+// without one.
 
 export type SizeKind = "fit" | "cap" | "text200";
 
@@ -23,11 +22,9 @@ export const SIZES: readonly Size[] = [
   { name: "360x640@200%", width: 360, height: 640, kind: "text200" },
 ];
 
-/** A phone: below this width the first screen is judged, not the vertical scroll. */
+/** A phone: below this width the first screen is judged, and a list or Heute may scroll vertically. */
 const PHONE_BELOW = 768;
 export const isPhone = (size: Size): boolean => size.width < PHONE_BELOW;
-/** The first rows that must stand fully in the first screen: two, one at 200 % text. */
-const wantedRows = (size: Size): number => (size.kind === "text200" ? 1 : 2);
 
 /** One pixel of tolerance for subpixel rounding (owner decision: at most 1.00 with 1 px, not 1.02). */
 const TOLERANCE_PX = 1;
@@ -49,8 +46,8 @@ export interface RegionX {
 
 /** A box in the window; `limit` is where the first screen ends there: the window height, a fixed or sticky bar over the bottom edge that does not contain it, or the region that clips it (`bar` names that one). */
 export type Spot = { top: number; bottom: number; limit: number; el: string; bar: string };
-/** The first screen of a phone (fit.first.ts): the title, the first rows (at most two) of the largest list and the first primary action; rows are empty without a list, the action null without one. */
-export type First = { title: Spot | null; rows: Spot[]; action: Spot | null };
+/** The first screen of a phone (fit.first.ts): the title, the first rows (at most two; none without a list), the first primary action (none without one) and whether the path is Heute (`/today`, layers of it too). */
+export type First = { title: Spot | null; rows: Spot[]; action: Spot | null; heute: boolean };
 
 /** What the page reports about itself at one size (measured in the browser, see fit.ts). */
 export interface Raw {
@@ -64,7 +61,6 @@ export interface Raw {
   regionXUnmarked?: RegionX | null;
   pageEl: string;
   hEl: string;
-  /** Measured at phone sizes only; a phone without it fails (P-10). */
   first?: First | null;
   paint: {
     left: number;
@@ -133,31 +129,34 @@ function sideways(
     );
   if (rx && rx.scrollWidth > rx.clientWidth + TOLERANCE_PX)
     failures.push(
-      `inner sideways ${fmt(innerX)} (${rx.scrollWidth} px of ${rx.clientWidth} px) ↔ ${rx.el}`,
+      `inner sideways ${fmt(innerX)} (${rx.scrollWidth} px of ${rx.clientWidth} px) \u2194 ${rx.el}`,
     );
   return { pageX, innerX, failures };
 }
 
-const cut = (s: Spot) => s.top < -TOLERANCE_PX || s.bottom > s.limit + TOLERANCE_PX;
+const starts = (s: Spot) => s.top >= -TOLERANCE_PX && s.top < s.limit;
+const whole = (s: Spot) => starts(s) && s.bottom <= s.limit + TOLERANCE_PX;
 const where = (s: Spot) =>
   `${s.el} spans ${Math.round(s.top)}..${Math.round(s.bottom)} px, the first screen ends at ${Math.round(s.limit)} px${s.bar ? ` under ${s.bar}` : ""}`;
 
-// The first screen of a phone: the title, the first rows of the list and the primary action stand fully in the window at
-// load and not under a fixed bar. A view without a list or without a primary action skips that part; no title fails.
+// The first screen of a phone: the title, the first two rows of the list and the primary action stand fully in the window at
+// load, not under a fixed bar. At 200 % text content scrolls in its region (DS-61): the title stands whole, the first row only
+// starts in the first screen (it may be taller), the action is not looked at. No list or no action skips it; no title fails.
 function firstScreen(first: First | null | undefined, size: Size): string[] {
   if (!first) return ["first screen not measured"];
+  const zoomed = size.kind === "text200";
   const failures: string[] = [];
   if (!first.title) failures.push("first screen: no page title (heading of the layer, or h1)");
-  else if (cut(first.title)) failures.push(`first screen: title is cut: ${where(first.title)}`);
-  const need = Math.min(wantedRows(size), first.rows.length);
-  const row = first.rows.slice(0, need).find(cut);
-  if (row) failures.push(`first screen: fewer than ${need} first rows are whole: ${where(row)}`);
-  if (first.action && cut(first.action))
+  else if (!whole(first.title)) failures.push(`first screen: title is cut: ${where(first.title)}`);
+  const rows = first.rows.slice(0, zoomed ? 1 : 2);
+  const row = rows.find((r) => !(zoomed ? starts(r) : whole(r)));
+  const what = zoomed ? "first row starts below it" : `fewer than ${rows.length} rows are whole`;
+  if (row) failures.push(`first screen: ${what}: ${where(row)}`);
+  if (!zoomed && first.action && !whole(first.action))
     failures.push(`first screen: primary action is cut: ${where(first.action)}`);
   return failures;
 }
 
-// From 768 px the page and every scroll region stand in the window (1 px tolerance); at 200 % text a region may scroll.
 function vertical(raw: Raw, size: Size): string[] {
   const failures: string[] = [];
   if (raw.scrollHeight > raw.innerHeight + TOLERANCE_PX)
@@ -182,8 +181,9 @@ export function evaluate(screen: string, size: Size, raw: Raw, sidewaysExempt = 
   }
   const page = raw.scrollHeight / raw.innerHeight;
   const inner = raw.region ? raw.region.scrollHeight / raw.region.clientHeight : 1;
-  // On a phone the ratios are reported, not judged: a list may scroll, the first screen is (issue 1854).
-  if (!isPhone(size)) failures.push(...vertical(raw, size));
+  // The one place of the rule (issue 1854): below 768 px only a view with a list (rows found) or Heute may scroll vertically.
+  const mayScroll = isPhone(size) && (raw.first?.heute || (raw.first?.rows.length ?? 0) > 0);
+  if (!mayScroll) failures.push(...vertical(raw, size));
   const x = sideways(raw, sidewaysExempt, size.kind === "text200");
   failures.push(...x.failures);
   if (isPhone(size)) failures.push(...firstScreen(raw.first, size));
