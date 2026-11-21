@@ -58,7 +58,8 @@ export function PhotoInput(props: {
 /**
  * The bar of the measure form (US-QS-32, SG-SHEET-04), last in the form: "Abbrechen" and "Messung sichern", at the top of
  * the form below md, sticky and above the keyboard (SG-FORM-02), after the last field from md. The status while the photo is
- * stored follows it in the DOM, always there so a status that appears is announced, and empty it takes no room (US-WAC-06).
+ * stored is the bar's status line: it stands right under the bar in both places, always in the DOM so a status that appears
+ * is announced, and empty it takes no room (US-WAC-06).
  */
 export function MeasureBar(props: {
   formId: string;
@@ -67,13 +68,14 @@ export function MeasureBar(props: {
   onCancel: () => void;
 }) {
   return (
-    <>
-      <FormBar formId={props.formId} disabled={props.saving} needsNetwork onCancel={props.onCancel}>
-        {t("save")}
-      </FormBar>
-      <p role="status" className="text-sm text-muted-foreground empty:hidden">
-        {props.photoStatus}
-      </p>
-    </>
+    <FormBar
+      formId={props.formId}
+      disabled={props.saving}
+      needsNetwork
+      onCancel={props.onCancel}
+      status={props.photoStatus}
+    >
+      {t("save")}
+    </FormBar>
   );
 }

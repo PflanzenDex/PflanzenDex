@@ -592,6 +592,9 @@ describe("US-WAC-05 photo in the form and in the course", () => {
       bar.compareDocumentPosition(screen.getByLabelText(/Messwert/)) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).not.toBe(0);
+    // The status line of the photo stands right under the bar, where the keeper pressed the save (US-WAC-06).
+    const status = bar.parentElement?.querySelector("p[role='status']");
+    expect(bar.nextElementSibling).toBe(status);
   });
 
   it("US-QS-32 · SG-SHEET-04 from md the bar of the form is a plain row after the last field, not sticky, and the status line follows it", async () => {

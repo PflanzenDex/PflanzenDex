@@ -3,6 +3,7 @@ import { Drawer } from "vaul";
 import { cn, mergeRefs } from "@/shared/lib/utils";
 import { StatusBarDim } from "@/shared/platform/device/status-bar/status-bar";
 import { focusOnOpen } from "./open-focus";
+import { useCrampedWindow } from "./use-cramped";
 import { TitleRow } from "./title-row/title-row";
 
 export type SheetPanelProps = Omit<
@@ -137,6 +138,8 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
     const opener = React.useRef<HTMLElement | null>(null);
     const close = React.useRef<HTMLButtonElement | null>(null);
     const { content, overlay } = useSnapBack(closeRefusals, ref);
+    // With the keyboard open at a large text size the full header leaves no room for a field (US-QS-32, SG-FORM-02).
+    const cramped = useCrampedWindow(barActive === true);
     return (
       <Drawer.Root open={open} onOpenChange={onOpenChange} autoFocus>
         <Drawer.Portal>
@@ -155,7 +158,7 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
             onOpenAutoFocus={openFocus(opener, close, onOpenAutoFocus)}
             onCloseAutoFocus={closeFocus(opener, onCloseAutoFocus)}
           >
-            <Grabber />
+            {cramped ? null : <Grabber />}
             <TitleRow
               title={title}
               closeLabel={closeLabel}
@@ -163,6 +166,7 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
               onClose={() => onOpenChange(false)}
               barSlot={onBarSlot}
               barActive={barActive}
+              compact={cramped}
             />
             <SheetDescription text={description} />
             <div className="overflow-y-auto p-4 has-[[data-page-fit]]:flex has-[[data-page-fit]]:min-h-0 has-[[data-page-fit]]:flex-1 has-[[data-page-fit]]:flex-col">

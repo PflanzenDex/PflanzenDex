@@ -168,7 +168,7 @@ function mockVisualViewport(start: { height: number; offsetTop: number }) {
  * A page form as "Messen" is (US-QS-32, SG-SHEET-04): its content in a `FormBarRegion`, the bar after the last field. The
  * region gives the bar its place at the top of the form below `md`.
  */
-function PageForm() {
+function PageForm(props: { status?: string | null }) {
   return (
     <form id="page-form" aria-label="Messung erfassen">
       <FormBarRegion>
@@ -180,7 +180,11 @@ function PageForm() {
           Notiz
           <input />
         </label>
-        <FormBar formId="page-form" onCancel={() => undefined}>
+        <FormBar
+          formId="page-form"
+          onCancel={() => undefined}
+          {...(props.status !== undefined ? { status: props.status } : {})}
+        >
           Sichern
         </FormBar>
       </FormBarRegion>
@@ -238,6 +242,42 @@ describe("US-QS-32 · SG-SHEET-04 a page form: the bar at the top below md, a pl
       follows(screen.getByRole("button", { name: "Sichern" }), screen.getByLabelText("Messwert")),
     ).toBe(true);
     expect((screen.getByLabelText("Messwert") as HTMLInputElement).value).toBe("12,5");
+  });
+
+  it("US-QS-32 · SG-SHEET-04 below md the status line of the action stands right under the sticky bar, before the first field", () => {
+    setViewportWidth(360);
+    render(<PageForm status="Foto wird gespeichert …" />);
+    const bar = screen.getByRole("button", { name: "Sichern" }).parentElement as HTMLElement;
+    const status = screen.getByRole("status");
+    expect(status.textContent).toBe("Foto wird gespeichert …");
+    expect(follows(bar, status)).toBe(true);
+    expect(follows(status, screen.getByLabelText("Messwert"))).toBe(true);
+    expect(bar.nextElementSibling).toBe(status);
+  });
+
+  it.each([768, 1280])(
+    "US-QS-32 · SG-SHEET-04 at %i px the status line of the action stands right after the row at the end of the form",
+    (width) => {
+      setViewportWidth(width);
+      render(<PageForm status="Foto wird gespeichert …" />);
+      const bar = screen.getByRole("button", { name: "Sichern" }).parentElement as HTMLElement;
+      const status = screen.getByRole("status");
+      expect(bar.nextElementSibling).toBe(status);
+      expect(follows(screen.getByLabelText("Notiz"), status)).toBe(true);
+    },
+  );
+
+  it("US-QS-32 · US-WAC-06 the status line is there before its text, so a status that appears is announced, and takes no room while empty; without a status prop there is none", () => {
+    setViewportWidth(360);
+    const { rerender } = render(<PageForm status={null} />);
+    const status = screen.getByRole("status");
+    expect(status.textContent).toBe("");
+    expect(status.className.split(/\s+/)).toContain("empty:hidden");
+    rerender(<PageForm status="Foto gespeichert." />);
+    expect(screen.getByRole("status")).toBe(status);
+    expect(status.textContent).toBe("Foto gespeichert.");
+    rerender(<PageForm />);
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("US-QS-32 · SG-SHEET-04 a form without a region keeps the pair as a plain row after its fields at every width", () => {

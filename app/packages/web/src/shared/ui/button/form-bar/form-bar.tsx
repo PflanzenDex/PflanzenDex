@@ -41,6 +41,12 @@ export type FormBarProps = {
   onCancel?: () => void;
   /** Extra classes of the bar drawn in place (a dialog, a pane or a page), e.g. to span the columns of a grid form. */
   className?: string;
+  /**
+   * The status line of the action ("Foto wird gespeichert …", US-WAC-06): it stands right under the bar, wherever the bar is
+   * drawn, so below `md` at the top of the form under the sticky bar, from `md` under the row. Given (also as `null`), the
+   * line is always in the DOM, so a status that appears is announced, and empty it takes no room; left out, there is none.
+   */
+  status?: string | null;
 };
 
 /**
@@ -84,30 +90,50 @@ function Pair(props: FormBarProps & { cancel: (() => void) | undefined }) {
   );
 }
 
+/** The status line of an action: a polite live region that is there before its text, and takes no room while empty. */
+function Status(props: { text: string | null | undefined }) {
+  if (props.text === undefined) return null;
+  return (
+    <p role="status" className="text-sm text-muted-foreground empty:hidden">
+      {props.text}
+    </p>
+  );
+}
+
 /** A phone sheet: the pair goes into the sheet's bar; the sheet drops its X while a form has one (one close control). */
 function SheetBar(props: FormBarProps & { slot: HTMLElement | null; close: () => void }) {
   const host = useFormBarHost();
   const register = host?.register;
   const attached = props.slot !== null;
   React.useLayoutEffect(() => (attached ? register?.() : undefined), [attached, register]);
-  if (!props.slot) return null;
-  return createPortal(
-    <div data-form-bar="" className={ROW}>
-      <Pair {...props} cancel={props.onCancel ?? props.close} />
-    </div>,
-    props.slot,
+  // The status line stays in the form, at the place of the `FormBar`: the sheet's bar slot holds the pair only.
+  return (
+    <>
+      {props.slot
+        ? createPortal(
+            <div data-form-bar="" className={ROW}>
+              <Pair {...props} cancel={props.onCancel ?? props.close} />
+            </div>,
+            props.slot,
+          )
+        : null}
+      <Status text={props.status} />
+    </>
   );
 }
 
 /**
  * A plain row in the content, after the last field, nothing sticky (owner decision d-060): the bar of a dialog from `md`, of a
- * pane, and of a page form from `md`.
+ * pane, and of a page form from `md`. The status line follows the row.
  */
 function RowBar(props: FormBarProps & { cancel: (() => void) | undefined }) {
   return (
-    <div data-form-bar="" className={cn(ROW, "min-w-0", props.className)}>
-      <Pair {...props} />
-    </div>
+    <>
+      <div data-form-bar="" className={cn(ROW, "min-w-0", props.className)}>
+        <Pair {...props} />
+      </div>
+      <Status text={props.status} />
+    </>
   );
 }
 
@@ -115,23 +141,27 @@ function RowBar(props: FormBarProps & { cancel: (() => void) | undefined }) {
  * A page form below `md`: the bar sticks at the top of the form, below the app's top bar, and follows the visual viewport, so
  * with the keyboard open it stays above the keyboard and covers no field (SG-FORM-02, `usePageBar`). It is drawn into the
  * slot at the top of the `FormBarRegion`, because a sticky element only sticks within its parent. The solid fill hides the
- * fields that scroll under it.
+ * fields that scroll under it. The status line follows the bar into the slot, so it stays right under the bar where the keeper
+ * pressed the action.
  */
 function PageBar(props: FormBarProps & { slot: HTMLElement }) {
   const ref = React.useRef<HTMLDivElement>(null);
   usePageBar(ref);
   return createPortal(
-    <div
-      ref={ref}
-      data-form-bar=""
-      className={cn(
-        ROW,
-        "sticky z-30 min-w-0 border-b border-border bg-background py-2",
-        props.className,
-      )}
-    >
-      <Pair {...props} cancel={props.onCancel} />
-    </div>,
+    <>
+      <div
+        ref={ref}
+        data-form-bar=""
+        className={cn(
+          ROW,
+          "sticky z-30 min-w-0 border-b border-border bg-background py-2",
+          props.className,
+        )}
+      >
+        <Pair {...props} cancel={props.onCancel} />
+      </div>
+      <Status text={props.status} />
+    </>,
     props.slot,
   );
 }

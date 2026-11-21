@@ -9,7 +9,8 @@ import { barOf, expectBarUsable } from "./form-bar.checks";
  * Every control of the form, one after the other: scrolled into the middle of its scroll area, the browser must hit the
  * control itself at its centre and at its corners, or a part that does not lie on it (its own parent). A fixed or sticky
  * part that lies on a control (#1941: the sticky save covered "Mehr Angaben") fails here and is named. The controls of the
- * bar are the bar's own, and the corners of a rounded control may hit what surrounds it.
+ * bar are the bar's own, and the corners of a rounded control may hit what surrounds it. A control in a closed "Mehr Angaben"
+ * (`details` without `open`) is not drawn, although the browser still reports a box for it: it is no control to cover.
  */
 export async function expectNoControlCovered(page: Page, what: string): Promise<void> {
   const covered = await page.evaluate(() => {
@@ -24,6 +25,9 @@ export async function expectNoControlCovered(page: Page, what: string): Promise<
     };
     const shown = (control: Element): boolean => {
       if (control.closest("[data-form-bar], [aria-hidden='true']")) return false;
+      const closed = control.closest("details:not([open])");
+      if (closed && !(control.tagName === "SUMMARY" && control.parentElement === closed))
+        return false;
       const style = getComputedStyle(control);
       const box = control.getBoundingClientRect();
       return (
@@ -78,10 +82,13 @@ export async function expectBarAfterFields(page: Page, what: string): Promise<vo
   await expectBarUsable(page, what);
   const placed = await barOf(page).bar.evaluate((el) => {
     const root = el.closest("[role='dialog'], [data-layer-pane], main") ?? document.body;
+    // A field in a closed "Mehr Angaben" is not drawn, although the browser still reports a box for it.
+    const drawn = (field: Element) =>
+      field.closest("details:not([open])") === null && field.getClientRects().length > 0;
     const fields = Array.from(
       root.querySelectorAll("input:not([type='hidden']), select, textarea"),
     );
-    const last = fields.filter((field) => field.getClientRects().length > 0).pop();
+    const last = fields.filter(drawn).pop();
     const floats = (node: Element | null): boolean =>
       node !== null &&
       node !== root &&

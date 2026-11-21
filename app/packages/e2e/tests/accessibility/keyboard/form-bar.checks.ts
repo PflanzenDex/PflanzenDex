@@ -99,9 +99,15 @@ export function barOf(page: Page): { bar: Locator; confirm: Locator; cancel: Loc
  */
 export async function expectBarUsable(page: Page, what: string): Promise<void> {
   const { bar, cancel, confirm } = barOf(page);
+  const window = await page.evaluate(() => ({ w: innerWidth, h: innerHeight }));
+  // A sheet slides in from below the window and its bar rests there until it starts to move: wait until it has come up.
+  await expect
+    .poll(async () => (await boxOf(bar)).bottom <= window.h + 0.5, {
+      message: `${what}: the bar comes inside the window`,
+    })
+    .toBe(true);
   await holdsPlace(bar);
   await expect(cancel, `${what}: Abbrechen`).toHaveText("Abbrechen");
-  const window = await page.evaluate(() => ({ w: innerWidth, h: innerHeight }));
   for (const [name, button] of [
     ["Abbrechen", cancel],
     ["the confirming action", confirm],
@@ -115,8 +121,13 @@ export async function expectBarUsable(page: Page, what: string): Promise<void> {
     expect(box.bottom, `${what}: ${name} inside the window`).toBeLessThanOrEqual(window.h + 0.5);
   }
   const covered = await confirm.evaluate((el) => {
+    // An action that cannot be pressed yet (nothing changed) takes no pointer events, and the browser would look through it
+    // at what lies beneath: the check asks as if it took them.
+    const own = el.style.pointerEvents;
+    el.style.pointerEvents = "auto";
     const r = el.getBoundingClientRect();
     const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    el.style.pointerEvents = own;
     return hit === null || !el.contains(hit);
   });
   expect(covered, `${what}: something lies on the confirming action`).toBe(false);

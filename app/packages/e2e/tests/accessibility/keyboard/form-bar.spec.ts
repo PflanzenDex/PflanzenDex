@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import {
+  createLocation,
   expect,
   expectAnnounced,
   layerOf,
@@ -158,6 +159,8 @@ test.describe("US-QS-32 the bar of a form on a phone (SG-SHEET-04, SG-FORM-02)",
     test.setTimeout(600_000);
     await textSizeBeforeLoad(page);
     await signIn(page, account);
+    // Without a location the care profile shows a hint and no field; with one it shows the pickers of its phases.
+    await createLocation(page, "Fensterbank");
     await startWithPlant(page);
     await openFirstPlant(page);
     const plant = page.url();

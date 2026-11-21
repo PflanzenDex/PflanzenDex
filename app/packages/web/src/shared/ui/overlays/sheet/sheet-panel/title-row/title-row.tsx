@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Drawer } from "vaul";
 import { X } from "lucide-react";
+import { cva } from "class-variance-authority";
 
 /**
  * The title takes the focus by script, so it draws no browser outline, as the layer heading does (US-QS-15, F15). Its
@@ -10,6 +11,12 @@ import { X } from "lucide-react";
  */
 const TITLE =
   "min-w-0 flex-1 text-lg font-semibold focus-visible:outline-none keyboard-input:focus-visible:ring-2 keyboard-input:focus-visible:ring-inset keyboard-input:focus-visible:ring-ring";
+
+/** The title: drawn, or read to assistive technology only in a window too short for the whole header (DS-34: a variant). */
+const titleLook = cva(TITLE, {
+  variants: { readOnly: { true: "sr-only", false: "" } },
+  defaultVariants: { readOnly: false },
+});
 
 /**
  * The close button beside the title (SG-SHEET-02, SG-TOUCH-03): the dialog's close (`dialog.tsx`), at the trailing edge of
@@ -28,7 +35,9 @@ const CLOSE =
  * A sheet that offers a bar slot (`barSlot`) has the bar above the title: a form draws "Abbrechen" and its confirming
  * action into it (`FormBar`). While a form has done so (`barActive`) the row is two rows, the bar and then the title, so a
  * long title or a large text size never meets the buttons; "Abbrechen" is then the one close control and the X is gone.
- * Without bar actions the X stays exactly as it was. The empty slot takes no room.
+ * Without bar actions the X stays exactly as it was. The empty slot takes no room. In a window too short for the whole header
+ * (`compact`: the keyboard is open at a large text size) the title is read to assistive technology only, so the bar and a
+ * field of the form fit (SG-FORM-02).
  */
 export function TitleRow(props: {
   title: string;
@@ -37,6 +46,8 @@ export function TitleRow(props: {
   onClose: () => void;
   barSlot?: ((element: HTMLElement | null) => void) | undefined;
   barActive?: boolean | undefined;
+  /** The window is too short for the full header (`useCrampedWindow`): the title stays for assistive technology only. */
+  compact?: boolean | undefined;
 }) {
   const bar = props.barActive === true;
   return (
@@ -45,7 +56,10 @@ export function TitleRow(props: {
         <div ref={props.barSlot} data-sheet-bar="" className="flex flex-col pb-1 empty:hidden" />
       ) : null}
       <div className="flex items-start gap-2">
-        <Drawer.Title tabIndex={-1} className={TITLE}>
+        <Drawer.Title
+          tabIndex={-1}
+          className={titleLook({ readOnly: bar && props.compact === true })}
+        >
           {props.title}
         </Drawer.Title>
         {/* A close is the same as Back and a tap on the scrim: the parent's guard asks for unsaved input (US-QS-32). */}

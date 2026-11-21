@@ -6,6 +6,7 @@ import {
   signIn,
   expect,
   test,
+  uniqueLatin,
 } from "../support/fixtures";
 import type { Page } from "@playwright/test";
 
@@ -83,7 +84,8 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     account,
   }, info) => {
     await signIn(page, account);
-    await withSpecimen(page, "Echeveria elegans");
+    // A species of its own: a database with the dev seed already holds "Echeveria elegans", and the proposal is refused (409).
+    await withSpecimen(page, uniqueLatin("Echeveria"));
     await openFirstPlant(page);
     await page.getByRole("button", { name: /^Messen: / }).click();
 

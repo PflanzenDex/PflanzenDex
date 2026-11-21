@@ -201,3 +201,56 @@ describe("US-QS-32 · SG-SHEET-04 from md the same pair is a plain row after the
     expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
   });
 });
+
+describe("US-QS-32 · SG-FORM-02 a sheet with bar actions in a window too short for its whole header", () => {
+  const height = window.innerHeight;
+  afterEach(() => {
+    window.innerHeight = height;
+    document.documentElement.style.fontSize = "";
+  });
+
+  /** The keyboard of a phone takes the window down to `high` px, at the root text size `text` (200 % text is 32 px). */
+  function open(high: number, text: string, bar = true) {
+    setViewportWidth(360);
+    window.innerHeight = high;
+    document.documentElement.style.fontSize = text;
+    render(<Example bar={bar} />);
+    return screen.findByRole("dialog", { name: "Notiz" });
+  }
+  const grabber = (sheet: HTMLElement) => sheet.querySelector(".h-1\\.5");
+
+  it("US-QS-32 · SG-FORM-02 at 200 % text with the keyboard open the grabber is gone and the title is read to assistive technology only, so the bar and a field fit", async () => {
+    const sheet = await open(354, "32px");
+    await within(sheet).findByRole("button", { name: "Abbrechen" });
+    expect(grabber(sheet)).toBeNull();
+    const title = within(sheet).getByRole("heading", { name: "Notiz" });
+    expect(title.className.split(/\s+/)).toContain("sr-only");
+    expect(within(sheet).getByRole("button", { name: "Sichern" })).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-FORM-02 at the default text size the same window keeps the whole header: the grabber and the visible title", async () => {
+    const sheet = await open(354, "16px");
+    await within(sheet).findByRole("button", { name: "Abbrechen" });
+    expect(grabber(sheet)).not.toBeNull();
+    const title = within(sheet).getByRole("heading", { name: "Notiz" });
+    expect(title.className.split(/\s+/)).not.toContain("sr-only");
+  });
+
+  it("US-QS-32 · SG-FORM-02 at 200 % text in a tall window the header stays whole", async () => {
+    const sheet = await open(852, "32px");
+    await within(sheet).findByRole("button", { name: "Abbrechen" });
+    expect(grabber(sheet)).not.toBeNull();
+    expect(
+      within(sheet).getByRole("heading", { name: "Notiz" }).className.split(/\s+/),
+    ).not.toContain("sr-only");
+  });
+
+  it("US-QS-32 · SG-SHEET-02 a sheet without bar actions keeps its grabber, its title and its X in a short window", async () => {
+    const sheet = await open(354, "32px", false);
+    await within(sheet).findByRole("button", { name: "Schließen" });
+    expect(grabber(sheet)).not.toBeNull();
+    expect(
+      within(sheet).getByRole("heading", { name: "Notiz" }).className.split(/\s+/),
+    ).not.toContain("sr-only");
+  });
+});
