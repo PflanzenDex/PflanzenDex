@@ -232,6 +232,35 @@ describe("US-ACC-04 deleting the account", () => {
     expect(screen.getAllByText(/23\. Oktober 2026/).length).toBeGreaterThan(0);
   });
 
+  it("US-QS-32 · SG-SHEET-04 the actions of the deletion are in the bar: Abbrechen leads, Weiter then the red action trails; Zurück is a plain button under the field (issue 2024)", async () => {
+    fakeServer();
+    show();
+    await userEvent.click(await deleteRow());
+    const next = await screen.findByRole("button", { name: "Weiter" });
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    expect(cancel.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(cancel.parentElement).toBe(next.parentElement);
+    expect(document.querySelector("[class*='sticky'][class*='bottom-0']")).toBeNull();
+    await userEvent.click(next);
+    // "7 Tagen" is joined by a no-break space (SG-TYPE-07).
+    const confirm = await screen.findByRole("button", { name: /^Konto in 7\sTagen löschen$/ });
+    expect(confirm.className.split(/\s+/)).toContain("bg-destructive");
+    expect(cancel.parentElement).toBe(confirm.parentElement);
+    const back = screen.getByRole("button", { name: "Zurück" });
+    expect(back.parentElement).not.toBe(confirm.parentElement);
+    await userEvent.click(back);
+    expect(await screen.findByRole("button", { name: "Weiter" })).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-SHEET-04 Abbrechen of the deletion bar closes the layer and requests nothing", async () => {
+    const calls = fakeServer();
+    show();
+    await userEvent.click(await deleteRow());
+    await userEvent.click(await screen.findByRole("button", { name: "Abbrechen" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull());
+    expect(calls).not.toContain("POST /account/deletion");
+  });
+
   it("US-ACC-04 shows the deadline of a requested deletion in its row and takes it back on request", async () => {
     const calls = fakeServer({
       requested: true,

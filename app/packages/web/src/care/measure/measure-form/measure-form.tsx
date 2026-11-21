@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Control } from "react-hook-form";
-import { localToday, MEASUREMENT_LIMITS, MEDIA_LIMITS } from "@pflanzendex/core";
+import { localToday, MEASUREMENT_LIMITS } from "@pflanzendex/core";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
+import { FormBarRegion } from "@/shared/ui/button/form-bar/form-bar.page";
 import { Input } from "@/shared/ui/fields/input/input";
-import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
-import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
 import { Textarea } from "@/shared/ui/fields/textarea/textarea";
 import { currentTimeZone, type ApiError } from "../../../shared/data";
@@ -14,7 +13,7 @@ import { Field } from "@/shared/ui/fields/form/field/field";
 import { photoProblem } from "../measurement-header/measurement-photo";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { RefusalAlert } from "../../shared/notices/notices";
-import { SaveFooter } from "./save-footer/save-footer";
+import { EtiolationSigns, MeasureBar, PhotoInput } from "./form-parts/form-parts";
 import type { MeasurementInput } from "../../shared/api/measurements-api";
 import {
   measurementDefaults,
@@ -23,57 +22,9 @@ import {
   type MeasurementFields,
 } from "../../shared/schemas";
 import { QUALITY_NAME } from "../../shared/text";
-import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 
-/** The id of the measure form; the sticky footer submits it through the `form` attribute (US-WAC-01). */
+/** The id of the measure form; its bar submits it through the `form` attribute (US-WAC-01, SG-SHEET-04). */
 const FORM_ID = "measure-form";
-
-/**
- * "Wie erkennen?" at the quality choice (US-WAC-02): the etiolation signs of the species, collapsed so the form stays
- * short on the phone. Without signs (species not visible, P-08) nothing is shown instead of an invented text.
- */
-function EtiolationSigns({ signs }: { signs: string | null }) {
-  if (!signs) return null;
-  return (
-    <details className="text-sm">
-      <DisclosureSummary className="rounded-md">Wie erkennen?</DisclosureSummary>
-      <p>Vergeilungsanzeichen dieser Art: {signs}</p>
-    </details>
-  );
-}
-
-/** The optional photo of the measurement (US-WAC-05, US-WAC-06): a file input; it is sent after the measurement is saved. */
-function PhotoInput(props: {
-  onPick: (file: File | null) => void;
-  problem: string | null;
-  inputKey: number;
-}) {
-  const id = "measure-photo";
-  const labelId = `${id}-label`;
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label id={labelId} htmlFor={id}>
-        Foto (optional)
-      </Label>
-      <FileField
-        key={props.inputKey}
-        id={id}
-        groupLabelledBy={labelId}
-        accept={MEDIA_LIMITS.uploadTypes.join(",")}
-        aria-describedby="measure-photo-hint"
-        onChange={(e) => props.onPick(e.target.files?.[0] ?? null)}
-      />
-      <p id="measure-photo-hint" className="text-sm text-muted-foreground">
-        Das Foto bleibt privat. Ort und Kameradaten werden entfernt.
-      </p>
-      {props.problem && (
-        <p role="alert" className="text-sm text-destructive">
-          {props.problem}
-        </p>
-      )}
-    </div>
-  );
-}
 
 function Fields(props: {
   control: Control<MeasurementFields>;
@@ -146,6 +97,8 @@ export function MeasureForm(props: {
   focusRef?: React.MutableRefObject<HTMLInputElement | null>;
   /** The status while the photo is stored (US-WAC-06); `null` shows nothing. */
   photoStatus?: string | null;
+  /** "Abbrechen" of the bar: leaves the page the way Back does (US-QS-32, SG-SHEET-04). */
+  onCancel: () => void;
 }) {
   const today = localToday(new Date(), currentTimeZone());
   const form = useFieldForm<MeasurementFields>({
@@ -175,24 +128,26 @@ export function MeasureForm(props: {
         onSubmit={submit}
         className="flex max-w-xl flex-col gap-3"
       >
-        <Fields
-          control={form.control}
-          unit={props.unit}
-          today={today}
-          etiolationSigns={props.signs ?? null}
-          focusRef={props.focusRef}
-          photo={<PhotoInput onPick={setPhoto} problem={problem} inputKey={inputKey} />}
-          photoOpen={photo !== null || problem !== null}
-        />
-        {refusal && <RefusalAlert error={refusal} />}
+        {/* A page form: its bar sticks at the top below md and stands after the last field from md (US-QS-32, SG-SHEET-04). */}
+        <FormBarRegion>
+          <Fields
+            control={form.control}
+            unit={props.unit}
+            today={today}
+            etiolationSigns={props.signs ?? null}
+            focusRef={props.focusRef}
+            photo={<PhotoInput onPick={setPhoto} problem={problem} inputKey={inputKey} />}
+            photoOpen={photo !== null || problem !== null}
+          />
+          {refusal && <RefusalAlert error={refusal} />}
+          <MeasureBar
+            formId={FORM_ID}
+            saving={form.formState.isSubmitting}
+            photoStatus={props.photoStatus ?? null}
+            onCancel={props.onCancel}
+          />
+        </FormBarRegion>
       </FormRoot>
-      <SaveFooter
-        formId={FORM_ID}
-        pending={form.formState.isSubmitting}
-        photoStatus={props.photoStatus ?? null}
-      >
-        Messung sichern
-      </SaveFooter>
     </Form>
   );
 }

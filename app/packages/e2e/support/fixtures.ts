@@ -110,6 +110,16 @@ export async function openPlant(page: Page, name: string): Promise<void> {
 }
 
 /**
+ * A layer by its name: the bottom sheet or the dialog (below 1024 px), the pane (from 1024 px). The actions of a form are in
+ * the bar of the layer, outside the `<form>` element on a phone (US-QS-32, SG-SHEET-04), so they are found in the layer.
+ */
+export function layerOf(page: Page, name: string): Locator {
+  return page
+    .getByRole("dialog", { name, exact: true })
+    .or(page.getByRole("complementary", { name, exact: true }));
+}
+
+/**
  * Proposes a species in the catalog and chooses it, as measure.spec does. The dormancy period is optional and given as
  * month-day, both or none (US-QS-24).
  */
@@ -122,7 +132,8 @@ export async function proposeSpecies(
   await page.getByRole("link", { name: "Entdecken", exact: true }).click();
   await page.getByRole("button", { name: "Katalog" }).click();
   await page.getByRole("button", { name: "Art vorschlagen" }).first().click();
-  const proposal = page.getByRole("form", { name: "Art vorschlagen" });
+  // The fields and the bar of the form are in the layer; on a phone the bar is outside the form element (US-QS-32).
+  const proposal = layerOf(page, "Art vorschlagen");
   await proposal.getByLabel("Lateinischer Name").fill(latinName);
   await proposal.getByLabel("Wachstumsmaß").selectOption("rosette_diameter");
   await proposal.getByRole("button", { name: "Weiter" }).click();

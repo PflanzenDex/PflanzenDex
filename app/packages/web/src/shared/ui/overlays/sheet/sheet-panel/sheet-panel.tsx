@@ -3,6 +3,7 @@ import { Drawer } from "vaul";
 import { cn, mergeRefs } from "@/shared/lib/utils";
 import { StatusBarDim } from "@/shared/platform/device/status-bar/status-bar";
 import { focusOnOpen } from "./open-focus";
+import { useCrampedWindow } from "./use-cramped";
 import { TitleRow } from "./title-row/title-row";
 
 export type SheetPanelProps = Omit<
@@ -19,6 +20,10 @@ export type SheetPanelProps = Omit<
   onOpenChange: (open: boolean) => void;
   /** How often the parent refused a close (US-QS-32): each one snaps the sheet back to its place. */
   closeRefusals?: number;
+  /** Receives the sheet's bar slot (US-QS-32, SG-SHEET-04): the element a form draws its actions into; `null` when it leaves. */
+  onBarSlot?: (element: HTMLElement | null) => void;
+  /** A form has drawn actions into the bar: "Abbrechen" is the close control and the X is gone. */
+  barActive?: boolean;
 };
 
 /** Vaul's timing of a reset (`resetDrawer` of Vaul 1.1): half a second on the sheet and on its overlay. */
@@ -87,6 +92,23 @@ function useSnapBack(closeRefusals: number, ref: React.ForwardedRef<HTMLDivEleme
   return { content, overlay };
 }
 
+/** The grabber is drawn in the input boundary token: 4.8:1 on the card in light, 4.4:1 in dark (WCAG 1.4.11). */
+function Grabber() {
+  return (
+    <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-input" />
+  );
+}
+
+/** The optional description linked to the sheet. */
+function SheetDescription(props: { text: string | undefined }) {
+  if (!props.text) return null;
+  return (
+    <Drawer.Description className="px-4 text-sm text-muted-foreground">
+      {props.text}
+    </Drawer.Description>
+  );
+}
+
 /**
  * The Vaul part of the bottom sheet (US-QS-07, DS-23, DS-40, DS-08): drag handle, safe-area padding, max height 90dvh.
  * `autoFocus` is required: Vaul 1.1 cancels Radix's focus-on-open by default, which left the focus on the trigger
@@ -106,6 +128,8 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
       onOpenAutoFocus,
       onCloseAutoFocus,
       closeRefusals = 0,
+      onBarSlot,
+      barActive,
       ...props
     },
     ref,
@@ -114,6 +138,8 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
     const opener = React.useRef<HTMLElement | null>(null);
     const close = React.useRef<HTMLButtonElement | null>(null);
     const { content, overlay } = useSnapBack(closeRefusals, ref);
+    // With the keyboard open at a large text size the full header leaves no room for a field (US-QS-32, SG-FORM-02).
+    const cramped = useCrampedWindow(barActive === true);
     return (
       <Drawer.Root open={open} onOpenChange={onOpenChange} autoFocus>
         <Drawer.Portal>
@@ -132,22 +158,17 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
             onOpenAutoFocus={openFocus(opener, close, onOpenAutoFocus)}
             onCloseAutoFocus={closeFocus(opener, onCloseAutoFocus)}
           >
-            {/* The grabber is drawn in the input boundary token: 4.8:1 on the card in light, 4.4:1 in dark (WCAG 1.4.11). */}
-            <div
-              aria-hidden="true"
-              className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-input"
-            />
+            {cramped ? null : <Grabber />}
             <TitleRow
               title={title}
               closeLabel={closeLabel}
               close={close}
               onClose={() => onOpenChange(false)}
+              barSlot={onBarSlot}
+              barActive={barActive}
+              compact={cramped}
             />
-            {description ? (
-              <Drawer.Description className="px-4 text-sm text-muted-foreground">
-                {description}
-              </Drawer.Description>
-            ) : null}
+            <SheetDescription text={description} />
             <div className="overflow-y-auto p-4 has-[[data-page-fit]]:flex has-[[data-page-fit]]:min-h-0 has-[[data-page-fit]]:flex-1 has-[[data-page-fit]]:flex-col">
               {children}
             </div>

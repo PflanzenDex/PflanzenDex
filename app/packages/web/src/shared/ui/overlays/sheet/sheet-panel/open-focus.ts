@@ -1,11 +1,13 @@
 /**
  * The controls Radix's focus on open tries, in document order (its FocusScope): tabbable, not disabled or hidden, and no
- * link. The close button is left out, so it never takes the focus on open (US-QS-32, SG-SHEET-07).
+ * link. The close button and the actions of a form bar (`data-form-bar`, SG-SHEET-04) are left out, so they never take the
+ * focus on open: the bar sits above the form's fields in the DOM (US-QS-32, SG-SHEET-07).
  */
 function openCandidates(root: HTMLElement, close: HTMLElement | null): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>("*")).filter(
     (el) =>
       el !== close &&
+      !el.closest("[data-form-bar]") &&
       el.tabIndex >= 0 &&
       el.tagName !== "A" &&
       !el.matches(":disabled") &&

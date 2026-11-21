@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type UseFormReturn } from "react-hook-form";
 import type { ZoneStock } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
@@ -90,6 +90,7 @@ export function WishForm(props: {
   /** Resolves true when the wish was saved, so the form can be emptied. */
   onSend: (input: WishInput) => Promise<boolean>;
 }) {
+  const formId = useId();
   const form = useFieldForm<WishFields>({
     resolver: zodResolver(wishSchema),
     defaultValues: EMPTY_FIELDS,
@@ -111,14 +112,12 @@ export function WishForm(props: {
         alertRef={alertRef}
       />
       <Form {...form}>
-        <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
+        <FormRoot id={formId} onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <FieldGroups form={form} access={props.access} zones={props.zones} />
-          {/* Sticky: the form scrolls inside the layer while the save button stays in view (US-QS-15). */}
-          <div className="sticky bottom-0 bg-card py-2">
-            <Button type="submit" size="touch" className="w-full" disabled={pending}>
-              {pending ? ui("form.saving") : ui("form.save")}
-            </Button>
-          </div>
+          {/* The save stands after the last field with "Abbrechen", in the bar of a phone sheet, never in a sticky footer (US-QS-32, SG-SHEET-04). */}
+          <FormBar formId={formId} pending={pending} pendingText={ui("form.saving")}>
+            {ui("form.save")}
+          </FormBar>
         </FormRoot>
       </Form>
     </section>

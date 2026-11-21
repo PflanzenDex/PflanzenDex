@@ -1,5 +1,5 @@
 import { Button } from "@/shared/ui/button/button";
-import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { Input } from "@/shared/ui/fields/input/input";
 import { errorText } from "@/shared/lib/error-text";
 import { keepTogether } from "@/shared/lib/format";
@@ -35,19 +35,70 @@ function DeletionSummary() {
   );
 }
 
-/** The content of the step, or the state when the deletion is requested or cannot be read (P-10). */
 /** The keys of the two deletion writes: a request and its cancel share the account target (US-QS-03). */
 const REQUEST = accountKey("deletion:request");
 const CANCEL = accountKey("deletion:cancel");
 const cancelWrite = (act: Act) =>
   void act.send(cancelDeletion, "Die Löschung ist zurückgenommen. Dein Konto bleibt.", CANCEL);
 
+/** The deletion is requested: the date, and the way to take it back (US-ACC-04). */
+function RequestedState(props: { state: Extract<DeletionState, { requested: true }>; act: Act }) {
+  const { state, act } = props;
+  return (
+    <div className="flex flex-col gap-3">
+      <p role="status" className="m-0 rounded-lg border border-border p-3">
+        Die Löschung ist vorgemerkt: Dein Konto und alle deine Daten werden am{" "}
+        <strong>{day(state.dueAt)}</strong> gelöscht. Bis dahin ändert sich nichts. Willst du sie
+        behalten, nimm die Löschung zurück.
+      </p>
+      <Button
+        type="button"
+        variant="tinted"
+        className="self-start"
+        disabled={act.running}
+        needsNetwork
+        onClick={() => cancelWrite(act)}
+      >
+        Löschung zurücknehmen
+      </Button>
+    </div>
+  );
+}
+
+/** Step 2: the typed confirmation word; the way back to step 1 is a plain button under the field, the bar keeps its two actions (SG-SHEET-04). */
+function ConfirmStep(props: {
+  typed: string;
+  onType: (typed: string) => void;
+  onStep: (step: Step) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <label className="flex flex-col gap-1 text-sm">
+        <span>
+          Zur Bestätigung tippe <strong>{CONFIRM_WORD}</strong>
+        </span>
+        <Input
+          value={props.typed}
+          autoComplete="off"
+          onChange={(e) => props.onType(e.target.value)}
+          aria-label={`Zur Bestätigung ${CONFIRM_WORD} eingeben`}
+        />
+      </label>
+      <Button type="button" variant="plain" className="self-start" onClick={() => props.onStep(1)}>
+        Zurück
+      </Button>
+    </div>
+  );
+}
+
+/** The content of the step, or the state when the deletion is requested or cannot be read (P-10). */
 function StepContent(props: {
   state: DeletionState | undefined;
   loadError: ApiError | undefined;
   step: Step;
   typed: string;
   onType: (typed: string) => void;
+  onStep: (step: Step) => void;
   act: Act;
 }) {
   const { state, act } = props;
@@ -63,40 +114,9 @@ function StepContent(props: {
         </p>
       </DelayedSkeleton>
     );
-  if (state.requested)
-    return (
-      <div className="flex flex-col gap-3">
-        <p role="status" className="m-0 rounded-lg border border-border p-3">
-          Die Löschung ist vorgemerkt: Dein Konto und alle deine Daten werden am{" "}
-          <strong>{day(state.dueAt)}</strong> gelöscht. Bis dahin ändert sich nichts. Willst du sie
-          behalten, nimm die Löschung zurück.
-        </p>
-        <Button
-          type="button"
-          variant="tinted"
-          className="self-start"
-          disabled={act.running}
-          needsNetwork
-          onClick={() => cancelWrite(act)}
-        >
-          Löschung zurücknehmen
-        </Button>
-      </div>
-    );
+  if (state.requested) return <RequestedState state={state} act={act} />;
   if (props.step === 1) return <DeletionSummary />;
-  return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span>
-        Zur Bestätigung tippe <strong>{CONFIRM_WORD}</strong>
-      </span>
-      <Input
-        value={props.typed}
-        autoComplete="off"
-        onChange={(e) => props.onType(e.target.value)}
-        aria-label={`Zur Bestätigung ${CONFIRM_WORD} eingeben`}
-      />
-    </label>
-  );
+  return <ConfirmStep typed={props.typed} onType={props.onType} onStep={props.onStep} />;
 }
 
 /** The body of the deletion layer: the step, then the refusal or the confirmation of the last request. */
@@ -106,6 +126,7 @@ export function DeletionBody(props: {
   step: Step;
   typed: string;
   onType: (typed: string) => void;
+  onStep: (step: Step) => void;
   act: Act;
 }) {
   const { act, state } = props;
@@ -126,48 +147,29 @@ export function DeletionBody(props: {
   );
 }
 
-/** The footer of the deletion layer, below its scroll region: one filled action per step (US-QS-15, DS-62). */
-export function DeletionFooter(props: {
+/**
+ * The bar of the deletion layer (US-QS-15, SG-SHEET-04): "Abbrechen" leads, the one action of the step trails, "Weiter" on
+ * step 1 and the red "Konto in 7 Tagen löschen" on step 2, which stays inactive until the word is typed. Nothing while the
+ * request is pending or the state cannot be read.
+ */
+export function DeletionBar(props: {
   state: DeletionState | undefined;
   step: Step;
   typed: string;
   act: Act;
   onStep: (step: Step) => void;
-  onClose: () => void;
 }) {
   const { state, act } = props;
   if (state === undefined || state.requested) return null;
-  if (props.step === 1)
-    return (
-      <>
-        <Button type="button" className="w-full" onClick={() => props.onStep(2)}>
-          Weiter
-        </Button>
-        <Button type="button" variant="ghost" className="w-full" onClick={props.onClose}>
-          Abbrechen
-        </Button>
-      </>
-    );
+  if (props.step === 1) return <FormBar onConfirm={() => props.onStep(2)}>Weiter</FormBar>;
   return (
-    <>
-      <NetworkSlot>
-        <Button
-          type="button"
-          variant="destructive"
-          className="w-full"
-          disabled={props.typed.trim() !== CONFIRM_WORD || act.running}
-          needsNetwork
-          onClick={() => void act.send(requestDeletion, "Die Löschung ist vorgemerkt.", REQUEST)}
-        >
-          {act.running ? "Wird vorgemerkt …" : keepTogether("Konto in 7 Tagen löschen")}
-        </Button>
-        <Button type="button" variant="plain" className="w-full" onClick={() => props.onStep(1)}>
-          Zurück
-        </Button>
-        <Button type="button" variant="ghost" className="w-full" onClick={props.onClose}>
-          Abbrechen
-        </Button>
-      </NetworkSlot>
-    </>
+    <FormBar
+      destructive
+      disabled={props.typed.trim() !== CONFIRM_WORD || act.running}
+      needsNetwork
+      onConfirm={() => void act.send(requestDeletion, "Die Löschung ist vorgemerkt.", REQUEST)}
+    >
+      {act.running ? "Wird vorgemerkt …" : keepTogether("Konto in 7 Tagen löschen")}
+    </FormBar>
   );
 }
