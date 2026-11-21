@@ -158,7 +158,7 @@ describe("US-WAC-01 Seite Messen", () => {
     show();
     await screen.findAllByText("noch keine Messung");
     await userEvent.type(screen.getByLabelText(/Messwert/), "12,5");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     await openCourse();
     expect(await screen.findByText("noch nicht berechenbar (1 Messung)")).toBeTruthy();
   });
@@ -167,8 +167,8 @@ describe("US-WAC-01 Seite Messen", () => {
     const { posts } = fakeServer();
     show();
     await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
-    expect(await screen.findByText("Gespeichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
+    expect(await screen.findByText("Gesichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
     await openEntries();
     expect(
       await screen.findByRole("heading", { level: 3, name: "12,5\u00a0cm · 01.10.2026" }),
@@ -185,10 +185,10 @@ describe("US-WAC-01 Seite Messen", () => {
     const { posts } = fakeServer({ save });
     show();
     await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
-    expect(await screen.findByText("Gespeichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
+    expect(await screen.findByText("Gesichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
     expect(posts).toHaveLength(2);
     expect(posts[1]?.key).toBe(posts[0]?.key);
   });
@@ -204,8 +204,8 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(screen.getByText(/Rosette streckt sich, Blätter werden blass\./)).toBeTruthy();
     await userEvent.type(screen.getByLabelText(/Messwert/), "8");
     await userEvent.selectOptions(screen.getByLabelText("Qualität"), "etiolated");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
-    await screen.findByText(/Gespeichert:/);
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
+    await screen.findByText(/Gesichert:/);
     expect(posts[0]?.body).toMatchObject({ value: 8, quality: "etiolated" });
   });
 
@@ -220,7 +220,7 @@ describe("US-WAC-01 Seite Messen", () => {
     const { posts } = fakeServer();
     show();
     await userEvent.type(await screen.findByLabelText(/Messwert/), "12,3");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Schritten von 0,5");
     expect(posts).toHaveLength(0);
   });
@@ -231,7 +231,7 @@ describe("US-WAC-01 Seite Messen", () => {
     const date = await screen.findByLabelText("Datum");
     await userEvent.type(screen.getByLabelText(/Messwert/), "12,5");
     await userEvent.clear(date);
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Gib ein Datum an, das es gibt",
     );
@@ -247,7 +247,7 @@ describe("US-WAC-01 Seite Messen", () => {
     await userEvent.type(screen.getByLabelText(/Messwert/), "12,5");
     await userEvent.clear(date);
     await userEvent.type(date, "31.02.2026");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     // One message under the field, the one the field shows on leaving it (US-QS-32, SG-FORM-05).
     expect((await screen.findByRole("alert")).textContent).toBe(
       "Kein gültiges Datum. Gib es als TT.MM.JJJJ an.",
@@ -266,7 +266,7 @@ describe("US-WAC-01 Seite Messen", () => {
     show();
     const field = await screen.findByLabelText(/Messwert/);
     await userEvent.type(field, "10");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       ERROR_TEXTS["specimen.not_found"],
     );
@@ -279,7 +279,7 @@ describe("US-WAC-01 Seite Messen", () => {
     show(async () => (signedIn ? "tok" : undefined));
     await userEvent.type(await screen.findByLabelText(/Messwert/), "10");
     signedIn = false;
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       ERROR_TEXTS["access.not_signed_in"],
     );
@@ -317,16 +317,14 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(document.querySelector('[data-slot="growth-note"]')).toBeNull();
     growth.moments = UNKNOWN_GROWTH;
     await userEvent.type(field, "12,5");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     await screen.findByText(UNKNOWN_NOTE);
     const overlay = document.querySelector<HTMLElement>('[data-slot="growth-note"]');
     // Absolute, in the wrapper of the form: the form is the same node in the same place in the flow.
     expect(overlay?.className).toContain("absolute");
     expect(overlay?.parentElement).toBe(form.parentElement);
     expect(screen.getByRole("form", { name: "Messung erfassen" })).toBe(form);
-    expect(overlay?.contains(screen.getByRole("button", { name: "Messung speichern" }))).toBe(
-      false,
-    );
+    expect(overlay?.contains(screen.getByRole("button", { name: "Messung sichern" }))).toBe(false);
   });
 
   it("US-QS-15 · the growth note is announced once per save, through the one polite region (issue 1644, F8)", async () => {
@@ -347,7 +345,7 @@ describe("US-WAC-01 Seite Messen", () => {
       </AnnouncerProvider>,
     );
     await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     const region = document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]');
     await vi.waitFor(() =>
       expect(region?.textContent).toContain("Dein Wachstum ist noch unbekannt"),
@@ -360,7 +358,7 @@ describe("US-WAC-01 Seite Messen", () => {
     growth.moments = UNKNOWN_GROWTH;
     show();
     const field = await screen.findByLabelText(/Messwert/);
-    const save = screen.getByRole("button", { name: "Messung speichern" });
+    const save = screen.getByRole("button", { name: "Messung sichern" });
     await userEvent.type(field, "12,5");
     await userEvent.click(save);
     await screen.findByText(UNKNOWN_NOTE);
@@ -386,7 +384,7 @@ describe("US-WAC-01 Seite Messen", () => {
     await userEvent.type(field, "12,5");
     // jsdom does not submit on Enter through the footer button (it sits outside the form); a browser sends the click of
     // the default button for that Enter, and that click moves no focus, so the test sends it the same way.
-    fireEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     await screen.findByText(UNKNOWN_NOTE);
     expect(document.activeElement).toBe(field);
     const card = document.querySelector<HTMLElement>('[data-slot="growth-note"]');
@@ -399,7 +397,7 @@ describe("US-WAC-01 Seite Messen", () => {
     show();
     const field = await screen.findByLabelText(/Messwert/);
     await userEvent.type(field, "12,5");
-    const save = screen.getByRole("button", { name: "Messung speichern" });
+    const save = screen.getByRole("button", { name: "Messung sichern" });
     fireEvent.click(save);
     await screen.findByText(UNKNOWN_NOTE);
     const card = document.querySelector<HTMLElement>('[data-slot="growth-note"]');
@@ -415,7 +413,7 @@ describe("US-WAC-01 Seite Messen", () => {
     show();
     const field = await screen.findByLabelText(/Messwert/);
     await userEvent.type(field, "12,5");
-    fireEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     await screen.findByText(UNKNOWN_NOTE);
     await userEvent.tab();
     expect(screen.queryByText(UNKNOWN_NOTE)).toBeNull();
@@ -428,7 +426,7 @@ describe("US-WAC-01 Seite Messen", () => {
     show();
     const field = await screen.findByLabelText(/Messwert/);
     await userEvent.type(field, "12,5");
-    fireEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     await screen.findByText(UNKNOWN_NOTE);
     await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
     expect(screen.queryByText(UNKNOWN_NOTE)).toBeNull();
@@ -450,7 +448,7 @@ describe("US-WAC-01 Seite Messen", () => {
     show();
     const field = await screen.findByLabelText(/Messwert/);
     await userEvent.type(field, "12,3");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     const alert = await screen.findByRole("alert");
     expect(field.getAttribute("aria-invalid")).toBe("true");
     expect(field.getAttribute("aria-describedby")).toContain(alert.id);
@@ -470,7 +468,7 @@ describe("US-WAC-01 Seite Messen", () => {
 
 const IMAGE = new File([new Uint8Array([1, 2, 3])], "pflanze.jpg", { type: "image/jpeg" });
 const fillValue = async (v: string) => userEvent.type(await screen.findByLabelText(/Messwert/), v);
-const save = () => userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+const save = () => userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
 /** A photo request that stays open until the test answers it: the photo is still on its way (US-WAC-06). */
 function heldPhoto() {
   let release: (answer: Promise<Response>) => void = () => undefined;
@@ -498,7 +496,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await fillValue("12,5");
     await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
     await save();
-    await screen.findByText(/Gespeichert:/);
+    await screen.findByText(/Gesichert:/);
     expect(posts).toHaveLength(1);
     expect(photoPosts).toHaveLength(1);
     expect(photoPosts[0]?.type).toBe("image/jpeg");
@@ -513,7 +511,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     show();
     await fillValue("12,5");
     await save();
-    await screen.findByText(/Gespeichert:/);
+    await screen.findByText(/Gesichert:/);
     expect(photoPosts).toHaveLength(0);
   });
 
@@ -526,7 +524,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     expect(more.contains(screen.getByRole("group", { name: "Foto (optional)" }))).toBe(true);
     expect(more.contains(screen.getByLabelText("Notiz (optional)"))).toBe(true);
     expect(
-      screen.getByRole("button", { name: "Messung speichern" }).parentElement?.className,
+      screen.getByRole("button", { name: "Messung sichern" }).parentElement?.className,
     ).toContain("sticky");
   });
 
@@ -540,7 +538,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
         screen.getByLabelText("Foto wählen"),
         new File(["x"], "x.pdf", { type: "application/pdf" }),
       );
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("JPEG, PNG oder WebP");
     expect(alert.closest("details")?.open).toBe(true);
@@ -572,10 +570,10 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
     await save();
     const alert = await refusalToast();
-    expect(alert.textContent).toContain("Die Messung ist gespeichert, das Foto nicht.");
+    expect(alert.textContent).toContain("Die Messung ist gesichert, das Foto nicht.");
     expect(alert.textContent).toContain(ERROR_TEXTS["media.type_unsupported"]);
     expect(alert.textContent).not.toContain("raw server text");
-    expect(screen.queryAllByText(/Gespeichert/)).toHaveLength(0);
+    expect(screen.queryAllByText(/Gesichert/)).toHaveLength(0);
   });
 
   it("US-WAC-06 while the photo is stored the page says so, the fact line shows the measurement, and nothing is confirmed yet (P-10)", async () => {
@@ -586,14 +584,14 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
     await save();
     await vi.waitFor(() => expect(photoPosts).toHaveLength(1));
-    const status = await screen.findByText("Foto wird gespeichert …");
+    const status = await screen.findByText("Foto wird gesichert …");
     expect(status.closest('[role="status"]')).not.toBeNull();
-    expect(screen.queryAllByText(/Gespeichert/)).toHaveLength(0);
+    expect(screen.queryAllByText(/Gesichert/)).toHaveLength(0);
     // The measurement is stored, so the fact line shows it while the photo is still on its way.
     await vi.waitFor(() =>
       expect(screen.getByText("Letzte Messung").nextElementSibling?.textContent).toContain("12,5"),
     );
-    expect(screen.getByRole("button", { name: "Messung speichern" }).hasAttribute("disabled")).toBe(
+    expect(screen.getByRole("button", { name: "Messung sichern" }).hasAttribute("disabled")).toBe(
       true,
     );
     held.release(response(201, { photo: "p.webp" }));
@@ -606,11 +604,11 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await fillValue("12,5");
     await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
     await save();
-    await screen.findByText("Foto wird gespeichert …");
+    await screen.findByText("Foto wird gesichert …");
     held.release(response(201, { photo: "p.webp" }));
-    expect(await screen.findByText("Gespeichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
-    expect(screen.queryByText("Foto wird gespeichert …")).toBeNull();
-    expect(screen.queryAllByText(/Gespeichert/)).toHaveLength(1);
+    expect(await screen.findByText("Gesichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
+    expect(screen.queryByText("Foto wird gesichert …")).toBeNull();
+    expect(screen.queryAllByText(/Gesichert/)).toHaveLength(1);
   });
 
   it("US-WAC-06 a store that refuses the photo: no success text comes before the error, and the error says the measurement is kept (P-10)", async () => {
@@ -623,9 +621,9 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
     await save();
     const alert = await refusalToast();
-    // Nothing says "Gespeichert" before or beside the error: the success text would be a lie about the photo (P-10).
-    expect(screen.queryAllByText(/Gespeichert/)).toHaveLength(0);
-    expect(alert.textContent).toContain("Die Messung ist gespeichert, das Foto nicht.");
+    // Nothing says "Gesichert" before or beside the error: the success text would be a lie about the photo (P-10).
+    expect(screen.queryAllByText(/Gesichert/)).toHaveLength(0);
+    expect(alert.textContent).toContain("Die Messung ist gesichert, das Foto nicht.");
     expect(alert.textContent).toContain(ERROR_TEXTS["media.storage_unavailable"]);
     expect(alert.textContent).not.toContain("raw server text");
   });

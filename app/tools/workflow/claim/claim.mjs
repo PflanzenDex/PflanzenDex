@@ -1,5 +1,5 @@
 // `make claim ISSUE=<n>` (US-DEV-08): claim a story before working on it, so nobody builds it twice.
-// Refuses (exit 1) when the issue has an assignee, a PR references it or an origin branch carries its story ID or it is labelled needs-triage (FR-DEV-10). Otherwise: assignee, project status, branch <type>/<story-id>-<slug>, draft PR with "## Handoff".
+// Refuses (exit 1) when the issue has an assignee, a PR closes it (Closes #n), an open PR carries its story ID, an origin branch carries its story ID or it is labelled needs-triage (FR-DEV-10). A merged PR that only refers to it (Refs #n) is printed as a note ("claim: note: ..."), never refused (US-DEV-08). Otherwise: assignee, project status, branch <type>/<story-id>-<slug>, draft PR with "## Handoff" whose body starts with Refs #n.
 // Repository, issue, PR and assignee calls are REST and the board is one lookup of this issue, so a claim survives an exhausted GraphQL budget (FR-DEV-10, #1412): what cannot be written is a warning.
 // Speed (#1487): the reads that do not depend on each other run at once, the branch list comes from the refs the fetch has just
 // updated, the assignee answer shows the assignees (no second read), and the status is two GraphQL writes.
@@ -8,7 +8,7 @@
 // and of its undo has a limit of its own (CLAIM_PUSH_TIMEOUT_S, starting value 300 s): it runs make gates (#1559). A timed-out call
 // ends its process group, so no gate run is left behind.
 // RESERVE_MIGRATION=1 also reserves the next migration number in the Handoff (issue #831).
-// Waive merged PRs only (follow-up work on a story): ALLOW_PRIOR_WORK=1. Everything else needs a human decision.
+// Waive merged PRs that close the issue (follow-up work on a story): ALLOW_PRIOR_WORK=1. Everything else needs a human decision.
 import {
   fetchBranches,
   fetchIssue,
@@ -89,7 +89,15 @@ export async function claim(
     fetchBranches(client),
   ]);
   const issue = board.item?.typ ? { ...found, typ: board.item.typ } : found;
-  checkFree({ issue, prs, branches, number, login, allowPrior: env.ALLOW_PRIOR_WORK === "1" });
+  const { notes } = checkFree({
+    issue,
+    prs,
+    branches,
+    number,
+    login,
+    allowPrior: env.ALLOW_PRIOR_WORK === "1",
+  });
+  for (const note of notes) log(`claim: note: ${note}`);
   const undo = [];
   try {
     const { branch, url } = await writeClaim(client, {

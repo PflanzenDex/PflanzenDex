@@ -66,7 +66,7 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     fakeServer([specimen("e1", "Bogenhanf")]);
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Behandlung speichern" }));
+    await user.click(await screen.findByRole("button", { name: "Behandlung sichern" }));
     const first = screen.getByRole("checkbox", { name: "Bogenhanf" });
     await vi.waitFor(() => expect(document.activeElement).toBe(first));
     expect(first.getAttribute("aria-invalid")).toBe("true");
@@ -84,7 +84,7 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     show();
     await user.click(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
     await user.type(screen.getByLabelText("Grund"), "Wollläuse");
-    await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(screen.getByRole("button", { name: "Behandlung sichern" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain(ERROR_TEXTS["specimen.archived"]);
     expect(alert.textContent).not.toContain("RAW SERVER TEXT");
@@ -117,7 +117,7 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     await user.type(screen.getByLabelText("Mittel (optional)"), "Neemöl");
     await user.clear(screen.getByLabelText("Datum"));
     await user.type(screen.getByLabelText("Datum"), "2026-10-10");
-    await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(screen.getByRole("button", { name: "Behandlung sichern" }));
     expect((await screen.findByRole("status")).textContent).toContain("geplant");
     expect(posts).toHaveLength(1);
     expect(posts[0]?.key).toBeTruthy();
@@ -133,15 +133,15 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     const { posts } = fakeServer([specimen("e1", "Bogenhanf")]);
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("button", { name: "Behandlung speichern" }));
+    await user.click(await screen.findByRole("button", { name: "Behandlung sichern" }));
     const alerts = await screen.findAllByRole("alert");
     expect(alerts.map((a) => a.textContent).join(" ")).toContain("Pflanze");
     await user.click(screen.getByRole("checkbox", { name: "Bogenhanf" }));
-    await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(screen.getByRole("button", { name: "Behandlung sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Grund");
     await user.type(screen.getByLabelText("Grund"), "Wollläuse");
     await user.clear(screen.getByLabelText("Datum"));
-    await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(screen.getByRole("button", { name: "Behandlung sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Datum");
     expect(posts).toHaveLength(0);
   });
@@ -172,7 +172,7 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     show();
     await user.click(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
     await user.type(screen.getByLabelText("Grund"), "Wollläuse");
-    await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(screen.getByRole("button", { name: "Behandlung sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("archiviert");
     expect((screen.getByLabelText("Grund") as HTMLInputElement).value).toBe("Wollläuse");
   });
@@ -287,7 +287,7 @@ describe("US-BEH-02 offene Behandlungen", () => {
     await screen.findByText(/^Keine offenen Behandlungen\.$/);
     await user.click(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
     await user.type(screen.getByLabelText("Grund"), "Wollläuse");
-    await user.click(screen.getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(screen.getByRole("button", { name: "Behandlung sichern" }));
     expect(await screen.findByRole("list", { name: "Offene Behandlungen" })).toBeTruthy();
     expect(screen.queryByText(/^Keine offenen Behandlungen\.$/)).toBeNull();
   });
@@ -585,7 +585,7 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
     const onPlan = vi.fn();
     showHost(onPlan);
     await screen.findByRole("list", { name: "Offene Behandlungen" });
-    expect(screen.queryByRole("button", { name: "Behandlung speichern" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Behandlung sichern" })).toBeNull();
     expect(screen.queryByRole("checkbox")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Behandlung planen" }));
     expect(onPlan).toHaveBeenCalledTimes(1);

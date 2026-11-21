@@ -149,7 +149,7 @@ function SettingsLayers(props: { layers: readonly SettingsLayer[] }) {
 
 /**
  * Profile and settings (US-ACC-02) as a list of six groups with their current values (US-QS-17): each opens as a
- * layer (`?sheet=<group>`). Switches save at once; Profil, Wunschliste and Licht have their own "Speichern". With
+ * layer (`?sheet=<group>`). Switches save at once; Profil, Wunschliste and Licht have their own "Sichern". With
  * `host` (a section of "Konto", US-QS-14) the page has no title of its own and sits in a card: the destination names
  * the section.
  */

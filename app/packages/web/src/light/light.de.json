@@ -50,5 +50,5 @@
   "location.outdoor": "außen",
   "location.editLabel": "{name} ändern",
   "location.createLabel": "Standort anlegen",
-  "location.save": "Speichern"
+  "location.save": "Sichern"
 }

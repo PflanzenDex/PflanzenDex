@@ -514,9 +514,9 @@ describe("US-QS-15 a save that keeps the form open leaves no guard entry ahead (
   async function typeAndSave(saves: string[]) {
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     await waitFor(() => expect(route.guarded).toBe(true));
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     await waitFor(() => expect(saves).toHaveLength(1), { timeout: 5_000 });
-    await waitFor(() => expect(document.body.textContent).toContain("Gespeichert"), {
+    await waitFor(() => expect(document.body.textContent).toContain("Gesichert"), {
       timeout: 5_000,
     });
     // The settle commits the history in two steps (back to the list, then the form again); the test waits for the form.
@@ -621,7 +621,7 @@ describe("US-QS-15 a settle keeps the focus and announces no view (issue 2165)",
 
   /** Saves with the form's button and waits until the form is on screen again with no guard entry (PF-031). */
   async function save(saves: string[]) {
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     await waitFor(() => expect(saves).toHaveLength(1), { timeout: 5_000 });
     await waitFor(() => {
       expect(route.guarded).toBe(false);
@@ -634,7 +634,7 @@ describe("US-QS-15 a settle keeps the focus and announces no view (issue 2165)",
     stubCollection(saves);
     renderFocusedArea();
     await measureAndType();
-    const saveButton = screen.getByRole("button", { name: "Messung speichern" });
+    const saveButton = screen.getByRole("button", { name: "Messung sichern" });
     const watch = watchFocusAndSpeech();
     await save(saves);
     // The settle has committed; the focus handling of the new entries runs after the commit, so it gets a short moment.

@@ -152,6 +152,19 @@ describe("US-QS-32 the wish row names a species the SG-TYPE-08 way (F-0067)", ()
     expect(container.textContent).not.toContain("Aloe vera (Aloe vera)");
   });
 
+  it("US-QS-32 the German name hyphenates at syllables and the scientific name never does, in the title and on the meta line (issue 2366)", () => {
+    const { container } = show();
+    const title = within(container).getByText("1. Aloe");
+    expect(title.className.split(" ")).toContain("hyphens-auto");
+    const latin = within(container).getByText("Aloe vera");
+    expect(latin.className.split(" ")).toContain("hyphens-manual");
+    cleanup();
+    const bare = show({ ...wish, german: null, title: "Aloe vera" } as Candidate);
+    const italic = within(bare.container).getByText("Aloe vera");
+    expect(italic.className.split(" ")).toContain("hyphens-manual");
+    expect(italic.parentElement?.className.split(" ")).toContain("hyphens-auto");
+  });
+
   it("US-QS-32 a German name equal to the scientific name is not a second name in the row (F-0067)", () => {
     const { container } = show({
       ...wish,

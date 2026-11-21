@@ -49,6 +49,49 @@ describe("US-QS-32 the tiles of Freunde are neutral (SG-COLOR-02, SG-LIST-05)", 
   });
 });
 
+describe("US-QS-32 · issue 2355 a full-width row that opens a layer shows the chevron, a tile does not (SG-TOUCH-02)", () => {
+  it("US-QS-32 · issue 2355 the row shows the neutral chevron, decorative, after its state at the trailing edge", () => {
+    render(
+      <MemoryRouter>
+        <LayerRow id="friends" name="Meine Freunde" state="3 Freunde" />
+      </MemoryRouter>,
+    );
+    const row = screen.getByRole("button", { name: /Meine Freunde/ });
+    const icon = row.querySelector("svg.lucide-chevron-right");
+    expect(icon).not.toBeNull();
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
+    expect(icon?.getAttribute("class")).toContain("size-4");
+    expect(icon?.getAttribute("class")).toContain("text-muted-foreground");
+    expect(row.lastElementChild).toBe(icon);
+    // The name and the state stay the row's accessible name: the icon adds no text.
+    expect(row.textContent).toBe("Meine Freunde3 Freunde");
+  });
+
+  it("US-QS-32 · issue 2355 the name and the state wrap in a block of their own, so the chevron keeps its place at a large text size", () => {
+    render(
+      <MemoryRouter>
+        <LayerRow id="friends" name="Meine Freunde" state="3 Freunde" />
+      </MemoryRouter>,
+    );
+    const row = screen.getByRole("button", { name: /Meine Freunde/ });
+    const text = screen.getByText("Meine Freunde").parentElement as HTMLElement;
+    expect(text.parentElement).toBe(row);
+    expect(text.className).toContain("flex-wrap");
+    expect(text.className).toContain("min-w-0");
+    expect(text.className).toContain("flex-1");
+    // A long word breaks instead of running under the chevron (measured at 180 px width and 200 % text).
+    expect(screen.getByText("Meine Freunde").className).toContain("[overflow-wrap:anywhere]");
+    expect(screen.getByText("3 Freunde").className).toContain("[overflow-wrap:anywhere]");
+  });
+
+  it("US-QS-32 · issue 2355 a tile is a tile, not a row: it shows no chevron", () => {
+    show(2);
+    expect(
+      screen.getByRole("button", { name: /Anfragen/ }).querySelector("svg.lucide-chevron-right"),
+    ).toBeNull();
+  });
+});
+
 describe("US-QS-32 a tile keeps its size while its count loads (SG-STATE-02, F-0247, issue 1995)", () => {
   it("US-QS-32 · SG-STATE-02 a loading count is a bar of the count line's height from the first frame", () => {
     vi.useFakeTimers();

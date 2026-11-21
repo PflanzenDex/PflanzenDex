@@ -64,7 +64,7 @@ function Demo({ submitEmpty, serverError, pending }: DemoProps) {
         <FormMessage name="root.server" />
         {/* DS-50 pattern: while the write runs (formState.isSubmitting) the button is disabled and says so; one tap sends one write. */}
         <Button type="submit" disabled={pending || form.formState.isSubmitting}>
-          {pending || form.formState.isSubmitting ? "Speichert …" : "Speichern"}
+          {pending || form.formState.isSubmitting ? "Sichert …" : "Sichern"}
         </Button>
       </FormRoot>
     </Form>

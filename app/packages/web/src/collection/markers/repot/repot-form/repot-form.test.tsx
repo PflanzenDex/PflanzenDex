@@ -33,7 +33,7 @@ async function chooseRepot(item: "Umtopfen eintragen" | "Eintopfen eintragen") {
 const repots = (all: Post[]) => all.filter((p) => p.path === "/specimens/e1/repot");
 
 async function save() {
-  await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+  await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
 }
 
 describe("US-BES-19 the plant's repot names its pot", () => {

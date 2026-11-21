@@ -27,8 +27,8 @@
   "card.buyLabel": "Gekauft: {title}",
   "picture.none": "Kein Bild",
   "picture.external": "Bild ansehen (öffnet extern)",
-  "picture.store": "Bild speichern",
-  "picture.storeLabel": "Bild speichern: {title}",
+  "picture.store": "Bild sichern",
+  "picture.storeLabel": "Bild sichern: {title}",
   "picture.alt": "Bild von {title}",
   "picture.open": "Bild von {title} groß anzeigen",
   "picture.loading": "Bild wird geladen …",
@@ -46,6 +46,6 @@
   "pick.retry": "Erneut versuchen",
   "pick.hits": "Treffer",
   "form.section": "Wunsch erfassen",
-  "form.saving": "Speichert …",
-  "form.save": "Wunsch speichern"
+  "form.saving": "Sichert …",
+  "form.save": "Wunsch sichern"
 }

@@ -56,19 +56,19 @@ describe("Toast (US-QS-07, P-10)", () => {
 
   it("US-QS-07 · a confirmation is a toast with role=status in the polite region, an error is no status (issue 1644, F8)", () => {
     setup();
-    show({ message: "Gespeichert." });
+    show({ message: "Gesichert." });
     const confirmation = screen.getByRole("status");
-    expect(confirmation.textContent).toContain("Gespeichert.");
+    expect(confirmation.textContent).toContain("Gesichert.");
     expect(confirmation.closest('[aria-live="polite"]')).not.toBeNull();
-    show({ kind: "error", message: "Speichern fehlgeschlagen." });
+    show({ kind: "error", message: "Sichern fehlgeschlagen." });
     expect(screen.getAllByRole("status")).toHaveLength(1);
-    expect(within(region("assertive")).getByText("Speichern fehlgeschlagen.")).toBeTruthy();
+    expect(within(region("assertive")).getByText("Sichern fehlgeschlagen.")).toBeTruthy();
   });
 
   it("US-QS-07 · an error goes into the assertive region", () => {
     setup();
-    show({ kind: "error", message: "Speichern fehlgeschlagen." });
-    expect(within(region("assertive")).getByText("Speichern fehlgeschlagen.")).toBeTruthy();
+    show({ kind: "error", message: "Sichern fehlgeschlagen." });
+    expect(within(region("assertive")).getByText("Sichern fehlgeschlagen.")).toBeTruthy();
   });
 
   it("US-QS-07 · useToast outside a provider fails loudly (P-10)", () => {
@@ -210,8 +210,8 @@ describe("US-QS-32 · a result is said, a refusal stays a toast (SG-FEED-01, SG-
         <CaptureSay />
       </AnnouncerProvider>,
     );
-    act(() => say("Gespeichert."));
-    expect(announcer()?.textContent).toBe("Gespeichert.");
+    act(() => say("Gesichert."));
+    expect(announcer()?.textContent).toBe("Gesichert.");
     expect(screen.queryByRole("status")).toBeNull();
     expect(screen.queryByRole("button", { name: "Meldung schließen" })).toBeNull();
   });
@@ -222,8 +222,8 @@ describe("US-QS-32 · a result is said, a refusal stays a toast (SG-FEED-01, SG-
         <CaptureSay />
       </AnnouncerProvider>,
     );
-    act(() => say("Speichern fehlgeschlagen.", "error"));
-    expect(within(region("assertive")).getByText("Speichern fehlgeschlagen.")).toBeTruthy();
+    act(() => say("Sichern fehlgeschlagen.", "error"));
+    expect(within(region("assertive")).getByText("Sichern fehlgeschlagen.")).toBeTruthy();
     expect(announcer()?.textContent).toBe("");
   });
 

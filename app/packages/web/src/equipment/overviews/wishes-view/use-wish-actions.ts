@@ -28,7 +28,7 @@ export function useWishActions(
         const r = await createEquipmentWish(api, t, input);
         saved = r.ok;
         return r;
-      }, `Geräte-Wunsch „${input.name}“ gespeichert.`);
+      }, `Geräte-Wunsch „${input.name}“ gesichert.`);
       return saved;
     },
     onBuy: (wish) =>

@@ -4,18 +4,17 @@ import { loadSpecimenCount } from "../../../../collection";
 import { useFeature, useRequest, type Request } from "../../../../shared/data";
 import { FriendsBanner } from "../../../../social";
 import { HintNote } from "./hint";
-import type { HintState } from "./hint/hint-api";
+import { FUNCTION_UNLOCKED, type HintState } from "./hint/hint-api";
 import { FirstPlantGuide } from "./first-plant-guide/first-plant-guide";
 import { GuideEndNote } from "./first-plant-guide/guide-end-note/guide-end-note";
 import type { SpeciesLookup } from "../onboarding-wizard/species-step/species-step";
 import type { LinkTarget } from "../../../../shared/patterns/navigation/navigation/navigation";
-import { useGuideEnd, useHints, useNoteCode } from "./use-hints";
+import { useGuideEnd, useHints } from "./use-hints";
 
 type Token = () => Promise<string | undefined>;
 type Target = Extract<LinkTarget, "species" | "collection">;
 
 const COUNTS_KEY = ["today", "intro-counts"];
-const NOTE_OCCASIONS = ["first_plant_saved", "function_unlocked"] as const;
 
 /** The count of the account for the intro; `undefined` while it loads or when it failed (the tasks then show alone). */
 function useCounts(api: string, token: Token): Request<OnboardingCounts> {
@@ -58,17 +57,16 @@ function stageOf(input: {
   answered: boolean;
   hints: HintState | "failed" | null;
   ended: boolean;
-  /** The code of a due note is in hand (issue 2230). */
-  codeReady: boolean;
 }) {
-  const { count, answered, hints, ended, codeReady } = input;
+  const { count, answered, hints, ended } = input;
   const counts = count.value;
   const copyNew = counts !== undefined && isNewAccount(counts);
   const waiting = copyNew && !answered && count.refreshing;
   const newAccount = copyNew && answered;
-  // Undecided: the count, the hints of an account with a count, or a due note's code is still loading (issue 2230).
+  // Undecided: the count, or the hints of an account with a count (the guide depends on the stored end). The note at the
+  // end of the page needs no code in hand: it never moves the tasks (issue 2230).
   const undecided =
-    count.status === "pending" || waiting || (counts !== undefined && hints === null) || !codeReady;
+    count.status === "pending" || waiting || (counts !== undefined && hints === null);
   const guide = newAccount && hints !== null && !ended;
   return {
     undecided,
@@ -78,10 +76,13 @@ function stageOf(input: {
   };
 }
 
-/** The hint that may show as a note above the tasks, if one is due (US-ONB-07). */
-function noteOf(hints: HintState | "failed" | null) {
+/**
+ * The one note of "Heute" (US-ONB-07): the function that a rule opened. It stands after the tasks and their tiles; the
+ * occasions of the plant layer are notes there, not here.
+ */
+function noteOf(hints: HintState | "failed" | null): typeof FUNCTION_UNLOCKED | null {
   const hint = typeof hints === "object" && hints !== null ? hints.hint : null;
-  return NOTE_OCCASIONS.find((o) => o === hint) ?? null;
+  return hint === FUNCTION_UNLOCKED ? FUNCTION_UNLOCKED : null;
 }
 
 /**
@@ -97,14 +98,8 @@ function Shown(props: { shown: boolean; children: ReactNode }) {
   );
 }
 
-/** The quiet notices above the tasks: the friends' requests (when "social" is on) and the due hint. */
-function Notes(props: {
-  api: string;
-  token: Token;
-  social: boolean;
-  note: ReturnType<typeof noteOf>;
-  onGone: () => void;
-}) {
+/** The quiet notice above the tasks: the friends' requests (when "social" is on). */
+function Notices(props: { api: string; token: Token; social: boolean }) {
   const { api, token } = props;
   return (
     <>
@@ -114,11 +109,6 @@ function Notes(props: {
           <FriendsBanner api={api} token={token} quiet requests news={false} />
         </Suspense>
       )}
-      {props.note && (
-        <Suspense fallback={null}>
-          <HintNote occasion={props.note} api={api} token={token} onGone={props.onGone} />
-        </Suspense>
-      )}
     </>
   );
 }
@@ -126,8 +116,8 @@ function Notes(props: {
 /**
  * The onboarding parts of the destination "Heute" (US-ONB-01, -05, -07, moved here by US-QS-16): a new account sees
  * the first-plant guide in place of the day's tasks (`children`); an account whose plants are all archived is a
- * returning keeper and gets the tasks. Otherwise the calm hint comes above the tasks; the locked functions are a tile of
- * the tasks (issue 1156).
+ * returning keeper and gets the tasks. The one calm note of Heute (the function a rule opened) stands last, after the
+ * tasks and their tiles; the locked functions are a tile of the tasks (issue 1156).
  * Only the intro waits for the count: the tasks load at the same time (issue 1244) and stay hidden until the count
  * decides, so no task is shown in the wrong state and none waits for the count to start loading.
  * Counting fails open: when the count is not there the tasks show without the introduction (P-10 is kept by the tasks
@@ -151,8 +141,7 @@ export function TodayIntro(props: {
   const [hints, setHints] = useHints(api, token, r.value);
   const guide = useGuideEnd(api, token, hints);
   const note = noteOf(hints);
-  const codeReady = useNoteCode(note);
-  const stage = stageOf({ count: r, answered, hints, ended: guide.ended, codeReady });
+  const stage = stageOf({ count: r, answered, hints, ended: guide.ended });
   return (
     <>
       {stage.undecided && props.fallback}
@@ -168,17 +157,26 @@ export function TodayIntro(props: {
       )}
       <Shown shown={stage.intro}>
         {guide.failed && <GuideEndNote error={guide.failed} onRetry={guide.retry} />}
-        <Notes
-          api={api}
-          token={token}
-          social={social}
-          note={noteOf(hints)}
-          onGone={() => setHints((h) => (typeof h === "object" && h ? { ...h, hint: null } : h))}
-        />
+        <Notices api={api} token={token} social={social} />
       </Shown>
       {/* A lazy part of the tasks suspends only this boundary: the intro above mounts and asks for its count at once. */}
       <Shown shown={stage.tasks}>
-        <Suspense fallback={props.fallback}>{props.children}</Suspense>
+        <Suspense fallback={props.fallback}>
+          {props.children}
+          {/* The note stands after the tasks and their tiles (US-ONB-07): nothing above the tasks moves for it. */}
+          {note && (
+            <Suspense fallback={null}>
+              <HintNote
+                occasion={note}
+                api={api}
+                token={token}
+                onGone={() =>
+                  setHints((h) => (typeof h === "object" && h ? { ...h, hint: null } : h))
+                }
+              />
+            </Suspense>
+          )}
+        </Suspense>
       </Shown>
     </>
   );

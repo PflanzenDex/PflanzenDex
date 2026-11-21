@@ -6,7 +6,15 @@ import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { busyPorts, devPlan, portFree, summaryLines, worktreePorts } from "./dev-servers.mjs";
+import {
+  E2E_DEFAULT_PORTS,
+  busyPorts,
+  devPlan,
+  e2ePorts,
+  portFree,
+  summaryLines,
+  worktreePorts,
+} from "./dev-servers.mjs";
 
 const dir = mkdtempSync(join(tmpdir(), "pdx-dev-servers-"));
 after(() => rmSync(dir, { recursive: true, force: true }));
@@ -105,6 +113,68 @@ test("US-DEV-08: a port that another process listens on is reported busy", async
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
+});
+
+// US-DEV-08 (issue 2390): the e2e ports of a Playwright run. The fixtures are `*.fixture` files: the secret env files are never read by hand.
+const E2E_LINES = "PFLANZENDEX_E2E_API_PORT=56002\nPFLANZENDEX_E2E_WEB_PORT=56001\n";
+const ABSENT = join(dir, "absent.fixture");
+
+function fixtureFile(text) {
+  const file = join(dir, `env-worktree-${Math.random().toString(36).slice(2)}.fixture`);
+  writeFileSync(file, text);
+  return file;
+}
+
+test("US-DEV-08: the e2e ports are E2E_WEB_PORT and E2E_API_PORT from the environment, before .env.worktree", () => {
+  const ports = e2ePorts({ E2E_WEB_PORT: "57001", E2E_API_PORT: "57002" }, fixtureFile(E2E_LINES));
+  assert.deepEqual(ports, { web: 57001, api: 57002 });
+});
+
+test("US-DEV-08: without the variables the e2e ports are the keys of this worktree's .env.worktree", () => {
+  assert.deepEqual(e2ePorts({}, fixtureFile(E2E_LINES)), { web: 56001, api: 56002 });
+});
+
+test("US-DEV-08: an empty e2e variable counts as unset, and a set one wins for its own port only", () => {
+  assert.deepEqual(e2ePorts({ E2E_WEB_PORT: "" }, fixtureFile(E2E_LINES)), {
+    web: 56001,
+    api: 56002,
+  });
+  assert.deepEqual(e2ePorts({ E2E_API_PORT: "57002" }, fixtureFile(E2E_LINES)), {
+    web: 56001,
+    api: 57002,
+  });
+});
+
+test("US-DEV-08: a .env.worktree without the e2e keys throws with the writer command and never falls back to 5173 or 3000", () => {
+  assert.throws(
+    () => e2ePorts({}, fixtureFile(WORKTREE_FILE)),
+    (error) =>
+      /PFLANZENDEX_E2E_WEB_PORT is missing/.test(error.message) &&
+      /node app\/tools\/workflow\/worktree\/worktree-env\.mjs <branch> > \.env\.worktree/.test(
+        error.message,
+      ),
+  );
+  assert.throws(
+    () => e2ePorts({}, fixtureFile("PFLANZENDEX_E2E_WEB_PORT=56001\n")),
+    /PFLANZENDEX_E2E_API_PORT is missing/,
+  );
+});
+
+test("US-DEV-08: without .env.worktree and without the variables the e2e ports are the main checkout's 5173 and 3000", () => {
+  assert.deepEqual(e2ePorts({}, ABSENT), { web: 5173, api: 3000 });
+  assert.deepEqual(E2E_DEFAULT_PORTS, { web: 5173, api: 3000 });
+});
+
+test("US-DEV-08: an e2e variable that is not a port is refused by name", () => {
+  assert.throws(
+    () => e2ePorts({ E2E_API_PORT: "http" }, ABSENT),
+    /E2E_API_PORT is not a port: http/,
+  );
+});
+
+test("US-DEV-08: with no worktree file at all (null, as in CI) the file is not read and the ports are the defaults", () => {
+  assert.deepEqual(e2ePorts({}, null), { web: 5173, api: 3000 });
+  assert.deepEqual(e2ePorts({ E2E_WEB_PORT: "57001" }, null), { web: 57001, api: 3000 });
 });
 
 async function freePort() {

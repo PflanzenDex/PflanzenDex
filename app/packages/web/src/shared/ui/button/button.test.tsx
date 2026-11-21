@@ -21,8 +21,8 @@ const hasOwnBorder = (classes: string) => classes.split(/\s+/).some((c) => /^bor
 describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
   it("US-QS-07 · DS-36 renders a native button that fires onClick and keeps its name", async () => {
     const onClick = vi.fn();
-    render(<Button onClick={onClick}>Speichern</Button>);
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    render(<Button onClick={onClick}>Sichern</Button>);
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
@@ -116,31 +116,31 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     const onClick = vi.fn();
     render(
       <Button pending onClick={onClick}>
-        Speichern
+        Sichern
       </Button>,
     );
     const button = screen.getByRole("button");
     expect(button.getAttribute("aria-busy")).toBe("true");
     expect((button as HTMLButtonElement).disabled).toBe(true);
     expect(button.textContent).toContain("Lädt …");
-    expect(button.textContent).toContain("Speichern");
+    expect(button.textContent).toContain("Sichern");
     await userEvent.click(button);
     expect(onClick).not.toHaveBeenCalled();
   });
 
   it("US-QS-32 SG-COPY-04 the default pending label is 'Lädt …' with a space before the ellipsis", () => {
-    render(<Button pending>Speichern</Button>);
+    render(<Button pending>Sichern</Button>);
     const text = screen.getByRole("button").textContent ?? "";
     expect(text).toContain("Lädt …");
   });
 
   it("US-QS-07 · DS-15 the pending text can be replaced by the caller", () => {
     render(
-      <Button pending pendingLabel="Wird gespeichert…">
-        Speichern
+      <Button pending pendingLabel="Wird gesichert…">
+        Sichern
       </Button>,
     );
-    expect(screen.getByRole("button").textContent).toContain("Wird gespeichert…");
+    expect(screen.getByRole("button").textContent).toContain("Wird gesichert…");
   });
 
   it("US-QS-07 · DS-15 an idle button is not marked busy", () => {
@@ -241,13 +241,13 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
   it("US-QS-14 · Greenhouse look: pill shape, semibold and a press scale; icon buttons use the control radius", () => {
     render(
       <>
-        <Button>Speichern</Button>
+        <Button>Sichern</Button>
         <Button size="icon" aria-label="Mehr">
           +
         </Button>
       </>,
     );
-    const pill = screen.getByRole("button", { name: "Speichern" }).className;
+    const pill = screen.getByRole("button", { name: "Sichern" }).className;
     expect(pill).toContain("rounded-pill");
     expect(pill).toContain("font-semibold");
     expect(pill).toContain("active:scale-[0.98]");
@@ -328,11 +328,11 @@ describe("Button needsNetwork (US-QS-30 · SG-BTN-05, SG-STATE-05)", () => {
     vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
     render(
       <NetworkSlot>
-        <Button needsNetwork>Speichern</Button>
+        <Button needsNetwork>Sichern</Button>
         <Button needsNetwork>Abbrechen-Ziel</Button>
       </NetworkSlot>,
     );
-    const first = screen.getByRole("button", { name: "Speichern" });
+    const first = screen.getByRole("button", { name: "Sichern" });
     const second = screen.getByRole("button", { name: "Abbrechen-Ziel" });
     expect(first.getAttribute("aria-describedby")).toBe(second.getAttribute("aria-describedby"));
     const reason = document.getElementById(first.getAttribute("aria-describedby") ?? "");

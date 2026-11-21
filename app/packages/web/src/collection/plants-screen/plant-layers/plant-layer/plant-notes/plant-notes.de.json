@@ -11,9 +11,9 @@
   "layer.retry": "Erneut versuchen",
   "form.formLabel": "Notiz bearbeiten",
   "form.label": "Notiz",
-  "form.description": "Bis zu {max} Zeichen. Leer speichern entfernt die Notiz.",
-  "form.submit": "Notiz speichern",
+  "form.description": "Bis zu {max} Zeichen. Leer sichern entfernt die Notiz.",
+  "form.submit": "Notiz sichern",
   "form.cancel": "Abbrechen",
-  "message.saved": "Die Notiz zu „{name}“ ist gespeichert.",
+  "message.saved": "Die Notiz zu „{name}“ ist gesichert.",
   "message.cleared": "Die Notiz zu „{name}“ ist entfernt."
 }

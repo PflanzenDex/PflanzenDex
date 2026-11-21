@@ -8,7 +8,7 @@ import {
 /** Fast client feedback in German (DS-47, DS-49); the server operation validates again (P-03). */
 export const MARKER_MISSING =
   "Gib ein Kennzeichen an, damit du die Töpfe dieser Art unterscheiden kannst.";
-export const MARKERS_MISSING = "Vergib zuerst alle fehlenden Kennzeichen, bevor du speicherst.";
+export const MARKERS_MISSING = "Vergib zuerst alle fehlenden Kennzeichen, bevor du sicherst.";
 export const REASON_MISSING =
   "Nenne einen Grund, damit du später noch weißt, warum die Pflanze im Archiv ist.";
 

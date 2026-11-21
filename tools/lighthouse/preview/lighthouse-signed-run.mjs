@@ -22,10 +22,11 @@ import {
   SIGNED_IN_ACCOUNT,
   signedInProblem,
   summarize,
-} from "./lighthouse-signed.mjs";
+} from "../lighthouse-signed.mjs";
 
+// This file lives one folder down (tools/lighthouse/preview/), so the app is three levels up.
 const here = path.dirname(fileURLToPath(import.meta.url));
-const app = path.resolve(here, "..", "..", "app");
+const app = path.resolve(here, "..", "..", "..", "app");
 const webDir = path.join(app, "packages", "web");
 const out = process.env["LIGHTHOUSE_SIGNED_OUT"] ?? path.join(app, ".cache", "lighthouse-signed");
 // The realm allows localhost:5173 and the redirect ports of the worktrees (web-port.mjs): the same variables as the e2e tests.

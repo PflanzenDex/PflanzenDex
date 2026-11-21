@@ -16,7 +16,7 @@ describe("US-QS-32 · SG-SHEET-05 the question for unsaved input", () => {
     renderDialog();
     const dialog = screen.getByRole("dialog", { name: "Eingabe verwerfen?" });
     expect(dialog.textContent).toContain(
-      "Was du eingetragen hast, ist noch nicht gespeichert. Verwirfst du es, ist es weg.",
+      "Was du eingetragen hast, ist noch nicht gesichert. Verwirfst du es, ist es weg.",
     );
   });
 

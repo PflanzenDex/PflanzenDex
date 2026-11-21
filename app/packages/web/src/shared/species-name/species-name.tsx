@@ -6,7 +6,14 @@ import { cn } from "@/shared/lib/utils";
  * name is the title, upright, and the scientific name stands in italics on the meta line before any further meta. Without
  * one the scientific name is the single title, in italics. A "German" name equal to the scientific name is no German
  * name (F-0067), and no name is invented where the catalog has none (P-08).
+ *
+ * A German name breaks at German syllables when one word is wider than its column (`hyphens-auto`, `lang="de"` on the
+ * document, issue 2366). A scientific name is Latin: it never hyphenates (`hyphens-manual`, a break only at a soft hyphen;
+ * `break-words` stays the last resort).
  */
+
+/** A scientific name never hyphenates, also inside a title that does (issue 2366). */
+export const SCIENTIFIC = "hyphens-manual";
 
 /** The German name where the catalog has one; `null` for a missing, empty or scientific one. */
 export function germanNameOf(scientific: string, german: string | null): string | null {
@@ -39,11 +46,11 @@ export function SpeciesName(props: SpeciesNameProps) {
   return (
     <>
       <Title
-        className={cn("break-words font-semibold", titleClassName)}
+        className={cn("hyphens-auto break-words font-semibold", titleClassName)}
         title={tooltip ?? undefined}
       >
         {lead}
-        {german ?? <i>{scientific}</i>}
+        {german ?? <i className={SCIENTIFIC}>{scientific}</i>}
       </Title>
       {/* A space between title and meta line: every caller lays both out in a grid or flex box, where it renders nothing,
           but the computed text of a labelled row reads "Bogenhanf Dracaena …", not "BogenhanfDracaena …" (axe
@@ -51,7 +58,7 @@ export function SpeciesName(props: SpeciesNameProps) {
       {german !== null || hasMeta ? " " : null}
       {german !== null || hasMeta ? (
         <span className="break-words text-sm font-normal text-muted-foreground">
-          {german !== null ? <i>{scientific}</i> : null}
+          {german !== null ? <i className={SCIENTIFIC}>{scientific}</i> : null}
           {german !== null && hasMeta ? " · " : null}
           {hasMeta ? meta : null}
         </span>
@@ -63,10 +70,10 @@ export function SpeciesName(props: SpeciesNameProps) {
 /** A name in running text: "German (*scientific*)", or the scientific name alone in italics (milestones, lists). */
 export function SpeciesNameInline(props: { scientific: string; german: string | null }) {
   const german = germanNameOf(props.scientific, props.german);
-  if (german === null) return <i>{props.scientific}</i>;
+  if (german === null) return <i className={SCIENTIFIC}>{props.scientific}</i>;
   return (
     <>
-      {german} (<i>{props.scientific}</i>)
+      {german} (<i className={SCIENTIFIC}>{props.scientific}</i>)
     </>
   );
 }

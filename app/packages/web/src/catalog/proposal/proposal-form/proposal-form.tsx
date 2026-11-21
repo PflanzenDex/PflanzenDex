@@ -74,7 +74,7 @@ function RefusalNotice(props: {
   );
 }
 
-/** The one filled action of each step (US-QS-15, US-QS-21): "Weiter" on step 1, "Vorschlag speichern" on step 2. */
+/** The one filled action of each step (US-QS-15, US-QS-21): "Weiter" on step 1, "Vorschlag sichern" on step 2. */
 function StepActions(props: {
   step: 1 | 2;
   pending: boolean;
@@ -97,10 +97,10 @@ function StepActions(props: {
           type="submit"
           size="touch"
           pending={props.pending}
-          pendingLabel="Speichert …"
+          pendingLabel="Sichert …"
           needsNetwork
         >
-          Vorschlag speichern
+          Vorschlag sichern
         </Button>
         <Button type="button" variant="secondary" onClick={props.onBack}>
           Zurück
@@ -116,7 +116,7 @@ function StepActions(props: {
  * the server lands on the fields it names (German text by error code, focus on the first); without a field it stays
  * in an alert (P-10). Two steps (US-QS-21): the name and the growth measure, then the two texts and, behind "Mehr Angaben",
  * the optional light and details (US-QS-24); the action row stays in view. It lives in a layer (`?sheet=propose`, US-QS-21): the layer owns the heading and the way out,
- * "Vorschlag speichern" is its one filled action.
+ * "Vorschlag sichern" is its one filled action.
  */
 export function ProposalForm(props: {
   start?: string;
