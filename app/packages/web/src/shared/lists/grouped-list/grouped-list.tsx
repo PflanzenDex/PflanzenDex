@@ -83,10 +83,11 @@ export type GroupedRowProps = {
    */
   bare?: boolean | undefined;
   /**
-   * Suppresses the chevron of a link or button row (a row that has a trailing element of its own gets none either). It
-   * cannot draw one: a row without a link or a button never shows a chevron.
+   * An action stands beside the row (`ObjectRow` draws it, because a button cannot sit in a link or a button). The action is
+   * the row's one trailing element, so the chevron steps aside (SG-LIST-03). It is no way to hide the chevron of an opener
+   * that has nothing beside it (issue 2355).
    */
-  chevron?: boolean | undefined;
+  hasAction?: boolean | undefined;
   /** A picture or an icon at the leading edge. */
   leading?: ReactNode;
   /** The row's name: 16 px, wraps and is never cut (SG-TYPE-05). */
@@ -98,17 +99,18 @@ export type GroupedRowProps = {
 };
 
 /**
- * One row of a `GroupedList`: a link, a button or plain content. A navigation or action row shows the neutral chevron
- * at the trailing edge, after its value, unless it is destructive or has a trailing element of its own (object rows,
- * SG-LIST-03: at most one trailing element). Plain content never shows one.
+ * One row of a `GroupedList`: a link, a button or plain content. Every row that opens a view (a link) or a layer (a button)
+ * shows the neutral chevron at the trailing edge, after its value, unless it is destructive or has a trailing element of
+ * its own (a trailing element or an action beside an object row, SG-LIST-03: at most one). Plain content never shows one. A caller cannot
+ * suppress it (SG-TOUCH-02, issue 2355).
  */
 export function GroupedRow(props: GroupedRowProps) {
   const destructive = props.tone === "destructive";
   const warning = props.tone === "warning";
   const interactive = props.to !== undefined || props.onClick !== undefined;
   const object = props.variant === "object";
-  const hasOwnTrailing = object && props.trailing !== undefined;
-  const chevron = interactive && !destructive && !hasOwnTrailing && props.chevron !== false;
+  const hasOwnTrailing = (object && props.trailing !== undefined) || props.hasAction === true;
+  const chevron = interactive && !destructive && !hasOwnTrailing;
   const look = cn(
     ROW,
     object && OBJECT_ROW,

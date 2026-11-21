@@ -128,7 +128,6 @@ function CompactEntry(props: {
         meta={metaOf(z, locations, moves)}
         trailing={canSwitch ? undefined : placeBadge(status)}
         action={action}
-        chevron={props.opens ? false : undefined}
         haspopup={props.opens ? "dialog" : undefined}
         expanded={props.opens ? open : undefined}
         onClick={props.opens ? (event) => openLayer(event.currentTarget) : undefined}

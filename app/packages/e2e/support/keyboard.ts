@@ -96,7 +96,7 @@ export async function specimenByKeyboard(page: Page, species: string): Promise<v
   await chooseOption(page, form.getByLabel(/^Schwierigkeit/), 1);
   await chooseOption(page, form.getByLabel(/^Standard-Lichtzone/), 3);
   await typeInto(page, form.getByLabel(/Lichtbedarf/), "40000");
-  await press(page, form.getByRole("button", { name: "Vorschlag speichern" }));
+  await press(page, form.getByRole("button", { name: "Vorschlag sichern" }));
   await press(page, page.getByRole("button", { name: "Diese Art wählen" }));
   const create = page.getByRole("form", { name: "Pflanze anlegen" });
   await press(page, create.getByRole("button", { name: "Pflanze anlegen" }));

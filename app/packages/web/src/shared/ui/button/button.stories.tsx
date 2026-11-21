@@ -5,7 +5,7 @@ import { Button } from "./button";
 const meta = {
   title: "ui/Button",
   component: Button,
-  args: { children: "Speichern" },
+  args: { children: "Sichern" },
 } satisfies Meta<typeof Button>;
 
 export default meta;
@@ -86,10 +86,10 @@ export const Pending: Story = {
   render: (args) => (
     <div className="flex flex-col gap-2 p-4">
       <Button {...args} pending>
-        Speichern
+        Sichern
       </Button>
-      <Button {...args} variant="tinted" pending pendingLabel="Wird gespeichert…">
-        Speichern
+      <Button {...args} variant="tinted" pending pendingLabel="Wird gesichert…">
+        Sichern
       </Button>
     </div>
   ),

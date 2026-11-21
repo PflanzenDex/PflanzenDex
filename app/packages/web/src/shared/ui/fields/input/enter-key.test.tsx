@@ -29,7 +29,7 @@ function Three({ onSubmit = () => {} }: { onSubmit?: () => void }) {
       <Input aria-label="Vorname" />
       <Input aria-label="Nachname" />
       <Input aria-label="Ort" />
-      <button type="submit">Speichern</button>
+      <button type="submit">Sichern</button>
     </FormRoot>
   );
 }
@@ -56,7 +56,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
         <FormRoot onSubmit={onSubmit}>
           <Input aria-label="Vorname" />
           {extra && <Input aria-label="Zusatz" />}
-          <button type="submit">Speichern</button>
+          <button type="submit">Sichern</button>
         </FormRoot>
       );
     }
@@ -74,7 +74,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
       <FormRoot onSubmit={onSubmit}>
         <Input aria-label="Vorname" enterKeyHint="send" />
         <Input aria-label="Nachname" />
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>,
     );
     expect(focusAndHint("Vorname")).toBe("send");
@@ -108,7 +108,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
       <FormRoot onSubmit={onSubmit}>
         <Input type="search" aria-label="Suche" />
         <Input aria-label="Notiz" />
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>,
     );
     expect(focusAndHint("Suche")).toBe("search");
@@ -157,7 +157,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
         <input type="radio" name="grund" aria-label="Option A" />
         <button type="button">Hilfe</button>
         <Input aria-label="Ort" />
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>,
     );
     expect(focusAndHint("Vorname")).toBe("next");
@@ -172,7 +172,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
       <FormRoot onSubmit={onSubmit}>
         <Input aria-label="Titel" />
         <Textarea aria-label="Notiz" />
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>,
     );
     expect(focusAndHint("Titel")).toBe("next");
@@ -192,7 +192,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
         <Select aria-label="Anrede">
           <option>Frau</option>
         </Select>
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>,
     );
     expect(focusAndHint("Vorname")).toBe("done");
@@ -242,7 +242,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
           <Input aria-label="Vorname" />
           {wrap(<Input aria-label="Foto" {...props} />)}
           <Input aria-label="Ort" />
-          <button type="submit">Speichern</button>
+          <button type="submit">Sichern</button>
         </FormRoot>,
       );
       if (stub) {
@@ -266,7 +266,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
         <datalist id="zeitzonen">
           <option value="Europe/Berlin" />
         </datalist>
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>,
     );
     expect(focusAndHint("Name")).toBe("next");
@@ -309,7 +309,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
         <Input aria-label="Vorname" />
         <Input aria-label="Ort" />
         <button type="submit" disabled>
-          Speichern
+          Sichern
         </button>
       </FormRoot>,
     );
@@ -348,7 +348,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
                 </FormItem>
               )}
             />
-            <button type="submit">Speichern</button>
+            <button type="submit">Sichern</button>
           </FormRoot>
         </Form>
       );
@@ -402,7 +402,7 @@ describe("DateField return-key hint (US-QS-32 · SG-FORM-03)", () => {
       <FormRoot onSubmit={onSubmit}>
         <Input aria-label="Messwert" />
         <DateField aria-label="Datum" />
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>,
     );
     expect(focusAndHint("Messwert")).toBe("next");
@@ -419,7 +419,7 @@ describe("DateField return-key hint (US-QS-32 · SG-FORM-03)", () => {
       <FormRoot onSubmit={onSubmit}>
         <DateField aria-label="Datum" />
         <Input aria-label="Notiz" />
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>,
     );
     expect(focusAndHint("Datum")).toBe("next");
@@ -434,7 +434,7 @@ describe("DateField return-key hint (US-QS-32 · SG-FORM-03)", () => {
       <FormRoot onSubmit={onSubmit}>
         <DateField aria-label="Datum" enterKeyHint="send" />
         <Input aria-label="Notiz" />
-        <button type="submit">Speichern</button>
+        <button type="submit">Sichern</button>
       </FormRoot>,
     );
     expect(focusAndHint("Datum")).toBe("send");

@@ -24,7 +24,7 @@ describe("Banner (US-QS-07, DS-56)", () => {
   it("US-QS-32 · SG-STATE-03 a focusable error banner shows its focus ring, for every error that takes the focus", () => {
     render(
       <Banner variant="error" tabIndex={-1}>
-        Speichern hat nicht geklappt.
+        Sichern hat nicht geklappt.
       </Banner>,
     );
     const banner = screen.getByRole("alert");

@@ -5,7 +5,7 @@ import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-pr
 
 /**
  * Says the result of each save once, with the growth note of that save (US-QS-08, issue 2323). The confirmation
- * ("Gespeichert: …") and its growth note are one text, because the announcer has one polite region, and a second text
+ * ("Gesichert: …") and its growth note are one text, because the announcer has one polite region, and a second text
  * would replace the first. When the note of the save is known at the confirmation, the text with the note is said once.
  * When it is not, the confirmation is said alone, and the text with the note follows when the note arrives; a note that
  * never comes leaves the confirmation alone. A refused photo confirms nothing, so nothing is said. The note of a save is

@@ -2,6 +2,8 @@ import * as React from "react";
 import { Drawer } from "vaul";
 import { cn, mergeRefs } from "@/shared/lib/utils";
 import { StatusBarDim } from "@/shared/platform/device/status-bar/status-bar";
+import { focusOnOpen } from "./open-focus";
+import { TitleRow } from "./title-row/title-row";
 
 export type SheetPanelProps = Omit<
   React.ComponentPropsWithoutRef<typeof Drawer.Content>,
@@ -11,6 +13,8 @@ export type SheetPanelProps = Omit<
   title: string;
   /** Optional description linked to the sheet. */
   description?: string;
+  /** Required: the accessible name of the close button (German, from the caller; SG-SHEET-02). */
+  closeLabel: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** How often the parent refused a close (US-QS-32): each one snaps the sheet back to its place. */
@@ -50,6 +54,22 @@ function closeFocus(
 }
 
 /**
+ * Vaul's focus on open: the opener is remembered, then the caller's handler runs, then the focus goes where Radix puts it
+ * when the handler left it (`focusOnOpen`, which passes the close button over).
+ */
+function openFocus(
+  opener: { current: HTMLElement | null },
+  close: { current: HTMLElement | null },
+  next: ((e: Event) => void) | undefined,
+) {
+  return (e: Event) => {
+    opener.current = document.activeElement as HTMLElement | null;
+    next?.(e);
+    if (!e.defaultPrevented) focusOnOpen(e, close.current);
+  };
+}
+
+/**
  * Snaps the sheet back at each close the parent refused (US-QS-32); a sheet that mounts after one does not move. Gives the
  * refs of the sheet and of its overlay.
  */
@@ -68,15 +88,6 @@ function useSnapBack(closeRefusals: number, ref: React.ForwardedRef<HTMLDivEleme
 }
 
 /**
- * The title takes the focus by script, so it draws no browser outline, as the layer heading does (US-QS-15, F15). Its
- * focus ring shows only after keyboard input (DS-37, issue 1714): a pointer user gets no frame, a keyboard user the ring.
- * The ring sits inside the title's box, because the sheet spans the full width of the window and an outer ring would be
- * cut off at its edges.
- */
-const TITLE =
-  "px-4 pt-3 text-lg font-semibold focus-visible:outline-none keyboard-input:focus-visible:ring-2 keyboard-input:focus-visible:ring-inset keyboard-input:focus-visible:ring-ring";
-
-/**
  * The Vaul part of the bottom sheet (US-QS-07, DS-23, DS-40, DS-08): drag handle, safe-area padding, max height 90dvh.
  * `autoFocus` is required: Vaul 1.1 cancels Radix's focus-on-open by default, which left the focus on the trigger
  * and Tab walking the page behind the sheet (US-QS-14, issue 604, WCAG 2.4.3).
@@ -88,6 +99,7 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
       className,
       title,
       description,
+      closeLabel,
       children,
       open,
       onOpenChange,
@@ -100,6 +112,7 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
   ) => {
     // Radix returns focus through its Dialog.Trigger, which the sheet does not use, so remember the opener here.
     const opener = React.useRef<HTMLElement | null>(null);
+    const close = React.useRef<HTMLButtonElement | null>(null);
     const { content, overlay } = useSnapBack(closeRefusals, ref);
     return (
       <Drawer.Root open={open} onOpenChange={onOpenChange} autoFocus>
@@ -116,19 +129,20 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
               className,
             )}
             {...props}
-            onOpenAutoFocus={(e) => {
-              opener.current = document.activeElement as HTMLElement | null;
-              onOpenAutoFocus?.(e);
-            }}
+            onOpenAutoFocus={openFocus(opener, close, onOpenAutoFocus)}
             onCloseAutoFocus={closeFocus(opener, onCloseAutoFocus)}
           >
+            {/* The grabber is drawn in the input boundary token: 4.8:1 on the card in light, 4.4:1 in dark (WCAG 1.4.11). */}
             <div
               aria-hidden="true"
-              className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-muted"
+              className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-input"
             />
-            <Drawer.Title tabIndex={-1} className={TITLE}>
-              {title}
-            </Drawer.Title>
+            <TitleRow
+              title={title}
+              closeLabel={closeLabel}
+              close={close}
+              onClose={() => onOpenChange(false)}
+            />
             {description ? (
               <Drawer.Description className="px-4 text-sm text-muted-foreground">
                 {description}

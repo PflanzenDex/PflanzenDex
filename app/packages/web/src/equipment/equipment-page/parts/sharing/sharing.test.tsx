@@ -37,7 +37,7 @@ describe("US-EQU-12 sharing control", () => {
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Freigabe für Freunde"), "friends");
     await user.type(screen.getByLabelText(/Erfahrung für Freunde/), "  sehr hell ");
-    await user.click(screen.getByRole("button", { name: "Freigabe speichern" }));
+    await user.click(screen.getByRole("button", { name: "Freigabe sichern" }));
     expect(onShare).toHaveBeenCalledWith(item, "friends", "sehr hell");
   });
 
@@ -52,7 +52,7 @@ describe("US-EQU-12 sharing control", () => {
     expect(screen.getByLabelText(/Erfahrung für Freunde/)).toHaveProperty("value", "läuft ruhig");
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Freigabe für Freunde"), "private");
-    await user.click(screen.getByRole("button", { name: "Freigabe speichern" }));
+    await user.click(screen.getByRole("button", { name: "Freigabe sichern" }));
     expect(onShare).toHaveBeenCalledWith(item, "private", null);
   });
 });

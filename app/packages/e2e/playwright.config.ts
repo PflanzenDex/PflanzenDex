@@ -1,11 +1,38 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
+// @ts-expect-error TS7016: clean-ports.checkout.mjs has no declaration file; its exports are typed by E2eGuard below (US-DEV-08).
+import * as guard from "../../tools/workflow/worktree/clean-ports.checkout.mjs";
+
+// The checkout check of the e2e ports (US-DEV-08, issue 2390) is plain Node code of the tools. A .d.mts beside it would be an
+// unused file for knip, and config/lint/knip.json is a gate file, so its exports are typed here.
+type E2eGuard = {
+  E2E_CHECKED_VARIABLE: string;
+  e2eServerGuard(options: { env: NodeJS.ProcessEnv; dir: string; checked: boolean }): {
+    web: number;
+    api: number;
+  };
+};
+const { E2E_CHECKED_VARIABLE, e2eServerGuard } = guard as E2eGuard;
 
 // QG-T3: core flows on a phone viewport (P-11, mobile first) and on desktop.
 // Prerequisites (make e2e): Keycloak (make auth-up) and a migrated PostgreSQL; API and web are started here.
 // The Keycloak realm only allows the origin localhost:5173; a worktree with its own port adds it with
 // `node tools/keycloak/web-port.mjs <port>` and sets E2E_WEB_PORT / E2E_API_PORT.
-const WEB_PORT = process.env["E2E_WEB_PORT"] ?? "5173";
-const API_PORT = process.env["E2E_API_PORT"] ?? "3000";
+// US-DEV-08 (issue 2390): the ports are E2E_WEB_PORT and E2E_API_PORT, else the keys of this worktree's .env.worktree, else
+// 5173 and 3000 (the main checkout and CI). Outside CI a local run never reuses a server of another checkout: a listener of
+// another checkout on one of the two ports makes the run refuse (e2eServerGuard), because Playwright would reuse it and
+// report its code as this checkout's. The ports are written back to the environment, so the servers, the workers and the
+// specs read the same ones. The workers load this file again and skip the check (E2E_CHECKED_VARIABLE).
+const ports = e2eServerGuard({
+  env: process.env,
+  dir: fileURLToPath(new URL(".", import.meta.url)),
+  checked: Boolean(process.env[E2E_CHECKED_VARIABLE]),
+});
+process.env["E2E_WEB_PORT"] = String(ports.web);
+process.env["E2E_API_PORT"] = String(ports.api);
+process.env[E2E_CHECKED_VARIABLE] = "1";
+const WEB_PORT = String(ports.web);
+const API_PORT = String(ports.api);
 const WEB = `http://localhost:${WEB_PORT}`;
 const API = `http://localhost:${API_PORT}`;
 const inCi = Boolean(process.env["CI"]);

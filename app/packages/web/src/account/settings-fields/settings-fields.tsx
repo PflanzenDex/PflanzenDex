@@ -138,7 +138,7 @@ export function NameFields({ control, fromDevice }: FieldProps & { fromDevice: b
             </datalist>
             <FormDescription>
               {fromDevice
-                ? "Vom Gerät übernommen. Speichere, um sie festzulegen."
+                ? "Vom Gerät übernommen. Sichere, um sie festzulegen."
                 : "Pflegephasen, Termine und „heute“ richten sich nach dieser Zeitzone."}
             </FormDescription>
             <FormMessage />

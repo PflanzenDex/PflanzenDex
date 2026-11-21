@@ -97,7 +97,7 @@ function Revealing({ onSubmit }: { onSubmit: () => void }) {
       <MoreFields>
         <Input aria-label="Notiz" />
       </MoreFields>
-      <button type="submit">Speichern</button>
+      <button type="submit">Sichern</button>
     </FormRoot>
   );
 }

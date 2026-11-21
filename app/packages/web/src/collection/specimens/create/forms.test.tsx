@@ -104,7 +104,7 @@ describe("US-BES-03 DS-48 invalid submission of the marker", () => {
     const posts = fakeServer([card("e1", null)]);
     render(page());
     await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf"));
-    await userEvent.click(await screen.findByRole("button", { name: "Kennzeichen speichern" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Kennzeichen sichern" }));
     const marker = screen.getByLabelText("Kennzeichen");
     await waitFor(() => expect(document.activeElement).toBe(marker));
     expect(marker.getAttribute("aria-invalid")).toBe("true");

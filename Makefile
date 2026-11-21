@@ -346,8 +346,8 @@ storybook: ## Component catalog (Storybook) on http://localhost:6006, light/dark
 build-storybook: ## Build the component catalog to app/packages/web/node_modules/.cache/storybook (TE-18)
 	cd $(APP) && npm run build-storybook
 
-lighthouse: heavy-lock ## Lighthouse on the built web app, mobile, median of 3 runs against the limits in app/config/gates/quality-limits.json; fails past a limit (QG-U1, FR-QG-09), plus the initial JS budget as report (QG-U6); report in app/packages/web/.lighthouseci
-	cd $(APP) && npm run build -w @pflanzendex/web
+lighthouse: heavy-lock ## Lighthouse on the built web app, mobile, median of 3 runs against the limits in app/config/gates/quality-limits.json; fails past a limit (QG-U1, FR-QG-09), plus the initial JS budget as report (QG-U6); report in app/packages/web/.lighthouseci; the build's sign-in authority is port 9, where nothing listens, as in CI (issue 1733)
+	cd $(APP) && VITE_OIDC_AUTHORITY=http://127.0.0.1:9/realms/pflanzendex npm run build -w @pflanzendex/web
 	cd $(APP) && npm run bundle-budget -- --report
 	tools/lighthouse/lighthouse-run.sh
 	@summary=$(APP)/packages/web/.lighthouseci/summary.md; tools/lighthouse/lighthouse-summary.sh --check > $$summary; status=$$?; cat $$summary; exit $$status

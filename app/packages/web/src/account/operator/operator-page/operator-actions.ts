@@ -69,7 +69,7 @@ export function useOperatorActions(api: string, token: Token) {
       run(
         "cost",
         (t) => setOperatorCost(api, t, figure),
-        () => "Monatliche Kosten gespeichert.",
+        () => "Monatliche Kosten gesichert.",
       ),
     /** Closes an identity removal done by hand (US-ACC-04); the card and its row reload afterwards. */
     markIdentity: (entryId: string) =>

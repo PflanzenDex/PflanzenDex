@@ -93,7 +93,7 @@ describe("US-ACC-02 settings page: display name", () => {
     expect((await screen.findByRole("status")).textContent).toContain("werden geladen");
     expect((await screen.findByLabelText<HTMLInputElement>("Anzeigename")).value).toBe("Anna");
     // Inactive, not disabled: a focused button that turns disabled loses the focus (US-QS-32, PF-045).
-    const save = screen.getByRole("button", { name: "Speichern" });
+    const save = screen.getByRole("button", { name: "Sichern" });
     expect(save.hasAttribute("disabled")).toBe(false);
     expect(save.getAttribute("aria-disabled")).toBe("true");
   });
@@ -105,8 +105,8 @@ describe("US-ACC-02 settings page: display name", () => {
     const name = await screen.findByLabelText("Anzeigename");
     await user.clear(name);
     await user.type(name, "Anna Beispiel");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
+    await waitFor(() => expect(announced()).toBe("Einstellungen gesichert."));
     expect(puts).toHaveLength(1);
     expect(puts[0]?.key).toBeTruthy();
     expect(puts[0]?.body["displayName"]).toBe("Anna Beispiel");
@@ -126,7 +126,7 @@ describe("US-ACC-02 settings page: display name", () => {
     show("profile");
     const name = await screen.findByLabelText("Anzeigename");
     await user.clear(name);
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toBe("Gib einen Namen ein.");
     expect(name.getAttribute("aria-invalid")).toBe("true");
@@ -154,8 +154,8 @@ describe("US-ACC-02 settings page: time zone", () => {
     const zone = await screen.findByLabelText("Zeitzone");
     await user.clear(zone);
     await user.type(zone, "America/New_York");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
+    await waitFor(() => expect(announced()).toBe("Einstellungen gesichert."));
     expect(currentTimeZone()).toBe("America/New_York");
   });
 
@@ -164,7 +164,7 @@ describe("US-ACC-02 settings page: time zone", () => {
     const user = userEvent.setup();
     show("profile");
     await user.clear(await screen.findByLabelText("Zeitzone"));
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body["timeZone"]).toBeNull();
   });
@@ -184,7 +184,7 @@ describe("US-ACC-02 settings page: time zone", () => {
     const zone = await screen.findByLabelText("Zeitzone");
     await user.clear(zone);
     await user.type(zone, "Mars/Olympus");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     expect((await screen.findByRole("alert")).textContent).toBe(
       "Wähle eine Zeitzone aus der Liste.",
     );
@@ -210,7 +210,7 @@ describe("US-ACC-02 settings page: time zone", () => {
     const zone = await screen.findByLabelText("Zeitzone");
     await user.clear(zone);
     await user.type(zone, "Mars/Olympus");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     const alert = await screen.findByRole("alert");
     expect(alert.id).not.toBe("");
     expect(zone.getAttribute("aria-describedby")).toContain(alert.id);
@@ -237,7 +237,7 @@ describe("US-ACC-02 settings page: time zone", () => {
     show("profile");
     const name = await screen.findByLabelText("Anzeigename");
     await user.type(name, "x");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     await screen.findAllByRole("alert");
     expect(document.activeElement).toBe(name);
   });
@@ -247,7 +247,7 @@ describe("US-ACC-02 settings page: time zone", () => {
     const user = userEvent.setup();
     show("profile");
     await user.type(await screen.findByLabelText("Anzeigename"), "x");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     expect(document.activeElement).toBe(await screen.findByRole("alert"));
   });
 });
@@ -258,7 +258,7 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     const user = userEvent.setup();
     show("notifications");
     await user.click(await screen.findByRole("checkbox", { name: "Behandlungen" }));
-    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
+    await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
     expect(puts).toHaveLength(1);
     expect(puts[0]?.body["notifications"]).toEqual({ ...PROFILE.notifications, treatment: false });
     await user.click(screen.getByRole("checkbox", { name: "Tausch" }));
@@ -305,7 +305,7 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     });
     expect((box as HTMLInputElement).checked).toBe(false);
     await user.click(box);
-    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
+    await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
     expect(puts[0]?.body).toMatchObject({ rarityConsent: true });
   });
 
@@ -373,7 +373,7 @@ describe("US-ACC-02 settings page: errors", () => {
     const name = await screen.findByLabelText("Anzeigename");
     await user.type(name, "x");
     available = false;
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("melde dich an");
     expect((name as HTMLInputElement).value).toBe("Annax");
   });
@@ -407,7 +407,7 @@ describe("US-ACC-02 · DS-48 states and primitives", () => {
     const user = userEvent.setup();
     show("profile");
     await user.type(await screen.findByLabelText("Anzeigename"), "x");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     await screen.findAllByRole("alert");
     expect(document.body.textContent).not.toContain("RAW SERVER TEXT");
     expect(document.body.textContent).toContain("Gib einen Namen ein, höchstens 80 Zeichen.");
@@ -428,7 +428,7 @@ describe("US-ACC-02 · DS-48 states and primitives", () => {
     show("profile");
     const name = await screen.findByLabelText("Anzeigename");
     await user.type(name, "x");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     await screen.findAllByRole("alert");
     await user.type(name, "y");
     expect(screen.queryByRole("alert")).toBeNull();
@@ -452,8 +452,8 @@ describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
     const input = await field();
     await user.clear(input);
     await user.type(input, "5");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
+    await waitFor(() => expect(announced()).toBe("Einstellungen gesichert."));
     expect(puts[0]?.body["replenishBuffer"]).toBe(5);
   });
 
@@ -466,7 +466,7 @@ describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
       const input = await field();
       await user.clear(input);
       if (text) await user.type(input, text);
-      await user.click(screen.getByRole("button", { name: "Speichern" }));
+      await user.click(screen.getByRole("button", { name: "Sichern" }));
       expect((await screen.findAllByRole("alert"))[0]?.textContent).toContain(
         "ganze Zahl von 0 bis 10",
       );
@@ -489,7 +489,7 @@ describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
     const input = await field();
     await user.clear(input);
     await user.type(input, "3");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     await screen.findByRole("alert");
     expect(input.getAttribute("aria-invalid")).toBe("true");
   });
@@ -510,16 +510,16 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     expect(screen.getByText(/eine Annahme/)).toBeTruthy();
   });
 
-  it("US-LIC-03 'Speichern' is enabled before anything changed; an unchanged save answers with a message and sends nothing", async () => {
+  it("US-LIC-03 'Sichern' is enabled before anything changed; an unchanged save answers with a message and sends nothing", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show("light");
     await fields();
-    const save = screen.getByRole("button", { name: "Speichern" });
+    const save = screen.getByRole("button", { name: "Sichern" });
     expect(save.hasAttribute("disabled")).toBe(false);
     await user.click(save);
     await waitFor(() =>
-      expect(announced()).toBe("Keine Änderung: Die Werte sind schon gespeichert."),
+      expect(announced()).toBe("Keine Änderung: Die Werte sind schon gesichert."),
     );
     expect(puts).toHaveLength(0);
   });
@@ -535,8 +535,8 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     const fourth = await field("Mittlerer Abstand ab");
     await user.clear(fourth);
     await user.type(fourth, "3.000");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
+    await waitFor(() => expect(announced()).toBe("Einstellungen gesichert."));
     expect(puts[0]?.body["positionThresholds"]).toEqual([50000, 16000, 8000, 3000]);
     expect(await values()).toEqual(["50.000", "16.000", "8.000", "3.000"]);
   });
@@ -546,7 +546,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     const user = userEvent.setup();
     show("privacy");
     await user.click(await screen.findByRole("checkbox", { name: "Alles privat" }));
-    await vi.waitFor(() => expect(announced()).toBe("Gespeichert."));
+    await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
     expect(puts[0]?.body["positionThresholds"]).toBeNull();
   });
 
@@ -564,7 +564,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
       const input = await field(label);
       await user.clear(input);
       await user.type(input, text);
-      await user.click(screen.getByRole("button", { name: "Speichern" }));
+      await user.click(screen.getByRole("button", { name: "Sichern" }));
       expect(await screen.findByText(message)).toBeTruthy();
       expect(input.getAttribute("aria-invalid")).toBe("true");
       expect(screen.getByText("Prüfe die markierten Felder.")).toBeTruthy();
@@ -587,7 +587,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     const first = await field("Direkt unter der Lampe ab");
     await user.clear(first);
     await user.type(first, "60000");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(first.getAttribute("aria-invalid")).toBe("true"));
     for (const input of await fields()) expect(input.getAttribute("aria-invalid")).toBe("true");
   });
@@ -779,7 +779,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     setViewportWidth(1024);
   });
 
-  it("US-QS-17 Profil saves only with 'Speichern' and the row shows the new value afterwards", async () => {
+  it("US-QS-17 Profil saves only with 'Sichern' and the row shows the new value afterwards", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show("profile");
@@ -787,8 +787,8 @@ describe("US-QS-17 settings as a list of groups", () => {
     await user.clear(name);
     await user.type(name, "Berta");
     expect(puts).toHaveLength(0);
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
-    await waitFor(() => expect(announced()).toBe("Einstellungen gespeichert."));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
+    await waitFor(() => expect(announced()).toBe("Einstellungen gesichert."));
     expect(puts).toHaveLength(1);
     expect((await row("Profil")).textContent).toContain("Berta · Europe/\u200bBerlin");
   });
@@ -800,7 +800,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     const input = await screen.findByLabelText(/Mindestzahl offener Wünsche/);
     await user.clear(input);
     await user.type(input, "4");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body).toMatchObject({
       replenishBuffer: 4,
@@ -819,7 +819,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     const input = await screen.findByLabelText("Sehr nah ab");
     await user.clear(input);
     await user.type(input, "16000");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Die Eingabe ist ungültig");
     expect(document.body.textContent).not.toContain("RAW SERVER TEXT");
   });

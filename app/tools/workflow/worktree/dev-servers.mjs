@@ -39,6 +39,44 @@ export function worktreePorts(file = WORKTREE_ENV_FILE) {
   return ports;
 }
 
+// US-DEV-08 (issue 2390): the e2e ports of a Playwright run. The main checkout and CI use the ports Playwright always used.
+export const E2E_DEFAULT_PORTS = { web: 5173, api: 3000 };
+const E2E_VARIABLES = {
+  web: { variable: "E2E_WEB_PORT", key: "PFLANZENDEX_E2E_WEB_PORT" },
+  api: { variable: "E2E_API_PORT", key: "PFLANZENDEX_E2E_API_PORT" },
+};
+
+function portOf(value, name) {
+  try {
+    return parsePort(value);
+  } catch {
+    throw new Error(`${name} is not a port: ${value}`);
+  }
+}
+
+/**
+ * The web and API ports of a Playwright run. E2E_WEB_PORT and E2E_API_PORT from the environment win (an empty one counts as
+ * unset); else the keys of `.env.worktree` when that file exists; else 5173 and 3000. A worktree file without the keys
+ * throws with the writer command: falling back to 5173 there would measure the main checkout's server (issue 2390).
+ * `file` null means that no worktree file is read at all (CI, where the ports stay the environment's or the defaults).
+ */
+export function e2ePorts(env = process.env, file = WORKTREE_ENV_FILE) {
+  const ports = {};
+  for (const [name, { variable, key }] of Object.entries(E2E_VARIABLES)) {
+    if (env[variable]) ports[name] = portOf(env[variable], variable);
+    else if (file === null || !existsSync(file)) ports[name] = E2E_DEFAULT_PORTS[name];
+    else {
+      const value = envValue(file, key);
+      if (value === undefined)
+        throw new Error(
+          `${key} is missing in ${file}: this worktree predates the e2e ports. Write the file again from the worktree root with \`node app/tools/workflow/worktree/worktree-env.mjs <branch> > .env.worktree\` (stop its servers and test database first, the slots can move), or set E2E_WEB_PORT and E2E_API_PORT.`,
+        );
+      ports[name] = portOf(value, key);
+    }
+  }
+  return ports;
+}
+
 /**
  * The plan for concurrently: its arguments, the variables to add for the child processes, the variables the environment
  * already set (kept) and the ports the launcher checks before it starts. The test database is the one that `make db-up`

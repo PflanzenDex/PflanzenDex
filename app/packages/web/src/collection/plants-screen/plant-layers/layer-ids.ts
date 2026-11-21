@@ -1,8 +1,42 @@
 import type { ReactNode } from "react";
-import type { ArchivedEntry, Distribution, LightLocation, SpecimenCard } from "@pflanzendex/core";
+import type {
+  ArchivedEntry,
+  Distribution,
+  LightLocation,
+  SpecimenCard,
+  SpecimenSummary,
+} from "@pflanzendex/core";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 
 export const ARCHIVE_LAYER = "archive";
+
+/** The calm hints of one plant (US-ONB-07): the only active plant, and a plant none is measured yet. */
+type PlantHintOccasion = "first_plant_saved" | "first_measurement";
+
+/** The note of one occasion for its place in the layer: the note while it is the due one, else nothing. */
+export type PlantNote = (occasion: PlantHintOccasion) => ReactNode;
+
+/**
+ * The calm hint of the plant layer (US-ONB-07), wired by the app: it asks the server once which of the `applicable`
+ * occasions is due, and `children` places its note ("Messen", the growth line). It renders the content at once.
+ */
+export type PlantHint = (props: {
+  applicable: readonly PlantHintOccasion[];
+  children: (note: PlantNote) => ReactNode;
+}) => ReactNode;
+
+/**
+ * The occasions that apply to the layer of the plants (US-ONB-07), from the summary over all plants (FR-BES-23): the only
+ * active plant has `first_plant_saved`; a plant while none is measured has `first_measurement`. Archived plants count nowhere.
+ */
+export function plantHintOccasionsOf(
+  summary: Pick<SpecimenSummary, "total" | "anyMeasured">,
+): PlantHintOccasion[] {
+  return [
+    ...(summary.total === 1 ? (["first_plant_saved"] as const) : []),
+    ...(summary.total > 0 && !summary.anyMeasured ? (["first_measurement"] as const) : []),
+  ];
+}
 
 export type Handlers = {
   onMeasure?: ((e: SpecimenCard) => void) | undefined;
@@ -37,10 +71,14 @@ export type PlantSlots = {
   care?: SlotRender | undefined;
   /** The button "Gießen" (`monitoring`). */
   water?: SlotRender | undefined;
+  /** The calm hint of the layer (US-ONB-07, `today-intro`): its note stands under "Messen" or at the growth line. */
+  hint?: PlantHint | undefined;
 };
 
 export type LayerProps = Handlers & {
   slots?: PlantSlots | undefined;
+  /** The occasions of the calm hint that apply to the plants (US-ONB-07); see `plantHintOccasionsOf`. */
+  hintOccasions?: readonly PlantHintOccasion[] | undefined;
   /** The own locations and the write that sets one (US-PHA-03, US-LIC); without them the layer offers no location change. */
   locations?: readonly LightLocation[] | undefined;
   onLocate?: ((specimenId: string, locationId: string, success: string) => void) | undefined;

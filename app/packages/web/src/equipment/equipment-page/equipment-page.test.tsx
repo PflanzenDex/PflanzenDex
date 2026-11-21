@@ -161,7 +161,7 @@ describe("US-EQU-01 equipment page", () => {
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Art"), "Lamp");
     await user.type(screen.getByLabelText("Produkt-ID (optional)"), "https://shop.example/x");
-    await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
+    await user.click(screen.getByRole("button", { name: "Gerät sichern" }));
     expect(await screen.findByText("Gib einen Namen ein.")).toBeTruthy();
     expect(screen.getByText(/Gib keine URL ein/)).toBeTruthy();
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
@@ -175,11 +175,11 @@ describe("US-EQU-01 equipment page", () => {
     expect(screen.queryByLabelText("Lichtzone")).toBeNull();
     await user.selectOptions(screen.getByLabelText("Art"), "Lamp");
     await user.type(screen.getByLabelText("Name"), "Neue Lampe");
-    await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
+    await user.click(screen.getByRole("button", { name: "Gerät sichern" }));
     expect(await screen.findByText(/Wähle die Lichtzone/)).toBeTruthy();
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
     await user.selectOptions(screen.getByLabelText("Lichtzone"), "z2");
-    await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
+    await user.click(screen.getByRole("button", { name: "Gerät sichern" }));
     const post = await vi.waitFor(() => {
       const call = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
       if (!call) throw new Error("not sent yet");
@@ -245,7 +245,7 @@ describe("US-EQU-01 equipment page", () => {
       return call;
     });
     expect(JSON.parse(String(post[1]?.body))).toEqual({ status: "defective" });
-    expect(await screen.findByText(/Zustand von „Lampe Regal“ gespeichert/)).toBeTruthy();
+    expect(await screen.findByText(/Zustand von „Lampe Regal“ gesichert/)).toBeTruthy();
   });
 
   it("US-EQU-01 sends only the given fields and reloads the list", async () => {
@@ -256,9 +256,9 @@ describe("US-EQU-01 equipment page", () => {
     await user.selectOptions(screen.getByLabelText("Art"), "Timer");
     await user.type(screen.getByLabelText("Name"), "Neue Lampe");
     await user.type(screen.getByLabelText("Preis (optional)"), "49,90");
-    await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
+    await user.click(screen.getByRole("button", { name: "Gerät sichern" }));
     // The layer closes, the outcome stands on the screen and the tile counts the new record (US-QS-22).
-    expect(await screen.findByText(/Gerät „Neue Lampe“ gespeichert/)).toBeTruthy();
+    expect(await screen.findByText(/Gerät „Neue Lampe“ gesichert/)).toBeTruthy();
     // The count is in the tile twice, one copy per width (equipment-tiles.tsx).
     expect(await screen.findAllByText("1 Gerät")).toHaveLength(2);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
@@ -276,7 +276,7 @@ describe("US-EQU-01 equipment page", () => {
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Art"), "Timer");
     await user.type(screen.getByLabelText("Name"), "Zone 3");
-    await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
+    await user.click(screen.getByRole("button", { name: "Gerät sichern" }));
     expect(await screen.findByText(/Dieses Gerät gibt es schon/)).toBeTruthy();
   });
 
@@ -287,7 +287,7 @@ describe("US-EQU-01 equipment page", () => {
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Art"), "Timer");
     await user.type(screen.getByLabelText("Name"), "Neue Lampe");
-    await user.click(screen.getByRole("button", { name: "Gerät speichern" }));
+    await user.click(screen.getByRole("button", { name: "Gerät sichern" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Der Server ist gerade nicht erreichbar");
     expect(alert.textContent).not.toContain("Es ist ein Fehler aufgetreten");
@@ -356,11 +356,11 @@ describe("US-EQU-01 equipment page", () => {
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
     const user = userEvent.setup();
     const form = await screen.findByRole("form", { name: "Messung für Lampe Regal" });
-    await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Messung sichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("Lux-Messung");
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
     await user.type(within(form).getByRole("textbox", { name: "Lichtstärke" }), "12000");
-    await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Messung sichern" }));
     const post = await vi.waitFor(() => {
       const call = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
       if (!call) throw new Error("not sent yet");
@@ -377,7 +377,7 @@ describe("US-EQU-01 equipment page", () => {
     const user = userEvent.setup();
     const form = await screen.findByRole("form", { name: "Abweichungsgrenze" });
     await user.type(within(form).getByLabelText(/^Abweichungsgrenze \(optional\)/), "150");
-    await user.click(within(form).getByRole("button", { name: "Grenze speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Grenze sichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("1 bis 100");
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
   });
@@ -412,13 +412,13 @@ describe("US-EQU-01 equipment page", () => {
     await user.click(await screen.findByText("Herstellerangabe ändern"));
     const form = screen.getByRole("form", { name: "Herstellerangabe für Lampe Regal" });
     await user.type(within(form).getByLabelText(/^Leistung \(optional\)/), "abc");
-    await user.click(within(form).getByRole("button", { name: "Herstellerangabe speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Herstellerangabe sichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("ganze Zahlen");
     expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
     await user.clear(within(form).getByLabelText(/^Leistung \(optional\)/));
     await user.type(within(form).getByLabelText(/^Leistung \(optional\)/), "40");
     await user.type(within(form).getByLabelText(/Lichtstärke laut Hersteller/), "20000");
-    await user.click(within(form).getByRole("button", { name: "Herstellerangabe speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Herstellerangabe sichern" }));
     const post = await postsTo(fetchFn);
     expect(String(post[0])).toContain("/equipment/l1/lamp-data");
     expect(JSON.parse(String(post[1]?.body))).toEqual({ powerW: 40, luxStatement: 20000 });
@@ -433,7 +433,7 @@ describe("US-EQU-01 equipment page", () => {
     const form = await screen.findByRole("form", { name: "Abweichungsgrenze" });
     expect(form.textContent).toContain("mehr als 25 %");
     await user.clear(within(form).getByLabelText(/^Abweichungsgrenze \(optional\)/));
-    await user.click(within(form).getByRole("button", { name: "Grenze speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Grenze sichern" }));
     const post = await postsTo(fetchFn);
     expect(String(post[0])).toContain("/equipment/lamps/limit");
     expect(JSON.parse(String(post[1]?.body))).toEqual({ percent: null });
@@ -467,7 +467,7 @@ describe("US-EQU-01 equipment page", () => {
     const form = screen.getByRole("form", { name: "Messung für Lampe Regal" });
     await user.type(within(form).getByRole("textbox", { name: "Lichtstärke" }), "500");
     await user.type(within(form).getByLabelText(/^Abstand \(optional\)/), "x");
-    await user.click(within(form).getByRole("button", { name: "Messung speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Messung sichern" }));
     expect(within(form).getByRole("alert").textContent).toContain("Abstand");
   });
 
@@ -547,7 +547,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(more.contains(within(layer).getByLabelText("Preis (optional)"))).toBe(true);
     expect(more.contains(within(layer).getByLabelText("Name"))).toBe(false);
     // The save button stays in view while the form scrolls inside the layer.
-    const save = within(layer).getByRole("button", { name: "Gerät speichern" });
+    const save = within(layer).getByRole("button", { name: "Gerät sichern" });
     expect(save.parentElement?.className).toContain("sticky");
   });
 
@@ -556,14 +556,12 @@ describe("US-QS-22 the equipment fits one screen", () => {
     view(<EquipmentPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: "Gerät erfassen" }));
     const layer = await screen.findByRole("dialog", { name: "Neues Gerät" });
-    const section = within(layer)
-      .getByRole("button", { name: "Gerät speichern" })
-      .closest("section");
+    const section = within(layer).getByRole("button", { name: "Gerät sichern" }).closest("section");
     expect(within(section as HTMLElement).queryByRole("heading")).toBeNull();
     const more = within(layer).getByText("Mehr Angaben").closest("details") as HTMLDetailsElement;
     expect(more.open).toBe(false);
     expect(
-      within(layer).getByRole("button", { name: "Gerät speichern" }).parentElement?.className,
+      within(layer).getByRole("button", { name: "Gerät sichern" }).parentElement?.className,
     ).toContain("sticky");
   });
 
@@ -686,7 +684,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
     const layer = await screen.findByRole("dialog", { name: "Lampen und Zonen" });
     await userEvent.selectOptions(await within(layer).findByLabelText("Zustand"), "defective");
-    expect(await within(layer).findByText(/Zustand von „Lampe Regal“ gespeichert/)).toBeTruthy();
+    expect(await within(layer).findByText(/Zustand von „Lampe Regal“ gesichert/)).toBeTruthy();
   });
   it("US-EQU-02 equipment status change offers Rückgängig which restores the previous status (P-10)", async () => {
     const fetchFn = fakeServer([], undefined, {

@@ -111,7 +111,7 @@ export function WishForm(props: {
           />
         ))}
         <Button type="submit" size="touch" disabled={props.busy || form.formState.isSubmitting}>
-          Wunsch speichern
+          Wunsch sichern
         </Button>
       </FormRoot>
     </Form>

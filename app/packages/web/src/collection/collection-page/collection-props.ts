@@ -1,7 +1,6 @@
 import type { Species, Specimen } from "@pflanzendex/core";
 import type { Host } from "../specimens/hooks/use-collection";
 import type { Token } from "../specimens/hooks/use-collection";
-import type { ReactNode } from "react";
 import type { PlantSlots } from "../plants-screen/plant-layers/layer-ids";
 import type {
   FormAddress,
@@ -22,7 +21,6 @@ export type Props = {
   /** Opens the management of locations and light zones from the layers of the plants (US-QS-19). */
   onManage?: () => void;
   groupBy?: "location"; // grouping by location and zone (US-QS-14)
-  renderHint?: (applicable: readonly string[]) => ReactNode; // calm hint (US-ONB-07)
   /** Parts of the plant layer that belong to other modules, wired by the app (US-QS-23). */
   plantSlots?: PlantSlots;
   /** The form of a plant the address names (US-QS-15): opened, closed and asked about through the address. */

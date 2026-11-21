@@ -239,7 +239,7 @@ describe("US-QS-17 Konto with its sections as views", () => {
     const name = await screen.findByLabelText("Anzeigename");
     await userEvent.clear(name);
     await userEvent.type(name, "Lena L");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(screen.queryByRole("status")).toBeNull();
     expect(puts[0]?.["displayName"]).toBe("Lena L");

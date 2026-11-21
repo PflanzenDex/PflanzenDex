@@ -72,8 +72,7 @@ function buildActions(
   };
   return {
     zoneCreate: (e) => write("POST", "/light-zones", "Lichtzone angelegt.", { body: e }),
-    zoneUpdate: (id, e) =>
-      write("PUT", `/light-zones/${id}`, "Lichtzone gespeichert.", { body: e }),
+    zoneUpdate: (id, e) => write("PUT", `/light-zones/${id}`, "Lichtzone gesichert.", { body: e }),
     // The zone leaves the list: its result stays a toast until the in-place row of FX-09 (SG-FEED-03).
     zoneDelete: (id) =>
       write("DELETE", `/light-zones/${id}`, "Lichtzone gelöscht.", { notify: notify.shown }),
@@ -85,8 +84,7 @@ function buildActions(
       return f;
     },
     locationCreate: (e) => write("POST", "/locations", "Standort angelegt.", { body: e }),
-    locationUpdate: (id, e) =>
-      write("PUT", `/locations/${id}`, "Standort gespeichert.", { body: e }),
+    locationUpdate: (id, e) => write("PUT", `/locations/${id}`, "Standort gesichert.", { body: e }),
     zoneDerive: (a) => derive(api, token, a),
   };
 }

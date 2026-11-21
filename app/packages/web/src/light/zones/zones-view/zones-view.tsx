@@ -87,7 +87,7 @@ export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: ()
         />
         <RefusalAlert sent={sent} />
         <FormButtons
-          label={z ? "Speichern" : "Lichtzone anlegen"}
+          label={z ? "Sichern" : "Lichtzone anlegen"}
           running={sent.running}
           onCancel={props.onCancel}
         />

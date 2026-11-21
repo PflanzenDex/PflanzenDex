@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/shared/ui/button/button";
+import { RowChevron } from "@/shared/lists/grouped-list/row-parts/row-parts";
 import { NavNote } from "@/shared/patterns/navigation/nav-note/nav-note";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
@@ -77,21 +78,30 @@ export function LinkTile(props: { to: string; name: string; count?: TileCount; n
   );
 }
 
-/** A full-width row that opens the layer `id`: the name left, the current state right. */
+/**
+ * A full-width row that opens the layer `id`: the name left, the current state right, and the neutral chevron of every
+ * opener at the trailing edge (SG-TOUCH-02, issue 2355). The text wraps in its own block, so the chevron keeps its place
+ * at the trailing edge at a large text size (SG-ICON-01).
+ */
 export function LayerRow(props: { id: string; name: string; state: ReactNode }) {
   const { open, openLayer } = useLayer(props.id);
   return (
     <Button
       type="button"
       variant="outline"
-      className="h-auto min-h-12 w-full flex-wrap justify-between gap-x-3 gap-y-1 rounded-card border-transparent bg-card px-3 py-2 text-left text-foreground hover:bg-muted hover:text-foreground"
+      className="h-auto min-h-12 w-full justify-start gap-3 rounded-card border-transparent bg-card px-3 py-2 text-left text-foreground hover:bg-muted hover:text-foreground"
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
     >
-      <span className="font-semibold">{props.name}</span>
-      {/* No truncation: at a larger text size the state wraps below the name instead of being cut (issue 1019). */}
-      <span className="min-w-0 text-sm tabular-nums text-muted-foreground">{props.state}</span>
+      <span className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <span className="min-w-0 font-semibold [overflow-wrap:anywhere]">{props.name}</span>
+        {/* No truncation: at a larger text size the state wraps below the name instead of being cut (issue 1019). */}
+        <span className="min-w-0 text-sm tabular-nums text-muted-foreground [overflow-wrap:anywhere]">
+          {props.state}
+        </span>
+      </span>
+      <RowChevron />
     </Button>
   );
 }

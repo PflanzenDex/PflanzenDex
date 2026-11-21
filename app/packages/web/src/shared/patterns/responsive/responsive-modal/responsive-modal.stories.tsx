@@ -16,7 +16,7 @@ export const Default: Story = {
     title: "Pflanze bearbeiten",
     description: "Ändere die Angaben.",
     trigger: <Button>Öffnen</Button>,
-    children: <Button>Speichern</Button>,
+    children: <Button>Sichern</Button>,
   },
 };
 
@@ -29,6 +29,6 @@ export const Open: Story = {
   args: {
     title: "Pflanze bearbeiten",
     description: "Ändere die Angaben.",
-    children: <Button>Speichern</Button>,
+    children: <Button>Sichern</Button>,
   },
 };

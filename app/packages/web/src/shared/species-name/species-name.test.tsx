@@ -92,6 +92,59 @@ describe("US-QS-32 SpeciesName: the German name leads, the scientific name is it
   });
 });
 
+describe("US-QS-32 SpeciesName: the German name hyphenates at syllables, the scientific name never (issue 2366)", () => {
+  const classesOf = (el: HTMLElement) => el.className.split(" ");
+
+  it("US-QS-32 the German-name title carries hyphens-auto, so 'Schmetterlingsorchidee' breaks at a syllable", () => {
+    render(<SpeciesName scientific="Phalaenopsis amabilis" german="Schmetterlingsorchidee" />);
+    expect(classesOf(screen.getByText("Schmetterlingsorchidee"))).toContain("hyphens-auto");
+  });
+
+  it("US-QS-32 the German-name title of a heading carries hyphens-auto too", () => {
+    render(
+      <SpeciesName
+        scientific="Phalaenopsis amabilis"
+        german="Schmetterlingsorchidee"
+        as="h2"
+        titleClassName="text-lg"
+      />,
+    );
+    const heading = screen.getByRole("heading", { level: 2, name: "Schmetterlingsorchidee" });
+    expect(classesOf(heading)).toContain("hyphens-auto");
+    expect(classesOf(heading)).toContain("text-lg");
+  });
+
+  it("US-QS-32 the scientific name on the meta line is hyphens-manual, so it breaks only at a soft hyphen", () => {
+    render(
+      <SpeciesName
+        scientific="Phalaenopsis amabilis"
+        german="Schmetterlingsorchidee"
+        meta="gefangen 07.09.2026"
+      />,
+    );
+    const latin = screen.getByText("Phalaenopsis amabilis");
+    expect(latin.tagName).toBe("I");
+    expect(classesOf(latin)).toContain("hyphens-manual");
+  });
+
+  it("US-QS-32 the scientific name as the title (no German name) is hyphens-manual inside the hyphenating title", () => {
+    render(<SpeciesName scientific="Phalaenopsis amabilis" german={null} />);
+    const latin = screen.getByText("Phalaenopsis amabilis");
+    expect(latin.tagName).toBe("I");
+    expect(classesOf(latin)).toContain("hyphens-manual");
+    expect(classesOf(latin.parentElement as HTMLElement)).toContain("hyphens-auto");
+  });
+
+  it("US-QS-32 the scientific name in running text is hyphens-manual", () => {
+    render(
+      <p>
+        <SpeciesNameInline scientific="Phalaenopsis amabilis" german="Schmetterlingsorchidee" />
+      </p>,
+    );
+    expect(classesOf(screen.getByText("Phalaenopsis amabilis"))).toContain("hyphens-manual");
+  });
+});
+
 describe("US-QS-32 SpeciesNameInline: a name in running text (milestones)", () => {
   it("US-QS-32 a German name is followed by the scientific name in brackets, the scientific one italic", () => {
     const { container } = render(
