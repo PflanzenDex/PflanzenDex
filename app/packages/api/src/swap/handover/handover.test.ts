@@ -1060,7 +1060,6 @@ describe("US-QG-05 QG-D2 the swap and match outputs carry only the whitelisted f
   });
 
   it("US-QS-32 US-QG-05 QG-D2 the match card carries the catalog picture of its species and its Wikipedia page, and no photo of the friend", async () => {
-    // subD's wish for this species is set by the test above (same describe, the scenarios run in order).
     const PICTURE = "https://upload.wikimedia.org/qs32/handover.jpg";
     const PAGE = "https://de.wikipedia.org/wiki/Handover_qs32";
     const id = await specimen(subA, "QS32");
@@ -1074,7 +1073,10 @@ describe("US-QG-05 QG-D2 the swap and match outputs carry only the whitelisted f
       .offers as { offerId: string; speciesLatin: string | null }[];
     const latin = probe.find((x) => x.offerId === offerId)?.speciesLatin ?? null;
     expect(latin).toBeTruthy();
-    // The catalog row of the species: the lock of this file is held, and the row goes away again at the end.
+    // Self-contained: the keeper wishes for the species (a 409 when the wish of an earlier test already exists).
+    expect([201, 409]).toContain((await call(subD, "POST", "/wishes", { name: latin })).status);
+    // The catalog row of the species: its Latin name is unique to this file's run, the lock of this file is held, and the row
+    // is deleted again in finally, so no taxon row leaks.
     await admin.query(
       `insert into taxon (latin_name, status, accepted_name, genus, family, catalog_fingerprint, built_at, image_url, page_url)
        values ($1, 'resolved', $1, 'Handoverus', 'Testaceae', 'qs32', now(), $2, $3)`,

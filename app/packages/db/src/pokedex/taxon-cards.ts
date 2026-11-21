@@ -38,13 +38,13 @@ export const CARDS = `select latin_name as "latinName", genus, family, order_nam
 
 // The catalog picture and its Wikipedia page of the given Latin names (US-QS-32, the match card). Resolved species only,
 // shared by all accounts: no user data. `picturesOf` in `TaxonomyPostgres` runs it.
-export const PICTURES = `select latin_name as "latinName", image_url as "imageUrl", page_url as "pageUrl"
+export const PICTURES = `select latin_name as "latinName", image_url as "imageUrl", page_url as "imageSourceUrl"
   from taxon where status = 'resolved' and latin_name = any($1::text[])`;
 
 export interface PictureRow {
   readonly latinName: string;
   readonly imageUrl: string | null;
-  readonly pageUrl: string | null;
+  readonly imageSourceUrl: string | null;
 }
 
 export interface CardRow extends Omit<TaxonCardRecord, "natureRarity"> {

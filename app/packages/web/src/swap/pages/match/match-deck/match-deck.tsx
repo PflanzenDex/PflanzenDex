@@ -7,19 +7,12 @@ import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigatio
 import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { cn } from "@/shared/lib/utils";
+import { largeText } from "@/shared/patterns/display/card/card-picture/large-text";
 import table from "../../../swap.de.json";
 import { MatchCard } from "../match-card/match-card";
 import { AnswerLists } from "./answer-lists/answer-lists";
 import { countOf, laterCards, type DeckAction, type DeckState } from "./deck-state";
-import {
-  Actions,
-  Confirm,
-  largeText,
-  UndoButton,
-  type Answer,
-} from "./match-actions/match-actions";
-import { Empty } from "./match-actions/empty-deck/empty-deck";
+import { Actions, Confirm, Empty, UndoButton, type Answer } from "./match-actions/match-actions";
 import { useDeck, type OnAnswer, type OnUndo, type OnYes } from "./use-deck";
 
 const t = texts(table);
@@ -89,7 +82,7 @@ function Current(props: {
   undo: () => void;
   lists: ReactNode;
   dispatch: (a: DeckAction) => void;
-  /** Large text (US-QS-32): the card takes its own height and the deck scrolls as a whole. */
+  /** Large text (US-QS-32): the picture of the card is not capped by the screen height. */
   large: boolean;
 }) {
   const { s, c, dispatch, large } = props;
@@ -111,7 +104,7 @@ function Current(props: {
         disabled={props.busy}
         onSwipe={props.swipe}
         onExited={props.finish}
-        className={cn("mx-auto w-full min-w-0 max-w-md", large && "flex-none")}
+        className="mx-auto w-full min-w-0 max-w-md"
       >
         <MatchCard card={c} large={large} />
       </SwipeCard>
@@ -129,7 +122,7 @@ function Current(props: {
       <MoreHelp className="text-center" more={t("deck.askMore")}>
         {c.ownerName ?? t("deck.friendFallback")} erfährt nur von einer Anfrage.
       </MoreHelp>
-      <Actions card={c} busy={props.busy} onAnswer={props.answer} large={large} />
+      <Actions card={c} busy={props.busy} onAnswer={props.answer} />
       {props.lists}
     </div>
   );

@@ -75,7 +75,7 @@ export function deckOrder(a: MatchCard, b: MatchCard): number {
 export interface CatalogPicture {
   readonly imageUrl: string | null;
   /** The Wikipedia page the picture comes from, for the credit (CC BY-SA, FR-POK-07). */
-  readonly sourceUrl: string | null;
+  readonly imageSourceUrl: string | null;
 }
 
 /** Port (ADR 0012): the catalog pictures of the given Latin names; a species without a row is missing from the map. The app root wires it. */
@@ -83,10 +83,21 @@ export interface CatalogPictures {
   of(latinNames: readonly string[]): Promise<ReadonlyMap<string, CatalogPicture>>;
 }
 
-/** The picture fields of a card: the catalog picture of its species, `null` where none is known (US-QS-32, P-08). */
-function pictureOf(pictures: ReadonlyMap<string, CatalogPicture>, species: string) {
-  const picture = pictures.get(species);
-  return { imageUrl: picture?.imageUrl ?? null, imageSourceUrl: picture?.sourceUrl ?? null };
+/** A card without a known picture (US-QS-32, P-08). */
+const NO_PICTURE: CatalogPicture = { imageUrl: null, imageSourceUrl: null };
+
+/** The catalog pictures of the cards (US-QS-32). A failed read is reported (`context.report`) and the cards keep none (P-10). */
+async function picturesOf(
+  context: MatchContext,
+  species: readonly string[],
+): Promise<ReadonlyMap<string, CatalogPicture>> {
+  if (!context.pictures) return new Map();
+  try {
+    return await context.pictures.of(species);
+  } catch (error) {
+    context.report?.("catalog pictures unavailable: the cards show no picture", error);
+    return new Map();
+  }
 }
 
 /** What the deck needs besides the exchange: the private answers, the clock (NFR-08), the counts that explain an empty deck, the own offers for "fits both ways" and the catalog pictures (US-QS-32). */
@@ -99,6 +110,8 @@ export interface MatchContext {
   readonly friendWishes?: FriendWishes;
   /** The catalog pictures of the cards (US-QS-32); without it every card has no picture (P-08). */
   readonly pictures?: CatalogPictures;
+  /** Reports a degraded read (P-10); the app root logs it. Without it a failed picture read is still not a failed deck. */
+  readonly report?: (message: string, error: unknown) => void;
 }
 
 /**
@@ -121,13 +134,15 @@ export async function readDeck(
   const given = new Map((await context.answers.list(userId)).map((a) => [a.offerId, a]));
   const wished = list.value.offers.filter((o) => o.onWishlist && o.speciesLatin !== null);
   const species = [...new Set(wished.map((o) => o.speciesLatin as string))];
-  const reasoning = await deps.wishes.reasoningOf(userId, species);
-  const asked = await ownOffersAsked(deps, context.mine, userId, context.friendWishes);
-  const pictures = (await context.pictures?.of(species)) ?? new Map<string, CatalogPicture>();
+  const [reasoning, asked, pictures] = await Promise.all([
+    deps.wishes.reasoningOf(userId, species),
+    ownOffersAsked(deps, context.mine, userId, context.friendWishes),
+    picturesOf(context, species),
+  ]);
   const matching = wished
     .map((o): MatchCard => ({
       ...o,
-      ...pictureOf(pictures, o.speciesLatin as string),
+      ...(pictures.get(o.speciesLatin as string) ?? NO_PICTURE),
       reasons: [
         {
           kind: "wishlist",

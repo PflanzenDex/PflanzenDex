@@ -142,9 +142,16 @@ export class TaxonomyPostgres {
   }
 
   /** The catalog pictures of the given Latin names (US-QS-32): shared by all accounts, no user data; a name without a resolved row is missing. */
-  async picturesOf(latinNames: readonly string[]): Promise<readonly PictureRow[]> {
-    if (latinNames.length === 0) return [];
-    return (await this.pool.query<PictureRow>(PICTURES, [latinNames])).rows;
+  async picturesOf(
+    latinNames: readonly string[],
+  ): Promise<ReadonlyMap<string, { imageUrl: string | null; imageSourceUrl: string | null }>> {
+    if (latinNames.length === 0) return new Map();
+    const rows = (await this.pool.query<PictureRow>(PICTURES, [latinNames])).rows;
+    return new Map(
+      rows.map(
+        (r) => [r.latinName, { imageUrl: r.imageUrl, imageSourceUrl: r.imageSourceUrl }] as const,
+      ),
+    );
   }
 
   /** Replaces the whole tree in one transaction: on any error nothing changes (US-POK-03). */

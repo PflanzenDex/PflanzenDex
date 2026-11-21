@@ -78,7 +78,7 @@ function Picture({ c, large }: { c: Card; large: boolean }) {
 /**
  * One offer of a friend as a card (US-TAU-01): the catalog picture with its credit (US-QS-32), names, giver, type, mode, note,
  * health and the reason it is shown (US-TAU-04). No score; the gesture and its stamps are the shared `SwipeCard` around it
- * (US-TAU-02). `large`: the text size is 150 % or more (US-QS-21), the picture is not capped and the card has no scroll region.
+ * (US-TAU-02). `large`: the text size is 150 % or more (US-QS-21): the picture is not capped by the screen height.
  */
 export function MatchCard(props: { card: Card; large?: boolean }) {
   const { card: c, large = false } = props;

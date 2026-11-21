@@ -35,6 +35,7 @@ const publicOffer = <T extends { ownerId: string }>(offer: T) => withoutKey(offe
  *   unknown), `onWishlist` (a hint, the list is never transmitted, FR-WUN-07) and `requested`
  * - GET /exchange/match?timeZone=…: `{ cards, entries, empty, requested }`, the match deck (US-TAU-01): the same offers narrowed to
  *   species on the own wishlist, each with its `reasons` (the wish, and "fits both ways" when the giver asked for an own offer, US-TAU-05), oldest offer first; no score and no ranking (FR-TAU-06).
+ *   Each card also names `imageUrl` and `imageSourceUrl` (US-QS-32): the catalog picture of its species and the Wikipedia page of that picture, `null` = none known; never a photo of the friend.
  *   `cards` are the offers without an answer plus those answered with Later on an earlier day (US-TAU-06), without any
  *   offer on which the caller has an open request (US-TAU-03: it is listed under Requests); `entries`
  *   are all answers of the caller (No and Later) with `answeredOn`, the `state` of the offer (`open`, `requested`,

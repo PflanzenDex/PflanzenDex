@@ -12,7 +12,8 @@ import { cn } from "@/shared/lib/utils";
 import { useDecisions, type Decision, type OnDecide, type OnUndo } from "./use-decisions";
 import { useDeckPosition } from "./use-deck-position";
 import { useDeckKeys } from "./use-deck-keys";
-import { Actions, DeckEmpty, DeckEnd, UndoButton, largeText } from "./deck-states/deck-states";
+import { Actions, DeckEmpty, DeckEnd, UndoButton } from "./deck-states/deck-states";
+import { largeText } from "@/shared/patterns/display/card/card-picture/large-text";
 
 const t = texts(table);
 

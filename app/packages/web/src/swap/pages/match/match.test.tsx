@@ -668,14 +668,6 @@ describe("US-QS-32 · SG-TYPE-04 at 200 % text the match deck scrolls as a whole
       expect(el.className).not.toMatch(/overflow-(y-)?(auto|scroll)/);
   });
 
-  it("US-QS-32 · SG-TYPE-04 the card takes its own height at large text, not the free height of the deck", async () => {
-    const article = await openAt200();
-    // The swipe card's root wraps the card in two elements (the stack and the gesture area).
-    const swipeRoot = article.parentElement?.parentElement?.parentElement;
-    expect(swipeRoot?.className).toContain("flex-none");
-    expect(swipeRoot?.className).not.toContain("flex-1");
-  });
-
   it("US-QS-32 · SG-PHOTO-01 at large text the picture of the card is not capped by the screen height", async () => {
     const article = await openAt200([
       card(1, { imageUrl: "https://upload.wikimedia.org/aloe.jpg" }),

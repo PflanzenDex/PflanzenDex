@@ -591,7 +591,7 @@ class StubPictures implements CatalogPictures {
 describe("US-QS-32 the match card carries the catalog picture of its species", () => {
   const aloe: CatalogPicture = {
     imageUrl: "https://upload.wikimedia.org/aloe.jpg",
-    sourceUrl: "https://de.wikipedia.org/wiki/Aloe_vera",
+    imageSourceUrl: "https://de.wikipedia.org/wiki/Aloe_vera",
   };
   const decking = (deps: ExchangeDependencies, pictures?: StubPictures) =>
     matchDeck(
@@ -610,7 +610,7 @@ describe("US-QS-32 the match card carries the catalog picture of its species", (
     const r = await decking(setup([offer(1)]), pictures);
     expect(r.ok && r.value.cards[0]).toMatchObject({
       imageUrl: aloe.imageUrl,
-      imageSourceUrl: aloe.sourceUrl,
+      imageSourceUrl: aloe.imageSourceUrl,
     });
   });
 
@@ -620,7 +620,7 @@ describe("US-QS-32 the match card carries the catalog picture of its species", (
     expect(
       r.ok && r.value.cards.map((c) => [c.speciesLatin, c.imageUrl, c.imageSourceUrl]),
     ).toEqual([
-      ["Aloe vera", aloe.imageUrl, aloe.sourceUrl],
+      ["Aloe vera", aloe.imageUrl, aloe.imageSourceUrl],
       ["Echeveria elegans", null, null],
     ]);
   });
@@ -634,5 +634,28 @@ describe("US-QS-32 the match card carries the catalog picture of its species", (
     const pictures = new StubPictures({ "Aloe vera": aloe });
     await decking(setup([offer(1), offer(4)]), pictures);
     expect(pictures.asked.flat()).toEqual(["Aloe vera"]);
+  });
+
+  it("US-QS-32 P-10 a failing picture lookup does not fail the deck: the cards keep no picture and the failure is reported", async () => {
+    const reported: string[] = [];
+    const failing: CatalogPictures = {
+      of: async () => {
+        throw new Error("catalog unreachable");
+      },
+    };
+    const r = await matchDeck(
+      setup([offer(1)]),
+      {
+        answers: new InMemoryMatchAnswers(),
+        clock: () => new Date(),
+        pictures: failing,
+        report: (message) => reported.push(message),
+      },
+      "anna",
+      { timeZone: "Europe/Berlin" },
+    );
+    expect(r.ok && r.value.cards).toHaveLength(1);
+    expect(r.ok && r.value.cards[0]).toMatchObject({ imageUrl: null, imageSourceUrl: null });
+    expect(reported).toEqual(["catalog pictures unavailable: the cards show no picture"]);
   });
 });
