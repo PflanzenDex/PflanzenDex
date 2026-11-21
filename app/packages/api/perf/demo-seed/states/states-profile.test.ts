@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { UNLOCK_FUNCTIONS } from "@pflanzendex/core";
 import { migrate, openAdminPool, openPool, testDatabaseUrl } from "@pflanzendex/db";
 import { seedCatalog } from "../../catalog-seed/seed-catalog.ts";
 import { SEED_SPECIES } from "../../catalog-seed/species-list.ts";
@@ -21,6 +22,13 @@ let admin: Pool;
 let pool: Pool;
 let api: Caller;
 const subjectOf = { anna: SUBJECTS.test, ben: SUBJECTS.test2, clara: SUBJECTS.test3 };
+// The hint accounts are the Keycloak users test5 and test6 that the seed creates through the admin API; the test bypasses it.
+const HINT_SUBJECT = `st-hint-${DB}`;
+const HINT_MEASURE_SUBJECT = `st-hint-measure-${DB}`;
+const SEED_ENV = {
+  DEMO_SEED_HINT_SUBJECT: HINT_SUBJECT,
+  DEMO_SEED_HINT_MEASURE_SUBJECT: HINT_MEASURE_SUBJECT,
+} as NodeJS.ProcessEnv;
 
 const scratchUrl = () => {
   const url = new URL(testDatabaseUrl());
@@ -69,7 +77,7 @@ describe("US-DEV-01 states profile makes every inventory state reachable (#1072)
   it("US-DEV-01 the base seed and the states profile run and a second run changes nothing", async () => {
     const run = async () => {
       await seedAll(pool, { subjects: SUBJECTS });
-      await seedStates(pool, { subjects: SUBJECTS });
+      await seedStates(pool, { subjects: SUBJECTS, env: SEED_ENV });
     };
     await run();
     first = await snapshot();
@@ -206,5 +214,61 @@ describe("US-DEV-01 states profile makes every inventory state reachable (#1072)
     expect(
       await count("select count(*) n from specimen where location_id is null and marker = 'Neu'"),
     ).toBe(1);
+  });
+
+  const HINT_ACCOUNTS = [
+    ["test5", HINT_SUBJECT],
+    ["test6", HINT_MEASURE_SUBJECT],
+  ] as const;
+
+  it.each(HINT_ACCOUNTS)(
+    "US-ONB-07 · US-QS-23 the hint account %s: style few, calm mode off, one active plant, no measurement (issue 2384)",
+    async (_user, sub) => {
+      expect(await get(sub, "/onboarding/style")).toMatchObject({ style: "few", chosen: true });
+      expect(await get(sub, "/achievements/settings")).toMatchObject({ calmMode: false });
+      const plants = list(await get(sub, "/specimens"), "specimens");
+      expect(plants).toHaveLength(1);
+      const measured = await get(
+        sub,
+        `/specimens/${plants[0]?.["id"]}/measurements?timeZone=${TZ}`,
+      );
+      expect(measured["last"] ?? null).toBeNull();
+      expect(
+        await count(
+          "select count(*) n from measurement m join specimen s on s.id = m.specimen_id join account a on a.id = s.account_id where a.subject = $1",
+          [sub],
+        ),
+      ).toBe(0);
+    },
+  );
+
+  const due = async (sub: string, applicable: string) =>
+    (await get(sub, `/onboarding/hints?timeZone=${TZ}&applicable=${applicable}`))["hint"];
+
+  it.each(HINT_ACCOUNTS)(
+    "US-ONB-07 · US-QS-23 the hint account %s meets one rule-staged unlock, so Heute has a function_unlocked hint to show (issue 2384)",
+    async (_user, sub) => {
+      // The same set as `use-hints.ts` of the web: the functions a rule stages, not the ones that are always or first-plant open.
+      const staged = new Set<string>(
+        UNLOCK_FUNCTIONS.filter((f) => f.rule !== "always" && f.rule !== "first_plant").map(
+          (f) => f.id,
+        ),
+      );
+      const unlocks = list(await get(sub, `/onboarding/unlocks?timeZone=${TZ}`), "functions");
+      expect(unlocks.some((f) => f["state"] === "open" && staged.has(String(f["id"])))).toBe(true);
+      expect(await due(sub, "function_unlocked")).toBe("function_unlocked");
+    },
+  );
+
+  it("US-ONB-07 · US-QS-23 test5 has first_plant_saved due on the plant layer, ahead of first_measurement (the fixed order of pickHint)", async () => {
+    expect(await due(HINT_SUBJECT, "first_plant_saved,first_measurement")).toBe(
+      "first_plant_saved",
+    );
+  });
+
+  it("US-ONB-07 · US-QS-23 test6 has dismissed first_plant_saved, so first_measurement is due and shows first in Verlauf", async () => {
+    expect(await due(HINT_MEASURE_SUBJECT, "first_plant_saved,first_measurement")).toBe(
+      "first_measurement",
+    );
   });
 });

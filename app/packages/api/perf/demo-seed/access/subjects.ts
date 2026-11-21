@@ -95,3 +95,53 @@ export async function subjectsFromKeycloak(
   }
   return Object.fromEntries(entries) as Subjects;
 }
+
+/** The password of every dev-realm demo user: the three of the realm import and the ones the seed creates itself. */
+export const DEMO_PASSWORD = "testtest12";
+
+/** A demo user that the realm import does not know: the gate account `test4`, the hint account `test5`. */
+export interface KeycloakUserSpec {
+  username: string;
+  firstName: string;
+  lastName: string;
+}
+
+/**
+ * The Keycloak id (the token's `sub`) of a demo user that the realm import does not know. A running dev Keycloak does not
+ * import again, so the user is created through the admin API when it is missing (`make auth-up` must be running).
+ * Idempotent: an existing user is only looked up.
+ */
+export async function ensureKeycloakUser(
+  user: KeycloakUserSpec,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<string> {
+  const { keycloak, headers } = await keycloakAdmin(env);
+  const users = `${keycloak}/admin/realms/${REALM}/users`;
+  const find = async () =>
+    (await (await fetch(`${users}?username=${user.username}&exact=true`, { headers })).json()) as {
+      id: string;
+    }[];
+  const found = await find();
+  if (found[0]) return found[0].id;
+  const created = await fetch(users, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: user.username,
+      email: `${user.username}@example.test`,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      enabled: true,
+      emailVerified: true,
+      requiredActions: [],
+      credentials: [{ type: "password", value: DEMO_PASSWORD, temporary: false }],
+    }),
+  });
+  if (created.status !== 201)
+    throw new Error(
+      `Keycloak user ${user.username} not created: ${created.status} ${await created.text()}`,
+    );
+  const after = await find();
+  if (!after[0]) throw new Error(`Keycloak user ${user.username} is missing after its creation`);
+  return after[0].id;
+}
