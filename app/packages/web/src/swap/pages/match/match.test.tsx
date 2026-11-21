@@ -27,6 +27,9 @@ const card = (n: number, extra: Record<string, unknown> = {}) => ({
   onWishlist: true,
   requested: false,
   reasons: [{ kind: "wishlist", species: `Aloe vera ${n}`, reasoning: null }],
+  // The catalog picture of the species (US-QS-32): none by default, as the API answers an unknown one.
+  imageUrl: null,
+  imageSourceUrl: null,
   ...extra,
 });
 
@@ -621,5 +624,73 @@ describe("US-QS-32 the match deck: no intro under the title, one line above the 
     open();
     await current();
     expect(screen.getByText("Ein Freund erfährt nur von einer Anfrage.")).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 · SG-TYPE-04 at 200 % text the match deck scrolls as a whole", () => {
+  /** Opens the deck at a 200 % root text size (32 px), as the keeper's setting gives it (US-QS-21, WCAG 1.4.4). The deck reads the size when it mounts, after the load. */
+  async function openAt200(cards: unknown[] = [card(1)]) {
+    server(cards);
+    const size = vi
+      .spyOn(window, "getComputedStyle")
+      .mockReturnValue({ fontSize: "32px" } as CSSStyleDeclaration);
+    open();
+    const article = await current();
+    size.mockRestore();
+    return article;
+  }
+  /** The root of the deck: its first line is "Karte n von m". */
+  const deckRoot = () => screen.getByText(/^Karte \d+ von \d+$/).parentElement as HTMLElement;
+
+  it("US-QS-32 · SG-TYPE-04 the decision row is not sticky at large text, so it cannot cover the card", async () => {
+    await openAt200();
+    const row = screen.getByRole("button", { name: /^Ablehnen:/ }).closest("div.border-t");
+    expect(row).not.toBeNull();
+    expect(row?.className).not.toContain("sticky");
+  });
+
+  it("US-QS-32 · SG-TYPE-04 the decision buttons come after the card in the flow, not over it", async () => {
+    const article = await openAt200();
+    for (const name of [/^Ablehnen:/, /^Später:/, /^Anfragen:/]) {
+      const button = screen.getByRole("button", { name });
+      expect(article.contains(button)).toBe(false);
+      expect(
+        article.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+  });
+
+  it("US-QS-32 · SG-TYPE-04 no element between the card and the deck holds a scroll region of its own", async () => {
+    const article = await openAt200();
+    expect(article.className).not.toMatch(/overflow-(y-)?(auto|scroll)/);
+    const stop = deckRoot().parentElement;
+    for (let el = article.parentElement; el && el !== stop; el = el.parentElement)
+      expect(el.className).not.toMatch(/overflow-(y-)?(auto|scroll)/);
+  });
+
+  it("US-QS-32 · SG-TYPE-04 the card takes its own height at large text, not the free height of the deck", async () => {
+    const article = await openAt200();
+    // The swipe card's root wraps the card in two elements (the stack and the gesture area).
+    const swipeRoot = article.parentElement?.parentElement?.parentElement;
+    expect(swipeRoot?.className).toContain("flex-none");
+    expect(swipeRoot?.className).not.toContain("flex-1");
+  });
+
+  it("US-QS-32 · SG-PHOTO-01 at large text the picture of the card is not capped by the screen height", async () => {
+    const article = await openAt200([
+      card(1, { imageUrl: "https://upload.wikimedia.org/aloe.jpg" }),
+    ]);
+    const box = article.querySelector("figure[data-card-picture]")
+      ?.firstElementChild as HTMLElement;
+    expect(box.className).toContain("aspect-[4/3]");
+    expect(box.className).not.toContain("dvh");
+  });
+
+  it("US-QS-14 at the normal text size the decision row stays sticky in a tall window, as before", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    const row = screen.getByRole("button", { name: /^Ablehnen:/ }).closest("div.border-t");
+    expect(row?.className).toContain("tall-window:sticky");
   });
 });
