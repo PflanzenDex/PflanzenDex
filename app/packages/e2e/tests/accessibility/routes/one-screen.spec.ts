@@ -2,15 +2,19 @@ import { expect } from "@playwright/test";
 import { WEB, test } from "../../../support/display/one-screen/sign-in";
 import { readBaseline, saveResults } from "../../../support/display/reporter";
 import { measure, openScreen, settle } from "../../../support/display/one-screen/fit";
+import { firstOf } from "../../../support/display/one-screen/fit.first";
 import { SCREENS, screensOf, type Screen } from "../../../support/display/one-screen/register";
 import {
   SIZES,
   evaluate,
+  isPhone,
   type Baseline,
   type Raw,
   type Size,
   type Result,
 } from "../../../support/display/one-screen/judge";
+import { firstSelfTests, goodFirst } from "./one-screen.first";
+import { phoneSelfTests } from "./one-screen.phone";
 import { sidewaysSelfTests } from "./one-screen-sideways";
 import { shiftJudgeSelfTests, shiftSelfTests, shiftTests } from "./one-screen.shift";
 import {
@@ -49,7 +53,8 @@ async function measureAll(
       await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
     await settle(page, 400);
     const withPaint = size.kind === "cap" && !screen.capExempt;
-    const raw: Raw = await measure(page, withPaint);
+    const first = isPhone(size) ? await firstOf(page) : null;
+    const raw: Raw = { ...(await measure(page, withPaint)), first };
     results.push(evaluate(screen.id, size, raw, Boolean(screen.sidewaysExempt)));
   }
   return results;
@@ -91,7 +96,7 @@ const sizeOf = (name: string) => SIZES.find((s) => s.name === name) as Size;
 
 const raw = (over: Partial<Raw>): Raw => ({
   ...{ scrollHeight: 640, innerHeight: 640, scrollWidth: 360, innerWidth: 360, region: null },
-  ...{ pageEl: "main", hEl: "div", regionX: null, paint: null },
+  ...{ pageEl: "main", hEl: "div", regionX: null, paint: null, first: goodFirst() },
   ...over,
 });
 
@@ -100,20 +105,20 @@ test.describe("QG-U8 self-test: the one-screen judgement", () => {
   const size = sizeOf("360x640");
   const none: Baseline = { maxEntries: 0, entries: [] };
 
-  test("QG-U8 a page one pixel too tall still fits, two pixels do not", () => {
-    expect(evaluate("s", size, raw({ scrollHeight: 641 })).failures).toEqual([]);
-    const tall = evaluate("s", size, raw({ scrollHeight: 960, pageEl: "ul.list" }));
+  // From 768 px the page and every region still fit; on a phone the first screen is judged instead (issue 1854).
+  const tablet = sizeOf("768x1024");
+  const rawTablet = (over: Partial<Raw>) =>
+    raw({
+      ...{ innerHeight: 1024, scrollHeight: 1024, innerWidth: 768, scrollWidth: 768 },
+      ...over,
+    });
+
+  test("QG-U8 a page one pixel too tall still fits, two pixels do not (from 768 px)", () => {
+    expect(evaluate("s", tablet, rawTablet({ scrollHeight: 1025 })).failures).toEqual([]);
+    const tall = evaluate("s", tablet, rawTablet({ scrollHeight: 1536, pageEl: "ul.list" }));
     expect(tall.page).toBe(1.5);
     expect(tall.failures[0]).toContain("page 1.50");
     expect(tall.failures[0]).toContain("ul.list");
-  });
-
-  test("QG-U8 a scroll region taller than itself fails, except at 200 % text", () => {
-    const region = { scrollHeight: 900, clientHeight: 300, el: "div.tabs" };
-    expect(evaluate("s", size, raw({ region })).failures[0]).toContain("inner 3.00");
-    const zoomed = sizeOf("360x640@200%");
-    expect(evaluate("s", zoomed, raw({ region })).failures).toEqual([]);
-    expect(evaluate("s", zoomed, raw({ scrollWidth: 400 })).failures[0]).toContain("sideways");
   });
 
   test("QG-U8 the 1920 px cap needs a painted width of at most 1921 px, centered", () => {
@@ -135,13 +140,13 @@ test.describe("QG-U8 self-test: the one-screen judgement", () => {
   });
 
   test("QG-U8 a new failure, a worse one and a stale entry are violations; a known one is not", () => {
-    const failing = evaluate("s", size, raw({ scrollHeight: 960 }));
+    const failing = evaluate("s", tablet, rawTablet({ scrollHeight: 1536 }));
     expect(judgeScreen([failing], none)).toHaveLength(1);
     const listed = buildBaseline([failing]);
     expect(judgeScreen([failing], listed)).toEqual([]);
-    const worse = evaluate("s", size, raw({ scrollHeight: 1100 }));
+    const worse = evaluate("s", tablet, rawTablet({ scrollHeight: 1760 }));
     expect(judgeScreen([worse], listed)[0]).toContain("worse than the baseline");
-    const fits = evaluate("s", size, raw({}));
+    const fits = evaluate("s", tablet, rawTablet({}));
     expect(judgeScreen([fits], listed)[0]).toContain("fits now");
   });
 
@@ -164,25 +169,22 @@ test.describe("QG-U8 self-test: the one-screen judgement", () => {
 });
 
 test("QG-U8 self-test: a borderline entry that fits in one run does not flip the gate", () => {
-  const size = sizeOf("360x640");
-  const listed = buildBaseline([evaluate("s", size, raw({ scrollHeight: 650 }))]);
-  expect(judgeScreen([evaluate("s", size, raw({}))], listed)).toEqual([]);
-  const unstable = buildBaseline([evaluate("s", size, raw({ scrollHeight: 960 }))]);
-  expect(judgeScreen([evaluate("s", size, raw({}))], unstable, true)).toEqual([]);
-});
-
-test("QG-U8 self-test: at 200 % text a taller region is no regression, a taller page is", () => {
-  const zoomed = sizeOf("360x640@200%");
-  const region = (inner: number) => ({ scrollHeight: inner, clientHeight: 300, el: "div" });
-  const tall = (inner: number) =>
-    evaluate("s", zoomed, raw({ scrollHeight: 1247, region: region(inner) }));
-  const listed = buildBaseline([tall(600)]);
-  expect(judgeScreen([tall(1200)], listed)).toEqual([]);
-  const page = evaluate("s", zoomed, raw({ scrollHeight: 1400, region: region(600) }));
-  expect(judgeScreen([page], listed)[0]).toContain("worse");
+  const tablet = sizeOf("768x1024");
+  const at = (scrollHeight: number) =>
+    evaluate(
+      "s",
+      tablet,
+      raw({ ...{ innerHeight: 1024, innerWidth: 768, scrollWidth: 768 }, scrollHeight }),
+    );
+  const listed = buildBaseline([at(1040)]);
+  expect(judgeScreen([at(1024)], listed)).toEqual([]);
+  const unstable = buildBaseline([at(1536)]);
+  expect(judgeScreen([at(1024)], unstable, true)).toEqual([]);
 });
 
 sidewaysSelfTests(raw, sizeOf);
+firstSelfTests(raw, sizeOf);
+phoneSelfTests(raw, sizeOf);
 
 test("QG-U8 self-test: a screen that lands on Heute instead of its path is named", () => {
   expect(lostScreen("http://x/account/data", "http://x/today")).toContain("landed on /today");

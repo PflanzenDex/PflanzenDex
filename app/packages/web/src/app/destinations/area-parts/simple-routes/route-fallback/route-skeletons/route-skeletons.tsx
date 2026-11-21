@@ -1,3 +1,5 @@
+import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
+import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -29,32 +31,29 @@ export function FriendsRouteSkeleton() {
 }
 
 /**
- * The route's fallback of "Freundes Sammlung" until its chunk is there (issue 1727): the title stands at once as the one
- * h1, named like the page before the friend's name is known (P-08), with its way back and the devices action in one row;
- * the action keeps its box from the first frame, and the blocks wait for the delay (DS-57).
+ * The route's fallback of "Freundes Sammlung" until its chunk is there (issue 1727): the page's header (the title as the one
+ * h1 in the top bar below md, named like the page before the friend's name is known (P-08), with its way back and the devices
+ * action, US-QS-32); the action keeps its box from the first frame, and the blocks wait for the delay (DS-57).
  */
 export function FriendCollectionRouteSkeleton() {
   return (
     <LayerHost data-fit-screen="">
-      <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <span aria-hidden="true" className="block size-11 shrink-0" />
-          <h1
-            data-route-fallback=""
-            className="min-w-min flex-1 text-2xl font-semibold [overflow-wrap:normal]"
-          >
-            {t("friendCollection.title")}
-          </h1>
+      <FullView
+        fallback
+        title={t("friendCollection.title")}
+        back={{ label: t("friendCollection.back"), to: PATHS.friends }}
+        action={
           <div className="h-11 w-24 shrink-0">
             <DelayedSkeleton>
               <Skeleton className="h-full w-full rounded-control" />
             </DelayedSkeleton>
           </div>
-        </div>
+        }
+      >
         <DelayedSkeleton>
           <FriendCollectionSkeleton label={t("friendCollection.loading")} />
         </DelayedSkeleton>
-      </section>
+      </FullView>
     </LayerHost>
   );
 }

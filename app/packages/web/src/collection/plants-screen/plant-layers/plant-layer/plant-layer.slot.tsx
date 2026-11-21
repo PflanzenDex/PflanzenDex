@@ -28,9 +28,10 @@ function slotFallback(
   part: SlotPart,
   label: string,
   fallback: SlotFallback | undefined,
+  card: SpecimenCard,
 ): ReactNode {
   if (part === "water") return <WaterPlaceholder />;
-  if (fallback) return fallback(label);
+  if (fallback) return fallback(label, card);
   return <PlantSlotSkeleton part={part} label={label} />;
 }
 
@@ -48,8 +49,21 @@ export function Slot(props: {
 }) {
   if (!props.render) return null;
   return (
-    <Suspense fallback={slotFallback(props.part, t("slot.loading"), props.fallback)}>
+    <Suspense fallback={slotFallback(props.part, t("slot.loading"), props.fallback, props.card)}>
       {props.render(props.card, { measure: props.measure })}
     </Suspense>
+  );
+}
+
+/**
+ * "Verlauf": the calm note of the first measurement (US-ONB-07) stands first, where the measurements will show. It is no
+ * part of the overview, which fits the layer without scroll while a note is due (US-QS-23, owner decision 2026-11-21).
+ */
+export function HistoryTab(props: { note: ReactNode; children: ReactNode }) {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
+      {props.note}
+      {props.children}
+    </div>
   );
 }

@@ -338,9 +338,10 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  # QG-U8 (US-QS-15, DS-58, issue 1137) and QG-U7 (FR-QG-24, issue 467): every view and layer fits the window at 360x640 to
-  # 1920x1080 and under the 1920 px width cap (one-screen), and axe and the keyboard walk pass over every view and layer
-  # (a11y-routes). Both are blocking from the first PR; known failures sit in the baselines (FR-QG-17). Read-only runs. They run
+  # QG-U8 (US-QS-15, DS-58, issues 1137 and 1854) and QG-U7 (FR-QG-24, issue 467): every view and layer fits the window from
+  # 768 px to 1920x1080 and under the 1920 px width cap (one-screen; below 768 px only a list and Heute may scroll, and the
+  # first screen shows the title, the first rows and the primary action), and axe and the keyboard walk pass over every view
+  # and layer (a11y-routes). Both are blocking from the first PR; known failures sit in the baselines (FR-QG-17). Read-only runs. They run
   # for PRs into `dev` and `main` when the UI, the e2e package or the gate files change (the `one-screen` output of `changes`),
   # and by hand.
   # US-QG-01 (owner decision 2026-11-07): one job per shard runs both gates for the screens of its shard, so the stack (Postgres,

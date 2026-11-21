@@ -123,8 +123,10 @@ describe("US-QS-32 needs are rows titled by their next action, opening where it 
     const list = screen.getByRole("list", { name: "Fehlt / Nachkaufen" });
     // Size containment (issue 1113, as the today page): the page size follows the free height, not the rows on the page.
     expect(list.className).toContain("[contain:size]");
-    // A row never shrinks below its content, so a squeezed list cannot collapse it to its borders (issue 2272).
-    expect(list.className).toContain("[&>li]:shrink-0");
+    // A row never shrinks below its content, so a squeezed list cannot collapse it to its borders (issue 2272). The pager
+    // gives each of its rows that rule (issue 2315), so the list needs no rule of its own.
+    for (const row of within(list).getAllByRole("listitem"))
+      expect(row.classList.contains("shrink-0")).toBe(true);
     const section = list.closest("section") as HTMLElement;
     expect(section.className.split(" ")).not.toContain("min-h-0");
   });

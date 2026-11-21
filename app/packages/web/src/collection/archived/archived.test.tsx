@@ -236,7 +236,7 @@ describe("US-BES-07 archive and restore", () => {
     expect(posts[0]?.path).toBe("/specimens/e9/catch-date");
     expect(posts[0]?.body["catchDate"]).toBe("2025-12-24");
     expect(await screen.findByText(/Das Fangdatum von „Alter Ficus“ ist jetzt/)).toBeTruthy();
-    await openArchive();
+    // The save returns to the layer the form was opened from, the archive (US-QS-32).
     expect(await screen.findByRole("region", { name: "Archiv" })).toBeTruthy();
   });
 
@@ -301,13 +301,13 @@ describe("US-BES-07 archive and restore", () => {
 });
 
 describe("US-QS-32 the archive form is a full view: the task in the header, the plant's name as the subject", () => {
-  it("US-QS-32 one h1 with the task, the name on the line under it, and a back control to the Sammlung that cancels", async () => {
+  it("US-QS-32 one h1 with the task, the name on the line under it, and a back control named after the plant that cancels", async () => {
     const onCancel = vi.fn();
     render(<ArchiveForm name="Bogenhanf" onSend={vi.fn(async () => null)} onCancel={onCancel} />);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("heading", { level: 1, name: "Pflanze archivieren" })).toBeTruthy();
     expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zu Bogenhanf" }));
     expect(onCancel).toHaveBeenCalledOnce();
   });
 });

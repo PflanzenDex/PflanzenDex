@@ -17,7 +17,10 @@ export const FunctionOverview = lazyPage(
  * The calm hint of the plant layer (US-ONB-07). Not lazy: it wraps the layer's content, which must not wait for a chunk;
  * its note is the lazy part (`HintNote`, DS-08), which loads only when a note is due.
  */
-export { ContextHint } from "./onboarding/today-intro/hint/context-hint/context-hint";
+export {
+  ContextHint,
+  prefetchHints,
+} from "./onboarding/today-intro/hint/context-hint/context-hint";
 /** The quick flow for a further plant (US-ONB-01) is its own chunk: it loads at its address (DS-08). */
 export const AddPlant = lazyPage(() =>
   import("./add-plant/add-plant").then((m) => ({ default: m.AddPlant })),

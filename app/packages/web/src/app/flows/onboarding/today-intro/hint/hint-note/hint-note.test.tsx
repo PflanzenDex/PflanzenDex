@@ -35,11 +35,11 @@ afterEach(() => {
 });
 
 describe("US-ONB-07 · SG-COPY-05 each hint is one short sentence, exact", () => {
-  it("US-ONB-07 · US-QS-32 the plant note under Messen reads exactly 'Miss sie, dann siehst du ihr Wachstum.'", async () => {
+  it("US-ONB-07 · US-QS-32 the plant note under Messen reads exactly 'Miss sie, um ihr Wachstum zu sehen.'", async () => {
     server();
     render(note("first_plant_saved"));
     const status = await screen.findByRole("status", { name: "Hinweis" });
-    expect(status.textContent).toBe("Miss sie, dann siehst du ihr Wachstum.");
+    expect(status.textContent).toBe("Miss sie, um ihr Wachstum zu sehen.");
   });
 
   it("US-ONB-07 · US-QS-32 the growth note reads exactly 'Foto und Größe zeigen ihr Wachstum.'", async () => {

@@ -149,14 +149,14 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
     server({});
     const { container: foreign } = show("fremd");
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Etikett ohne Pflanze" }),
+      await screen.findByRole("heading", { level: 2, name: "Etikett ohne Pflanze" }),
     ).toBeTruthy();
     const foreignHtml = foreign.innerHTML;
     expect(screen.queryByRole("button", { name: "Gegossen" })).toBeNull();
     cleanup();
     const { container: unknownLabel } = show("unbekannt");
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Etikett ohne Pflanze" }),
+      await screen.findByRole("heading", { level: 2, name: "Etikett ohne Pflanze" }),
     ).toBeTruthy();
     expect(unknownLabel.innerHTML).toBe(foreignHtml);
     expect(within(unknownLabel).queryByText(/fremd|unbekannt/)).toBeNull();
@@ -165,7 +165,7 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
   it("US-QS-32 the not-found label says what it means in one line, with its own mark and the way on (SG-STATE-03, SG-COPY-06)", async () => {
     server({});
     const { container } = show("unbekannt");
-    await screen.findByRole("heading", { level: 1, name: "Etikett ohne Pflanze" });
+    await screen.findByRole("heading", { level: 2, name: "Etikett ohne Pflanze" });
     expect(screen.getByText(table["notFoundCause"])).toBeTruthy();
     expect(table["notFoundCause"]).toBe(
       "Zu diesem Etikett gibt es in deinem Konto keine Pflanze. Vielleicht wurde sie gelöscht, oder das Etikett gehört zu einem anderen Konto.",
@@ -199,7 +199,7 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
   it("US-QS-32 the scanned label is one screen (DS-61): its frame fits the window and scrolls inside, also for the not-found view", async () => {
     server({});
     const { container } = show("unbekannt");
-    await screen.findByRole("heading", { level: 1, name: "Etikett ohne Pflanze" });
+    await screen.findByRole("heading", { level: 2, name: "Etikett ohne Pflanze" });
     const frame = container.querySelector("[data-fit-screen][data-fit-fill]");
     expect(frame).not.toBeNull();
     expect(frame?.className).toContain("min-h-0");

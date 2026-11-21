@@ -1,10 +1,11 @@
 import { useLayoutEffect, useRef } from "react";
-import { NOT_FOUND, type FormAddress, type FormKind } from "../address/form-address";
+import { ARCHIVE_PLANT, NOT_FOUND, type FormAddress, type FormKind } from "../address/form-address";
 
 /**
  * A form whose open state lives in its own hook (`useMarker` and the others) follows the address (US-QS-15): the address
  * opens it once its target is known (a reload reads the plant first), Back closes it, and a form that closed itself
- * after a save or a cancel leaves the address. A plant that cannot be read closes the address with a notice (P-10).
+ * after a save or a cancel leaves the address: back to the plant's layer, to the list for the archive, whose plant has
+ * left it (US-QS-32). A plant that cannot be read closes the address with a notice to the list (P-10).
  */
 export function useAddressedForm<T>(p: {
   kind: FormKind;
@@ -41,7 +42,7 @@ export function useAddressedForm<T>(p: {
     if (attempted.current) {
       // The form closed itself (saved or cancelled): the address leaves the form too.
       closing.current = true;
-      leave();
+      leave(undefined, kind === ARCHIVE_PLANT);
       return;
     }
     if (target) {
@@ -51,7 +52,7 @@ export function useAddressedForm<T>(p: {
     }
     if (failed) {
       closing.current = true;
-      leave(NOT_FOUND);
+      leave(NOT_FOUND, true);
     }
   }, [active, open, target, failed, leave, setOpen]);
 }

@@ -7,11 +7,18 @@ import { GrowthFrame } from "./growth-frame/growth-frame";
  * overview keeps the height the trend will take. One status with the caller's label, read out once (DS-56), and it shows
  * after the delay (DS-57); before the delay the frame keeps its place without drawing anything (SG-STATE-02).
  */
-export function PlantGrowthSkeleton({ label }: { label: string }) {
+export function PlantGrowthSkeleton({
+  label,
+  measured = true,
+}: {
+  label: string;
+  /** False while the plant has no measurement: the frame of its one reading (US-QS-23). */
+  measured?: boolean;
+}) {
   return (
-    <DelayedSkeleton before={<GrowthFrame />}>
+    <DelayedSkeleton before={<GrowthFrame measured={measured} />}>
       <SkeletonGroup label={label} className="min-w-0">
-        <GrowthFrame>
+        <GrowthFrame measured={measured}>
           <Skeleton className="h-5 w-3/4" />
         </GrowthFrame>
       </SkeletonGroup>

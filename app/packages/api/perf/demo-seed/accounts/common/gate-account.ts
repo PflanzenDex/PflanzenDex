@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
 import { Caller } from "../../access/caller.ts";
-import { keycloakAdmin } from "../../access/subjects.ts";
+import { ensureKeycloakUser } from "../../access/subjects.ts";
 import { SEED_SPECIES } from "../../../catalog-seed/species-list.ts";
 import { ensureSpecimens, setUp, speciesByLatin, type Ctx, type SpecimenDef } from "./shared.ts";
 
@@ -9,46 +9,19 @@ import { ensureSpecimens, setUp, speciesByLatin, type Ctx, type SpecimenDef } fr
 // The plants are spread over a dozen species, and every pot gets its marker from the start (DM-BES-03 needs none then).
 export const GATE_USER = "test4";
 export const GATE_NAME = "Dora";
-const GATE_PASSWORD = "testtest12";
 const SPECIES = 12;
 const PLANTS = 108;
 
 /**
- * The Keycloak id (the token's `sub`) of the gate user. The realm import knows only test, test2 and test3, and a running
- * dev Keycloak does not import again, so the user is created through the admin API when it is missing. Idempotent.
- * `DEMO_SEED_GATE_SUBJECT` bypasses Keycloak (tests).
+ * The Keycloak id (the token's `sub`) of the gate user. The realm import knows only test, test2 and test3, so the user is
+ * created through the admin API when it is missing (`ensureKeycloakUser`). `DEMO_SEED_GATE_SUBJECT` bypasses Keycloak (tests).
  */
 export async function gateSubject(env: NodeJS.ProcessEnv = process.env): Promise<string> {
   if (env["DEMO_SEED_GATE_SUBJECT"]) return env["DEMO_SEED_GATE_SUBJECT"];
-  const { keycloak, headers } = await keycloakAdmin(env);
-  const users = `${keycloak}/admin/realms/pflanzendex/users`;
-  const find = async () =>
-    (await (await fetch(`${users}?username=${GATE_USER}&exact=true`, { headers })).json()) as {
-      id: string;
-    }[];
-  const found = await find();
-  if (found[0]) return found[0].id;
-  const created = await fetch(users, {
-    method: "POST",
-    headers: { ...headers, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      username: GATE_USER,
-      email: `${GATE_USER}@example.test`,
-      firstName: GATE_NAME,
-      lastName: "Sammlerin",
-      enabled: true,
-      emailVerified: true,
-      requiredActions: [],
-      credentials: [{ type: "password", value: GATE_PASSWORD, temporary: false }],
-    }),
-  });
-  if (created.status !== 201)
-    throw new Error(
-      `Keycloak user ${GATE_USER} not created: ${created.status} ${await created.text()}`,
-    );
-  const after = await find();
-  if (!after[0]) throw new Error(`Keycloak user ${GATE_USER} is missing after its creation`);
-  return after[0].id;
+  return ensureKeycloakUser(
+    { username: GATE_USER, firstName: GATE_NAME, lastName: "Sammlerin" },
+    env,
+  );
 }
 
 /** Adds the gate account and its plants through the API, as the other demo accounts (idempotent). Needs the catalog. */

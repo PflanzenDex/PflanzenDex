@@ -1,5 +1,5 @@
 {
-  "form.back": "Zurück zur Sammlung",
+  "form.back": "Zurück zu {name}",
   "form.titleCutting": "Steckling eintopfen",
   "form.titlePlant": "Pflanze umtopfen",
   "form.quietCutting": "Nur der Status ändert sich: Aus dem Steckling wird eine Pflanze. Ab dem Datum gilt die Lichtzone ihres Standorts oder der Art.",

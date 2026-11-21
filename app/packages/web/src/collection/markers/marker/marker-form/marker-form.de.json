@@ -1,5 +1,5 @@
 {
   "title": "Kennzeichen ändern",
-  "back": "Zurück zur Sammlung",
+  "back": "Zurück zu {name}",
   "renamed": "„{name}“ heißt jetzt „{marker}“. Die Historie bleibt bei der Pflanze."
 }

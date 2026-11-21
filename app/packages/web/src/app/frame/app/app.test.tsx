@@ -583,7 +583,10 @@ describe("US-ACC-01 App", () => {
     await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
     expect(await screen.findByRole("heading", { name: "Pflanze anlegen" })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Art" }));
+    // The chevron in the bar and the cancel under the fields both lead back (US-QS-32): the first is the chevron.
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "Zurück zur Art" })[0] as HTMLElement,
+    );
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
 
@@ -643,7 +646,10 @@ describe("US-ACC-01 App", () => {
     await userEvent.click(await screen.findByRole("button", { name: /^Dracaena trifasciata/ }));
     await userEvent.click(screen.getByRole("button", { name: "Zum Artprofil" }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Zurück zur Art" }));
+    await screen.findAllByRole("button", { name: "Zurück zur Art" });
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "Zurück zur Art" })[0] as HTMLElement,
+    );
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
 
@@ -669,7 +675,7 @@ describe("US-ACC-01 App", () => {
     renderApp("/gibt-es-nicht");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+      await screen.findByRole("heading", { level: 2, name: "Diese Seite gibt es nicht" }),
     ).toBeTruthy();
     expect(document.title).toBe("Seite nicht gefunden – PflanzenDéx");
     await userEvent.click(screen.getByRole("button", { name: "Zu Heute" }));

@@ -5,6 +5,10 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { RouteFocus } from "@/shared/platform/routing/route-focus/route-focus";
 import { viewTitle } from "@/shared/patterns/navigation/navigation/navigation";
+import {
+  expectTitleInBar,
+  renderInTopBar,
+} from "@/shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot.test-helpers";
 import { NotFoundView } from "./not-found-view";
 
 afterEach(() => {
@@ -32,10 +36,11 @@ function shown(address: string, withShell = false) {
 }
 
 describe("US-QS-32 an unknown address shows the not-found view inside the frame", () => {
-  it("US-QS-32 the view has its own mark and the title as its one h1, with no error role and no empty mark", () => {
+  it("US-QS-32 the view has its own mark, the page title as its one h1 and the state's title as a section, with no error role and no empty mark", () => {
     const { container } = shown("/gibt-es-nicht");
+    expect(screen.getByRole("heading", { level: 1, name: "Seite nicht gefunden" })).toBeTruthy();
     expect(
-      screen.getByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+      screen.getByRole("heading", { level: 2, name: "Diese Seite gibt es nicht" }),
     ).toBeTruthy();
     expect(container.querySelector("svg.lucide-file-question")).not.toBeNull();
     expect(container.querySelector("svg.lucide-sprout")).toBeNull();
@@ -63,5 +68,15 @@ describe("US-QS-32 an unknown address shows the not-found view inside the frame"
     await userEvent.click(screen.getByRole("button", { name: "Zu Heute" }));
     await screen.findByRole("heading", { name: "Heute" });
     await waitFor(() => expect(document.title).toBe("Heute – PflanzenDéx"));
+  });
+});
+
+describe("US-QS-32 · SG-HEAD-01 the not-found view puts its title into the top bar", () => {
+  it('US-QS-32 below md the page has one h1, "Seite nicht gefunden", in the bar, and the brand is not shown', () => {
+    renderInTopBar(<NotFoundView />, "/gibt-es-nicht");
+    expectTitleInBar("Seite nicht gefunden");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Diese Seite gibt es nicht" }),
+    ).toBeTruthy();
   });
 });

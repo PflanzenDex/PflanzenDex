@@ -43,7 +43,7 @@ export function MarkerForm(props: {
         headingId="marker-title"
         title={tx("title")}
         subject={props.name}
-        back={{ label: tx("back"), onBack: props.onCancel }}
+        back={{ label: tx("back", { name: props.name }), onBack: props.onCancel }}
       />
       <Quiet className="mb-5">
         Nur der Name ändert sich: Messungen und Behandlungen bleiben bei der Pflanze.

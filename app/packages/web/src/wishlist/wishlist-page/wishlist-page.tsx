@@ -10,6 +10,7 @@ import { Candidates, Controls } from "./parts/candidates/candidates";
 import { useWishWrites } from "./parts/use-wish-writes/use-wish-writes";
 import { HINTS_LAYER, WishlistLayers } from "./layers/wishlist-layers/wishlist-layers";
 import { WishlistPageSkeleton } from "./wishlist-page.skeleton";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 
 const t = texts(table);
 const KEY = ["wishlist", "candidates"] as const;
@@ -118,9 +119,7 @@ export function WishlistPage(props: {
             {t("page.title")}
           </h2>
         ) : (
-          <h1 id="wishlist-title" className="text-2xl font-semibold">
-            {t("page.title")}
-          </h1>
+          <PageHeader headingId="wishlist-title" title={t("page.title")} />
         )}
         <LoadFrame
           queryKey={KEY}

@@ -7,11 +7,12 @@ import {
   type LightLocation,
   type LightZone,
 } from "@pflanzendex/core";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../../shared/data";
 import { refusesCatchDate } from "../../../markers/catch-date/catch-date-field/catch-date-field";
 import { useToday } from "../../../markers/catch-date/use-today";
-import { Heading, NamePreview, OtherFields } from "../create-fields/create-fields";
+import { NamePreview, OtherFields, SpeciesLine } from "../create-fields/create-fields";
 import { toCreateInput, type CreateInput } from "../create-input";
 import { MarkerFields } from "../../../markers/marker/marker-fields/marker-fields";
 import { markerRule, type Sibling } from "../../../markers/marker/marker-rule";
@@ -56,6 +57,18 @@ const inputOf = (
   missing: readonly { id: string }[],
 ) => toCreateInput(values, missing, form.getFieldState("catchDate").isDirty);
 
+/** The header of the form (US-QS-32): the title in the bar below md, the species as the subject line, the way back. */
+function CreateHeader(props: { species: Species; onBack: () => void }) {
+  return (
+    <PageHeader
+      headingId="create-title"
+      title={ui("formLabel")}
+      subject={<SpeciesLine species={props.species} />}
+      back={{ label: ui("cancel"), onBack: props.onBack }}
+    />
+  );
+}
+
 /**
  * Create specimen (US-BES-02, US-BES-03): only the species is required for the first specimen. The name is fixed
  * before saving and is already shown here (DM-BES-03). From the second specimen on the marker is required (preset
@@ -91,8 +104,8 @@ export function CreateForm(props: {
     setError(await props.onSend(inputOf(form, values, rule.missing))),
   );
   return (
-    <section aria-labelledby="create-title">
-      <Heading species={props.species} />
+    <section aria-labelledby="create-title" className="flex min-w-0 flex-col gap-2">
+      <CreateHeader species={props.species} onBack={props.onCancel} />
       <Form {...form}>
         <FormRoot
           onSubmit={submit}

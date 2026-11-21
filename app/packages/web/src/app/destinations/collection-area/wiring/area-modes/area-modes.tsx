@@ -16,6 +16,7 @@ import {
   DelayedSkeleton,
   useHeldLoader,
 } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { useQueryClient } from "@/shared/data";
 import { plantSlots } from "../plant-slots/plant-slots";
 import type { PlantGroup } from "../../../../sammlung-view";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -129,7 +130,7 @@ export function ModeBody(p: ModeProps) {
 /** The plants themselves, with the parts of other modules wired into the plant layer (US-QS-23). */
 function PlantsMode(p: ModeProps) {
   const { api, token, host } = p;
-  const slots = plantSlots(api, token);
+  const slots = plantSlots(api, token, useQueryClient());
   return (
     <CollectionPage
       api={api}
