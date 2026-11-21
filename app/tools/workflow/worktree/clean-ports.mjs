@@ -1,6 +1,7 @@
 // `make clean-ports` (US-DEV-01): stops the processes that listen on the dev ports of this worktree (API and web, from
 // .env.worktree; 3000 and 5173 in the main checkout). A process is found by its port only, and only processes of the
 // current user are stopped; each stop is named in the output. Another user's listener is reported and left alone.
+// The checkout check of the e2e ports (US-DEV-08, issue 2390) is in clean-ports.checkout.mjs; it uses listenersOf and runCommand.
 // Usage: node tools/workflow/worktree/clean-ports.mjs   (from app/, as `make clean-ports` runs it)
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -16,9 +17,9 @@ export function devPorts(file = WORKTREE_ENV_FILE) {
   return { api: ports.api, web: ports.web };
 }
 
-/** Runs a system tool; `missing` when it is not installed. Arguments go without a shell. */
-export function runCommand(cmd, args) {
-  const r = spawnSync(cmd, args, { encoding: "utf8" });
+/** Runs a system tool; `missing` when it is not installed. Arguments go without a shell. `env` defaults to this process's. */
+export function runCommand(cmd, args, env) {
+  const r = spawnSync(cmd, args, { encoding: "utf8", env });
   if (r.error?.code === "ENOENT") return { missing: true };
   if (r.error) throw r.error;
   return { code: r.status, stdout: r.stdout ?? "", stderr: r.stderr ?? "" };
