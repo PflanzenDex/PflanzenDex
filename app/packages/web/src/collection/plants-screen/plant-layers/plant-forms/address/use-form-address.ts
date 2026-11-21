@@ -4,14 +4,14 @@ import { BELOW } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { quietFrom } from "@/shared/platform/routing/route-focus/quiet-steps";
 import { walkOverGuard } from "@/shared/patterns/responsive/layer-sheet/use-layer.history";
 import {
-  FORM_PARAM,
   FROM_APP,
   GUARD,
-  PLANT_PARAM,
   SHEET_PARAM,
   fallbackBelow,
   formOf,
+  formSearch,
   listSearch,
+  originIsArchive,
   stateFlag,
   type FormAddress,
   type FormKind,
@@ -102,16 +102,16 @@ function useFormInput(
   const open = useCallback(
     (kind: FormKind, plantId: string) => {
       const c = latest.current;
-      const next = new URLSearchParams(c.location.search);
-      next.delete(SHEET_PARAM);
-      next.set(FORM_PARAM, kind);
-      next.set(PLANT_PARAM, plantId);
       setNotice(null);
-      // The entry below the form is the one it is opened from: the plant's layer on its tab, or the list (US-QS-32). The form
-      // is pushed above it, so Back, the chevron and "Abbrechen" return there (SG-NAV-05, owner answer Q-46).
+      // The entry below the form is the one it is opened from: the plant's layer on its tab, the Archiv layer, or the list
+      // (US-QS-32). The form is pushed above it, so Back, the chevron and "Abbrechen" return there (SG-NAV-05, Q-46, d-054).
       const below = { pathname: c.location.pathname, search: c.location.search };
       void c.navigate(
-        { pathname: c.location.pathname, search: `?${next}`, hash: c.location.hash },
+        {
+          pathname: c.location.pathname,
+          search: formSearch(c.location.search, kind, plantId),
+          hash: c.location.hash,
+        },
         { state: { [FROM_APP]: true, [BELOW]: below } },
       );
     },
@@ -161,6 +161,9 @@ export function useFormAddress(enabled: boolean): FormAddress {
   const held = isHeldForm({ enabled, current, type, state: location.state, landed, refs });
   // The form the render shows: the one the address names, or the one a held render keeps.
   const shown = current ?? (held ? refs.named.current : null);
+  // A held form keeps the way back it had (d-054): the address no longer names it, its last entry does.
+  const heldSearch = held ? (refs.named.current?.at.search ?? "") : "";
+  const shownSearch = current ? location.search : heldSearch;
   const latest = useLatest({ location, current, held, navigate, type });
   useKeepNamed(refs, location, current);
   useOrdering(latest, fromApp, location.key, current !== null);
@@ -168,6 +171,7 @@ export function useFormAddress(enabled: boolean): FormAddress {
   return {
     kind: shown?.kind ?? null,
     plantId: shown?.plantId ?? null,
+    fromArchive: originIsArchive(shownSearch),
     ...useFormInput(latest, refs, setNotice),
     ...useCloseActions(latest, refs, setAsking, setNotice),
     asking,

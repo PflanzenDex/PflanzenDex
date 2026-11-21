@@ -1,14 +1,18 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useLayoutEffect } from "react";
 import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import type { SpecimenCard } from "@pflanzendex/core";
+import type { ArchivedEntry, SpecimenCard } from "@pflanzendex/core";
 import { CollectionArea } from "./collection-area";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";
 import { answerCardRead } from "../../../collection/specimens/tests/cards-fake";
-import { openPlant, openTab } from "../../../collection/specimens/tests/plants-test-helpers";
+import {
+  openArchive,
+  openPlant,
+  openTab,
+} from "../../../collection/specimens/tests/plants-test-helpers";
 import {
   GUARD,
   stateFlag,
@@ -51,8 +55,18 @@ const repotPlan = {
 };
 /** The marker field, by its label (the form and the field share the word). */
 const MARKER_FIELD = /^Kennzeichen(?: \(optional\))?$/;
+/** The archived plant of the Archiv layer (d-054): its catch date is the one form that opens from there. */
+const ARCHIVED: ArchivedEntry = {
+  id: "e9",
+  name: "Alter Ficus",
+  speciesName: "Birkenfeige",
+  caughtAt: "2026-01-05",
+  archivedAt: "2026-10-02",
+  archivedReason: "eingegangen",
+};
 /** The writes of a plant that answer with its row. */
-const WRITE = /^\/specimens\/e1\/(marker|catch-date|repot|light-zone|archive)$/;
+const WRITE =
+  /^\/specimens\/(?:e1\/(?:marker|catch-date|repot|light-zone|archive)|e9\/catch-date)$/;
 
 beforeAll(async () => {
   await Promise.all([
@@ -72,14 +86,14 @@ afterEach(() => {
 });
 
 /** The API of one plant with every write the forms send; `saves` collects the paths written. */
-function stubPlantApi(saves: string[] = []) {
+function stubPlantApi(saves: string[] = [], archived: ArchivedEntry[] = []) {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url, init) => {
       const path = new URL(String(url)).pathname;
       if (path === "/locations") return response(200, { locations: [] });
       if (path === "/light-zones") return response(200, { zones: [] });
-      if (path === "/specimens/archived") return response(200, { archived: [] });
+      if (path === "/specimens/archived") return response(200, { archived });
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
       if (path === "/specimens/e1/measurements") return response(200, emptyView);
       if (path === "/specimens/e1/repot-plan") return response(200, repotPlan);
@@ -331,6 +345,136 @@ describe("US-QS-32 a form of a plant leads back to the plant, on the tab it was 
     ).toBeTruthy();
     await waitFor(() => expect(route.search).not.toContain("form="));
     expect(route.search).not.toContain("sheet=");
+  }, 15_000);
+});
+
+/** Opens the layer Archiv and from it the catch-date form of the archived plant (the one form that opens there, d-054). */
+async function openCatchDateFromArchive() {
+  await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
+  await openArchive();
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Fangdatum ändern: Alter Ficus" }),
+  );
+  await screen.findByRole(
+    "heading",
+    { level: 1, name: "Fangdatum korrigieren" },
+    { timeout: 5_000 },
+  );
+  expect(route.search).toContain("form=catch-date");
+}
+
+/** The Archiv layer is open again, and no form is in the address. */
+async function expectArchiveLayer() {
+  await waitFor(() => expect(route.search).toContain("sheet=archive"), { timeout: 5_000 });
+  expect(route.search).not.toContain("form=");
+  expect(await screen.findByRole("region", { name: "Archiv" }, { timeout: 5_000 })).toBeTruthy();
+}
+
+describe("US-QS-32 · d-054 the catch-date form opened from the Archiv names the Archiv as its way back", () => {
+  it("US-QS-32 · d-054 the chevron reads Zurück zum Archiv, not Zurück zu <Pflanze>, and the plant's name stays the subject", async () => {
+    stubPlantApi([], [ARCHIVED]);
+    renderAt("/collection?view=plants");
+    await openCatchDateFromArchive();
+    expect(screen.getByRole("button", { name: "Zurück zum Archiv" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Zurück zu Alter Ficus" })).toBeNull();
+    expect(screen.getByText("Alter Ficus", { selector: "p" })).toBeTruthy();
+  }, 15_000);
+
+  it("US-QS-32 · d-054 the chevron returns to the Archiv layer", async () => {
+    stubPlantApi([], [ARCHIVED]);
+    renderAt("/collection?view=plants");
+    await openCatchDateFromArchive();
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zum Archiv" }));
+    await expectArchiveLayer();
+  }, 15_000);
+
+  it("US-QS-32 · d-054 the system Back returns to the Archiv layer, and Back from there leaves to the list", async () => {
+    stubPlantApi([], [ARCHIVED]);
+    renderAt("/collection?view=plants");
+    await openCatchDateFromArchive();
+    back();
+    await expectArchiveLayer();
+    back();
+    await waitFor(() => expect(route.search).not.toContain("sheet="));
+    expect(route.search).not.toContain("form=");
+  }, 15_000);
+
+  it("US-QS-32 · d-054 Abbrechen returns to the Archiv layer without a write", async () => {
+    const saves: string[] = [];
+    stubPlantApi(saves, [ARCHIVED]);
+    renderAt("/collection?view=plants");
+    await openCatchDateFromArchive();
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await expectArchiveLayer();
+    expect(saves).toHaveLength(0);
+  }, 15_000);
+
+  it("US-QS-32 · Q-32 · d-054 a save returns to the Archiv layer", async () => {
+    const saves: string[] = [];
+    stubPlantApi(saves, [ARCHIVED]);
+    renderAt("/collection?view=plants");
+    await openCatchDateFromArchive();
+    await userEvent.click(screen.getByRole("button", { name: "Fangdatum sichern" }));
+    await waitFor(() => expect(saves).toEqual(["/specimens/e9/catch-date"]), { timeout: 5_000 });
+    await expectArchiveLayer();
+  }, 15_000);
+
+  it("US-QS-32 · d-054 a reload at the form's address opens the Archiv layer under it: the chevron reads Zurück zum Archiv and returns there", async () => {
+    stubPlantApi([], [ARCHIVED]);
+    renderAt("/collection?view=plants");
+    await openCatchDateFromArchive();
+    const address = `/collection${route.search}`;
+    cleanup();
+    renderAt(address);
+    await screen.findByRole(
+      "heading",
+      { level: 1, name: "Fangdatum korrigieren" },
+      { timeout: 5_000 },
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Zurück zum Archiv" }));
+    await expectArchiveLayer();
+    back();
+    await waitFor(() => expect(route.search).not.toContain("sheet="));
+    expect(route.search).not.toContain("form=");
+  }, 20_000);
+
+  it("US-QS-32 · d-054 the system Back from a form opened by its address (a reload) returns to the Archiv layer", async () => {
+    stubPlantApi([], [ARCHIVED]);
+    renderAt("/collection?view=plants");
+    await openCatchDateFromArchive();
+    const address = `/collection${route.search}`;
+    cleanup();
+    renderAt(address);
+    await screen.findByRole("button", { name: "Zurück zum Archiv" }, { timeout: 5_000 });
+    back();
+    await expectArchiveLayer();
+  }, 20_000);
+
+  it("US-QS-32 · d-054 the question about unsaved input still guards it: Verwerfen returns to the Archiv layer", async () => {
+    stubPlantApi([], [ARCHIVED]);
+    renderAt("/collection?view=plants");
+    await openCatchDateFromArchive();
+    fireEvent.change(screen.getByLabelText("Fangdatum"), { target: { value: "2025-12-24" } });
+    await waitFor(() => expect(route.guarded).toBe(true));
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zum Archiv" }));
+    const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
+    await waitFor(() => expect(route.guarded).toBe(true));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Eingabe verwerfen" }));
+    await expectArchiveLayer();
+    expect(route.guarded).toBe(false);
+  }, 20_000);
+
+  it("US-QS-32 · d-054 the same form opened from the plant layer keeps Zurück zu <Pflanze>, also by its address", async () => {
+    stubPlantApi([], [ARCHIVED]);
+    renderAt("/collection?view=plants&form=catch-date&plant=e1&tab=pflege");
+    await screen.findByRole(
+      "heading",
+      { level: 1, name: "Fangdatum korrigieren" },
+      { timeout: 5_000 },
+    );
+    expect(screen.queryByRole("button", { name: "Zurück zum Archiv" })).toBeNull();
+    await userEvent.click(await screen.findByRole("button", { name: "Zurück zu Bogenhanf" }));
+    await expectPlantLayer(CARE);
   }, 15_000);
 });
 
