@@ -14,28 +14,13 @@ const CATEGORY_TEXT = {
   DD: "Datenlage unzureichend",
 } as const;
 
-// "2026-10-16T10:00:00.000Z" becomes "16.10.2026": the day of the retrieval, not a calendar date of the keeper.
-const day = (iso: string) => iso.slice(0, 10).split("-").reverse().join(".");
-
-/** A source is a link only for https; anything else stays plain text (P-08: the value still names its source). */
-function Source(props: { url: string; retrievedAt: string }) {
-  const text = `Quelle: GBIF, abgerufen ${day(props.retrievedAt)}`;
-  if (!props.url.startsWith("https://"))
-    return <span className="text-sm text-muted-foreground">{text}</span>;
-  return (
-    <a href={props.url} target="_blank" rel="noopener noreferrer" className="text-sm underline">
-      {text}
-    </a>
-  );
-}
-
 /** One line of the card; `unknown` lines fold on a short screen (US-QS-24, issue 1154). */
 export type CardLine = { key: string; node: ReactNode; unknown: boolean };
 
 /**
- * Rarity in nature (US-POK-13): IUCN category and GBIF occurrence count, each labelled "in der Natur", with source and
- * retrieval date; unknown says "unbekannt" (P-08). Information only: no sorting, badge or reward, and the note on a
- * threatened species neither blocks nor promotes anything.
+ * Rarity in nature (US-POK-13): IUCN category and GBIF occurrence count, each labelled "in der Natur"; their source and
+ * retrieval date are in the sources row at the foot of the card (US-QS-32); unknown says "unbekannt" (P-08). Information
+ * only: no sorting, badge or reward, and the note on a threatened species neither blocks nor promotes anything.
  */
 export function rarityLines(rarity: Rarity): CardLine[] {
   const { iucn, occurrences, threatened } = rarity;
@@ -50,10 +35,7 @@ export function rarityLines(rarity: Rarity): CardLine[] {
           key: "iucn",
           unknown: false,
           node: (
-            <>
-              <span className="text-sm">{`In der Natur: ${CATEGORY_TEXT[iucn.category]} (${iucn.category})`}</span>
-              <Source url={iucn.url} retrievedAt={iucn.retrievedAt} />
-            </>
+            <span className="text-sm">{`In der Natur: ${CATEGORY_TEXT[iucn.category]} (${iucn.category})`}</span>
           ),
         },
     occurrences === null
@@ -66,10 +48,7 @@ export function rarityLines(rarity: Rarity): CardLine[] {
           key: "occurrences",
           unknown: false,
           node: (
-            <>
-              <span className="text-sm">{`In der Natur: ${occurrences.count.toLocaleString("de-DE")} Fundmeldungen (GBIF)`}</span>
-              <Source url={occurrences.url} retrievedAt={occurrences.retrievedAt} />
-            </>
+            <span className="text-sm">{`In der Natur: ${occurrences.count.toLocaleString("de-DE")} Fundmeldungen (GBIF)`}</span>
           ),
         },
   ];

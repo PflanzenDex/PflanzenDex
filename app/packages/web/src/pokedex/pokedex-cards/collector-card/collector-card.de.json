@@ -1,0 +1,11 @@
+{
+  "card.imageAlt": "Bild von {species}",
+  "card.pictureCredit": "Bild",
+  "source.wikipedia": "{label}: Wikipedia (CC BY-SA)",
+  "source.wikipediaNoLink": "{label}: Wikipedia (CC BY-SA), Link unbekannt",
+  "sources.title": "Quellen",
+  "sources.gbif": "GBIF",
+  "sources.wikipedia": "Wikipedia (CC BY-SA)",
+  "sources.retrieved": "abgerufen {date}",
+  "sources.noLink": "Link unbekannt"
+}
