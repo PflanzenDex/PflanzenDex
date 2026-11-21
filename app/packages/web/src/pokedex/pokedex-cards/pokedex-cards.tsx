@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
-import { germanNameOf } from "@/shared/species-name/species-name";
+import { germanNameOf, SCIENTIFIC } from "@/shared/species-name/species-name";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
@@ -39,12 +39,12 @@ export const speciesLayerId = (species: string): string => `species-${species}`;
 function speciesLines(c: CaughtSpecies): { title: ReactNode; meta: ReactNode } {
   const german = germanNameOf(c.species, c.germanName);
   const date = catchText(c.caughtDate);
-  if (german === null) return { title: <i className="hyphens-manual">{c.species}</i>, meta: date };
+  if (german === null) return { title: <i className={SCIENTIFIC}>{c.species}</i>, meta: date };
   return {
     title: german,
     meta: (
       <>
-        <i className="hyphens-manual">{c.species}</i>
+        <i className={SCIENTIFIC}>{c.species}</i>
         {` · ${date}`}
       </>
     ),

@@ -13,7 +13,7 @@ import { cn } from "@/shared/lib/utils";
  */
 
 /** A scientific name never hyphenates, also inside a title that does (issue 2366). */
-const SCIENTIFIC = "hyphens-manual";
+export const SCIENTIFIC = "hyphens-manual";
 
 /** The German name where the catalog has one; `null` for a missing, empty or scientific one. */
 export function germanNameOf(scientific: string, german: string | null): string | null {

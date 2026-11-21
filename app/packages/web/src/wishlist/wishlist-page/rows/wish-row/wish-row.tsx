@@ -5,7 +5,7 @@ import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { useObjectPhoto } from "@/shared/lists/object-row/use-object-photo";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { germanNameOf } from "@/shared/species-name/species-name";
+import { germanNameOf, SCIENTIFIC } from "@/shared/species-name/species-name";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LEVELS, UNKNOWN } from "../../../candidate-card/candidate-card";
 import {
@@ -38,7 +38,7 @@ function titleOf(c: Candidate, rank: number) {
   return (
     <>
       {`${rank}. `}
-      {german ?? <i className="hyphens-manual">{c.name}</i>}
+      {german ?? <i className={SCIENTIFIC}>{c.name}</i>}
     </>
   );
 }
@@ -53,7 +53,7 @@ function metaOf(c: Candidate) {
   if (germanNameOf(c.name, c.german) === null) return zone;
   return (
     <>
-      <i className="hyphens-manual">{c.name}</i>
+      <i className={SCIENTIFIC}>{c.name}</i>
       {` · ${zone}`}
     </>
   );
