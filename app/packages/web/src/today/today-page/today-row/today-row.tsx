@@ -54,7 +54,7 @@ type RowProps = {
 function ViewRow(props: RowProps & { view: LinkTarget }) {
   return (
     <GroupedRow
-      {...(props.bare ? { bare: true } : {})}
+      {...(props.bare ? { bare: true, dense: true } : {})}
       to={viewAddress(props.view)}
       title={chipOf(props.item)}
       meta={lineOf(props.item)}
@@ -72,7 +72,7 @@ function LayerRow(props: RowProps & { layer: string }) {
   const { openLayer, open } = useLayer(props.layer);
   return (
     <GroupedRow
-      {...(props.bare ? { bare: true } : {})}
+      {...(props.bare ? { bare: true, dense: true } : {})}
       haspopup="dialog"
       expanded={open}
       tone={isTreatment(props.item) ? "warning" : "default"}

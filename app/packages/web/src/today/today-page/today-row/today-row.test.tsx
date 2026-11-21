@@ -240,3 +240,31 @@ describe("US-QS-32 a task row of Heute is one row with its whole target (SG-TOUC
     expect(stand.className).not.toContain("text-xs");
   });
 });
+
+describe("US-QS-32 · SG-LIST-01 the rows of the further tasks are dense, the row of Jetzt dran is not (issue 1854)", () => {
+  it("US-QS-32 · SG-LIST-01 a row of a list of its own has 8 px above and below, so two rows fit the first screen at 360 x 640", () => {
+    render(
+      wrap(
+        <ul>
+          <li>
+            <TodayRow item={item({})} bare />
+          </li>
+        </ul>,
+      ),
+    );
+    const link = screen.getByRole("link");
+    expect(link.className).toContain("py-2");
+    expect(link.className).not.toContain("py-3");
+  });
+
+  it("US-QS-32 · SG-LIST-01 a row inside a group of its own (Jetzt dran) keeps its 12 px", () => {
+    render(
+      wrap(
+        <GroupedList>
+          <TodayRow item={item({})} />
+        </GroupedList>,
+      ),
+    );
+    expect(screen.getByRole("link").className).toContain("py-3");
+  });
+});

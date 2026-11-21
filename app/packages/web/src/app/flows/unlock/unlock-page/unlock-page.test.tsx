@@ -284,10 +284,10 @@ describe("US-QS-18 locked functions on Heute", () => {
     })) as unknown as typeof window.matchMedia;
   });
 
-  it("US-QS-18 the locked functions are one tile 'n Noch nicht geöffnet' that opens a layer with the rows (issue 1156)", async () => {
+  it("US-QS-18 the locked functions are one tile 'n Ungeöffnet' that opens a layer with the rows (issue 1156)", async () => {
     server(() => [swapping(), swapping({ id: "wishlist" })]);
     page("/collapsed");
-    const row = await screen.findByRole("button", { name: "2 Noch nicht geöffnet" });
+    const row = await screen.findByRole("button", { name: "2 Ungeöffnet" });
     expect(screen.queryByRole("link")).toBeNull();
     await userEvent.click(row);
     const layer = await screen.findByRole("dialog", { name: "Weitere Funktionen" });
@@ -295,6 +295,17 @@ describe("US-QS-18 locked functions on Heute", () => {
     // The rows page by the free height of the layer instead of scrolling it (US-QS-15, issue 1156).
     const rows = within(layer).getByRole("list", { name: "Noch nicht geöffnet" });
     expect(rows.hasAttribute("data-page-fit")).toBe(true);
+  });
+
+  it("US-QS-32 · SG-LIST-01 the tile says 'Ungeöffnet' (one line at 360 px, issue 1854) while the heading of the locked rows stays 'Noch nicht geöffnet'", async () => {
+    server(() => [swapping(), swapping({ id: "wishlist" })]);
+    page("/collapsed");
+    const tile = await screen.findByRole("button", { name: "2 Ungeöffnet" });
+    expect(tile.textContent).toContain("Ungeöffnet");
+    expect(screen.queryByRole("button", { name: /Noch nicht geöffnet/ })).toBeNull();
+    await userEvent.click(tile);
+    const layer = await screen.findByRole("dialog", { name: "Weitere Funktionen" });
+    expect(within(layer).getByRole("list", { name: "Noch nicht geöffnet" })).toBeTruthy();
   });
 
   it("US-QS-18 nothing locked shows no tile", async () => {

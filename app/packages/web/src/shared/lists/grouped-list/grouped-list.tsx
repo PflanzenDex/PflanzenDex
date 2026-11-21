@@ -83,6 +83,11 @@ export type GroupedRowProps = {
    */
   bare?: boolean | undefined;
   /**
+   * 8 px above and below instead of 12 px, for the rows of a list that has to show two whole rows on the first screen of a
+   * 360 x 640 phone (SG-LIST-01, issue 1854). The row keeps its 44 px hit area and its text size.
+   */
+  dense?: boolean | undefined;
+  /**
    * An action stands beside the row (`ObjectRow` draws it, because a button cannot sit in a link or a button). The action is
    * the row's one trailing element, so the chevron steps aside (SG-LIST-03). It is no way to hide the chevron of an opener
    * that has nothing beside it (issue 2355).
@@ -114,6 +119,7 @@ export function GroupedRow(props: GroupedRowProps) {
   const look = cn(
     ROW,
     object && OBJECT_ROW,
+    props.dense && "py-2",
     interactive && (warning ? FOCUS : INTERACTIVE),
     props.current && "bg-muted",
     destructive && "text-destructive",
