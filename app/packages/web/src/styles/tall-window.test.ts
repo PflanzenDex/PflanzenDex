@@ -38,12 +38,15 @@ describe("US-QS-14 tall window: one threshold for the bars and their room", () =
     );
   });
 
-  it("US-QS-14 by default nothing is pinned to the window height; the tall window restores the one-screen frame", () => {
+  it("US-QS-14 by default nothing is pinned to the window height; the tall window restores the one-screen frame from md (issue 1854)", () => {
     expect(flat).toContain("main > div:has(> [data-fit-fill]) { height: auto; }");
     expect(flat).toContain("main > div > [data-fit-fill] { margin: -0.5rem -1rem;");
     expect(flat).toContain("main:has([data-fit-screen]) { overflow-y: visible;");
     expect(flat).toContain("@variant tall-window { ");
-    expect(flat).toContain("div:has(> div > main [data-fit-screen]) { height: 100dvh; }");
+    // Below md (48 rem) there is no frame: the page scrolls (SG-LIST-01), so the frame rules sit in a media query of md.
+    expect(flat).toMatch(
+      /@media \(width >= 48rem\) \{ div:has\(> div > main \[data-fit-screen\]\) \{ height: 100dvh; \}/,
+    );
     expect(flat).toContain(
       "main > div > [data-fit-fill] { height: calc(100% + 1rem); overflow-y: auto;",
     );
@@ -52,7 +55,7 @@ describe("US-QS-14 tall window: one threshold for the bars and their room", () =
     );
     // Issue 1835: with the bottom bar the view ends at the room for the bar, so its last 0.5 rem is never under it.
     expect(flat).toContain(
-      "@media (width < 48rem) { main > div > [data-fit-fill] { height: calc(100% + 0.5rem); margin-bottom: 0; } }",
+      "@media (width < 48rem) { main > div > [data-fit-fill] { margin-bottom: 0; } }",
     );
   });
 });

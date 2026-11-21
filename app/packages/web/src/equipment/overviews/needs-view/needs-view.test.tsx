@@ -121,8 +121,10 @@ describe("US-QS-32 needs are rows titled by their next action, opening where it 
   it("US-QS-32 the rows of the needs do not count towards the height of their section, and the section never shrinks below its content, so the pager never falls under the recommendations at 200 % text (issue 2272)", () => {
     render(<NeedsView needs={[need({ id: "a" }), need({ id: "b" })]} fill={noop} />);
     const list = screen.getByRole("list", { name: "Fehlt / Nachkaufen" });
-    // Size containment (issue 1113, as the today page): the page size follows the free height, not the rows on the page.
-    expect(list.className).toContain("[contain:size]");
+    // Size containment (issue 1113, as the today page) from 768 px, where the list pages: the page size follows the free
+    // height, not the rows on the page. Below it the list scrolls with the page, so its rows give it its height.
+    expect(list.className).toContain("md:[contain:size]");
+    expect(list.className).not.toMatch(/(^|\s)\[contain:size\]/);
     // A row never shrinks below its content, so a squeezed list cannot collapse it to its borders (issue 2272).
     expect(list.className).toContain("[&>li]:shrink-0");
     const section = list.closest("section") as HTMLElement;

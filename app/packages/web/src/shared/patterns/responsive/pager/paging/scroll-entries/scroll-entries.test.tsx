@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
@@ -14,7 +14,9 @@ afterEach(() => {
 
 const plants = Array.from({ length: 20 }, (_, i) => `Pflanze ${i + 1}`);
 
-function list(items: readonly string[], paging?: PagerPaging) {
+type ListOptions = { resetKey?: string; fit?: boolean };
+
+function list(items: readonly string[], paging?: PagerPaging, more: ListOptions = {}) {
   return (
     <MemoryRouter>
       <Pager
@@ -23,6 +25,8 @@ function list(items: readonly string[], paging?: PagerPaging) {
         label="Pflanzen"
         renderItem={(t) => t}
         {...(paging ? { paging } : {})}
+        {...(more.resetKey !== undefined ? { resetKey: more.resetKey } : {})}
+        {...(more.fit ? { fit: true } : {})}
       />
     </MemoryRouter>
   );
@@ -39,12 +43,17 @@ function serverPaging(total: number, onMore: () => void): PagerPaging {
   };
 }
 
-/** A fake IntersectionObserver: `reach` reports that the end of the list is on screen. */
+/** A fake IntersectionObserver: `reach` reports that the end of the list is on screen; `roots` are the roots it was made with. */
 function stubIntersection() {
   const active = new Set<IntersectionObserverCallback>();
+  const roots: (Element | Document | null | undefined)[] = [];
   class FakeObserver {
-    constructor(private readonly callback: IntersectionObserverCallback) {
+    constructor(
+      private readonly callback: IntersectionObserverCallback,
+      options?: IntersectionObserverInit,
+    ) {
       active.add(callback);
+      roots.push(options?.root);
     }
     observe() {}
     unobserve() {}
@@ -57,6 +66,7 @@ function stubIntersection() {
   }
   vi.stubGlobal("IntersectionObserver", FakeObserver);
   return {
+    roots,
     reach: () =>
       act(() => {
         for (const callback of active) {
@@ -112,5 +122,83 @@ describe("US-QS-32 · SG-LIST-01 a list on a phone scrolls instead of paging", (
     const onMore = vi.fn();
     render(list(plants.slice(0, 8), serverPaging(20, onMore)));
     expect(onMore).toHaveBeenCalled();
+  });
+
+  it("US-QS-32 · SG-LIST-01 a failed part shows its note with the retry and nothing is asked for again", () => {
+    setViewportWidth(360);
+    const onMore = vi.fn();
+    const failed = { ...serverPaging(20, onMore), failure: "Konnte nicht geladen werden" };
+    render(list(plants.slice(0, 8), failed));
+    expect(screen.getByRole("alert").textContent).toBe("Konnte nicht geladen werden");
+    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+    expect(onMore).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 · SG-LIST-01 a retry that worked takes the note away and puts the focus on the list", () => {
+    setViewportWidth(360);
+    const onRetry = vi.fn();
+    const failed = {
+      ...serverPaging(12, vi.fn()),
+      failure: "Konnte nicht geladen werden",
+      onRetry,
+    };
+    const view = render(list(plants.slice(0, 8), failed));
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    view.rerender(list(plants.slice(0, 12), serverPaging(12, vi.fn())));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole("list", { name: "Pflanzen" }));
+  });
+
+  it("US-QS-32 · SG-LIST-01 the second part is asked for once the first has arrived and the end shows again", () => {
+    setViewportWidth(360);
+    const observer = stubIntersection();
+    const onMore = vi.fn();
+    const view = render(list(plants.slice(0, 8), serverPaging(20, onMore)));
+    observer.reach();
+    expect(onMore).toHaveBeenCalledTimes(1);
+    view.rerender(list(plants.slice(0, 12), serverPaging(20, onMore)));
+    expect(onMore).toHaveBeenCalledTimes(1);
+    observer.reach();
+    expect(onMore).toHaveBeenCalledTimes(2);
+  });
+
+  it("US-QS-32 · SG-LIST-01 a changed filter forgets what was asked for, so no skeletons stand for the old part", () => {
+    setViewportWidth(360);
+    const observer = stubIntersection();
+    const onMore = vi.fn();
+    const paging = { ...serverPaging(20, onMore), placeholder: <span>Karte</span> };
+    const holes = () => document.querySelectorAll('li[aria-hidden="true"]').length;
+    const view = render(list(plants.slice(0, 8), paging, { resetKey: "alle" }));
+    observer.reach();
+    expect(holes()).toBe(4);
+    view.rerender(list(plants.slice(0, 4), paging, { resetKey: "Wohnzimmer" }));
+    expect(holes()).toBe(0);
+    observer.reach();
+    expect(onMore).toHaveBeenCalledTimes(2);
+  });
+
+  it("US-QS-32 · SG-LIST-01 · SG-LIST-02 a fit list scrolls in its own box, so it is a tab stop and its rows keep their height", () => {
+    setViewportWidth(360);
+    render(list(plants, undefined, { fit: true }));
+    expect(screen.getByRole("list", { name: "Pflanzen" }).getAttribute("tabindex")).toBe("0");
+    for (const row of screen.getAllByRole("listitem")) expect(row.className).toContain("shrink-0");
+  });
+
+  it("US-QS-32 · SG-LIST-01 a list that does not scroll in its own box is no tab stop", () => {
+    setViewportWidth(360);
+    render(list(plants));
+    expect(screen.getByRole("list", { name: "Pflanzen" }).hasAttribute("tabindex")).toBe(false);
+  });
+
+  it("US-QS-32 · SG-LIST-01 the end of a fit list is watched inside the list, the end of any other against the window", () => {
+    setViewportWidth(360);
+    const fit = stubIntersection();
+    const view = render(list(plants.slice(0, 8), serverPaging(20, vi.fn()), { fit: true }));
+    expect(fit.roots.at(-1)).toBe(screen.getByRole("list", { name: "Pflanzen" }));
+    view.unmount();
+    const page = stubIntersection();
+    render(list(plants.slice(0, 8), serverPaging(20, vi.fn())));
+    expect(page.roots.at(-1) ?? null).toBeNull();
   });
 });

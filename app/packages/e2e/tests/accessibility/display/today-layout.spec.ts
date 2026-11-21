@@ -59,15 +59,19 @@ async function settleOverview(page: Page): Promise<void> {
     .toBe(true);
 }
 
-/** On the settled "Heute", the anniversaries tile covers neither the further tasks, their pager nor the later line, and they are hit. */
+/** Whether the page itself scrolls: below 768 px a list and Heute scroll as the page, there is no frame (issue 1854). */
+const pageScrolls = (page: Page): Promise<boolean> =>
+  page.evaluate(() => (document.scrollingElement?.scrollHeight ?? 0) > window.innerHeight);
+
+/**
+ * On the settled "Heute" on a phone, the anniversaries tile covers neither the further tasks nor the later line, and they are
+ * hit. The further tasks scroll as one list (SG-LIST-01, issue 1854): no pager stands below them.
+ */
 async function expectNoCover(page: Page, size: string): Promise<void> {
   const tile = await boxOf(anniversariesTile(page));
   const later = page.getByText("3 Termine später", { exact: true });
-  const weiter = page.getByRole("button", { name: "Weiter", exact: true });
   const parts: Record<string, Locator> = {
     "the further tasks": page.getByRole("list", { name: "Weitere Aufgaben" }),
-    "the pager Zurück": page.getByRole("button", { name: "Zurück", exact: true }),
-    "the pager Weiter": weiter,
     "the later line": later,
   };
   for (const [name, part] of Object.entries(parts)) {
@@ -77,11 +81,10 @@ async function expectNoCover(page: Page, size: string): Promise<void> {
     ).toBe(false);
   }
   expect(await hitsItself(later), `${size}: another element is hit at the later line`).toBe(true);
-  expect(await hitsItself(weiter), `${size}: another element is hit at Weiter`).toBe(true);
 }
 
 test.describe("US-QS-18 Heute at 360 px", () => {
-  test("US-QS-18: Heute at 360 px: the anniversaries tile covers neither the pager nor the later line (issue 1662)", async ({
+  test("US-QS-18: Heute at 360 px: the anniversaries tile covers neither the further tasks nor the later line (issue 1662)", async ({
     page,
     account,
   }, info) => {
@@ -115,15 +118,14 @@ test.describe("US-QS-18 Heute at 360 px", () => {
     await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
     await settleOverview(page);
     await expectNoCover(page, "360x640 at 200 %");
-    // The content is taller than the window and scrolls inside the frame; it does not collapse under the tile.
-    expect(
-      await page.locator("[data-fit-fill]").evaluate((el) => el.scrollHeight > el.clientHeight),
-    ).toBe(true);
+    // The content is taller than the window and the page scrolls (no frame below 768 px, issue 1854); it does not collapse
+    // under the tile.
+    expect(await pageScrolls(page)).toBe(true);
   });
 });
 
 test.describe("US-QS-14 Heute taller than the window", () => {
-  test("US-QS-14: Heute taller than the window: scrolled to the end, the frame and Weiter end above the bottom bar (issue 1835)", async ({
+  test("US-QS-14: Heute taller than the window: scrolled to the end, the frame and its last entry end above the bottom bar (issue 1835)", async ({
     page,
     account,
   }, info) => {
@@ -136,21 +138,21 @@ test.describe("US-QS-14 Heute taller than the window", () => {
     await page.setViewportSize({ width: 360, height: 640 });
     await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
     await settleOverview(page);
-    const frame = page.locator("[data-fit-fill]");
-    expect(await frame.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
-    await frame.evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
-    // The scrolling frame itself ends at the top of the bar, so its last line (its own bottom padding included) is
-    // never under the bar, whatever the content; before the fix it reached 8 px (0.5 rem) under it.
-    const box = await boxOf(frame);
+    expect(await pageScrolls(page)).toBe(true);
+    await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight }));
+    // The page ends at the top of the bar, so the last line of the frame (its own bottom padding included) is never under
+    // the bar, whatever the content; before the fix it reached 8 px (0.5 rem) under it.
+    const box = await boxOf(page.locator("[data-fit-fill]"));
     const bar = await boxOf(page.locator("nav[data-bottom-bar]"));
     expect(
       box.y + box.height,
-      "the bottom of the scrolling frame against the top of the bar",
+      "the bottom of the frame against the top of the bar",
     ).toBeLessThanOrEqual(bar.y + 0.5);
-    const weiter = await boxOf(page.getByRole("button", { name: "Weiter", exact: true }));
+    const last = page.getByRole("list", { name: "Weitere Aufgaben" }).getByRole("listitem").last();
+    const entry = await boxOf(last);
     expect(
-      weiter.y + weiter.height,
-      "the bottom of Weiter against the top of the bar",
+      entry.y + entry.height,
+      "the bottom of the last further task against the top of the bar",
     ).toBeLessThanOrEqual(bar.y);
   });
 });
