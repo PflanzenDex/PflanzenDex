@@ -10,8 +10,7 @@ import {
   type Response,
   type WriteOptions,
 } from "../api";
-import { localToday } from "@pflanzendex/core";
-import { currentTimeZone } from "../time-zone";
+import { todayLocal } from "../time-zone";
 import { appendKey, entityKey, useRepeatKey, type KeyScope, type RepeatEntity } from "./repeat-key";
 import table from "./write-action.de.json";
 
@@ -147,8 +146,4 @@ export const entityRun =
 export const dailyRun =
   (write: ReturnType<typeof useWriteAction>, entity: RepeatEntity, id: string) =>
   (send: WriteSend, success: string, action: string) =>
-    void write.run(
-      send,
-      success,
-      appendKey(entity, id, `${action}:${localToday(new Date(), currentTimeZone())}`),
-    );
+    void write.run(send, success, appendKey(entity, id, `${action}:${todayLocal()}`));

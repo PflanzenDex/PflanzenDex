@@ -37,4 +37,4 @@ export {
 } from "./write-action/repeat-key";
 export { FeaturesProvider, useFeature, useFeatures } from "./client/features/features";
 export type { FeatureStates } from "./client/features/features";
-export { currentTimeZone, deviceTimeZone, setProfileTimeZone } from "./time-zone";
+export { currentTimeZone, deviceTimeZone, setProfileTimeZone, todayLocal } from "./time-zone";

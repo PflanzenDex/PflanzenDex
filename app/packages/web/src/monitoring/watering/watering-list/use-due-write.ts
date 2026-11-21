@@ -3,11 +3,10 @@ import { useAnnounce } from "@/shared/platform/announcer/context";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useUndo, type Held, type Undo } from "@/shared/feedback/undo-row/use-undo";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { localToday } from "@pflanzendex/core";
 import {
   accountKey,
   appendKey,
-  currentTimeZone,
+  todayLocal,
   entityKey,
   useInvalidate,
   useWriteAction,
@@ -45,7 +44,7 @@ const waterKey = (specimenIds: readonly string[], action: string): KeyScope =>
  * own. A bulk watering is an append to several plants: its own target, not the account (set-state).
  */
 const waterAppend = (specimenIds: readonly string[]): KeyScope => {
-  const day = localToday(new Date(), currentTimeZone());
+  const day = todayLocal();
   return specimenIds.length === 1 && specimenIds[0] !== undefined
     ? appendKey("specimen", specimenIds[0], `water:${day}`)
     : { target: "bulk:watering", action: `${day}:${specimenIds.join(",")}`, adds: true };

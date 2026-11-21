@@ -1,11 +1,10 @@
 import { useRef } from "react";
-import { localToday } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useUndo } from "@/shared/feedback/undo-row/use-undo";
 import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import {
   appendKey,
-  currentTimeZone,
+  todayLocal,
   entityKey,
   useInvalidate,
   useWriteAction,
@@ -57,7 +56,7 @@ export function useWaterWrite(
       },
       t("watered", { name: specimen.name }),
       // A daily append: the local day names the occasion, so a watering the next day is a write of its own (US-QS-03).
-      appendKey("specimen", specimen.id, `water:${localToday(new Date(), currentTimeZone())}`),
+      appendKey("specimen", specimen.id, `water:${todayLocal()}`),
     );
   const undoWater = () => {
     const date = writtenOn.current;

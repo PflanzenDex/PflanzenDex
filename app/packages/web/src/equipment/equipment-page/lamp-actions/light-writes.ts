@@ -1,11 +1,4 @@
-import { localToday } from "@pflanzendex/core";
-import {
-  accountKey,
-  appendKey,
-  currentTimeZone,
-  entityKey,
-  useWriteAction,
-} from "../../../shared/data";
+import { accountKey, appendKey, todayLocal, entityKey, useWriteAction } from "../../../shared/data";
 import { describeLamp, measureLamp, setDeviationLimit } from "../../equipment-api";
 import type { LampLightActions } from "../../lamp-light/lamp-light";
 
@@ -28,7 +21,7 @@ export function lightWrites(api: string, write: Write): LampLightActions {
         },
         `Messung für „${lamp.name}“ gesichert.`,
         // An append (a measurement is added to the lamp): the operation and the local day, the values are the body (US-QS-03).
-        appendKey("lamp", lamp.id, `measure:${localToday(new Date(), currentTimeZone())}`),
+        appendKey("lamp", lamp.id, `measure:${todayLocal()}`),
       );
       return saved;
     },
