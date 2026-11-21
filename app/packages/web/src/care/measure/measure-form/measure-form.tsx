@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type Control } from "react-hook-form";
 import { localToday, MEASUREMENT_LIMITS } from "@pflanzendex/core";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
+import { FormBarRegion } from "@/shared/ui/button/form-bar/form-bar.page";
 import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
 import { Select } from "@/shared/ui/fields/select/select";
@@ -22,7 +23,7 @@ import {
 } from "../../shared/schemas";
 import { QUALITY_NAME } from "../../shared/text";
 
-/** The id of the measure form; the bar at its top submits it through the `form` attribute (US-WAC-01, SG-SHEET-04). */
+/** The id of the measure form; its bar submits it through the `form` attribute (US-WAC-01, SG-SHEET-04). */
 const FORM_ID = "measure-form";
 
 function Fields(props: {
@@ -127,22 +128,25 @@ export function MeasureForm(props: {
         onSubmit={submit}
         className="flex max-w-xl flex-col gap-3"
       >
-        <MeasureBar
-          formId={FORM_ID}
-          saving={form.formState.isSubmitting}
-          photoStatus={props.photoStatus ?? null}
-          onCancel={props.onCancel}
-        />
-        <Fields
-          control={form.control}
-          unit={props.unit}
-          today={today}
-          etiolationSigns={props.signs ?? null}
-          focusRef={props.focusRef}
-          photo={<PhotoInput onPick={setPhoto} problem={problem} inputKey={inputKey} />}
-          photoOpen={photo !== null || problem !== null}
-        />
-        {refusal && <RefusalAlert error={refusal} />}
+        {/* A page form: its bar sticks at the top below md and stands after the last field from md (US-QS-32, SG-SHEET-04). */}
+        <FormBarRegion>
+          <Fields
+            control={form.control}
+            unit={props.unit}
+            today={today}
+            etiolationSigns={props.signs ?? null}
+            focusRef={props.focusRef}
+            photo={<PhotoInput onPick={setPhoto} problem={problem} inputKey={inputKey} />}
+            photoOpen={photo !== null || problem !== null}
+          />
+          {refusal && <RefusalAlert error={refusal} />}
+          <MeasureBar
+            formId={FORM_ID}
+            saving={form.formState.isSubmitting}
+            photoStatus={props.photoStatus ?? null}
+            onCancel={props.onCancel}
+          />
+        </FormBarRegion>
       </FormRoot>
     </Form>
   );

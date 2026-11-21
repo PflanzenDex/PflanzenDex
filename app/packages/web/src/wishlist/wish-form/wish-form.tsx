@@ -113,11 +113,11 @@ export function WishForm(props: {
       />
       <Form {...form}>
         <FormRoot id={formId} onSubmit={submit} className="flex max-w-xl flex-col gap-4">
-          {/* The save sits in the bar of the layer with "Abbrechen", never in a sticky footer (US-QS-32, SG-SHEET-04). */}
+          <FieldGroups form={form} access={props.access} zones={props.zones} />
+          {/* The save stands after the last field with "Abbrechen", in the bar of a phone sheet, never in a sticky footer (US-QS-32, SG-SHEET-04). */}
           <FormBar formId={formId} pending={pending} pendingText={ui("form.saving")}>
             {ui("form.save")}
           </FormBar>
-          <FieldGroups form={form} access={props.access} zones={props.zones} />
         </FormRoot>
       </Form>
     </section>

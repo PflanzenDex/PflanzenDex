@@ -94,13 +94,13 @@ export function CostForm(props: {
   return (
     <Form {...form}>
       <FormRoot id={formId} onSubmit={submit} className="flex max-w-xl flex-col gap-4">
-        {/* The save sits in the bar of the layer "Monatliche Kosten" with "Abbrechen", never in a sticky footer (US-QS-32, SG-SHEET-04). */}
-        <FormBar formId={formId} inactive={props.running} busy={props.running} needsNetwork>
-          Kosten sichern
-        </FormBar>
         <TextField control={form.control} name="amount" label="Betrag" inputMode="decimal" />
         <TextField control={form.control} name="currency" label="Währung" maxLength={3} />
         <MonthRow control={form.control} max={thisMonth()} />
+        {/* The save stands after the last field with "Abbrechen", in the bar of the layer "Monatliche Kosten", never in a sticky footer (US-QS-32, SG-SHEET-04). */}
+        <FormBar formId={formId} inactive={props.running} busy={props.running} needsNetwork>
+          Kosten sichern
+        </FormBar>
       </FormRoot>
     </Form>
   );

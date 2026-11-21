@@ -13,7 +13,7 @@ const CONTROL = `${TEXT_FIELD}, button:not([disabled]):not([data-close]), a[href
 
 /**
  * The text field a layer starts with, when its first control is one; otherwise `null` (US-QS-15, issue 1104). The actions of
- * a form bar (`data-form-bar`, SG-SHEET-04) are chrome like the close button: they sit above the fields and never count.
+ * a form bar (`data-form-bar`, SG-SHEET-04) are chrome like the close button: they never count, wherever the bar stands (the sheet's bar, or after the last field).
  */
 export function leadingTextField(layer: HTMLElement | null): HTMLElement | null {
   const first =

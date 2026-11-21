@@ -7,6 +7,8 @@ import {
   type LightLocation,
   type LightZone,
 } from "@pflanzendex/core";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
+import { FormBarRegion } from "@/shared/ui/button/form-bar/form-bar.page";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../../shared/data";
 import { refusesCatchDate } from "../../../markers/catch-date/catch-date-field/catch-date-field";
@@ -15,7 +17,7 @@ import { Heading, NamePreview, OtherFields } from "../create-fields/create-field
 import { toCreateInput, type CreateInput } from "../create-input";
 import { MarkerFields } from "../../../markers/marker/marker-fields/marker-fields";
 import { markerRule, type Sibling } from "../../../markers/marker/marker-rule";
-import { FormButtons, ErrorNotice } from "../../cards/parts/parts";
+import { ErrorNotice } from "../../cards/parts/parts";
 import { useEdited, useRefusal } from "../../model/refusal";
 import { createSchema, type CreateFields } from "../../model/schemas";
 import { createStart } from "../../model/create-start";
@@ -24,6 +26,22 @@ import table from "./create-form.de.json";
 import { nameConflict } from "../../model/text";
 
 const ui = texts(table);
+
+/** The id of the create form; its bar submits it through the `form` attribute (US-BES-02, SG-SHEET-04). */
+const FORM_ID = "create-form";
+
+/**
+ * The bar of the form "Pflanze anlegen" (US-QS-32, SG-SHEET-04, owner decision d-056): "Abbrechen" leaves to the species
+ * choice, "Pflanze anlegen" sends the form. It is the last part of the form: at the top of the page below md, after the last
+ * field from md (owner decision d-060).
+ */
+function CreateBar(props: { pending: boolean; onCancel: () => void }) {
+  return (
+    <FormBar formId={FORM_ID} pending={props.pending} needsNetwork onCancel={props.onCancel}>
+      {ui("submit")}
+    </FormBar>
+  );
+}
 
 /** The fields a refusal points at: the catch date by its detail, a taken marker at the marker (US-BES-02, US-BES-03). */
 function fieldsOfRefusal(error: ApiError): (keyof CreateFields)[] {
@@ -95,30 +113,28 @@ export function CreateForm(props: {
       <Heading species={props.species} />
       <Form {...form}>
         <FormRoot
+          id={FORM_ID}
           onSubmit={submit}
           aria-label={ui("formLabel")}
           className="flex max-w-xl flex-col gap-4"
         >
-          <NamePreview control={form.control} speciesName={speciesName} />
-          <MarkerFields
-            control={form.control}
-            speciesName={speciesName}
-            required={rule.required}
-            missing={rule.missing}
-          />
-          <OtherFields
-            control={form.control}
-            locations={props.locations}
-            zones={props.zones}
-            today={today}
-          />
-          {error && alertText !== null && <ErrorBox text={alertText} error={error} />}
-          <FormButtons
-            submit={ui("submit")}
-            cancel={ui("cancel")}
-            pending={form.formState.isSubmitting}
-            onCancel={props.onCancel}
-          />
+          <FormBarRegion>
+            <NamePreview control={form.control} speciesName={speciesName} />
+            <MarkerFields
+              control={form.control}
+              speciesName={speciesName}
+              required={rule.required}
+              missing={rule.missing}
+            />
+            <OtherFields
+              control={form.control}
+              locations={props.locations}
+              zones={props.zones}
+              today={today}
+            />
+            {error && alertText !== null && <ErrorBox text={alertText} error={error} />}
+            <CreateBar pending={form.formState.isSubmitting} onCancel={props.onCancel} />
+          </FormBarRegion>
         </FormRoot>
       </Form>
     </section>

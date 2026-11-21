@@ -14,7 +14,7 @@ beforeAll(() => {
 
 afterEach(cleanup);
 
-/** A form that draws its bar through the container, as the forms of the layers do (US-QS-32, SG-SHEET-04). */
+/** A form that draws its bar through the container, as the forms of the layers do: the bar after the last field (US-QS-32, SG-SHEET-04). */
 function BarForm(props: { onSubmit?: () => void; pending?: boolean }) {
   return (
     <form
@@ -25,13 +25,13 @@ function BarForm(props: { onSubmit?: () => void; pending?: boolean }) {
         props.onSubmit?.();
       }}
     >
-      <FormBar formId="bar-form" pending={props.pending ?? false}>
-        Sichern
-      </FormBar>
       <label>
         Text
         <input />
       </label>
+      <FormBar formId="bar-form" pending={props.pending ?? false}>
+        Sichern
+      </FormBar>
     </form>
   );
 }
@@ -149,7 +149,7 @@ describe("US-QS-32 · SG-SHEET-04 a phone sheet puts the actions of its form in 
   });
 });
 
-describe("US-QS-32 · SG-SHEET-04 from md the same pair is a plain row of the dialog, nothing sticky", () => {
+describe("US-QS-32 · SG-SHEET-04 from md the same pair is a plain row after the last field of the dialog, nothing sticky", () => {
   it("US-QS-32 · SG-SHEET-04 in a dialog Abbrechen precedes the confirming action in a row that is not sticky", async () => {
     setViewportWidth(800);
     render(<Example />);
@@ -159,6 +159,22 @@ describe("US-QS-32 · SG-SHEET-04 from md the same pair is a plain row of the di
     expect(position(cancel, save) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
     const bar = cancel.parentElement as HTMLElement;
     expect(bar.className).not.toMatch(/\b(sticky|fixed)\b/);
+  });
+
+  it("US-QS-32 · SG-SHEET-04 in a dialog from 768 px the pair stands after the last field, in the content, and focus order follows the picture", async () => {
+    setViewportWidth(768);
+    render(<Example />);
+    const dialog = await screen.findByRole("dialog", { name: "Notiz" });
+    const cancel = await within(dialog).findByRole("button", { name: "Abbrechen" });
+    const field = within(dialog).getByLabelText("Text");
+    expect(position(field, cancel) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(within(dialog).getAllByRole("button", { name: "Abbrechen" })).toHaveLength(1);
+    expect(within(dialog).getAllByRole("button", { name: "Sichern" })).toHaveLength(1);
+    // The pair is in the content of the dialog, below the title, and Abbrechen is read before the confirming action.
+    const title = within(dialog).getByRole("heading", { name: "Notiz" });
+    expect(position(title, cancel) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    const save = within(dialog).getByRole("button", { name: "Sichern" });
+    expect(position(cancel, save) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
   });
 
   it("US-QS-32 · SG-SHEET-04 Abbrechen of the dialog closes it", async () => {

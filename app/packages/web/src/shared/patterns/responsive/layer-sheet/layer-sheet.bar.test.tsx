@@ -27,11 +27,11 @@ function NoteForm() {
   useUnsavedInput(text !== "");
   return (
     <form id="note-form" aria-label="Notiz erfassen" onSubmit={(event) => event.preventDefault()}>
-      <FormBar formId="note-form">Sichern</FormBar>
       <label>
         Text
         <input value={text} onChange={(event) => setText(event.target.value)} />
       </label>
+      <FormBar formId="note-form">Sichern</FormBar>
     </form>
   );
 }
@@ -98,6 +98,11 @@ describe("US-QS-32 · SG-FORM-06 Abbrechen of the bar leaves the layer the way i
     const save = within(pane).getByRole("button", { name: "Sichern" });
     expect(cancel.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
     expect((cancel.parentElement as HTMLElement).className).not.toMatch(/\b(sticky|fixed)\b/);
+    // From md the pair stands after the last field (US-QS-32, SG-SHEET-04).
+    expect(
+      within(pane).getByLabelText("Text").compareDocumentPosition(cancel) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
     await userEvent.type(within(pane).getByLabelText("Text"), "Basilikum");
     await userEvent.click(cancel);
     expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();

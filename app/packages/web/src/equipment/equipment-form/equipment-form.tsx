@@ -83,16 +83,16 @@ export function EquipmentForm(props: {
       />
       <Form {...form}>
         <FormRoot id={formId} onSubmit={submit} className="flex max-w-xl flex-col gap-4">
-          {/* The save sits in the bar of the layer with "Abbrechen", never in a sticky footer (US-QS-32, SG-SHEET-04, issue 1941). */}
-          <FormBar formId={formId} pending={pending} pendingText={t("form.saving")}>
-            {t("form.save")}
-          </FormBar>
           <RequiredFields control={form.control} />
           <ZoneField control={form.control} zones={props.zones} />
           <PotFields control={form.control} />
           <FormMoreFields control={form.control} names={OPTIONAL_FIELDS}>
             <OptionalFields control={form.control} />
           </FormMoreFields>
+          {/* The save stands after the last field with "Abbrechen", in the bar of a phone sheet, never in a sticky footer (US-QS-32, SG-SHEET-04, issue 1941). */}
+          <FormBar formId={formId} pending={pending} pendingText={t("form.saving")}>
+            {t("form.save")}
+          </FormBar>
         </FormRoot>
       </Form>
     </section>

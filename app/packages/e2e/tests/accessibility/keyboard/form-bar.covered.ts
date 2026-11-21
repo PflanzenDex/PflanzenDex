@@ -1,7 +1,9 @@
 import type { Page } from "@playwright/test";
 import { expect } from "../../../support/fixtures";
+import { barOf, expectBarUsable } from "./form-bar.checks";
 
-// "No fixed or sticky part lies on a control of the form" (US-QS-32, SG-SHEET-04, issue 1941), for form-bar.spec.ts.
+// "No fixed or sticky part lies on a control of the form" (US-QS-32, SG-SHEET-04, issue 1941), for form-bar.spec.ts: below 768 px
+// the sticky bar of a page form, from 768 px (owner decision d-060) the plain row after the last field, which floats over nothing.
 
 /**
  * Every control of the form, one after the other: scrolled into the middle of its scroll area, the browser must hit the
@@ -63,4 +65,35 @@ export async function expectNoControlCovered(page: Page, what: string): Promise<
     return found;
   });
   expect(covered, `${what}: a control lies under a fixed or sticky part`).toEqual([]);
+}
+
+/**
+ * From md the pair is the form's one plain row after its last field (owner decision d-060, US-QS-32): there is one pair in the
+ * page, it is reached by scrolling to it and then usable (`expectBarUsable`), it follows the last visible field in the DOM and
+ * lies below it in the picture, and nothing from the bar up to the form is sticky or fixed.
+ */
+export async function expectBarAfterFields(page: Page, what: string): Promise<void> {
+  await expect(page.locator("[data-form-bar]"), `${what}: one pair is in the page`).toHaveCount(1);
+  await barOf(page).bar.scrollIntoViewIfNeeded();
+  await expectBarUsable(page, what);
+  const placed = await barOf(page).bar.evaluate((el) => {
+    const root = el.closest("[role='dialog'], [data-layer-pane], main") ?? document.body;
+    const fields = Array.from(
+      root.querySelectorAll("input:not([type='hidden']), select, textarea"),
+    );
+    const last = fields.filter((field) => field.getClientRects().length > 0).pop();
+    const floats = (node: Element | null): boolean =>
+      node !== null &&
+      node !== root &&
+      (["sticky", "fixed"].includes(getComputedStyle(node).position) || floats(node.parentElement));
+    return {
+      afterInDom:
+        !!last && (last.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) > 0,
+      below: !!last && el.getBoundingClientRect().top >= last.getBoundingClientRect().bottom - 1,
+      floating: floats(el),
+    };
+  });
+  expect(placed.afterInDom, `${what}: the pair follows the last field in the DOM`).toBe(true);
+  expect(placed.below, `${what}: the pair lies below the last field`).toBe(true);
+  expect(placed.floating, `${what}: the pair is neither sticky nor fixed`).toBe(false);
 }

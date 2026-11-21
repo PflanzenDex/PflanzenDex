@@ -4,8 +4,9 @@ import { Button } from "@/shared/ui/button/button";
 import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { BUSY_LOOK, cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { useFormBarHost } from "./form-bar.host";
-import { usePageBar } from "./form-bar.page";
+import { useFormBarRegion, usePageBar } from "./form-bar.page";
 import table from "./form-bar.de.json";
 
 const t = texts(table);
@@ -98,24 +99,28 @@ function SheetBar(props: FormBarProps & { slot: HTMLElement | null; close: () =>
   );
 }
 
-/** A dialog or pane: a plain row in the content, nothing sticky. */
-function RowBar(props: FormBarProps & { close: () => void }) {
+/**
+ * A plain row in the content, after the last field, nothing sticky (owner decision d-060): the bar of a dialog from `md`, of a
+ * pane, and of a page form from `md`.
+ */
+function RowBar(props: FormBarProps & { cancel: (() => void) | undefined }) {
   return (
     <div data-form-bar="" className={cn(ROW, "min-w-0", props.className)}>
-      <Pair {...props} cancel={props.onCancel ?? props.close} />
+      <Pair {...props} />
     </div>
   );
 }
 
 /**
- * A page: the bar sticks at the top of the form, below the app's top bar, and follows the visual viewport, so with the
- * keyboard open it stays above the keyboard and covers no field (SG-FORM-02, `usePageBar`). It is the first child of the
- * form region, because a sticky element only sticks within its parent. The solid fill hides the fields that scroll under it.
+ * A page form below `md`: the bar sticks at the top of the form, below the app's top bar, and follows the visual viewport, so
+ * with the keyboard open it stays above the keyboard and covers no field (SG-FORM-02, `usePageBar`). It is drawn into the
+ * slot at the top of the `FormBarRegion`, because a sticky element only sticks within its parent. The solid fill hides the
+ * fields that scroll under it.
  */
-function PageBar(props: FormBarProps) {
+function PageBar(props: FormBarProps & { slot: HTMLElement }) {
   const ref = React.useRef<HTMLDivElement>(null);
   usePageBar(ref);
-  return (
+  return createPortal(
     <div
       ref={ref}
       data-form-bar=""
@@ -126,19 +131,25 @@ function PageBar(props: FormBarProps) {
       )}
     >
       <Pair {...props} cancel={props.onCancel} />
-    </div>
+    </div>,
+    props.slot,
   );
 }
 
 /**
- * The actions of a form (US-QS-32, SG-SHEET-04): "Abbrechen" at the leading edge, the confirming action at the trailing
- * edge, the one filled button of the view (SG-BTN-02). There is no sticky footer. The container decides where the pair
- * is drawn: in the bar of a phone sheet, in a row of a dialog or pane, at the top of a page form (sticky). The confirming
- * button names its form with `form`, so it submits it from wherever it is drawn. Render it first in the form region.
+ * The actions of a form (US-QS-32, SG-SHEET-04, owner decision d-060): "Abbrechen" at the leading edge, the confirming action
+ * at the trailing edge, the one filled button of the view (SG-BTN-02). There is no sticky footer. Render it last in the form
+ * region, after the last field: that is where it stands from `md`, in a dialog, a pane and a page form, as a plain row. Below
+ * `md` the container decides, and the DOM order still follows the picture: a phone sheet draws the pair into its bar above
+ * the title, a page form (its content in a `FormBarRegion`) sticks it at the top of the form. The confirming button names its
+ * form with `form`, so it submits it from wherever it is drawn. Only one pair is in the page at a time.
  */
 export function FormBar(props: FormBarProps) {
   const host = useFormBarHost();
+  const region = useFormBarRegion();
+  const isMd = useIsMd();
   if (host?.sheet) return <SheetBar {...props} slot={host.slot} close={host.close} />;
-  if (host) return <RowBar {...props} close={host.close} />;
-  return <PageBar {...props} />;
+  if (host) return <RowBar {...props} cancel={props.onCancel ?? host.close} />;
+  if (region && !isMd) return region.slot ? <PageBar {...props} slot={region.slot} /> : null;
+  return <RowBar {...props} cancel={props.onCancel} />;
 }

@@ -108,7 +108,7 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     ).toBeVisible();
     const form = page.getByRole("form", { name: "Messung erfassen" });
     await typeInto(page, form.getByLabel(/^Messwert/), "12,5");
-    // "Messung sichern" sits in the bar at the top of the form (SG-SHEET-04, US-QS-32).
+    // "Messung sichern" sits in the bar of the form: at the top below 768 px, after the last field from 768 px (SG-SHEET-04, US-QS-32).
     await press(page, page.getByRole("button", { name: "Messung sichern" }));
     // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
     await expectAnnounced(page, /Gesichert: 12,5\scm am \d\d\.\d\d\.\d{4}\./);

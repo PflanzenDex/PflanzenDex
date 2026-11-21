@@ -4,13 +4,21 @@ import { expect } from "../../../support/fixtures";
 // The checks of the form bar on a phone (US-QS-32, SG-SHEET-04, SG-FORM-02, SG-TOUCH-01, SG-COLOR-06), shared by
 // form-bar.spec.ts. They measure what the browser lays out: the bar's confirming action is visible, nothing that is fixed or
 // sticky covers a control of the form, and with the keyboard's height taken from the window the action and the focused field
-// are both inside the window and do not overlap.
+// are both inside the window and do not overlap. From 768 px (owner decision d-060) the pair stands after the last field as a
+// plain row: `expectBarAfterFields` in form-bar.covered.ts.
 
 /** The window sizes of the phones of the design review: iPhone 16, OnePlus 15R (assumed) and the large phone (emulated). */
 export const PHONES = [
   { width: 393, height: 852 },
   { width: 424, height: 933 },
   { width: 430, height: 932 },
+] as const;
+
+/** The windows from md (owner decision d-060): the dialog from 768 px, the pane from 1024 px, and a wide desktop. */
+export const WIDE_WINDOWS = [
+  { width: 768, height: 1024 },
+  { width: 1024, height: 768 },
+  { width: 1280, height: 800 },
 ] as const;
 
 /** The text sizes of the check: the default and 200 %. */

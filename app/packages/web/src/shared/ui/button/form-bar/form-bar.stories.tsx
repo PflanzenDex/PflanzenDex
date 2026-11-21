@@ -2,7 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { FormBar } from "./form-bar";
 
 // Catalog of the form bar (US-QS-32, SG-SHEET-04): "Abbrechen" at the leading edge, the confirming action at the trailing
-// edge. On a page it is drawn in place and sticky; inside a sheet, dialog or pane the container draws it (see `ResponsiveModal`).
+// edge. Without a container it is a plain row after the fields; a page form's `FormBarRegion` sticks it at the top below md, and
+// inside a sheet, dialog or pane the container draws it (see `ResponsiveModal`).
 const meta = {
   title: "ui/FormBar",
   component: FormBar,

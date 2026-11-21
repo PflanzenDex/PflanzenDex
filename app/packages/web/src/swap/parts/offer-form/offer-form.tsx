@@ -126,10 +126,6 @@ export function OfferForm(props: {
         </p>
       )}
       <div className="flex max-w-xl flex-col gap-3">
-        {/* The offer sits in the bar of the layer with "Abbrechen", never in a sticky footer (US-QS-32, SG-SHEET-04). */}
-        <FormBar onConfirm={() => void s.submit()} disabled={!s.ready || s.write.running}>
-          Angebot erstellen
-        </FormBar>
         <OfferFields specimens={props.specimens} value={s.fields} onChange={s.setFields} />
         {s.fields.specimenId === "" && (
           <p className="text-muted-foreground">
@@ -150,6 +146,10 @@ export function OfferForm(props: {
             onShare={s.share}
           />
         )}
+        {/* The offer stands after the last field with "Abbrechen", in the bar of a phone sheet, never in a sticky footer (US-QS-32, SG-SHEET-04). */}
+        <FormBar onConfirm={() => void s.submit()} disabled={!s.ready || s.write.running}>
+          Angebot erstellen
+        </FormBar>
       </div>
     </section>
   );

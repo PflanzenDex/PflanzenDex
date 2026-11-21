@@ -94,8 +94,6 @@ export function DeletionCard(props: { api: string; token: Token }) {
       }
     >
       <div className="flex min-w-0 flex-col gap-3">
-        {/* The actions are in the bar of the layer, above the text: "Abbrechen" and the one action of the step (SG-SHEET-04, issue 2024). */}
-        <DeletionBar state={state} step={step} typed={typed} act={act} onStep={setStep} />
         <DeletionBody
           state={state}
           loadError={loadError}
@@ -105,6 +103,8 @@ export function DeletionCard(props: { api: string; token: Token }) {
           onStep={setStep}
           act={act}
         />
+        {/* "Abbrechen" and the one action of the step stand after the text, in the bar of a phone sheet (SG-SHEET-04, issue 2024). */}
+        <DeletionBar state={state} step={step} typed={typed} act={act} onStep={setStep} />
       </div>
     </LayerPart>
   );

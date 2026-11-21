@@ -56,9 +56,9 @@ export function PhotoInput(props: {
 }
 
 /**
- * The bar of the measure form (US-QS-32, SG-SHEET-04): "Abbrechen" and "Messung sichern" at the top of the form, sticky and
- * above the keyboard (SG-FORM-02); under it the status while the photo is stored, always in the DOM so a status that
- * appears is announced, and empty it takes no room (US-WAC-06).
+ * The bar of the measure form (US-QS-32, SG-SHEET-04), last in the form: "Abbrechen" and "Messung sichern", at the top of
+ * the form below md, sticky and above the keyboard (SG-FORM-02), after the last field from md. The status while the photo is
+ * stored follows it in the DOM, always there so a status that appears is announced, and empty it takes no room (US-WAC-06).
  */
 export function MeasureBar(props: {
   formId: string;

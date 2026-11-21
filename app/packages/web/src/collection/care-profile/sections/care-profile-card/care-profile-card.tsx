@@ -72,7 +72,8 @@ export function CareProfileCard(props: {
       </Quiet>
       <Form {...form}>
         <FormRoot id={formId} onSubmit={submit} className="grid gap-3">
-          {/* The bar of the layer holds "Abbrechen" and the one save; it is filled once a value changed (US-QS-32, issue 1969). */}
+          <ProfileFields shared={shared} lists={props.lists} name={name} />
+          {/* "Abbrechen" and the one save stand after the last field, in the bar of a phone sheet; filled once a value changed (US-QS-32, issue 1969). */}
           <FormBar
             formId={formId}
             confirmName={`Sichern: ${name}`}
@@ -80,7 +81,6 @@ export function CareProfileCard(props: {
           >
             Sichern
           </FormBar>
-          <ProfileFields shared={shared} lists={props.lists} name={name} />
         </FormRoot>
       </Form>
     </section>

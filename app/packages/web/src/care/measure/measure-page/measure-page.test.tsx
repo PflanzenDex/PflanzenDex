@@ -409,6 +409,43 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(card?.style.top).toBe("80px");
   });
 
+  it.each([
+    {
+      width: 360,
+      where: "below md the note without a focused field starts just below the bar at the top",
+      top: "56px",
+    },
+    {
+      width: 1024,
+      where: "from md the bar stands after the fields, so the note starts at the top of the form",
+      top: "0px",
+    },
+  ])("US-QS-32 · SG-SHEET-04 $where", async ({ width, top }) => {
+    setViewportWidth(width);
+    try {
+      fakeServer();
+      growth.moments = UNKNOWN_GROWTH;
+      show();
+      const field = await screen.findByLabelText(/Messwert/);
+      const save = screen.getByRole("button", { name: "Messung sichern" });
+      const wrapper = screen.getByRole("form", { name: "Messung erfassen" })
+        .parentElement as HTMLElement;
+      // The form starts at 100 px; the bar is the first 56 px of it below md and the last 56 px of it from md.
+      vi.spyOn(wrapper, "getBoundingClientRect").mockReturnValue(rectAt(100, 700));
+      vi.spyOn(save.parentElement as HTMLElement, "getBoundingClientRect").mockReturnValue(
+        width < 768 ? rectAt(100, 156) : rectAt(644, 700),
+      );
+      await userEvent.type(field, "12,5");
+      field.blur();
+      fireEvent.click(save);
+      await screen.findByText(UNKNOWN_NOTE);
+      const card = document.querySelector<HTMLElement>('[data-slot="growth-note"]');
+      expect(card?.style.top).toBe(top);
+    } finally {
+      setViewportWidth(360);
+    }
+  });
+
   it("US-QS-15 · US-QS-32 the note paints under the sticky bar with the save and scrolls within 40 % of the window, also at 200 % text (issue 1644)", async () => {
     fakeServer();
     growth.moments = UNKNOWN_GROWTH;
@@ -555,6 +592,29 @@ describe("US-WAC-05 photo in the form and in the course", () => {
       bar.compareDocumentPosition(screen.getByLabelText(/Messwert/)) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).not.toBe(0);
+  });
+
+  it("US-QS-32 · SG-SHEET-04 from md the bar of the form is a plain row after the last field, not sticky, and the status line follows it", async () => {
+    setViewportWidth(1024);
+    try {
+      fakeServer();
+      show();
+      await screen.findAllByText("noch keine Messung");
+      const save = screen.getByRole("button", { name: "Messung sichern" });
+      const bar = save.parentElement as HTMLElement;
+      expect(bar.className).not.toMatch(/\b(sticky|fixed)\b/);
+      const buttons = Array.from(bar.querySelectorAll("button")).map((b) => b.textContent);
+      expect(buttons).toEqual(["Abbrechen", "Messung sichern"]);
+      expect(screen.getAllByRole("button", { name: "Messung sichern" })).toHaveLength(1);
+      const form = screen.getByRole("form", { name: "Messung erfassen" });
+      const fields = Array.from(form.querySelectorAll("input, select, textarea"));
+      const last = fields[fields.length - 1] as Element;
+      expect(last.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+      const status = form.querySelector("p[role='status']") as Element;
+      expect(bar.compareDocumentPosition(status) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    } finally {
+      setViewportWidth(360);
+    }
   });
 
   it("US-QS-24 a refused photo opens Mehr Angaben, so its message is never hidden (P-10)", async () => {

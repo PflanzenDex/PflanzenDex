@@ -206,12 +206,13 @@ describe("US-BES-02 Seite Sammlung", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("the back button of the form leads to the species choice", async () => {
+  it("US-QS-32 · SG-SHEET-04 Abbrechen in the bar of the form leads to the species choice, as the back button did", async () => {
     fakeServer();
     const onSpeciesChoose = vi.fn();
     render(page({ newSpecies: species, onSpeciesChoose }));
-    await userEvent.click(await screen.findByRole("button", { name: "Zurück zur Art" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Abbrechen" }));
     expect(onSpeciesChoose).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("button", { name: "Zurück zur Art" })).toBeNull();
   });
 
   it("US-ONB-01 Pflanze anlegen (the plus) opens the quick flow, not the species choice", async () => {

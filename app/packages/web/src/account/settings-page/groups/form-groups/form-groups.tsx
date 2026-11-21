@@ -130,16 +130,16 @@ function GroupForm(props: {
         onSubmit={send}
         className="flex flex-col gap-4"
       >
-        {/* "Abbrechen" and "Sichern" sit in the bar of the sheet, never in a sticky footer (US-QS-32, SG-SHEET-04). */}
-        <FormBar formId={formId} inactive={inactive} needsNetwork>
-          {saver.saving ? "Sichert …" : "Sichern"}
-        </FormBar>
         {props.children(form.control)}
         {alertText !== null && (
           <Banner variant="error" tabIndex={-1} ref={alertRef}>
             {alertText}
           </Banner>
         )}
+        {/* "Abbrechen" and "Sichern" stand after the last field, in the bar of a phone sheet, never in a sticky footer (US-QS-32, SG-SHEET-04). */}
+        <FormBar formId={formId} inactive={inactive} needsNetwork>
+          {saver.saving ? "Sichert …" : "Sichern"}
+        </FormBar>
       </FormRoot>
     </Form>
   );

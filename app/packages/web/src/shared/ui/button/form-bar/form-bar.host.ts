@@ -3,8 +3,9 @@ import * as React from "react";
 /**
  * What the container of a form tells its `FormBar` (US-QS-32, SG-SHEET-04): where the bar goes and how the form is left.
  * A phone sheet (`sheet`) has a bar of its own above the scroll region; the pair is drawn into its `slot` and the sheet's
- * close X gives way to "Abbrechen". A dialog from `md` and a pane from `lg` have no slot: the pair is a plain row in the
- * content. Without a host (a page) the bar is drawn in place and sticky.
+ * close X gives way to "Abbrechen". A dialog from `md` and a pane from `lg` have no slot: the pair is a plain row after the
+ * last field of the content (owner decision d-060). Without a host (a page) the form's `FormBarRegion` decides: the bar sticks
+ * at the top of the form below `md` and is a plain row after the last field from `md`.
  */
 export type FormBarHost = {
   /** A phone sheet: the pair goes through a portal into `slot`, and nothing is drawn until the sheet has its slot. */
@@ -25,7 +26,7 @@ export function useFormBarHost(): FormBarHost | null {
 
 const noRegister = () => () => undefined;
 
-/** A dialog or pane (from `md`): the pair is a plain row in the content, closing with the container's close. */
+/** A dialog or pane (from `md`): the pair is a plain row after the last field, closing with the container's close. */
 export function rowHost(close: () => void): FormBarHost {
   return { sheet: false, slot: null, close, register: noRegister };
 }

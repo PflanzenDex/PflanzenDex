@@ -75,9 +75,9 @@ function RefusalNotice(props: {
 }
 
 /**
- * The actions of each step in the bar of the layer (US-QS-15, US-QS-21, SG-SHEET-04): "Abbrechen" leads, "Weiter" on step 1 and
- * "Vorschlag sichern" on step 2 trail. On step 2 "Zurück" goes back to step 1; it is a plain button under the fields, not part
- * of the bar, and nothing is sticky.
+ * The actions of each step (US-QS-15, US-QS-21, SG-SHEET-04): "Abbrechen" leads, "Weiter" on step 1 and "Vorschlag sichern"
+ * on step 2 trail. They stand last in the form, in the bar of a phone sheet or, from md, as a row after the last field. On
+ * step 2 "Zurück" goes back to step 1; it is a plain button under the fields, not part of the bar, and nothing is sticky.
  */
 function StepActions(props: { step: 1 | 2; formId: string; pending: boolean; onNext: () => void }) {
   // `md:col-span-2`: from md the bar is a row of the dialog and spans both columns of the form.
@@ -155,12 +155,6 @@ export function ProposalForm(props: {
           aria-label="Art vorschlagen"
           className="grid gap-4 md:grid-cols-2"
         >
-          <StepActions
-            step={step}
-            formId={formId}
-            pending={form.formState.isSubmitting}
-            onNext={next}
-          />
           {step === 1 ? (
             <NameStepFields control={form.control} />
           ) : (
@@ -183,6 +177,12 @@ export function ProposalForm(props: {
               </Button>
             </div>
           ) : null}
+          <StepActions
+            step={step}
+            formId={formId}
+            pending={form.formState.isSubmitting}
+            onNext={next}
+          />
         </FormRoot>
       </Form>
     </section>

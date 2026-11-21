@@ -470,17 +470,19 @@ describe("US-BES-09 change my deviation", () => {
     expect(enabled.parentElement?.className.split(/\s+/)).not.toContain("bg-primary");
   });
 
-  it("US-QS-32 · SG-SHEET-04 the save has no sticky footer: its action sits in the bar at the top of the form", async () => {
+  it("US-QS-32 · SG-SHEET-04 the save has no sticky footer: its action sits in the bar, after the last field of the form", async () => {
     fakeServer({ entries: [entry()] });
     open();
     const save = await screen.findByRole("button", { name: "Sichern: Bogenhanf" });
     expect(document.querySelectorAll("[class*='bottom-0']")).toHaveLength(0);
     const form = save.closest("form") ?? document.getElementById(save.getAttribute("form") ?? "");
     expect(form).not.toBeNull();
-    const first = form?.querySelector("input, select, textarea, [role='group']");
-    expect(first).not.toBeNull();
+    const fields = Array.from(form?.querySelectorAll("input, select, textarea") ?? []);
+    const last = fields[fields.length - 1];
+    expect(last).toBeDefined();
+    // Without a sheet around it (a layer draws the bar of a phone sheet above the title) the pair is a plain row at the end.
     expect(
-      (save.compareDocumentPosition(first as Element) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
+      ((last as Element).compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
     ).toBe(true);
   });
 

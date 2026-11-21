@@ -2,7 +2,9 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { FormBar } from "./form-bar";
+import { FormBarRegion } from "./form-bar.page";
 
 afterEach(cleanup);
 
@@ -162,7 +164,102 @@ function mockVisualViewport(start: { height: number; offsetTop: number }) {
   };
 }
 
-describe("US-QS-32 · SG-FORM-02 a form bar on a page follows the visual viewport", () => {
+/**
+ * A page form as "Messen" is (US-QS-32, SG-SHEET-04): its content in a `FormBarRegion`, the bar after the last field. The
+ * region gives the bar its place at the top of the form below `md`.
+ */
+function PageForm() {
+  return (
+    <form id="page-form" aria-label="Messung erfassen">
+      <FormBarRegion>
+        <label>
+          Messwert
+          <input />
+        </label>
+        <label>
+          Notiz
+          <input />
+        </label>
+        <FormBar formId="page-form" onCancel={() => undefined}>
+          Sichern
+        </FormBar>
+      </FormBarRegion>
+    </form>
+  );
+}
+
+const follows = (a: Element, b: Element) =>
+  (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+
+describe("US-QS-32 · SG-SHEET-04 a page form: the bar at the top below md, a plain row after the last field from md", () => {
+  it("US-QS-32 · SG-SHEET-04 below md the bar sticks at the top of the form, before its first field, and the DOM order is the visual order", () => {
+    setViewportWidth(360);
+    render(<PageForm />);
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    const save = screen.getByRole("button", { name: "Sichern" });
+    const bar = save.parentElement as HTMLElement;
+    expect(bar.className.split(/\s+/)).toContain("sticky");
+    expect(bar.hasAttribute("data-form-bar")).toBe(true);
+    expect(follows(cancel, save)).toBe(true);
+    expect(follows(bar, screen.getByLabelText("Messwert"))).toBe(true);
+    expect(order()).toEqual(["Abbrechen", "Sichern"]);
+  });
+
+  it.each([768, 1024, 1440])(
+    "US-QS-32 · SG-SHEET-04 at %i px the pair is a plain row after the last field of the page form, not sticky",
+    (width) => {
+      setViewportWidth(width);
+      render(<PageForm />);
+      const cancel = screen.getByRole("button", { name: "Abbrechen" });
+      const save = screen.getByRole("button", { name: "Sichern" });
+      const bar = save.parentElement as HTMLElement;
+      expect(bar.className).not.toMatch(/\b(sticky|fixed)\b/);
+      expect(bar.style.top).toBe("");
+      expect(follows(cancel, save)).toBe(true);
+      expect(follows(screen.getByLabelText("Notiz"), bar)).toBe(true);
+      expect(order()).toEqual(["Abbrechen", "Sichern"]);
+    },
+  );
+
+  it("US-QS-32 · SG-SHEET-04 only one pair is in the page at a time: crossing md moves it, and the typed input stays", async () => {
+    setViewportWidth(360);
+    render(<PageForm />);
+    await userEvent.type(screen.getByLabelText("Messwert"), "12,5");
+    act(() => setViewportWidth(1024));
+    expect(screen.getAllByRole("button", { name: "Abbrechen" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Sichern" })).toHaveLength(1);
+    const bar = screen.getByRole("button", { name: "Sichern" }).parentElement as HTMLElement;
+    expect(follows(screen.getByLabelText("Notiz"), bar)).toBe(true);
+    expect((screen.getByLabelText("Messwert") as HTMLInputElement).value).toBe("12,5");
+    act(() => setViewportWidth(360));
+    expect(screen.getAllByRole("button", { name: "Sichern" })).toHaveLength(1);
+    // Back below md the pair is at the top again, before the first field.
+    expect(
+      follows(screen.getByRole("button", { name: "Sichern" }), screen.getByLabelText("Messwert")),
+    ).toBe(true);
+    expect((screen.getByLabelText("Messwert") as HTMLInputElement).value).toBe("12,5");
+  });
+
+  it("US-QS-32 · SG-SHEET-04 a form without a region keeps the pair as a plain row after its fields at every width", () => {
+    for (const width of [360, 1024]) {
+      setViewportWidth(width);
+      const { unmount } = render(
+        <form id="plain" aria-label="Formular">
+          <input aria-label="Name" />
+          <FormBar formId="plain" onCancel={() => undefined}>
+            Sichern
+          </FormBar>
+        </form>,
+      );
+      const bar = screen.getByRole("button", { name: "Sichern" }).parentElement as HTMLElement;
+      expect(bar.className).not.toMatch(/\b(sticky|fixed)\b/);
+      expect(follows(screen.getByLabelText("Name"), bar)).toBe(true);
+      unmount();
+    }
+  });
+});
+
+describe("US-QS-32 · SG-FORM-02 a form bar on a page follows the visual viewport below md", () => {
   afterEach(() => {
     Reflect.deleteProperty(window, "visualViewport");
   });
@@ -172,11 +269,8 @@ describe("US-QS-32 · SG-FORM-02 a form bar on a page follows the visual viewpor
   it("US-QS-32 · SG-FORM-02 the page bar is sticky at the top of its form and stays inside the visual viewport while the keyboard opens", () => {
     const keyboard = mockVisualViewport({ height: 716, offsetTop: 0 });
     vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(BAR);
-    render(
-      <FormBar formId="f" onCancel={() => undefined}>
-        Sichern
-      </FormBar>,
-    );
+    setViewportWidth(360);
+    render(<PageForm />);
     const bar = screen.getByRole("button", { name: "Sichern" }).parentElement as HTMLElement;
     expect(bar.className.split(/\s+/)).toContain("sticky");
     const inside = (viewport: { height: number; offsetTop: number }) => {
@@ -203,11 +297,8 @@ describe("US-QS-32 · SG-FORM-02 a form bar on a page follows the visual viewpor
   it("US-QS-32 · SG-FORM-02 a field the keyboard brings up scrolls clear of the bar: the page publishes the bar's height", () => {
     mockVisualViewport({ height: 716, offsetTop: 0 });
     vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(BAR);
-    const { unmount } = render(
-      <FormBar formId="f" onCancel={() => undefined}>
-        Sichern
-      </FormBar>,
-    );
+    setViewportWidth(360);
+    const { unmount } = render(<PageForm />);
     expect(document.documentElement.style.getPropertyValue("--form-bar-height")).toBe(`${BAR}px`);
     unmount();
     expect(document.documentElement.style.getPropertyValue("--form-bar-height")).toBe("");

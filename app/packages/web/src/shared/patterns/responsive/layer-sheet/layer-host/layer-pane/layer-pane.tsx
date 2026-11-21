@@ -61,7 +61,7 @@ export function LayerPane({
 }: LayerPaneProps) {
   const heading = React.useRef<HTMLHeadingElement>(null);
   const pane = React.useRef<HTMLElement>(null);
-  // The actions of a form in the pane are a plain row in its content; "Abbrechen" closes through the guard (US-QS-32).
+  // The actions of a form in the pane are a plain row after its last field; "Abbrechen" closes through the guard (US-QS-32, d-060).
   const barHost = React.useMemo(() => rowHost(onClose), [onClose]);
   const onBack = React.useRef(returning);
   React.useEffect(() => {

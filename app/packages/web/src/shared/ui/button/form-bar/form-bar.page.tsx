@@ -54,3 +54,30 @@ export function usePageBar(ref: React.RefObject<HTMLElement | null>): void {
     };
   }, [ref]);
 }
+
+/** What a `FormBarRegion` gives its `FormBar`: the place at the top of the form where the bar goes below `md`; `slot` is `null` until it is mounted. */
+const RegionContext = React.createContext<{ slot: HTMLElement | null } | null>(null);
+
+/** The region a `FormBar` is in; `null` when it is in none (a form that is no page form, or a layer). */
+export function useFormBarRegion(): { slot: HTMLElement | null } | null {
+  return React.useContext(RegionContext);
+}
+
+/**
+ * The content of a page form (US-QS-32, SG-SHEET-04, owner decision d-060): the one place that knows both positions of the
+ * bar. Below `md` the bar of the form sticks at the top of the form; from `md` it is a plain row after the last field. The
+ * `FormBar` stands last in the region, as the DOM order of the md position; below `md` it draws itself into the slot this
+ * region keeps at the top, so there is one pair at a time, and the order of the DOM is the order of the picture in both.
+ * The slot is `display: contents`, so the sticky bar sticks within the form itself. A form in a sheet, dialog or pane needs no
+ * region: its container tells the bar where to go (`form-bar.host.ts`).
+ */
+export function FormBarRegion({ children }: { children: React.ReactNode }) {
+  const [slot, setSlot] = React.useState<HTMLElement | null>(null);
+  const value = React.useMemo(() => ({ slot }), [slot]);
+  return (
+    <RegionContext.Provider value={value}>
+      <div ref={setSlot} className="contents" />
+      {children}
+    </RegionContext.Provider>
+  );
+}
