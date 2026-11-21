@@ -9,16 +9,9 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
 import type { Decision } from "../use-decisions";
 import table from "../../discover.de.json";
+import { largeText } from "@/shared/patterns/display/card/card-picture/large-text";
 
 const t = texts(table);
-
-/**
- * True when the text size is raised to 150 % or more (US-QS-21, WCAG 1.4.4). Media queries do not follow the root font
- * size, so the row reads it: a sticky row would then cover the card, so it scrolls with the content instead.
- */
-function largeText(): boolean {
-  return parseFloat(getComputedStyle(document.documentElement).fontSize) >= 24;
-}
 
 /** "Kein Interesse · Später · Wünschen" as buttons; they are the way without a swipe gesture (NFR-13). */
 export function Actions(props: { onDecide: (d: Decision) => void }) {

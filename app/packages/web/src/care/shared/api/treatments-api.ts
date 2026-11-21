@@ -1,5 +1,11 @@
 import type { TreatmentListRow, TreatmentRow } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -47,16 +53,16 @@ export interface TreatmentInput {
 }
 
 /**
- * Plans treatments (US-BEH-01). The repeat-guard key stays with the write until it is answered (`createWrite`), so a double tap or a retry writes once.
+ * Plans treatments (US-BEH-01). The repeat-guard key is the caller's (`options.key`, US-QS-03), so a double tap or a retry writes once.
  */
 export async function planTreatments(
   api: string,
   token: string,
   input: TreatmentInput,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<readonly TreatmentRow[]>> {
   const { course, ...rest } = input;
-  const r = await createWrite(api, token, fetchFn)("POST", "/treatments", {
+  const r = await createWrite(api, token, options)("POST", "/treatments", {
     ...rest,
     ...(course ? { count: course.count, intervalDays: course.intervalDays } : {}),
   });
@@ -65,16 +71,16 @@ export async function planTreatments(
 
 /**
  * Ticks a treatment off (US-BEH-03). The treatment is addressed by its ID, the done date is the device's local date
- * (NFR-08). The repeat-guard key is created per call; a second tap on another device changes nothing.
+ * (NFR-08). The repeat-guard key is the caller's (`options.key`, US-QS-03); a second tap on another device changes nothing.
  */
 export async function completeTreatment(
   api: string,
   token: string,
   id: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<{ treatment: TreatmentRow; changed: boolean }>> {
   const timeZone = currentTimeZone();
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/treatments/${encodeURIComponent(id)}/complete`,
     {
@@ -116,15 +122,15 @@ export async function loadOpenTreatments(
 
 /**
  * The undo of "Erledigt" (US-QS-32): opens the treatment again when it was ticked off today in the device's time zone
- * (NFR-08); a tick-off of another day is refused by its code. The repeat-guard key is created per call.
+ * (NFR-08); a tick-off of another day is refused by its code. The repeat-guard key is the caller's (`options.key`, US-QS-03).
  */
 export async function reopenTreatment(
   api: string,
   token: string,
   id: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<TreatmentRow>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/treatments/${encodeURIComponent(id)}/reopen`,
     { timeZone: currentTimeZone() },

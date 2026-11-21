@@ -21,7 +21,7 @@ const LOADING = "Messungen werden geladen …";
 
 /**
  * Measure (US-WAC-01): on the page the one fact line (last measurement, value and date) with the link "Messverlauf (n)", the
- * input form and the sticky "Messung speichern". The facts and the course of the specimen live in the layer "Messverlauf"
+ * input form and the sticky "Messung sichern". The facts and the course of the specimen live in the layer "Messverlauf"
  * (US-QS-15). Every view says what to do next (P-09).
  */
 /** `onSaved` is called after a measurement was written; the page stays open (US-QS-15). */

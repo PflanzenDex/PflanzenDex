@@ -18,7 +18,7 @@ export function Row(props: {
         <Quiet>{`Katalog: ${props.catalog}`}</Quiet>
         <Button
           type="button"
-          variant="outline"
+          variant="plain"
           size="sm"
           disabled={!props.hasOwn || props.busy}
           aria-label={`Auf Katalog zurücksetzen: ${props.label} (${props.species})`}

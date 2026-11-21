@@ -1,5 +1,11 @@
 import type { EmptyReason, MatchCard, MatchEntry, MatchYesResult } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -27,10 +33,11 @@ export async function loadMatchDeck(
 export async function saveAnswer(
   api: string,
   token: string,
-  offerId: string,
-  answer: "no" | "later",
+  target: { offerId: string; answer: "no" | "later" },
+  options: WriteOptions,
 ): Promise<Response<{ answeredOn: string }>> {
-  const r = await createWrite(api, token)(
+  const { offerId, answer } = target;
+  const r = await createWrite(api, token, options)(
     "PUT",
     `/exchange/match/${encodeURIComponent(offerId)}/answer`,
     { answer, timeZone: currentTimeZone() },
@@ -43,12 +50,12 @@ export async function undoAnswer(
   api: string,
   token: string,
   offerId: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<unknown>> {
   return createWrite(
     api,
     token,
-    fetchFn,
+    options,
   )("DELETE", `/exchange/match/${encodeURIComponent(offerId)}/answer`);
 }
 
@@ -56,10 +63,11 @@ export async function undoAnswer(
 export async function answerYes(
   api: string,
   token: string,
-  offerId: string,
-  counterSpecimenId: string | null = null,
+  target: { offerId: string; counterSpecimenId: string | null },
+  options: WriteOptions,
 ): Promise<Response<MatchYesResult>> {
-  const r = await createWrite(api, token)(
+  const { offerId, counterSpecimenId } = target;
+  const r = await createWrite(api, token, options)(
     "POST",
     `/exchange/match/${encodeURIComponent(offerId)}/yes`,
     counterSpecimenId === null ? {} : { counterSpecimenId },

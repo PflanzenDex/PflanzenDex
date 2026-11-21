@@ -64,14 +64,16 @@ export function Chips({ card }: { card: SpecimenCard }) {
 /**
  * "Überblick" (US-QS-23): fits the layer without scroll on a phone. The latest photo as a thumbnail beside the last
  * measurement, the growth trend of the own history (a slot of `care`, P-08), the state and the open treatment; "Gießen"
- * (a slot of `monitoring`), "Behandeln" and "Notizen" are outline buttons, the filled "Messen" sits in the layer's
- * primary slot.
+ * (a slot of `monitoring`) is the one tinted button, "Behandeln" and "Notizen" are plain, the filled "Messen" sits in the
+ * layer's primary slot (SG-BTN-01).
  */
 export function PlantOverview(props: {
   card: SpecimenCard;
   access: PhotoAccess;
   /** The growth trend; without it the overview says "unbekannt". */
   growth?: ReactNode;
+  /** The calm hint at the growth line (US-ONB-07), directly after the trend. */
+  hint?: ReactNode;
   /** The button "Gießen". */
   water?: ReactNode;
   /** Opens the planning of a treatment (tab "Pflege"). */
@@ -90,6 +92,7 @@ export function PlantOverview(props: {
         </div>
       </div>
       {props.growth ?? <Quiet>{t("overview.trend", { value: UNKNOWN })}</Quiet>}
+      {props.hint}
       <div className="grid gap-1.5 text-sm">
         <Treatment card={card} />
       </div>
@@ -112,7 +115,7 @@ export function PlantOverview(props: {
         {props.water}
         <Button
           type="button"
-          variant="outline"
+          variant="plain"
           aria-label={t("overview.treatLabel", { name: card.name })}
           onClick={props.onTreat}
         >

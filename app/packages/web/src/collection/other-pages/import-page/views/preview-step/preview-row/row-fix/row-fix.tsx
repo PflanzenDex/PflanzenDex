@@ -25,7 +25,7 @@ function Candidates(props: { row: Row; onFix: OnFix }) {
           <Button
             key={c.id}
             type="button"
-            variant="outline"
+            variant="tinted"
             size="touch"
             onClick={() => onFix(row.line, { speciesId: c.id })}
           >
@@ -61,7 +61,7 @@ function MarkerFix(props: { row: Row; onFix: OnFix }) {
         {ui("markerHint")}
       </p>
       <div>
-        <Button type="submit" variant="outline" size="touch">
+        <Button type="submit" variant="tinted" size="touch">
           {ui("markerSave")}
         </Button>
       </div>
@@ -77,7 +77,7 @@ export function RowFixControls(props: { row: Row; onFix: OnFix }) {
       <div>
         <Button
           type="button"
-          variant="outline"
+          variant="tinted"
           size="touch"
           onClick={() => onFix(row.line, { skip: false })}
         >

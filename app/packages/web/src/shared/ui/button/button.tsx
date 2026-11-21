@@ -17,9 +17,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        // The quiet fill keeps its boundary in the field boundary colour (US-QS-14, WCAG 1.4.11): --input reaches 3:1 on background, card, warning, secondary and muted.
-        secondary:
-          "border border-input bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        // Tinted without a border (owner decision 2026-11-20, SG-BTN-01); forced colors keep the boundary from the base class.
+        secondary: "bg-accent text-accent-foreground hover:bg-accent/80",
         // Tinted: the secondary action of a group or card (SG-BTN-01): accent fill, dark green text, no border.
         tinted: "bg-accent text-accent-foreground hover:bg-accent/80",
         // Plain: a tertiary action (SG-BTN-01): green text only; the hover fill is the accent.

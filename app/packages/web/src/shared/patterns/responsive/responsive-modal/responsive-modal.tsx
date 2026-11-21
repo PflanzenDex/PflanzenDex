@@ -7,7 +7,8 @@ import { DialogPart, preloadDialog } from "./dialog-part/dialog-part";
 
 const TEXT_FIELD =
   "input:not([type='hidden']):not([disabled]), select:not([disabled]), textarea:not([disabled])";
-const CONTROL = `${TEXT_FIELD}, button:not([disabled]), a[href], [tabindex]:not([tabindex='-1'])`;
+// A close button marked `data-close` is chrome, not the content of the layer: it never counts as the first control (US-QS-32).
+const CONTROL = `${TEXT_FIELD}, button:not([disabled]):not([data-close]), a[href], [tabindex]:not([tabindex='-1'])`;
 
 /** The text field a layer starts with, when its first control is one; otherwise `null` (US-QS-15, issue 1104). */
 export function leadingTextField(layer: HTMLElement | null): HTMLElement | null {
@@ -147,6 +148,7 @@ export function ResponsiveModal({
           <SheetContent
             title={title}
             {...copy}
+            {...(closeLabel !== undefined ? { closeLabel } : {})}
             {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
             {...(sheetCloseFocus ? { onCloseAutoFocus: sheetCloseFocus } : {})}
             {...(closeRefusals !== undefined ? { closeRefusals } : {})}

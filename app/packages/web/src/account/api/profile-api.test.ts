@@ -36,17 +36,16 @@ describe("US-ACC-02 profile API client", () => {
     });
   });
 
-  it("saves the whole profile with PUT and a fresh Idempotency-Key per call", async () => {
+  it("saves the whole profile with PUT and the key of its action", async () => {
     const f = vi
       .fn<typeof fetch>()
       .mockImplementation(async () => new Response(JSON.stringify(PROFILE)));
-    await saveProfile("http://api", "tok", PROFILE, f);
-    await saveProfile("http://api", "tok", PROFILE, f);
+    await saveProfile("http://api", "tok", PROFILE, { fetchFn: f, key: "test-key" });
+    await saveProfile("http://api", "tok", PROFILE, { fetchFn: f, key: "test-key" });
     const keys = f.mock.calls.map(
       ([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"],
     );
-    expect(keys[0]).toBeTruthy();
-    expect(keys[0]).not.toBe(keys[1]);
+    expect(keys).toEqual(["test-key", "test-key"]);
     expect(f.mock.calls[0]?.[1]).toMatchObject({ method: "PUT", body: JSON.stringify(PROFILE) });
   });
 
@@ -58,7 +57,9 @@ describe("US-ACC-02 profile API client", () => {
     const f = vi
       .fn<typeof fetch>()
       .mockResolvedValue(new Response(JSON.stringify({ error }), { status: 400 }));
-    expect(await saveProfile("http://api", "tok", PROFILE, f)).toEqual({ ok: false, error });
+    expect(
+      await saveProfile("http://api", "tok", PROFILE, { fetchFn: f, key: "test-key" }),
+    ).toEqual({ ok: false, error });
   });
 });
 

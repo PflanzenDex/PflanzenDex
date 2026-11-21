@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createWrite, useWriteAction } from "../../../../../shared/data";
+import { accountKey, createWrite, useWriteAction } from "../../../../../shared/data";
 import { UnlocksProvider, useUnlocks } from "./unlocks";
 
 const json = (status: number, body: unknown) =>
@@ -44,7 +44,7 @@ describe("US-ONB-05 lock states refresh after every write", () => {
     );
     await screen.findByText("have 0");
     have = 1;
-    await createWrite("http://api.test", "tok")("POST", "/specimens", {});
+    await createWrite("http://api.test", "tok", { key: "test-key" })("POST", "/specimens", {});
     await waitFor(() => expect(screen.getByText("have 1")).toBeTruthy());
   });
 
@@ -69,12 +69,13 @@ describe("US-ONB-05 lock states refresh after every write", () => {
           type="button"
           onClick={() =>
             void write.run(
-              (t) => createWrite("http://api.test", t)("POST", "/specimens", {}),
-              "Gespeichert.",
+              (t, opts) => createWrite("http://api.test", t, opts)("POST", "/specimens", {}),
+              "Gesichert.",
+              accountKey("save"),
             )
           }
         >
-          Speichern
+          Sichern
         </button>
       );
     }
@@ -85,7 +86,7 @@ describe("US-ONB-05 lock states refresh after every write", () => {
       </UnlocksProvider>,
     );
     await waitFor(() => expect(unlocksCalls()).toBe(1));
-    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(unlocksCalls()).toBe(2));
     await new Promise((done) => setTimeout(done, 50));
     expect(unlocksCalls()).toBe(2);

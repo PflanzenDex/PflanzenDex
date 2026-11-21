@@ -69,7 +69,7 @@ export function MarkerForm(props: {
             </ErrorNotice>
           )}
           <FormButtons
-            submit="Kennzeichen speichern"
+            submit="Kennzeichen sichern"
             cancel="Abbrechen"
             pending={form.formState.isSubmitting}
             onCancel={props.onCancel}

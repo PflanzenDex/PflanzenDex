@@ -11,6 +11,7 @@ import type {
 import {
   call,
   createWrite as createKernel,
+  type WriteOptions,
   type Response as KernelResponse,
   type ApiError as KernelApiError,
   type Write as KernelWrite,
@@ -76,8 +77,8 @@ export async function loadZones(
   return r.ok ? { ok: true, value: r.value.zones } : r;
 }
 
-export const createWrite = (api: string, token: string, fetchFn: FetchFn = fetch): Write =>
-  createKernel<ZoneUser>(api, token, fetchFn);
+export const createWrite = (api: string, token: string, options: WriteOptions): Write =>
+  createKernel<ZoneUser>(api, token, options);
 
 export interface DerivationRequest {
   lightDemandLux: number;

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WaterAction } from "./water-action";
@@ -80,6 +80,57 @@ describe("US-QS-23 Gießen of a plant", () => {
     const assertive = () => document.querySelector('[aria-live="assertive"]')?.textContent ?? "";
     await vi.waitFor(() => expect(assertive()).not.toBe(""));
     expect(assertive()).not.toContain("raw");
+  });
+});
+
+/**
+ * A key-enforcing server of the watering route: a key is applied once and its repeat gets the stored answer. The first
+ * `lost` answers are lost on the way back (the write is applied, the client sees a network error) (US-QS-03).
+ */
+function wateringServer(lost: number) {
+  const seen = new Map<string, string>();
+  const keys: string[] = [];
+  const records: string[] = [];
+  let left = lost;
+  const fetchFn = vi.fn<typeof fetch>(async (_url, init) => {
+    const key = (init?.headers as Record<string, string>)["Idempotency-Key"] ?? "";
+    const body = String(init?.body ?? "");
+    keys.push(key);
+    if (seen.has(key)) return Response.json({ watered: [] });
+    seen.set(key, body);
+    records.push(body);
+    if (left > 0) {
+      left -= 1;
+      throw new TypeError("Failed to fetch");
+    }
+    return Response.json({ watered: [] });
+  });
+  return { fetchFn, keys, records };
+}
+
+describe("US-QS-03 · a daily watering names its local day in its key", () => {
+  it("US-QS-03 a lost watering at 23:50 and a watering the next day are two records: the local day names the action", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      vi.setSystemTime(new Date(2026, 10, 20, 23, 50));
+      const server = wateringServer(1);
+      vi.stubGlobal("fetch", server.fetchFn);
+      show();
+      fireEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
+      await waitFor(() => expect(server.fetchFn).toHaveBeenCalledTimes(1));
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Gießen: Aloe" }).getAttribute("aria-disabled"),
+        ).not.toBe("true"),
+      );
+      vi.setSystemTime(new Date(2026, 10, 21, 8, 0));
+      fireEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
+      await waitFor(() => expect(server.fetchFn).toHaveBeenCalledTimes(2));
+      expect(server.keys[1]).not.toBe(server.keys[0]);
+      expect(server.records).toHaveLength(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

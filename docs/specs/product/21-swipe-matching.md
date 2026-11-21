@@ -155,7 +155,7 @@ Acceptance criteria:
 - "Later" returns after 1 day, the swipe threshold is 40 percent of the card width (starting values, not measured).
 - "Fits both ways" counts a friend's open request on my offer, or a wish the friend deliberately marked as visible; unmarked wishes are never read (P-05). The default is off.
 - Yes on a card that fits both ways proposes my matching offer as the counter-offer, with one confirmation step.
-- Release R5 (after the exchange and Discover are in use) and priority P3 (rule of thumb in `CLAUDE.md`); the owner may overrule.
+- Release R5 (after the exchange and Discover are in use) and priority P3 (rule of thumb in `docs/guides/operations/parallel-work.md`); the owner may overrule.
 - The deck lives in the destination "Freunde" next to the exchange; it is no new main destination.
 
 ## Open questions

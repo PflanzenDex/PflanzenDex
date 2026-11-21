@@ -59,7 +59,7 @@ export function Sharing(props: { item: EquipmentRow; actions: SharingActions }) 
       {/* One line at 14 px (SG-COPY-05, SG-TYPE-03); the full list and the withdrawal sit behind Mehr erfahren. */}
       <MoreHelp more={t("share.more")}>Freunde sehen nie den Preis.</MoreHelp>
       <Button type="submit" size="touch" variant="secondary" disabled={actions.busy}>
-        Freigabe speichern
+        Freigabe sichern
       </Button>
     </FormRoot>
   );

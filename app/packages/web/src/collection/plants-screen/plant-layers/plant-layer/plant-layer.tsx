@@ -12,7 +12,7 @@ import {
   PLANT_TAB_PARAM,
   plantLayerId,
 } from "@/shared/patterns/navigation/navigation/navigation";
-import type { Handlers, LayerProps, SlotFallback, SlotRender } from "../layer-ids";
+import type { Handlers, LayerProps, PlantNote, SlotFallback, SlotRender } from "../layer-ids";
 import table from "../plant-layers.de.json";
 import { PlantCareTab } from "./plant-care-tab/plant-care-tab";
 import { PlantLocation } from "./plant-location/plant-location";
@@ -68,12 +68,17 @@ function moreItems(card: SpecimenCard, h: Handlers): MenuItem[] {
 }
 
 type Props = Handlers &
-  Pick<LayerProps, "slots" | "locations" | "onLocate" | "onManage"> & {
+  Pick<LayerProps, "slots" | "hintOccasions" | "locations" | "onLocate" | "onManage"> & {
     card: SpecimenCard;
     photoAccess: PhotoAccess;
   };
 
-function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () => void) {
+function tabContents(
+  p: Props,
+  tab: ReturnType<typeof usePlantTab>,
+  close: () => void,
+  note: PlantNote,
+) {
   const { card } = p;
   const lightZone = p.onLightZone;
   const measure = () => p.onMeasure?.(card);
@@ -91,6 +96,7 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
           p.slots?.growth ? slot(p.slots.growth, "growth", p.slots.growthFallback) : undefined
         }
         water={p.slots?.water ? slot(p.slots.water, "water") : undefined}
+        hint={note("first_measurement")}
         onTreat={() => tab.choose("pflege")}
       />
     ),
@@ -126,13 +132,16 @@ function tabContents(p: Props, tab: ReturnType<typeof usePlantTab>, close: () =>
   return TABS.map((t) => ({ ...t, content: content[t.value] }));
 }
 
+/** A layer without a hint host: no note is ever due, every place stays as it is (US-ONB-07). */
+const NO_NOTE: PlantNote = () => null;
+
 /**
  * One plant as a layer with tabs (US-QS-23, US-QS-15): the name, its chips, the menu "Mehr" with the rarer actions and
  * the tabs "Überblick", "Verlauf", "Pflege" and "Standort". The filled "Messen" sits in the primary slot of the layer
  * and only on the overview; the active tab is in the address.
  */
-export function PlantLayer(props: Props) {
-  const { card } = props;
+function PlantLayerSheet(props: Props & { note: PlantNote }) {
+  const { card, note } = props;
   const { closeLayer } = useLayer(plantLayerId(card.id));
   const tab = usePlantTab();
   const items = moreItems(card, props);
@@ -143,7 +152,11 @@ export function PlantLayer(props: Props) {
       title={card.name}
       primaryAction={
         tab.tab === "ueberblick" && measure ? (
-          <MeasureButton card={card} onMeasure={() => measure(card)} />
+          <>
+            <MeasureButton card={card} onMeasure={() => measure(card)} />
+            {/* The note of the first plant stands directly under "Messen" (US-ONB-07). */}
+            {note("first_plant_saved")}
+          </>
         ) : undefined
       }
     >
@@ -155,11 +168,21 @@ export function PlantLayer(props: Props) {
         <Tabs
           label={t("tabs.label")}
           wrap
-          tabs={tabContents(props, tab, closeLayer)}
+          tabs={tabContents(props, tab, closeLayer, note)}
           value={tab.tab}
           onValueChange={tab.choose}
         />
       </div>
     </LayerSheet>
   );
+}
+
+/**
+ * The plant layer with its calm hint (US-ONB-07): the app's hint host asks once for the occasions that apply and gives
+ * the note of each occasion to its place in the layer. Without a host the layer shows as before.
+ */
+export function PlantLayer(props: Props) {
+  const hint = props.slots?.hint;
+  const body = (note: PlantNote) => <PlantLayerSheet {...props} note={note} />;
+  return hint ? hint({ applicable: props.hintOccasions ?? [], children: body }) : body(NO_NOTE);
 }

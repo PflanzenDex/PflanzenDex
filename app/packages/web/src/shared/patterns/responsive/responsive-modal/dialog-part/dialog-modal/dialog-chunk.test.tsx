@@ -32,7 +32,7 @@ describe("Dialog chunk (NFR-12, DS-08)", () => {
     setViewportWidth(1024);
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-        <button>Speichern</button>
+        <button>Sichern</button>
       </ResponsiveModal>,
     );
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));

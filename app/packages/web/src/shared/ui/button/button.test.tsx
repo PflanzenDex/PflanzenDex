@@ -21,8 +21,8 @@ const hasOwnBorder = (classes: string) => classes.split(/\s+/).some((c) => /^bor
 describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
   it("US-QS-07 · DS-36 renders a native button that fires onClick and keeps its name", async () => {
     const onClick = vi.fn();
-    render(<Button onClick={onClick}>Speichern</Button>);
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    render(<Button onClick={onClick}>Sichern</Button>);
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
@@ -116,31 +116,31 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     const onClick = vi.fn();
     render(
       <Button pending onClick={onClick}>
-        Speichern
+        Sichern
       </Button>,
     );
     const button = screen.getByRole("button");
     expect(button.getAttribute("aria-busy")).toBe("true");
     expect((button as HTMLButtonElement).disabled).toBe(true);
     expect(button.textContent).toContain("Lädt …");
-    expect(button.textContent).toContain("Speichern");
+    expect(button.textContent).toContain("Sichern");
     await userEvent.click(button);
     expect(onClick).not.toHaveBeenCalled();
   });
 
   it("US-QS-32 SG-COPY-04 the default pending label is 'Lädt …' with a space before the ellipsis", () => {
-    render(<Button pending>Speichern</Button>);
+    render(<Button pending>Sichern</Button>);
     const text = screen.getByRole("button").textContent ?? "";
     expect(text).toContain("Lädt …");
   });
 
   it("US-QS-07 · DS-15 the pending text can be replaced by the caller", () => {
     render(
-      <Button pending pendingLabel="Wird gespeichert…">
-        Speichern
+      <Button pending pendingLabel="Wird gesichert…">
+        Sichern
       </Button>,
     );
-    expect(screen.getByRole("button").textContent).toContain("Wird gespeichert…");
+    expect(screen.getByRole("button").textContent).toContain("Wird gesichert…");
   });
 
   it("US-QS-07 · DS-15 an idle button is not marked busy", () => {
@@ -230,8 +230,15 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     expect(hasOwnBorder(outline.join(" "))).toBe(false);
   });
 
-  it("US-QS-32 · SG-BTN-01 no button variant draws a border of its own, except secondary", () => {
-    for (const variant of ["default", "tinted", "plain", "destructive-plain", "outline"] as const) {
+  it("US-QS-32 · SG-BTN-01 no button variant draws a border of its own", () => {
+    for (const variant of [
+      "default",
+      "secondary",
+      "tinted",
+      "plain",
+      "destructive-plain",
+      "outline",
+    ] as const) {
       render(<Button variant={variant}>{`v-${variant}`}</Button>);
       const cls = screen.getByRole("button", { name: `v-${variant}` }).className;
       expect(hasOwnBorder(cls), variant).toBe(false);
@@ -241,25 +248,42 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
   it("US-QS-14 · Greenhouse look: pill shape, semibold and a press scale; icon buttons use the control radius", () => {
     render(
       <>
-        <Button>Speichern</Button>
+        <Button>Sichern</Button>
         <Button size="icon" aria-label="Mehr">
           +
         </Button>
       </>,
     );
-    const pill = screen.getByRole("button", { name: "Speichern" }).className;
+    const pill = screen.getByRole("button", { name: "Sichern" }).className;
     expect(pill).toContain("rounded-pill");
     expect(pill).toContain("font-semibold");
     expect(pill).toContain("active:scale-[0.98]");
     expect(screen.getByRole("button", { name: "Mehr" }).className).toContain("rounded-control");
   });
 
-  it("US-QS-14 · the secondary variant draws its boundary in --input (WCAG 1.4.11)", () => {
+  it("US-QS-32 · SG-BTN-01 secondary is the tinted look without a border (owner decision 2026-11-20)", () => {
+    render(
+      <>
+        <Button variant="tinted">Anbieten</Button>
+        <Button variant="secondary">Abbrechen</Button>
+      </>,
+    );
+    const tinted = screen.getByRole("button", { name: "Anbieten" }).className.split(/\s+/);
+    const secondary = screen.getByRole("button", { name: "Abbrechen" }).className.split(/\s+/);
+    expect(secondary).toContain("bg-accent");
+    expect(secondary).toContain("text-accent-foreground");
+    expect(secondary).toContain("hover:bg-accent/80");
+    expect(secondary).not.toContain("bg-secondary");
+    expect(secondary).not.toContain("border-input");
+    expect(hasOwnBorder(secondary.join(" "))).toBe(false);
+    expect(secondary.slice().sort()).toEqual(tinted.slice().sort());
+  });
+
+  it("US-QS-32 · SG-BTN-01 every button keeps its boundary in forced colors, whatever its fill", () => {
     render(<Button variant="secondary">Abbrechen</Button>);
-    const classes = screen.getByRole("button", { name: "Abbrechen" }).className.split(/\s+/);
-    expect(classes).toContain("border");
-    expect(classes).toContain("border-input");
-    expect(classes).toContain("bg-secondary");
+    const cls = screen.getByRole("button", { name: "Abbrechen" }).className.split(/\s+/);
+    expect(cls).toContain("forced-colors:border");
+    expect(cls).toContain("forced-colors:border-[color:ButtonText]");
   });
 });
 
@@ -328,11 +352,11 @@ describe("Button needsNetwork (US-QS-30 · SG-BTN-05, SG-STATE-05)", () => {
     vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
     render(
       <NetworkSlot>
-        <Button needsNetwork>Speichern</Button>
+        <Button needsNetwork>Sichern</Button>
         <Button needsNetwork>Abbrechen-Ziel</Button>
       </NetworkSlot>,
     );
-    const first = screen.getByRole("button", { name: "Speichern" });
+    const first = screen.getByRole("button", { name: "Sichern" });
     const second = screen.getByRole("button", { name: "Abbrechen-Ziel" });
     expect(first.getAttribute("aria-describedby")).toBe(second.getAttribute("aria-describedby"));
     const reason = document.getElementById(first.getAttribute("aria-describedby") ?? "");

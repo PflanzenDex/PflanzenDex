@@ -7,7 +7,13 @@ import { Select } from "@/shared/ui/fields/select/select";
 import { errorText, refusalText } from "@/shared/lib/error-text";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { setSpecimenLocation } from "../../../../../collection";
-import { createWrite, useQueryClient, type QueryClient } from "../../../../../shared/data";
+import {
+  createWrite,
+  entityKey,
+  useQueryClient,
+  type QueryClient,
+  useRepeatKey,
+} from "../../../../../shared/data";
 import { refreshLight } from "../../../../../light";
 import { zoneLabel } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -57,17 +63,25 @@ async function placeSpecimen(
   client: QueryClient,
   p: { api: string; token: Token; specimenId: string },
   chosen: LightLocation,
-  zoneId: string,
+  target: { zoneId: string; keys: ReturnType<typeof useRepeatKey> },
 ) {
+  const { zoneId, keys } = target;
   const t = await p.token();
   if (!t) return { ok: false as const, error: { code: "access.not_signed_in" } };
-  const set = await setSpecimenLocation(p.api, t, { id: p.specimenId, locationId: chosen.id });
+  const set = await keys.run(
+    (key) => setSpecimenLocation(p.api, t, { id: p.specimenId, locationId: chosen.id }, { key }),
+    entityKey("specimen", p.specimenId, `locate:${chosen.id}`),
+  );
   if (!set.ok || chosen.lightZoneId !== null || !zoneId) return set;
-  const named = await createWrite(p.api, t)("PUT", `/locations/${chosen.id}`, {
-    name: chosen.name,
-    kind: chosen.kind,
-    lightZoneId: zoneId,
-  });
+  const named = await keys.run(
+    (key) =>
+      createWrite(p.api, t, { key })("PUT", `/locations/${chosen.id}`, {
+        name: chosen.name,
+        kind: chosen.kind,
+        lightZoneId: zoneId,
+      }),
+    entityKey("location", chosen.id, `zone:${zoneId}`),
+  );
   // The location now stands under a light zone: the shared copies of the light data are asked again (issue 1244).
   if (named.ok) await refreshLight(client);
   return named;
@@ -120,10 +134,11 @@ function PlaceChoice(props: WhereProps & { places: Places }) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const chosen = places.locations.find((l) => l.id === (locationId || places.locations[0]?.id));
+  const keys = useRepeatKey();
   const save = async () => {
     if (!chosen) return;
     setSaving(true);
-    const r = await placeSpecimen(client, props, chosen, zoneId);
+    const r = await placeSpecimen(client, props, chosen, { zoneId, keys });
     setSaving(false);
     if (!r.ok) return setError(errorText(r.error.code));
     const zone = places.zones.find((z) => z.id === (chosen.lightZoneId ?? zoneId));
@@ -161,7 +176,7 @@ function PlaceChoice(props: WhereProps & { places: Places }) {
 }
 
 /**
- * The actions of the step: "Speichern" writes the location (needs the network, US-ONB-02); "Später" writes nothing. The
+ * The actions of the step: "Sichern" writes the location (needs the network, US-ONB-02); "Später" writes nothing. The
  * reason stands once below both buttons.
  */
 function StepActions(props: { saving: boolean; onSave: () => void; onLater: () => void }) {

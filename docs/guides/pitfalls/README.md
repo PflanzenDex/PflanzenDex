@@ -374,7 +374,23 @@ IDs are never renumbered.
 - **Can it become a gate?** No: whether a control holds the focus while it saves needs judgment; the tests of each such control pin it.
 - **Source:** Issue #2317 (US-QS-32), PR #2356.
 
-## PF-046 A row with `overflow-hidden` in a flex column shrinks to a hairline
+## PF-046 A ticket lead that starts its implementer in the background hands back before the work is done
+
+- **Symptom:** The ticket lead reports to the orchestrator while its implementer still runs; the implementer's later commits go unreviewed, the PR stays a draft, or the work is lost when the session ends.
+- **Cause:** `ticket-lead.md` said to start the implementer "in the background". A background subagent's result arrives as a later notification, and the lead's turn ended (and handed back) before it came.
+- **Fix:** A ticket lead starts its implementer and every specialist with `run_in_background: false` and never hands back while a subagent of its own runs (`.claude/agents/ticket-lead.md`, step 1).
+- **Can it become a gate?** No: whether a subagent still runs is not visible to a check after the hand-back; the agent definition carries the rule.
+- **Source:** Three incidents on 2026-11-20 (issues #2322, #2318), issue #2363.
+
+## PF-047 A repeat-guard key scope that names the request body brings back the content comparison and the double write
+
+- **Symptom:** After a lost answer, a keeper edits a form and taps again, and the server writes a second record (a second plant, a second measurement). Or a silent background write succeeds and frees a held create key, and the next tap creates the record twice.
+- **Cause:** The scope of a held key (`{target, action}` in `shared/data/write-action/repeat-key.ts`) was built from the body (`create:${JSON.stringify(input)}`). An edited body then counts as a new action with a fresh key, which is the content guess that `openKeys` made. Creates shared the `account` target with silent marks, so any success on `account` freed their keys.
+- **Fix:** The action names the operation only: never body content, and only a discrete chosen value for a set-state write. Creates and appends carry `adds` and their own `new:<entity>` target, and keep the key on `idempotency.key_conflict`. Silent writes use a key per send and free nothing. Daily appends name the local day. The test next to `repeat-key.test.tsx` fails on `JSON.stringify` inside `entityKey(`/`accountKey(`.
+- **Can it become a gate?** Partly: the grep test catches a body serialised inside the call, but not one built into a variable first. Which class a write belongs to needs judgment.
+- **Source:** Issue #1432 (US-QS-03, US-QS-07), PR #1789: rounds 3 to 5 of the review.
+
+## PF-048 A row with `overflow-hidden` in a flex column shrinks to a hairline
 
 - **Symptom:** At 200 % text the rows of a fit-paged list are 2 to 30 px high and only the pager shows; at 100 % on a small window the rows are cut to a third, and the one-screen gate still passes because the cut rows fit.
 - **Cause:** `overflow: hidden` (here `[&>li]:overflow-hidden` of `ROWS_OF_GROUP`) turns a flex item's automatic minimum height into 0, so the default `flex-shrink: 1` squeezes it below its content when the list is shorter than its rows. The fit measure then reads the squeezed row and never recovers.

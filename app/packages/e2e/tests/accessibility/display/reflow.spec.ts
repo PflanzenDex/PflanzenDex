@@ -123,7 +123,7 @@ async function etiolatedMeasurement(page: Page): Promise<void> {
   const form = page.getByRole("form", { name: "Messung erfassen" });
   await form.getByLabel(/^Messwert/).fill("12,5");
   await form.getByLabel("Qualität").selectOption("etiolated");
-  await page.getByRole("button", { name: "Messung speichern" }).click();
+  await page.getByRole("button", { name: "Messung sichern" }).click();
   // The form clears once the measurement is stored; the saved result is not waited for here (a growth note takes the
   // one polite region after a save, see the measure spec).
   await expect(form.getByLabel(/^Messwert/)).toHaveValue("");

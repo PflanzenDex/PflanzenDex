@@ -49,9 +49,9 @@ export async function openScreen(page: Page, base: string, screen: Screen): Prom
 // Found elements are named for the failure text (tag, role, id, label or classes, start of the text). The scroll region
 // is the visible one with the largest ratio; the farthest element ignores fixed boxes and scroll regions; the painted
 // edges belong to the left-most and right-most visible element that paints text, media, a background or a border.
-type Found = JSHandle<Element | null>;
+export type Found = JSHandle<Element | null>;
 
-async function label(handle: Found): Promise<string> {
+export async function label(handle: Found): Promise<string> {
   return handle.evaluate((el) => {
     if (!el) return "";
     const role = el.getAttribute("role");

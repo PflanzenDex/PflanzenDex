@@ -180,10 +180,14 @@ describe("US-QS-07 · DS-09 mutation invalidates the list", () => {
         <>
           <button
             onClick={() =>
-              void write.run(async () => {
-                rows = [...rows, "Farn"];
-                return { ok: true, value: null };
-              }, "Gespeichert.")
+              void write.run(
+                async () => {
+                  rows = [...rows, "Farn"];
+                  return { ok: true, value: null };
+                },
+                "Gesichert.",
+                { target: "list", action: "add:Farn" },
+              )
             }
           >
             Hinzufügen
@@ -198,7 +202,7 @@ describe("US-QS-07 · DS-09 mutation invalidates the list", () => {
     expect(screen.queryByText("Farn")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Hinzufügen" }));
     await waitFor(() => expect(screen.getByText("Farn")).toBeTruthy());
-    expect(screen.getByText("Gespeichert.")).toBeTruthy();
+    expect(screen.getByText("Gesichert.")).toBeTruthy();
   });
 
   it("US-QS-07 · DS-09 a refused write stays visible and nothing is dropped silently (P-10)", async () => {
@@ -217,7 +221,8 @@ describe("US-QS-07 · DS-09 mutation invalidates the list", () => {
                     text: "Der Server ist nicht erreichbar.",
                   },
                 }),
-                "Gespeichert.",
+                "Gesichert.",
+                { target: "list", action: "send" },
               )
             }
           >

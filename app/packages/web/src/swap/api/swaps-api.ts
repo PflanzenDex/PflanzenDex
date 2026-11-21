@@ -1,5 +1,11 @@
 import type { HistoryEntry, SwapAction, SwapOverview } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -18,13 +24,14 @@ export interface AnswerInput {
   proposal?: string;
 }
 
-/** Answers or changes a swap (US-SOZ-10); the repeat-guard key is created per call. */
+/** Answers or changes a swap (US-SOZ-10); the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function answerSwap(
-  access: { api: string; token: string; fetchFn?: FetchFn },
+  access: { api: string; token: string },
   swapId: string,
   input: AnswerInput,
+  options: WriteOptions,
 ): Promise<Response<{ status: string }>> {
-  const r = await createWrite(access.api, access.token, access.fetchFn ?? fetch)(
+  const r = await createWrite(access.api, access.token, options)(
     "POST",
     `/swaps/${encodeURIComponent(swapId)}/answer`,
     input,
@@ -34,11 +41,12 @@ export async function answerSwap(
 
 /** Confirms the handover (US-SOZ-11) with the keeper's time zone for the local date; `marker` only for the recipient. */
 export async function confirmHandover(
-  access: { api: string; token: string; fetchFn?: FetchFn },
+  access: { api: string; token: string },
   swapId: string,
   marker: string | null,
+  options: WriteOptions,
 ): Promise<Response<{ status: "waiting" | "handed_over" }>> {
-  const r = await createWrite(access.api, access.token, access.fetchFn ?? fetch)(
+  const r = await createWrite(access.api, access.token, options)(
     "POST",
     `/swaps/${encodeURIComponent(swapId)}/handover`,
     { timeZone: currentTimeZone(), ...(marker ? { marker } : {}) },

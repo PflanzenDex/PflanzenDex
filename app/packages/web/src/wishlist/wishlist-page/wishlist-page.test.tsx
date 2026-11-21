@@ -371,7 +371,7 @@ describe("US-QS-07 · DS-09 wishlist on the data layer", () => {
     await screen.findByText(/Korbmarante$/);
     await userEvent.click(screen.getByRole("button", { name: "Wunsch erfassen" }));
     await userEvent.type(await screen.findByLabelText("Name"), "Neu");
-    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch sichern" }));
     // The layer closes and the new row stands in the list (US-QS-22).
     expect(await screen.findByRole("button", { name: /^1\. Neu\b/ })).toBeTruthy();
     expect(screen.queryByText(/Korbmarante$/)).toBeNull();
@@ -420,8 +420,8 @@ describe("US-WUN-01 recording a wish", () => {
     await fill("Neu");
     await userEvent.selectOptions(screen.getByLabelText("Ziel-Lichtzone (optional)"), "z2");
     await userEvent.selectOptions(screen.getByLabelText("Schwierigkeit (optional)"), "3");
-    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
-    await screen.findByText(/Wunsch „Neu“ gespeichert/);
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch sichern" }));
+    await screen.findByText(/Wunsch „Neu“ gesichert/);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
     expect(JSON.parse(String(post?.[1]?.body))).toEqual({
       name: "Neu",
@@ -436,7 +436,7 @@ describe("US-WUN-01 recording a wish", () => {
 
   const refusal = (status: number, code: string, text: string, details?: unknown) => () =>
     response(status, { error: { code, text, ...(details ? { details } : {}) } });
-  const save = () => userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
+  const save = () => userEvent.click(screen.getByRole("button", { name: "Wunsch sichern" }));
   const describedText = (el: HTMLElement) =>
     (el.getAttribute("aria-describedby") ?? "")
       .split(" ")
@@ -456,7 +456,7 @@ describe("US-WUN-01 recording a wish", () => {
     expect(describedText(name)).toContain("gibt es schon");
     expect(document.activeElement).toBe(name);
     expect(name.value).toBe("Neu");
-    expect(screen.queryByText(/gespeichert/)).toBeNull();
+    expect(screen.queryByText(/gesichert/)).toBeNull();
     expect(screen.getByLabelText("Schwierigkeit (optional)").getAttribute("aria-invalid")).not.toBe(
       "true",
     );
@@ -574,7 +574,7 @@ describe("US-WUN-01 recording a wish", () => {
     expect(name.getAttribute("aria-invalid")).toBe("true");
     await userEvent.type(name, "Neu");
     await save();
-    await screen.findByText(/gespeichert/);
+    await screen.findByText(/gesichert/);
     expect(name.getAttribute("aria-invalid")).not.toBe("true");
   });
 
@@ -651,8 +651,8 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     expect(await screen.findByText(/Gewählt: Epipremnum aureum \(Efeutute\)/)).toBeTruthy();
     // The pick shows the names, so they do not open the group (issue 1032).
     expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
-    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
-    await screen.findByText(/Wunsch „Epipremnum aureum“ gespeichert/);
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch sichern" }));
+    await screen.findByText(/Wunsch „Epipremnum aureum“ gesichert/);
     const post = fetchFn.mock.calls.find(([, init]) => init?.method === "POST");
     expect(JSON.parse(String(post?.[1]?.body))).toEqual({
       name: "Epipremnum aureum",
@@ -665,7 +665,7 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Neuer Wunsch" });
-    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch sichern" }));
     expect(await screen.findByText("Gib einen Namen ein.")).toBeTruthy();
     expect(screen.getByLabelText("Name").getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
@@ -675,11 +675,11 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Neuer Wunsch" });
-    const section = screen.getByRole("button", { name: "Wunsch speichern" }).closest("section");
+    const section = screen.getByRole("button", { name: "Wunsch sichern" }).closest("section");
     expect(within(section as HTMLElement).queryByRole("heading")).toBeNull();
     expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
     expect(
-      screen.getByRole("button", { name: "Wunsch speichern" }).parentElement?.className,
+      screen.getByRole("button", { name: "Wunsch sichern" }).parentElement?.className,
     ).toContain("sticky");
   });
 
@@ -692,11 +692,11 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Neuer Wunsch" });
     await userEvent.type(screen.getByLabelText("Name"), "Neu");
-    await userEvent.click(screen.getByRole("button", { name: "Wunsch speichern" }));
-    const busy = (await screen.findByRole("button", { name: /Speichert/ })) as HTMLButtonElement;
+    await userEvent.click(screen.getByRole("button", { name: "Wunsch sichern" }));
+    const busy = (await screen.findByRole("button", { name: /Sichert/ })) as HTMLButtonElement;
     expect(busy.disabled).toBe(true);
     release(new Response(JSON.stringify({ wish: { id: "w2" } }), { status: 201 }));
-    await screen.findByText(/gespeichert/);
+    await screen.findByText(/gesichert/);
     expect(fetchFn.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
   });
 });

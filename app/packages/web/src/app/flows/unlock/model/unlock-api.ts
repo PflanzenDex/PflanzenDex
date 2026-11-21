@@ -1,5 +1,11 @@
 import type { UnlockStatus } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../../../shared/data";
 
 /**
  * One function as the API sends it: registry data plus the derived state, reason and way as data (US-ONB-05). `keeperSwitch`
@@ -31,9 +37,9 @@ export function unlockFunction(
   api: string,
   token: string,
   id: string,
-  fetchFn: typeof fetch = fetch,
+  options: WriteOptions,
 ): Promise<Response<unknown>> {
-  return createWrite(api, token, fetchFn)("POST", `/onboarding/unlocks/${encodeURIComponent(id)}`, {
+  return createWrite(api, token, options)("POST", `/onboarding/unlocks/${encodeURIComponent(id)}`, {
     timeZone: currentTimeZone(),
   });
 }
@@ -45,11 +51,16 @@ export function unlockFunction(
 export function setKeeperSwitch(
   api: string,
   token: string,
-  feature: string,
-  enabled: boolean,
+  target: { feature: string; enabled: boolean },
+  options: WriteOptions,
 ): Promise<Response<unknown>> {
-  return createWrite(api, token)("PUT", `/onboarding/switches/${encodeURIComponent(feature)}`, {
-    enabled,
-    timeZone: currentTimeZone(),
-  });
+  const { feature, enabled } = target;
+  return createWrite(api, token, options)(
+    "PUT",
+    `/onboarding/switches/${encodeURIComponent(feature)}`,
+    {
+      enabled,
+      timeZone: currentTimeZone(),
+    },
+  );
 }

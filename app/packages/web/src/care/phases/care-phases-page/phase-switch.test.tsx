@@ -26,7 +26,29 @@ const row = (
 });
 const token = async () => "tok";
 
-/** Fake server: `phases` is what GET /care-phases answers now, `confirm` answers the POST (and may change `phases`). */
+/**
+ * Records the key of a request. A key that comes back with another request is refused (`idempotency.key_conflict`), the
+ * same request is answered without a second write; a new key is not answered here.
+ */
+function keyCheck(requests: Map<string, string>, init: RequestInit | undefined, path: string) {
+  const key = (init?.headers as Record<string, string> | undefined)?.["Idempotency-Key"] ?? "";
+  if (key === "") return undefined;
+  const request = `${init?.method ?? "GET"} ${path} ${String(init?.body ?? "")}`;
+  const seen = requests.get(key);
+  if (seen === undefined) {
+    requests.set(key, request);
+    return undefined;
+  }
+  return seen === request
+    ? response(200, {})
+    : response(409, { error: { code: "idempotency.key_conflict", text: "x" } });
+}
+
+/**
+ * Fake server: `phases` is what GET /care-phases answers now, `confirm` answers the POST (and may change `phases`). It
+ * enforces the repeat-guard key as the API does (US-QS-03): a key that comes back with another request is refused with
+ * `idempotency.key_conflict`, and a repeat of the same request is answered without a second write.
+ */
 function fakeServer(state: {
   phases: ReturnType<typeof row>[];
   confirm: (body: { specimenIds: string[]; timeZone: string }) => Promise<Response>;
@@ -35,8 +57,11 @@ function fakeServer(state: {
   /** A plant whose location write is refused (US-QS-32, a failed undo). */
   failLocationFor?: string;
 }) {
+  const requests = new Map<string, string>();
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const path = new URL(String(url)).pathname;
+    const refused = keyCheck(requests, init, path);
+    if (refused) return refused;
     if (path === "/locations") return response(200, { locations: [living, cold] });
     if (path === "/care-phases" && (init?.method ?? "GET") === "GET")
       return response(200, { phases: state.phases });
@@ -73,7 +98,10 @@ describe("US-PHA-03 client of the confirm API", () => {
     const fetchFn = vi.fn<typeof fetch>(async () =>
       response(200, { specimens: [{ specimenId: "e1", locationId: "s2", changed: true }] }),
     );
-    const r = await confirmPhaseSwitch("http://api", "tok", ["e1", "e2"], fetchFn);
+    const r = await confirmPhaseSwitch("http://api", "tok", ["e1", "e2"], {
+      fetchFn: fetchFn,
+      key: "test-key",
+    });
     expect(r).toMatchObject({ ok: true, value: [{ specimenId: "e1", changed: true }] });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/care-phases/confirm");
@@ -90,7 +118,9 @@ describe("US-PHA-03 client of the confirm API", () => {
   it("US-PHA-03 an error of the API stays an error with code", async () => {
     const error = { code: "care.target_unknown", text: "Kein Soll-Standort." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(409, { error }));
-    expect(await confirmPhaseSwitch("http://api", "tok", ["e1"], fetchFn)).toMatchObject({
+    expect(
+      await confirmPhaseSwitch("http://api", "tok", ["e1"], { fetchFn: fetchFn, key: "test-key" }),
+    ).toMatchObject({
       ok: false,
       error: { code: "care.target_unknown" },
     });
@@ -295,6 +325,35 @@ describe("US-QS-32 the bulk move 'Alle n nach … umstellen' can be undone in pl
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("US-QS-03 · US-QS-32 the bulk undo of two plants sends every plant under a key of its own", () => {
+  it("US-QS-03 · US-QS-32 the key-enforcing server applies both moves: no plant after the first is refused as a key conflict", async () => {
+    const state = {
+      phases: [row("e1", "Bogenhanf", "s1", "s2"), row("e3", "Efeu", "s9", "s2")],
+      confirm: async () => {
+        state.phases = state.phases.map((p) => ({ ...p, locationId: p.targetLocationId }));
+        return response(200, { specimens: [] });
+      },
+      moves: [] as { specimenId: string; locationId: string }[],
+    };
+    const fetchFn = fakeServer(state);
+    render(<CarePhasesPage api="http://api" token={token} />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Alle 2 nach Kühler Flur umstellen" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Rückgängig: 2 Pflanzen nach Kühler Flur" }),
+    );
+    await screen.findByRole("button", { name: "Alle 2 nach Kühler Flur umstellen" });
+    const moveKeys = fetchFn.mock.calls
+      .filter(([url]) => /\/specimens\/[^/]+\/location$/.test(new URL(String(url)).pathname))
+      .map(([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"]);
+    expect(moveKeys).toHaveLength(2);
+    expect(new Set(moveKeys).size).toBe(2);
+    expect(state.moves).toHaveLength(2);
+    expect(screen.queryByText(/Dieser Schlüssel/)).toBeNull();
   });
 });
 

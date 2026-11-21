@@ -13,7 +13,7 @@ export function FailureNote(props: { error: ApiError; onRetry: () => void }) {
       <p className="m-0 text-sm">{refusalText(props.error)}</p>
       <p className="m-0 text-sm text-muted-foreground">{ui("failureHint")}</p>
       <div>
-        <Button type="button" variant="outline" onClick={props.onRetry}>
+        <Button type="button" variant="tinted" onClick={props.onRetry}>
           {ui("retry")}
         </Button>
       </div>

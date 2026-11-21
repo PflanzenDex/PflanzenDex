@@ -98,7 +98,7 @@ export function StoredPicture(props: { c: Candidate; access: PhotoAccess; source
 /**
  * The picture of a candidate without a stored copy, as before: "Kein Bild", or the address, typed by a keeper, as a link
  * the viewer follows on purpose. Loading it would make every viewer's browser contact a third-party host (IP address,
- * browser, referrer) and breaks P-05. "Bild speichern" fetches a copy from Wikimedia Commons with its license; the server
+ * browser, referrer) and breaks P-05. "Bild sichern" fetches a copy from Wikimedia Commons with its license; the server
  * refuses everything else with a clear text.
  */
 export function Picture(props: {

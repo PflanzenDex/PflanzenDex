@@ -1,6 +1,6 @@
 // Public interface of the module `kernel` (ADR 0003): access to the API with sign-in and replay protection, the data layer, shared load error.
-export { announceWrite, call, createWrite, withRepeatKey } from "./api";
-export type { Response, ApiError, Write } from "./api";
+export { announceWrite, call, createWrite, isUnanswered, newRepeatKey } from "./api";
+export type { Response, ApiError, Write, WriteOptions } from "./api";
 export { LoadFrame } from "./client/load-frame/load-frame";
 export {
   REFERENCE_STALE_TIME,
@@ -17,7 +17,24 @@ export {
   useRequestPages,
   type Request,
 } from "./client/request/use-request";
-export { SIGN_IN, WRITE_SUCCEEDED, useWriteAction } from "./write-action/use-write-action";
+export {
+  SIGN_IN,
+  WRITE_SUCCEEDED,
+  dailyRun,
+  entityRun,
+  useWriteAction,
+} from "./write-action/use-write-action";
+export type { WriteSend } from "./write-action/use-write-action";
+export {
+  accountKey,
+  appendKey,
+  createKey,
+  entityKey,
+  forgetRepeatKeys,
+  runRepeat,
+  useRepeatKey,
+  type KeyScope,
+} from "./write-action/repeat-key";
 export { FeaturesProvider, useFeature, useFeatures } from "./client/features/features";
 export type { FeatureStates } from "./client/features/features";
-export { currentTimeZone, deviceTimeZone, setProfileTimeZone } from "./time-zone";
+export { currentTimeZone, deviceTimeZone, setProfileTimeZone, todayLocal } from "./time-zone";

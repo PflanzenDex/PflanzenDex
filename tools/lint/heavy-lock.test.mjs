@@ -4,7 +4,7 @@
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,10 +17,11 @@ after(() => {
   for (const dir of folders) rmSync(dir, { recursive: true, force: true });
 });
 
-// The environment of a call: the test's own HEAVY_LOCK_WAIT never leaks into a call that does not name one.
+// The environment of a call: the test's own HEAVY_LOCK_WAIT and HEAVY_LOCK_MAX_HOLD never leak into a call that does not name one.
 function envOf(extra) {
   const env = { ...process.env, ...extra };
   if (!("HEAVY_LOCK_WAIT" in extra)) delete env.HEAVY_LOCK_WAIT;
+  if (!("HEAVY_LOCK_MAX_HOLD" in extra)) delete env.HEAVY_LOCK_MAX_HOLD;
   return env;
 }
 
@@ -289,4 +290,121 @@ test("US-DEV-08: a pid that is not a number and a wait below 1 second are refuse
   const noWait = heavyLock([String(a.pid), "e2e"], { HEAVY_LOCK_DIR: dir, HEAVY_LOCK_WAIT: "0" });
   assert.equal(noWait.status, 2);
   assert.match(noWait.stderr, /at least 1 second/);
+});
+
+// The note time of a holder that took the lock `seconds` ago, in the note's own format (UTC, whole seconds).
+const notedAgo = (seconds) =>
+  new Date(Date.now() - seconds * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+test("US-DEV-08 (issue 2370): a wait on a holder older than HEAVY_LOCK_MAX_HOLD names its label and age; nothing is stopped", async () => {
+  const dir = lockFolder();
+  await externalLock(dir, 20);
+  const holder = owner();
+  writeFileSync(
+    path.join(dir, "heavy-job.owner"),
+    `${holder.pid} /work/checkout-a heavy ${notedAgo(1800)}\n`,
+  );
+  const b = owner();
+  const waiting = heavyLockAsync([String(b.pid), "ui-gates"], {
+    HEAVY_LOCK_DIR: dir,
+    HEAVY_LOCK_WAIT: "4",
+    HEAVY_LOCK_MAX_HOLD: "600",
+  });
+  assert.equal(await waiting.done, 1, waiting.out);
+  const text = waiting.out + waiting.err;
+  assert.match(text, /^heavy-lock: waiting for ui-gates in .+ \(since /m);
+  const report =
+    /^heavy-lock: over the maximum hold time \(HEAVY_LOCK_MAX_HOLD 600 s\): \/work\/checkout-a heavy has held the lock for (\d+) s; reported only, nothing is stopped or taken$/m.exec(
+      text,
+    );
+  assert.ok(report, `no over-maximum line in: ${text}`);
+  assert.ok(Number(report[1]) >= 1800, `the age is ${report[1]} s, the note says 1800 s ago`);
+  assert.doesNotThrow(() => process.kill(holder.pid, 0), "the holder was stopped");
+  assert.match(
+    noteOf(dir),
+    new RegExp(`^${holder.pid} /work/checkout-a heavy `),
+    "the note was taken away",
+  );
+});
+
+test("US-DEV-08 (issue 2370): the default HEAVY_LOCK_MAX_HOLD is 1200 s; a holder younger than that is not reported as over it", async () => {
+  const dir = lockFolder();
+  await externalLock(dir, 20);
+  const young = owner();
+  writeFileSync(
+    path.join(dir, "heavy-job.owner"),
+    `${young.pid} /work/checkout-a heavy ${notedAgo(60)}\n`,
+  );
+  const b = owner();
+  const waiting = heavyLockAsync([String(b.pid), "ui-gates"], {
+    HEAVY_LOCK_DIR: dir,
+    HEAVY_LOCK_WAIT: "3",
+  });
+  assert.equal(await waiting.done, 1, waiting.out);
+  assert.match(waiting.out, /^heavy-lock: waiting for ui-gates in /m);
+  assert.match(waiting.out, /^heavy-lock: held by \/work\/checkout-a heavy \(pid \d+, since /m);
+  assert.doesNotMatch(waiting.out + waiting.err, /over the maximum hold time/);
+});
+
+test("US-DEV-08 (issue 2370): a holder older than the default 1200 s is reported with the default in the line", async () => {
+  const dir = lockFolder();
+  await externalLock(dir, 20);
+  const old = owner();
+  writeFileSync(
+    path.join(dir, "heavy-job.owner"),
+    `${old.pid} /work/checkout-b e2e ${notedAgo(1500)}\n`,
+  );
+  const b = owner();
+  const waiting = heavyLockAsync([String(b.pid), "one-screen"], {
+    HEAVY_LOCK_DIR: dir,
+    HEAVY_LOCK_WAIT: "2",
+  });
+  assert.equal(await waiting.done, 1, waiting.out);
+  assert.match(
+    waiting.out + waiting.err,
+    /^heavy-lock: over the maximum hold time \(HEAVY_LOCK_MAX_HOLD 1200 s\): \/work\/checkout-b e2e has held the lock for \d+ s;/m,
+  );
+});
+
+test("US-DEV-08 (issue 2370): a note whose time does not read is waited for without a maximum-hold line", async () => {
+  const dir = lockFolder();
+  await externalLock(dir, 20);
+  const odd = owner();
+  writeFileSync(
+    path.join(dir, "heavy-job.owner"),
+    `${odd.pid} /work/checkout-c heavy not-a-time\n`,
+  );
+  const b = owner();
+  const waiting = heavyLockAsync([String(b.pid), "ui-gates"], {
+    HEAVY_LOCK_DIR: dir,
+    HEAVY_LOCK_WAIT: "2",
+  });
+  assert.equal(await waiting.done, 1, waiting.out);
+  assert.match(waiting.out, /^heavy-lock: waiting for ui-gates in /m);
+  assert.doesNotMatch(waiting.out + waiting.err, /over the maximum hold time/);
+});
+
+test("US-DEV-08 (issue 2370): HEAVY_LOCK_MAX_HOLD that is not a whole number, or below 1 second, is refused with exit 2 before the lock", () => {
+  const dir = lockFolder();
+  const a = owner();
+  const notANumber = heavyLock([String(a.pid), "e2e"], {
+    HEAVY_LOCK_DIR: dir,
+    HEAVY_LOCK_MAX_HOLD: "20m",
+  });
+  assert.equal(notANumber.status, 2, notANumber.stderr);
+  assert.match(
+    notANumber.stderr,
+    /HEAVY_LOCK_MAX_HOLD must be a whole number of seconds, got '20m'/,
+  );
+  const noHold = heavyLock([String(a.pid), "e2e"], {
+    HEAVY_LOCK_DIR: dir,
+    HEAVY_LOCK_MAX_HOLD: "0",
+  });
+  assert.equal(noHold.status, 2, noHold.stderr);
+  assert.match(noHold.stderr, /HEAVY_LOCK_MAX_HOLD must be at least 1 second/);
+  assert.equal(
+    existsSync(path.join(dir, "heavy-job.owner")),
+    false,
+    "a refused call took the lock",
+  );
 });

@@ -1,3 +1,4 @@
+import { entityKey, useRepeatKey } from "@/shared/data";
 import { useCallback, useState } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -17,21 +18,31 @@ export type RepotTarget = { id: string; name: string; status: SpecimenCard["stat
 
 /**
  * State and action for potting a cutting or repotting a plant (US-BES-04, US-BES-19). The form asks for the day first:
- * nothing is written before "Speichern" (issue 1028). After success the page reloads (`after`) and the message says what
+ * nothing is written before "Sichern" (issue 1028). After success the page reloads (`after`) and the message says what
  * changed (P-09); a refusal stays in the form (P-10). `access` is what the form reads the plant's plan with.
  */
 export function useRepot(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<RepotTarget | null>(null);
+  const keys = useRepeatKey();
 
   const send = useCallback(
     async (date: string, potId?: string): Promise<ApiError | null> => {
       const tok = await token();
       if (!tok || !open) return SIGN_IN;
-      const r = await repotSpecimen(api, tok, {
-        id: open.id,
-        date,
-        ...(potId === undefined ? {} : { potId }),
-      });
+      const r = await keys.run(
+        (key) =>
+          repotSpecimen(
+            api,
+            tok,
+            {
+              id: open.id,
+              date,
+              ...(potId === undefined ? {} : { potId }),
+            },
+            { key },
+          ),
+        entityKey("specimen", open.id, `repot:${date}:${potId ?? ""}`),
+      );
       if (!r.ok) return r.error;
       say(t(open.status === PLANT_STATUS ? "done.plant" : "done.cutting", { name: open.name }));
       setOpen(null);

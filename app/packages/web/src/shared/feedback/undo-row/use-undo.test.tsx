@@ -10,7 +10,9 @@ const row = (id: string): Row => ({ id, name: `Pflanze ${id}` });
 
 let announce = vi.fn<(text: string, shown?: string | null) => void>();
 const wrapper = ({ children }: { children: ReactNode }) => (
-  <Context.Provider value={{ announce, buffer: async () => undefined, note: null }}>
+  <Context.Provider
+    value={{ announce, buffer: async () => ({ ok: true as const, value: undefined }), note: null }}
+  >
     {children}
   </Context.Provider>
 );

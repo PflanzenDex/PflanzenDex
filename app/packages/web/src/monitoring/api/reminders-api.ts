@@ -1,5 +1,11 @@
 import type { FertilizingView, ReminderRow, ReminderSettings } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -20,14 +26,14 @@ export const loadReminderSettings = (
   fetchFn: FetchFn = fetch,
 ): Promise<Response<ReminderSettings>> => call(fetchFn, `${api}/reminders/settings`, token);
 
-/** Saves the settings as a whole; the repeat-guard key is created per call. */
+/** Saves the settings as a whole; the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function saveReminderSettings(
   api: string,
   token: string,
   settings: ReminderSettings,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<ReminderSettings>> {
-  const r = await createWrite(api, token, fetchFn)("PUT", "/reminders/settings", settings);
+  const r = await createWrite(api, token, options)("PUT", "/reminders/settings", settings);
   return r.ok ? { ok: true, value: r.value as ReminderSettings } : r;
 }
 
@@ -49,8 +55,8 @@ export const removeSubscription = (
   api: string,
   token: string,
   endpoint: string,
-  fetchFn: FetchFn = fetch,
-) => createWrite(api, token, fetchFn)("DELETE", "/reminders/subscriptions", { endpoint });
+  options: WriteOptions,
+) => createWrite(api, token, options)("DELETE", "/reminders/subscriptions", { endpoint });
 
 /** A plant that is due to be watered today (US-MON-05). */
 export interface WateringDueRow {
@@ -81,9 +87,9 @@ export const markWatered = (
   api: string,
   token: string,
   specimenIds: readonly string[],
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ) =>
-  createWrite(api, token, fetchFn)("POST", "/watering", {
+  createWrite(api, token, options)("POST", "/watering", {
     specimenIds,
     timeZone: currentTimeZone(),
   });
@@ -102,9 +108,9 @@ export const markFertilized = (
   api: string,
   token: string,
   specimenId: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ) =>
-  createWrite(api, token, fetchFn)("POST", "/fertilizing", {
+  createWrite(api, token, options)("POST", "/fertilizing", {
     specimenId,
     timeZone: currentTimeZone(),
   });
@@ -119,15 +125,15 @@ export const madeEntries = (value: unknown, count: number): boolean =>
 /**
  * The undo of "Gegossen" (US-QS-32): takes the entries of the given plants of `date` back through `monitoring.unwater`. `date`
  * is the day the write used (its response), so an undo after midnight still means that day (NFR-08). The answer says how many
- * entries were removed (`removed`, 0 when they are gone already). The repeat-guard key is created per call.
+ * entries were removed (`removed`, 0 when they are gone already). The repeat-guard key is the caller's (`options.key`, US-QS-03).
  */
 export const unwaterPlants = (
   api: string,
   token: string,
   input: { specimenIds: readonly string[]; date: string },
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ) =>
-  createWrite(api, token, fetchFn)("POST", "/watering/unwater", {
+  createWrite(api, token, options)("POST", "/watering/unwater", {
     ...input,
     timeZone: currentTimeZone(),
   });

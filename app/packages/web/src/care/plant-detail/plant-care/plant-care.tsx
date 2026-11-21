@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import type { TreatmentListRow, TreatmentRow } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import {
   completeTreatment,
   loadOpenTreatments,
@@ -63,8 +63,9 @@ function OpenTreatmentsOfPlant(props: { api: string; token: Token; specimen: Spe
                   busy={write.running}
                   onDone={() =>
                     void write.run(
-                      (t) => completeTreatment(api, t, row.id),
+                      (t, opts) => completeTreatment(api, t, row.id, opts),
                       `„${row.reason}“ bei „${row.specimenName}“ als erledigt eingetragen.`,
+                      entityKey("treatment", row.id, "complete"),
                     )
                   }
                 />
