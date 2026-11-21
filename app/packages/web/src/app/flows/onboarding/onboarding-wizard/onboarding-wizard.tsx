@@ -90,7 +90,7 @@ function Buttons({ f, onSkip }: { f: Flow; onSkip: () => void }) {
           >
             {FIRST_PLANT_STEPS[1]?.actionLabel}
           </Button>
-          <Button type="button" variant="outline" onClick={() => f.setIndex(0)}>
+          <Button type="button" variant="plain" onClick={() => f.setIndex(0)}>
             {ui("back")}
           </Button>
         </>

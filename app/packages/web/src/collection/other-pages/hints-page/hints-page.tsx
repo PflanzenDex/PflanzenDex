@@ -15,7 +15,7 @@ import {
 import { refusalText } from "@/shared/lib/error-text";
 import { sharedLocations } from "../../../light";
 import { loadSpecimenHints } from "../../insights/api/hints-api";
-import { setSpecimenLocation } from "../../specimens/model/specimens-api";
+import { locateKey, setSpecimenLocation } from "../../specimens/model/specimens-api";
 import { HintCount, type useHintCount } from "../../insights/api/hint-count/hint-count";
 import { HintCard, type HintTarget } from "./hint-card/hint-card";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
@@ -37,7 +37,6 @@ interface Data {
 const KEY = ["collection", "hints"] as const;
 
 type Token = () => Promise<string | undefined>;
-
 /**
  * With `count` the page renders nothing of its own and hands the number of hints to `count` (US-QS-18): the overview
  * of "Heute" shows it on a tile and in its summary. It shares the request and the cached copy with the list.
@@ -109,8 +108,9 @@ function HintsList(props: HintsListProps) {
               onOpen={onOpen}
               onLocate={(specimenId, locationId, success) =>
                 void place.run(
-                  (t) => setSpecimenLocation(api, t, { id: specimenId, locationId }),
+                  (t, opts) => setSpecimenLocation(api, t, { id: specimenId, locationId }, opts),
                   success,
+                  locateKey(specimenId, locationId),
                 )
               }
             />

@@ -7,7 +7,7 @@ import {
   useLayer,
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { Button } from "@/shared/ui/button/button";
+import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useRequest } from "../../../shared/data";
 import { DistributionView } from "../../insights/distribution-view/distribution-view";
@@ -103,9 +103,9 @@ export function PlantLayers(props: LayerProps) {
       <LayerSheet id={ZONES_LAYER} title="Lichtzonen">
         <div className="flex flex-col gap-3">
           <DistributionView distribution={props.distribution} />
-          <Button type="button" variant="outline" onClick={props.onManage}>
-            Standorte und Lichtzonen verwalten
-          </Button>
+          <GroupedList>
+            <GroupedRow onClick={props.onManage} title="Standorte und Lichtzonen verwalten" />
+          </GroupedList>
         </div>
       </LayerSheet>
       {props.archived.length > 0 ? <ArchiveLayer {...props} /> : null}

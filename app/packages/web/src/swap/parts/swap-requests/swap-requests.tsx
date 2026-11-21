@@ -3,7 +3,7 @@ import type { SwapOverview, SwapSide } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { errorText } from "@/shared/lib/error-text";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { answerSwap, confirmHandover, loadSwaps, type AnswerInput } from "../../api/swaps-api";
 import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
 import { SwapCard } from "./swap-card/swap-card";
@@ -85,15 +85,25 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
   const [handed, setHanded] = useState<string | null>(null);
   const answer = (s: SwapSide, a: AnswerInput) => {
     setHanded(null);
-    void write.run((t) => answerSwap({ api, token: t }, s.swapId, a), doneText(s, a));
+    void write.run(
+      (t, opts) => answerSwap({ api, token: t }, s.swapId, a, opts),
+      doneText(s, a),
+      // Set-state with a chosen action (accept, decline, propose): the action stays, the free-text reason and
+      // proposal are the body (US-QS-03).
+      entityKey("swap", s.swapId, `answer:${a.action}`),
+    );
   };
   const handover = (s: SwapSide, marker: string | null) => {
     setHanded(null);
-    void write.run(async (t) => {
-      const r = await confirmHandover({ api, token: t }, s.swapId, marker);
-      if (r.ok) setHanded(handoverText(s, r.value.status));
-      return r;
-    }, "");
+    void write.run(
+      async (t, opts) => {
+        const r = await confirmHandover({ api, token: t }, s.swapId, marker, opts);
+        if (r.ok) setHanded(handoverText(s, r.value.status));
+        return r;
+      },
+      "",
+      entityKey("swap", s.swapId, `handover:${marker}`),
+    );
   };
   if (data.received.length === 0 && data.sent.length === 0)
     return <EmptySection text={t("requests.none")} />;

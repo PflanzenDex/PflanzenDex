@@ -82,7 +82,7 @@ function SignOutRow(props: {
           </Button>
           <Button
             type="button"
-            variant="outline"
+            variant="tinted"
             size="touch"
             aria-disabled={props.busy || undefined}
             aria-busy={props.busy || undefined}

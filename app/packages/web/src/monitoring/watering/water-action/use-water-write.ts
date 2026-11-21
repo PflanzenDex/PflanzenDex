@@ -2,7 +2,13 @@ import { useRef } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useUndo } from "@/shared/feedback/undo-row/use-undo";
 import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
-import { useInvalidate, useWriteAction } from "../../../shared/data";
+import {
+  appendKey,
+  todayLocal,
+  entityKey,
+  useInvalidate,
+  useWriteAction,
+} from "../../../shared/data";
 import { madeEntries, markWatered, unwaterPlants } from "../../api/reminders-api";
 import table from "./water-action.de.json";
 
@@ -41,23 +47,29 @@ export function useWaterWrite(
   });
   const water = () =>
     void write.run(
-      async (tok) => {
-        const r = await markWatered(api, tok, [specimen.id]);
+      async (tok, opts) => {
+        const r = await markWatered(api, tok, [specimen.id], opts);
         made.current = r.ok && madeEntries(r.value, 1);
         writtenOn.current =
           r.ok && made.current ? ((r.value as { date?: string }).date ?? null) : null;
         return r;
       },
       t("watered", { name: specimen.name }),
+      // A daily append: the local day names the occasion, so a watering the next day is a write of its own (US-QS-03).
+      appendKey("specimen", specimen.id, `water:${todayLocal()}`),
     );
   const undoWater = () => {
     const date = writtenOn.current;
     if (date === null) return;
-    void restore.run(async (tok) => {
-      const r = await unwaterPlants(api, tok, { specimenIds: [specimen.id], date });
-      removed.current = r.ok ? ((r.value as { removed?: number }).removed ?? 0) : 0;
-      return r;
-    }, t("restored"));
+    void restore.run(
+      async (tok, opts) => {
+        const r = await unwaterPlants(api, tok, { specimenIds: [specimen.id], date }, opts);
+        removed.current = r.ok ? ((r.value as { removed?: number }).removed ?? 0) : 0;
+        return r;
+      },
+      t("restored"),
+      entityKey("specimen", specimen.id, `unwater:${date}`),
+    );
   };
   return { held: undo.held.some((h) => h.key === specimen.id), write, restore, water, undoWater };
 }

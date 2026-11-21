@@ -2,7 +2,7 @@ import { REMINDER_LIMITS, type ReminderOccasion, type ReminderSettings } from "@
 import { useCallback, useState, type FormEvent, type ReactNode } from "react";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { accountKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadReminderSettings, saveReminderSettings } from "../../api/reminders-api";
 import { PauseRows, withPause, type Paused } from "../pause-rows/pause-rows";
 import { TimeFields } from "./time-fields/time-fields";
@@ -61,7 +61,12 @@ function TimesForm(props: { api: string; token: Token; saved: ReminderSettings }
       quietTo: quiet[1] === "" ? null : quiet[1],
       measurementDays: Number(days),
     };
-    void write.run((t) => saveReminderSettings(props.api, t, next), "Erinnerungen gesichert.");
+    void write.run(
+      (t, opts) => saveReminderSettings(props.api, t, next, opts),
+      "Erinnerungen gesichert.",
+      // Set-state on the times form: its own action, so the pauses form never shares its key (US-QS-03).
+      accountKey("reminders:times"),
+    );
   };
 
   return (
@@ -98,7 +103,12 @@ function PausesForm(props: { api: string; token: Token; saved: ReminderSettings 
     // A typed text that is no day: its field shows the message on leaving it (US-QS-32), nothing is saved.
     if (!Object.values(paused).every(isHandedDate)) return;
     const next: ReminderSettings = { ...saved, paused };
-    void write.run((t) => saveReminderSettings(props.api, t, next), "Pausen gesichert.");
+    void write.run(
+      (t, opts) => saveReminderSettings(props.api, t, next, opts),
+      "Pausen gesichert.",
+      // Set-state on the pauses form: its own action, so the times form never shares its key (US-QS-03).
+      accountKey("reminders:pauses"),
+    );
   };
   const pause = (o: ReminderOccasion, until: string) => setPaused((p) => withPause(p, o, until));
 

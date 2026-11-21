@@ -4,7 +4,13 @@ import type {
   OperatorCostFigure,
   OperatorOverview,
 } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -57,9 +63,9 @@ export async function markIdentityRemoved(
   api: string,
   token: string,
   entryId: string,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<{ entryId: string; outcome: "marked" | "already" }>> {
-  const r = await createWrite(api, token, fetchFn)(
+  const r = await createWrite(api, token, options)(
     "POST",
     `/operator/deletion-log/${entryId}/identity-removed`,
     {},
@@ -69,14 +75,14 @@ export async function markIdentityRemoved(
     : r;
 }
 
-/** Registration with or without invitation code; the repeat-guard key is created per call. */
+/** Registration with or without invitation code; the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function setRegistrationMode(
   api: string,
   token: string,
   invitationOnly: boolean,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<{ invitationOnly: boolean }>> {
-  const r = await createWrite(api, token, fetchFn)("PUT", "/operator/registration", {
+  const r = await createWrite(api, token, options)("PUT", "/operator/registration", {
     invitationOnly,
   });
   return r.ok ? { ok: true, value: r.value as { invitationOnly: boolean } } : r;
@@ -87,9 +93,9 @@ export async function setOperatorCost(
   api: string,
   token: string,
   figure: OperatorCostFigure,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<OperatorCostFigure>> {
-  const r = await createWrite(api, token, fetchFn)("PUT", "/operator/cost", figure);
+  const r = await createWrite(api, token, options)("PUT", "/operator/cost", figure);
   return r.ok ? { ok: true, value: r.value as OperatorCostFigure } : r;
 }
 
@@ -98,9 +104,9 @@ export async function createInvitation(
   api: string,
   token: string,
   validForDays: number,
-  fetchFn: FetchFn = fetch,
+  options: WriteOptions,
 ): Promise<Response<CreatedInvitation>> {
-  const r = await createWrite(api, token, fetchFn)("POST", "/operator/invitations", {
+  const r = await createWrite(api, token, options)("POST", "/operator/invitations", {
     validForDays,
   });
   return r.ok ? { ok: true, value: r.value as CreatedInvitation } : r;

@@ -4,7 +4,7 @@ import { Input } from "@/shared/ui/fields/input/input";
 import { Select } from "@/shared/ui/fields/select/select";
 import { copyText } from "@/shared/platform/browser/clipboard";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useWriteAction } from "../../../shared/data";
+import { createKey, useWriteAction } from "../../../shared/data";
 import { createTask, previewTask, type AiTaskType } from "../../api/connections-api";
 import { HOWTO_LAYER, StepButton } from "../../clients-section/connect-step/connect-step";
 import table from "../../ai.de.json";
@@ -128,7 +128,7 @@ export function NewTask(props: {
 
   const preview = async () => {
     const t = await props.token();
-    const r = t ? await previewTask(props.api, t, type, reference) : null;
+    const r = t ? await previewTask(props.api, t, { type, reference }) : null;
     setNotice(null);
     setProblem(r && !r.ok ? r.error.text : null);
     setText(r?.ok ? r.value.prompt : null);
@@ -157,8 +157,10 @@ export function NewTask(props: {
           disabled={!props.connected || write.running}
           onClick={() =>
             void write.run(
-              (t) => createTask(props.api, t, type, reference),
+              (t, opts) => createTask(props.api, t, { type, reference }, opts),
               "Der Auftrag ist angelegt.",
+              // A create (an AI task is added): the operation only, the type and the reference are the body (US-QS-03).
+              createKey("task", "create"),
             )
           }
         >

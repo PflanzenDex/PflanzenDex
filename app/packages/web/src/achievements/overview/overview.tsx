@@ -93,7 +93,8 @@ function NewNotice(props: { api: string; token: Token; ids: string[] }) {
         variant="outline"
         pending={write.running}
         pendingLabel="Sichert …"
-        onClick={() => void write.run((t) => markSeen(api, t, ids), "")}
+        // A seen mark: a background write with its own key, it frees no held key (US-QS-03).
+        onClick={() => void write.runSilent((t, opts) => markSeen(api, t, ids, opts), "")}
       >
         Als gesehen markieren
       </Button>

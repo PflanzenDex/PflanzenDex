@@ -1,3 +1,4 @@
+import { newRepeatKey } from "@/shared/data";
 import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import type { Banner } from "@pflanzendex/core";
@@ -67,7 +68,8 @@ function useMarkRead(deps: { api: string; token: Token; reload: () => void }): M
       sent.current = asOf;
       try {
         const tk = await token();
-        const r = tk ? await markFeedSeen(api, tk, asOf) : null;
+        // A per-send key: marking the news seen is idempotent (seen up to asOf), and a failure is retried by the next view.
+        const r = tk ? await markFeedSeen(api, tk, asOf, { key: newRepeatKey() }) : null;
         if (r?.ok) return;
         sent.current = null;
         toast.show({ message: failureText(r && !r.ok ? r.error : undefined), kind: "error" });

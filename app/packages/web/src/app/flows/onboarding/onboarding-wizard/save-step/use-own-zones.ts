@@ -7,6 +7,7 @@ import {
   useQueryClient,
   type ApiError,
   type QueryClient,
+  newRepeatKey,
 } from "../../../../../shared/data";
 import { refreshLight, sharedZones } from "../../../../../light";
 import { ensureHome } from "../where-question/use-places";
@@ -31,7 +32,12 @@ async function ownZones(client: QueryClient, api: string, token: Token): Promise
     await ensureHome(client, api, t);
     return { ok: true, zones: first.value };
   }
-  const made = await createWrite(api, t)("POST", "/light-zones/defaults", {});
+  // A per-send key: the zone defaults are silent and idempotent; no action of the keeper is repeated here (US-ONB-02).
+  const made = await createWrite(api, t, { key: newRepeatKey() })(
+    "POST",
+    "/light-zones/defaults",
+    {},
+  );
   if (!made.ok) return { ok: false, error: made.error };
   // The new zones refresh the shared light data (issue 1244); the default location "Zuhause" comes with them (US-ONB-02).
   await refreshLight(client);

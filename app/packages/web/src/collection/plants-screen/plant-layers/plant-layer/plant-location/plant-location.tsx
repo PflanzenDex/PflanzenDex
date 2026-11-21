@@ -35,7 +35,7 @@ export function PlantLocation(props: {
         <Actions>
           <Button
             type="button"
-            variant="outline"
+            variant="tinted"
             aria-label={`Lichtzone ändern: ${card.name}`}
             onClick={props.onLightZone}
           >

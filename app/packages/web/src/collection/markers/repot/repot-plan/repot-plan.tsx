@@ -70,7 +70,7 @@ export function RepotPlanSection(props: {
         <ErrorNotice>
           <p>{t("plan.failed")}</p>
           {plan.error ? <p>{refusalText(plan.error)}</p> : null}
-          <Button type="button" variant="outline" onClick={plan.retry}>
+          <Button type="button" variant="tinted" onClick={plan.retry}>
             {t("plan.retry")}
           </Button>
         </ErrorNotice>
@@ -92,7 +92,7 @@ export function RepotPlanSection(props: {
       {view.equipmentOff ? null : <FreePots pots={view.freePots} />}
       <SignsLine hints={view.hints} />
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" onClick={props.onRepot}>
+        <Button type="button" variant="tinted" onClick={props.onRepot}>
           {t("plan.repot")}
         </Button>
         <LayerOpener id={signsLayerId(card.id)}>{t("plan.signsOpen")}</LayerOpener>

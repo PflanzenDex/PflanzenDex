@@ -1,11 +1,27 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { User, UserManager } from "oidc-client-ts";
-import { setProfileTimeZone, type ApiError } from "../../shared/data";
+import {
+  setProfileTimeZone,
+  type ApiError,
+  accountKey,
+  forgetRepeatKeys,
+  runRepeat,
+} from "../../shared/data";
 import { SIGN_OUT_UNREACHABLE, signOutEverywhere } from "../api/account-api";
 import { here, hereState } from "../api/sign-in-client";
 import { texts } from "../../shared/lib/text-rules/texts";
 import table from "../views/views.de.json";
 import type { State } from "./session";
+
+/**
+ * Ends the sessions on all devices. The press is held by the registry like any account action (US-QS-03): a lost answer is
+ * repeated under its key, and `forgetRepeatKeys` (sign-out) frees it.
+ */
+function endEverywhere(api: string, token: string) {
+  return runRepeat(accountKey("sign-out-everywhere"), (key) =>
+    signOutEverywhere(api, token, { key }),
+  );
+}
 
 // The sessionStorage keys of the sign-in (US-ACC-01). They live here because the actions write them and session.ts reads them.
 export const MARKER = "pflanzendex.signed_out";
@@ -32,6 +48,8 @@ export function endSession(
   mgr: UserManager,
   then?: "after_logout" | "after_switch",
 ): Promise<void> {
+  // Sign-out and account switch both end the session: the held repeat-guard keys of the account go too (US-QS-03).
+  forgetRepeatKeys();
   // On the way to a sign-in form nobody signed out: the marker would stay in the tab and show "Du bist abgemeldet.".
   window.sessionStorage.setItem(then ? REGISTER : MARKER, then ?? "1");
   // The session ends here, so this tab no longer knows of a live one.
@@ -146,7 +164,7 @@ export function sessionActions(
         const user = await signedInUser(mgr);
         // Without a stored sign-in there is no token to end the sessions with; a success here would claim what did not happen.
         if (!user) return showError(t("everywhere.failed"));
-        const r = await signOutEverywhere(api, user.access_token);
+        const r = await endEverywhere(api, user.access_token);
         if (!r.ok) return showError(everywhereText(r.error));
         await forgetSignIn(mgr);
         setState({ kind: "signedOut", hint: "Du bist auf allen Geräten abgemeldet." });

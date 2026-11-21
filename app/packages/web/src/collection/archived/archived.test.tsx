@@ -109,7 +109,12 @@ describe("US-BES-07 client of the archive API", () => {
 
   it("archives with reason, time zone of the device and replay-protection key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(200, {}));
-    await archiveSpecimen("http://api", "tok", { id: "e1", reason: "verkauft" }, fetchFn);
+    await archiveSpecimen(
+      "http://api",
+      "tok",
+      { id: "e1", reason: "verkauft" },
+      { fetchFn: fetchFn, key: "test-key" },
+    );
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://api/specimens/e1/archive");
     expect(JSON.parse(String(init?.body))).toEqual({
@@ -122,7 +127,9 @@ describe("US-BES-07 client of the archive API", () => {
   it("a server error stays an error with code (P-10)", async () => {
     const error = { code: "specimen.already_archived", text: "Schon archiviert." };
     const fetchFn = vi.fn<typeof fetch>(async () => response(409, { error }));
-    expect(await restoreSpecimen("http://api", "tok", "e1", fetchFn)).toMatchObject({
+    expect(
+      await restoreSpecimen("http://api", "tok", "e1", { fetchFn: fetchFn, key: "test-key" }),
+    ).toMatchObject({
       ok: false,
       error: { code: "specimen.already_archived" },
     });
