@@ -164,13 +164,15 @@ The UI gates, Lighthouse, the e2e tests and `make ci` load the workstation so mu
 
 ### The orchestrating session (owner decisions 2026-11-09 and 2026-11-14, issues 1747 and 2099)
 
-The roles are indexed in `CLAUDE.md` ("Agent sessions and models"); each subagent's rules are in its `.claude/agents/<name>.md`. The orchestrating session (the main session, Opus at effort medium) has no definition file; its rules are these:
+The roles are indexed in `CLAUDE.md` ("Agent sessions and models"); each subagent's rules are in its `.claude/agents/<name>.md`. The orchestrating session (the main session, Opus at effort medium; ticket leads run on Sonnet since issue 2413) has no definition file; its rules are these:
 
 - It picks and claims tickets (`make claim`, `make worktree`), sets the PR title and starts one `ticket-lead` per ticket with only the ticket's facts. When it works a ticket itself, it takes the ticket-lead role and follows `.claude/agents/ticket-lead.md`.
 - One lead runs one implementer. The orchestrator adds implementers by the machine's resources (CPU, free RAM, running heavy jobs); heavy work waits on the heavy lock: `make heavy-lock` for a heavy target, `make heavy RUN="<command>"` for an ad-hoc command (see "One heavy job at a time").
 - No hard cap on open PRs; with three open PRs that are all drafts, it finishes them before claiming more.
 - It takes the owner's decisions and relays them to the leads, and spot-checks each lead's report against the merged head on `dev`.
-- It works a batch of tickets this way. At a natural break (a batch is done, or the context grows long) it suggests `/clear` to the owner, once every open PR's Handoff carries the state, open questions and owner decisions.
+- It works on one item at a time: one ticket lead, or one `device-checker` run, and the next starts only after the current one is merged, closed or reported (owner decision 2026-11-21, issue 2413). The item's own implementer and specialists are part of it.
+- It asks the owner the item's open questions before the lead briefs an implementer (step 0 of `ticket-lead.md`), so an item stops for the owner once.
+- After each merged item it updates the session handoff and suggests `/clear` to the owner, once every open PR's Handoff carries the state, open questions and owner decisions; a short context costs less on every turn (issue 2413).
 
 ### What the SubagentStop hooks check (US-QG-07, issues 2371 and US-DEV-02)
 

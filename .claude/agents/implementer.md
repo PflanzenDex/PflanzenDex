@@ -34,6 +34,16 @@ Read `AGENTS.md` and `CLAUDE.md` in the worktree first. They are the rules of th
 - Layout: at most 5 units per directory (`make layout`). A crowded directory needs a subfolder, not a sixth file.
 - A test that spawns `make` uses `spawnSync("bash", ["-c", …])`, as `rest-cli.test.mjs` does, or knip fails. User input never goes into a make recipe unquoted (`export REST_X := $(value X)`).
 
+## Before the first push
+
+CI runs checks that `make gates` (the pre-push hook) does not. Each one missed cost a whole rework round on 2026-11-21 (issue 2413). Before your first push, run the ones your diff needs and report their exit codes:
+
+- **A new or changed function in `app/packages/db/` or `core/`:** write its test, then `make heavy RUN="npm run ci:tests:db"` (or `ci:tests:core`) in `app/`. The coverage thresholds (99 % functions in db) fail in CI, not in the hook.
+- **A new import into web code that loads at start** (the shell, `main.tsx`, shared hooks, a `core` import): `make heavy RUN="npm run build && npm run bundle-budget"` in `app/`. The entry bundle has a gzip budget, and one `core` import added 15 kB.
+- **Moved or removed literal UI text:** the ui-text baseline must shrink in the same commit. Run `npm run ui-text` in `app/`, and lower the counts it names in `app/config/gates/baselines/ui-text-baseline.json`.
+- **A component file near 200 lines or a function near 60:** split it before the push; ESLint's size limits fail the hook after the work is done.
+- **Changed API or core behaviour:** run the api and core suites, not only the web suite.
+
 ## Commit and push
 
 - Conventional Commits; the scope must be one of `app/config/project/commitlint.config.js` (an epic code such as `bes`, or a tech scope such as `dev`, `qg`); header at most 100 characters.
