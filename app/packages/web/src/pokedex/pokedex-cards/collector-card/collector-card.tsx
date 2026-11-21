@@ -1,5 +1,10 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import type { CollectorCard as Card } from "@pflanzendex/core";
+import {
+  CardPicture,
+  PICTURE_HEIGHT_CAP,
+} from "@/shared/patterns/display/card/card-picture/card-picture";
+import { largeText } from "@/shared/patterns/display/card/card-picture/large-text";
 import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
 import {
   FoldNext,
@@ -8,9 +13,15 @@ import {
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { SpeciesName } from "@/shared/species-name/species-name";
 import { cn } from "@/shared/lib/utils";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { catchText } from "./catch-text";
+import table from "./collector-card.de.json";
+import { SourcesRow } from "./sources-row/sources-row";
+import { WikipediaSource } from "./wikipedia-source/wikipedia-source";
 import { appRarityLine, rarityLines, type CardLine } from "./rarity-note/rarity-note";
 import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+
+const t = texts(table);
 
 const stars = (n: number) => "★".repeat(n) + "☆".repeat(3 - n);
 
@@ -27,26 +38,33 @@ export function DifficultyStars(props: { level: number; label: string }) {
   );
 }
 
-/** The image is a link to its source, not a copy (P-05); without one a neutral sprout stands in. */
-function Picture(props: { card: Card }) {
+/**
+ * The picture with its credit directly under it (US-QS-32, F-0133, SG-PHOTO-01 to SG-PHOTO-03): the shared card picture
+ * keeps a 4:3 box at every width and text size, with room reserved before the image comes; the image is a link to its
+ * source, not a copy (P-05); without one the drawn placeholder stands in, never an emoji. An uncaught card keeps its
+ * picture in grey (owner answer Q-91, the one exception to SG-COLOR-07). At the normal text size the box takes the height
+ * cap of the other cards; at large text the card takes its own height and the picture is not capped.
+ */
+function Picture(props: { card: Card; large: boolean }) {
   const c = props.card;
-  if (c.imageUrl === null)
-    return (
-      <span aria-hidden="true" className="text-4xl">
-        🌱
-      </span>
-    );
   return (
-    <img
-      src={c.imageUrl}
-      alt={`Bild von ${c.species}`}
-      loading="lazy"
-      className={cn(
-        // 80 px instead of 128 on a short screen, so one card fits a 360 x 640 phone (issue 1154).
-        "h-32 w-full rounded-tile object-cover [@media(max-height:700px)]:h-20",
-        c.state === "missing" && "grayscale",
-      )}
-    />
+    <div className={cn("min-w-0", c.state === "missing" && "[&_img]:grayscale")}>
+      <CardPicture
+        src={c.imageUrl}
+        alt={t("card.imageAlt", { species: c.species })}
+        boxClassName={props.large ? undefined : PICTURE_HEIGHT_CAP}
+        credit={
+          c.imageUrl === null ? undefined : (
+            <WikipediaSource
+              label={t("card.pictureCredit")}
+              sourceUrl={c.sourceUrl}
+              shown
+              className="inline-flex min-h-11 items-center text-muted-foreground"
+            />
+          )
+        }
+      />
+    </div>
   );
 }
 
@@ -126,37 +144,13 @@ function Lines(props: { lines: readonly CardLine[] }) {
 }
 
 /**
- * Source and license of Wikipedia content (US-QS-06, FR-POK-07): a link when the source is known; when text or image are
- * shown without one, the source and license are still named, as text (P-08). Without Wikipedia content: nothing.
- */
-export function WikipediaSource(props: {
-  label: string;
-  sourceUrl: string | null;
-  shown: boolean;
-  className?: string;
-}) {
-  const text = `${props.label}: Wikipedia (CC BY-SA)`;
-  if (props.sourceUrl !== null)
-    return (
-      <a
-        href={props.sourceUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cn("text-sm underline", props.className)}
-      >
-        {text}
-      </a>
-    );
-  if (!props.shown) return null;
-  return <span className="text-sm text-muted-foreground">{`${text}, Link unbekannt`}</span>;
-}
-
-/**
  * Collector card of one species (US-POK-01). Caught is colored, missing keeps name and text visible and shows the
  * image in grey. A species-poor genus gets a badge, a caught one also a rarity frame.
  */
 export function CollectorCard(props: { card: Card }) {
   const c = props.card;
+  // The text size is read once when the card appears, as the decks do (US-QS-21).
+  const [large] = useState(largeText);
   const caught = c.state === "caught";
   const rare = caught && c.speciesPoor;
   return (
@@ -164,11 +158,11 @@ export function CollectorCard(props: { card: Card }) {
       data-state={c.state}
       {...(rare ? { "data-rarity": "" } : {})}
       className={cn(
-        "animate-list-in grid min-w-0 content-start gap-1 break-words rounded-card bg-card p-3 text-card-foreground shadow-elevation-1",
+        "animate-list-in grid min-w-0 grid-cols-1 content-start gap-1 break-words rounded-card bg-card p-3 text-card-foreground shadow-elevation-1",
         rare && "border-2 border-warning-border",
       )}
     >
-      <Picture card={c} />
+      <Picture card={c} large={large} />
       <span className="text-sm text-muted-foreground">{`#${String(c.number).padStart(3, "0")}`}</span>
       <SpeciesName scientific={c.species} german={c.germanName} tooltip={c.germanNameFull} />
       {/* Two lines on a short screen; the full text is in the species profile (issue 1154). */}
@@ -187,11 +181,7 @@ export function CollectorCard(props: { card: Card }) {
       {c.specimenCount > 1 && (
         <span className="text-muted-foreground">{`${c.specimenCount} Pflanzen`}</span>
       )}
-      <WikipediaSource
-        label="Quelle"
-        sourceUrl={c.sourceUrl}
-        shown={c.summary !== null || c.imageUrl !== null}
-      />
+      <SourcesRow card={c} />
     </li>
   );
 }

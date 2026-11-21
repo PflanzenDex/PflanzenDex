@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { CollectorCard as Card } from "@pflanzendex/core";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectorCard } from "./collector-card";
 
@@ -95,12 +95,12 @@ describe("US-POK-01 collector card", () => {
   it("US-POK-01 links the image from its source and the source with its license", () => {
     show(card());
     expect(screen.getByRole("img").getAttribute("src")).toBe("https://upload.example/ficus.jpg");
-    const link = screen.getByRole("link", { name: /Quelle: Wikipedia/ });
+    const link = screen.getByRole("link", { name: /^Bild: Wikipedia/ });
     expect(link.getAttribute("href")).toBe("https://de.wikipedia.org/wiki/Ficus_benjamina");
     expect(link.textContent).toContain("CC BY-SA");
   });
 
-  it("US-POK-01 without an image a neutral sprout stands in and without source there is no link", () => {
+  it("US-POK-01 without an image the drawn placeholder stands in and without source there is no link", () => {
     show(card({ imageUrl: null, sourceUrl: null }));
     expect(screen.queryByRole("img")).toBeNull();
     expect(screen.queryByRole("link")).toBeNull();
@@ -120,13 +120,14 @@ describe("US-POK-01 collector card", () => {
 describe("US-QS-06 sources and licenses on the collector card (FR-POK-07)", () => {
   it("US-QS-06 Wikipedia text without a known source link still names source and license, without a link", () => {
     show(card({ imageUrl: null, sourceUrl: null }));
-    expect(screen.getByText("Quelle: Wikipedia (CC BY-SA), Link unbekannt")).toBeTruthy();
+    expect(screen.getByText("Wikipedia (CC BY-SA)")).toBeTruthy();
+    expect(screen.getByText("Link unbekannt")).toBeTruthy();
     expect(screen.queryByRole("link")).toBeNull();
   });
 
   it("US-QS-06 a Wikipedia image without a known source link also names source and license", () => {
     show(card({ summary: null, sourceUrl: null }));
-    expect(screen.getByText("Quelle: Wikipedia (CC BY-SA), Link unbekannt")).toBeTruthy();
+    expect(screen.getByText("Bild: Wikipedia (CC BY-SA), Link unbekannt")).toBeTruthy();
   });
 
   it("US-QS-06 nothing from Wikipedia on the card: no attribution", () => {
@@ -148,7 +149,7 @@ describe("US-POK-13 rarity in nature on the card", () => {
     expect(screen.queryByText(/Hinweis/)).toBeNull();
   });
 
-  it("US-POK-13 labels category and occurrence count 'in der Natur' with source link and retrieval date", () => {
+  it("US-POK-13 labels category and occurrence count 'in der Natur'; their source and retrieval date are in the sources row", () => {
     show(
       card({
         natureRarity: {
@@ -164,9 +165,9 @@ describe("US-POK-13 rarity in nature on the card", () => {
     );
     expect(screen.getByText("In der Natur: gefährdet (VU)")).toBeTruthy();
     expect(screen.getByText("In der Natur: 1.231 Fundmeldungen (GBIF)")).toBeTruthy();
-    const links = screen.getAllByRole("link", { name: /Quelle: GBIF, abgerufen 16\.10\.2026/ });
-    expect(links).toHaveLength(2);
-    expect(links[0]?.getAttribute("href")).toBe(src.url);
+    const row = screen.getByRole("group", { name: "Quellen" });
+    expect(within(row).getAllByRole("link", { name: "GBIF" })).toHaveLength(1);
+    expect(row.textContent).toContain("abgerufen 16.10.2026");
   });
 
   it("US-POK-13 shows a neutral note for a threatened species and none for a safe one", () => {
@@ -186,7 +187,7 @@ describe("US-POK-13 rarity in nature on the card", () => {
     expect(screen.getByText("Hinweis: Diese Art gilt in der Natur als bedroht.")).toBeTruthy();
   });
 
-  it("US-POK-13 does not link a source that is not https", () => {
+  it("US-POK-13 does not link a source that is not https: the sources row names it as text with its date", () => {
     show(
       card({
         natureRarity: {
@@ -196,7 +197,10 @@ describe("US-POK-13 rarity in nature on the card", () => {
         },
       }),
     );
-    expect(screen.queryByRole("link", { name: /GBIF, abgerufen/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: "GBIF" })).toBeNull();
+    const row = screen.getByRole("group", { name: "Quellen" });
+    expect(row.textContent).toContain("GBIF");
+    expect(row.textContent).toContain("abgerufen 16.10.2026");
   });
 });
 
@@ -291,11 +295,238 @@ describe("US-POK-01 · US-QS-24 the card on a short screen (issue 1154)", () => 
     expect(screen.getByText("Schwierigkeit unbekannt").closest("details")).toBeNull();
   });
 
-  it("US-POK-01 · issue 1154 the picture and the summary are smaller on a short screen only", () => {
+  it("US-POK-01 · issue 1154 the summary is two lines on a short screen only", () => {
     show(card());
-    expect(screen.getByRole("img").className).toContain("[@media(max-height:700px)]:h-20");
     expect(screen.getByText("Ein Baum.").className).toContain(
       "[@media(max-height:700px)]:line-clamp-2",
     );
+  });
+});
+
+/** The GBIF values of a species as the API answers them: two rows, each with its own API address. */
+const GBIF_URL = "https://api.gbif.org/v1/species/42/iucnRedListCategory";
+const GBIF: Card["natureRarity"] = {
+  iucn: { category: "VU", url: GBIF_URL, retrievedAt: "2026-10-16T10:00:00.000Z" },
+  occurrences: {
+    count: 1231,
+    url: "https://api.gbif.org/v1/occurrence/count?taxonKey=42",
+    retrievedAt: "2026-10-16T10:00:00.000Z",
+  },
+  threatened: true,
+};
+
+/** The figure of the shared card picture and its 4:3 box, the first child of the figure. */
+const figureOf = (container: HTMLElement) =>
+  container.querySelector("figure[data-card-picture]") as HTMLElement;
+const boxOf = (container: HTMLElement) => figureOf(container).firstElementChild as HTMLElement;
+const sourcesRow = () => screen.getByRole("group", { name: "Quellen" });
+
+describe("US-QS-32 · SG-PHOTO-01 the collector card shows its picture in a 4:3 box (F-0133)", () => {
+  afterEach(() => {
+    document.documentElement.style.fontSize = "";
+  });
+
+  it("US-QS-32 · SG-PHOTO-01 a card with a picture shows it in the shared 4:3 box, not as a 128 px strip", () => {
+    const { container } = show(card());
+    const img = screen.getByRole("img", { name: "Bild von Ficus benjamina" });
+    expect(img.getAttribute("src")).toBe("https://upload.example/ficus.jpg");
+    expect(boxOf(container).className).toContain("aspect-[4/3]");
+    expect(boxOf(container).contains(img)).toBe(true);
+    expect(container.innerHTML).not.toContain("h-32");
+  });
+
+  it("US-QS-32 · SG-PHOTO-02 a card without a picture keeps the same 4:3 box with the drawn placeholder, no emoji", () => {
+    const { container } = show(card({ imageUrl: null, sourceUrl: null }));
+    expect(container.querySelector("img")).toBeNull();
+    expect(boxOf(container).className).toContain("aspect-[4/3]");
+    expect(boxOf(container).querySelector("svg")).not.toBeNull();
+    expect(container.textContent).not.toContain("🌱");
+  });
+
+  it("US-QS-32 · SG-PHOTO-01 the card has one column that can shrink below its widest content, so the picture stays inside the card at large text", () => {
+    const { container } = show(card());
+    expect(container.querySelector("li")?.className).toContain("grid-cols-1");
+  });
+
+  it("US-QS-32 · SG-PHOTO-01 the picture box leads the card, before the number and the name", () => {
+    const { container } = show(card());
+    expect(container.querySelector("li")?.firstElementChild?.contains(figureOf(container))).toBe(
+      true,
+    );
+  });
+
+  it("US-QS-32 · SG-PHOTO-01 at the normal text size the box takes its width from the height cap, so it stays 4:3 and centred", () => {
+    const { container } = show(card());
+    expect(boxOf(container).className).toContain("mx-auto");
+    expect(boxOf(container).className).toContain("100dvh_-_600px");
+    expect(boxOf(container).className).toContain("*4/3");
+  });
+
+  it("US-QS-32 · SG-PHOTO-01 at large text (150 % and more) the box is not capped by the screen height: the card takes its own height", () => {
+    document.documentElement.style.fontSize = "32px";
+    const { container } = show(card());
+    expect(boxOf(container).className).not.toContain("dvh");
+    expect(boxOf(container).className).toContain("aspect-[4/3]");
+  });
+
+  it("US-QS-32 · Q-91 an uncaught card keeps its picture in grey, a caught one shows it in colour", () => {
+    const { container, rerender } = show(card());
+    expect(figureOf(container).parentElement?.className).toContain("[&_img]:grayscale");
+    rerender(
+      <CollectorCard
+        card={card({ state: "caught", caughtDate: { date: "2026-03-05", source: "caught_at" } })}
+      />,
+    );
+    expect(figureOf(container).parentElement?.className ?? "").not.toContain("grayscale");
+  });
+});
+
+describe("US-QS-32 · SG-PHOTO-03 the picture credit sits directly under the picture (F-0135)", () => {
+  it("US-QS-32 · SG-PHOTO-03 the credit is the caption right after the box, before the number, and its link leads to the Wikipedia page", () => {
+    const { container } = show(card());
+    const caption = figureOf(container).querySelector("figcaption") as HTMLElement;
+    expect(caption.textContent).toBe("Bild: Wikipedia (CC BY-SA)");
+    expect(caption.previousElementSibling).toBe(boxOf(container));
+    expect(caption.querySelector("a")?.getAttribute("href")).toBe(
+      "https://de.wikipedia.org/wiki/Ficus_benjamina",
+    );
+    expect(
+      caption.compareDocumentPosition(screen.getByText("#007")) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-TOUCH-01 the credit link is a 44 px target", () => {
+    const { container } = show(card());
+    const link = figureOf(container).querySelector("figcaption a") as HTMLElement;
+    expect(link.className).toContain("min-h-11");
+  });
+
+  it("US-QS-32 · SG-PHOTO-03 a picture without a known page names source and license under it, without a link", () => {
+    const { container } = show(card({ sourceUrl: null }));
+    expect(figureOf(container).querySelector("figcaption")?.textContent).toBe(
+      "Bild: Wikipedia (CC BY-SA), Link unbekannt",
+    );
+    expect(figureOf(container).querySelector("a")).toBeNull();
+  });
+
+  it("US-QS-32 · SG-PHOTO-03 a card without a picture has no picture credit, because there is no outside picture to credit", () => {
+    const { container } = show(card({ imageUrl: null }));
+    expect(figureOf(container).querySelector("figcaption")).toBeNull();
+  });
+});
+
+describe("US-QS-32 · SG-TOUCH-01 the sources are one row of 44 px at the foot (F-0135)", () => {
+  const withGbif = () => card({ natureRarity: GBIF });
+
+  it("US-QS-32 there is exactly one sources row, and it is the last part of the card", () => {
+    const { container } = show(withGbif());
+    expect(screen.getAllByRole("group", { name: "Quellen" })).toHaveLength(1);
+    expect(container.querySelector("li")?.lastElementChild).toBe(sourcesRow());
+  });
+
+  it("US-QS-32 each source appears once in the row, GBIF with its page and Wikipedia with the article", () => {
+    show(withGbif());
+    const links = within(sourcesRow()).getAllByRole("link");
+    expect(links.map((l) => l.textContent)).toEqual(["GBIF", "Wikipedia (CC BY-SA)"]);
+    // Both GBIF values name one link; without a species key in the card the address stays the one the card carries.
+    expect(links[0]?.getAttribute("href")).toBe(GBIF_URL);
+    expect(links[1]?.getAttribute("href")).toBe("https://de.wikipedia.org/wiki/Ficus_benjamina");
+    expect(links.every((l) => l.getAttribute("target") === "_blank")).toBe(true);
+    expect(links.every((l) => l.getAttribute("rel") === "noopener noreferrer")).toBe(true);
+  });
+
+  it("US-QS-32 the facts above carry no link: the only links of the card are the picture credit and the sources row", () => {
+    const { container } = show(withGbif());
+    const outside = [...container.querySelectorAll("a")].filter(
+      (a) => !a.closest("figcaption") && !a.closest("[role='group']"),
+    );
+    expect(outside).toEqual([]);
+    expect(screen.getAllByRole("link")).toHaveLength(3);
+  });
+
+  it("US-QS-32 the retrieval date of the GBIF numbers stays visible in the row", () => {
+    show(withGbif());
+    expect(sourcesRow().textContent).toContain("abgerufen 16.10.2026");
+  });
+
+  it("US-QS-32 two GBIF values from different days show the older day, never a fresher one than a number has", () => {
+    show(
+      card({
+        natureRarity: {
+          ...GBIF,
+          occurrences: {
+            count: 1231,
+            url: "https://api.gbif.org/v1/occurrence/count?taxonKey=42",
+            retrievedAt: "2026-10-20T10:00:00.000Z",
+          },
+        },
+      }),
+    );
+    expect(sourcesRow().textContent).toContain("abgerufen 16.10.2026");
+    expect(sourcesRow().textContent).not.toContain("20.10.2026");
+  });
+
+  it("US-QS-32 · SG-TOUCH-01 the row is at least 44 px high and each link target is at least 44 px", () => {
+    show(withGbif());
+    expect(sourcesRow().className).toContain("min-h-11");
+    for (const link of within(sourcesRow()).getAllByRole("link")) {
+      expect(link.className).toContain("min-h-11");
+      expect(link.className).toContain("min-w-11");
+    }
+  });
+
+  it("US-QS-32 · SG-ICON-01 the row is secondary text, its links carry the lucide external-link icon, hidden from assistive technology", () => {
+    show(withGbif());
+    expect(sourcesRow().className).toContain("text-muted-foreground");
+    for (const link of within(sourcesRow()).getAllByRole("link")) {
+      const icon = link.querySelector("svg.lucide-external-link");
+      expect(icon?.getAttribute("aria-hidden")).toBe("true");
+    }
+  });
+
+  it("US-QS-32 the sources are separated by space, not by a dot that would hang at the end of a line or stand alone once the row wraps", () => {
+    show(withGbif());
+    expect(sourcesRow().textContent).not.toContain("·");
+  });
+
+  it("US-QS-32 the icon follows the last word of its link inside one text run, so it wraps with the text at large text size", () => {
+    show(withGbif());
+    for (const link of within(sourcesRow()).getAllByRole("link")) {
+      const run = link.firstElementChild as HTMLElement;
+      expect(run.tagName).toBe("SPAN");
+      const icon = run.querySelector("svg.lucide-external-link") as SVGElement;
+      expect(icon).not.toBeNull();
+      expect(link.children).toHaveLength(1);
+      // The last word and the icon are one nowrap run: the icon never stands alone on a line.
+      expect(icon.parentElement?.className).toContain("whitespace-nowrap");
+      expect(link.textContent?.endsWith(icon.parentElement?.textContent ?? "?")).toBe(true);
+    }
+  });
+
+  it("US-QS-32 the row is named 'Quellen' and each source of a species with only a Wikipedia text appears alone", () => {
+    show(card());
+    expect(
+      within(sourcesRow())
+        .getAllByRole("link")
+        .map((l) => l.textContent),
+    ).toEqual(["Wikipedia (CC BY-SA)"]);
+  });
+
+  it("US-QS-32 a species with GBIF values but no Wikipedia text has a row with GBIF only", () => {
+    show(card({ summary: null, imageUrl: null, sourceUrl: null, natureRarity: GBIF }));
+    expect(sourcesRow().textContent).toContain("GBIF");
+    expect(sourcesRow().textContent).not.toContain("Wikipedia");
+  });
+
+  it("US-QS-32 · P-10 a Wikipedia text with an address that is not https is named without a link", () => {
+    show(card({ imageUrl: null, sourceUrl: "javascript:alert(1)" }));
+    expect(within(sourcesRow()).queryByRole("link")).toBeNull();
+    expect(sourcesRow().textContent).toContain("Wikipedia (CC BY-SA)");
+    expect(sourcesRow().textContent).toContain("Link unbekannt");
+  });
+
+  it("US-QS-32 a card with neither GBIF values nor Wikipedia text has no sources row", () => {
+    show(card({ summary: null, imageUrl: null, sourceUrl: null }));
+    expect(screen.queryByRole("group", { name: "Quellen" })).toBeNull();
   });
 });

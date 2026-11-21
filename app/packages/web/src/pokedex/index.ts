@@ -4,6 +4,7 @@ import { lazyPage } from "@/shared/platform/routing/lazy-page/lazy-page";
 export const PokedexPage = lazyPage(() =>
   import("./pokedex-page/pokedex-page").then((m) => ({ default: m.PokedexPage })),
 );
-export { DifficultyStars, WikipediaSource } from "./pokedex-cards/collector-card/collector-card";
+export { DifficultyStars } from "./pokedex-cards/collector-card/collector-card";
+export { WikipediaSource } from "./pokedex-cards/collector-card/wikipedia-source/wikipedia-source";
 // The skeleton of the species mode, the mode's skeleton on "Sammlung" (US-QS-14, issue 1727).
 export { PokedexPageSkeleton } from "./pokedex-page/pokedex-page.skeleton";

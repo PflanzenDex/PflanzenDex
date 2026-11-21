@@ -20,10 +20,10 @@ Acceptance criteria:
 - Without image: icon matching the family (cactus, arum, tendril leaf, orchid, rosette, bulb flower, sword leaves, palm, fern, bromeliad; otherwise neutral sprout).
 - If the short text is missing: "No description available."
 - Species-poor (genus ≤ 10 <!-- const: SPECIES_POOR_MAX --> species according to GBIF): badge "Species-poor"; caught species-poor species with a rarity frame.
-- Source link on every card with an image source (CC BY-SA).
+- Source link on every card with an image source (CC BY-SA): the picture credit stands directly under the picture, and the sources of the text and the rarity values stand once in one row at the foot of the card (US-QS-32).
 - Given the catalog changes, when I next open the collector cards, then I see the new catalog (FR-POK-13).
 - Given two keepers with different plants, then each sees only their own caught state, although the catalog part is shared (P-04, FR-POK-13).
-- Given the layer "Sammlerkarten", then the cards page by the free height of the layer (US-QS-15). Given a window at most 700 px high (starting value, assumption), then a card shows its image 80 px high, its short text in two lines (the full text is in the species profile), and its unknown facts and rarity values folded into one line "n Angaben fehlen" with the next step (US-QS-24), so one card fits a 360×640 phone; taller windows show the card unchanged (decision of the owner, 2026-11-02, issue 1154).
+- Given the layer "Sammlerkarten", then the cards page by the free height of the layer (US-QS-15). Given a window at most 700 px high (starting value, assumption), then a card shows its picture in the 4:3 box with the height cap of the suggestion card (US-QS-32), its short text in two lines (the full text is in the species profile), and its unknown facts and rarity values folded into one line "n Angaben fehlen" with the next step (US-QS-24), so one card fits a 360×640 phone; taller windows show the card unchanged (decision of the owner, 2026-11-02, issue 1154).
 
 Status 🟨: the cards of the taxonomy tree work (`GET /pokedex/cards`, caught derived live from the specimens, missing cards, species-poor badge and rarity frame, Wikipedia image as a link only, P-05). Missing: the latest measurement photo of an active specimen (WAC-05, storage TE-05; the Wikipedia image link or a neutral sprout is shown) and the family icons (FR-POK-10); caught species that are not in the tree are not shown as cards (FR-POK-04 hints).
 
@@ -132,7 +132,7 @@ Acceptance criteria:
 - Given a value that no source gave (no GBIF match, no assessment, a category outside that list, an occurrence count of 0), then it is stored as unknown (NULL) and shown as "unbekannt"; nothing is estimated and no category is derived from other data (P-08).
 - Given a species name that GBIF matches only approximately or only at another rank, then no value is taken (exact species match only).
 - Given a source failure, then the build fails as a whole and keeps the previous tree (P-10, as US-POK-03); "no hit" is cached as a result.
-- Given a collector card, then the card shows "In der Natur: <category>" and "In der Natur: N Fundmeldungen (GBIF)" with the retrieval date, each with a link to its source; the label always says "in der Natur" (assumption, decided by the PO).
+- Given a collector card, then the card shows "In der Natur: <category>" and "In der Natur: N Fundmeldungen (GBIF)" with the retrieval date; their source stands once in the sources row at the foot of the card (US-QS-32); the label always says "in der Natur" (assumption, decided by the PO).
 - Given a species with the category VU, EN, CR or EW, then the card shows a neutral note that the species is threatened in the wild (informs, never blocks and never promotes buying).
 - Given any list, ranking or view, then rarity is **not** a sort key, filter, badge, ranking or reward; the achievements (ACH) do not use it as a criterion and the recommendations (EQU) do not use it (assumption, decided by the PO).
 
