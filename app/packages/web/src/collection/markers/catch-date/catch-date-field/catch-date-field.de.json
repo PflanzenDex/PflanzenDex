@@ -1,5 +1,5 @@
 {
   "title": "Fangdatum korrigieren",
-  "back": "Zurück zur Sammlung",
+  "back": "Zurück zu {name}",
   "corrected": "Das Fangdatum von „{name}“ ist jetzt der {date}. Die Ansicht „Arten“ rechnet damit."
 }

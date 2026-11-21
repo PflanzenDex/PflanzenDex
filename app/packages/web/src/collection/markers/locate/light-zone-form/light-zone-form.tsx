@@ -131,7 +131,7 @@ export function LightZoneForm(props: {
         headingId="light-zone-title"
         title={tx("title")}
         subject={card.name}
-        back={{ label: tx("back"), onBack: () => setOpen(null) }}
+        back={{ label: tx("back", { name: card.name }), onBack: () => setOpen(null) }}
       />
       <Quiet className="mb-5">
         Jetzt: {zoneText(card)}.{" "}

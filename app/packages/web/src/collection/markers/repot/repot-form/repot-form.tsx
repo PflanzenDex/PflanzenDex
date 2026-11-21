@@ -88,7 +88,7 @@ function RepotFrame(props: { open: RepotTarget; onBack: () => void; children: Re
         headingId="repot-title"
         title={planted ? t("form.titlePlant") : t("form.titleCutting")}
         subject={props.open.name}
-        back={{ label: t("form.back"), onBack: props.onBack }}
+        back={{ label: t("form.back", { name: props.open.name }), onBack: props.onBack }}
       />
       <Quiet className="mb-5">{planted ? t("form.quietPlant") : t("form.quietCutting")}</Quiet>
       {props.children}

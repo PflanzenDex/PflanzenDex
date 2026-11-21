@@ -139,7 +139,7 @@ export function CatchDateForm(props: {
         headingId="catch-date-title"
         title={tx("title")}
         subject={open.name}
-        back={{ label: tx("back"), onBack: () => setOpen(null) }}
+        back={{ label: tx("back", { name: open.name }), onBack: () => setOpen(null) }}
       />
       <Quiet className="mb-5">
         Bisher: {open.caughtAt ? dateText(open.caughtAt) : UNKNOWN}. Nur das Fangdatum ändert sich;

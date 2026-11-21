@@ -103,7 +103,7 @@ export function ArchiveForm(props: {
         headingId="archive-title"
         title={tx("title")}
         subject={props.name}
-        back={{ label: tx("back"), onBack: props.onCancel }}
+        back={{ label: tx("back", { name: props.name }), onBack: props.onCancel }}
       />
       <p className="mb-2 text-muted-foreground">
         „{props.name}“ verschwindet aus der Liste und aus den Auswertungen.

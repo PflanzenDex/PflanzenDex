@@ -262,14 +262,14 @@ describe("US-BES-03 rename: change the marker on the card", () => {
 });
 
 describe("US-QS-32 the marker form is a full view: the task in the header, the plant's name as the subject", () => {
-  it("US-QS-32 one h1 with the task, the plant's name on the line under it, and a back control named after the Sammlung", async () => {
+  it("US-QS-32 one h1 with the task, the plant's name on the line under it, and a back control named after the plant", async () => {
     fakeServer([card("e1", null)]);
     render(page());
     await userEvent.click(await findCardButton("Kennzeichen ändern: Bogenhanf"));
     const heading = await screen.findByRole("heading", { level: 1, name: "Kennzeichen ändern" });
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(heading.closest("[data-page-header]")).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Zurück zu Bogenhanf" })).toBeTruthy();
     expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
   });
 });
