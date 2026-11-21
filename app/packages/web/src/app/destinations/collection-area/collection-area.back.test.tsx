@@ -85,15 +85,21 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** The API of one plant with every write the forms send; `saves` collects the paths written. */
-function stubPlantApi(saves: string[] = [], archived: ArchivedEntry[] = []) {
+/**
+ * The API of one plant with every write the forms send; `saves` collects the paths written. `archivedAfterMs` answers the list
+ * of the archive late, as a slow network does: the read of a plant that is archived (not found) is then back first.
+ */
+function stubPlantApi(saves: string[] = [], archived: ArchivedEntry[] = [], archivedAfterMs = 0) {
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url, init) => {
       const path = new URL(String(url)).pathname;
       if (path === "/locations") return response(200, { locations: [] });
       if (path === "/light-zones") return response(200, { zones: [] });
-      if (path === "/specimens/archived") return response(200, { archived });
+      if (path === "/specimens/archived") {
+        if (archivedAfterMs > 0) await new Promise((done) => setTimeout(done, archivedAfterMs));
+        return response(200, { archived });
+      }
       if (path === "/specimens/distribution") return response(200, EMPTY_DISTRIBUTION);
       if (path === "/specimens/e1/measurements") return response(200, emptyView);
       if (path === "/specimens/e1/repot-plan") return response(200, repotPlan);
@@ -348,6 +354,9 @@ describe("US-QS-32 a form of a plant leads back to the plant, on the tab it was 
   }, 15_000);
 });
 
+/** The archive list that answers after the read of the plant (not found, as it is archived): a reload must wait for it. */
+const LATE_ARCHIVE_MS = 150;
+
 /** Opens the layer Archiv and from it the catch-date form of the archived plant (the one form that opens there, d-054). */
 async function openCatchDateFromArchive() {
   await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
@@ -420,7 +429,7 @@ describe("US-QS-32 · d-054 the catch-date form opened from the Archiv names the
   }, 15_000);
 
   it("US-QS-32 · d-054 a reload at the form's address opens the Archiv layer under it: the chevron reads Zurück zum Archiv and returns there", async () => {
-    stubPlantApi([], [ARCHIVED]);
+    stubPlantApi([], [ARCHIVED], LATE_ARCHIVE_MS);
     renderAt("/collection?view=plants");
     await openCatchDateFromArchive();
     const address = `/collection${route.search}`;
@@ -439,7 +448,7 @@ describe("US-QS-32 · d-054 the catch-date form opened from the Archiv names the
   }, 20_000);
 
   it("US-QS-32 · d-054 the system Back from a form opened by its address (a reload) returns to the Archiv layer", async () => {
-    stubPlantApi([], [ARCHIVED]);
+    stubPlantApi([], [ARCHIVED], LATE_ARCHIVE_MS);
     renderAt("/collection?view=plants");
     await openCatchDateFromArchive();
     const address = `/collection${route.search}`;
@@ -463,6 +472,20 @@ describe("US-QS-32 · d-054 the catch-date form opened from the Archiv names the
     await expectArchiveLayer();
     expect(route.guarded).toBe(false);
   }, 20_000);
+
+  it("US-QS-32 · d-054 a catch-date address of a plant that is neither active nor archived still closes with a notice to the list, once the archive has answered", async () => {
+    stubPlantApi([], [ARCHIVED], LATE_ARCHIVE_MS);
+    renderAt("/collection?view=plants&form=catch-date&plant=zz&origin=archive");
+    expect(
+      await screen.findByText(
+        "Diese Pflanze gibt es in deiner Sammlung nicht (mehr). Die Ansicht ist geschlossen.",
+        undefined,
+        { timeout: 5_000 },
+      ),
+    ).toBeTruthy();
+    await waitFor(() => expect(route.search).not.toContain("form="));
+    expect(route.search).not.toContain("sheet=plant");
+  }, 15_000);
 
   it("US-QS-32 · d-054 the same form opened from the plant layer keeps Zurück zu <Pflanze>, also by its address", async () => {
     stubPlantApi([], [ARCHIVED]);
