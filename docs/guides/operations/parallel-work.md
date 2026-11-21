@@ -169,6 +169,13 @@ The roles are indexed in `CLAUDE.md` ("Agent sessions and models"); each subagen
 - It takes the owner's decisions and relays them to the leads, and spot-checks each lead's report against the merged head on `dev`.
 - It works a batch of tickets this way. At a natural break (a batch is done, or the context grows long) it suggests `/clear` to the owner, once every open PR's Handoff carries the state, open questions and owner decisions.
 
+### What the SubagentStop hooks check (US-QG-07, issues 2371 and US-DEV-02)
+
+When an `implementer` or a `ticket-lead` stops, two Claude Code hooks look at its run (`.claude/settings.json`, `run.mjs`). Both read the worktrees the subagent entered with `cd <folder> &&` from its transcript; only the first one can block, and it does so once.
+
+- `subagent-stop` (the `implementer` only, `.claude/hooks/subagent-gates.mjs`) runs `make gates` in that worktree, unless a green stamp covers the same commit and code. A red run blocks the end once with its output; the second red end is reported as a system message.
+- `subagent-push` (the `implementer` and the `ticket-lead`, `.claude/hooks/subagent-push.mjs`, issue 2371) adds the system message "no new commit pushed on <branch>" when the origin head of a worktree's branch did not move during the run. The start is the first timestamp of the transcript; the head at the start is the newest reflog entry of `refs/remotes/origin/<branch>` written in an earlier second, and the head at the stop is that ref. It flags nothing it cannot tell: a detached HEAD, a branch first pushed during the run, or a git error. It runs read-only git calls only (no fetch, no push, no write) and has a 15 s limit. The message is shown in the UI; a ticket lead still checks `git log origin/<branch>` itself.
+
 ## Short output for agents (US-DEV-12)
 
 Long commands print hundreds of lines that cost tokens. Run them through the wrapper; it writes the full output to a log file (default `.cache/agent-logs/run-<time>.log`, ignored by git) and prints the path:
