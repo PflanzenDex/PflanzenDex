@@ -37,7 +37,7 @@ describe("US-DEV-06 routes of the function group social", () => {
     for (const path of ["/friends", "/friends/exchange", "/friends/match", "/friends/abc"]) {
       renderAt(path, { social: false });
       expect(
-        await screen.findByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+        await screen.findByRole("heading", { level: 2, name: "Diese Seite gibt es nicht" }),
         path,
       ).toBeTruthy();
       cleanup();

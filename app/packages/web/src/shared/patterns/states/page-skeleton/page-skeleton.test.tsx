@@ -1,6 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import {
+  expectTitleInBar,
+  renderInTopBar,
+} from "@/shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot.test-helpers";
 import { PageSkeleton } from "./page-skeleton";
 
 afterEach(cleanup);
@@ -61,5 +65,12 @@ describe("PageSkeleton delay (US-QS-14, DS-57, issue 1697)", () => {
   it("US-QS-14 · issue 1697 a fast load shows no status before the delay has passed", () => {
     render(<PageSkeleton />);
     expect(screen.queryByRole("status")).toBeNull();
+  });
+});
+
+describe("PageSkeleton: the destination's title in the top bar (US-QS-32, SG-HEAD-01)", () => {
+  it("US-QS-32 below md the title of a loading destination is the one h1, in the bar, and the brand waits", () => {
+    renderInTopBar(<PageSkeleton heading="Sammlung" />);
+    expectTitleInBar("Sammlung");
   });
 });

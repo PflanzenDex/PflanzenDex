@@ -1,8 +1,13 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { VIEW_KEY } from "@/app/sammlung-view";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import {
+  expectTitleInBar,
+  renderInTopBar,
+} from "@/shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot.test-helpers";
 import { routeFallbackOf, type FallbackState } from "./route-fallback";
 
 afterEach(() => {
@@ -25,7 +30,11 @@ describe("routeFallbackOf: the routes of 'Freunde' and the species profile (US-Q
   it.each(ROUTES)(
     "US-QS-14 issue 1727 · %s has its own skeleton: the page's h1 at once (%s), one status after the delay",
     async (path, heading, label) => {
-      await expectOneLoadingStatus(<>{routeFallbackOf(path, "", state)}</>, label);
+      // The way back of a sub-page is a link, which needs the router the app has (US-QS-32).
+      await expectOneLoadingStatus(
+        <MemoryRouter>{routeFallbackOf(path, "", state)}</MemoryRouter>,
+        label,
+      );
       const headings = screen.queryAllByRole("heading", { level: 1 });
       if (heading === "none") {
         expect(headings).toHaveLength(0);
@@ -40,12 +49,31 @@ describe("routeFallbackOf: the routes of 'Freunde' and the species profile (US-Q
   it.each(ROUTES)(
     "US-QS-14 issue 1727 · %s draws no block before the delay, so a fast load shows nothing (DS-57)",
     async (path) => {
-      const { container } = render(<>{routeFallbackOf(path, "", state)}</>);
+      const { container } = render(<MemoryRouter>{routeFallbackOf(path, "", state)}</MemoryRouter>);
       expect(container.querySelectorAll(".animate-pulse")).toHaveLength(0);
       expect(await screen.findByRole("status")).toBeTruthy();
       expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
     },
   );
+
+  it.each(ROUTES.filter(([, heading]) => heading !== "none"))(
+    "US-QS-32 · SG-HEAD-01 %s: the skeleton's title is in the top bar below md, as the page's will be, so it does not move when the page arrives",
+    (path, heading) => {
+      renderInTopBar(<>{routeFallbackOf(path, "", state)}</>, path);
+      expectTitleInBar(heading);
+    },
+  );
+
+  it("US-QS-32 the skeletons of the sub-pages carry the way back of their page, named after its target (SG-HEAD-04)", () => {
+    renderInTopBar(<>{routeFallbackOf("/friends/exchange", "", state)}</>, "/friends/exchange");
+    expectTitleInBar("Tauschbörse", "Zurück zu Freunde");
+    cleanup();
+    renderInTopBar(<>{routeFallbackOf("/friends/match", "", state)}</>, "/friends/match");
+    expectTitleInBar("Passende Angebote", "Zurück zur Tauschbörse");
+    cleanup();
+    renderInTopBar(<>{routeFallbackOf("/friends/clara-1", "", state)}</>, "/friends/clara-1");
+    expectTitleInBar("Sammlung eines Freundes", "Zurück zu Freunde");
+  });
 
   it("US-QS-14 issue 1727 · a route without its own skeleton keeps the generic one of the route boundary", () => {
     expect(routeFallbackOf("/collection/labels", "", state)).toBeUndefined();

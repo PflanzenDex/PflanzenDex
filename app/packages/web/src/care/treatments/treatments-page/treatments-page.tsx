@@ -10,6 +10,7 @@ import { Button } from "@/shared/ui/button/button";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import type { EmptyStateAction } from "@/shared/patterns/elements/empty-state/empty-state";
 import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 
 type Token = () => Promise<string | undefined>;
 type View = "open" | "done";
@@ -104,9 +105,7 @@ function TreatmentsList(props: { api: string; token: Token; host?: boolean; onPl
     );
   return (
     <section aria-labelledby="treatments-title" className="flex min-w-0 flex-col gap-6">
-      <h1 id="treatments-title" className="text-2xl font-semibold">
-        Behandlung
-      </h1>
+      <PageHeader headingId="treatments-title" title="Behandlung" />
       <OpenTreatments api={api} token={token} next={next} />
       <section aria-labelledby="plan-title" className="flex flex-col gap-3">
         <h2 id="plan-title" className="text-xl font-semibold">

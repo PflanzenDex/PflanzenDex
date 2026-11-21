@@ -292,27 +292,27 @@ describe("US-BES-11 correct the catch date on the card", () => {
     );
   });
 
-  it("US-BES-11 cancel goes back to the list without sending", async () => {
+  it("US-BES-11 cancel goes back to the plant without sending (US-QS-32)", async () => {
     const posts = fakeServer([card()], () => json(200, {}));
     render(page());
     await openForm();
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
-    expect(await screen.findByRole("heading", { name: "Sammlung" })).toBeTruthy();
+    expect(await screen.findByRole("dialog", { name: "Bogenhanf" })).toBeTruthy();
     expect(posts).toHaveLength(0);
   });
 });
 
 describe("US-QS-32 the catch-date form is a full view: the task in the header, the plant's name as the subject", () => {
-  it("US-QS-32 one h1 with the task, the plant's name on the line under it, and a back control named after the Sammlung", async () => {
+  it("US-QS-32 one h1 with the task, the plant's name on the line under it, and a back control named after the plant", async () => {
     fakeServer([card()], () => json(200, {}));
     render(page());
     await openForm();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("heading", { level: 1, name: "Fangdatum korrigieren" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Zurück zu Bogenhanf" })).toBeTruthy();
     expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
     // The chevron closes the form (US-QS-32, SG-HEAD-04).
-    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zu Bogenhanf" }));
     await waitFor(() =>
       expect(screen.queryByRole("heading", { level: 1, name: "Fangdatum korrigieren" })).toBeNull(),
     );

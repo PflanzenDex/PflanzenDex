@@ -1,6 +1,7 @@
 {
   "loading": "Pflanze wird geladen …",
   "heading": "Pflanze",
+  "notFoundPage": "Etikett",
   "notFound": "Etikett ohne Pflanze",
   "notFoundCause": "Zu diesem Etikett gibt es in deinem Konto keine Pflanze. Vielleicht wurde sie gelöscht, oder das Etikett gehört zu einem anderen Konto.",
   "addPlant": "Pflanze anlegen",

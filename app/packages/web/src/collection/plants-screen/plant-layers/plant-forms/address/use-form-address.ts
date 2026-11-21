@@ -1,16 +1,17 @@
 import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router";
-import { BELOW, belowOf } from "@/shared/patterns/responsive/layer-sheet/use-layer";
+import { BELOW } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { quietFrom } from "@/shared/platform/routing/route-focus/quiet-steps";
 import { walkOverGuard } from "@/shared/patterns/responsive/layer-sheet/use-layer.history";
 import {
-  FORM_PARAM,
   FROM_APP,
   GUARD,
-  PLANT_PARAM,
   SHEET_PARAM,
+  fallbackBelow,
   formOf,
+  formSearch,
   listSearch,
+  originIsArchive,
   stateFlag,
   type FormAddress,
   type FormKind,
@@ -20,21 +21,33 @@ import {
   pushGuard,
   useKeepNamed,
   useLatest,
-  useOrdering,
   usePopGuard,
   type Latest,
   type Refs,
 } from "./use-form-history";
+import { useOrdering } from "../use-form-ordering";
 
 /**
- * Closes the form from the guard entry above it (US-QS-15, issue 2158): the guard becomes a plain entry of the list the form
- * closes to, and the step back reaches that list over the form's own entry (`walkOverGuard`). The guard is read from
- * `refs.guarded` by the caller, since the router may not show the guard entry yet.
+ * Whether the entry below the form is a layer (the plant's, or the archive): leaving to the list then goes one entry further
+ * back (US-QS-32). A form without a layer below it (none is opened so) leaves in one step.
  */
-function closeOverGuard(c: Latest, refs: Refs): void {
+const layerBelow = (refs: Refs): boolean =>
+  new URLSearchParams(refs.named.current?.below?.search ?? "").has(SHEET_PARAM);
+
+/**
+ * Closes the form from the guard entry above it (US-QS-15, issue 2158): the guard becomes a plain entry of the entry the
+ * form closes to, and the step back reaches it over the form's own entry (`walkOverGuard`). That is the plant's layer, or
+ * with `toList` the list below it (US-QS-32). The guard is read from `refs.guarded` by the caller, since the router may not
+ * show the guard entry yet.
+ */
+function closeOverGuard(c: Latest, refs: Refs, toList: boolean): void {
   const { pathname, hash, search } = c.location;
-  const below = refs.named.current?.below ?? { pathname, search: listSearch(search) };
-  walkOverGuard(c.navigate, { ...below, hash });
+  const layer = refs.named.current?.below ?? fallbackBelow(c.location, c.current?.plantId);
+  if (toList && layerBelow(refs)) {
+    walkOverGuard(c.navigate, { pathname, search: listSearch(search), hash }, 3);
+    return;
+  }
+  walkOverGuard(c.navigate, { ...layer, hash });
 }
 
 /** The handlers that close a form, and the question "Eingabe verwerfen?" (US-QS-15). */
@@ -45,7 +58,7 @@ function useCloseActions(
   setNotice: Dispatch<SetStateAction<string | null>>,
 ) {
   const closeNow = useCallback(
-    (text?: string) => {
+    (text?: string, toList = false) => {
       const c = latest.current;
       // Read before the refs are cleared: the guard entry is on the history at once, while the latest render may not show it
       // yet (issue 2158).
@@ -57,11 +70,12 @@ function useCloseActions(
       // A held form is on screen too (issue 2145): its close walks back from its entry, as a shown form (issue 2154).
       if (!c.current && !c.held) return;
       if (overGuard) {
-        closeOverGuard(c, refs);
+        closeOverGuard(c, refs, toList);
         return;
       }
       refs.leaving.current = true;
-      void c.navigate(-1);
+      // The form's own entry, and with `toList` the layer below it (US-QS-32).
+      void c.navigate(toList && layerBelow(refs) ? -2 : -1);
     },
     [latest, refs, setAsking, setNotice],
   );
@@ -72,7 +86,7 @@ function useCloseActions(
   const keepEditing = useCallback(() => setAsking(false), [setAsking]);
   // Buttons call these with their event: only the notice text is taken from an argument.
   return {
-    leave: (text?: string) => closeNow(text),
+    leave: (text?: string, toList?: boolean) => closeNow(text, toList),
     requestLeave,
     keepEditing,
     discard: () => closeNow(),
@@ -88,20 +102,17 @@ function useFormInput(
   const open = useCallback(
     (kind: FormKind, plantId: string) => {
       const c = latest.current;
-      const next = new URLSearchParams(c.location.search);
-      next.delete(SHEET_PARAM);
-      next.set(FORM_PARAM, kind);
-      next.set(PLANT_PARAM, plantId);
       setNotice(null);
-      // A form opened from a layer replaces that layer's entry, so its close is one step back to the list.
-      const replaces = new URLSearchParams(c.location.search).has(SHEET_PARAM);
-      // The entry below the form is the list, or, when the form replaces a layer, the entry below that layer (issue 2145).
-      const below = replaces
-        ? belowOf(c.location.state)
-        : { pathname: c.location.pathname, search: c.location.search };
+      // The entry below the form is the one it is opened from: the plant's layer on its tab, the Archiv layer, or the list
+      // (US-QS-32). The form is pushed above it, so Back, the chevron and "Abbrechen" return there (SG-NAV-05, Q-46, d-054).
+      const below = { pathname: c.location.pathname, search: c.location.search };
       void c.navigate(
-        { pathname: c.location.pathname, search: `?${next}`, hash: c.location.hash },
-        { replace: replaces, state: { [FROM_APP]: true, [BELOW]: below } },
+        {
+          pathname: c.location.pathname,
+          search: formSearch(c.location.search, kind, plantId),
+          hash: c.location.hash,
+        },
+        { state: { [FROM_APP]: true, [BELOW]: below } },
       );
     },
     [latest, setNotice],
@@ -150,6 +161,9 @@ export function useFormAddress(enabled: boolean): FormAddress {
   const held = isHeldForm({ enabled, current, type, state: location.state, landed, refs });
   // The form the render shows: the one the address names, or the one a held render keeps.
   const shown = current ?? (held ? refs.named.current : null);
+  // A held form keeps the way back it had (d-054): the address no longer names it, its last entry does.
+  const heldSearch = held ? (refs.named.current?.at.search ?? "") : "";
+  const shownSearch = current ? location.search : heldSearch;
   const latest = useLatest({ location, current, held, navigate, type });
   useKeepNamed(refs, location, current);
   useOrdering(latest, fromApp, location.key, current !== null);
@@ -157,6 +171,7 @@ export function useFormAddress(enabled: boolean): FormAddress {
   return {
     kind: shown?.kind ?? null,
     plantId: shown?.plantId ?? null,
+    fromArchive: originIsArchive(shownSearch),
     ...useFormInput(latest, refs, setNotice),
     ...useCloseActions(latest, refs, setAsking, setNotice),
     asking,

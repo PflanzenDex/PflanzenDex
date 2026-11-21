@@ -6,6 +6,10 @@ import {
   STATUS_HOLD_MS,
 } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import {
+  expectTitleInBar,
+  renderInTopBar,
+} from "@/shared/patterns/navigation/page-header/app-bar-slot/app-bar-slot.test-helpers";
 import { RequestState } from "./request-state";
 
 afterEach(cleanup);
@@ -335,5 +339,15 @@ describe("US-QS-32 · RequestState failed while the device is offline (issue 188
       window.dispatchEvent(new Event("online"));
     });
     expect(onRetry).not.toHaveBeenCalled();
+  });
+});
+
+describe("US-QS-32 · RequestState: the heading of a failed page is the bar's below md (SG-HEAD-01)", () => {
+  it("US-QS-32 a failed page's heading is the one h1, in the top bar, and the brand waits", () => {
+    renderInTopBar(
+      <RequestState {...props} status="error" errorText="Nicht erreichbar." heading="Sammlung" />,
+    );
+    expectTitleInBar("Sammlung");
+    expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
 });

@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
-import { findCardButton, openPlant, openTab } from "../../specimens/tests/plants-test-helpers";
+import { findCardButton } from "../../specimens/tests/plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../../insights/distribution-test-helpers";
@@ -129,8 +129,7 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
     });
     expect(posts[0]?.key).toBeTruthy();
     expect(await screen.findByText(/„Bogenhanf“ ist jetzt „Zone 3“/)).toBeTruthy();
-    await openPlant("Bogenhanf");
-    await openTab("Standort");
+    // The save returns to the plant's layer on its tab Standort, where the zone shows (US-QS-32).
     expect(await screen.findByText(/Zone 3 \(von dir für diese Pflanze gesetzt\)/)).toBeTruthy();
   });
 
@@ -236,16 +235,16 @@ describe("US-LIC-02 US-BES-04 set the own light zone of an existing specimen", (
 });
 
 describe("US-QS-32 the light-zone form is a full view: the task in the header, the plant's name as the subject", () => {
-  it("US-QS-32 one h1 with the task, the plant's name on the line under it, and a back control named after the Sammlung", async () => {
+  it("US-QS-32 one h1 with the task, the plant's name on the line under it, and a back control named after the plant", async () => {
     fakeServer({ cards: [card()] });
     render(page());
     await open();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("heading", { level: 1, name: "Lichtzone ändern" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Zurück zur Sammlung" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Zurück zu Bogenhanf" })).toBeTruthy();
     expect(screen.getByText("Bogenhanf", { selector: "p" })).toBeTruthy();
     // The chevron closes the form (US-QS-32, SG-HEAD-04).
-    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zu Bogenhanf" }));
     await waitFor(() =>
       expect(screen.queryByRole("heading", { level: 1, name: "Lichtzone ändern" })).toBeNull(),
     );
