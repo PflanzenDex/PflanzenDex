@@ -16,14 +16,17 @@ const closesNote = (event: Event): boolean =>
 const FIELD = "input, select, textarea";
 
 /**
- * Places the card just below the row of the focused field of the form, or at the top of the form when no field has the
- * focus. Returns the element that had the focus, so "Schließen" can give the focus back to it (issue 1644).
+ * Places the card just below the row of the focused field of the form, or at the top of the form, just below its bar
+ * (`data-form-bar`, SG-SHEET-04), when no field has the focus. Returns the element that had the focus, so "Schließen" can
+ * give the focus back to it (issue 1644).
  */
 function placeCard(wrapEl: HTMLElement, cardEl: HTMLElement): HTMLElement | null {
   const active = document.activeElement;
   const focus = active instanceof HTMLElement && !cardEl.contains(active) ? active : null;
   const field = focus && wrapEl.contains(focus) && focus.matches(FIELD) ? focus : null;
-  const top = field ? field.getBoundingClientRect().bottom - wrapEl.getBoundingClientRect().top : 0;
+  const bar = wrapEl.querySelector("[data-form-bar]");
+  const below = field ?? bar;
+  const top = below ? below.getBoundingClientRect().bottom - wrapEl.getBoundingClientRect().top : 0;
   cardEl.style.top = `${top}px`;
   return focus;
 }
@@ -55,9 +58,9 @@ function listenForDismiss(
 /**
  * The growth note after a save (US-ACH-05, DS-54, issue 1644): an overlay over the form that takes no place in the flow,
  * so the form and the controls below it never move when it appears. It sits just below the row of the focused field, so
- * the field the keeper works in is never covered; when no field has the focus it sits at the top of the form. The sticky
- * save button paints over it (its z-index is higher), and at 200 % text the note scrolls inside 40 % of the window
- * height. The note is not read here: the save announces it with its confirmation (`useSaveAnnouncement`, US-QS-08, issue
+ * the field the keeper works in is never covered; when no field has the focus it sits at the top of the form, under the
+ * bar. The sticky bar with the save paints over it (its z-index is higher), and at 200 % text the note scrolls inside 40 % of
+ * the window height. The note is not read here: the save announces it with its confirmation (`useSaveAnnouncement`, US-QS-08, issue
  * 2323). It closes with "Schließen" (the focus goes back to the control it came from), when the keeper types or taps in
  * the form outside the note, when the focus moves into the form outside the note (a Tab into a covered control), and at
  * the next save (`saves` counts the saves of the view).

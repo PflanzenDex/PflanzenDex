@@ -2,6 +2,7 @@ import * as React from "react";
 import { Button } from "@/shared/ui/button/button";
 import { leadingTextField } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { cn } from "@/shared/lib/utils";
+import { FormBarHostContext, rowHost } from "@/shared/ui/button/form-bar/form-bar.host";
 import { keptOpener } from "../../use-layer";
 
 /**
@@ -60,6 +61,8 @@ export function LayerPane({
 }: LayerPaneProps) {
   const heading = React.useRef<HTMLHeadingElement>(null);
   const pane = React.useRef<HTMLElement>(null);
+  // The actions of a form in the pane are a plain row in its content; "Abbrechen" closes through the guard (US-QS-32).
+  const barHost = React.useMemo(() => rowHost(onClose), [onClose]);
   const onBack = React.useRef(returning);
   React.useEffect(() => {
     // The pane's own close button comes first, so the text field is looked for in the layer's body.
@@ -90,7 +93,9 @@ export function LayerPane({
           {closeLabel}
         </Button>
       </div>
-      <LayerBody primaryAction={primaryAction}>{children}</LayerBody>
+      <FormBarHostContext.Provider value={barHost}>
+        <LayerBody primaryAction={primaryAction}>{children}</LayerBody>
+      </FormBarHostContext.Provider>
     </aside>
   );
 }

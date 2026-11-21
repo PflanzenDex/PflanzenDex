@@ -446,6 +446,39 @@ describe("US-BES-09 change my deviation", () => {
     expect(screen.queryByText(SAVED)).toBeNull();
   });
 
+  it("US-QS-32 · SG-COLOR-06 the save is inactive while nothing changed and turns into the primary fill once a value changed, never white on white (issue 1969)", async () => {
+    fakeServer({ entries: [entry()] });
+    open();
+    const save = await screen.findByRole("button", { name: "Sichern: Bogenhanf" });
+    expect((save as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.selectOptions(
+      screen.getByLabelText("Soll-Standort Wachstumsphase für „Bogenhanf“"),
+      "l1",
+    );
+    const enabled = screen.getByRole("button", { name: "Sichern: Bogenhanf" });
+    expect((enabled as HTMLButtonElement).disabled).toBe(false);
+    const classes = enabled.className.split(/\s+/);
+    expect(classes).toContain("bg-primary");
+    expect(classes).toContain("text-primary-foreground");
+    // The caller's classes win over the variant (DS-31): a page-coloured fill would hide the primary one.
+    expect(classes).not.toContain("bg-background");
+    expect(enabled.parentElement?.className.split(/\s+/)).not.toContain("bg-primary");
+  });
+
+  it("US-QS-32 · SG-SHEET-04 the save has no sticky footer: its action sits in the bar at the top of the form", async () => {
+    fakeServer({ entries: [entry()] });
+    open();
+    const save = await screen.findByRole("button", { name: "Sichern: Bogenhanf" });
+    expect(document.querySelectorAll("[class*='bottom-0']")).toHaveLength(0);
+    const form = save.closest("form") ?? document.getElementById(save.getAttribute("form") ?? "");
+    expect(form).not.toBeNull();
+    const first = form?.querySelector("input, select, textarea, [role='group']");
+    expect(first).not.toBeNull();
+    expect(
+      (save.compareDocumentPosition(first as Element) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
+    ).toBe(true);
+  });
+
   it("US-BES-09 a double tap on save sends one request", async () => {
     let finish: (r: Response) => void = () => undefined;
     const fetchFn = fakeServer({

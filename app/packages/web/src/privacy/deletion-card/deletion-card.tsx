@@ -12,7 +12,7 @@ import { FailedValue } from "@/shared/patterns/states/request-state/failed-value
 import { useRequest } from "../../shared/data";
 import { loadDeletion, type DeletionState } from "../privacy-api";
 import { DELETION_KEY, useDeletionAction } from "./use-deletion-action/use-deletion-action";
-import { DeletionBody, DeletionFooter, day, type Step } from "./deletion-steps/deletion-steps";
+import { DeletionBar, DeletionBody, day, type Step } from "./deletion-steps/deletion-steps";
 import table from "./deletion-card.de.json";
 
 const t = texts(table);
@@ -46,14 +46,14 @@ function DeletionValue(props: {
 /**
  * Deleting the own account with a grace period (US-ACC-04): a red plain "Konto löschen" below the export, with the state
  * under it (SG-BTN-03, F-0303), and its layer. Not yet requested, the layer names what goes and stays (step 1), then asks
- * for the word LÖSCHEN (step 2); the footer with the one filled action stays below the scroll region (US-QS-15).
+ * for the word LÖSCHEN (step 2); the actions sit in the bar of the layer, "Abbrechen" and the action of the step (SG-SHEET-04).
  * Requested, the layer shows the date and can take the request back. A closed layer loads nothing; the row needs only the
  * state (P-10: a failure stays in the row).
  */
 export function DeletionCard(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadDeletion(props.api, t), [props.api]);
   const r = useRequest({ queryKey: DELETION_KEY, fresh: true, token: props.token, load });
-  const { open, openLayer, closeLayer } = useLayer("delete");
+  const { open, openLayer } = useLayer("delete");
   const act = useDeletionAction({ api: props.api, token: props.token, loaded: r.value });
   const [step, setStep] = useState<Step>(1);
   const [typed, setTyped] = useState("");
@@ -92,25 +92,20 @@ export function DeletionCard(props: { api: string; token: Token }) {
           </div>
         </div>
       }
-      primaryAction={
-        <DeletionFooter
+    >
+      <div className="flex min-w-0 flex-col gap-3">
+        {/* The actions are in the bar of the layer, above the text: "Abbrechen" and the one action of the step (SG-SHEET-04, issue 2024). */}
+        <DeletionBar state={state} step={step} typed={typed} act={act} onStep={setStep} />
+        <DeletionBody
           state={state}
+          loadError={loadError}
           step={step}
           typed={typed}
-          act={act}
+          onType={setTyped}
           onStep={setStep}
-          onClose={closeLayer}
+          act={act}
         />
-      }
-    >
-      <DeletionBody
-        state={state}
-        loadError={loadError}
-        step={step}
-        typed={typed}
-        onType={setTyped}
-        act={act}
-      />
+      </div>
     </LayerPart>
   );
 }

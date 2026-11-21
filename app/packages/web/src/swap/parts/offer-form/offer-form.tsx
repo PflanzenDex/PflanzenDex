@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { errorText } from "@/shared/lib/error-text";
 import { useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
 import { createOffer, loadPreview, shareSpecimen, type OwnSpecimenRow } from "../../api/offers-api";
@@ -116,6 +116,10 @@ export function OfferForm(props: {
         </p>
       )}
       <div className="flex max-w-xl flex-col gap-3">
+        {/* The offer sits in the bar of the layer with "Abbrechen", never in a sticky footer (US-QS-32, SG-SHEET-04). */}
+        <FormBar onConfirm={() => void s.submit()} disabled={!s.ready || s.write.running}>
+          Angebot erstellen
+        </FormBar>
         <OfferFields specimens={props.specimens} value={s.fields} onChange={s.setFields} />
         {s.fields.specimenId === "" && (
           <p className="text-muted-foreground">
@@ -136,18 +140,6 @@ export function OfferForm(props: {
             onShare={s.share}
           />
         )}
-        {/* Sticky: the form scrolls inside the layer while the offer button stays in view (US-QS-15). */}
-        <div className="sticky bottom-0 bg-card py-2">
-          <Button
-            type="button"
-            size="touch"
-            className="w-full"
-            disabled={!s.ready || s.write.running}
-            onClick={() => void s.submit()}
-          >
-            Angebot erstellen
-          </Button>
-        </div>
       </div>
     </section>
   );

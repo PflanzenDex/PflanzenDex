@@ -1,7 +1,8 @@
 import type { CostPerUser, OperatorCostFigure } from "@pflanzendex/core";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useId } from "react";
 import { type Control } from "react-hook-form";
-import { Button } from "@/shared/ui/button/button";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import {
   Form,
   FormControl,
@@ -14,7 +15,6 @@ import {
 } from "@/shared/ui/fields/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
 import { MonthField } from "@/shared/ui/fields/input/native-fields/month-field/month-field";
-import { BUSY_LOOK, cn } from "@/shared/lib/utils";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { costSchema, parseAmount, type CostFields } from "../../schemas";
 
@@ -71,6 +71,7 @@ export function CostForm(props: {
   /** Resolves true when the figure was saved; the form is then empty of unsaved input (US-QS-32). */
   onSave: (figure: OperatorCostFigure) => Promise<boolean>;
 }) {
+  const formId = useId();
   const form = useFieldForm<CostFields>({
     resolver: zodResolver(costSchema),
     defaultValues: {
@@ -92,23 +93,14 @@ export function CostForm(props: {
   });
   return (
     <Form {...form}>
-      <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
+      <FormRoot id={formId} onSubmit={submit} className="flex max-w-xl flex-col gap-4">
+        {/* The save sits in the bar of the layer "Monatliche Kosten" with "Abbrechen", never in a sticky footer (US-QS-32, SG-SHEET-04). */}
+        <FormBar formId={formId} inactive={props.running} busy={props.running} needsNetwork>
+          Kosten sichern
+        </FormBar>
         <TextField control={form.control} name="amount" label="Betrag" inputMode="decimal" />
         <TextField control={form.control} name="currency" label="Währung" maxLength={3} />
         <MonthRow control={form.control} max={thisMonth()} />
-        {/* Sticky: the save button stays in view in the layer "Monatliche Kosten" (US-QS-15). */}
-        <div className="sticky bottom-0 bg-card py-2">
-          <Button
-            type="submit"
-            size="touch"
-            needsNetwork
-            className={cn("w-full", BUSY_LOOK)}
-            aria-disabled={props.running || undefined}
-            aria-busy={props.running || undefined}
-          >
-            Kosten sichern
-          </Button>
-        </div>
       </FormRoot>
     </Form>
   );

@@ -1,9 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useId, useState, type FormEvent, type ReactNode } from "react";
 import { type Control, type Path } from "react-hook-form";
-import { Button } from "@/shared/ui/button/button";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
-import { BUSY_LOOK } from "@/shared/lib/utils";
 import { deviceTimeZone, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
 import { Banner } from "@/shared/patterns/states/banner/banner";
@@ -111,6 +110,7 @@ function GroupForm(props: {
   children: (control: Control<Fields>) => ReactNode;
 }) {
   const { saver, keys } = props;
+  const formId = useId();
   const fromDevice = props.fromDevice === true;
   const saveAlways = props.saveAlways === true;
   const { form, alertText, alertRef, send, inactive } = useGroupForm(
@@ -124,22 +124,22 @@ function GroupForm(props: {
 
   return (
     <Form {...form}>
-      <FormRoot aria-label={props.label} onSubmit={send} className="flex flex-col gap-4">
+      <FormRoot
+        id={formId}
+        aria-label={props.label}
+        onSubmit={send}
+        className="flex flex-col gap-4"
+      >
+        {/* "Abbrechen" and "Sichern" sit in the bar of the sheet, never in a sticky footer (US-QS-32, SG-SHEET-04). */}
+        <FormBar formId={formId} inactive={inactive} needsNetwork>
+          {saver.saving ? "Sichert …" : "Sichern"}
+        </FormBar>
         {props.children(form.control)}
         {alertText !== null && (
           <Banner variant="error" tabIndex={-1} ref={alertRef}>
             {alertText}
           </Banner>
         )}
-        <Button
-          type="submit"
-          size="touch"
-          aria-disabled={inactive || undefined}
-          className={BUSY_LOOK}
-          needsNetwork
-        >
-          {saver.saving ? "Sichert …" : "Sichern"}
-        </Button>
       </FormRoot>
     </Form>
   );

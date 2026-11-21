@@ -21,7 +21,7 @@ const LOADING = "Messungen werden geladen …";
 
 /**
  * Measure (US-WAC-01): on the page the one fact line (last measurement, value and date) with the link "Messverlauf (n)", the
- * input form and the sticky "Messung sichern". The facts and the course of the specimen live in the layer "Messverlauf"
+ * input form with its bar "Abbrechen" and "Messung sichern" at the top (SG-SHEET-04). The facts and the course of the specimen live in the layer "Messverlauf"
  * (US-QS-15). Every view says what to do next (P-09).
  */
 /** `onSaved` is called after a measurement was written; the page stays open (US-QS-15). */
@@ -46,6 +46,7 @@ type MeasuredProps = {
   photoStatus: string | null;
   valueRef: NonNullable<ComponentProps<typeof MeasureForm>["focusRef"]>;
   invalidate: () => void;
+  onBack: () => void;
 };
 
 /** The loaded page: the fact line, the form under the growth note and the course layer (issue 1644, US-ACH-05). */
@@ -76,6 +77,7 @@ function MeasuredView(props: MeasuredProps) {
           onSend={send}
           focusRef={valueRef}
           photoStatus={photoStatus}
+          onCancel={props.onBack}
         />
       </GrowthNoteLayer>
       <CourseLayer
@@ -141,6 +143,7 @@ export function MeasurePage(props: MeasurePageProps) {
             photoStatus={photoStatus}
             valueRef={valueRef}
             invalidate={invalidate}
+            onBack={props.onBack}
           />
         )}
       </LoadFrame>

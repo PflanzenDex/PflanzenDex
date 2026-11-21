@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
-import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type UseFormSetError } from "react-hook-form";
+import { type UseFormReturn, type UseFormSetError } from "react-hook-form";
 import { Button } from "@/shared/ui/button/button";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import type { ApiError } from "../../../shared/data";
@@ -74,64 +74,42 @@ function RefusalNotice(props: {
   );
 }
 
-/** The one filled action of each step (US-QS-15, US-QS-21): "Weiter" on step 1, "Vorschlag sichern" on step 2. */
-function StepActions(props: {
-  step: 1 | 2;
-  pending: boolean;
-  onNext: () => void;
-  onBack: () => void;
-}) {
-  // Sticky at the foot of the sheet: the optional fields scroll, the one filled action stays in view (US-QS-21).
+/**
+ * The actions of each step in the bar of the layer (US-QS-15, US-QS-21, SG-SHEET-04): "Abbrechen" leads, "Weiter" on step 1 and
+ * "Vorschlag sichern" on step 2 trail. On step 2 "Zurück" goes back to step 1; it is a plain button under the fields, not part
+ * of the bar, and nothing is sticky.
+ */
+function StepActions(props: { step: 1 | 2; formId: string; pending: boolean; onNext: () => void }) {
+  // `md:col-span-2`: from md the bar is a row of the dialog and spans both columns of the form.
   if (props.step === 1)
     return (
-      <div className="sticky bottom-0 flex flex-col gap-2 bg-card pt-2 md:col-span-2">
-        <Button type="button" size="touch" onClick={props.onNext}>
-          Weiter
-        </Button>
-      </div>
+      <FormBar onConfirm={props.onNext} className="md:col-span-2">
+        Weiter
+      </FormBar>
     );
   return (
-    <div className="sticky bottom-0 flex flex-col gap-2 bg-card pt-2 md:col-span-2">
-      <NetworkSlot>
-        <Button
-          type="submit"
-          size="touch"
-          pending={props.pending}
-          pendingLabel="Sichert …"
-          needsNetwork
-        >
-          Vorschlag sichern
-        </Button>
-        <Button type="button" variant="secondary" onClick={props.onBack}>
-          Zurück
-        </Button>
-      </NetworkSlot>
-    </div>
+    <FormBar
+      formId={props.formId}
+      pending={props.pending}
+      pendingText="Sichert …"
+      needsNetwork
+      className="md:col-span-2"
+    >
+      Vorschlag sichern
+    </FormBar>
   );
 }
 
-/**
- * Propose species, the path without AI (FR-KI-05): all required fields from DM-BES-01 in the form. The proposal is
- * visible only to the creator and goes into the review list (FR-BES-11); the UI says so beforehand. A refusal of
- * the server lands on the fields it names (German text by error code, focus on the first); without a field it stays
- * in an alert (P-10). Two steps (US-QS-21): the name and the growth measure, then the two texts and, behind "Mehr Angaben",
- * the optional light and details (US-QS-24); the action row stays in view. It lives in a layer (`?sheet=propose`, US-QS-21): the layer owns the heading and the way out,
- * "Vorschlag sichern" is its one filled action.
- */
-export function ProposalForm(props: {
-  start?: string;
-  onSend: (input: Record<string, unknown>) => Promise<ApiError | null>;
-  onExisting: (id: string) => void;
-  /** The step to start on (tests and stories); the form starts on step 1. */
-  startStep?: 1 | 2;
-}) {
-  const form = useFieldForm<ProposalFields>({
-    resolver: zodResolver(proposalSchema),
-    defaultValues: { ...EMPTY_PROPOSAL, latinName: props.start ?? "" },
-  });
+/** The step, the refusal of the last send and the actions of the steps: "Weiter" checks step 1, the send brings step 1 back on a refusal of its fields. */
+function useProposalSteps(
+  form: UseFormReturn<ProposalFields>,
+  props: {
+    startStep?: 1 | 2;
+    onSend: (input: Record<string, unknown>) => Promise<ApiError | null>;
+  },
+) {
   const [error, setError] = useState<ApiError | null>(null);
   const [step, setStep] = useState<1 | 2>(props.startStep ?? 1);
-  const { alertRef, namesField, existing } = useRefusal(error, form.setError);
   const submit = form.handleSubmit(async (values) => {
     const refused = await props.onSend(toProposalInput(values));
     // A refusal of a step-1 field brings that step back, so its field is on screen to take the focus.
@@ -142,15 +120,47 @@ export function ProposalForm(props: {
   const next = async () => {
     if (await form.trigger([...REQUIRED_STEP], { shouldFocus: true })) setStep(2);
   };
+  return { error, step, setStep, submit, next };
+}
+
+/**
+ * Propose species, the path without AI (FR-KI-05): all required fields from DM-BES-01 in the form. The proposal is
+ * visible only to the creator and goes into the review list (FR-BES-11); the UI says so beforehand. A refusal of
+ * the server lands on the fields it names (German text by error code, focus on the first); without a field it stays
+ * in an alert (P-10). Two steps (US-QS-21): the name and the growth measure, then the two texts and, behind "Mehr Angaben",
+ * the optional light and details (US-QS-24). It lives in a layer (`?sheet=propose`, US-QS-21): the layer owns the heading and
+ * the way out; its bar holds "Abbrechen" and the one filled action, "Weiter" or "Vorschlag sichern" (SG-SHEET-04).
+ */
+export function ProposalForm(props: {
+  start?: string;
+  onSend: (input: Record<string, unknown>) => Promise<ApiError | null>;
+  onExisting: (id: string) => void;
+  /** The step to start on (tests and stories); the form starts on step 1. */
+  startStep?: 1 | 2;
+}) {
+  const formId = useId();
+  const form = useFieldForm<ProposalFields>({
+    resolver: zodResolver(proposalSchema),
+    defaultValues: { ...EMPTY_PROPOSAL, latinName: props.start ?? "" },
+  });
+  const { error, step, setStep, submit, next } = useProposalSteps(form, props);
+  const { alertRef, namesField, existing } = useRefusal(error, form.setError);
   return (
     <section className="flex min-w-0 flex-col gap-3">
       <StepNotice step={step} />
       <Form {...form}>
         <FormRoot
+          id={formId}
           onSubmit={submit}
           aria-label="Art vorschlagen"
           className="grid gap-4 md:grid-cols-2"
         >
+          <StepActions
+            step={step}
+            formId={formId}
+            pending={form.formState.isSubmitting}
+            onNext={next}
+          />
           {step === 1 ? (
             <NameStepFields control={form.control} />
           ) : (
@@ -166,12 +176,13 @@ export function ProposalForm(props: {
             existing={existing}
             onExisting={props.onExisting}
           />
-          <StepActions
-            step={step}
-            pending={form.formState.isSubmitting}
-            onNext={next}
-            onBack={() => setStep(1)}
-          />
+          {step === 2 ? (
+            <div className="md:col-span-2">
+              <Button type="button" variant="plain" onClick={() => setStep(1)}>
+                Zurück
+              </Button>
+            </div>
+          ) : null}
         </FormRoot>
       </Form>
     </section>

@@ -179,7 +179,9 @@ describe("US-WAC-01 default date in the profile's time zone (NFR-08, US-ACC-02)"
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(NOW);
     setProfileTimeZone(profile ?? null);
-    const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
+    const html = renderToString(
+      <MeasureForm unit="cm" onSend={async () => null} onCancel={() => undefined} />,
+    );
     expect(html).toContain(`value="${formDate(localToday(NOW, profile ?? ""))}"`);
     expect(html).not.toContain(`value="${formDate(localToday(NOW, device))}"`);
   });
@@ -187,7 +189,9 @@ describe("US-WAC-01 default date in the profile's time zone (NFR-08, US-ACC-02)"
   it("US-WAC-01 without a chosen zone the form's date is today in the device's zone", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(NOW);
-    const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
+    const html = renderToString(
+      <MeasureForm unit="cm" onSend={async () => null} onCancel={() => undefined} />,
+    );
     expect(html).toContain(`value="${formDate(localToday(NOW, deviceTimeZone()))}"`);
   });
 });
@@ -280,7 +284,9 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
   });
 
   it("the form has number, date, quality (healthy preset), note and the optional photo (US-WAC-05)", () => {
-    const html = renderToString(<MeasureForm unit="cm" onSend={async () => null} />);
+    const html = renderToString(
+      <MeasureForm unit="cm" onSend={async () => null} onCancel={() => undefined} />,
+    );
     expect(html).toContain("Messwert (cm, in Schritten von 0,5)");
     expect(html).toMatch(/<input[^>]*placeholder="TT.MM.JJJJ"[^>]*>/);
     expect(html).toMatch(/<input[^>]*value="\d{2}\.\d{2}\.\d{4}"[^>]*>/);
@@ -292,7 +298,12 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
 
   it('US-WAC-02 the quality choice offers healthy (preset) and etiolated/thin with "Wie erkennen?" closed', () => {
     const html = renderToString(
-      <MeasureForm unit="cm" signs="Rosette streckt sich." onSend={async () => null} />,
+      <MeasureForm
+        unit="cm"
+        signs="Rosette streckt sich."
+        onSend={async () => null}
+        onCancel={() => undefined}
+      />,
     );
     expect(html).toMatch(/<option value="healthy" selected[^>]*>Gesund<\/option>/);
     expect(html).toMatch(/<option value="etiolated"[^>]*>Vergeilt\/dünn<\/option>/);
@@ -304,7 +315,12 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
   it("US-WAC-02 without etiolation signs (or from an older server) the form shows no disclosure", () => {
     for (const signs of [null, undefined]) {
       const html = renderToString(
-        <MeasureForm unit="cm" signs={signs} onSend={async () => null} />,
+        <MeasureForm
+          unit="cm"
+          signs={signs}
+          onSend={async () => null}
+          onCancel={() => undefined}
+        />,
       );
       expect(html).not.toContain("Wie erkennen?");
     }

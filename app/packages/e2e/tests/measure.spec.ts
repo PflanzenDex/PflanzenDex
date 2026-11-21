@@ -1,5 +1,12 @@
 import { axeReport } from "../support/axe";
-import { expectAnnounced, openFirstPlant, signIn, expect, test } from "../support/fixtures";
+import {
+  expectAnnounced,
+  layerOf,
+  openFirstPlant,
+  signIn,
+  expect,
+  test,
+} from "../support/fixtures";
 import type { Page } from "@playwright/test";
 
 // Core flow R1: record a measurement (US-WAC-01), signed in, against the real API and database.
@@ -8,10 +15,11 @@ async function withSpecimen(page: Page, species: string): Promise<void> {
   await page.getByRole("link", { name: "Entdecken", exact: true }).click();
   await page.getByRole("button", { name: "Katalog" }).click();
   await page.getByRole("button", { name: "Art vorschlagen" }).first().click();
-  const proposal = page.getByRole("form", { name: "Art vorschlagen" });
+  const proposal = layerOf(page, "Art vorschlagen");
   // Step 1 holds the name and the growth measure (US-QS-21); the light is optional and sits behind "Mehr Angaben" (US-QS-24).
   await proposal.getByLabel("Lateinischer Name").fill(species);
   await proposal.getByLabel("Wachstumsmaß").selectOption("rosette_diameter");
+  // The actions of the form are in the bar of the layer, outside the form element on a phone (US-QS-32).
   await proposal.getByRole("button", { name: "Weiter" }).click();
   await proposal.getByLabel("Vergeilungsanzeichen").fill("Die Rosette streckt sich.");
   await proposal.getByLabel("Erfolgskriterien").fill("Dichte, flache Rosette.");

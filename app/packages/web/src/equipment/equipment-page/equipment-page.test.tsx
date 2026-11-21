@@ -546,23 +546,25 @@ describe("US-QS-22 the equipment fits one screen", () => {
     const more = within(layer).getByText("Mehr Angaben").closest("details") as HTMLElement;
     expect(more.contains(within(layer).getByLabelText("Preis (optional)"))).toBe(true);
     expect(more.contains(within(layer).getByLabelText("Name"))).toBe(false);
-    // The save button stays in view while the form scrolls inside the layer.
+    // The save sits in the bar of the layer with Abbrechen before it, not in a sticky footer (US-QS-32, SG-SHEET-04, issue 1941).
     const save = within(layer).getByRole("button", { name: "Gerät sichern" });
-    expect(save.parentElement?.className).toContain("sticky");
+    const cancel = within(layer).getByRole("button", { name: "Abbrechen" });
+    expect(cancel.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(cancel.parentElement).toBe(save.parentElement);
+    expect(layer.querySelector("[class*='bottom-0']")).toBeNull();
   });
 
-  it("US-QS-24 'Neues Gerät' starts with Mehr Angaben closed, has no heading inside the form that repeats the layer title, and saves from a sticky footer", async () => {
+  it("US-QS-24 'Neues Gerät' starts with Mehr Angaben closed, has no heading inside the form that repeats the layer title, and saves from the bar, not a sticky footer", async () => {
     fakeServer([item()]);
     view(<EquipmentPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: "Gerät erfassen" }));
     const layer = await screen.findByRole("dialog", { name: "Neues Gerät" });
-    const section = within(layer).getByRole("button", { name: "Gerät sichern" }).closest("section");
-    expect(within(section as HTMLElement).queryByRole("heading")).toBeNull();
+    const section = within(layer).getByRole("region", { name: "Gerät erfassen" });
+    expect(within(section).queryByRole("heading")).toBeNull();
     const more = within(layer).getByText("Mehr Angaben").closest("details") as HTMLDetailsElement;
     expect(more.open).toBe(false);
-    expect(
-      within(layer).getByRole("button", { name: "Gerät sichern" }).parentElement?.className,
-    ).toContain("sticky");
+    expect(layer.querySelector("[class*='sticky'][class*='bottom-0']")).toBeNull();
+    expect(within(layer).getByRole("button", { name: "Gerät sichern" })).toBeTruthy();
   });
 
   it("US-QS-22 a tile opens its layer with the existing content; the layers mount only while open", async () => {

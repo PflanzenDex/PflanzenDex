@@ -331,6 +331,15 @@
     overscroll-behavior: auto;
   }
   /*
+   * A page form's bar sticks at the top of its form (`FormBar`, US-QS-32, SG-SHEET-04) and publishes its height as
+   * `--form-bar-height` while it is on the page. A field that takes the focus scrolls clear of it, 0.5 rem below its
+   * lower edge, so the keyboard's scroll never leaves a field under the bar (SG-FORM-02, WCAG 2.4.11). Without a bar the
+   * property is not set, the calc is invalid and the margin is none.
+   */
+  :is(input, select, textarea, summary, button):focus {
+    scroll-margin-top: calc(var(--form-bar-height) + 0.5rem);
+  }
+  /*
    * The bars and the room they reserve (US-QS-08, US-QS-14): AppShell writes the real heights of the sticky app bar and
    * of the fixed bottom bar as variables, so a focused element stays clear of them (WCAG 2.4.11). The base style keeps
    * no scroll padding for them, because the bars scroll with the content; the tall window applies the variables.

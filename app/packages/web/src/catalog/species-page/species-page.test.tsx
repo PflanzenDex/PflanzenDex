@@ -429,7 +429,7 @@ describe("US-QS-21 the proposal opens as a layer", () => {
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
-  it("US-QS-24 step 2 keeps the optional light and details behind Mehr Angaben, the save button sits in a sticky footer, and no heading repeats the layer title", async () => {
+  it("US-QS-24 step 2 keeps the optional light and details behind Mehr Angaben, the save sits in the bar with Abbrechen and Zurück is a plain button under the fields, and no heading repeats the layer title", async () => {
     fakeServer({ species: [hit] });
     render(at("/discover?view=catalog&sheet=propose"));
     const layer = await screen.findByRole("dialog", { name: "Art vorschlagen" });
@@ -444,9 +444,14 @@ describe("US-QS-21 the proposal opens as a layer", () => {
     expect(more.contains(within(layer).getByLabelText(/Schwierigkeit/))).toBe(true);
     expect(more.contains(within(layer).getByLabelText(/Lichtbedarf/))).toBe(true);
     expect(more.contains(within(layer).getByLabelText(/Vergeilungsanzeichen/))).toBe(false);
-    expect(
-      within(layer).getByRole("button", { name: "Vorschlag sichern" }).parentElement?.className,
-    ).toContain("sticky");
+    const save = within(layer).getByRole("button", { name: "Vorschlag sichern" });
+    const cancel = within(layer).getByRole("button", { name: "Abbrechen" });
+    expect(cancel.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(cancel.parentElement).toBe(save.parentElement);
+    expect(layer.querySelector("[class*='sticky'][class*='bottom-0']")).toBeNull();
+    // "Zurück" to step 1 is not part of the bar (SG-SHEET-04) and not sticky.
+    const back = within(layer).getByRole("button", { name: "Zurück" });
+    expect(back.parentElement).not.toBe(save.parentElement);
   });
 
   it("US-QS-21 a link with ?sheet=propose opens the layer, and saving leaves it for the new profile", async () => {

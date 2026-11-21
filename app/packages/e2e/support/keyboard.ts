@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import type { TestAccount } from "./account";
+import { layerOf } from "./fixtures";
 
 // US-QS-08: keyboard-only helpers. Nothing here clicks; every step is Tab, Shift+Tab, Enter, Space, Esc or an arrow key.
 
@@ -84,7 +85,7 @@ export async function specimenByKeyboard(page: Page, species: string): Promise<v
   await openByKeyboard(page, "Entdecken");
   await press(page, page.getByRole("button", { name: "Katalog" }));
   await press(page, page.getByRole("button", { name: /Art vorschlagen/ }).first());
-  const form = page.getByRole("form", { name: "Art vorschlagen" });
+  const form = layerOf(page, "Art vorschlagen");
   // Step 1 holds the name and the growth measure (US-QS-21).
   await typeInto(page, form.getByLabel(/^Lateinischer Name/), species);
   await chooseOption(page, form.getByLabel(/^Wachstumsmaß/), 1);
