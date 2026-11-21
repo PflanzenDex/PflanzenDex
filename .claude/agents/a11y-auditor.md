@@ -16,7 +16,7 @@ Read `AGENTS.md` and `CLAUDE.md` first, then follow the skill `accessibility-che
 - Read only on the repo; you write only in the scratchpad (scripts, screenshots, the report).
 - Never read, print, copy or search any `.env` file or other secret file.
 - Write a command's output to a file and print `$?`. Shell traps (zsh) as in `implementer.md`: kill by PID, no word-splitting of `$var`, quoted globs, `printf '%s'` for JSON, `find` instead of `ls` in pipes.
-- Heavy runs (a dev server with the demo seed, Playwright over many views, `make a11y-routes`) take `make heavy-lock` first or go through a target that takes it. Stop every dev server and browser you started, by PID, at the end.
+- Heavy runs (a dev server with the demo seed, Playwright over many views, `make a11y-routes`) go through `make heavy RUN="<command>"`, which takes the lock around that one command, or through a target that takes it. Stop every dev server and browser you started, by PID, at the end.
 
 ## How you walk
 
