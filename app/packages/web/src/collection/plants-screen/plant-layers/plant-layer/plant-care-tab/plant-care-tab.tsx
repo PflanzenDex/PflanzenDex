@@ -136,7 +136,7 @@ export function RepotSignsLayer(props: { card: SpecimenCard; access: PhotoAccess
         <ErrorNotice>
           <p>{t("signs.failed")}</p>
           {plan.error ? <p>{refusalText(plan.error)}</p> : null}
-          <Button type="button" variant="outline" onClick={plan.retry}>
+          <Button type="button" variant="tinted" onClick={plan.retry}>
             {t("signs.retry")}
           </Button>
         </ErrorNotice>

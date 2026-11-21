@@ -39,7 +39,7 @@ function BatchBanner(props: {
       <Button
         ref={props.opener}
         type="button"
-        variant="outline"
+        variant="tinted"
         size="sm"
         className="mt-2"
         aria-haspopup="dialog"

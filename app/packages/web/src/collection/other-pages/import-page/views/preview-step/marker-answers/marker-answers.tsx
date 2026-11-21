@@ -32,7 +32,7 @@ function AnswerField(props: {
       <Label htmlFor={id}>{ui("markerFor", { name: missing.name })}</Label>
       <Input id={id} value={marker} onChange={(e) => setMarker(e.target.value)} />
       <div>
-        <Button type="submit" variant="outline" size="touch" disabled={text === ""}>
+        <Button type="submit" variant="tinted" size="touch" disabled={text === ""}>
           {ui("markerSave")}
         </Button>
       </div>

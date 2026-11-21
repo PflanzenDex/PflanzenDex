@@ -67,7 +67,7 @@ function ImportAction(props: { view: ImportFlow; counts: Counts; markers: number
         {counts.ready === 1 ? ui("importOne") : ui("importMany", { count: counts.ready })}
       </Button>
       <div>
-        <Button type="button" variant="outline" onClick={view.back}>
+        <Button type="button" variant="plain" onClick={view.back}>
           {ui("changeFile")}
         </Button>
       </div>
