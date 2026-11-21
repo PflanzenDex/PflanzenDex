@@ -34,6 +34,24 @@ export type Request<T> = {
 };
 
 /**
+ * The query function of a request (DS-09): `load` runs with the token, a refusal becomes a `RequestFailure` with the code's
+ * error (P-10), and without a token nothing is queried. `useRequest` uses it, and so does a prefetch of the same key
+ * (`client.prefetchQuery`), so both fill the cache the same way and a refusal reads the same.
+ */
+export function requestQueryFn<T>(
+  token: Token,
+  load: (token: string) => Promise<Response<T>>,
+): () => Promise<T> {
+  return async () => {
+    const t = await token();
+    if (!t) throw new RequestFailure(SIGN_IN);
+    const r = await load(t);
+    if (!r.ok) throw new RequestFailure(r.error);
+    return r.value;
+  };
+}
+
+/**
  * One request of a view on the data layer (DS-09): `load` runs with the token, a refusal becomes a visible error with
  * the code's text (P-10), without a token nothing is queried. While data is there it stays on screen when the next
  * load fails because the network is down. Mutations invalidate by `queryKey` prefix (`useInvalidate`).
@@ -58,13 +76,7 @@ export function useRequest<T>(props: {
     ...(enabled === undefined ? {} : { enabled }),
     ...(staleTime === undefined ? {} : { staleTime }),
     ...(keepPrevious ? { placeholderData: keepPreviousData } : {}),
-    queryFn: async () => {
-      const t = await token();
-      if (!t) throw new RequestFailure(SIGN_IN);
-      const r = await load(t);
-      if (!r.ok) throw new RequestFailure(r.error);
-      return r.value;
-    },
+    queryFn: requestQueryFn(token, load),
   });
   const failure = q.error instanceof RequestFailure ? q.error.error : undefined;
   const offline = q.data !== undefined && q.isError && failure?.code === NETWORK_DOWN;

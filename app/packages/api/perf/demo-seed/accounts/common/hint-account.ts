@@ -15,7 +15,8 @@ import {
 // views that show a calm hint. `pickHint` shows a hint only for style few with calm mode off, so Anna (calm mode on), Ben
 // and Clara (style many) never show one, and it shows one hint at a time, the first of its fixed order. Both accounts have
 // style few, calm mode off (the default), one active plant, no measurement, and one function that a rule stages
-// ("Wunschliste") is open, so Heute has `function_unlocked`. They differ in the hint of the plant layer:
+// ("Wunschliste") is open, so Heute has `function_unlocked`. Each seed run resets their stored hint state (`resetHints`), so a
+// note shown earlier does not run out its 7 days. They differ in the hint of the plant layer:
 // - `test5`: `first_plant_saved` under "Messen" on the overview.
 // - `test6`: that hint is dismissed, so `first_measurement` is the due one, first in "Verlauf" (the overview shows none).
 // Their own accounts, so that the screens of the three other accounts stay as they are.
@@ -66,6 +67,19 @@ export async function hintSubject(
   );
 }
 
+/**
+ * Clears the stored hint state of a keeper, so the hints are due again (issue 2384). A hint that was shown starts its 7 days
+ * (US-ONB-07) and the app never deletes the row (P-10), so on a local database that a developer browsed with these accounts
+ * the notes would be gone after a week and the gate screens would measure none. Written on the owner connection, like
+ * `grantRoles`: the application role has no way to unshow a hint, and the seed guard keeps this to local databases.
+ */
+async function resetHints(pool: Pool, sub: string): Promise<void> {
+  await pool.query(
+    "delete from account_hint where account_id = (select id from account where subject = $1)",
+    [sub],
+  );
+}
+
 async function seedKeeper(
   pool: Pool,
   keeper: HintKeeper,
@@ -82,6 +96,8 @@ async function seedKeeper(
   await ensureSpecimens(ctx, species, locations, [{ latin: PLANT, location: PLACE }]);
   // "Jetzt freischalten": storing the tap twice keeps the first date, so a second run changes nothing.
   await api.ok(sub, "POST", `/onboarding/unlocks/${OPENED}`, { timeZone: TZ });
+  // The hint state is restored on every run: nothing shown yet, and test6 dismisses first_plant_saved again.
+  await resetHints(pool, sub);
   if (keeper.dismissed)
     await api.ok(sub, "PUT", `/onboarding/hints/${keeper.dismissed}`, {
       state: "dismissed",

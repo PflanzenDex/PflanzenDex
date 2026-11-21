@@ -2,7 +2,9 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { useInvalidate, useRequest } from "./use-request";
+import { RequestFailure } from "./query-client";
+import { SIGN_IN } from "../../write-action/use-write-action";
+import { requestQueryFn, useInvalidate, useRequest } from "./use-request";
 
 const KEY = ["NFR-12", "US-ONB-01", "1795", "refetch"];
 const token = async () => "tok";
@@ -55,5 +57,24 @@ describe("NFR-12 · US-ONB-01 · #1795 a view that reads only the value of a req
     await settle();
     expect(renders.n).toBe(before);
     expect(screen.getByText("Monstera")).toBeTruthy();
+  });
+});
+
+describe("DS-09 · US-QS-23 the query function of a request is one function, for the hook and for a prefetch (issue 2384)", () => {
+  it("DS-09 · US-QS-23 it gives the value of an answer that is ok", async () => {
+    const load = vi.fn(async () => ({ ok: true as const, value: "Monstera" }));
+    expect(await requestQueryFn(token, load)()).toBe("Monstera");
+    expect(load).toHaveBeenCalledWith("tok");
+  });
+
+  it("DS-09 · US-QS-23 it throws a RequestFailure with the error of a refusal (P-10), and with the sign-in error without a token", async () => {
+    const error = { code: "specimen.not_found", text: "Nicht gefunden." };
+    const refused = requestQueryFn(token, async () => ({ ok: false as const, error }))();
+    await expect(refused).rejects.toBeInstanceOf(RequestFailure);
+    await expect(refused).rejects.toMatchObject({ error });
+    const load = vi.fn();
+    const noToken = requestQueryFn(async () => undefined, load)();
+    await expect(noToken).rejects.toMatchObject({ error: SIGN_IN });
+    expect(load).not.toHaveBeenCalled();
   });
 });

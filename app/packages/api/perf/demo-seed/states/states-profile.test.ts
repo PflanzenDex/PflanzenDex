@@ -271,4 +271,37 @@ describe("US-DEV-01 states profile makes every inventory state reachable (#1072)
       "first_measurement",
     );
   });
+
+  it("US-ONB-07 · US-QS-23 each seed run restores the hint state of test5 and test6: a shown date that started the 7 days is cleared, test6 keeps its dismissal (issue 2384)", async () => {
+    const rowsOf = (sub: string) =>
+      count(
+        "select count(*) n from account_hint where account_id = (select id from account where subject = $1)",
+        [sub],
+      );
+    const both = "first_plant_saved,first_measurement";
+    // A keeper browsed the dev app a month ago: the notes were shown then, so their 7 days are over.
+    for (const sub of [HINT_SUBJECT, HINT_MEASURE_SUBJECT])
+      for (const occasion of ["first_measurement", "function_unlocked"])
+        await api.ok(sub, "PUT", `/onboarding/hints/${occasion}`, { state: "shown", timeZone: TZ });
+    await api.ok(HINT_SUBJECT, "PUT", "/onboarding/hints/first_plant_saved", {
+      state: "shown",
+      timeZone: TZ,
+    });
+    await pool.query(
+      "update account_hint set shown_on = $2 where account_id in (select id from account where subject = any($1))",
+      [[HINT_SUBJECT, HINT_MEASURE_SUBJECT], daysAgo(30)],
+    );
+    expect(await due(HINT_SUBJECT, both)).toBeNull();
+    expect(await due(HINT_MEASURE_SUBJECT, "function_unlocked")).toBeNull();
+
+    await seedStates(pool, { subjects: SUBJECTS, env: SEED_ENV });
+
+    expect(await due(HINT_SUBJECT, both)).toBe("first_plant_saved");
+    expect(await due(HINT_SUBJECT, "function_unlocked")).toBe("function_unlocked");
+    expect(await rowsOf(HINT_SUBJECT)).toBe(0);
+    // test6 keeps what makes it test6: first_plant_saved is dismissed, so first_measurement is due.
+    expect(await due(HINT_MEASURE_SUBJECT, both)).toBe("first_measurement");
+    expect(await due(HINT_MEASURE_SUBJECT, "function_unlocked")).toBe("function_unlocked");
+    expect(await rowsOf(HINT_MEASURE_SUBJECT)).toBe(1);
+  });
 });

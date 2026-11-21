@@ -7,6 +7,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient, type QueryClient } from "@/shared/data";
 import table from "../hint.de.json";
+import { hintsKey } from "../hint-api";
 import { ContextHint, prefetchHints } from "./context-hint";
 
 const response = (status: number, body: unknown) =>
@@ -190,6 +191,53 @@ describe("US-ONB-07 · US-QS-32 the calm hint of the plant layer asks once for i
       first.unmount();
       render(places(["first_plant_saved"], undefined, client));
       expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull();
+    });
+
+    it("US-ONB-07 · US-QS-23 a refetch that started before the dismissal cannot bring the dismissed note back", async () => {
+      let gets = 0;
+      let release: (r: Response) => void = () => undefined;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn<typeof fetch>(async (url) => {
+          const u = new URL(String(url));
+          if (u.pathname !== "/onboarding/hints") return response(200, { occasion: "x" });
+          gets += 1;
+          const answer = { hint: "first_plant_saved", guideEnded: false };
+          // The first answer comes at once; the refetch waits until the test releases it.
+          return gets === 1
+            ? response(200, answer)
+            : new Promise<Response>((resolve) => (release = resolve));
+        }),
+      );
+      const client = createQueryClient();
+      const applicable = ["first_plant_saved"];
+      await prefetchHints(client, "http://api", async () => "tok", applicable);
+      render(places(applicable, undefined, client));
+      expect(screen.getByRole("status", { name: "Hinweis" })).toBeTruthy();
+      void client.invalidateQueries({ queryKey: hintsKey(applicable) });
+      await waitFor(() => expect(gets).toBe(2));
+      await userEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
+      await waitFor(() => expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull());
+      release(new Response(JSON.stringify({ hint: "first_plant_saved", guideEnded: false })));
+      await new Promise((done) => setTimeout(done, 30));
+      expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull();
+      expect(client.getQueryData(hintsKey(applicable))).toMatchObject({ hint: null });
+    });
+
+    it("US-ONB-07 · US-QS-23 the prefetched answer outlives the screen: nobody observes it for ten minutes and it is still in the cache", async () => {
+      server("first_plant_saved");
+      vi.useFakeTimers();
+      try {
+        const client = createQueryClient();
+        const applicable = ["first_plant_saved", "first_measurement"];
+        await prefetchHints(client, "http://api", async () => "tok", applicable);
+        await vi.advanceTimersByTimeAsync(10 * 60_000);
+        expect(client.getQueryData(hintsKey(applicable))).toMatchObject({
+          hint: "first_plant_saved",
+        });
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });

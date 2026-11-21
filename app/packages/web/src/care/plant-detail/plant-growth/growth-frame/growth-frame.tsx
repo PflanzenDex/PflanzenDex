@@ -110,8 +110,11 @@ function ReadingCopy({ growth }: { growth: GrowthTrend }) {
 /**
  * The growth line in the height of its longest reading (US-QS-32): every reading is drawn invisibly in one cell, and the
  * visible content shares that cell. The line keeps the height it reserves in every state (loading, loaded, unknown, error),
- * so nothing moves when the trend arrives. The copies are hidden from assistive technology and cannot be focused. A plant
- * without a measurement (`measured` false) reserves its one reading only.
+ * so nothing moves when the trend arrives. The copies are hidden from assistive technology and cannot be focused.
+ *
+ * Exception (owner decision 2026-11-21, issue 2384): a plant without a measurement (`measured` false) reserves its one
+ * reading only, so the overview fits 360 x 640 while the first note stands under "Messen" (US-QS-23). The unmeasured frame
+ * then holds one line: the error state (its text and the 44 px retry) is taller and grows it, which is rare and accepted.
  */
 export function GrowthFrame({
   children,

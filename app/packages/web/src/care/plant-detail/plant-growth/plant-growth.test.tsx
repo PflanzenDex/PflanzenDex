@@ -243,4 +243,21 @@ describe("US-QS-23 the growth line of a plant without a measurement reserves one
       GROWTH_READINGS.length,
     );
   });
+
+  it("US-QS-23 a card that says unmeasured while the loaded trend counts measurements: the loaded reading gets the full reserve, the card flag only decides the first render", async () => {
+    answer.load = loadedWith({ count: 3, ratePerYear: 20, trend: "stable", signal: null });
+    const { container } = renderGrowth({ measured: false });
+    expect(sizers(container)).toHaveLength(1);
+    expect(await screen.findByText("Trend: stabil")).toBeTruthy();
+    // The frame of the first render stays (one sizer); the loaded line brings the reserve of every reading.
+    expect(sizers(container).length).toBeGreaterThanOrEqual(GROWTH_READINGS.length);
+    expect(screen.getAllByText("Trend: stabil")).toHaveLength(1);
+  });
+
+  it("US-QS-23 a loaded 'no measurement' reading in an unmeasured frame stays at one sizer", async () => {
+    answer.load = loadedWith(NONE);
+    const { container } = renderGrowth({ measured: false });
+    await screen.findByText(/Wachstum: noch keine Messung/);
+    expect(sizers(container)).toHaveLength(1);
+  });
 });

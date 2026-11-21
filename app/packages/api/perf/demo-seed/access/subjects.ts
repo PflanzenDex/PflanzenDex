@@ -99,7 +99,11 @@ export async function subjectsFromKeycloak(
 /** The password of every dev-realm demo user: the three of the realm import and the ones the seed creates itself. */
 export const DEMO_PASSWORD = "testtest12";
 
-/** A demo user that the realm import does not know: the gate account `test4`, the hint account `test5`. */
+/**
+ * A demo user that the realm import does not know: the gate account `test4` and the hint accounts `test5` and `test6`
+ * (the seed creates them; their subject bypasses for tests are `DEMO_SEED_GATE_SUBJECT`, `DEMO_SEED_HINT_SUBJECT` and
+ * `DEMO_SEED_HINT_MEASURE_SUBJECT`).
+ */
 export interface KeycloakUserSpec {
   username: string;
   firstName: string;

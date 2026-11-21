@@ -13,6 +13,7 @@ export {
   useClearOnSignOut,
   useInvalidate,
   useReload,
+  requestQueryFn,
   useRequest,
   useRequestPages,
   type Request,

@@ -24,7 +24,8 @@ import { signsLayerId } from "../../markers/repot/repot-plan/repot-plan";
 import { NotesLayer, notesLayerId } from "./plant-layer/plant-notes/plant-notes";
 import { plantLayerId } from "@/shared/patterns/navigation/navigation/navigation";
 import { ZONES_LAYER } from "../rows/zone-insight/zone-insight";
-import { ARCHIVE_LAYER, useHintPrefetch, type LayerProps } from "./layer-ids";
+import { ARCHIVE_LAYER, type LayerProps } from "./layer-ids";
+import { useHintPrefetch } from "./plant-layers.hint";
 import table from "./plant-layers.de.json";
 import { PlantLayerSkeleton } from "./plant-layer/plant-layer.skeleton";
 

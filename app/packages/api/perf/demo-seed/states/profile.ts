@@ -19,7 +19,10 @@ import { annaOffer, benMoosstabOffer, declineBen, friendNews, swapStates } from 
 export const PROFILES = ["base", "states"] as const;
 export type Profile = (typeof PROFILES)[number];
 
-/** `env` reaches the subject bypass of the hint account (`DEMO_SEED_HINT_SUBJECT`, tests); the other accounts take `subjects`. */
+/**
+ * `env` reaches the subject bypasses of the hint accounts `test5` and `test6` (`DEMO_SEED_HINT_SUBJECT` and
+ * `DEMO_SEED_HINT_MEASURE_SUBJECT`, tests); the three accounts of the realm import take `subjects`.
+ */
 export type StatesOptions = {
   subjects: Subjects;
   log?: (message: string) => void;
@@ -29,8 +32,9 @@ export type StatesOptions = {
 /**
  * The opt-in states profile (US-DEV-01, owner decision 2026-10-30): runs after the base seed on the same three accounts
  * and adds the feature states the base seed does not show (roles, review cases, friend and swap states, match cards,
- * wishlist history and hints, equipment states, measurement states, achievements, operator area, care states) and a fourth
- * account, the hint account (issue 2384: style few, one plant, a hint due on the plant layer and on Heute). Every
+ * wishlist history and hints, equipment states, measurement states, achievements, operator area, care states) and two
+ * accounts of its own, the hint accounts `test5` and `test6` (issue 2384: style few, one plant, a calm hint due on the
+ * plant layer, in "Verlauf" and on Heute; each run resets their hint state). Every
  * write goes through the API of the acting account (the same operations the app calls, row rules apply). Safe to run
  * again: each step looks at the current state first. The mapping of states to accounts and screens is states/states-map.md.
  * Not covered here (listed as manual steps there): the fresh-account states, AI client states, the deletion request, photos.

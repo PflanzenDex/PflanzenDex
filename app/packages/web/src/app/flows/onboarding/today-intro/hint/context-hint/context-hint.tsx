@@ -1,5 +1,11 @@
 import { Suspense, type ReactNode } from "react";
-import { SCREEN_STALE_TIME, useQueryClient, useRequest, type QueryClient } from "@/shared/data";
+import {
+  SCREEN_STALE_TIME,
+  requestQueryFn,
+  useQueryClient,
+  useRequest,
+  type QueryClient,
+} from "@/shared/data";
 import {
   hintsKey,
   isNoteOccasion,
@@ -10,6 +16,13 @@ import {
 import { HintNote } from "..";
 
 type Token = () => Promise<string | undefined>;
+
+/**
+ * How long the answer of a prefetch stays in the cache when nobody reads it (starting value, assumption: 30 minutes). The
+ * default of the data layer is 5 minutes, and a prefetch has no reader until a layer opens, so a keeper who stays on the
+ * plants screen longer would meet the note arriving late again (issue 2384).
+ */
+const KEEP_TIME = 30 * 60_000;
 
 /** The note of one occasion for its place: the note while the server picks that occasion, else nothing. */
 type Note = (occasion: string) => ReactNode;
@@ -32,13 +45,8 @@ export async function prefetchHints(
   await client.prefetchQuery({
     queryKey,
     staleTime: SCREEN_STALE_TIME,
-    queryFn: async () => {
-      const accessToken = await token();
-      if (!accessToken) throw new Error("hints: not signed in");
-      const answer = await loadHints(api, accessToken, applicable);
-      if (!answer.ok) throw new Error(answer.error.code);
-      return answer.value;
-    },
+    gcTime: KEEP_TIME,
+    queryFn: requestQueryFn(token, (accessToken) => loadHints(api, accessToken, applicable)),
   });
   const hint = client.getQueryData<HintState>(queryKey)?.hint;
   if (isNoteOccasion(hint) && applicable.includes(hint))
@@ -74,11 +82,14 @@ export function ContextHint(props: {
   const due: NoteOccasion | null = isNoteOccasion(hint) && applicable.includes(hint) ? hint : null;
   const note: Note = (occasion) => {
     if (due === null || due !== occasion) return null;
-    const gone = () =>
+    // A request that is on its way would restore the dismissed note when it answers: it is cancelled first.
+    const gone = async () => {
+      await client.cancelQueries({ queryKey });
       client.setQueryData<HintState>(queryKey, (old) => old && { ...old, hint: null });
+    };
     return (
       <Suspense fallback={null}>
-        <HintNote occasion={due} api={api} token={token} onGone={gone} />
+        <HintNote occasion={due} api={api} token={token} onGone={() => void gone()} />
       </Suspense>
     );
   };

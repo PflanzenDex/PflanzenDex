@@ -12,8 +12,10 @@ const t = texts(table);
 /**
  * The growth trend of one plant for the overview of the plant layer (US-QS-23). It shares the data of the measure page,
  * so a new measurement shows here at once; it says that it loads, and why it failed with a way to retry (P-10). The line
- * keeps the height of its longest reading in every state (`GrowthFrame`, US-QS-32), or of its one reading while the plant
- * has no measurement (`measured` false, US-QS-23).
+ * keeps the height of its longest reading in every state (`GrowthFrame`, US-QS-32). While the card says the plant has no
+ * measurement (`measured` false, US-QS-23, issue 2384) it keeps one line instead, and the error state is the exception
+ * that grows it. The card flag decides the first render only: a loaded trend that counts measurements (the card was behind)
+ * gets the full reserve of its own frame.
  */
 export function PlantGrowth(props: {
   api: string;
@@ -41,7 +43,15 @@ export function PlantGrowth(props: {
           </p>
         }
       >
-        {(view) => <GrowthLines growth={view.growth} />}
+        {(view) =>
+          props.measured === false && view.growth.count > 0 ? (
+            <GrowthFrame>
+              <GrowthLines growth={view.growth} />
+            </GrowthFrame>
+          ) : (
+            <GrowthLines growth={view.growth} />
+          )
+        }
       </LoadFrame>
     </GrowthFrame>
   );
