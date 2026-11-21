@@ -50,8 +50,11 @@ export type Handlers = {
 /** What a slot may ask the plant layer for: leave the layer and measure (the layer closes first, P-10). */
 export type SlotContext = { measure: () => void };
 export type SlotRender = (card: SpecimenCard, context: SlotContext) => ReactNode;
-/** The shape of a part while its chunk loads; it gets the layer's loading label, which the layer owns (`slot.loading`). */
-export type SlotFallback = (label: string) => ReactNode;
+/**
+ * The shape of a part while its chunk loads; it gets the layer's loading label, which the layer owns (`slot.loading`), and
+ * the plant's card, so the shape can follow the state of the plant (US-QS-23).
+ */
+export type SlotFallback = (label: string, card: SpecimenCard) => ReactNode;
 
 /**
  * Parts of the plant layer that belong to other modules (US-QS-23): the app wires them, because `collection` does not

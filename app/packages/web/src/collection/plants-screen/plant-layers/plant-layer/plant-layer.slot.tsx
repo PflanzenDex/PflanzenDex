@@ -28,9 +28,10 @@ function slotFallback(
   part: SlotPart,
   label: string,
   fallback: SlotFallback | undefined,
+  card: SpecimenCard,
 ): ReactNode {
   if (part === "water") return <WaterPlaceholder />;
-  if (fallback) return fallback(label);
+  if (fallback) return fallback(label, card);
   return <PlantSlotSkeleton part={part} label={label} />;
 }
 
@@ -48,7 +49,7 @@ export function Slot(props: {
 }) {
   if (!props.render) return null;
   return (
-    <Suspense fallback={slotFallback(props.part, t("slot.loading"), props.fallback)}>
+    <Suspense fallback={slotFallback(props.part, t("slot.loading"), props.fallback, props.card)}>
       {props.render(props.card, { measure: props.measure })}
     </Suspense>
   );

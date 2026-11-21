@@ -76,6 +76,15 @@ function distinctReadings(samples: readonly GrowthTrend[]): GrowthTrend[] {
 export const GROWTH_READINGS: readonly GrowthTrend[] = distinctReadings(SAMPLES);
 
 /**
+ * The one reading of a plant without a measurement (US-QS-23, owner decision 2026-11-21, issue 2384): the card knows before
+ * the request that nothing is measured, so the line can only read "noch keine Messung" and the frame needs no more than that
+ * one reading. A plant that shows its first note under "Messen" then fits the overview at 360 x 640.
+ */
+export const UNMEASURED_READINGS: readonly GrowthTrend[] = GROWTH_READINGS.filter(
+  (reading) => reading.count === 0,
+);
+
+/**
  * The hidden copy of a reading: the two spans of `GrowthLines`, with their texts in attributes that CSS draws
  * (`before:content-[attr(data-reading)]`). The copy holds no text node, so a text query finds only the visible line, and
  * the generated text wraps like the real one (US-QS-32). The attribute values are the texts `GrowthLines` shows.
@@ -101,12 +110,20 @@ function ReadingCopy({ growth }: { growth: GrowthTrend }) {
 /**
  * The growth line in the height of its longest reading (US-QS-32): every reading is drawn invisibly in one cell, and the
  * visible content shares that cell. The line keeps the height it reserves in every state (loading, loaded, unknown, error),
- * so nothing moves when the trend arrives. The copies are hidden from assistive technology and cannot be focused.
+ * so nothing moves when the trend arrives. The copies are hidden from assistive technology and cannot be focused. A plant
+ * without a measurement (`measured` false) reserves its one reading only.
  */
-export function GrowthFrame({ children }: { children?: ReactNode }) {
+export function GrowthFrame({
+  children,
+  measured = true,
+}: {
+  children?: ReactNode;
+  /** False while the plant has no measurement: only its one reading is reserved (`UNMEASURED_READINGS`). */
+  measured?: boolean;
+}) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)]">
-      {GROWTH_READINGS.map((reading) => (
+      {(measured ? GROWTH_READINGS : UNMEASURED_READINGS).map((reading) => (
         <ReadingCopy key={readingKey(reading)} growth={reading} />
       ))}
       <div className="col-start-1 row-start-1 min-w-0">{children}</div>

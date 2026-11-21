@@ -23,7 +23,7 @@ export interface Step {
 // sideways (the page itself never may); `unstable`: why its content
 // changes between runs (it is never reported as fitting now, only as new or worse). `test4` is the gate account with more
 // than 100 plants (issue 1378), `test5` and `test6` are the hint accounts with one plant, style few and a calm hint due
-// (issue 2384): `test5` shows `first_plant_saved` on the plant layer (not a screen yet, it scrolls by 36 px at 360x640),
+// (issue 2384): `test5` shows `first_plant_saved` on the plant layer,
 // `test6` `first_measurement` in "Verlauf"; both show `function_unlocked` on Heute. All three are seeded by the states profile.
 export interface Screen {
   id: string;

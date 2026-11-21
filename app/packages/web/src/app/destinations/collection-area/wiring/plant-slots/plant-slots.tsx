@@ -18,9 +18,20 @@ export function plantSlots(api: string, token: Token): PlantSlots {
         {children}
       </ContextHint>
     ),
-    growth: (card) => <PlantGrowth api={api} token={token} specimenId={card.id} />,
+    // A plant without a measurement reserves one line for its growth line, one with a measurement the longest reading
+    // (US-QS-23, US-QS-32): the card knows it before the request, so the first note under "Messen" fits the overview.
+    growth: (card) => (
+      <PlantGrowth
+        api={api}
+        token={token}
+        specimenId={card.id}
+        measured={card.lastMeasurement !== null}
+      />
+    ),
     // The growth line keeps the height of its loaded line while its chunk loads (US-QS-32, issue 2318).
-    growthFallback: (label) => <PlantGrowthSkeleton label={label} />,
+    growthFallback: (label, card) => (
+      <PlantGrowthSkeleton label={label} measured={card.lastMeasurement !== null} />
+    ),
     history: (card, ctx) => (
       <PlantCourse api={api} token={token} specimenId={card.id} onMeasure={ctx.measure} />
     ),
