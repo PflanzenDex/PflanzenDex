@@ -3,6 +3,13 @@ import { cn } from "@/shared/lib/utils";
 import { ObjectPlaceholder } from "@/shared/lists/object-placeholder/object-placeholder";
 
 /**
+ * The height cap of a picture at the normal text size (US-QS-32, owner decision 2026-11-20): the width follows the screen
+ * height less about 600 px, so the box stays 4:3, is centred, and the card fits one screen. At large text the card takes its
+ * own height and the picture is not capped (`boxClassName` is left unset).
+ */
+export const PICTURE_HEIGHT_CAP = "mx-auto w-[min(100%,calc((100dvh_-_600px)*4/3))]";
+
+/**
  * The picture of a card (US-QS-32, SG-PHOTO-01 to SG-PHOTO-03): a 4:3 box whose room is reserved before the picture comes,
  * the picture covers the box, and a missing or failed picture shows the drawn placeholder of the family in the same box
  * (SG-PHOTO-02, P-10: never an emoji, never an empty box). The credit of an outside picture sits directly under the box, in

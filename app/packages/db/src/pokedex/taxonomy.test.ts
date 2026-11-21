@@ -208,3 +208,41 @@ describe("NFR-12 statistics of the taxon table", () => {
     expect(await store.version()).not.toBe(second);
   });
 });
+
+describe("US-QS-32 catalog pictures of the match cards in the database", () => {
+  const pictureUrl = "https://upload.wikimedia.org/wikipedia/commons/1/1f/Ficus_benjamina.jpg";
+  const withPicture = (imageUrl: string | null): TaxonomyRecord => {
+    const base = build("f1");
+    const taxon = base.taxa[0] as TaxonRecord;
+    const text = taxon.text as NonNullable<TaxonRecord["text"]>;
+    return { ...base, taxa: [{ ...taxon, text: { ...text, imageUrl } }] };
+  };
+
+  it("US-QS-32 returns the catalog picture and its Wikipedia page for a resolved Latin name", async () => {
+    await store.replace(withPicture(pictureUrl));
+    const pictures = await store.picturesOf(["Ficus benjamina"]);
+    expect(pictures.get("Ficus benjamina")).toEqual({
+      imageUrl: pictureUrl,
+      imageSourceUrl: "https://de.wikipedia.org/wiki/Ficus_benjamina",
+    });
+  });
+
+  it("US-QS-32 leaves a name without a resolved row out of the map, so its card shows no picture", async () => {
+    await store.replace(withPicture(pictureUrl));
+    const pictures = await store.picturesOf([
+      "Nonexistus plantus",
+      "Unknown species",
+      "Ficus benjamina",
+    ]);
+    expect(pictures.has("Nonexistus plantus")).toBe(false);
+    expect(pictures.has("Unknown species")).toBe(false);
+    expect([...pictures.keys()]).toEqual(["Ficus benjamina"]);
+  });
+
+  it("US-QS-32 returns an empty map for an empty list of names", async () => {
+    await store.replace(withPicture(null));
+    const pictures = await store.picturesOf([]);
+    expect(pictures).toBeInstanceOf(Map);
+    expect(pictures.size).toBe(0);
+  });
+});
