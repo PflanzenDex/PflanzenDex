@@ -309,6 +309,24 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(back).toHaveBeenCalledOnce();
   });
 
+  it("US-QS-32 · SG-SHEET-04 Abbrechen of the bar leaves the page the way Back does", async () => {
+    fakeServer();
+    const back = vi.fn();
+    show(async () => "tok", back);
+    await userEvent.click(await screen.findByRole("button", { name: "Abbrechen" }));
+    expect(back).toHaveBeenCalledOnce();
+  });
+
+  it("US-QS-32 · SG-SHEET-04 the photo status stays a status line next to the form once the footer is gone", async () => {
+    fakeServer();
+    show();
+    await screen.findAllByText("noch keine Messung");
+    const form = screen.getByRole("form", { name: "Messung erfassen" });
+    const status = form.querySelector("p[role='status']");
+    expect(status).not.toBeNull();
+    expect(document.querySelector("[class*='bottom-0']")).toBeNull();
+  });
+
   it("US-QS-15 · the growth note is an overlay that takes no place: the form keeps its node and place with and without it, and the save button is never under it (issue 1644, F8)", async () => {
     fakeServer();
     show();
@@ -391,7 +409,44 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(card?.style.top).toBe("80px");
   });
 
-  it("US-QS-15 · the note paints under the sticky save button and scrolls within 40 % of the window, also at 200 % text (issue 1644)", async () => {
+  it.each([
+    {
+      width: 360,
+      where: "below md the note without a focused field starts just below the bar at the top",
+      top: "56px",
+    },
+    {
+      width: 1024,
+      where: "from md the bar stands after the fields, so the note starts at the top of the form",
+      top: "0px",
+    },
+  ])("US-QS-32 · SG-SHEET-04 $where", async ({ width, top }) => {
+    setViewportWidth(width);
+    try {
+      fakeServer();
+      growth.moments = UNKNOWN_GROWTH;
+      show();
+      const field = await screen.findByLabelText(/Messwert/);
+      const save = screen.getByRole("button", { name: "Messung sichern" });
+      const wrapper = screen.getByRole("form", { name: "Messung erfassen" })
+        .parentElement as HTMLElement;
+      // The form starts at 100 px; the bar is the first 56 px of it below md and the last 56 px of it from md.
+      vi.spyOn(wrapper, "getBoundingClientRect").mockReturnValue(rectAt(100, 700));
+      vi.spyOn(save.parentElement as HTMLElement, "getBoundingClientRect").mockReturnValue(
+        width < 768 ? rectAt(100, 156) : rectAt(644, 700),
+      );
+      await userEvent.type(field, "12,5");
+      field.blur();
+      fireEvent.click(save);
+      await screen.findByText(UNKNOWN_NOTE);
+      const card = document.querySelector<HTMLElement>('[data-slot="growth-note"]');
+      expect(card?.style.top).toBe(top);
+    } finally {
+      setViewportWidth(360);
+    }
+  });
+
+  it("US-QS-15 · US-QS-32 the note paints under the sticky bar with the save and scrolls within 40 % of the window, also at 200 % text (issue 1644)", async () => {
     fakeServer();
     growth.moments = UNKNOWN_GROWTH;
     show();
@@ -401,7 +456,10 @@ describe("US-WAC-01 Seite Messen", () => {
     fireEvent.click(save);
     await screen.findByText(UNKNOWN_NOTE);
     const card = document.querySelector<HTMLElement>('[data-slot="growth-note"]');
-    expect(save.parentElement?.className).toContain("sticky bottom-0 z-10");
+    // The bar sticks at the top of the form and paints over the note (SG-SHEET-04).
+    expect(save.parentElement?.className.split(/\s+/)).toEqual(
+      expect.arrayContaining(["sticky", "z-30"]),
+    );
     expect(card?.className).toContain("z-[5]");
     expect(card?.className).toContain("max-h-[40vh]");
     expect(card?.className).toContain("overflow-y-auto");
@@ -515,7 +573,7 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     expect(photoPosts).toHaveLength(0);
   });
 
-  it("US-QS-24 the optional note and photo sit behind Mehr Angaben, closed; the save button sits in a sticky footer", async () => {
+  it("US-QS-24 · US-QS-32 the optional note and photo sit behind Mehr Angaben, closed; the save sits in the bar at the top of the form, not in a footer", async () => {
     fakeServer();
     show();
     await screen.findAllByText("noch keine Messung");
@@ -523,9 +581,43 @@ describe("US-WAC-05 photo in the form and in the course", () => {
     expect(more.open).toBe(false);
     expect(more.contains(screen.getByRole("group", { name: "Foto (optional)" }))).toBe(true);
     expect(more.contains(screen.getByLabelText("Notiz (optional)"))).toBe(true);
+    const bar = screen.getByRole("button", { name: "Messung sichern" })
+      .parentElement as HTMLElement;
+    expect(bar.className.split(/\s+/)).toContain("sticky");
+    expect(bar.className).not.toContain("bottom-0");
+    // Abbrechen leads, the save trails, and both come before the first field (SG-SHEET-04).
+    const buttons = Array.from(bar.querySelectorAll("button")).map((b) => b.textContent);
+    expect(buttons).toEqual(["Abbrechen", "Messung sichern"]);
     expect(
-      screen.getByRole("button", { name: "Messung sichern" }).parentElement?.className,
-    ).toContain("sticky");
+      bar.compareDocumentPosition(screen.getByLabelText(/Messwert/)) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+    // The status line of the photo stands right under the bar, where the keeper pressed the save (US-WAC-06).
+    const status = bar.parentElement?.querySelector("p[role='status']");
+    expect(bar.nextElementSibling).toBe(status);
+  });
+
+  it("US-QS-32 · SG-SHEET-04 from md the bar of the form is a plain row after the last field, not sticky, and the status line follows it", async () => {
+    setViewportWidth(1024);
+    try {
+      fakeServer();
+      show();
+      await screen.findAllByText("noch keine Messung");
+      const save = screen.getByRole("button", { name: "Messung sichern" });
+      const bar = save.parentElement as HTMLElement;
+      expect(bar.className).not.toMatch(/\b(sticky|fixed)\b/);
+      const buttons = Array.from(bar.querySelectorAll("button")).map((b) => b.textContent);
+      expect(buttons).toEqual(["Abbrechen", "Messung sichern"]);
+      expect(screen.getAllByRole("button", { name: "Messung sichern" })).toHaveLength(1);
+      const form = screen.getByRole("form", { name: "Messung erfassen" });
+      const fields = Array.from(form.querySelectorAll("input, select, textarea"));
+      const last = fields[fields.length - 1] as Element;
+      expect(last.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+      const status = form.querySelector("p[role='status']") as Element;
+      expect(bar.compareDocumentPosition(status) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    } finally {
+      setViewportWidth(360);
+    }
   });
 
   it("US-QS-24 a refused photo opens Mehr Angaben, so its message is never hidden (P-10)", async () => {

@@ -207,15 +207,11 @@ describe("US-BES-02 Seite Sammlung", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("the back button of the form leads to the species choice", async () => {
+  it("US-QS-32 · SG-SHEET-04 Abbrechen in the bar of the form leads to the species choice, as the back button did", async () => {
     fakeServer();
     const onSpeciesChoose = vi.fn();
     render(page({ newSpecies: species, onSpeciesChoose }));
-    // The chevron in the header and the cancel under the fields both lead back to the species choice (US-QS-32).
-    await screen.findAllByRole("button", { name: "Zurück zur Art" });
-    await userEvent.click(
-      screen.getAllByRole("button", { name: "Zurück zur Art" })[0] as HTMLElement,
-    );
+    await userEvent.click(await screen.findByRole("button", { name: "Abbrechen" }));
     expect(onSpeciesChoose).toHaveBeenCalledOnce();
   });
 

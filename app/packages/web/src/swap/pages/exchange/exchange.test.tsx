@@ -175,7 +175,7 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     expect(screen.getByText("Keine Behandlung bekannt")).toBeTruthy();
   });
 
-  it("US-QS-24 the offer form: the wish and the note sit behind Mehr Angaben, the offer button sits in a sticky footer, and no heading repeats the layer title", async () => {
+  it("US-QS-24 the offer form: the wish and the note sit behind Mehr Angaben, the offer sits in the bar with Abbrechen, not in a sticky footer, and no heading repeats the layer title", async () => {
     server();
     view("/?sheet=offer");
     await screen.findByLabelText("Pflanze");
@@ -186,9 +186,11 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
       .closest("details") as HTMLDetailsElement;
     expect(more.open).toBe(false);
     expect(more.contains(screen.getByLabelText("Hinweis (optional)"))).toBe(true);
-    expect(
-      screen.getByRole("button", { name: "Angebot erstellen" }).parentElement?.className,
-    ).toContain("sticky");
+    const offer = screen.getByRole("button", { name: "Angebot erstellen" });
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    expect(cancel.compareDocumentPosition(offer) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(cancel.parentElement).toBe(offer.parentElement);
+    expect(document.querySelector("[class*='sticky'][class*='bottom-0']")).toBeNull();
   });
 
   it("US-SOZ-08 a private specimen cannot be offered until it is shared; the dialog sets the sharing", async () => {

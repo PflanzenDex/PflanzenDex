@@ -1,8 +1,9 @@
+import { useId } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useWatch } from "react-hook-form";
 import { useLocation, useSearchParams } from "react-router";
 import type { CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { dropPageParts, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { changesOf, draftOf } from "../../care-profile-draft";
@@ -36,6 +37,7 @@ export function CareProfileCard(props: {
   const { entry, busy } = props;
   const [params, setParams] = useSearchParams();
   const location = useLocation();
+  const formId = useId();
   const initial = draftOf(entry);
   const form = useFieldForm<CareProfileFields>({
     resolver: zodResolver(careProfileSchema),
@@ -69,18 +71,16 @@ export function CareProfileCard(props: {
         {entry.deviates && <strong>Meine Abweichung gilt</strong>}
       </Quiet>
       <Form {...form}>
-        <FormRoot onSubmit={submit} className="grid gap-3">
+        <FormRoot id={formId} onSubmit={submit} className="grid gap-3">
           <ProfileFields shared={shared} lists={props.lists} name={name} />
-          {/* Sticky at the bottom of the layer: the one filled action stays in view while the page scrolls (US-QS-15). */}
-          <Button
-            type="submit"
-            size="touch"
-            className="sticky bottom-0 z-10 bg-background"
+          {/* "Abbrechen" and the one save stand after the last field, in the bar of a phone sheet; filled once a value changed (US-QS-32, issue 1969). */}
+          <FormBar
+            formId={formId}
+            confirmName={`Sichern: ${name}`}
             disabled={busy || !(outcome.changes || outcome.problem)}
-            aria-label={`Sichern: ${name}`}
           >
             Sichern
-          </Button>
+          </FormBar>
         </FormRoot>
       </Form>
     </section>

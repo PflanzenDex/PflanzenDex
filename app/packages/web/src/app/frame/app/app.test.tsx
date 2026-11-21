@@ -542,7 +542,7 @@ describe("US-ACC-01 App", () => {
     expect(add.getAttribute("href")).toBe("/collection/new");
   });
 
-  it('choosing a species in the catalog leads to the form "Pflanze anlegen"; back leads to the catalog (US-BES-02)', async () => {
+  it('choosing a species in the catalog leads to the form "Pflanze anlegen"; Abbrechen leads back to the catalog (US-BES-02, US-QS-32)', async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async (url) => {
@@ -583,14 +583,11 @@ describe("US-ACC-01 App", () => {
     await userEvent.click(await screen.findByRole("button", { name: /Dracaena trifasciata/ }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
     expect(await screen.findByRole("heading", { name: "Pflanze anlegen" })).toBeTruthy();
-    // The chevron in the bar and the cancel under the fields both lead back (US-QS-32): the first is the chevron.
-    await userEvent.click(
-      screen.getAllByRole("button", { name: "Zurück zur Art" })[0] as HTMLElement,
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
 
-  it("US-POK-09 after the way Sammlung species mode, species profile, collection, back the catalog search opens, not the old profile", async () => {
+  it("US-POK-09 · US-QS-32 after the way Sammlung species mode, species profile, collection, Abbrechen the catalog search opens, not the old profile", async () => {
     const species = {
       id: "a1",
       latinName: "Dracaena trifasciata",
@@ -646,10 +643,7 @@ describe("US-ACC-01 App", () => {
     await userEvent.click(await screen.findByRole("button", { name: /^Dracaena trifasciata/ }));
     await userEvent.click(screen.getByRole("button", { name: "Zum Artprofil" }));
     await userEvent.click(await screen.findByRole("button", { name: "Diese Art wählen" }));
-    await screen.findAllByRole("button", { name: "Zurück zur Art" });
-    await userEvent.click(
-      screen.getAllByRole("button", { name: "Zurück zur Art" })[0] as HTMLElement,
-    );
+    await userEvent.click(await screen.findByRole("button", { name: "Abbrechen" }));
     expect(await screen.findByRole("heading", { name: "Art wählen" })).toBeTruthy();
   });
 

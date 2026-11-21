@@ -91,7 +91,7 @@ async function settleMeasurementSave(page: Page): Promise<void> {
   }
 }
 
-/** 1. Measure with a photo: the photo field sits behind "Mehr Angaben"; "Messung sichern" is the main action. */
+/** 1. Measure with a photo: the photo field sits behind "Mehr Angaben"; "Messung sichern" is the main action, in the bar at the top (SG-SHEET-04). */
 async function measureWithPhoto(page: Page): Promise<void> {
   await openFirstPlant(page);
   await page.getByRole("button", { name: /^Messen: / }).click();
@@ -106,7 +106,8 @@ async function measureWithPhoto(page: Page): Promise<void> {
     buffer: PHOTO,
   });
   const save = page.getByRole("button", { name: "Messung sichern" });
-  await expectLowerHalf(page, save, "measure: Messung sichern");
+  // The confirming action of a form sits in the bar at the top, so it is outside the lower-half rule (US-QS-32).
+  await expect(save).toBeVisible();
   await save.click();
   await settleMeasurementSave(page);
 }

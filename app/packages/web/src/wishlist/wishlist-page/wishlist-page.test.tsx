@@ -673,16 +673,18 @@ describe("US-WUN-01 · DS-48 states and primitives", () => {
     expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
   });
 
-  it("US-QS-24 · US-WUN-01 'Neuer Wunsch' has no heading inside the form that repeats the layer title; Mehr Angaben starts closed; the save button sits in a sticky footer", async () => {
+  it("US-QS-24 · US-WUN-01 'Neuer Wunsch' has no heading inside the form that repeats the layer title; Mehr Angaben starts closed; the save sits in the bar with Abbrechen, not in a sticky footer", async () => {
     fakeServer(list([candidate()]));
     view(<WishlistPage api="http://api" token={token} />, "/?sheet=new-wish");
     await screen.findByRole("heading", { name: "Neuer Wunsch" });
-    const section = screen.getByRole("button", { name: "Wunsch sichern" }).closest("section");
-    expect(within(section as HTMLElement).queryByRole("heading")).toBeNull();
+    const section = screen.getByRole("region", { name: "Wunsch erfassen" });
+    expect(within(section).queryByRole("heading")).toBeNull();
     expect(screen.getByText("Mehr Angaben").closest("details")?.open).toBe(false);
-    expect(
-      screen.getByRole("button", { name: "Wunsch sichern" }).parentElement?.className,
-    ).toContain("sticky");
+    const save = screen.getByRole("button", { name: "Wunsch sichern" });
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    expect(cancel.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(cancel.parentElement).toBe(save.parentElement);
+    expect(document.querySelector("[class*='sticky'][class*='bottom-0']")).toBeNull();
   });
 
   it("US-WUN-01 · DS-50 the save button is disabled while the write runs, so a double tap writes once", async () => {

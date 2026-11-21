@@ -4,6 +4,7 @@ import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { returnFocusOnClose } from "@/shared/platform/routing/route-focus/view-start";
+import { FormBarHostContext, useModalBarHost } from "@/shared/ui/button/form-bar/form-bar.host";
 import { DialogPart, preloadDialog } from "./dialog-part/dialog-part";
 
 const TEXT_FIELD =
@@ -11,9 +12,15 @@ const TEXT_FIELD =
 // A close button marked `data-close` is chrome, not the content of the layer: it never counts as the first control (US-QS-32).
 const CONTROL = `${TEXT_FIELD}, button:not([disabled]):not([data-close]), a[href], [tabindex]:not([tabindex='-1'])`;
 
-/** The text field a layer starts with, when its first control is one; otherwise `null` (US-QS-15, issue 1104). */
+/**
+ * The text field a layer starts with, when its first control is one; otherwise `null` (US-QS-15, issue 1104). The actions of
+ * a form bar (`data-form-bar`, SG-SHEET-04) are chrome like the close button: they never count, wherever the bar stands (the sheet's bar, or after the last field).
+ */
 export function leadingTextField(layer: HTMLElement | null): HTMLElement | null {
-  const first = layer?.querySelector<HTMLElement>(CONTROL) ?? null;
+  const first =
+    Array.from(layer?.querySelectorAll<HTMLElement>(CONTROL) ?? []).find(
+      (el) => !el.closest("[data-form-bar]"),
+    ) ?? null;
   return first?.matches(TEXT_FIELD) ? first : null;
 }
 
@@ -94,11 +101,38 @@ function usePreloadDialog(isMd: boolean) {
   }, [isMd]);
 }
 
+/** The open state: given by `open`, or kept here; `opened` stays true once the modal has been open (its code stays mounted). */
+function useOpenState(
+  openProp: boolean | undefined,
+  onOpenChange: ((open: boolean) => void) | undefined,
+) {
+  const [inner, setInner] = React.useState(false);
+  const open = openProp ?? inner;
+  const setOpen = (next: boolean) => {
+    setInner(next);
+    onOpenChange?.(next);
+  };
+  const [opened, setOpened] = React.useState(open);
+  if (open && !opened) setOpened(true);
+  return { open, setOpen, opened };
+}
+
+type Hosted = { host: HTMLElement; barHost: React.ContextType<typeof FormBarHostContext> };
+
+/** The children go through a portal, so the sheet and the dialog provide nothing to them: the form bar host (US-QS-32) and the layer scope (SG-LIST-01) come from here. */
+function HostedChildren(props: Hosted & { children: React.ReactNode }) {
+  return createPortal(
+    <FormBarHostContext.Provider value={props.barHost}>
+      <LayerScope.Provider value>{props.children}</LayerScope.Provider>
+    </FormBarHostContext.Provider>,
+    props.host,
+  );
+}
+
 /**
  * Modal for content a phone user fills in (US-QS-07, DS-23): bottom sheet below `md`, centered dialog from `md`.
  * The children are rendered once into a stable host node that moves between the two containers,
- * so their state survives a viewport change across `md`. A portal keeps the React tree of this component, so the layer
- * scope of the sheet and the dialog does not reach the children: they get it here (US-QS-32, SG-LIST-01).
+ * so their state survives a viewport change across `md`.
  */
 export function ResponsiveModal({
   title,
@@ -114,17 +148,11 @@ export function ResponsiveModal({
   children,
 }: ResponsiveModalProps) {
   const isMd = useIsMd();
-  const [inner, setInner] = React.useState(false);
-  const open = openProp ?? inner;
-  const setOpen = (next: boolean) => {
-    setInner(next);
-    onOpenChange?.(next);
-  };
-  const [opened, setOpened] = React.useState(open);
-  if (open && !opened) setOpened(true);
-
+  const { open, setOpen, opened } = useOpenState(openProp, onOpenChange);
   usePreloadDialog(isMd);
   const { host, body } = useHost(open, onExited);
+  // What the forms inside learn about the bar: the sheet's slot below `md`, a plain row of the dialog from `md` (US-QS-32).
+  const { barHost, sheetBar } = useModalBarHost(isMd, () => setOpen(false));
   const copy = description ? { description } : {};
   // A sheet returns the focus to the element given, as the dialog does (US-QS-08); Vaul would use what had the focus at open.
   const sheetCloseFocus = returnFocusOnClose(returnFocusTo);
@@ -154,12 +182,16 @@ export function ResponsiveModal({
             {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
             {...(sheetCloseFocus ? { onCloseAutoFocus: sheetCloseFocus } : {})}
             {...(closeRefusals !== undefined ? { closeRefusals } : {})}
+            onBarSlot={sheetBar.setSlot}
+            barActive={sheetBar.active}
           >
             {body}
           </SheetContent>
         </Sheet>
       )}
-      {createPortal(<LayerScope.Provider value>{children}</LayerScope.Provider>, host)}
+      <HostedChildren host={host} barHost={barHost}>
+        {children}
+      </HostedChildren>
     </>
   );
 }

@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type UseFormReturn } from "react-hook-form";
-import { Button } from "@/shared/ui/button/button";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
@@ -48,17 +48,6 @@ function usePrefill(
 
 const t = texts(table);
 
-/** Sticky: the form may scroll inside the layer while the save button stays visible. */
-function SaveBar({ pending }: { pending: boolean }) {
-  return (
-    <div className="sticky bottom-0 bg-card py-2">
-      <Button type="submit" size="touch" className="w-full" disabled={pending}>
-        {pending ? t("form.saving") : t("form.save")}
-      </Button>
-    </div>
-  );
-}
-
 /** The form to record equipment (US-EQU-01): only type and name are required, the rest stays unknown (P-08). */
 export function EquipmentForm(props: {
   zones: readonly { zoneId: string; name: string }[];
@@ -70,6 +59,7 @@ export function EquipmentForm(props: {
   /** Resolves true when the equipment was saved, so the form can be emptied. */
   onSend: (input: EquipmentInput) => Promise<boolean>;
 }) {
+  const formId = useId();
   const form = useFieldForm<EquipmentFields>({
     resolver: zodResolver(equipmentSchema),
     defaultValues: EMPTY_FIELDS,
@@ -92,14 +82,17 @@ export function EquipmentForm(props: {
         alertRef={alertRef}
       />
       <Form {...form}>
-        <FormRoot onSubmit={submit} className="flex max-w-xl flex-col gap-4">
+        <FormRoot id={formId} onSubmit={submit} className="flex max-w-xl flex-col gap-4">
           <RequiredFields control={form.control} />
           <ZoneField control={form.control} zones={props.zones} />
           <PotFields control={form.control} />
           <FormMoreFields control={form.control} names={OPTIONAL_FIELDS}>
             <OptionalFields control={form.control} />
           </FormMoreFields>
-          <SaveBar pending={pending} />
+          {/* The save stands after the last field with "Abbrechen", in the bar of a phone sheet, never in a sticky footer (US-QS-32, SG-SHEET-04, issue 1941). */}
+          <FormBar formId={formId} pending={pending} pendingText={t("form.saving")}>
+            {t("form.save")}
+          </FormBar>
         </FormRoot>
       </Form>
     </section>

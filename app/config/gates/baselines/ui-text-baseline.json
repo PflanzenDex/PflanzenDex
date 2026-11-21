@@ -1,5 +1,5 @@
 {
-  "maxTotal": 950,
+  "maxTotal": 942,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -135,7 +135,7 @@
     },
     {
       "file": "packages/web/src/care/measure/measure-form/measure-form.tsx",
-      "count": 11
+      "count": 6
     },
     {
       "file": "packages/web/src/care/measure/measure-page/measure-page.tsx",
@@ -271,7 +271,7 @@
     },
     {
       "file": "packages/web/src/collection/care-profile/sections/care-profile-card/care-profile-card.tsx",
-      "count": 4
+      "count": 3
     },
     {
       "file": "packages/web/src/collection/care-profile/sections/care-profile-card/profile-fields/profile-fields.tsx",
@@ -471,7 +471,7 @@
     },
     {
       "file": "packages/web/src/privacy/deletion-card/deletion-steps/deletion-steps.tsx",
-      "count": 12
+      "count": 10
     },
     {
       "file": "packages/web/src/privacy/deletion-card/what-happens/what-happens.tsx",
