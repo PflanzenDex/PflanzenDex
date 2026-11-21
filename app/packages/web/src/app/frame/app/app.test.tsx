@@ -669,7 +669,7 @@ describe("US-ACC-01 App", () => {
     renderApp("/gibt-es-nicht");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+      await screen.findByRole("heading", { level: 2, name: "Diese Seite gibt es nicht" }),
     ).toBeTruthy();
     expect(document.title).toBe("Seite nicht gefunden – PflanzenDéx");
     await userEvent.click(screen.getByRole("button", { name: "Zu Heute" }));

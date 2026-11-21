@@ -212,7 +212,6 @@ describe("US-BES-02 Seite Sammlung", () => {
     render(page({ newSpecies: species, onSpeciesChoose }));
     await userEvent.click(await screen.findByRole("button", { name: "Abbrechen" }));
     expect(onSpeciesChoose).toHaveBeenCalledOnce();
-    expect(screen.queryByRole("button", { name: "Zurück zur Art" })).toBeNull();
   });
 
   it("US-ONB-01 Pflanze anlegen (the plus) opens the quick flow, not the species choice", async () => {

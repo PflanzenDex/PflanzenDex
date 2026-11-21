@@ -3,6 +3,7 @@
   "withMarker": "Mit einem Kennzeichen heißt die neue Pflanze dann „{name} – Kennzeichen“.",
   "formLabel": "Pflanze anlegen",
   "submit": "Pflanze anlegen",
+  "back": "Zurück zur Art",
   "plant": "Pflanze „{name}“ ist angelegt.",
   "cutting": "Steckling „{name}“ ist angelegt.",
   "cuttingLight": " Er steht unter Stecklingslicht; tippe auf der Karte „Eintopfen eintragen“, sobald du ihn eintopfst.",

@@ -365,6 +365,6 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
     expect(html).toContain(">Messen<");
     expect(html).toContain("Bogenhanf");
     expect(html).toContain("Messungen werden geladen");
-    expect(html).toContain("Zurück zur Sammlung");
+    expect(html).toContain("Zurück zu Bogenhanf");
   });
 });

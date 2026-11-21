@@ -76,6 +76,19 @@ describe("US-QS-32 the growth slot shows the fallback of its loaded height while
     expect((await screen.findByTestId("growth-fallback")).textContent).toBe(table["slot.loading"]);
   });
 
+  it("US-QS-23 the growth fallback gets the plant's card, so it can reserve the height of that plant's state (issue 2384)", async () => {
+    setViewportWidth(360);
+    show({
+      growth: () => <Pending />,
+      growthFallback: (label, plant) => (
+        <p data-testid="growth-fallback">{`${label}|${plant.name}|${plant.lastMeasurement === null}`}</p>
+      ),
+    });
+    expect((await screen.findByTestId("growth-fallback")).textContent).toBe(
+      `${table["slot.loading"]}|Aloe|false`,
+    );
+  });
+
   it("US-QS-32 without a growth fallback the layer keeps its one-line shape for the growth part", async () => {
     setViewportWidth(360);
     show({ growth: () => <Pending /> });

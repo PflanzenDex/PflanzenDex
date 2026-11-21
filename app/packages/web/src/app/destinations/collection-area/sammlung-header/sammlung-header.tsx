@@ -25,15 +25,12 @@ export function SammlungHeader<V extends string>(props: {
   children?: ReactNode;
   /** A control beside the heading, e.g. the opener of the layer "Ansicht" (US-QS-19); it goes into the bar below `md`. */
   action?: ReactNode;
-  /** Keeps the title in the content below `md` too: a destination that is not on the top bar yet (US-QS-32). */
-  inContent?: boolean;
 }) {
   return (
     <div className="mb-1.5 flex flex-col gap-1.5">
       <PageHeader
         title={props.title ?? "Sammlung"}
         {...(props.action ? { action: props.action } : {})}
-        {...(props.inContent ? { inContent: true } : {})}
       />
       {props.caption ? (
         <p className="text-sm text-muted-foreground">{props.caption}</p>

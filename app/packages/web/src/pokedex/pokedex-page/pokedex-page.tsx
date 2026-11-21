@@ -21,6 +21,7 @@ import { loadTree, TREE_KEY } from "../collector-rank/tree-api";
 import { Milestones, MILESTONES_LAYER } from "../milestones/milestones";
 import { NewlyCaught } from "../caught/newly-caught/newly-caught";
 import table from "./pokedex-page.de.json";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 
 const ui = texts(table);
 const plural = plurals(table);
@@ -77,9 +78,7 @@ export function PokedexPage(props: {
                 {ui("sectionHeading")}
               </h2>
             ) : (
-              <h1 id="pokedex-title" className="text-2xl font-semibold">
-                {ui("heading")}
-              </h1>
+              <PageHeader headingId="pokedex-title" title={ui("heading")} />
             )}
             <NewlyCaught api={api} token={token} caught={ownership.caught} />
             <ProgressLine

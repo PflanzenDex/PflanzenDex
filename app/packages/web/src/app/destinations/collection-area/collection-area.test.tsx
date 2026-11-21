@@ -119,15 +119,15 @@ function renderArea() {
 // 5 s per step. Under 16 busy loops (local runs of the file before this change) it took 1.4 s at the median and, in 1 of
 // 65 runs, 5076 ms, so it timed out. Stalls of 3 to 5 s hit other tests of the file under the same load, and they passed.
 describe("US-WAC-01 collection wired with measuring", () => {
-  it("US-WAC-01 measuring on the specimen opens the measure view, back leads to the collection", async () => {
+  it("US-WAC-01 measuring on the specimen opens the measure view, back leads to the plant (US-QS-32)", async () => {
     stubCollection();
     renderArea();
     // The collection page is a lazy part; its first import can take longer than the default second under load.
     await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     expect(await screen.findByRole("heading", { name: "Messen" })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
-    expect(await screen.findByRole("heading", { name: "Sammlung" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zu Bogenhanf" }));
+    expect(await screen.findByRole("dialog", { name: "Bogenhanf" })).toBeTruthy();
   });
 }, 15_000);
 
@@ -203,7 +203,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Messen" })).toBeNull());
   });
 
-  it("US-QS-15 Back from the measure view returns to the list and focuses the plant it was opened from", async () => {
+  it("US-QS-15 Back from the measure view returns to the plant's layer, and the focus is in it (US-QS-32)", async () => {
     stubCollection();
     render(
       <MemoryRouter>
@@ -223,10 +223,10 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     await userEvent.click(await findCardButton("Messen: Bogenhanf"));
     await screen.findByRole("heading", { name: "Messen" });
     back();
-    await waitFor(
-      () => expect(document.activeElement?.closest('ul[aria-label="Pflanzen"]')).not.toBeNull(),
-      { timeout: 8_000 },
-    );
+    const layer = await screen.findByRole("dialog", { name: "Bogenhanf" });
+    await waitFor(() => expect(layer.contains(document.activeElement)).toBe(true), {
+      timeout: 8_000,
+    });
     expect(screen.queryByRole("heading", { name: "Messen" })).toBeNull();
   }, 15_000);
 
@@ -494,7 +494,7 @@ describe("US-QS-15 the forms of a plant are full views with an address", () => {
     await screen.findByRole("heading", { name: "Messen" });
     await userEvent.type(await screen.findByLabelText(/^Messwert/), "44");
     await waitFor(() => expect(route.guarded).toBe(true));
-    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zu Bogenhanf" }));
     const dialog = await screen.findByRole("dialog", { name: "Eingabe verwerfen?" });
     await waitFor(() => expect(route.guarded).toBe(true));
     await userEvent.click(within(dialog).getByRole("button", { name: "Eingabe verwerfen" }));
@@ -656,10 +656,9 @@ describe("US-QS-15 a settle keeps the focus and announces no view (issue 2165)",
     await save(saves);
     back();
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Messen" })).toBeNull());
-    // Back to the list moves the focus to the control the view was opened from.
-    await waitFor(() =>
-      expect(document.activeElement?.closest('ul[aria-label="Pflanzen"]')).not.toBeNull(),
-    );
+    // Back to the plant's layer moves the focus into it (US-QS-32).
+    const layer = await screen.findByRole("dialog", { name: "Bogenhanf" });
+    await waitFor(() => expect(layer.contains(document.activeElement)).toBe(true));
     const watch = watchFocusAndSpeech();
     forward();
     await waitFor(() => expect(document.activeElement?.id).toBe("measure-title"));

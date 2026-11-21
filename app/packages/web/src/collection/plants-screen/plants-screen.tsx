@@ -16,7 +16,6 @@ import {
 } from "./rows/location-groups/group-by-location";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
-import { TITLE } from "../specimens/cards/parts/parts";
 import { useCardPages, type CardPages } from "../specimens/cards/use-card-pages";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PlantTile, PlantTileSkeleton } from "./rows/plant-tile/plant-tile";
@@ -25,6 +24,7 @@ import { PlantLayers } from "./plant-layers/plant-layers";
 import { ARCHIVE_LAYER, plantHintOccasionsOf, type LayerProps } from "./plant-layers/layer-ids";
 import { ZoneInsightRow } from "./rows/zone-insight/zone-insight";
 import table from "./plant-layers/plant-layers.de.json";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 
 const t = texts(table);
 /**
@@ -187,9 +187,7 @@ export function PlantsScreen(props: Props) {
             Pflanzen
           </h2>
         ) : (
-          <h1 id="collection-title" className={TITLE}>
-            Sammlung
-          </h1>
+          <PageHeader headingId="collection-title" title="Sammlung" />
         )}
         <Row {...props} />
         {body}

@@ -1,3 +1,4 @@
+import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
@@ -33,33 +34,26 @@ function ActionBlock({ className }: { className: string }) {
 }
 
 /**
- * The route's fallback of "Freunde Tausch" until its chunk is there (issue 1727): the title stands at once as the one h1
- * with its way back and the offer action in one row, the link to the matching offers and the privacy line are the page's
- * own (the line shows from the medium width, as on the page), and the list waits for the delay (DS-57). The route shows the
- * list's shape, not a part's.
+ * The route's fallback of "Freunde Tausch" until its chunk is there (issue 1727): the page's header (the title as the one h1
+ * in the top bar below md, with its way back and the offer action, US-QS-32), so the title does not move when the page
+ * arrives. The link to the matching offers and the privacy line are the page's own (the line shows from the medium width, as
+ * on the page), and the list waits for the delay (DS-57). The route shows the list's shape, not a part's.
  */
 export function ExchangeRouteSkeleton() {
   return (
     <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
-      <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <span aria-hidden="true" className="block size-11 shrink-0" />
-          <h1
-            data-route-fallback=""
-            className="min-w-min flex-1 text-2xl font-semibold [overflow-wrap:normal]"
-          >
-            {t("exchange.title")}
-          </h1>
-          <ActionBlock className="h-12 w-52 shrink-0" />
-        </div>
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-          <ActionBlock className="h-12 w-52" />
-          <p className="hidden text-muted-foreground md:block">{t("exchange.privacy")}</p>
-          <DelayedSkeleton>
-            <ExchangeSkeleton label={t("exchange.loading")} />
-          </DelayedSkeleton>
-        </div>
-      </section>
+      <FullView
+        fallback
+        title={t("exchange.title")}
+        back={{ label: t("exchange.back"), to: "/friends" }}
+        action={<ActionBlock className="h-12 w-52 shrink-0" />}
+      >
+        <ActionBlock className="h-12 w-52" />
+        <p className="hidden text-muted-foreground md:block">{t("exchange.privacy")}</p>
+        <DelayedSkeleton>
+          <ExchangeSkeleton label={t("exchange.loading")} />
+        </DelayedSkeleton>
+      </FullView>
     </LayerHost>
   );
 }

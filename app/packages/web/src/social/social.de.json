@@ -98,5 +98,6 @@
   "friendCollection.allShared": "Du hast schon alle Arten, die dieser Freund teilt. Wähle „Alle“ für die ganze Sammlung.",
   "friendCollection.noCommon": "Ihr habt keine gemeinsame Art. Wähle „Alle“ für die ganze Sammlung.",
   "friendEquipment.none": "{name} teilt keine Geräte.",
-  "friendsPage.none": "Noch keine Freunde."
+  "friendsPage.none": "Noch keine Freunde.",
+  "friendsPage.title": "Freunde"
 }

@@ -12,6 +12,7 @@ import { ManageLists, Notices } from "./manage-lists/manage-lists";
 import type { ZoneInput } from "../../zones/zones-view/zones-view";
 import type { LocationInput } from "../../zones/locations-view/locations-view";
 import type { Derive } from "../../zones/derivation-view/derivation-view";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../light.de.json";
 
@@ -47,7 +48,7 @@ export function LightView(props: {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 gap-4">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-        {props.hosted ? null : <h1 className="text-xl font-semibold">{t("view.title")}</h1>}
+        {props.hosted ? null : <PageHeader title={t("view.title")} />}
         {props.error && <ErrorMessage error={props.error} />}
         <ManageLists data={data} actions={actions} />
         <Notices data={data} />

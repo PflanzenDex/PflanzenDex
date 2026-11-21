@@ -34,7 +34,7 @@ export function usePlantForm(api: string, token: Token, enabled: boolean) {
   const measure = measureTarget(measureOpen, form.plantId, picked, plant.card);
   const missing = measureOpen && measure === null && plant.failed;
   useEffect(() => {
-    if (missing) leave(formText("notFound"));
+    if (missing) leave(formText("notFound"), true);
   }, [missing, leave]);
   const openMeasure = (m: Plant) => {
     setPicked(m);

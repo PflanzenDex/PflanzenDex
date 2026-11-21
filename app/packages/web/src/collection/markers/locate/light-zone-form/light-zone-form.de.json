@@ -1,6 +1,6 @@
 {
   "title": "Lichtzone ändern",
-  "back": "Zurück zur Sammlung",
+  "back": "Zurück zu {name}",
   "unknownNext": "Welche Zone gilt, ist unbekannt. Weise dem Standort eine Lichtzone zu oder setze die Zone der Pflanze selbst.",
   "removedHead": "Die eigene Lichtzone von „{name}“ ist entfernt.",
   "removedReload": "{head} Welche Zone jetzt gilt, zeigt die Karte nach dem Neuladen.",

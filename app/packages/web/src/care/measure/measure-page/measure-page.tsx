@@ -13,6 +13,10 @@ import { CourseLayer } from "./course-layer/course-layer";
 import { GrowthNoteLayer } from "./growth-note-layer/growth-note-layer";
 import { useSaveAnnouncement } from "./growth-note-layer/use-save-announcement";
 import { useMeasureSend } from "../measurement-header/measurement-photo";
+import { texts } from "@/shared/lib/text-rules/texts";
+import table from "./measure-page.de.json";
+
+const ui = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
@@ -118,9 +122,9 @@ export function MeasurePage(props: MeasurePageProps) {
     <section aria-labelledby="measure-title" className="flex min-w-0 flex-col gap-3">
       <PageHeader
         headingId="measure-title"
-        title="Messen"
+        title={ui("title")}
         subject={specimen.name}
-        back={{ label: "Zurück zur Sammlung", onBack: props.onBack }}
+        back={{ label: ui("back", { name: specimen.name }), onBack: props.onBack }}
       />
       <LoadFrame
         queryKey={key}

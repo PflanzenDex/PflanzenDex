@@ -305,7 +305,7 @@ describe("US-WAC-01 Seite Messen", () => {
     fakeServer();
     const back = vi.fn();
     show(async () => "tok", back);
-    await userEvent.click(screen.getByRole("button", { name: "Zurück zur Sammlung" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zu Bogenhanf" }));
     expect(back).toHaveBeenCalledOnce();
   });
 
@@ -897,7 +897,7 @@ describe("US-QS-14 · US-QS-15 the measure page is a sub-page with one page head
     const header = title.closest("[data-page-header]") as HTMLElement | null;
     expect(header).not.toBeNull();
     expect(
-      within(header as HTMLElement).getByRole("button", { name: "Zurück zur Sammlung" }),
+      within(header as HTMLElement).getByRole("button", { name: "Zurück zu Bogenhanf" }),
     ).toBeTruthy();
   });
 });

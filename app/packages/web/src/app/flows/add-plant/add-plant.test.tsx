@@ -226,6 +226,21 @@ describe("US-QS-14 · US-ONB-01 Pflanze anlegen is a full-view page with one pag
     expect(more).not.toContain("border-primary");
     expect(more).not.toContain("bg-secondary");
   });
+
+  it("US-QS-32 · F-0068 the step headings and the result line are 16 px section labels under the one h1, not page titles", async () => {
+    server();
+    view();
+    const section = (heading: HTMLElement) => heading.className.split(/\s+/);
+    const choose = await screen.findByRole("heading", { level: 2, name: /Welche Pflanze\?/ });
+    expect(section(choose)).toEqual(expect.arrayContaining(["text-base", "font-semibold"]));
+    await toSave();
+    const save = await screen.findByRole("heading", { level: 2, name: /Schritt 2 von 2/ });
+    expect(section(save)).toEqual(expect.arrayContaining(["text-base", "font-semibold"]));
+    await userEvent.click(await screen.findByRole("button", { name: "Pflanze sichern" }));
+    const done = await screen.findByRole("heading", { level: 2, name: /ist angelegt/ });
+    expect(section(done)).toEqual(expect.arrayContaining(["text-base", "font-semibold"]));
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
 });
 
 const LEGACY_ZONES = [

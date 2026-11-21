@@ -18,15 +18,19 @@ export type FormHooks = {
 
 /**
  * Keeps each form of a plant in step with the address: the plant of the address is the target of the form (a reload
- * reads it first), and an archived plant gives its catch date from the archive (the card is not read for it).
+ * reads it first), and an archived plant gives its catch date from the archive (the card is not read for it). The read of
+ * an archived plant's card fails at once, so the catch-date form waits for the archive (`archiveRead`) before it takes
+ * that failure for a plant that is not there (US-QS-32, d-054).
  */
 export function useFormMirrors(p: {
   form: FormAddress;
   plant: FormPlant | undefined;
   archivedEntry: ArchivedEntry | undefined;
+  /** The archive has answered, with its list or with an error: an absent entry then means there is none. */
+  archiveRead: boolean;
   hooks: FormHooks;
 }): void {
-  const { form, plant, archivedEntry, hooks } = p;
+  const { form, plant, archivedEntry, archiveRead, hooks } = p;
   const { archived, potted, marked, caught, zoned } = hooks;
   const card = plant?.card;
   const failed = plant?.failed ?? false;
@@ -45,7 +49,7 @@ export function useFormMirrors(p: {
     form,
     open: caught.open,
     setOpen: caught.setOpen,
-    failed,
+    failed: failed && archiveRead,
     target: card
       ? { id: card.id, name: card.name, caughtAt: card.caughtAt }
       : archivedEntry

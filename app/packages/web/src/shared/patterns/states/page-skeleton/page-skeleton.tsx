@@ -1,3 +1,4 @@
+import { PageTitle } from "@/shared/patterns/navigation/page-header/page-title/page-title";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
@@ -17,12 +18,10 @@ export type PageSkeletonProps = {
 export function PageSkeleton({ label = "Lädt …", heading }: PageSkeletonProps) {
   if (heading)
     return (
-      // The h1 sits where the destination's header puts it (top of the content, 28 px semibold), so it does not move
-      // when the page arrives; the focus mover skips it and waits for the page's own heading (US-QS-09).
+      // The title sits where the destination's header puts it (in the top bar below md, in the content from md, US-QS-32), so
+      // it does not move when the page arrives; the focus mover skips it and waits for the page's own heading (US-QS-09).
       <div className="mx-auto flex w-full min-w-0 max-w-180 flex-col gap-4">
-        <h1 data-route-fallback="" className="text-2xl font-semibold">
-          {heading}
-        </h1>
+        <PageTitle title={heading} />
         <DelayedSkeleton>
           <SkeletonGroup label={label} className="flex min-w-0 flex-col gap-4">
             <div className="flex items-center gap-3">
