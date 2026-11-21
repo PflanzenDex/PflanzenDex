@@ -122,7 +122,7 @@ function Current(props: {
       <MoreHelp className="text-center" more={t("deck.askMore")}>
         {c.ownerName ?? t("deck.friendFallback")} erfährt nur von einer Anfrage.
       </MoreHelp>
-      <Actions card={c} busy={props.busy} onAnswer={props.answer} />
+      <Actions card={c} busy={props.busy} onAnswer={props.answer} large={large} />
       {props.lists}
     </div>
   );

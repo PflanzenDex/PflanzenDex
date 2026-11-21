@@ -19,11 +19,16 @@ export type Answer = "no" | "later" | "yes";
 const LATER = MATCH_ANSWERS[1];
 export const SIGN = (c: Card) => `${title(c)} von ${c.ownerName ?? "einem Freund"}`;
 /** "Ablehnen · Später · Anfragen" as buttons with text; the buttons are the way without a swipe (NFR-13, FR-TAU-08). */
-export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy: boolean }) {
-  const { card: c, busy } = props;
+export function Actions(props: {
+  card: Card;
+  onAnswer: (a: Answer) => void;
+  busy: boolean;
+  large: boolean;
+}) {
+  const { card: c, busy, large } = props;
   const who = SIGN(c);
   return (
-    <div className={decisionRowClass()}>
+    <div className={decisionRowClass(large)}>
       <div className="mx-auto flex w-full max-w-md flex-wrap gap-2">
         <NetworkSlot visible={false}>
           <Button
@@ -63,7 +68,6 @@ export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy
     </div>
   );
 }
-
 /** The text and the one filled action (label and href) of each empty reason (US-TAU-07, P-09); the texts of the two reasons of US-TAU-03 come from the message table. */
 type EmptyText = { title: string; description: string; action: string; href: string };
 const EMPTY_TEXT: Record<EmptyReason, EmptyText> = {
@@ -110,7 +114,6 @@ const EMPTY_TEXT: Record<EmptyReason, EmptyText> = {
     href: MATCH_PATH,
   },
 };
-
 /** The empty deck names the reason and the next step (US-TAU-07, P-09); one filled action, the other ways stay as text links. */
 export function Empty(props: { reason?: EmptyReason | null }) {
   const reason = props.reason ?? "no_match";
@@ -144,7 +147,6 @@ export function Empty(props: { reason?: EmptyReason | null }) {
     </div>
   );
 }
-
 export function UndoButton(props: { onClick: () => void }) {
   return (
     <div className="text-center">
