@@ -20,7 +20,8 @@ export function lightWrites(api: string, write: Write): LampLightActions {
           return r;
         },
         `Messung für „${lamp.name}“ gespeichert.`,
-        entityKey("lamp", lamp.id, `measure:${JSON.stringify(input)}`),
+        // An append (a measurement is added to the lamp): the operation only, the values are the body (US-QS-03).
+        entityKey("lamp", lamp.id, "measure"),
       );
       return saved;
     },
@@ -28,7 +29,8 @@ export function lightWrites(api: string, write: Write): LampLightActions {
       void write.run(
         (t, opts) => describeLamp(api, t, { id: lamp.id, ...data }, opts),
         `Herstellerangabe für „${lamp.name}“ gespeichert.`,
-        entityKey("lamp", lamp.id, `data:${JSON.stringify(data)}`),
+        // Set-state on the manufacturer's statement (a whole form): the operation only (US-QS-03).
+        entityKey("lamp", lamp.id, "data"),
       ),
     onLimit: (percent) =>
       void write.run(

@@ -135,7 +135,8 @@ function Offers(props: {
               void write.run(
                 (t, opts) => requestOffer({ api, token: t }, o.offerId, input, opts),
                 t("friends.sent", { title: title(o) }),
-                entityKey("offer", o.offerId, `request:${JSON.stringify(input)}`),
+                // A create (a request is added to the offer): the operation only, the counter-offer is the body (US-QS-03).
+                entityKey("offer", o.offerId, "request"),
               )
             }
           />

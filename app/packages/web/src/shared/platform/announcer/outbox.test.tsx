@@ -322,7 +322,7 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
     expect(server.records.size).toBe(2);
   });
 
-  it("US-QS-03 a retry with an edited form is another action: it gets a key of its own and is applied, not refused", async () => {
+  it("US-QS-03 an edited retry after a lost answer keeps the key: the server refuses it (idempotency.key_conflict), one record, the original replays", async () => {
     online(true);
     const server = serverLosing(1, true);
     const { result } = renderHook(() =>
@@ -331,20 +331,19 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
         () => undefined,
       ),
     );
-    // The action names its input (the value), so the edited value is another write.
-    await act(async () =>
-      result.current.run(measureOn(server, 9), "a", { target: "specimen:e1", action: "measure:9" }),
-    );
+    // The action names the operation only (a create or an append): the edited value is the body, not the action.
+    const scope: KeyScope = { target: "specimen:e1", action: "measure" };
+    await act(async () => result.current.run(measureOn(server, 9), "a", scope));
     expect(result.current.error?.code).toBe("network.not_reachable");
-    await act(async () =>
-      result.current.run(measureOn(server, 10), "b", {
-        target: "specimen:e1",
-        action: "measure:10",
-      }),
-    );
-    expect(server.keys[1]).not.toBe(server.keys[0]);
+    await act(async () => result.current.run(measureOn(server, 10), "b", scope));
+    expect(server.keys[1]).toBe(server.keys[0]);
+    expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    expect(server.records.size).toBe(1);
+    // The original body under the held key gets the stored answer: success, still one record.
+    await act(async () => result.current.run(measureOn(server, 9), "a", scope));
+    expect(server.keys[2]).toBe(server.keys[0]);
     expect(result.current.error).toBeNull();
-    expect(server.records.size).toBe(2);
+    expect(server.records.size).toBe(1);
   });
 
   it("US-QS-03 the server refuses a key that comes back with another body: idempotency.key_conflict is the answer, nothing is replayed", async () => {

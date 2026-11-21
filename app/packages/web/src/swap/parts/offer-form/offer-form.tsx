@@ -68,7 +68,8 @@ function useOfferForm(
       created = r.ok;
       return r;
     };
-    await write.run(send, CREATED, accountKey(`offer:create:${JSON.stringify(body)}`));
+    // A create: the operation only, the offer's fields are the body (US-QS-03).
+    await write.run(send, CREATED, accountKey("offer:create"));
     setConfirm(false);
     // A form in a layer ends on success: the host closes the layer and confirms with a toast (issue 1696, D10).
     if (created) onCreated?.(CREATED);

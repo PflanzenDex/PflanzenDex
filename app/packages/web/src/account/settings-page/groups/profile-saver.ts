@@ -34,7 +34,8 @@ export function useProfileSaver(api: string, token: Token, initial: AccountProfi
       const r = t
         ? await keys.run(
             (key) => saveProfile(api, t, next, { key }),
-            accountKey(`profile:${JSON.stringify(next)}`),
+            // Set-state on the whole profile form: the operation only, no body (US-QS-03).
+            accountKey("profile"),
           )
         : { ok: false as const, error: SIGN_IN };
       busy.current = false;

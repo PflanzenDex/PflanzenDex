@@ -23,7 +23,8 @@ export function useRepair(api: string, token: Token, onWritten: () => void, onRu
       void write.run(
         async (t, opts) => finish(await renameWish(api, t, { wishId: w.id, name }, opts)),
         "",
-        entityKey("wish", w.id, `rename:${name}`),
+        // Set-state with a typed name (free text): the operation only, the name is the body (US-QS-03).
+        entityKey("wish", w.id, "rename"),
       );
     },
     remove: (w: DuplicateWish) => {

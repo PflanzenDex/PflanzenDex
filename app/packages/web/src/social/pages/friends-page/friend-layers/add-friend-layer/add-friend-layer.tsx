@@ -32,7 +32,8 @@ function useSendRequest(
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const send = async (code: string): Promise<boolean> => {
     let ok = false;
-    const key = accountKey(`friend-request:${code}`);
+    // A create (a request is sent): the operation only, the code is the body (US-QS-03).
+    const key = accountKey("friend-request");
     await write.run(
       async (t, opts) => {
         const r = await sendFriendRequest(api, t, code, opts);

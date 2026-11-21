@@ -97,7 +97,8 @@ function usePauseWrites(api: string, token: Token) {
     void write.run(
       (t, o) => addRhythmPause(api, t, { from, until }, o),
       "Urlaub eingetragen.",
-      accountKey(`pause:add:${from}:${until}`),
+      // A create (a pause is added): the operation only, the dates are the body (US-QS-03).
+      accountKey("pause:add"),
     );
   const remove = (id: string) =>
     void write.run(

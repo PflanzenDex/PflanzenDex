@@ -50,7 +50,8 @@ export function useMeasureSend(props: {
       if (!tok) return SIGN_IN;
       const r = await keys.run(
         (key) => recordMeasurement({ api, token: tok }, specimenId, input, { key }),
-        entityKey("specimen", specimenId, `measure:${JSON.stringify(input)}`),
+        // An append (a measurement is added to the plant): the operation only, the values are the body (US-QS-03).
+        entityKey("specimen", specimenId, "measure"),
       );
       if (!r.ok) return r.error;
       const text = measurementText(r.value);

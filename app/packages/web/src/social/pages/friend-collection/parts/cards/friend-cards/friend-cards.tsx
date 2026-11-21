@@ -121,7 +121,8 @@ export function FriendCards(props: {
                 void wish.run(
                   (t, opts) => addToWishlist(props.api, t, card.speciesLatin ?? "", opts),
                   tx("friendCollection.wishAdded", { name: card.speciesLatin ?? "" }),
-                  accountKey(`wish:add:${card.speciesLatin ?? ""}`),
+                  // A create (a wish is added from a friend's card): the operation only, the species is the body (US-QS-03).
+                  accountKey("wish:add"),
                 )
               }
             />

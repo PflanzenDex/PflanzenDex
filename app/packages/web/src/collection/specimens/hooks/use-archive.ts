@@ -28,7 +28,8 @@ export function useArchive(api: string, token: Token, after: () => void, say: Sa
       if (!tok || !open) return SIGN_IN;
       const r = await keys.run(
         (key) => archiveSpecimen(api, tok, { id: open.id, reason }, { key }),
-        entityKey("specimen", open.id, `archive:${reason}`),
+        // Set-state with a reason from the list or a typed one (free text): the operation only (US-QS-03).
+        entityKey("specimen", open.id, "archive"),
       );
       if (!r.ok) return r.error;
       // The row leaves the list: visible result until the in-place row of FX-09 (SG-FEED-03).

@@ -31,7 +31,8 @@ export function useNotes(access: PhotoAccess, plant: { id: string; name: string 
         if (!credential) return SIGN_IN;
         const r = await keys.run(
           (key) => setSpecimenNotes(api, credential, { id, notes }, { key }),
-          entityKey("specimen", id, `notes:${notes}`),
+          // Set-state with free text (the notes): the operation only, the text is the body (US-QS-03).
+          entityKey("specimen", id, "notes"),
         );
         if (!r.ok) return r.error;
         await reload();

@@ -26,7 +26,8 @@ export function useRecord(
         return r;
       },
       `Gerät „${input.name}“ gespeichert.`,
-      accountKey(`record:${JSON.stringify(input)}`),
+      // A create (a record is added): the operation only, the form is the body (US-QS-03).
+      accountKey("equipment:record"),
     );
     if (saved) {
       setPrefill(null);

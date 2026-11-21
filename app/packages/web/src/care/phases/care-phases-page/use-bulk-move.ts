@@ -70,7 +70,9 @@ export function useBulkMove(api: string, token: Token, again: () => void) {
     const moves = movesOf(undo.held, group);
     restoring.current = group;
     setNote(null);
-    const key = accountKey(`undo:${JSON.stringify(moves)}`);
+    // The undo names the plants and their earlier places (ids, not content): the same undo repeats the same key, and
+    // `restorePhaseLocations` derives one key per plant from it (US-QS-03, US-QS-32).
+    const key = accountKey(`undo:${moves.map((m) => `${m.specimenId}>${m.locationId}`).join(",")}`);
     void restore.run((t, opts) => restorePhaseLocations(api, t, moves, opts), ui("restored"), key);
   };
   const groupUndo = (target: string) =>

@@ -43,7 +43,8 @@ export function useCreate(
       if (!t || !newSpecies) return SIGN_IN;
       const r = await keys.run(
         (key) => createSpecimen(api, t, { speciesId: newSpecies.id, ...input }, { key }),
-        accountKey(`create:${newSpecies.id}:${JSON.stringify(input)}`),
+        // A create: the operation only, the species and the form are the body (US-QS-03).
+        accountKey("specimen:create"),
       );
       if (!r.ok) return r.error;
       say(createdText(r.value));

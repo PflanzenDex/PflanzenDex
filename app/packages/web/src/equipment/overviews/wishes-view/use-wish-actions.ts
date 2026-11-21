@@ -31,7 +31,8 @@ export function useWishActions(
           return r;
         },
         `Geräte-Wunsch „${input.name}“ gespeichert.`,
-        accountKey(`equipment-wish:create:${JSON.stringify(input)}`),
+        // A create: the operation only, the form is the body (US-QS-03).
+        accountKey("equipment-wish:create"),
       );
       return saved;
     },

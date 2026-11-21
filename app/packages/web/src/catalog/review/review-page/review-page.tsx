@@ -65,7 +65,8 @@ function useReviewActions(api: string, token: Token, refresh: () => void) {
       run(
         (t, opts) => decideProposal(api, t, { caseId, status: "rejected", reason }, opts),
         "Vorschlag zurückgewiesen. Der Ersteller sieht deinen Grund.",
-        entityKey("case", caseId, `rejected:${reason}`),
+        // Set-state with a typed reason (free text): the operation only, the reason is the body (US-QS-03).
+        entityKey("case", caseId, "rejected"),
       ),
     onMerge: (caseId, targetSpeciesId) =>
       run(

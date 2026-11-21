@@ -65,7 +65,8 @@ export function useSend(api: string, token: Token, onSaved: (id: string) => void
     const r = t
       ? await keys.run(
           (key) => propose(api, t, input, { key }),
-          accountKey(`propose:${JSON.stringify(input)}`),
+          // A create (a species proposal is added): the operation only, the form is the body (US-QS-03).
+          accountKey("propose"),
         )
       : { ok: false as const, error: SIGN_IN };
     if (!r.ok) return r.error;

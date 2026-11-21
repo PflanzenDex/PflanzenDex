@@ -159,7 +159,8 @@ export function NewTask(props: {
             void write.run(
               (t, opts) => createTask(props.api, t, { type, reference }, opts),
               "Der Auftrag ist angelegt.",
-              accountKey(`task:${type}:${reference}`),
+              // A create (an AI task is added): the operation only, the type and the reference are the body (US-QS-03).
+              accountKey("task:create"),
             )
           }
         >

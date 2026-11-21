@@ -88,7 +88,8 @@ function useLeafWrites(api: string, token: Token, specimenId: string, onDone: ()
     send: (input: LeafInput): Promise<ApiError | null> =>
       run(
         (access, opts) => recordLeaf(access, specimenId, input, opts),
-        `send:${JSON.stringify(input)}`,
+        // A create (a leaf is added): the operation only, the leaf's input is the body (US-QS-03).
+        "leaf:record",
       ),
     remove: (leafId: string): Promise<ApiError | null> =>
       run((access, opts) => removeLeaf(access, specimenId, leafId, opts), `remove:${leafId}`),

@@ -59,7 +59,8 @@ function maintenanceWrites(api: string, write: Write): MaintenanceActions {
       void write.run(
         (t, opts) => setMaintenance(api, t, { id: item.id, input }, opts),
         `Betriebsdaten von „${item.name}“ gespeichert.`,
-        entityKey("equipment", item.id, `maintenance:${JSON.stringify(input)}`),
+        // Set-state on the operation data (a whole form): the operation only (US-QS-03).
+        entityKey("equipment", item.id, "maintenance"),
       ),
     onChecked: (item, checkedOn) =>
       void write.run(
@@ -105,7 +106,8 @@ function sensorWrites(api: string, write: Write): SensorActions {
       void write.run(
         (t, opts) => setSensorTarget(api, t, { id: sensor.id, ...target }, opts),
         `Zuordnung von „${sensor.name}“ gespeichert.`,
-        entityKey("sensor", sensor.id, `target:${JSON.stringify(target)}`),
+        // Set-state on the sensor's place: the operation only, the target is the body (US-QS-03).
+        entityKey("sensor", sensor.id, "target"),
       ),
   };
 }
@@ -125,7 +127,8 @@ function sharingWrites(
         share === "friends"
           ? `„${item.name}“ ist für Freunde sichtbar.`
           : `„${item.name}“ ist wieder privat.`,
-        entityKey("equipment", item.id, `share:${share}:${note}`),
+        // Set-state with a free-text note: the operation only, the note is the body (US-QS-03).
+        entityKey("equipment", item.id, "share"),
       ),
   };
 }

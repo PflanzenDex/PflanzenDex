@@ -88,7 +88,9 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
     void write.run(
       (t, opts) => answerSwap({ api, token: t }, s.swapId, a, opts),
       doneText(s, a),
-      entityKey("swap", s.swapId, `answer:${JSON.stringify(a)}`),
+      // Set-state with a chosen action (accept, decline, propose): the action stays, the free-text reason and
+      // proposal are the body (US-QS-03).
+      entityKey("swap", s.swapId, `answer:${a.action}`),
     );
   };
   const handover = (s: SwapSide, marker: string | null) => {

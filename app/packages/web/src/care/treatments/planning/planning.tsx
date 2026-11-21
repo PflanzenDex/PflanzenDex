@@ -43,7 +43,8 @@ export function usePlanning(api: string, token: Token, onPlanned: (message: stri
       const r = t
         ? await keys.run(
             (key) => planTreatments(api, t, input, { key }),
-            accountKey(`plan:${JSON.stringify(input)}`),
+            // A create (treatments are added to the plan): the operation only, the plan is the body (US-QS-03).
+            accountKey("plan"),
           )
         : { ok: false as const, error: SIGN_IN };
       busy.current = false;

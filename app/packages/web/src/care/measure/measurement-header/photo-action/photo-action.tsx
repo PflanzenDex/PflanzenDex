@@ -28,7 +28,9 @@ function usePhotoUpload(props: {
   const send = async (file: File, replace: boolean) => {
     const token = await access.token();
     if (!token) return;
-    // The action names the file: another file after a lost answer is another write, with a key of its own.
+    // Set-state of the date's one photo (`replace` is a chosen value). The action names the file's identity (name, size,
+    // date modified), not its bytes: another file after a lost answer is another write with a key of its own, and the
+    // server's one-photo rule decides, so it never adds a second photo (US-QS-03).
     const photo = `photo:${date}:${replace}:${file.name}:${file.size}:${file.lastModified}`;
     const r = await keys.run(
       (key) => uploadPhoto({ api: access.api, token }, specimenId, { file, date, replace }, key),

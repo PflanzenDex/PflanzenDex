@@ -59,8 +59,8 @@ async function createPlant(args: {
   const t = await token();
   const rule = marker.rule;
   if (!t || !rule) return { ok: false as const, error: SIGN_IN };
-  // The key belongs to the first plant as typed: the species, the marker, the zone and the place (US-QS-03).
-  const input = [species.id, marker.form.getValues(), zoneId, locationId];
+  // A create: the action names the operation only. The first plant as typed (species, marker, zone, place) is the body:
+  // a changed form after a lost answer gets `idempotency.key_conflict`, not a second plant (US-QS-03).
   return keys.run(
     (key) =>
       createSpecimen(
@@ -74,7 +74,7 @@ async function createPlant(args: {
         },
         { key },
       ),
-    accountKey(`create:${JSON.stringify(input)}`),
+    accountKey("first-plant:create"),
   );
 }
 

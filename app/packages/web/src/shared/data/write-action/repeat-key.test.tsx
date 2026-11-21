@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -241,5 +243,148 @@ describe("US-QS-03 · the repeat-guard key of an action, held per target", () =>
     await tap(result.current, save, scope);
     expect(server.keys[1]).not.toBe(server.keys[0]);
     expect(result.current.error).toBeNull();
+  });
+
+  it("US-QS-03 a key_conflict keeps the held key: another edited tap is refused too, the original body replays the stored answer", async () => {
+    const server = keyServer(1);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const scope = entityKey("specimen", "e6", "measure");
+    const measure = (value: number) =>
+      send(server.fetchFn, "POST", "/specimens/e6/measurements", { value });
+    await tap(result.current, measure(1), scope);
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await tap(result.current, measure(2), scope);
+    expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    await tap(result.current, measure(3), scope);
+    expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    await tap(result.current, measure(1), scope);
+    expect(result.current.error).toBeNull();
+    expect(new Set(server.keys).size).toBe(1);
+    expect(server.applied).toEqual(["POST /specimens/e6/measurements"]);
+  });
+
+  it("US-QS-03 a success on the target frees a conflicting key: the edited write after it is a write of its own", async () => {
+    const server = keyServer(1);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const scope = entityKey("specimen", "e6", "measure");
+    const measure = (value: number) =>
+      send(server.fetchFn, "POST", "/specimens/e6/measurements", { value });
+    await tap(result.current, measure(1), scope);
+    await tap(result.current, measure(2), scope);
+    expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    await tap(
+      result.current,
+      send(server.fetchFn, "PUT", "/specimens/e6/notes", { notes: "x" }),
+      entityKey("specimen", "e6", "notes"),
+    );
+    expect(result.current.error).toBeNull();
+    await tap(result.current, measure(2), scope);
+    expect(result.current.error).toBeNull();
+    expect(server.keys[3]).not.toBe(server.keys[0]);
+    expect(server.applied).toEqual([
+      "POST /specimens/e6/measurements",
+      "PUT /specimens/e6/notes",
+      "POST /specimens/e6/measurements",
+    ]);
+  });
+
+  it("US-QS-03 another refusal of the same action frees its conflicting key: the next edited write gets a key of its own", async () => {
+    const server = keyServer(1);
+    const refusing = vi.fn<typeof fetch>(
+      async () =>
+        new Response(JSON.stringify({ error: { code: "input.invalid", text: "x" } }), {
+          status: 400,
+        }),
+    );
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const scope = entityKey("specimen", "e7", "measure");
+    const measure = (value: number) =>
+      send(server.fetchFn, "POST", "/specimens/e7/measurements", { value });
+    await tap(result.current, measure(1), scope);
+    await tap(result.current, measure(2), scope);
+    expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    await tap(
+      result.current,
+      send(refusing, "POST", "/specimens/e7/measurements", { value: 2 }),
+      scope,
+    );
+    expect(result.current.error?.code).toBe("input.invalid");
+    await tap(result.current, measure(2), scope);
+    expect(result.current.error).toBeNull();
+    expect(server.keys[2]).not.toBe(server.keys[0]);
+    expect(server.applied).toEqual([
+      "POST /specimens/e7/measurements",
+      "POST /specimens/e7/measurements",
+    ]);
+  });
+});
+
+/**
+ * The source of the web app (`src`), read for the check of the key scopes below. The suite runs from the package
+ * directory (`npm run test` in `app/packages/web`); the jsdom environment gives no file URL to resolve from.
+ */
+const SRC = join(process.cwd(), "src");
+
+function sourceFiles(dir: string): string[] {
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- the web package's own src folder, read by this check only
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? sourceFiles(join(dir, e.name)) : [join(dir, e.name)],
+  );
+}
+
+/** The text of each `entityKey(` and `accountKey(` call, up to its closing parenthesis. */
+function keyCalls(text: string): string[] {
+  return [...text.matchAll(/\b(?:entityKey|accountKey)\(/g)].map((m) => {
+    const start = m.index ?? 0;
+    let depth = 1;
+    let i = start + m[0].length;
+    for (; i < text.length && depth > 0; i += 1) {
+      if (text[i] === "(") depth += 1;
+      else if (text[i] === ")") depth -= 1;
+    }
+    return text.slice(start, i);
+  });
+}
+
+describe("US-QS-03 · the action of a repeat-guard key names the operation, never the body", () => {
+  const files = sourceFiles(SRC).filter(
+    (f) => /\.tsx?$/.test(f) && !/\.(test|stories)\.tsx?$/.test(f) && !f.endsWith(".fixtures.tsx"),
+  );
+
+  it("US-QS-03 no entityKey or accountKey call takes JSON.stringify of a body: the body is not part of the key", () => {
+    expect(existsSync(join(SRC, "shared/data/write-action/repeat-key.ts"))).toBe(true);
+    const hits: string[] = [];
+    let calls = 0;
+    for (const file of files)
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- a file found under the same src folder
+      for (const call of keyCalls(readFileSync(file, "utf8"))) {
+        calls += 1;
+        if (/JSON\.stringify/.test(call)) hits.push(`${relative(SRC, file)}: ${call.slice(0, 90)}`);
+      }
+    expect(calls).toBeGreaterThan(80);
+    expect(hits).toEqual([]);
+  });
+
+  it("US-QS-03 the check flags a body in a key and passes a key of the operation", () => {
+    const body = (text: string) => keyCalls(text).some((c) => /JSON\.stringify/.test(c));
+    expect(body("accountKey(`create:${JSON.stringify(input)}`)")).toBe(true);
+    expect(body('entityKey("lamp", lamp.id, `data:${JSON.stringify(\n  data,\n)}`)')).toBe(true);
+    expect(body('accountKey("first-plant:create")')).toBe(false);
+    expect(body('entityKey("specimen", id, `undo:${ids.join(",")}`)')).toBe(false);
   });
 });

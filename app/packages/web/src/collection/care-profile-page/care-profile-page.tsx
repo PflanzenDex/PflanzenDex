@@ -71,7 +71,8 @@ export function CareProfileSection(props: {
     void write.run(
       (t, opts) => saveCareProfile(api, t, { speciesId, changes }, opts),
       success,
-      entityKey("species", speciesId, `care-profile:${JSON.stringify(changes)}`),
+      // Set-state on the care profile form (a whole form): the operation only, the changes are the body (US-QS-03).
+      entityKey("species", speciesId, "care-profile"),
     );
   return (
     <div className="min-w-0">

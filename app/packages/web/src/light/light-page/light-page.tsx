@@ -67,7 +67,7 @@ function buildActions(
   ) => {
     const t = await token();
     if (!t) return SIGN_IN;
-    // The key belongs to the write's target and action (US-QS-03): the zone or location and the body that is sent.
+    // The key belongs to the write's target and operation (US-QS-03); the body is never part of it.
     const r = await keys.run((key) => createWrite(api, t, { key })(method, path, body), scope);
     if (!r.ok) return r.error;
     setLastError(undefined);
@@ -79,12 +79,14 @@ function buildActions(
     zoneCreate: (e) =>
       write("POST", "/light-zones", "Lichtzone angelegt.", {
         body: e,
-        scope: accountKey(`zone:create:${JSON.stringify(e)}`),
+        // A create: the operation only, the zone's fields are the body (US-QS-03).
+        scope: accountKey("zone:create"),
       }),
     zoneUpdate: (id, e) =>
       write("PUT", `/light-zones/${id}`, "Lichtzone gespeichert.", {
         body: e,
-        scope: entityKey("zone", id, `update:${JSON.stringify(e)}`),
+        // Set-state on the zone form (a whole form): the operation only (US-QS-03).
+        scope: entityKey("zone", id, "update"),
       }),
     // The zone leaves the list: its result stays a toast until the in-place row of FX-09 (SG-FEED-03).
     zoneDelete: (id) =>
@@ -103,12 +105,14 @@ function buildActions(
     locationCreate: (e) =>
       write("POST", "/locations", "Standort angelegt.", {
         body: e,
-        scope: accountKey(`location:create:${JSON.stringify(e)}`),
+        // A create: the operation only, the location's fields are the body (US-QS-03).
+        scope: accountKey("location:create"),
       }),
     locationUpdate: (id, e) =>
       write("PUT", `/locations/${id}`, "Standort gespeichert.", {
         body: e,
-        scope: entityKey("location", id, `update:${JSON.stringify(e)}`),
+        // Set-state on the location form (a whole form): the operation only (US-QS-03).
+        scope: entityKey("location", id, "update"),
       }),
     zoneDerive: (a) => derive(api, token, a),
   };
