@@ -13,7 +13,7 @@ import { Button } from "@/shared/ui/button/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../../swap.de.json";
 import { cardTitle as title } from "../deck-state";
-import { largeText } from "@/shared/patterns/display/card/card-picture/large-text";
+import { decisionRowClass } from "./decision-row";
 const t = texts(table);
 export type Answer = "no" | "later" | "yes";
 const LATER = MATCH_ANSWERS[1];
@@ -23,9 +23,7 @@ export function Actions(props: { card: Card; onAnswer: (a: Answer) => void; busy
   const { card: c, busy } = props;
   const who = SIGN(c);
   return (
-    <div
-      className={`z-10 border-t border-border bg-background py-2 ${largeText() ? "tall-window:mb-20 tall-window:md:mb-0" : "tall-window:sticky tall-window:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] tall-window:md:bottom-0"}`}
-    >
+    <div className={decisionRowClass()}>
       <div className="mx-auto flex w-full max-w-md flex-wrap gap-2">
         <NetworkSlot visible={false}>
           <Button
