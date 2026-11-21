@@ -32,22 +32,21 @@ const TOLERANCE_PX = 1;
 const CAP_WIDTH = 1921;
 const CENTER_PX = 2;
 
-export interface Region {
-  scrollHeight: number;
-  clientHeight: number;
-  el: string;
-}
-
-export interface RegionX {
-  scrollWidth: number;
-  clientWidth: number;
-  el: string;
-}
+export type Region = { scrollHeight: number; clientHeight: number; el: string };
+export type RegionX = { scrollWidth: number; clientWidth: number; el: string };
 
 /** A box in the window; `limit` is where the first screen ends there: the window height, a fixed or sticky bar over the bottom edge that does not contain it, or the region that clips it (`bar` names that one). */
 export type Spot = { top: number; bottom: number; limit: number; el: string; bar: string };
-/** The first screen of a phone (fit.first.ts): the title, the first rows (at most two; none without a list), the first primary action (none without one) and whether the path is Heute (`/today`, layers of it too). */
-export type First = { title: Spot | null; rows: Spot[]; action: Spot | null; heute: boolean };
+/** A layer open at a phone size: how far its box reaches (its bottom edge, or the window height plus what sticks out above it) and its largest scroll region. */
+export type Layer = { reach: number; el: string; region: Region | null };
+/** The first screen of a phone (fit.first.ts): the title, the first rows (at most two; none without a list), the first primary action (none without one), whether the path is Heute (`/today`, layers of it too) and the open layer. */
+export type First = {
+  title: Spot | null;
+  rows: Spot[];
+  action: Spot | null;
+  heute: boolean;
+  layer: Layer | null;
+};
 
 /** What the page reports about itself at one size (measured in the browser, see fit.ts). */
 export interface Raw {
@@ -134,39 +133,38 @@ function sideways(
   return { pageX, innerX, failures };
 }
 
-const starts = (s: Spot) => s.top >= -TOLERANCE_PX && s.top < s.limit;
-const whole = (s: Spot) => starts(s) && s.bottom <= s.limit + TOLERANCE_PX;
+const cut = (s: Spot) => s.top < -TOLERANCE_PX || s.bottom > s.limit + TOLERANCE_PX;
 const where = (s: Spot) =>
   `${s.el} spans ${Math.round(s.top)}..${Math.round(s.bottom)} px, the first screen ends at ${Math.round(s.limit)} px${s.bar ? ` under ${s.bar}` : ""}`;
 
 // The first screen of a phone: the title, the first two rows of the list and the primary action stand fully in the window at
-// load, not under a fixed bar. At 200 % text content scrolls in its region (DS-61): the title stands whole, the first row only
-// starts in the first screen (it may be taller), the action is not looked at. No list or no action skips it; no title fails.
+// load, not under a fixed bar. At 200 % text content scrolls in its region (DS-61): only the title is checked. No list or no
+// action skips it; no title fails.
 function firstScreen(first: First | null | undefined, size: Size): string[] {
   if (!first) return ["first screen not measured"];
-  const zoomed = size.kind === "text200";
   const failures: string[] = [];
   if (!first.title) failures.push("first screen: no page title (heading of the layer, or h1)");
-  else if (!whole(first.title)) failures.push(`first screen: title is cut: ${where(first.title)}`);
-  const rows = first.rows.slice(0, zoomed ? 1 : 2);
-  const row = rows.find((r) => !(zoomed ? starts(r) : whole(r)));
-  const what = zoomed ? "first row starts below it" : `fewer than ${rows.length} rows are whole`;
-  if (row) failures.push(`first screen: ${what}: ${where(row)}`);
-  if (!zoomed && first.action && !whole(first.action))
+  else if (cut(first.title)) failures.push(`first screen: title is cut: ${where(first.title)}`);
+  if (size.kind === "text200") return failures;
+  const row = first.rows.slice(0, 2).find(cut);
+  if (row) failures.push(`first screen: fewer than 2 rows are whole: ${where(row)}`);
+  if (first.action && cut(first.action))
     failures.push(`first screen: primary action is cut: ${where(first.action)}`);
   return failures;
 }
 
 function vertical(raw: Raw, size: Size): string[] {
   const failures: string[] = [];
-  if (raw.scrollHeight > raw.innerHeight + TOLERANCE_PX)
+  const layer = raw.first?.layer; // an open layer is judged by its box and regions, not by the page behind it (issue 1854)
+  const high = layer ? layer.reach : raw.scrollHeight;
+  if (high > raw.innerHeight + TOLERANCE_PX)
     failures.push(
-      `page ${(raw.scrollHeight / raw.innerHeight).toFixed(2)} (${raw.scrollHeight} px of ${raw.innerHeight} px), lowest: ${raw.pageEl}`,
+      `${layer ? "layer" : "page"} ${fmt(high / raw.innerHeight)} (${high} px of ${raw.innerHeight} px), lowest: ${layer ? layer.el : raw.pageEl}`,
     );
-  const r = raw.region;
+  const r = layer ? layer.region : raw.region;
   if (r && r.scrollHeight > r.clientHeight + TOLERANCE_PX && size.kind === "fit")
     failures.push(
-      `inner ${(r.scrollHeight / r.clientHeight).toFixed(2)} (${r.scrollHeight} px of ${r.clientHeight} px): ${r.el}`,
+      `inner ${fmt(r.scrollHeight / r.clientHeight)} (${r.scrollHeight} px of ${r.clientHeight} px): ${r.el}`,
     );
   return failures;
 }

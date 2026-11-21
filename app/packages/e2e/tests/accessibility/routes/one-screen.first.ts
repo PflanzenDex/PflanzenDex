@@ -25,6 +25,7 @@ export const goodFirst = (): First => ({
   rows: [spot(60, 120, "li.row-1"), spot(130, 190, "li.row-2")],
   action: spot(560, 604, "button.bg-primary Speichern"),
   heute: false,
+  layer: null,
 });
 
 export type Raws = (over: Partial<Raw>) => Raw;

@@ -30,7 +30,7 @@ export function reportMarkdown(results: readonly Result[], baseline: Baseline): 
   const lines = [
     "## One screen (US-QS-15, QG-U8)",
     "",
-    "Cells show page/inner (height of the content divided by the height of the window or region) and, after the arrow, page/inner sideways (width likewise); all must be at most 1.00 (1 px tolerance); below 768 px the heights are shown only and the first screen is judged instead (title, first rows and primary action fully visible, not under a fixed bar).",
+    "Cells show page/inner (height of the content divided by the height of the window or region) and, after the arrow, page/inner sideways (width likewise); all must be at most 1.00 (1 px tolerance); below 768 px the heights of a view with a list and of Heute are shown only, and the first screen of every view is judged (title, first rows and primary action whole and not under a fixed bar; at 200 % text only the title).",
     "",
     "| size | measured | failing | listed in the baseline |",
     "| --- | --- | --- | --- |",
