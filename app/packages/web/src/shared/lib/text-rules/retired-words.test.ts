@@ -49,6 +49,11 @@ describe("US-QS-24 one word per concept", () => {
     expect(RETIRED_WORDS.some((w) => w.pattern.test("Lampe 3 hat Platz"))).toBe(true);
     expect(RETIRED_WORDS.some((w) => w.pattern.test("Die Lampe leuchtet nicht"))).toBe(false);
     expect(RETIRED_WORDS.some((w) => w.pattern.test("Zurück zur Sammlung"))).toBe(false);
+    expect(RETIRED_WORDS.some((w) => w.pattern.test("Speichern"))).toBe(true);
+    expect(RETIRED_WORDS.some((w) => w.pattern.test("Gespeichert: Bild"))).toBe(true);
+    expect(RETIRED_WORDS.some((w) => w.pattern.test("Sichern"))).toBe(false);
+    expect(RETIRED_WORDS.some((w) => w.pattern.test("Später speichert nichts"))).toBe(false);
+    expect(RETIRED_WORDS.some((w) => w.pattern.test("Es wurde nichts gespeichert"))).toBe(false);
   });
 
   it("US-QS-24 a text with an omission uses the ellipsis character, not three dots", () => {

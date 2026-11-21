@@ -66,7 +66,7 @@ describe("NFR-12 · DS-08 a first open says that the window is loading", () => {
     const release = holdChunk();
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-        <button>Speichern</button>
+        <button>Sichern</button>
       </ResponsiveModal>,
     );
     const trigger = screen.getByRole("button", { name: "Öffnen" });
@@ -88,7 +88,7 @@ describe("NFR-12 · DS-08 a first open says that the window is loading", () => {
     const release = holdChunk();
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-        <button>Speichern</button>
+        <button>Sichern</button>
       </ResponsiveModal>,
     );
     const trigger = screen.getByRole("button", { name: "Öffnen" });
@@ -107,7 +107,7 @@ describe("NFR-12 · DS-08 a first open says that the window is loading", () => {
     const release = holdChunk();
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-        <button>Speichern</button>
+        <button>Sichern</button>
       </ResponsiveModal>,
     );
     const trigger = screen.getByRole("button", { name: "Öffnen" });
@@ -128,7 +128,7 @@ describe("NFR-12 · DS-08 a first open says that the window is loading", () => {
     const release = holdChunk();
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-        <button>Speichern</button>
+        <button>Sichern</button>
       </ResponsiveModal>,
     );
     const trigger = screen.getByRole("button", { name: "Öffnen" });
@@ -215,7 +215,7 @@ describe("US-QS-07 · DS-08 the loading status waits 300 ms, so a window that op
       setViewportWidth(width);
       render(
         <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-          <button>Speichern</button>
+          <button>Sichern</button>
         </ResponsiveModal>,
       );
       const watch = watchStatus();
@@ -236,7 +236,7 @@ describe("US-QS-07 · DS-08 the loading status waits 300 ms, so a window that op
       setViewportWidth(width);
       render(
         <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-          <button>Speichern</button>
+          <button>Sichern</button>
         </ResponsiveModal>,
       );
       const trigger = screen.getByRole("button", { name: "Öffnen" });
@@ -264,7 +264,7 @@ describe("US-QS-07 · DS-08 the loading status waits 300 ms, so a window that op
       const release = holdChunk();
       render(
         <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-          <button>Speichern</button>
+          <button>Sichern</button>
         </ResponsiveModal>,
       );
       await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
@@ -289,7 +289,7 @@ describe("US-QS-07 · DS-08 the loading status waits 300 ms, so a window that op
       const release = holdChunk();
       render(
         <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-          <button>Speichern</button>
+          <button>Sichern</button>
         </ResponsiveModal>,
       );
       const trigger = screen.getByRole("button", { name: "Öffnen" });
@@ -313,7 +313,7 @@ describe("US-QS-07 · DS-08 the loading status waits 300 ms, so a window that op
     const release = holdChunk();
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-        <button>Speichern</button>
+        <button>Sichern</button>
       </ResponsiveModal>,
     );
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
@@ -410,7 +410,7 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     const errors = captureExpectedErrors("Failed to fetch dynamically imported module");
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-        <button>Speichern</button>
+        <button>Sichern</button>
       </ResponsiveModal>,
     );
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
@@ -435,7 +435,7 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     const errors = captureExpectedErrors("Failed to fetch dynamically imported module");
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-        <button>Speichern</button>
+        <button>Sichern</button>
       </ResponsiveModal>,
     );
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
@@ -460,7 +460,7 @@ describe("US-QS-07 · DS-08 · P-10 a failed chunk of a window offers retry and 
     const errors = captureExpectedErrors("Failed to fetch dynamically imported module");
     render(
       <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-        <button>Speichern</button>
+        <button>Sichern</button>
       </ResponsiveModal>,
     );
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
@@ -493,7 +493,7 @@ describe("US-QS-07 · DS-40 Escape stops a window that is still loading", () => 
       const release = holdChunk();
       render(
         <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-          <button>Speichern</button>
+          <button>Sichern</button>
         </ResponsiveModal>,
       );
       const trigger = screen.getByRole("button", { name: "Öffnen" });
@@ -521,7 +521,7 @@ describe("US-QS-07 · DS-40 Escape stops a window that is still loading", () => 
       const release = holdChunk();
       render(
         <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-          <button>Speichern</button>
+          <button>Sichern</button>
         </ResponsiveModal>,
       );
       const trigger = screen.getByRole("button", { name: "Öffnen" });
@@ -549,7 +549,7 @@ describe("US-QS-07 · DS-40 Escape stops a window that is still loading", () => 
       const release = holdChunk();
       render(
         <ResponsiveModal title="Pflanze bearbeiten" trigger={<button>Öffnen</button>}>
-          <button>Speichern</button>
+          <button>Sichern</button>
         </ResponsiveModal>,
       );
       const trigger = screen.getByRole("button", { name: "Öffnen" });
@@ -576,7 +576,7 @@ describe("US-QS-07 · DS-40 Escape stops a window that is still loading", () => 
       const onOpenChange = vi.fn();
       render(
         <ResponsiveModal title="Pflanze bearbeiten" open onOpenChange={onOpenChange}>
-          <button>Speichern</button>
+          <button>Sichern</button>
         </ResponsiveModal>,
       );
       await screen.findByRole("dialog", { name: "Pflanze bearbeiten" });

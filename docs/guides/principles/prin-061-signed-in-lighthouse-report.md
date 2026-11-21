@@ -15,7 +15,7 @@ Lighthouse scores and Web Vitals of "Heute" and "Sammlung" for a seeded demo use
 
 ## Checked by
 
-`tools/lighthouse/lighthouse-signed.sh`, `tools/lighthouse/lighthouse-signed.mjs`, `tools/lighthouse/lighthouse-signed-run.mjs`.
+`tools/lighthouse/lighthouse-signed.sh`, `tools/lighthouse/lighthouse-signed.mjs`, `tools/lighthouse/preview/lighthouse-signed-run.mjs`.
 
 ## Evidence
 

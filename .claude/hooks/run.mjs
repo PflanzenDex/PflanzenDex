@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Entry point for all Claude Code hooks of this repo (US-QG-07, US-DEV-02).
-// Usage from .claude/settings.json: node .claude/hooks/run.mjs <guard-edit|guard-bash|guard-read|after-edit|after-bash|stop|subagent-stop>
+// Usage from .claude/settings.json: node .claude/hooks/run.mjs <guard-edit|guard-bash|guard-read|after-edit|after-bash|stop|subagent-stop|subagent-push>
 // A hook must never hang or break a session: every step has a time limit and unexpected errors end with exit 0.
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -40,9 +40,11 @@ import {
   hasGitFile,
   subagentStop,
 } from "./subagent-gates.mjs";
+import { subagentPush } from "./subagent-push.mjs";
 
 const event = process.argv[2];
-// A request that cannot be read is denied by guard-read (US-QG-07, issue 2354); every other event fails here as it always did.
+// A request that cannot be read is denied by guard-read (US-QG-07, issue 2354) and says nothing to subagent-push (issue 2371);
+// every other event fails here as it always did.
 let input = {};
 let unreadable = false;
 try {
@@ -50,7 +52,7 @@ try {
   if (input === null || typeof input !== "object")
     throw new SyntaxError("the request is not an object");
 } catch (error) {
-  if (event !== "guard-read") throw error;
+  if (event !== "guard-read" && event !== "subagent-push") throw error;
   unreadable = true;
 }
 const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
@@ -489,6 +491,39 @@ const handlers = {
       now: () => new Date().toISOString(),
     });
     if (out) print(out);
+  },
+  // The push check of an implementer or a ticket lead (US-QG-07, issue 2371): read-only git calls, never a block. A check that
+  // cannot run says nothing, so a hook error never reaches the stop.
+  "subagent-push"() {
+    try {
+      const repo = repoAt(root);
+      const out = subagentPush(input, {
+        worktreesDir: repo && path.join(path.dirname(repo.common), ".worktrees"),
+        isWorktree: hasGitFile,
+        readFile: readRecord,
+        branchOf: (worktree) => {
+          const ref = run("git", ["symbolic-ref", "-q", "HEAD"], {
+            cwd: worktree,
+            timeout: 3000,
+          }).trim();
+          return ref.startsWith("refs/heads/") ? ref.slice("refs/heads/".length) : null;
+        },
+        remoteHead: (worktree, branch) =>
+          run("git", ["rev-parse", "--verify", "-q", `refs/remotes/origin/${branch}`], {
+            cwd: worktree,
+            timeout: 3000,
+          }).trim(),
+        reflogText: (worktree, branch) =>
+          run(
+            "git",
+            ["log", "-g", "--date=unix", "--format=%H %gD", `refs/remotes/origin/${branch}`, "--"],
+            { cwd: worktree, timeout: 3000 },
+          ),
+      });
+      if (out) print(out);
+    } catch {
+      // Silent by design: an error in this check must never break a stop (US-QG-07).
+    }
   },
 };
 

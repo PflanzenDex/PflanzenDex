@@ -760,9 +760,9 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     await user.click(within(form).getByRole("button", { name: "Termin" }));
     await user.type(within(form).getByLabelText(/Grund/), "Läuse");
     // The save button sits in the footer outside the scrolling list and submits the form by its id (sticky footer).
-    const save = within(form).getByRole("button", { name: "Behandlung speichern" });
+    const save = within(form).getByRole("button", { name: "Behandlung sichern" });
     expect(document.getElementById(save.getAttribute("form") ?? "")?.tagName).toBe("FORM");
-    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Behandlung sichern" }));
     await waitFor(() => expect(posts).toContain("/treatments"));
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Behandlung planen" })).toBeNull(),
@@ -777,7 +777,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     show("/today?sheet=treatments");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
-    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Behandlung sichern" }));
     expect(await within(form).findByText("Wähle mindestens eine Pflanze.")).toBeTruthy();
     expect(
       within(form)
@@ -786,7 +786,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     ).toBe("true");
     // A plant is chosen, the reason is missing: the view moves to the reason and names it.
     await user.click(within(form).getByRole("checkbox", { name: /^Aloe/ }));
-    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Behandlung sichern" }));
     expect(
       await within(form).findByText("Nenne einen Grund, zum Beispiel Wollläuse."),
     ).toBeTruthy();
@@ -989,7 +989,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
     await user.click(within(form).getByRole("button", { name: "Termin" }));
     await user.type(within(form).getByLabelText(/Grund/), "Läuse");
-    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Behandlung sichern" }));
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Behandlung planen" })).toBeNull(),
     );
@@ -1015,7 +1015,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
     await user.click(within(form).getByRole("button", { name: "Termin" }));
     await user.type(within(form).getByLabelText(/Grund/), "Läuse");
-    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Behandlung sichern" }));
     // The card of Heute names the planned treatment as due today, without a reload.
     expect(await screen.findByText("Heute fällig")).toBeTruthy();
     expect(screen.queryByText("Heute steht nichts an")).toBeNull();
@@ -1054,7 +1054,7 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
     await user.click(await within(form).findByRole("checkbox", { name: /^Aloe/ }));
     await user.click(within(form).getByRole("button", { name: "Termin" }));
     await user.type(within(form).getByLabelText(/Grund/), "Läuse");
-    await user.click(within(form).getByRole("button", { name: "Behandlung speichern" }));
+    await user.click(within(form).getByRole("button", { name: "Behandlung sichern" }));
     await waitFor(() => expect(held).toBe(true));
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Behandlung planen" })).toBeNull(),

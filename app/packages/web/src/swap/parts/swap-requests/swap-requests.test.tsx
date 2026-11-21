@@ -223,7 +223,7 @@ describe("US-SOZ-11 confirming the handover", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Übergabe bestätigen: Echte Aloe" }),
     );
-    expect(await screen.findByText(/Deine Bestätigung ist gespeichert/)).toBeTruthy();
+    expect(await screen.findByText(/Deine Bestätigung ist gesichert/)).toBeTruthy();
     expect(posts[0]?.path).toBe("/swaps/s1/handover");
     expect(posts[0]?.body).toMatchObject({ timeZone: expect.any(String) });
     expect(posts[0]?.body["marker"]).toBeUndefined();
@@ -234,7 +234,7 @@ describe("US-SOZ-11 confirming the handover", () => {
     show();
     const item = (await screen.findAllByRole("listitem"))[0] as HTMLElement;
     expect(item.textContent).toContain(
-      "Deine Bestätigung ist gespeichert. Sobald Ben auch bestätigt hat, wird übergeben.",
+      "Deine Bestätigung ist gesichert. Sobald Ben auch bestätigt hat, wird übergeben.",
     );
     expect(screen.queryByRole("button", { name: /Übergabe bestätigen/ })).toBeNull();
   });

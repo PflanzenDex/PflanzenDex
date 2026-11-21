@@ -49,7 +49,7 @@ function zoneWrites(api: string, write: Write, toast: ToastApi) {
         after: status,
         send: (value) => (t) => setEquipmentStatus(api, t, { id: lamp.id, status: value }),
         said: (value) => `Zustand von „${lamp.name}“ ist jetzt „${STATUS_LABELS[value]}“.`,
-        saved: `Zustand von „${lamp.name}“ gespeichert.`,
+        saved: `Zustand von „${lamp.name}“ gesichert.`,
         undone: `Zustand von „${lamp.name}“ zurückgesetzt.`,
       }),
   };
@@ -65,18 +65,18 @@ function lightWrites(api: string, write: Write): LampLightActions {
         const r = await measureLamp(api, t, { id: lamp.id, input });
         saved = r.ok;
         return r;
-      }, `Messung für „${lamp.name}“ gespeichert.`);
+      }, `Messung für „${lamp.name}“ gesichert.`);
       return saved;
     },
     onData: (lamp, data) =>
       void write.run(
         (t) => describeLamp(api, t, { id: lamp.id, ...data }),
-        `Herstellerangabe für „${lamp.name}“ gespeichert.`,
+        `Herstellerangabe für „${lamp.name}“ gesichert.`,
       ),
     onLimit: (percent) =>
       void write.run(
         (t) => setDeviationLimit(api, t, percent),
-        percent === null ? "Die Prüfung ist aus." : `Grenze von ${percent} % gespeichert.`,
+        percent === null ? "Die Prüfung ist aus." : `Grenze von ${percent} % gesichert.`,
       ),
   };
 }
@@ -88,7 +88,7 @@ function maintenanceWrites(api: string, write: Write): MaintenanceActions {
     onSave: (item, input) =>
       void write.run(
         (t) => setMaintenance(api, t, { id: item.id, input }),
-        `Betriebsdaten von „${item.name}“ gespeichert.`,
+        `Betriebsdaten von „${item.name}“ gesichert.`,
       ),
     onChecked: (item, checkedOn) =>
       void write.run(
@@ -109,7 +109,7 @@ function supplyWrites(api: string, write: Write, toast: ToastApi): SupplyActions
         after: supply,
         send: (value) => (t) => setSupply(api, t, { id: item.id, supply: value }),
         said: (value) => `Vorrat von „${item.name}“ ist jetzt „${SUPPLY_LABELS[value]}“.`,
-        saved: `Vorrat von „${item.name}“ gespeichert.`,
+        saved: `Vorrat von „${item.name}“ gesichert.`,
         undone: `Vorrat von „${item.name}“ zurückgesetzt.`,
       });
     },
@@ -130,7 +130,7 @@ function sensorWrites(api: string, write: Write): SensorActions {
     onTarget: (sensor, target) =>
       void write.run(
         (t) => setSensorTarget(api, t, { id: sensor.id, ...target }),
-        `Zuordnung von „${sensor.name}“ gespeichert.`,
+        `Zuordnung von „${sensor.name}“ gesichert.`,
       ),
   };
 }

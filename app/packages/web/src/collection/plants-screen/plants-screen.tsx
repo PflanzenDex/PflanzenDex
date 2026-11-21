@@ -22,7 +22,7 @@ import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PlantTile, PlantTileSkeleton } from "./rows/plant-tile/plant-tile";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { PlantLayers } from "./plant-layers/plant-layers";
-import { ARCHIVE_LAYER, type LayerProps } from "./plant-layers/layer-ids";
+import { ARCHIVE_LAYER, plantHintOccasionsOf, type LayerProps } from "./plant-layers/layer-ids";
 import { ZoneInsightRow } from "./rows/zone-insight/zone-insight";
 import table from "./plant-layers/plant-layers.de.json";
 
@@ -194,7 +194,7 @@ export function PlantsScreen(props: Props) {
         <Row {...props} />
         {body}
       </div>
-      <PlantLayers {...props} />
+      <PlantLayers {...props} hintOccasions={plantHintOccasionsOf(props.summary)} />
     </section>
   );
 }

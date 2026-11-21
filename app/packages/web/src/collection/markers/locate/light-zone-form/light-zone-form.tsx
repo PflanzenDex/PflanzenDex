@@ -157,7 +157,7 @@ export function LightZoneForm(props: {
             </ErrorNotice>
           )}
           <FormButtons
-            submit="Lichtzone speichern"
+            submit="Lichtzone sichern"
             cancel="Abbrechen"
             pending={form.formState.isSubmitting}
             onCancel={() => setOpen(null)}

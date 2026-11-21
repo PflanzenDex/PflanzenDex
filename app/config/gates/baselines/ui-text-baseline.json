@@ -122,10 +122,6 @@
       "count": 5
     },
     {
-      "file": "packages/web/src/app/flows/onboarding/today-intro/hint/hint-note/hint-note.tsx",
-      "count": 3
-    },
-    {
       "file": "packages/web/src/app/flows/unlock/unlock-page/unlock-page.tsx",
       "count": 10
     },

@@ -58,7 +58,7 @@ export function DataForm(props: {
         </p>
       ) : null}
       <Button type="submit" size="touch" variant="secondary" disabled={props.busy}>
-        Herstellerangabe speichern
+        Herstellerangabe sichern
       </Button>
     </FormRoot>
   );

@@ -14,6 +14,12 @@ export const RETIRED_WORDS: ReadonlyArray<{ concept: string; use: string; patter
   { concept: "Equipment area", use: "Geräte", pattern: /\bEquipment\b|\bAusrüstung\b/ },
   { concept: "AI connection", use: "Anbindung (MCP)", pattern: /\bConnector\b/ },
   { concept: "Species profile", use: "Artprofil", pattern: /\bArtenprofil\b/ },
+  // Capitalised only: the lower-case verb stays in storage prose ("speichern wir", "nichts gespeichert").
+  {
+    concept: "Confirming action",
+    use: "Sichern",
+    pattern: /\b(?:Speichern|Speichert|Gespeichert)\b/,
+  },
   { concept: "Light zone", use: "Zone <n> (Zone 1 · Stecklingslicht)", pattern: /\bLampe [1-9]\b/ },
 ];
 

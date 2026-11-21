@@ -211,6 +211,63 @@ describe("US-QS-32 GroupedRow (SG-LIST-04, SG-TYPE-02, SG-COLOR-02)", () => {
   });
 });
 
+describe("US-QS-32 GroupedRow: a chevron on every opener, and no way to suppress it (issue 2355, SG-TOUCH-02)", () => {
+  const chevron = (el: Element | null) => el?.querySelector("svg.lucide-chevron-right") ?? null;
+  const inList = (row: React.ReactNode) => render(wrap(<GroupedList>{row}</GroupedList>));
+
+  it("US-QS-32 · issue 2355 a link row shows the chevron, decorative", () => {
+    inList(<GroupedRow to="/a" title="Einstellungen" />);
+    const icon = chevron(screen.getByRole("link", { name: "Einstellungen" }));
+    expect(icon).not.toBeNull();
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("US-QS-32 · issue 2355 a button row shows the chevron, with and without a layer to open", () => {
+    inList(
+      <>
+        <GroupedRow onClick={() => undefined} haspopup="dialog" title="Zonen" />
+        <GroupedRow onClick={() => undefined} title="Neu" />
+      </>,
+    );
+    expect(chevron(screen.getByRole("button", { name: "Zonen" }))).not.toBeNull();
+    expect(chevron(screen.getByRole("button", { name: "Neu" }))).not.toBeNull();
+  });
+
+  it("US-QS-32 · issue 2355 a destructive row shows none", () => {
+    inList(<GroupedRow tone="destructive" onClick={() => undefined} title="Abmelden …" />);
+    expect(chevron(screen.getByRole("button", { name: "Abmelden …" }))).toBeNull();
+  });
+
+  it("US-QS-32 · issue 2355 an object row with a trailing element shows none, one without shows it", () => {
+    inList(
+      <>
+        <GroupedRow variant="object" to="/a" title="Clip" trailing={<span>Weicht ab</span>} />
+        <GroupedRow variant="object" to="/b" title="Ficus" />
+      </>,
+    );
+    expect(chevron(screen.getByRole("link", { name: "Clip Weicht ab" }))).toBeNull();
+    expect(chevron(screen.getByRole("link", { name: "Ficus" }))).not.toBeNull();
+  });
+
+  it("US-QS-32 · issue 2355 a list row keeps its value and shows the chevron after it", () => {
+    inList(<GroupedRow to="/a" title="Einstellungen" trailing="Lena" />);
+    const link = screen.getByRole("link", { name: /Einstellungen/ });
+    expect(link.textContent).toContain("Lena");
+    expect(link.lastElementChild).toBe(chevron(link));
+  });
+
+  it("US-QS-32 · issue 2355 a plain row without a link or a button shows none", () => {
+    inList(<GroupedRow title="Was die App kann" meta="unbekannt" />);
+    expect(chevron(screen.getByRole("listitem"))).toBeNull();
+  });
+
+  it("US-QS-32 · issue 2355 a caller cannot suppress the chevron of an opener: the prop is gone", () => {
+    const suppress = { chevron: false } as object;
+    inList(<GroupedRow to="/a" title="Clip" {...suppress} />);
+    expect(chevron(screen.getByRole("link", { name: "Clip" }))).not.toBeNull();
+  });
+});
+
 const FIT_ROW = 100;
 let frameHeight = 500;
 

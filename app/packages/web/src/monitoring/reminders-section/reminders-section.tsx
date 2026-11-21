@@ -45,7 +45,7 @@ export function RemindersSection(props: { api: string; token: Token }) {
         value="Uhrzeit, Ruhezeit und Messung"
         primaryAction={
           <Button type="submit" form={TIMES_FORM} className="w-full">
-            Erinnerungen speichern
+            Erinnerungen sichern
           </Button>
         }
       >
@@ -57,7 +57,7 @@ export function RemindersSection(props: { api: string; token: Token }) {
         value="Je Anlass bis zu einem Datum"
         primaryAction={
           <Button type="submit" form={PAUSES_FORM} className="w-full">
-            Pausen speichern
+            Pausen sichern
           </Button>
         }
       >

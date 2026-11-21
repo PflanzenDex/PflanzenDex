@@ -132,7 +132,7 @@ export function MeasureForm(props: MeasureFormProps) {
         </p>
       ) : null}
       <Button type="submit" size="touch" disabled={props.busy}>
-        Messung speichern
+        Messung sichern
       </Button>
     </FormRoot>
   );

@@ -198,7 +198,7 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
     serve(() => json(404, {}));
     await open();
     await topic(/^Monatliche Kosten/);
-    const save = screen.getByRole("button", { name: "Kosten speichern" });
+    const save = screen.getByRole("button", { name: "Kosten sichern" });
     expect(save.closest("form")?.querySelector("h1, h2, h3")).toBeNull();
     expect(save.parentElement?.className).toContain("sticky");
   });
@@ -215,8 +215,8 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
     await userEvent.type(amount, "1.234,5");
     const month = screen.getByLabelText("Monat");
     await userEvent.selectOptions(month, "2026-09");
-    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
-    expect(await screen.findByText("Monatliche Kosten gespeichert.")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Kosten sichern" }));
+    expect(await screen.findByText("Monatliche Kosten gesichert.")).toBeTruthy();
     const writes = calls.filter((c) => c.method === "PUT");
     expect(writes.map((w) => [w.path, w.body])).toEqual([
       ["/operator/cost", { amountCents: 123450, currency: "EUR", month: "2026-09" }],
@@ -231,13 +231,13 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
     await open();
     await topic(/^Monatliche Kosten/);
     await userEvent.type(screen.getByLabelText("Betrag"), "12,345");
-    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Kosten sichern" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/zum Beispiel 12,50/);
     await userEvent.clear(screen.getByLabelText("Betrag"));
     await userEvent.type(screen.getByLabelText("Betrag"), "12,50");
     await userEvent.clear(screen.getByLabelText("Währung"));
     await userEvent.type(screen.getByLabelText("Währung"), "E1");
-    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Kosten sichern" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/drei Buchstaben/);
     expect(calls.filter((c) => c.method === "PUT")).toEqual([]);
   });
@@ -254,7 +254,7 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
     await open();
     await topic(/^Monatliche Kosten/);
     await userEvent.type(screen.getByLabelText("Betrag"), "10");
-    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Kosten sichern" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/Zukunft/);
   });
 
@@ -694,7 +694,7 @@ describe("US-ACC-05 · DS-52 to DS-49 states and primitives", () => {
     const user = userEvent.setup();
     const amount = screen.getByLabelText("Betrag");
     await user.type(amount, "12,345");
-    await user.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    await user.click(screen.getByRole("button", { name: "Kosten sichern" }));
     const alert = await screen.findByRole("alert");
     expect(amount.getAttribute("aria-invalid")).toBe("true");
     expect(amount.getAttribute("aria-describedby")).toContain(alert.id);
@@ -707,8 +707,8 @@ describe("US-QS-14 operator page keeps the focus while and after a save (SC 2.4.
   const cases = [
     {
       topic: /^Monatliche Kosten/,
-      button: "Kosten speichern",
-      done: "Monatliche Kosten gespeichert.",
+      button: "Kosten sichern",
+      done: "Monatliche Kosten gesichert.",
       prep: true,
     },
     {
@@ -951,8 +951,8 @@ describe("US-ACC-05 US-QS-32 the cost and codes layers ask before they discard t
       within(await askedQuestion()).getByRole("button", { name: "Weiter bearbeiten" }),
     );
     await noQuestion();
-    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
-    expect(await screen.findByText("Monatliche Kosten gespeichert.")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Kosten sichern" }));
+    expect(await screen.findByText("Monatliche Kosten gesichert.")).toBeTruthy();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog", costLayer)).toBeNull());
     expect(screen.queryByRole("dialog", question)).toBeNull();
@@ -969,7 +969,7 @@ describe("US-ACC-05 US-QS-32 the cost and codes layers ask before they discard t
     );
     await open();
     await typeAmount("10");
-    await userEvent.click(screen.getByRole("button", { name: "Kosten speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Kosten sichern" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/Zukunft/);
     await userEvent.keyboard("{Escape}");
     expect(await askedQuestion()).toBeTruthy();

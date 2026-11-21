@@ -142,7 +142,7 @@ describe("US-BES-17 a scanned pot label opens the plant with quick actions", () 
     expect(await screen.findByRole("heading", { name: "Messen" })).toBeTruthy();
     // The form waits for the measurement view (its skeleton shows until then).
     expect(await screen.findByLabelText(/Messwert/)).toBeTruthy();
-    expect(await screen.findByRole("button", { name: "Messung speichern" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Messung sichern" })).toBeTruthy();
   });
 
   it("US-BES-17 a foreign and an unknown label look exactly the same: the same not-found view, without the plant", async () => {

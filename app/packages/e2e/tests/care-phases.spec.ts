@@ -41,7 +41,7 @@ async function openCareProfile(page: Page, plant: string): Promise<void> {
 async function closeCareProfile(page: Page, species: string): Promise<void> {
   await page.getByRole("heading", { level: 2, name: "Pflegeprofil", exact: true }).focus();
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("button", { name: `Speichern: ${species}` })).toBeHidden();
+  await expect(page.getByRole("button", { name: `Sichern: ${species}` })).toBeHidden();
   if (await page.getByRole("tab", { name: "Überblick" }).isVisible()) {
     await page.keyboard.press("Escape");
     // The close commits late (the address changes in a transition): the next step waits until the layer is gone (issue 1791).
@@ -77,8 +77,8 @@ async function setProfile(
       await page.getByRole("combobox", { name: label }).selectOption(String(Number(value)));
     }
   }
-  await page.getByRole("button", { name: `Speichern: ${species}` }).click();
-  await expect(page.getByText(`Pflegeprofil für „${species}“ gespeichert.`)).toBeVisible();
+  await page.getByRole("button", { name: `Sichern: ${species}` }).click();
+  await expect(page.getByText(`Pflegeprofil für „${species}“ gesichert.`)).toBeVisible();
   await closeCareProfile(page, species);
 }
 

@@ -273,7 +273,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     expect((name as HTMLInputElement).value).toBe("Zone 2");
     await userEvent.clear(name);
     await userEvent.type(name, "Zone 3");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(await screen.findByRole("button", { name: /^Zone 3\b/ })).toBeTruthy();
     const put = calls.find((a) => a.method === "PUT");
     expect(put?.body).toMatchObject({ name: "Zone 3", luxCeiling: 15000, ppfd: 300 });
@@ -332,7 +332,7 @@ describe("US-LIC-05 page locations and light zones", () => {
       screen.getByLabelText("Lichtzone", { selector: "form[aria-label='Balkon ändern'] select" }),
       "z1",
     );
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(await screen.findByText("Zone 2 · außen")).toBeTruthy();
     expect(calls.find((a) => a.url === "/locations/s1")?.body).toEqual({
       name: "Balkon",
@@ -347,8 +347,8 @@ describe("US-QS-14 feedback on the light page", () => {
     fakeServer({ zones: [zone], locations: [location] });
     render(<LightPage api="http://api" token={async () => "tok"} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Balkon\b/ }));
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
-    expect(await screen.findByText("Standort gespeichert.")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
+    expect(await screen.findByText("Standort gesichert.")).toBeTruthy();
   });
 
   it("US-QS-14 a refused write shows no success toast", async () => {
@@ -610,7 +610,7 @@ describe("US-QS-32 the light layers ask before they discard typed input", () => 
     render(<LightPage api="http://api" token={async () => "tok"} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.type(screen.getByLabelText("Name", { selector: ZONE_NAME }), " neu");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(await screen.findByRole("button", { name: /^Zone 2 neu\b/ })).toBeTruthy();
     await waitFor(() =>
       expect(screen.queryByLabelText("Name", { selector: ZONE_NAME })).toBeNull(),

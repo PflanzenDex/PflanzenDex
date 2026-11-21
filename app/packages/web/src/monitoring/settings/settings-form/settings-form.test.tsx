@@ -93,8 +93,8 @@ describe("US-MON-08 reminder settings in layers", () => {
     await user.type(time, "07:15");
     await user.type(screen.getByLabelText("Von"), "22:00");
     await user.type(screen.getByLabelText("Bis"), "06:00");
-    await user.click(screen.getByRole("button", { name: "Erinnerungen speichern" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Erinnerungen gespeichert.");
+    await user.click(screen.getByRole("button", { name: "Erinnerungen sichern" }));
+    expect((await screen.findByRole("status")).textContent).toBe("Erinnerungen gesichert.");
     expect(puts).toEqual([
       {
         sendTime: "07:15",
@@ -112,8 +112,8 @@ describe("US-MON-08 reminder settings in layers", () => {
     show("/?sheet=pauses&lfrom=2");
     await screen.findByLabelText("Gießen pausiert bis");
     await user.click(screen.getByRole("button", { name: "Gießen: Pause beenden" }));
-    await user.click(screen.getByRole("button", { name: "Pausen speichern" }));
-    await screen.findByText("Pausen gespeichert.");
+    await user.click(screen.getByRole("button", { name: "Pausen sichern" }));
+    await screen.findByText("Pausen gesichert.");
     expect(puts[0]?.["paused"]).toEqual({ swap: "2026-11-02" });
   });
 
@@ -139,7 +139,7 @@ describe("US-MON-08 reminder settings in layers", () => {
     const user = userEvent.setup();
     show("/?sheet=times");
     await user.type(await screen.findByLabelText("Von"), "22:00");
-    await user.click(screen.getByRole("button", { name: "Erinnerungen speichern" }));
+    await user.click(screen.getByRole("button", { name: "Erinnerungen sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Beginn und Ende");
     expect(puts).toHaveLength(0);
   });
@@ -151,7 +151,7 @@ describe("US-MON-08 reminder settings in layers", () => {
     const days = await screen.findByLabelText("Messung überfällig nach (Tagen)");
     await user.clear(days);
     await user.type(days, "0");
-    await user.click(screen.getByRole("button", { name: "Erinnerungen speichern" }));
+    await user.click(screen.getByRole("button", { name: "Erinnerungen sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("1 bis 365");
     expect(puts).toHaveLength(0);
   });

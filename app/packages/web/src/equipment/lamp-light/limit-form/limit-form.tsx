@@ -54,7 +54,7 @@ export function LimitForm(props: {
         </p>
       ) : null}
       <Button type="submit" size="touch" variant="secondary" disabled={props.busy}>
-        Grenze speichern
+        Grenze sichern
       </Button>
     </FormRoot>
   );

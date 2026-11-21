@@ -258,7 +258,7 @@ describe("US-QS-23 Pflege", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     expect((screen.getByRole("checkbox", { name: "Aloe" }) as HTMLInputElement).checked).toBe(true);
     await userEvent.type(screen.getByLabelText("Grund"), "Neem");
-    await userEvent.click(screen.getByRole("button", { name: "Behandlung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Behandlung sichern" }));
     await vi.waitFor(() => expect(posts.some((p) => p.path === "/treatments")).toBe(true));
     expect(posts.find((p) => p.path === "/treatments")?.body).toMatchObject({
       specimenIds: ["e1"],

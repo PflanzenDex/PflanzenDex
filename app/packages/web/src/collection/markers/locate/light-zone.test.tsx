@@ -85,7 +85,7 @@ const page = () => (
 );
 const open = async () => userEvent.click(await findCardButton("Lichtzone ändern: Bogenhanf"));
 const select = async () => (await screen.findByLabelText("Eigene Lichtzone")) as HTMLSelectElement;
-const save = () => userEvent.click(screen.getByRole("button", { name: "Lichtzone speichern" }));
+const save = () => userEvent.click(screen.getByRole("button", { name: "Lichtzone sichern" }));
 
 afterEach(() => {
   cleanup();

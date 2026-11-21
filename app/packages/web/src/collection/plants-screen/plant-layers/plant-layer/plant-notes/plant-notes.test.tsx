@@ -122,7 +122,7 @@ async function notesForm(action: string) {
   return {
     layer,
     field: within(layer).getByLabelText("Notiz") as HTMLTextAreaElement,
-    save: within(layer).getByRole("button", { name: "Notiz speichern" }),
+    save: within(layer).getByRole("button", { name: "Notiz sichern" }),
   };
 }
 
@@ -194,9 +194,7 @@ describe("US-BES-18 change the notes in their layer", () => {
     await userEvent.type(field, NOTE);
     await userEvent.click(save);
     expect(posts).toEqual([{ path: "/specimens/e1/notes", body: { notes: NOTE } }]);
-    expect(
-      await within(layer).findByText("Die Notiz zu „Bogenhanf“ ist gespeichert."),
-    ).toBeTruthy();
+    expect(await within(layer).findByText("Die Notiz zu „Bogenhanf“ ist gesichert.")).toBeTruthy();
     expect(within(layer).getByText(NOTE)).toBeTruthy();
     expect(document.activeElement).toBe(
       within(layer).getByRole("button", { name: "Notiz bearbeiten" }),
@@ -209,7 +207,7 @@ describe("US-BES-18 change the notes in their layer", () => {
     const { layer, field, save } = await notesForm("Notiz schreiben");
     await userEvent.type(field, NOTE);
     await userEvent.click(save);
-    await within(layer).findByText("Die Notiz zu „Bogenhanf“ ist gespeichert.");
+    await within(layer).findByText("Die Notiz zu „Bogenhanf“ ist gesichert.");
     await userEvent.keyboard("{Escape}");
     const plant = await screen.findByRole("dialog", { name: "Bogenhanf" });
     await userEvent.click(within(plant).getByRole("button", { name: "Notizen: Bogenhanf" }));
@@ -281,7 +279,7 @@ describe("US-BES-18 change the notes in their layer", () => {
     ).toBeTruthy();
     expect(field.getAttribute("aria-invalid")).toBe("true");
     expect(field.value).toBe(NOTE);
-    expect(within(layer).queryByText(/gespeichert/)).toBeNull();
+    expect(within(layer).queryByText(/gesichert/)).toBeNull();
   });
 
   it("US-BES-18 a failed connection keeps the form and the text, and says it did not save (P-10)", async () => {
@@ -292,7 +290,7 @@ describe("US-BES-18 change the notes in their layer", () => {
     await userEvent.click(save);
     expect(await within(layer).findByRole("alert")).toBeTruthy();
     expect(field.value).toBe(NOTE);
-    expect(within(layer).queryByText(/gespeichert/)).toBeNull();
+    expect(within(layer).queryByText(/gesichert/)).toBeNull();
   });
 });
 
