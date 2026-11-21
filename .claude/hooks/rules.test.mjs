@@ -66,6 +66,13 @@ test("US-QG-07: gate configs need a human confirmation, ordinary code does not",
   }
 });
 
+test("US-QG-07 (issue 2381): the root AGENTS.md is a gate file that asks a human; a nested AGENTS.md and a backup are not", () => {
+  assert.equal(isGateFile("AGENTS.md"), true);
+  assert.equal(asksBeforeEdit("AGENTS.md"), true);
+  assert.equal(isGateFile("docs/AGENTS.md"), false);
+  assert.equal(isGateFile("AGENTS.md.bak"), false);
+});
+
 const GATE_LISTS = [
   "coverage-thresholds.json",
   "quality-limits.json",

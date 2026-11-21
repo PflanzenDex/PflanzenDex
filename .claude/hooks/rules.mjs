@@ -15,6 +15,8 @@ const GATE_FILES = [
   /^\.claude\/hooks\//,
   /^\.gitleaksignore$/,
   /^Makefile$/,
+  // The agent rules hold the gates, blocked commands and definition of done (owner decision 2026-11-20, issue 2381).
+  /^AGENTS\.md$/,
   /^tools\/(lint\/(gitleaks|actionlint|tool)|repo\/rulesets-apply)\.sh$/,
   /^app\/eslint\.config\.js$/,
   /^app\/config\/lint\/knip\.json$/,
