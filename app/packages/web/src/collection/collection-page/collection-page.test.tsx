@@ -384,16 +384,14 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
     expect(cardCalls(fetchFn).filter((u) => u.searchParams.has("after"))).toHaveLength(1);
   });
 
-  it("US-ONB-07 · FR-BES-23 the hint for a plant without a place still appears when that plant is beyond the first page", async () => {
+  it("US-ONB-07 · US-QS-32 · FR-BES-23 the list of plants shows no calm hint any more, also for a plant without a place beyond the first page (its hints are in the plant layer)", async () => {
     fakeServer({
       specimens: [...many(100), specimen({ id: "ezz", name: "Zzz Ohne Ort", locationId: null })],
     });
-    render(
-      page({
-        renderHint: (applicable) => <p>Hinweis: {applicable.join(" ")}</p>,
-      }),
-    );
-    expect(await screen.findByText(/Hinweis: .*plant_without_place/)).toBeTruthy();
+    render(page());
+    expect(await screen.findByRole("button", { name: /Pflanze 001/ })).toBeTruthy();
+    expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull();
+    expect(screen.queryByText(/Hinweis|plant_without_place/)).toBeNull();
   });
 
   it("US-BES-03 · FR-BES-23 the other specimens of a species come from the species filter, not from the loaded page", async () => {

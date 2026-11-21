@@ -63,7 +63,7 @@ export function NewlyCaught(props: {
       <Button
         variant="outline"
         pending={write.running}
-        pendingLabel="Wird gespeichert …"
+        pendingLabel="Sichert …"
         onClick={() =>
           void write.run(
             (t, opts) => markSeen(api, t, names, opts),

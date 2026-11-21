@@ -18,7 +18,7 @@ const t = texts(table);
 
 /**
  * Saves a measurement and then its optional photo (US-WAC-01, US-WAC-05, US-WAC-06). The measurement is written first and
- * the fact line shows it at once. The confirmation "Gespeichert" comes only when the photo is stored as well: while it
+ * the fact line shows it at once. The confirmation "Gesichert" comes only when the photo is stored as well: while it
  * uploads, `photoStatus` says so. A refused photo is an error toast that names the measurement as kept and the photo as
  * not, with the text of its code (P-10, DS-54); the form resets either way, because the measurement is stored.
  * This hook does not announce the confirmation: `confirmed` is the confirmed text of the current save (`null` while the

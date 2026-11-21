@@ -25,7 +25,7 @@ export function useRecord(
         saved = r.ok;
         return r;
       },
-      `Gerät „${input.name}“ gespeichert.`,
+      `Gerät „${input.name}“ gesichert.`,
       // A create (a record is added): the operation only, the form is the body (US-QS-03).
       accountKey("equipment:record"),
     );

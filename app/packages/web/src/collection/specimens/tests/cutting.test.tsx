@@ -195,7 +195,7 @@ describe("US-BES-04 repotted on the card", () => {
     expect(screen.queryByRole("menuitem", { name: "Eintopfen eintragen" })).toBeNull();
   });
 
-  it("US-BES-04: tapping Eintopfen eintragen changes nothing until Speichern, Abbrechen changes nothing either", async () => {
+  it("US-BES-04: tapping Eintopfen eintragen changes nothing until Sichern, Abbrechen changes nothing either", async () => {
     const { posts } = fakeServer();
     render(page());
     await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
@@ -219,14 +219,14 @@ describe("US-BES-04 repotted on the card", () => {
     );
   });
 
-  it("US-BES-04: Speichern repots with the chosen date, reloads and says what happens next (P-09)", async () => {
+  it("US-BES-04: Sichern repots with the chosen date, reloads and says what happens next (P-09)", async () => {
     const { posts } = fakeServer();
     render(page());
     await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
     fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
       target: { value: "2026-10-01" },
     });
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({ path: "/specimens/e1/repot", body: { date: "2026-10-01" } });
     expect(posts[0]?.key).toBeTruthy();
@@ -255,7 +255,7 @@ describe("US-BES-04 repotted on the card", () => {
     fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
       target: { value: "2026-12-24" },
     });
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(await screen.findByText(/liegt in der Zukunft/)).toBeTruthy();
     expect(screen.getByLabelText("Eingetopft am").getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
@@ -279,7 +279,7 @@ describe("US-BES-04 repotted on the card", () => {
     fireEvent.change(await screen.findByLabelText("Eingetopft am"), {
       target: { value: "2026-08-31" },
     });
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(await screen.findByText(/liegt vor dem Fangdatum/)).toBeTruthy();
     expect(screen.getByLabelText("Eingetopft am").getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
@@ -296,7 +296,7 @@ describe("US-BES-04 repotted on the card", () => {
     });
     render(page());
     await userEvent.click(await findCardButton("Eintopfen eintragen: Ableger"));
-    await userEvent.click(await screen.findByRole("button", { name: "Speichern" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("kein Steckling");
     expect(screen.getByRole("heading", { name: "Steckling eintopfen" })).toBeTruthy();
   });

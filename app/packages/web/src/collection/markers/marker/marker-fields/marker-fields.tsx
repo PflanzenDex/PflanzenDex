@@ -71,7 +71,7 @@ export function MarkerFields(props: {
       {props.missing.length > 0 && (
         <Quiet>
           Ab der dritten Pflanze braucht jede Pflanze der Art ein Kennzeichen. Vergib die fehlenden
-          jetzt, dann wird alles zusammen gespeichert.
+          jetzt, dann wird alles zusammen gesichert.
         </Quiet>
       )}
       {props.missing.map((s) => (

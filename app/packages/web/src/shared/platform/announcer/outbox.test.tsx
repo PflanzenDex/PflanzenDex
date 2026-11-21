@@ -55,9 +55,9 @@ function Page(props: { send: WriteSend; after: () => void }) {
     <>
       <button
         type="button"
-        onClick={() => void write.run(props.send, "Gespeichert: Monstera.", page)}
+        onClick={() => void write.run(props.send, "Gesichert: Monstera.", page)}
       >
-        Speichern
+        Sichern
       </button>
       <p>{write.running ? "läuft" : "bereit"}</p>
     </>
@@ -82,11 +82,11 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
     online(false);
     const fetchFn = serverWith();
     shell(measure(9));
-    const button = screen.getByRole("button", { name: "Speichern" });
+    const button = screen.getByRole("button", { name: "Sichern" });
     await userEvent.click(button);
     expect(fetchFn).not.toHaveBeenCalled();
     const text =
-      "Du bist offline. Wird gesendet, sobald du wieder online bist: Gespeichert: Monstera.";
+      "Du bist offline. Wird gesendet, sobald du wieder online bist: Gesichert: Monstera.";
     await waitFor(() => expect(heard()).toBe(text));
     expect(visible(text)).toHaveLength(1);
     expect(document.activeElement).toBe(button);
@@ -97,13 +97,13 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
     const fetchFn = serverWith(ok());
     const after = vi.fn();
     shell(measure(9), after);
-    const button = screen.getByRole("button", { name: "Speichern" });
+    const button = screen.getByRole("button", { name: "Sichern" });
     await userEvent.click(button);
     await userEvent.click(button);
     await buffered();
     online(true);
     act(() => void window.dispatchEvent(new Event("online")));
-    const text = "Nachträglich gesendet: Gespeichert: Monstera.";
+    const text = "Nachträglich gesendet: Gesichert: Monstera.";
     await waitFor(() => expect(heard()).toBe(text));
     expect(visible(text)).toHaveLength(1);
     expect(fetchFn).toHaveBeenCalledTimes(1);
@@ -115,7 +115,7 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
     online(false);
     const fetchFn = serverWith(ok());
     shell(measure(9));
-    const button = screen.getByRole("button", { name: "Speichern" });
+    const button = screen.getByRole("button", { name: "Sichern" });
     await userEvent.dblClick(button);
     await buffered();
     online(true);
@@ -127,7 +127,7 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
     online(false);
     serverWith(refusedWith("access.denied"));
     shell(measure(9));
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await buffered();
     online(true);
     act(() => void window.dispatchEvent(new Event("online")));
@@ -141,7 +141,7 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
     online(false);
     const fetchFn = serverWith(lost(), ok());
     shell(measure(9));
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await buffered();
     act(() => void window.dispatchEvent(new Event("online")));
     await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
@@ -160,29 +160,29 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(measure(9), "Gespeichert.", page));
+    await act(async () => result.current.run(measure(9), "Gesichert.", page));
     expect(fetchFn).toHaveBeenCalledTimes(1);
-    expect(result.current.message).toBe("Gespeichert.");
+    expect(result.current.message).toBe("Gesichert.");
   });
 
   it("US-QS-10 the delivered note goes away after a while, a waiting one stays until it is delivered", async () => {
     online(false);
     serverWith(ok());
     shell(measure(9));
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await buffered();
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       await act(async () => void (await vi.advanceTimersByTimeAsync(60_000)));
       expect(
         visible(
-          "Du bist offline. Wird gesendet, sobald du wieder online bist: Gespeichert: Monstera.",
+          "Du bist offline. Wird gesendet, sobald du wieder online bist: Gesichert: Monstera.",
         ),
       ).toHaveLength(1);
       online(true);
       act(() => void window.dispatchEvent(new Event("online")));
       await waitFor(() => expect(heard()).toMatch(/^Nachträglich gesendet/));
-      expect(visible("Nachträglich gesendet: Gespeichert: Monstera.")).toHaveLength(1);
+      expect(visible("Nachträglich gesendet: Gesichert: Monstera.")).toHaveLength(1);
       await act(async () => void (await vi.advanceTimersByTimeAsync(31_000)));
       expect(
         screen.queryAllByText(/^Nachträglich gesendet/).filter((el) => !el.closest("[aria-live]")),
@@ -201,7 +201,7 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(measure(9), "Gespeichert.", page));
+    await act(async () => result.current.run(measure(9), "Gesichert.", page));
     expect(fetchFn).not.toHaveBeenCalled();
     expect(result.current.error?.code).toBe("network.not_reachable");
   });
@@ -253,7 +253,7 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
     const server = serverLosing(1);
     vi.stubGlobal("fetch", server.fetchFn);
     shell(measureOn(server, 9));
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await buffered();
     online(true);
     await deliverBuffered();
@@ -275,9 +275,9 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(save, "Gespeichert.", page));
+    await act(async () => result.current.run(save, "Gesichert.", page));
     expect(result.current.error?.code).toBe("network.not_reachable");
-    await act(async () => result.current.run(save, "Gespeichert.", page));
+    await act(async () => result.current.run(save, "Gesichert.", page));
     expect(result.current.error).toBeNull();
     expect(server.keys).toHaveLength(2);
     expect(server.keys[1]).toBe(server.keys[0]);
@@ -294,8 +294,8 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(save, "Gespeichert.", page));
-    await act(async () => result.current.run(save, "Gespeichert.", page));
+    await act(async () => result.current.run(save, "Gesichert.", page));
+    await act(async () => result.current.run(save, "Gesichert.", page));
     expect(server.keys[1]).not.toBe(server.keys[0]);
     expect(server.records.size).toBe(2);
   });
@@ -372,8 +372,8 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(save, "Gespeichert.", page));
-    await act(async () => result.current.run(save, "Gespeichert.", page));
+    await act(async () => result.current.run(save, "Gesichert.", page));
+    await act(async () => result.current.run(save, "Gesichert.", page));
     const keys = fetchFn.mock.calls.map(
       ([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"],
     );
@@ -385,7 +385,7 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
     const server = serverLosing(1);
     vi.stubGlobal("fetch", server.fetchFn);
     shell(measureOn(server, 9));
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await buffered();
     online(true);
     await deliverBuffered(); // applied, the answer is lost: the write stays queued with its key
@@ -443,7 +443,7 @@ describe("US-QS-30 · a write through useWriteAction stays active offline", () =
     online(false);
     const fetchFn = serverWith();
     shell(measure(9));
-    const button = screen.getByRole("button", { name: "Speichern" });
+    const button = screen.getByRole("button", { name: "Sichern" });
     expect(button.hasAttribute("aria-disabled")).toBe(false);
     await userEvent.click(button);
     expect(fetchFn).not.toHaveBeenCalled();

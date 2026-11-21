@@ -207,7 +207,7 @@ describe("US-BES-03 rename: change the marker on the card", () => {
     expect(await screen.findByRole("heading", { name: "Kennzeichen ändern" })).toBeTruthy();
     await userEvent.type(screen.getByLabelText("Kennzeichen"), "rot");
     expect(screen.getByText("Name: Bogenhanf – rot")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Kennzeichen speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Kennzeichen sichern" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({ path: "/specimens/e1/marker", body: { marker: "rot" } });
     expect(posts[0]?.key).toBeTruthy();
@@ -227,7 +227,7 @@ describe("US-BES-03 rename: change the marker on the card", () => {
     const posts = fakeServer([card("e1", null)]);
     render(page());
     await open();
-    await userEvent.click(await screen.findByRole("button", { name: "Kennzeichen speichern" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Kennzeichen sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Kennzeichen");
     expect(posts).toHaveLength(0);
   });
@@ -239,7 +239,7 @@ describe("US-BES-03 rename: change the marker on the card", () => {
     render(page());
     await open();
     await userEvent.type(screen.getByLabelText("Kennzeichen"), "klammer");
-    await userEvent.click(screen.getByRole("button", { name: "Kennzeichen speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Kennzeichen sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "gibt es bei dieser Art schon",
     );

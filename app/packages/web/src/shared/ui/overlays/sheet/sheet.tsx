@@ -98,7 +98,10 @@ const SheetTrigger = React.forwardRef<HTMLButtonElement, SheetTriggerProps>(
 );
 SheetTrigger.displayName = "SheetTrigger";
 
-export type SheetContentProps = Omit<SheetPanelProps, "open" | "onOpenChange">;
+/** The sheet's content. `closeLabel` names the close button; it defaults to the German "Schließen" (SG-SHEET-02). */
+export type SheetContentProps = Omit<SheetPanelProps, "open" | "onOpenChange" | "closeLabel"> & {
+  closeLabel?: string;
+};
 
 /**
  * The loading state of a sheet whose chunk is still on its way (NFR-12, P-10): a centred panel with the same look as the
@@ -133,34 +136,42 @@ const SheetWindow = React.forwardRef<HTMLDivElement, SheetPanelProps>((props, re
 SheetWindow.displayName = "SheetWindow";
 
 /** Bottom sheet content (US-QS-07, DS-23, DS-40): see `shared/patterns/elements/sheet-panel`. A failed chunk shows an error with retry. */
-const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>((props, ref) => {
-  const { open, setOpen, opened } = useSheet();
-  if (!opened) return null;
-  return (
-    <ChunkErrorBoundary
-      resetKey="sheet"
-      errorView={(retry) =>
-        open ? (
-          // A centred panel like the dialog's error view: pinned to the bottom edge it covered the navigation labels (issue 1575).
-          <div
-            role="alert"
-            className="fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 rounded-card border border-destructive bg-background p-6 text-center text-foreground shadow-elevation-2"
-          >
-            <p className="text-base font-semibold">{t("sheet.loadFailed")}</p>
-            <Button variant="tinted" onClick={retry}>
-              {t("sheet.retry")}
-            </Button>
-            <Button variant="ghost" onClick={() => setOpen(false)}>
-              {t("sheet.close")}
-            </Button>
-          </div>
-        ) : null
-      }
-    >
-      <SheetWindow ref={ref} {...props} open={open} onOpenChange={setOpen} />
-    </ChunkErrorBoundary>
-  );
-});
+const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>(
+  ({ closeLabel = t("sheet.close"), ...props }, ref) => {
+    const { open, setOpen, opened } = useSheet();
+    if (!opened) return null;
+    return (
+      <ChunkErrorBoundary
+        resetKey="sheet"
+        errorView={(retry) =>
+          open ? (
+            // A centred panel like the dialog's error view: pinned to the bottom edge it covered the navigation labels (issue 1575).
+            <div
+              role="alert"
+              className="fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 rounded-card border border-destructive bg-background p-6 text-center text-foreground shadow-elevation-2"
+            >
+              <p className="text-base font-semibold">{t("sheet.loadFailed")}</p>
+              <Button variant="tinted" onClick={retry}>
+                {t("sheet.retry")}
+              </Button>
+              <Button variant="ghost" onClick={() => setOpen(false)}>
+                {t("sheet.close")}
+              </Button>
+            </div>
+          ) : null
+        }
+      >
+        <SheetWindow
+          ref={ref}
+          {...props}
+          closeLabel={closeLabel}
+          open={open}
+          onOpenChange={setOpen}
+        />
+      </ChunkErrorBoundary>
+    );
+  },
+);
 SheetContent.displayName = "SheetContent";
 
 export { Sheet, SheetContent, SheetTrigger };

@@ -63,7 +63,7 @@ function TimesForm(props: { api: string; token: Token; saved: ReminderSettings }
     };
     void write.run(
       (t, opts) => saveReminderSettings(props.api, t, next, opts),
-      "Erinnerungen gespeichert.",
+      "Erinnerungen gesichert.",
       // Set-state on the times form: its own action, so the pauses form never shares its key (US-QS-03).
       accountKey("reminders:times"),
     );
@@ -105,7 +105,7 @@ function PausesForm(props: { api: string; token: Token; saved: ReminderSettings 
     const next: ReminderSettings = { ...saved, paused };
     void write.run(
       (t, opts) => saveReminderSettings(props.api, t, next, opts),
-      "Pausen gespeichert.",
+      "Pausen gesichert.",
       // Set-state on the pauses form: its own action, so the times form never shares its key (US-QS-03).
       accountKey("reminders:pauses"),
     );

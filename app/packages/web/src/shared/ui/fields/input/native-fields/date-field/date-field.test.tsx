@@ -151,7 +151,7 @@ describe("DateField (US-QS-24, US-QS-32, NFR-08)", () => {
             <Field control={form.control} name="date" label="Datum">
               {(field) => <DateField {...field} />}
             </Field>
-            <button type="submit">Speichern</button>
+            <button type="submit">Sichern</button>
           </FormRoot>
         </Form>
       );
@@ -160,7 +160,7 @@ describe("DateField (US-QS-24, US-QS-32, NFR-08)", () => {
     const input = screen.getByLabelText("Datum");
     await userEvent.clear(input);
     await userEvent.type(input, "31.02.2026");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(onValid).not.toHaveBeenCalled();
     expect(screen.getAllByText(NO_DAY)).toHaveLength(1);
     expect(input.getAttribute("aria-invalid")).toBe("true");

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState, type RefObject } from "react";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
@@ -32,6 +32,22 @@ function Example() {
 }
 
 describe("ResponsiveModal (US-QS-07, DS-23)", () => {
+  it("US-QS-32 · SG-SHEET-02 below md the sheet's close button takes the closeLabel the caller gives", async () => {
+    setViewportWidth(360);
+    render(
+      <ResponsiveModal
+        trigger={<button>Öffnen</button>}
+        title="Pflanze bearbeiten"
+        closeLabel="Pflanze schließen"
+      >
+        <Counter />
+      </ResponsiveModal>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const dialog = await screen.findByRole("dialog", { name: "Pflanze bearbeiten" });
+    expect(within(dialog).getByRole("button", { name: "Pflanze schließen" })).toBeTruthy();
+  });
+
   it("US-QS-07 · DS-23 below md it opens as a bottom sheet with safe-area padding", async () => {
     setViewportWidth(360);
     render(<Example />);

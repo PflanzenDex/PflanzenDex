@@ -69,7 +69,7 @@ function tap(
   run: ReturnType<typeof send>,
   scope: KeyScope,
 ) {
-  return act(async () => hook.run(run, "Gespeichert.", scope));
+  return act(async () => hook.run(run, "Gesichert.", scope));
 }
 
 describe("US-QS-03 · the repeat-guard key of an action, held per target", () => {

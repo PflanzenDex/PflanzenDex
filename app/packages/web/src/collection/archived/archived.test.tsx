@@ -231,7 +231,7 @@ describe("US-BES-07 archive and restore", () => {
     const field = (await screen.findByLabelText("Fangdatum")) as HTMLInputElement;
     expect(field.value).toBe("05.01.2026");
     fireEvent.change(field, { target: { value: "2025-12-24" } });
-    await userEvent.click(screen.getByRole("button", { name: "Fangdatum speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Fangdatum sichern" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]?.path).toBe("/specimens/e9/catch-date");
     expect(posts[0]?.body["catchDate"]).toBe("2025-12-24");
@@ -259,9 +259,9 @@ describe("US-BES-07 archive and restore", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Fangdatum ändern: Alter Ficus" }),
     );
-    await userEvent.click(await screen.findByRole("button", { name: "Fangdatum speichern" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Fangdatum sichern" }));
     expect(await screen.findByText(/nach dem Tag, an dem die Pflanze archiviert/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Fangdatum speichern" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Fangdatum sichern" })).toBeTruthy();
   });
 
   it("restoring sends the request and brings the specimen back into the cards", async () => {

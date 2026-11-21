@@ -93,7 +93,7 @@ function NewNotice(props: { api: string; token: Token; ids: string[] }) {
       <Button
         variant="outline"
         pending={write.running}
-        pendingLabel="Wird gespeichert …"
+        pendingLabel="Sichert …"
         onClick={() => void write.run((t, opts) => markSeen(api, t, ids, opts), "", seen)}
       >
         Als gesehen markieren

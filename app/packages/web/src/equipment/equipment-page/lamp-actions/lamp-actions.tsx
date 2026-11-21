@@ -45,7 +45,7 @@ function zoneWrites(api: string, write: Write, toast: ToastApi) {
           setEquipmentStatus(api, t, { id: lamp.id, status: value }, opts),
         scope: (value) => entityKey("lamp", lamp.id, `status:${value}`),
         said: (value) => `Zustand von „${lamp.name}“ ist jetzt „${STATUS_LABELS[value]}“.`,
-        saved: `Zustand von „${lamp.name}“ gespeichert.`,
+        saved: `Zustand von „${lamp.name}“ gesichert.`,
         undone: `Zustand von „${lamp.name}“ zurückgesetzt.`,
       }),
   };
@@ -58,7 +58,7 @@ function maintenanceWrites(api: string, write: Write): MaintenanceActions {
     onSave: (item, input) =>
       void write.run(
         (t, opts) => setMaintenance(api, t, { id: item.id, input }, opts),
-        `Betriebsdaten von „${item.name}“ gespeichert.`,
+        `Betriebsdaten von „${item.name}“ gesichert.`,
         // Set-state on the operation data (a whole form): the operation only (US-QS-03).
         entityKey("equipment", item.id, "maintenance"),
       ),
@@ -83,7 +83,7 @@ function supplyWrites(api: string, write: Write, toast: ToastApi): SupplyActions
         send: (value) => (t, opts) => setSupply(api, t, { id: item.id, supply: value }, opts),
         scope: (value) => entityKey("equipment", item.id, `supply:${value}`),
         said: (value) => `Vorrat von „${item.name}“ ist jetzt „${SUPPLY_LABELS[value]}“.`,
-        saved: `Vorrat von „${item.name}“ gespeichert.`,
+        saved: `Vorrat von „${item.name}“ gesichert.`,
         undone: `Vorrat von „${item.name}“ zurückgesetzt.`,
       });
     },
@@ -105,7 +105,7 @@ function sensorWrites(api: string, write: Write): SensorActions {
     onTarget: (sensor, target) =>
       void write.run(
         (t, opts) => setSensorTarget(api, t, { id: sensor.id, ...target }, opts),
-        `Zuordnung von „${sensor.name}“ gespeichert.`,
+        `Zuordnung von „${sensor.name}“ gesichert.`,
         // Set-state on the sensor's place: the operation only, the target is the body (US-QS-03).
         entityKey("sensor", sensor.id, "target"),
       ),

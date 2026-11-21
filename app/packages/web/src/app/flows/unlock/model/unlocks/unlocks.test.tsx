@@ -70,12 +70,12 @@ describe("US-ONB-05 lock states refresh after every write", () => {
           onClick={() =>
             void write.run(
               (t, opts) => createWrite("http://api.test", t, opts)("POST", "/specimens", {}),
-              "Gespeichert.",
+              "Gesichert.",
               accountKey("save"),
             )
           }
         >
-          Speichern
+          Sichern
         </button>
       );
     }
@@ -86,7 +86,7 @@ describe("US-ONB-05 lock states refresh after every write", () => {
       </UnlocksProvider>,
     );
     await waitFor(() => expect(unlocksCalls()).toBe(1));
-    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(unlocksCalls()).toBe(2));
     await new Promise((done) => setTimeout(done, 50));
     expect(unlocksCalls()).toBe(2);

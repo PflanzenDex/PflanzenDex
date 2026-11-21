@@ -1565,11 +1565,11 @@ describe("US-QS-03 · signing out ends the repeat-guard keys of the account", ()
     const save = (t: string, options: Parameters<typeof createWrite>[2]) =>
       createWrite("http://api", t, options)("POST", "/measurements", { value: 1 });
     const scope = entityKey("specimen", "e7", "measure:1");
-    await act(async () => write.result.current.run(save, "Gespeichert.", scope));
+    await act(async () => write.result.current.run(save, "Gesichert.", scope));
     expect(write.result.current.error?.code).toBe("network.not_reachable");
     act(() => session.result.current.signOut());
     await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalled());
-    await act(async () => write.result.current.run(save, "Gespeichert.", scope));
+    await act(async () => write.result.current.run(save, "Gesichert.", scope));
     expect(keys[1]).not.toBe(keys[0]);
     expect(write.result.current.error).toBeNull();
   });

@@ -1,0 +1,11 @@
+{
+  "name": "pflanzendex",
+  "owner": { "name": "PflanzenDex" },
+  "plugins": [
+    {
+      "name": "status-panel",
+      "source": "./.claude/mods/status-panel",
+      "description": "Status panel for the orchestrating session (US-DEV-08, issue 2376)"
+    }
+  ]
+}

@@ -39,7 +39,9 @@ Each subagent's fixed rules are in `.claude/agents/<name>.md`; start it with `su
 
 - **Orchestrating session** (main session, Opus at effort medium): claims tickets and starts one `ticket-lead` per ticket; its rules are in `docs/guides/operations/parallel-work.md` ("The orchestrating session").
 - `ticket-lead`: one claimed ticket from the implementer brief to the merge into `dev`.
+- Taking over another contributor's pull request: skill `takeover-pr` (`pr-reviewer` verdict first, `ci-triager` on red CI; issue 2373).
 - `implementer` (Haiku, effort xhigh, owner decision 2026-11-03): edits, commits and pushes in the claimed worktree; `scout`: read-only search and measurement.
 - Read-only reviews: `pr-reviewer` (merge verdict), `security-reviewer` (tenant isolation, privacy, auth, AI interface), `design-judge` (style guide), `a11y-auditor` (keyboard and screen reader).
 - `ci-triager` (red `ci-status`), `device-checker` (rechecks merged FX fixes on the devices).
 - `illustrator` (SVG motifs, US-QS-31), `copywriter` (German wording proposals), `spec-writer` (spec text), `catalog-researcher` (catalog batch attributes).
+- **Status panel:** the repo's mod `status-panel@pflanzendex` shows worktrees with PR and `ci-status`, the heavy lock, `owner-merge` PRs and your claim drafts; `/status-panel` opens it (install, opt-out and what it reads: `docs/guides/operations/status-panel.md`).

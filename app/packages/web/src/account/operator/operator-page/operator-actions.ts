@@ -61,7 +61,8 @@ export function useOperatorActions(api: string, token: Token) {
 
   /**
    * Resolves true when the write was saved; false when it was refused or skipped because another write runs (US-QS-32).
-   * `input` is what decides the body of the write (the value, the figure, the row): another input is another action.
+   * `input` is the discrete value of the action (a chosen value, an id), never the body of a create or of a whole form:
+   * the key names the operation, the server refuses a changed body under it (US-QS-03). Empty for a whole form.
    */
   const run = async <T>(
     scope: Scope,
@@ -96,9 +97,10 @@ export function useOperatorActions(api: string, token: Token) {
     setCost: (figure: OperatorCostFigure) =>
       run(
         "cost",
-        JSON.stringify(figure),
+        // A whole form: the operation only, the figure is the body (US-QS-03).
+        "",
         (t, opts) => setOperatorCost(api, t, figure, opts),
-        () => "Monatliche Kosten gespeichert.",
+        () => "Monatliche Kosten gesichert.",
       ),
     /** Closes an identity removal done by hand (US-ACC-04); the card and its row reload afterwards. */
     markIdentity: (entryId: string) =>
@@ -106,7 +108,8 @@ export function useOperatorActions(api: string, token: Token) {
     create: (days: number) =>
       run(
         "codes",
-        String(days),
+        // A create (invitation codes are added): the operation only, the days are the body (US-QS-03).
+        "",
         (t, opts) => createInvitation(api, t, days, opts),
         (v) => {
           setCreated(v);

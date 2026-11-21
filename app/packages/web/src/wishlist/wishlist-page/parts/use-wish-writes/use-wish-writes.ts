@@ -31,7 +31,7 @@ export function useWishWrites(
         saved = r.ok;
         return r;
       },
-      `Wunsch „${input.name}“ gespeichert.`,
+      `Wunsch „${input.name}“ gesichert.`,
       // A create: the operation only, the wish's fields are the body (US-QS-03).
       accountKey("wish:create"),
     );

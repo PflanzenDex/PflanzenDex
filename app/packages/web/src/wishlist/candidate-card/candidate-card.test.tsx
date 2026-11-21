@@ -70,7 +70,7 @@ describe("US-WUN-04 the stored image of a candidate", () => {
     expect(screen.getByText(/Quelle: Anna Beispiel/)).toBeTruthy();
     expect(screen.getByText(/Lizenz: CC BY-SA 4.0/)).toBeTruthy();
     expect(screen.queryByText("Bild ansehen (öffnet extern)")).toBeNull();
-    expect(screen.queryByRole("button", { name: /Bild speichern/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Bild sichern/ })).toBeNull();
   });
 
   it("an unknown license reads unbekannt, it is not invented (P-08)", async () => {
@@ -101,17 +101,17 @@ describe("US-WUN-04 the stored image of a candidate", () => {
     expect(screen.getByText("Bild ansehen (öffnet extern)")).toBeTruthy();
     expect(screen.queryByRole("img")).toBeNull();
     await userEvent.click(
-      screen.getByRole("button", { name: "Bild speichern: Geigenfeige (Ficus lyrata)" }),
+      screen.getByRole("button", { name: "Bild sichern: Geigenfeige (Ficus lyrata)" }),
     );
     expect(onStoreImage).toHaveBeenCalledWith(expect.objectContaining({ id: "w1" }));
   });
 
   it("without a handler or without an image there is no store action", () => {
     render(<CandidateCard c={mockCandidate({ image: image(false) })} rank={1} />);
-    expect(screen.queryByRole("button", { name: /Bild speichern/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Bild sichern/ })).toBeNull();
     cleanup();
     render(<CandidateCard c={mockCandidate()} rank={1} onStoreImage={vi.fn()} />);
-    expect(screen.queryByRole("button", { name: /Bild speichern/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Bild sichern/ })).toBeNull();
     expect(screen.getByText("Kein Bild")).toBeTruthy();
   });
 
@@ -308,7 +308,7 @@ describe("US-WUN-06 a stored picture opens large from the card", () => {
     );
     expect(screen.getByRole("link", { name: "Bild ansehen (öffnet extern)" })).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Bild speichern: Geigenfeige (Ficus lyrata)" }),
+      screen.getByRole("button", { name: "Bild sichern: Geigenfeige (Ficus lyrata)" }),
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: /groß anzeigen/ })).toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();

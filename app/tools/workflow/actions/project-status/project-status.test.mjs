@@ -160,3 +160,30 @@ test("FR-DEV-10 (e): status-check exits 1 and lists the open board item without 
   assert.ok(lines.includes("#7: no status"));
   assert.ok(!lines.some((l) => /^#9:/.test(l)), "a closed item without a Status is not reported");
 });
+
+test("US-DEV-08: an open PR that only refers to the issue (Refs #n) is an open PR for the drift check", () => {
+  const pItems = [
+    { issue: 1, status: "In Progress", priority: "P1 high" },
+    { issue: 2, status: "Todo", priority: "P1 high" },
+  ];
+  const prs = [
+    { number: 30, base: "dev", state: "open", body: "Refs #1" },
+    { number: 31, base: "dev", state: "open", body: "References #2" },
+  ];
+  assert.deepEqual(
+    drift(pItems, prs).map((d) => `${d.issue}:${d.problem}`),
+    ["2:Todo but an open PR names it"],
+  );
+});
+
+test("US-DEV-08: a merged PR that only refers to the issue neither moves it to On dev nor counts as a merge for the drift check", () => {
+  const pr = { number: 32, body: "Refs #4", base: "dev", merged: true };
+  assert.deepEqual(transitions(pr, items), []);
+  assert.deepEqual(
+    drift(
+      [{ issue: 4, status: "Todo", priority: "P1 high" }],
+      [{ number: 32, base: "dev", state: "merged", body: "Refs #4" }],
+    ),
+    [],
+  );
+});

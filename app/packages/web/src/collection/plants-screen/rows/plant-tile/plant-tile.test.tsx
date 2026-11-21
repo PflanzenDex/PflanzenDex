@@ -176,6 +176,36 @@ describe("US-QS-32 choosing a plant row opens the plant in its layer (US-QS-19)"
   });
 });
 
+describe("US-QS-32 · issue 2355 a plant row that opens the plant's layer shows the chevron (SG-TOUCH-02)", () => {
+  const chevronOf = (row: HTMLElement) => row.querySelector("svg.lucide-chevron-right");
+
+  it("US-QS-32 · issue 2355 the row shows the decorative chevron at its trailing edge", () => {
+    render(
+      <MemoryRouter>
+        <PlantTile card={card} access={noPhoto} />
+      </MemoryRouter>,
+    );
+    const row = screen.getByRole("button", { name: /^Aloe(\s|$)/ });
+    const icon = chevronOf(row);
+    expect(icon).not.toBeNull();
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
+    expect(row.lastElementChild).toBe(icon);
+  });
+
+  it("US-QS-32 · issue 2355 a plant with an open treatment shows it too: the state leads the meta line, no trailing element takes the place", () => {
+    const due = {
+      ...card,
+      treatment: { reason: "Umtopfen", dueDate: { kind: "today", days: 0, text: "heute" } },
+    } as unknown as SpecimenCard;
+    render(
+      <MemoryRouter>
+        <PlantTile card={due} access={noPhoto} />
+      </MemoryRouter>,
+    );
+    expect(chevronOf(screen.getByRole("button", { name: /^Aloe(\s|$)/ }))).not.toBeNull();
+  });
+});
+
 describe("NFR-12 a plant row asks the thumbnail of its photo", () => {
   it("NFR-12 the row requests size=thumb and shows the picture it gets back", async () => {
     const requested: string[] = [];

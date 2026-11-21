@@ -83,7 +83,7 @@ function buildActions(
         scope: accountKey("zone:create"),
       }),
     zoneUpdate: (id, e) =>
-      write("PUT", `/light-zones/${id}`, "Lichtzone gespeichert.", {
+      write("PUT", `/light-zones/${id}`, "Lichtzone gesichert.", {
         body: e,
         // Set-state on the zone form (a whole form): the operation only (US-QS-03).
         scope: entityKey("zone", id, "update"),
@@ -109,7 +109,7 @@ function buildActions(
         scope: accountKey("location:create"),
       }),
     locationUpdate: (id, e) =>
-      write("PUT", `/locations/${id}`, "Standort gespeichert.", {
+      write("PUT", `/locations/${id}`, "Standort gesichert.", {
         body: e,
         // Set-state on the location form (a whole form): the operation only (US-QS-03).
         scope: entityKey("location", id, "update"),

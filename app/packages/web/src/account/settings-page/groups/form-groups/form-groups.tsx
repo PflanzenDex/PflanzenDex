@@ -21,7 +21,7 @@ const t = texts(table);
 
 type Key = "displayName" | "timeZone" | "replenishBuffer" | "positionThresholds";
 
-const UNCHANGED = "Keine Änderung: Die Werte sind schon gespeichert.";
+const UNCHANGED = "Keine Änderung: Die Werte sind schon gesichert.";
 const INVALID = "Prüfe die markierten Felder.";
 
 /** The form fields a key stands for: the four threshold fields of "positionThresholds" (US-LIC-03). */
@@ -96,7 +96,7 @@ function useGroupForm(
 }
 
 /**
- * One group of the settings with its own "Speichern" (US-QS-17): the form holds the whole profile, but only the
+ * One group of the settings with its own "Sichern" (US-QS-17): the form holds the whole profile, but only the
  * fields of the group are taken over, onto the stored profile (the API saves the profile as a whole). A refusal that
  * names one of the group's fields marks it; any other refusal is an alert (P-10); the input stays. The button is
  * `aria-disabled` while the group is inactive, never `disabled`, so the focus stays on it (US-QS-32, PF-045).
@@ -106,7 +106,7 @@ function GroupForm(props: {
   keys: readonly Key[];
   saver: ProfileSaver;
   fromDevice?: boolean;
-  /** "Speichern" stays enabled; an unchanged save is announced and sends nothing (US-LIC-03, #1022). */
+  /** "Sichern" stays enabled; an unchanged save is announced and sends nothing (US-LIC-03, #1022). */
   saveAlways?: boolean;
   children: (control: Control<Fields>) => ReactNode;
 }) {
@@ -138,7 +138,7 @@ function GroupForm(props: {
           className={BUSY_LOOK}
           needsNetwork
         >
-          {saver.saving ? "Speichert …" : "Speichern"}
+          {saver.saving ? "Sichert …" : "Sichern"}
         </Button>
       </FormRoot>
     </Form>

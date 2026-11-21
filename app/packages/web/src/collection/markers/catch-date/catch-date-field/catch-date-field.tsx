@@ -163,7 +163,7 @@ export function CatchDateForm(props: {
             </ErrorNotice>
           )}
           <FormButtons
-            submit="Fangdatum speichern"
+            submit="Fangdatum sichern"
             cancel="Abbrechen"
             pending={form.formState.isSubmitting}
             onCancel={() => setOpen(null)}

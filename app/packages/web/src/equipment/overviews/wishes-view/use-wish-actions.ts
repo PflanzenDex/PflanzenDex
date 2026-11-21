@@ -30,7 +30,7 @@ export function useWishActions(
           saved = r.ok;
           return r;
         },
-        `Geräte-Wunsch „${input.name}“ gespeichert.`,
+        `Geräte-Wunsch „${input.name}“ gesichert.`,
         // A create: the operation only, the form is the body (US-QS-03).
         accountKey("equipment-wish:create"),
       );

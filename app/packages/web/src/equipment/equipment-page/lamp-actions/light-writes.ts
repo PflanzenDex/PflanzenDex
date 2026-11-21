@@ -19,7 +19,7 @@ export function lightWrites(api: string, write: Write): LampLightActions {
           saved = r.ok;
           return r;
         },
-        `Messung für „${lamp.name}“ gespeichert.`,
+        `Messung für „${lamp.name}“ gesichert.`,
         // An append (a measurement is added to the lamp): the operation only, the values are the body (US-QS-03).
         entityKey("lamp", lamp.id, "measure"),
       );
@@ -28,14 +28,14 @@ export function lightWrites(api: string, write: Write): LampLightActions {
     onData: (lamp, data) =>
       void write.run(
         (t, opts) => describeLamp(api, t, { id: lamp.id, ...data }, opts),
-        `Herstellerangabe für „${lamp.name}“ gespeichert.`,
+        `Herstellerangabe für „${lamp.name}“ gesichert.`,
         // Set-state on the manufacturer's statement (a whole form): the operation only (US-QS-03).
         entityKey("lamp", lamp.id, "data"),
       ),
     onLimit: (percent) =>
       void write.run(
         (t, opts) => setDeviationLimit(api, t, percent, opts),
-        percent === null ? "Die Prüfung ist aus." : `Grenze von ${percent} % gespeichert.`,
+        percent === null ? "Die Prüfung ist aus." : `Grenze von ${percent} % gesichert.`,
         accountKey(`limit:${percent}`),
       ),
   };

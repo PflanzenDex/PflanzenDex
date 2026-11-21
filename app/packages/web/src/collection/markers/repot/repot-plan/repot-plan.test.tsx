@@ -369,7 +369,7 @@ describe("US-BES-19 the keeper ticks what they see in the layer and the hint fol
     expect(alert.className).toContain("border-destructive");
     expect(alert.className).not.toMatch(/warning/);
     expect(
-      within(alert).getByText("Der Haken bei „Wurzeln aus dem Topf“ ist nicht gespeichert."),
+      within(alert).getByText("Der Haken bei „Wurzeln aus dem Topf“ ist nicht gesichert."),
     ).toBeTruthy();
     expect(
       within(alert).getByText("Die Eingabe ist ungültig. Bitte prüfe die markierten Felder."),

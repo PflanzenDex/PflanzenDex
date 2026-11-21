@@ -18,7 +18,7 @@ export type RepotTarget = { id: string; name: string; status: SpecimenCard["stat
 
 /**
  * State and action for potting a cutting or repotting a plant (US-BES-04, US-BES-19). The form asks for the day first:
- * nothing is written before "Speichern" (issue 1028). After success the page reloads (`after`) and the message says what
+ * nothing is written before "Sichern" (issue 1028). After success the page reloads (`after`) and the message says what
  * changed (P-09); a refusal stays in the form (P-10). `access` is what the form reads the plant's plan with.
  */
 export function useRepot(api: string, token: Token, after: () => void, say: Say) {

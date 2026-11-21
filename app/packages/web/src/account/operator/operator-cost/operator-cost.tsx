@@ -106,7 +106,7 @@ export function CostForm(props: {
             aria-disabled={props.running || undefined}
             aria-busy={props.running || undefined}
           >
-            Kosten speichern
+            Kosten sichern
           </Button>
         </div>
       </FormRoot>

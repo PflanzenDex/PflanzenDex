@@ -6,7 +6,7 @@ import {
   type Preloadable,
 } from "@/shared/platform/routing/lazy-page/preload";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
-import { AddPlant, ContextHint, TodayIntro } from "@/app/flows";
+import { AddPlant, TodayIntro } from "@/app/flows";
 import { CollectionPage, HintsPage, PlantsViewLayer } from "@/collection";
 import { DiscoverPage } from "@/discover";
 import { PlanLayer, TreatmentsPage } from "@/care";
@@ -61,7 +61,7 @@ function destinationPages(): Record<PreloadKey, readonly Preloadable[]> {
       WateringList,
       HintsPage,
     ],
-    collection: [CollectionArea, CollectionPage, PlantsViewLayer, ContextHint],
+    collection: [CollectionArea, CollectionPage, PlantsViewLayer],
     discover: [DiscoverArea, DiscoverPage],
     friends: [CalmGate, FriendsPage],
     account: [AccountArea],

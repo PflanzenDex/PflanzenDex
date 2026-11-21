@@ -2,6 +2,7 @@ import type { Suggestion } from "@pflanzendex/core";
 import { useId, useState, type Ref } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { Badge } from "@/shared/ui/display/badge/badge";
+import { CardPicture } from "@/shared/patterns/display/card/card-picture/card-picture";
 import { cn } from "@/shared/lib/utils";
 import { AttributeSources, attributeRows, UNKNOWN } from "./attribute-view/attribute-view";
 import { DifficultyStars, WikipediaSource } from "@/pokedex";
@@ -10,20 +11,34 @@ import { texts } from "@/shared/lib/text-rules/texts";
 
 const t = texts(table);
 
-/** The image is a link to its source, not a copy (P-05); without one a neutral sprout stands in. */
-function Picture({ s }: { s: Suggestion }) {
-  if (s.imageUrl === null)
-    return (
-      <span aria-hidden="true" className="text-center text-6xl">
-        🌱
-      </span>
-    );
+/**
+ * At the normal text size the picture is capped by the height of the screen less the room the card's text needs (about 600 px,
+ * measured at 360 × 640 to 430 × 852, US-QS-21): the width follows the height, so the box stays 4:3 and is centred. At large
+ * text the card has its own height and the picture is not capped.
+ */
+const PICTURE_CAP = "mx-auto w-[min(100%,calc((100dvh_-_600px)*4/3))]";
+
+/**
+ * The picture with its credit directly under it (US-QS-32, SG-PHOTO-03): the image is a link to its source, not a
+ * copy (P-05); without a picture the drawn placeholder of the family stands in (SG-PHOTO-02), never an emoji.
+ */
+function Picture({ s, fill }: { s: Suggestion; fill: boolean }) {
+  const shown = s.summary !== null || s.imageUrl !== null;
   return (
-    <img
+    <CardPicture
       src={s.imageUrl}
       alt={t("card.imageAlt", { species: s.species })}
-      loading="lazy"
-      className="h-56 min-h-12 w-full shrink rounded-lg object-cover"
+      boxClassName={fill ? PICTURE_CAP : undefined}
+      credit={
+        s.sourceUrl !== null || shown ? (
+          <WikipediaSource
+            label={t("card.sourceLabel")}
+            sourceUrl={s.sourceUrl}
+            shown={shown}
+            className="inline-flex min-h-11 items-center text-muted-foreground"
+          />
+        ) : undefined
+      }
     />
   );
 }
@@ -106,19 +121,27 @@ export function SuggestionCard(props: {
   suggestion: Suggestion;
   /** The name heading, so the view can move the focus to this card (SC 2.4.3). */
   titleRef?: Ref<HTMLHeadingElement>;
+  /**
+   * The card takes the free height of its deck (one screen, the default). At large text it takes its own height instead,
+   * so the deck scrolls as a whole and the decision buttons follow the card (US-QS-32, SG-TYPE-04).
+   */
+  fill?: boolean;
 }) {
   const s = props.suggestion;
   const [more, setMore] = useState(false);
   const titleId = useId();
+  const fill = props.fill ?? true;
   return (
     <article
       aria-labelledby={titleId}
       className={cn(
-        "mx-auto flex min-h-48 w-full min-w-0 max-w-md flex-1 basis-0 touch-pan-y flex-col gap-2 overflow-y-auto break-words",
-        "rounded-xl border border-border bg-card p-3 text-card-foreground",
+        "mx-auto flex min-h-48 w-full min-w-0 max-w-md touch-pan-y flex-col gap-2 break-words",
+        "rounded-card border border-border bg-card p-3 text-card-foreground",
+        // Filling the deck, a card that is still too tall scrolls inside itself as the last resort (the one-screen gate reports it).
+        fill ? "flex-1 basis-0 overflow-y-auto" : "flex-none",
       )}
     >
-      <Picture s={s} />
+      <Picture s={s} fill={fill} />
       <div>
         {s.exploration && <Badge className="mb-1">{t("card.exploration")}</Badge>}
         <h2
@@ -142,12 +165,6 @@ export function SuggestionCard(props: {
         {more ? t("card.less") : t("card.more")}
       </Button>
       <Details s={s} more={more} />
-      <WikipediaSource
-        label={t("card.sourceLabel")}
-        sourceUrl={s.sourceUrl}
-        shown={s.summary !== null || s.imageUrl !== null}
-        className="inline-flex min-h-11 items-center"
-      />
     </article>
   );
 }
