@@ -2,9 +2,11 @@ import type { Pool } from "pg";
 import { beginPlain, inTransaction } from "../kernel/index.ts";
 import {
   CARDS,
+  PICTURES,
   natureRarityOf,
   type CardRow,
   type IucnCategory,
+  type PictureRow,
   type TaxonCardRecord,
 } from "./taxon-cards.ts";
 
@@ -136,6 +138,19 @@ export class TaxonomyPostgres {
           occurrencesSource,
         }),
       }),
+    );
+  }
+
+  /** The catalog pictures of the given Latin names (US-QS-32): shared by all accounts, no user data; a name without a resolved row is missing. */
+  async picturesOf(
+    latinNames: readonly string[],
+  ): Promise<ReadonlyMap<string, { imageUrl: string | null; imageSourceUrl: string | null }>> {
+    if (latinNames.length === 0) return new Map();
+    const rows = (await this.pool.query<PictureRow>(PICTURES, [latinNames])).rows;
+    return new Map(
+      rows.map(
+        (r) => [r.latinName, { imageUrl: r.imageUrl, imageSourceUrl: r.imageSourceUrl }] as const,
+      ),
     );
   }
 

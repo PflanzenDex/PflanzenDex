@@ -1,6 +1,8 @@
 // Public interface of the feature `match` (epic TAU): the deck of friends' offers that match the own wishlist.
 export { matchDeck, deckOrder, LATER_DAYS } from "./deck";
 export type {
+  CatalogPicture,
+  CatalogPictures,
   EntryState,
   FitReason,
   MatchCard,

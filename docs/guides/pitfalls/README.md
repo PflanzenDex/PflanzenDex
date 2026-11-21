@@ -389,3 +389,11 @@ IDs are never renumbered.
 - **Fix:** The action names the operation only: never body content, and only a discrete chosen value for a set-state write. Creates and appends carry `adds` and their own `new:<entity>` target, and keep the key on `idempotency.key_conflict`. Silent writes use a key per send and free nothing. Daily appends name the local day. The test next to `repeat-key.test.tsx` fails on `JSON.stringify` inside `entityKey(`/`accountKey(`.
 - **Can it become a gate?** Partly: the grep test catches a body serialised inside the call, but not one built into a variable first. Which class a write belongs to needs judgment.
 - **Source:** Issue #1432 (US-QS-03, US-QS-07), PR #1789: rounds 3 to 5 of the review.
+
+## PF-048 A row with `overflow-hidden` in a flex column shrinks to a hairline
+
+- **Symptom:** At 200 % text the rows of a fit-paged list are 2 to 30 px high and only the pager shows; at 100 % on a small window the rows are cut to a third, and the one-screen gate still passes because the cut rows fit.
+- **Cause:** `overflow: hidden` (here `[&>li]:overflow-hidden` of `ROWS_OF_GROUP`) turns a flex item's automatic minimum height into 0, so the default `flex-shrink: 1` squeezes it below its content when the list is shorter than its rows. The fit measure then reads the squeezed row and never recovers.
+- **Fix:** A row of a flex list that clips its content carries `shrink-0` (the `Pager` sets it on every row and placeholder since PR #2367). When the room is shorter than one whole row, the frame scrolls or the layout gives the room back; never let the row shrink.
+- **Can it become a gate?** Partly: a measurement that every row of a list is at least its `scrollHeight` could join the one-screen gate; until R1 a new gate needs a finding that asks for it (E-30).
+- **Source:** Issues #2315 and #2316 (US-QS-32), PR #2367; earlier local fixes #2272 and #2293.
