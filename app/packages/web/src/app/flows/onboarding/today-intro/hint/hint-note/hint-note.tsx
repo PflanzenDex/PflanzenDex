@@ -1,3 +1,4 @@
+import { accountKey, useRepeatKey, newRepeatKey } from "@/shared/data";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { X } from "lucide-react";
@@ -47,15 +48,22 @@ export function HintNote(props: {
 }) {
   const { api, token, occasion } = props;
   const [failed, setFailed] = useState(false);
+  const keys = useRepeatKey();
   useEffect(() => {
     void (async () => {
-      const accessToken = await token();
-      if (accessToken) await saveHint(api, accessToken, occasion, "shown");
+      const t = await token();
+      // A per-send key: the view mark is silent and idempotent (DM-ONB-03).
+      if (t) await saveHint(api, t, { occasion, state: "shown" }, { key: newRepeatKey() });
     })();
   }, [api, token, occasion]);
   const dismiss = async () => {
-    const accessToken = await token();
-    const r = accessToken ? await saveHint(api, accessToken, occasion, "dismissed") : null;
+    const t = await token();
+    const r = t
+      ? await keys.run(
+          (key) => saveHint(api, t, { occasion, state: "dismissed" }, { key }),
+          accountKey(`dismiss:${occasion}`),
+        )
+      : null;
     if (r?.ok) props.onGone();
     else setFailed(true);
   };

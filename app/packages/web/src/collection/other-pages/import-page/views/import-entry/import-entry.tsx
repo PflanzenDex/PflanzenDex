@@ -1,4 +1,4 @@
-// The entry "Aus Datei importieren" where plants are added (US-BES-18): an outline link, never a second filled action. It is
+// The entry "Aus Datei importieren" where plants are added (US-BES-18): a tinted link, never a second filled action. It is
 // hidden while the keeper switch "csv_import" is off (P-12); the collection header and its layers do not offer it.
 import { Link } from "react-router";
 import { useFeature } from "@/shared/data";
@@ -14,7 +14,7 @@ export function ImportEntry() {
   const on = useFeature("csv_import");
   if (!on) return null;
   return (
-    <Link to={IMPORT_PATH} className={cn(buttonVariants({ variant: "outline" }), "self-start")}>
+    <Link to={IMPORT_PATH} className={cn(buttonVariants({ variant: "tinted" }), "self-start")}>
       {ui("entry")}
     </Link>
   );

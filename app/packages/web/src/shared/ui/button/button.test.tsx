@@ -230,8 +230,15 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     expect(hasOwnBorder(outline.join(" "))).toBe(false);
   });
 
-  it("US-QS-32 · SG-BTN-01 no button variant draws a border of its own, except secondary", () => {
-    for (const variant of ["default", "tinted", "plain", "destructive-plain", "outline"] as const) {
+  it("US-QS-32 · SG-BTN-01 no button variant draws a border of its own", () => {
+    for (const variant of [
+      "default",
+      "secondary",
+      "tinted",
+      "plain",
+      "destructive-plain",
+      "outline",
+    ] as const) {
       render(<Button variant={variant}>{`v-${variant}`}</Button>);
       const cls = screen.getByRole("button", { name: `v-${variant}` }).className;
       expect(hasOwnBorder(cls), variant).toBe(false);
@@ -254,12 +261,29 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     expect(screen.getByRole("button", { name: "Mehr" }).className).toContain("rounded-control");
   });
 
-  it("US-QS-14 · the secondary variant draws its boundary in --input (WCAG 1.4.11)", () => {
+  it("US-QS-32 · SG-BTN-01 secondary is the tinted look without a border (owner decision 2026-11-20)", () => {
+    render(
+      <>
+        <Button variant="tinted">Anbieten</Button>
+        <Button variant="secondary">Abbrechen</Button>
+      </>,
+    );
+    const tinted = screen.getByRole("button", { name: "Anbieten" }).className.split(/\s+/);
+    const secondary = screen.getByRole("button", { name: "Abbrechen" }).className.split(/\s+/);
+    expect(secondary).toContain("bg-accent");
+    expect(secondary).toContain("text-accent-foreground");
+    expect(secondary).toContain("hover:bg-accent/80");
+    expect(secondary).not.toContain("bg-secondary");
+    expect(secondary).not.toContain("border-input");
+    expect(hasOwnBorder(secondary.join(" "))).toBe(false);
+    expect(secondary.slice().sort()).toEqual(tinted.slice().sort());
+  });
+
+  it("US-QS-32 · SG-BTN-01 every button keeps its boundary in forced colors, whatever its fill", () => {
     render(<Button variant="secondary">Abbrechen</Button>);
-    const classes = screen.getByRole("button", { name: "Abbrechen" }).className.split(/\s+/);
-    expect(classes).toContain("border");
-    expect(classes).toContain("border-input");
-    expect(classes).toContain("bg-secondary");
+    const cls = screen.getByRole("button", { name: "Abbrechen" }).className.split(/\s+/);
+    expect(cls).toContain("forced-colors:border");
+    expect(cls).toContain("forced-colors:border-[color:ButtonText]");
   });
 });
 

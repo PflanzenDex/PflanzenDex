@@ -5,7 +5,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./unlock-page.de.json";
 import { UnlockSkeleton } from "./unlock-page.skeleton";
 import { errorText, refusalText } from "@/shared/lib/error-text";
-import { useInvalidate, useWriteAction } from "../../../../shared/data";
+import { accountKey, useInvalidate, useWriteAction } from "../../../../shared/data";
 import {
   PATHS,
   accountAddress,
@@ -141,8 +141,9 @@ export function UnlockPage(props: { api: string; token: Token; id?: string }) {
   const unlock = useCallback(
     () =>
       run(
-        (t) => unlockFunction(props.api, t, id),
+        (t, opts) => unlockFunction(props.api, t, id, opts),
         `${name} ist jetzt freigeschaltet. ${functionEmpty(id)}`.trim(),
+        accountKey(`unlock:${id}`),
       ),
     [run, props.api, id, name],
   );

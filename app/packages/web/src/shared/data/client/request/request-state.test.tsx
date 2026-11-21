@@ -180,10 +180,14 @@ describe("US-QS-07 · DS-09 mutation invalidates the list", () => {
         <>
           <button
             onClick={() =>
-              void write.run(async () => {
-                rows = [...rows, "Farn"];
-                return { ok: true, value: null };
-              }, "Gesichert.")
+              void write.run(
+                async () => {
+                  rows = [...rows, "Farn"];
+                  return { ok: true, value: null };
+                },
+                "Gesichert.",
+                { target: "list", action: "add:Farn" },
+              )
             }
           >
             Hinzufügen
@@ -218,6 +222,7 @@ describe("US-QS-07 · DS-09 mutation invalidates the list", () => {
                   },
                 }),
                 "Gesichert.",
+                { target: "list", action: "send" },
               )
             }
           >

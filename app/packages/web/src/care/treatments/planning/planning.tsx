@@ -3,7 +3,13 @@ import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-secti
 import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { SIGN_IN, type ApiError, type Request } from "../../../shared/data";
+import {
+  createKey,
+  SIGN_IN,
+  type ApiError,
+  type Request,
+  useRepeatKey,
+} from "../../../shared/data";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
 import { TreatmentForm } from "../treatment-form/treatment-form";
 import { TreatmentFormSkeleton } from "../treatments-page/treatments-page.skeleton";
@@ -24,6 +30,7 @@ type Token = () => Promise<string | undefined>;
  */
 export function usePlanning(api: string, token: Token, onPlanned: (message: string) => void) {
   const busy = useRef(false);
+  const keys = useRepeatKey();
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -33,7 +40,13 @@ export function usePlanning(api: string, token: Token, onPlanned: (message: stri
       busy.current = true;
       setRunning(true);
       const t = await token();
-      const r = t ? await planTreatments(api, t, input) : { ok: false as const, error: SIGN_IN };
+      const r = t
+        ? await keys.run(
+            (key) => planTreatments(api, t, input, { key }),
+            // A create (treatments are added to the plan): the operation only, the plan is the body (US-QS-03).
+            createKey("treatment", "plan"),
+          )
+        : { ok: false as const, error: SIGN_IN };
       busy.current = false;
       setRunning(false);
       setError(r.ok ? null : r.error);

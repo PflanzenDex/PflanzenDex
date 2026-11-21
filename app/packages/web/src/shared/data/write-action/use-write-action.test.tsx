@@ -30,6 +30,7 @@ function Probe() {
         void write.run(
           async () => ({ ok: false, error: { code: "server.unexpected", text: "raw" } }),
           "Gesichert.",
+          { target: "probe", action: "save" },
         )
       }
     >

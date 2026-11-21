@@ -2,7 +2,12 @@ import { useState } from "react";
 import type { CreatedFriendCode } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
-import { useWriteAction, type ApiError } from "../../../../../shared/data";
+import {
+  createKey,
+  useWriteAction,
+  type ApiError,
+  type WriteOptions,
+} from "../../../../../shared/data";
 import { createFriendCode, sendFriendRequest } from "../../../../api/friends-api";
 import { CodeForm } from "../../../../parts/code-form/code-form";
 import { InviteCard } from "../../../../parts/invite-card/invite-card";
@@ -27,18 +32,34 @@ function useSendRequest(
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const send = async (code: string): Promise<boolean> => {
     let ok = false;
-    await write.run(async (t) => {
-      const r = await sendFriendRequest(api, t, code);
-      ok = r.ok;
-      setRefusal(r.ok ? null : r.error);
-      return r;
-    }, "Anfrage gesendet. Sobald die Person sie annimmt, seid ihr befreundet.");
+    // A create (a request is sent): the operation only, the code is the body (US-QS-03).
+    const key = createKey("friend", "request");
+    await write.run(
+      async (t, opts) => {
+        const r = await sendFriendRequest(api, t, code, opts);
+        ok = r.ok;
+        setRefusal(r.ok ? null : r.error);
+        return r;
+      },
+      "Anfrage gesendet. Sobald die Person sie annimmt, seid ihr befreundet.",
+      key,
+    );
     return ok;
   };
   return { send, refusal, write };
 }
 
 type Tab = "invite" | "code";
+
+/** The invitation code: the write of one code, keyed to the action of creating one (US-QS-03). */
+const CODE_KEY = createKey("invite", "friend-code");
+const createCode =
+  (api: string, onCreated: (code: CreatedFriendCode) => void) =>
+  async (t: string, opts: WriteOptions) => {
+    const r = await createFriendCode(api, t, opts);
+    if (r.ok) onCreated(r.value);
+    return r;
+  };
 
 /**
  * The layer "Freund hinzufügen" (`?sheet=add`, US-QS-20): "Einladen" creates and shows the code (US-SOZ-01), "Code eingeben"
@@ -84,11 +105,7 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
               created={created}
               running={invite.running}
               onCreate={() =>
-                void invite.run(async (t) => {
-                  const r = await createFriendCode(api, t);
-                  if (r.ok) setCreated(r.value);
-                  return r;
-                }, "Code erzeugt.")
+                void invite.run(createCode(api, setCreated), "Code erzeugt.", CODE_KEY)
               }
             />
           ) : (

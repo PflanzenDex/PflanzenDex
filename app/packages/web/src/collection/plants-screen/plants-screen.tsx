@@ -139,7 +139,7 @@ function Row(props: Props) {
         {props.archived.length > 0 ? (
           <Button
             type="button"
-            variant="outline"
+            variant="plain"
             size="sm"
             aria-haspopup="dialog"
             onClick={(event) => archive.openLayer(event.currentTarget)}

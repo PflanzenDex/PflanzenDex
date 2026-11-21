@@ -70,7 +70,11 @@ export function NewPlantsBody(props: {
 }) {
   const { news, okay, compact, offline } = props;
   const seen = async () => {
-    await okay.run((tk) => markFeedSeen(props.api, tk, news.asOf), t("news.okayDone"));
+    // The feed mark is a background write: its own key, it frees no held key of the page (US-QS-03).
+    await okay.runSilent(
+      (tk, opts) => markFeedSeen(props.api, tk, news.asOf, opts),
+      t("news.okayDone"),
+    );
     props.onSeen?.();
   };
   return (

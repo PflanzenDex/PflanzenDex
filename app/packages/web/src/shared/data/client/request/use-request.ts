@@ -9,6 +9,7 @@ import {
 import type { ApiError, Response } from "../../api";
 import { NETWORK_DOWN, RequestFailure } from "./query-client";
 import { SIGN_IN } from "../../write-action/use-write-action";
+import { forgetRepeatKeys } from "../../write-action/repeat-key";
 import type { RequestStatus } from "@/shared/patterns/states/request-state/request-state";
 
 type Token = () => Promise<string | undefined>;
@@ -90,7 +91,11 @@ export function useRequest<T>(props: {
 export function useClearOnSignOut(signedIn: boolean): void {
   const client = useQueryClient();
   useEffect(() => {
-    if (!signedIn) client.clear();
+    // The held repeat-guard keys go with the account: a key of another account is never repeated (US-QS-03).
+    if (!signedIn) {
+      client.clear();
+      forgetRepeatKeys();
+    }
   }, [client, signedIn]);
 }
 

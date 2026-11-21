@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useWriteAction } from "../../../../shared/data";
+import { createKey, useWriteAction } from "../../../../shared/data";
 import { useCandidateWrite } from "../../../actions/actions";
 import { useRepair } from "../../../hints/duplicate-wishes/duplicate-wishes";
 import { createWish, type WishInput } from "../../../wishlist-api";
@@ -25,11 +25,16 @@ export function useWishWrites(
       : candidate;
   const send = async (input: WishInput): Promise<boolean> => {
     let saved = false;
-    await write.run(async (t) => {
-      const r = await createWish(api, t, input);
-      saved = r.ok;
-      return r;
-    }, `Wunsch „${input.name}“ gesichert.`);
+    await write.run(
+      async (t, opts) => {
+        const r = await createWish(api, t, input, opts);
+        saved = r.ok;
+        return r;
+      },
+      `Wunsch „${input.name}“ gesichert.`,
+      // A create: the operation only, the wish's fields are the body (US-QS-03).
+      createKey("wish", "create"),
+    );
     if (saved) setLast("write");
     return saved;
   };

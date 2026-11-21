@@ -44,10 +44,15 @@ describe("uploadPhoto and the photo cache (NFR-12, US-WAC-06)", () => {
     await show();
     await show();
     expect(loads).toBe(1);
-    const r = await uploadPhoto({ api: API, token: "tok", fetchFn: answering(200) }, "s1", {
-      file: FILE,
-      replace: true,
-    });
+    const r = await uploadPhoto(
+      { api: API, token: "tok", fetchFn: answering(200) },
+      "s1",
+      {
+        file: FILE,
+        replace: true,
+      },
+      "test-key",
+    );
     expect(r.ok).toBe(true);
     await show();
     expect(loads).toBe(2);
@@ -55,9 +60,14 @@ describe("uploadPhoto and the photo cache (NFR-12, US-WAC-06)", () => {
 
   it("NFR-12 a refused upload changes nothing, so the cached picture stays", async () => {
     await show();
-    const r = await uploadPhoto({ api: API, token: "tok", fetchFn: answering(409) }, "s1", {
-      file: FILE,
-    });
+    const r = await uploadPhoto(
+      { api: API, token: "tok", fetchFn: answering(409) },
+      "s1",
+      {
+        file: FILE,
+      },
+      "test-key",
+    );
     expect(r.ok).toBe(false);
     await show();
     expect(loads).toBe(1);
@@ -69,60 +79,42 @@ describe("US-QS-03 a repeated upload is the same write (repeat guard)", () => {
     (fetchFn.mock.calls[n]?.[1]?.headers as Record<string, string> | undefined)?.[
       "Idempotency-Key"
     ];
-  // Same name, size, type and last-modified time: only the content tells the two files apart.
+  // The key is the caller's: the upload sends the key of its action (US-QS-03). Same name, size, type and time here.
   const photo = (bytes: number[]) =>
     new File([new Uint8Array(bytes)], "p.jpg", { type: "image/jpeg", lastModified: 1 });
   const lost = () => Promise.reject(new TypeError("Failed to fetch"));
   const saved = async () => new Response(JSON.stringify({ photo: "p.webp" }), { status: 201 });
-  const send = (fetchFn: typeof fetch, file: File) =>
-    uploadPhoto({ api: API, token: "tok", fetchFn }, "s1", { file, date: "2026-10-01" });
+  const send = (fetchFn: typeof fetch, file: File, key: string) =>
+    uploadPhoto({ api: API, token: "tok", fetchFn }, "s1", { file, date: "2026-10-01" }, key);
 
-  it("US-QS-03 a lost answer, then the same file again: the repeat carries the same Idempotency-Key", async () => {
+  it("US-QS-03 a lost answer, then the same file again with the same key: the repeat carries that key", async () => {
     const fetchFn = vi
       .fn<typeof fetch>()
       .mockImplementationOnce(lost)
       .mockImplementationOnce(saved);
-    const first = await send(fetchFn, photo([1, 2, 3]));
-    const second = await send(fetchFn, photo([1, 2, 3]));
+    const first = await send(fetchFn, photo([1, 2, 3]), "action-1");
+    const second = await send(fetchFn, photo([1, 2, 3]), "action-1");
     expect([first.ok, second.ok]).toEqual([false, true]);
     expect(sentKey(fetchFn, 1)).toBe(sentKey(fetchFn, 0));
   });
 
-  it("US-QS-03 another photo after a lost answer is a new write: its key differs although name, size, type and time match", async () => {
+  it("US-QS-03 another action after a lost answer is a new write: its key differs although the file is the same", async () => {
     const fetchFn = vi
       .fn<typeof fetch>()
       .mockImplementationOnce(lost)
       .mockImplementationOnce(saved);
-    await send(fetchFn, photo([1, 2, 3]));
-    await send(fetchFn, photo([9, 8, 7]));
+    await send(fetchFn, photo([1, 2, 3]), "action-1");
+    await send(fetchFn, photo([1, 2, 3]), "action-2");
     expect(sentKey(fetchFn, 1)).not.toBe(sentKey(fetchFn, 0));
   });
 
-  it("US-QS-03 after a saved photo the same file is a new write again, so a genuine second photo gets the replace question", async () => {
-    const fetchFn = vi
-      .fn<typeof fetch>()
-      .mockImplementationOnce(saved)
-      .mockImplementationOnce(
-        async () =>
-          new Response(JSON.stringify({ error: { code: "measurement.photo_exists", text: "x" } }), {
-            status: 409,
-          }),
-      );
-    await send(fetchFn, photo([1, 2, 3]));
-    const again = await send(fetchFn, photo([1, 2, 3]));
-    expect(again).toMatchObject({ ok: false, error: { code: "measurement.photo_exists" } });
-    expect(sentKey(fetchFn, 1)).not.toBe(sentKey(fetchFn, 0));
-  });
-
-  it("US-QS-03 a saved photo frees the open key of an older lost upload: repeating that one is a new write", async () => {
+  it("US-QS-03 a changed file under the same key is refused by the server, it is not a new write", async () => {
     const fetchFn = vi
       .fn<typeof fetch>()
       .mockImplementationOnce(lost)
-      .mockImplementationOnce(saved)
       .mockImplementationOnce(saved);
-    await send(fetchFn, photo([1, 2, 3]));
-    await send(fetchFn, photo([9, 8, 7]));
-    await send(fetchFn, photo([1, 2, 3]));
-    expect(sentKey(fetchFn, 2)).not.toBe(sentKey(fetchFn, 0));
+    await send(fetchFn, photo([1, 2, 3]), "action-1");
+    await send(fetchFn, photo([9, 8, 7]), "action-1");
+    expect(sentKey(fetchFn, 1)).toBe(sentKey(fetchFn, 0));
   });
 });

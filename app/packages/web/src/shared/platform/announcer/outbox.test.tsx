@@ -2,7 +2,14 @@
 import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createWrite, useWriteAction, type Response as ApiResponse } from "@/shared/data";
+import {
+  appendKey,
+  createWrite,
+  useWriteAction,
+  type KeyScope,
+  type WriteOptions,
+  type WriteSend,
+} from "@/shared/data";
 import { AnnouncerProvider } from "./announcer";
 import { deliverBuffered } from "./outbox";
 
@@ -11,6 +18,7 @@ afterEach(async () => {
   vi.restoreAllMocks();
   // The buffer is shared by the whole page: leave it empty for the next test.
   await deliverBuffered();
+  vi.unstubAllGlobals();
 });
 
 const online = (state: boolean) =>
@@ -19,19 +27,37 @@ const online = (state: boolean) =>
 const visible = (text: string) =>
   screen.getAllByText(text).filter((el) => !el.closest("[aria-live]"));
 /** What a screen reader is told (a repeated message carries a trailing no-break space). */
-const heard = () => region()?.textContent?.replace(/\u00A0$/, "");
+const heard = () => region()?.textContent?.replace(/ $/, "");
 const buffered = () => waitFor(() => expect(heard()).toMatch(/^Du bist offline/));
 const region = () => document.querySelector<HTMLElement>("[aria-live=polite]");
 
+/** The server of a test: each call gets the next answer, an Error is a lost answer. The buffer delivers over the global fetch. */
+function serverWith(...answers: (Response | Error)[]) {
+  const fetchFn = vi.fn<typeof fetch>(async () => {
+    const next = answers.shift() ?? new Response("{}", { status: 201 });
+    if (next instanceof Error) throw next;
+    return next;
+  });
+  vi.stubGlobal("fetch", fetchFn);
+  return fetchFn;
+}
+const ok = () => new Response("{}", { status: 201 });
+const lost = () => new TypeError("Failed to fetch");
+const refusedWith = (code: string) =>
+  new Response(JSON.stringify({ error: { code, text: "raw" } }), { status: 403 });
+
+/** The action of the test page's save: one target (the page), one action (US-QS-03). */
+const page: KeyScope = { target: "page", action: "save" };
+
 /** One tap that writes, shown the way a page does: a button that runs the action. */
-function Page(props: {
-  send: (token: string) => Promise<ApiResponse<unknown>>;
-  after: () => void;
-}) {
+function Page(props: { send: WriteSend; after: () => void }) {
   const write = useWriteAction(async () => "token", props.after);
   return (
     <>
-      <button type="button" onClick={() => void write.run(props.send, "Gesichert: Monstera.")}>
+      <button
+        type="button"
+        onClick={() => void write.run(props.send, "Gesichert: Monstera.", page)}
+      >
         Sichern
       </button>
       <p>{write.running ? "läuft" : "bereit"}</p>
@@ -39,21 +65,27 @@ function Page(props: {
   );
 }
 
-const shell = (send: (token: string) => Promise<ApiResponse<unknown>>, after = vi.fn()) =>
+const shell = (send: WriteSend, after = vi.fn()) =>
   render(
     <AnnouncerProvider>
       <Page send={send} after={after} />
     </AnnouncerProvider>,
   );
 
+/** The write of the tests: a measurement through the API layer, so an offline tap is buffered with its key (US-QS-10). */
+const measure =
+  (value: number): WriteSend =>
+  (t, options: WriteOptions) =>
+    createWrite<unknown>("http://api", t, options)("POST", "/measurements", { value });
+
 describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P-10)", () => {
   it("US-QS-10 offline a write is not sent, the buffered state is visible text and announced, the focus stays", async () => {
     online(false);
-    const send = vi.fn(async () => ({ ok: true as const, value: {} }));
-    shell(send);
+    const fetchFn = serverWith();
+    shell(measure(9));
     const button = screen.getByRole("button", { name: "Sichern" });
     await userEvent.click(button);
-    expect(send).not.toHaveBeenCalled();
+    expect(fetchFn).not.toHaveBeenCalled();
     const text =
       "Du bist offline. Wird gesendet, sobald du wieder online bist: Gesichert: Monstera.";
     await waitFor(() => expect(heard()).toBe(text));
@@ -63,9 +95,9 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
 
   it("US-QS-10 when the network returns the write is delivered once, and the delivery is visible text and announced", async () => {
     online(false);
-    const send = vi.fn(async () => ({ ok: true as const, value: {} }));
+    const fetchFn = serverWith(ok());
     const after = vi.fn();
-    shell(send, after);
+    shell(measure(9), after);
     const button = screen.getByRole("button", { name: "Sichern" });
     await userEvent.click(button);
     await userEvent.click(button);
@@ -75,30 +107,27 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
     const text = "Nachträglich gesendet: Gesichert: Monstera.";
     await waitFor(() => expect(heard()).toBe(text));
     expect(visible(text)).toHaveLength(1);
-    expect(send).toHaveBeenCalledTimes(1);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
     expect(after).toHaveBeenCalledTimes(1);
     expect(document.activeElement).toBe(button);
   });
 
   it("US-QS-10 a double tap while offline buffers one write, not two (no duplicate entry)", async () => {
     online(false);
-    const send = vi.fn(async () => ({ ok: true as const, value: {} }));
-    shell(send);
+    const fetchFn = serverWith(ok());
+    shell(measure(9));
     const button = screen.getByRole("button", { name: "Sichern" });
     await userEvent.dblClick(button);
     await buffered();
     online(true);
     act(() => void window.dispatchEvent(new Event("online")));
-    await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
   });
 
   it("US-QS-10 a refused delivery stays visible with the text of its code and is announced (P-10)", async () => {
     online(false);
-    const send = vi.fn(async () => ({
-      ok: false as const,
-      error: { code: "access.denied", text: "raw" },
-    }));
-    shell(send as never);
+    serverWith(refusedWith("access.denied"));
+    shell(measure(9));
     await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await buffered();
     online(true);
@@ -111,42 +140,36 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
 
   it("US-QS-10 still without a network the delivery waits and the write stays buffered", async () => {
     online(false);
-    const send = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: false,
-        error: { code: "network.not_reachable", text: "x" },
-      })
-      .mockResolvedValue({ ok: true, value: {} });
-    shell(send);
+    const fetchFn = serverWith(lost(), ok());
+    shell(measure(9));
     await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await buffered();
     act(() => void window.dispatchEvent(new Event("online")));
-    await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
     expect(heard()).toMatch(/^Du bist offline/);
     act(() => void window.dispatchEvent(new Event("online")));
     await waitFor(() => expect(heard()).toMatch(/^Nachträglich gesendet/));
-    expect(send).toHaveBeenCalledTimes(2);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
   it("US-QS-10 online a write is sent at once and nothing is buffered", async () => {
     online(true);
-    const send = vi.fn(async () => ({ ok: true as const, value: {} }));
+    const fetchFn = serverWith(ok());
     const { result } = renderHook(() =>
       useWriteAction(
         async () => "token",
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(send, "Gesichert."));
-    expect(send).toHaveBeenCalledTimes(1);
+    await act(async () => result.current.run(measure(9), "Gesichert.", page));
+    expect(fetchFn).toHaveBeenCalledTimes(1);
     expect(result.current.message).toBe("Gesichert.");
   });
 
   it("US-QS-10 the delivered note goes away after a while, a waiting one stays until it is delivered", async () => {
     online(false);
-    const send = vi.fn(async () => ({ ok: true as const, value: {} }));
-    shell(send);
+    serverWith(ok());
+    shell(measure(9));
     await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await buffered();
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -170,35 +193,46 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
     }
   });
 
-  it("US-QS-10 without an announcer a write is sent as before, offline too", async () => {
+  it("US-QS-10 without an announcer an offline write is refused, not sent (US-QS-30)", async () => {
     online(false);
-    const send = vi.fn(async () => ({ ok: true as const, value: {} }));
+    const fetchFn = serverWith();
     const { result } = renderHook(() =>
       useWriteAction(
         async () => "token",
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(send, "Gesichert."));
-    expect(send).toHaveBeenCalledTimes(1);
+    await act(async () => result.current.run(measure(9), "Gesichert.", page));
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(result.current.error?.code).toBe("network.not_reachable");
   });
 });
 
 /**
  * A server that keeps one record per Idempotency-Key, as the API does (its replay test in `care/measurements.test.ts`).
- * The first `lost` answers are lost on the way back: the record exists, the client sees a network error.
+ * The first `lost` answers are lost on the way back: the record exists, the client sees a network error. With `strict`
+ * the server refuses a key that comes back with another body (`idempotency.key_conflict`).
  */
-function serverLosing(lost: number) {
-  const records = new Map<string, unknown>();
+function serverLosing(lost: number, strict = false) {
+  const records = new Map<string, { url: string; body: unknown }>();
   const keys: string[] = [];
   let left = lost;
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const key = (init?.headers as Record<string, string>)["Idempotency-Key"] ?? "";
     keys.push(key);
-    if (!records.has(key)) {
-      const body = init?.body === undefined ? null : JSON.parse(String(init.body));
-      records.set(key, { url: String(url), body });
-    }
+    const request = {
+      url: String(url),
+      body: init?.body === undefined ? null : JSON.parse(String(init.body)),
+    };
+    const seen = records.get(key);
+    if (strict && seen && JSON.stringify(seen) !== JSON.stringify(request))
+      return new Response(
+        JSON.stringify({ error: { code: "idempotency.key_conflict", text: "x" } }),
+        {
+          status: 409,
+        },
+      );
+    if (!seen) records.set(key, request);
     if (left > 0) {
       left -= 1;
       throw new TypeError("Failed to fetch");
@@ -208,14 +242,18 @@ function serverLosing(lost: number) {
   return { fetchFn, records, keys };
 }
 
-const measurement = (value: number) => (t: string, fetchFn: typeof fetch) =>
-  createWrite("http://api", t, fetchFn)("POST", "/measurements", { value });
+/** A send of a page on a measurement of the test server; the options of the action go on to the write (US-QS-03). */
+const measureOn =
+  (server: { fetchFn: typeof fetch }, value: number): WriteSend =>
+  (t, options) =>
+    measure(value)(t, { ...options, fetchFn: server.fetchFn });
 
 describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idempotency-Key", () => {
   it("US-QS-03 a buffered write whose answer was lost is sent again with the same key: one record", async () => {
     online(false);
     const server = serverLosing(1);
-    shell((t) => measurement(9)(t, server.fetchFn));
+    vi.stubGlobal("fetch", server.fetchFn);
+    shell(measureOn(server, 9));
     await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await buffered();
     online(true);
@@ -230,17 +268,17 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
 
   it("US-QS-03 a retry by the user after a lost answer sends the same key: one record", async () => {
     online(true);
-    const server = serverLosing(1);
-    const save = (t: string) => measurement(9)(t, server.fetchFn);
+    const server = serverLosing(1, true);
+    const save = measureOn(server, 9);
     const { result } = renderHook(() =>
       useWriteAction(
         async () => "token",
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(save, "Gesichert."));
+    await act(async () => result.current.run(save, "Gesichert.", page));
     expect(result.current.error?.code).toBe("network.not_reachable");
-    await act(async () => result.current.run(save, "Gesichert."));
+    await act(async () => result.current.run(save, "Gesichert.", page));
     expect(result.current.error).toBeNull();
     expect(server.keys).toHaveLength(2);
     expect(server.keys[1]).toBe(server.keys[0]);
@@ -249,104 +287,202 @@ describe("US-QS-03 · a repeat of a write whose answer was lost carries its Idem
 
   it("US-QS-03 a second tap after a confirmed write is a new write with a key of its own", async () => {
     online(true);
-    const server = serverLosing(0);
-    const save = (t: string) => measurement(9)(t, server.fetchFn);
+    const server = serverLosing(0, true);
+    const save = measureOn(server, 9);
     const { result } = renderHook(() =>
       useWriteAction(
         async () => "token",
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(save, "Gesichert."));
-    await act(async () => result.current.run(save, "Gesichert."));
+    await act(async () => result.current.run(save, "Gesichert.", page));
+    await act(async () => result.current.run(save, "Gesichert.", page));
     expect(server.keys[1]).not.toBe(server.keys[0]);
     expect(server.records.size).toBe(2);
   });
 
-  it("US-QS-03 a different write after a lost answer gets a key of its own", async () => {
+  it("US-QS-03 a lost answer on row A, a tap on row B, then a retap on A: B gets a key of its own, A's retap repeats A's key", async () => {
     online(true);
-    const server = serverLosing(1);
+    const server = serverLosing(1, true);
+    const rowA: KeyScope = { target: "row-a", action: "save" };
+    const rowB: KeyScope = { target: "row-b", action: "save" };
     const { result } = renderHook(() =>
       useWriteAction(
         async () => "token",
         () => undefined,
       ),
     );
-    await act(async () => result.current.run((t) => measurement(9)(t, server.fetchFn), "a"));
-    await act(async () => result.current.run((t) => measurement(10)(t, server.fetchFn), "b"));
+    await act(async () => result.current.run(measureOn(server, 1), "a", rowA));
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await act(async () => result.current.run(measureOn(server, 2), "b", rowB));
     expect(server.keys[1]).not.toBe(server.keys[0]);
+    expect(result.current.error).toBeNull();
+    await act(async () => result.current.run(measureOn(server, 1), "a", rowA));
+    expect(server.keys[2]).toBe(server.keys[0]);
+    expect(result.current.error).toBeNull();
     expect(server.records.size).toBe(2);
+  });
+
+  it("US-QS-03 an edited retry after a lost answer keeps the key: the server refuses it (idempotency.key_conflict), one record, the original replays", async () => {
+    online(true);
+    const server = serverLosing(1, true);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "token",
+        () => undefined,
+      ),
+    );
+    // The action names the operation only (a create or an append): the edited value is the body, not the action.
+    const scope: KeyScope = appendKey("specimen", "e1", "measure");
+    await act(async () => result.current.run(measureOn(server, 9), "a", scope));
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await act(async () => result.current.run(measureOn(server, 10), "b", scope));
+    expect(server.keys[1]).toBe(server.keys[0]);
+    expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    expect(server.records.size).toBe(1);
+    // The original body under the held key gets the stored answer: success, still one record.
+    await act(async () => result.current.run(measureOn(server, 9), "a", scope));
+    expect(server.keys[2]).toBe(server.keys[0]);
+    expect(result.current.error).toBeNull();
+    expect(server.records.size).toBe(1);
+  });
+
+  it("US-QS-03 the server refuses a key that comes back with another body: idempotency.key_conflict is the answer, nothing is replayed", async () => {
+    const server = serverLosing(0, true);
+    await createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "same" })(
+      "POST",
+      "/measurements",
+      { value: 1 },
+    );
+    const again = await createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "same" })(
+      "POST",
+      "/measurements",
+      { value: 2 },
+    );
+    expect(again.ok).toBe(false);
+    expect(!again.ok && again.error.code).toBe("idempotency.key_conflict");
   });
 
   it("US-QS-03 a refused write is definitive: its identical retry gets a new key", async () => {
     online(true);
-    const fetchFn = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ error: { code: "input.invalid", text: "x" } }), {
-          status: 400,
-        }),
-      )
-      .mockResolvedValueOnce(new Response("{}", { status: 201 }));
-    const save = (t: string) => measurement(9)(t, fetchFn);
+    const fetchFn = serverWith(refusedWith("input.invalid"), ok());
+    const save = measureOn({ fetchFn }, 9);
     const { result } = renderHook(() =>
       useWriteAction(
         async () => "token",
         () => undefined,
       ),
     );
-    await act(async () => result.current.run(save, "Gesichert."));
-    await act(async () => result.current.run(save, "Gesichert."));
+    await act(async () => result.current.run(save, "Gesichert.", page));
+    await act(async () => result.current.run(save, "Gesichert.", page));
     const keys = fetchFn.mock.calls.map(
       ([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"],
     );
     expect(keys[1]).not.toBe(keys[0]);
   });
 
+  it("US-QS-03 a queued write whose answer was lost keeps its key when a newer write succeeds: its redelivery sends the same key", async () => {
+    online(false);
+    const server = serverLosing(1);
+    vi.stubGlobal("fetch", server.fetchFn);
+    shell(measureOn(server, 9));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
+    await buffered();
+    online(true);
+    await deliverBuffered(); // applied, the answer is lost: the write stays queued with its key
+    expect(server.keys).toHaveLength(1);
+    await createWrite("http://api", "token", { fetchFn: server.fetchFn, key: "newer" })(
+      "POST",
+      "/measurements",
+      { value: 10 },
+    ); // a newer write succeeds
+    await deliverBuffered(); // the redelivery of the queued write
+    await waitFor(() => expect(heard()).toMatch(/^Nachträglich gesendet/));
+    expect(server.keys).toHaveLength(3);
+    expect(server.keys[2]).toBe(server.keys[0]);
+    expect(server.records.size).toBe(2);
+  });
+
   it("US-QS-03 a write whose answer was lost does not swallow a later write: on, off, on again is applied", async () => {
     const server = serverLosing(1);
-    const write = createWrite("http://api", "tok", server.fetchFn);
-    await write("PUT", "/share", { share: true }); // applied, the answer is lost
-    await write("PUT", "/share", { share: false }); // the user moved on
-    await write("PUT", "/share", { share: true }); // the same write again: a new write
+    // Each action has its own key (US-QS-03): the on, the off and the second on are three actions.
+    await createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "on" })(
+      "PUT",
+      "/share",
+      { share: true },
+    ); // applied, the answer is lost
+    await createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "off" })(
+      "PUT",
+      "/share",
+      { share: false },
+    ); // the user moved on
+    await createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "on-again" })(
+      "PUT",
+      "/share",
+      { share: true },
+    ); // a new action: a new write
     expect(server.keys[2]).not.toBe(server.keys[0]);
     expect([...server.records.values()].at(-1)).toMatchObject({ body: { share: true } });
   });
 
-  it("US-QS-03 the same across two paths: archive lost, restore succeeds, archive again is applied", async () => {
-    const server = serverLosing(1);
-    const write = createWrite("http://api", "tok", server.fetchFn);
-    await write("POST", "/specimens/e1/archive", { timeZone: "Europe/Berlin" });
-    await write("POST", "/specimens/e1/restore");
-    await write("POST", "/specimens/e1/archive", { timeZone: "Europe/Berlin" });
-    expect(server.keys[2]).not.toBe(server.keys[0]);
-    expect([...server.records.values()].at(-1)).toMatchObject({
-      url: "http://api/specimens/e1/archive",
-    });
-  });
-
   it("US-QS-03 two writes whose answers were lost: delivering the older one leaves the newer one's key in place", async () => {
     const server = serverLosing(2);
-    const write = createWrite("http://api", "tok", server.fetchFn);
-    await write("POST", "/measurements", { value: 1 }); // older, lost
-    await write("POST", "/measurements", { value: 2 }); // newer, lost
-    await write("POST", "/measurements", { value: 1 }); // older delivered: succeeds
-    await write("POST", "/measurements", { value: 2 }); // newer delivered again
+    const older = createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "older" });
+    const newer = createWrite("http://api", "tok", { fetchFn: server.fetchFn, key: "newer" });
+    await older("POST", "/measurements", { value: 1 }); // older, lost
+    await newer("POST", "/measurements", { value: 2 }); // newer, lost
+    await older("POST", "/measurements", { value: 1 }); // older delivered again: succeeds
+    await newer("POST", "/measurements", { value: 2 }); // newer delivered again
     expect(server.keys[2]).toBe(server.keys[0]);
     expect(server.keys[3]).toBe(server.keys[1]);
     expect(server.records.size).toBe(2);
   });
 });
 
+describe("US-QS-03 · an offline tap is buffered before the token is asked", () => {
+  it("US-QS-03 an offline tap with an expired token is buffered and delivered once, with its key, when the token is back", async () => {
+    online(false);
+    const server = serverLosing(0, true);
+    vi.stubGlobal("fetch", server.fetchFn);
+    // The token of the tab is gone (expired): it is read again only when the buffer delivers (outbox.ts).
+    const tokenOf: { current?: string } = {};
+    function ExpiredPage(props: { send: WriteSend }) {
+      const write = useWriteAction(
+        async () => tokenOf.current,
+        () => undefined,
+      );
+      return (
+        <button type="button" onClick={() => void write.run(props.send, "Gesichert.", page)}>
+          Sichern
+        </button>
+      );
+    }
+    render(
+      <AnnouncerProvider>
+        <ExpiredPage send={measureOn(server, 9)} />
+      </AnnouncerProvider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
+    await buffered();
+    expect(server.keys).toHaveLength(0);
+    tokenOf.current = "token";
+    online(true);
+    await deliverBuffered();
+    expect(server.keys).toHaveLength(1);
+    expect(server.records.size).toBe(1);
+    await waitFor(() => expect(heard()).toMatch(/^Nachträglich gesendet/));
+  });
+});
+
 describe("US-QS-30 · a write through useWriteAction stays active offline", () => {
   it("US-QS-30 · offline the buffered write control is active, buffers the write and is not refused", async () => {
     online(false);
-    const send = vi.fn(async () => ({ ok: true as const, value: {} }));
-    shell(send);
+    const fetchFn = serverWith();
+    shell(measure(9));
     const button = screen.getByRole("button", { name: "Sichern" });
     expect(button.hasAttribute("aria-disabled")).toBe(false);
     await userEvent.click(button);
-    expect(send).not.toHaveBeenCalled();
+    expect(fetchFn).not.toHaveBeenCalled();
     await buffered();
     expect(screen.queryByText(/Keine Verbindung/)).toBeNull();
   });

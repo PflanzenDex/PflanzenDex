@@ -133,8 +133,11 @@ The UI gates, Lighthouse, the e2e tests and `make ci` load the workstation so mu
 - **See the holder:** `cat "$(git rev-parse --git-common-dir)/heavy-job.owner"`. A waiting job prints the same holder.
 - **Released with its owner:** the lock belongs to the make process that took it and is released when that process ends, also on a failure or a kill. A note whose pid is dead does not count. A heavy target inside another one (`make e2e` run by `make ci`) sees the lock as its own and runs at once.
 - **Waiting:** a free lock is taken silently. A wait prints its line after one second, naming the job and the holder, and again every 30 seconds. `HEAVY_LOCK_WAIT=<seconds>` bounds the wait (default 3600, a starting value, assumption); then the job exits with 1 and names the holder. Example: `HEAVY_LOCK_WAIT=600 make e2e`.
-- **CI does not use it:** with `CI` set the target does nothing, because each CI job is its own machine. `make gates`, the pre-push hook and the other targets stay outside the lock; they are light.
-- The script needs `setsid` and `flock` (util-linux).
+- **Maximum hold time (issue 2370):** `HEAVY_LOCK_MAX_HOLD=<seconds>` (default 1200, a starting value, assumption). A wait that finds the holder older than that also prints its label (directory and target), its age and that it is over the maximum. It only reports: nothing is stopped or taken from the holder. Tell the owner of such a holder; do not kill it.
+- **One command under the lock (issue 2370):** `make heavy RUN="<command>"` takes the lock through its prerequisite `heavy-lock`, runs the command in its own process group (`tools/lint/heavy-lock.run.sh`) and releases the lock when the command ends, on success, on failure and when make is killed (the command's group is stopped then too). Its exit code is the script's; make itself exits with 2 when the command fails and prints `Error <code>`. Example: `make heavy RUN="cd app/packages/web && npx playwright test"`. An empty or blank `RUN` is refused before the lock is taken. Agents use this form for every ad-hoc heavy command.
+- **Never hold the lock across turns:** do not start `make heavy-lock` by hand and keep it running while you think, write or wait (a `sleep` holder or a shell that waits for the lock). On 2026-11-20 a recheck held the lock for over 20 minutes that way, and two tickets waited behind it. A heavy target (`make e2e`, `make one-screen`, …) or `make heavy RUN=` holds it only around its own command.
+- **CI does not use it:** with `CI` set the target does nothing, because each CI job is its own machine; `make heavy RUN=` still runs its command there. `make gates`, the pre-push hook and the other targets stay outside the lock; they are light.
+- The scripts need `setsid` and `flock` (util-linux).
 - `/tmp` is a tmpfs on the workstation: bulky output there uses RAM. Check `df -h /tmp` before a long run and keep big logs in the checkout's `.cache/` (ignored by git) instead.
 
 ## CI reruns and merges
@@ -164,10 +167,17 @@ The UI gates, Lighthouse, the e2e tests and `make ci` load the workstation so mu
 The roles are indexed in `CLAUDE.md` ("Agent sessions and models"); each subagent's rules are in its `.claude/agents/<name>.md`. The orchestrating session (the main session, Opus at effort medium) has no definition file; its rules are these:
 
 - It picks and claims tickets (`make claim`, `make worktree`), sets the PR title and starts one `ticket-lead` per ticket with only the ticket's facts. When it works a ticket itself, it takes the ticket-lead role and follows `.claude/agents/ticket-lead.md`.
-- One lead runs one implementer. The orchestrator adds implementers by the machine's resources (CPU, free RAM, running heavy jobs); heavy work waits on `make heavy-lock` (see "One heavy job at a time").
+- One lead runs one implementer. The orchestrator adds implementers by the machine's resources (CPU, free RAM, running heavy jobs); heavy work waits on the heavy lock: `make heavy-lock` for a heavy target, `make heavy RUN="<command>"` for an ad-hoc command (see "One heavy job at a time").
 - No hard cap on open PRs; with three open PRs that are all drafts, it finishes them before claiming more.
 - It takes the owner's decisions and relays them to the leads, and spot-checks each lead's report against the merged head on `dev`.
 - It works a batch of tickets this way. At a natural break (a batch is done, or the context grows long) it suggests `/clear` to the owner, once every open PR's Handoff carries the state, open questions and owner decisions.
+
+### What the SubagentStop hooks check (US-QG-07, issues 2371 and US-DEV-02)
+
+When an `implementer` or a `ticket-lead` stops, two Claude Code hooks look at its run (`.claude/settings.json`, `run.mjs`). Both read the worktrees the subagent entered with `cd <folder> &&` from its transcript; only the first one can block, and it does so once.
+
+- `subagent-stop` (the `implementer` only, `.claude/hooks/subagent-gates.mjs`) runs `make gates` in that worktree, unless a green stamp covers the same commit and code. A red run blocks the end once with its output; the second red end is reported as a system message.
+- `subagent-push` (the `implementer` and the `ticket-lead`, `.claude/hooks/subagent-push.mjs`, issue 2371) adds the system message "no new commit pushed on <branch>" when the origin head of a worktree's branch did not move during the run. The start is the first timestamp of the transcript; the head at the start is the newest reflog entry of `refs/remotes/origin/<branch>` written in an earlier second, and the head at the stop is that ref. It flags nothing it cannot tell: a detached HEAD, a branch first pushed during the run, or a git error. It runs read-only git calls only (no fetch, no push, no write) and has a 15 s limit. The message is shown in the UI; a ticket lead still checks `git log origin/<branch>` itself.
 
 ## Short output for agents (US-DEV-12)
 
