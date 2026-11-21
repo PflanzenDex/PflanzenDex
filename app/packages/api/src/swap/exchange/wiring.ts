@@ -14,6 +14,7 @@ import {
   SpeciesPostgres,
   SpecimenPostgres,
   SwapsPostgres,
+  TaxonomyPostgres,
   WishesPostgres,
   WishVisibilityPostgres,
 } from "@pflanzendex/db";
@@ -148,9 +149,20 @@ export function matchContext(
   const wishes = new WishesPostgres(pool);
   const offers = new OffersPostgres(pool);
   const visibility = new WishVisibilityPostgres(pool);
+  const taxa = new TaxonomyPostgres(pool);
   return {
     answers: new MatchAnswersPostgres(pool),
     clock,
+    // The catalog picture of each species of the cards (US-QS-32): the public catalog by Latin name, the same source as the
+    // collector cards; a species without a resolved row has none (P-08). A friend's photo never comes through here (P-05).
+    pictures: {
+      async of(latinNames) {
+        const rows = await taxa.picturesOf(latinNames);
+        return new Map(
+          rows.map((r) => [r.latinName, { imageUrl: r.imageUrl, sourceUrl: r.pageUrl }] as const),
+        );
+      },
+    },
     // The marked wishes of friends answer only for the species of the keeper's own open offers (DM-TAU-02, FR-WUN-07).
     friendWishes: {
       async wantedBy(userId, latinNames) {

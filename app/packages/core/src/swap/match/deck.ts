@@ -10,6 +10,7 @@ import {
 import { exchangeList, type ExchangeQuery } from "../exchange";
 import type { ExchangeDependencies, ExchangeOffer } from "../exchange";
 import type { MatchAnswers, StoredMatchAnswer } from "./answer/types";
+import { entryOf, type MatchEntry } from "./answer/entries";
 import { emptyReason, type EmptyReason, type Held, type MatchCounts } from "./empty";
 import {
   bothWays,
@@ -18,6 +19,8 @@ import {
   type FriendWishes,
   type MyOffers,
 } from "./both-ways";
+
+export type { EntryState, MatchEntry } from "./answer/entries";
 
 /** Days a "Later" card stays out of the deck (starting value 1 day, assumption of the PO). */
 export const LATER_DAYS = 1;
@@ -37,27 +40,10 @@ export type FitReason = WishlistReason | BothWaysReason;
 /** A match card (US-TAU-01): an open offer of a friend plus the reasons it is shown. No score, no percentage (FR-TAU-06). */
 export interface MatchCard extends ExchangeOffer {
   readonly reasons: readonly FitReason[];
-}
-
-/**
- * What became of an answered offer (US-TAU-06), derived on every read (NFR-04): `open` it is still a card, `requested`
- * the keeper has asked for it already, `wish_done` the wish is no longer on the wishlist (US-WUN-03), `unavailable` the
- * offer ended (withdrawn, given to someone else or the friendship ended) or is not shared any more.
- */
-export type EntryState = "open" | "requested" | "wish_done" | "unavailable";
-
-/** One answer of the keeper to an offer, for the lists "Später" and "Abgelehnt" (US-TAU-06). Private (FR-TAU-02). */
-export interface MatchEntry {
-  readonly offerId: string;
-  readonly answer: "no" | "later";
-  /** Local calendar date `YYYY-MM-DD` of the keeper (NFR-08). */
-  readonly answeredOn: string;
-  readonly speciesLatin: string | null;
-  readonly speciesGerman: string | null;
-  readonly giverName: string | null;
-  readonly state: EntryState;
-  /** The card while the entry is `open`, so a Later entry can be decided now. */
-  readonly card: MatchCard | null;
+  /** The catalog picture of the species, a link (US-QS-32); `null` = none known (P-08). Never a photo of the friend (P-05). */
+  readonly imageUrl: string | null;
+  /** The Wikipedia page of that picture, for its credit (CC BY-SA, FR-POK-07); `null` = unknown. */
+  readonly imageSourceUrl: string | null;
 }
 
 /** Why a match is no card: my open request (`requested`, listed under Requests) or my No or Later (`answered`). */
@@ -85,7 +71,25 @@ export function deckOrder(a: MatchCard, b: MatchCard): number {
   );
 }
 
-/** What the deck needs besides the exchange: the private answers, the clock (NFR-08), the counts that explain an empty deck and the own offers for "fits both ways". */
+/** The catalog picture of one species (US-QS-32): a link to the picture and to its Wikipedia page; `null` = none known (P-08). Public catalog data, shared by all accounts. */
+export interface CatalogPicture {
+  readonly imageUrl: string | null;
+  /** The Wikipedia page the picture comes from, for the credit (CC BY-SA, FR-POK-07). */
+  readonly sourceUrl: string | null;
+}
+
+/** Port (ADR 0012): the catalog pictures of the given Latin names; a species without a row is missing from the map. The app root wires it. */
+export interface CatalogPictures {
+  of(latinNames: readonly string[]): Promise<ReadonlyMap<string, CatalogPicture>>;
+}
+
+/** The picture fields of a card: the catalog picture of its species, `null` where none is known (US-QS-32, P-08). */
+function pictureOf(pictures: ReadonlyMap<string, CatalogPicture>, species: string) {
+  const picture = pictures.get(species);
+  return { imageUrl: picture?.imageUrl ?? null, imageSourceUrl: picture?.sourceUrl ?? null };
+}
+
+/** What the deck needs besides the exchange: the private answers, the clock (NFR-08), the counts that explain an empty deck, the own offers for "fits both ways" and the catalog pictures (US-QS-32). */
 export interface MatchContext {
   readonly answers: MatchAnswers;
   readonly clock: () => Date;
@@ -93,6 +97,8 @@ export interface MatchContext {
   readonly mine?: MyOffers;
   /** The marked wishes of friends for "fits both ways" (DM-TAU-02); without it only open requests count. */
   readonly friendWishes?: FriendWishes;
+  /** The catalog pictures of the cards (US-QS-32); without it every card has no picture (P-08). */
+  readonly pictures?: CatalogPictures;
 }
 
 /**
@@ -114,13 +120,14 @@ export async function readDeck(
   const today = localToday(context.clock(), query.timeZone);
   const given = new Map((await context.answers.list(userId)).map((a) => [a.offerId, a]));
   const wished = list.value.offers.filter((o) => o.onWishlist && o.speciesLatin !== null);
-  const reasoning = await deps.wishes.reasoningOf(userId, [
-    ...new Set(wished.map((o) => o.speciesLatin as string)),
-  ]);
+  const species = [...new Set(wished.map((o) => o.speciesLatin as string))];
+  const reasoning = await deps.wishes.reasoningOf(userId, species);
   const asked = await ownOffersAsked(deps, context.mine, userId, context.friendWishes);
+  const pictures = (await context.pictures?.of(species)) ?? new Map<string, CatalogPicture>();
   const matching = wished
     .map((o): MatchCard => ({
       ...o,
+      ...pictureOf(pictures, o.speciesLatin as string),
       reasons: [
         {
           kind: "wishlist",
@@ -173,28 +180,4 @@ export async function matchDeck(
   if (!r.ok) return r;
   const { cards, entries, empty, requested } = r.value;
   return ok({ cards, entries, empty, requested: requested.size });
-}
-function stateOf(offer: ExchangeOffer | undefined, card: MatchCard | null): EntryState {
-  if (!offer) return "unavailable";
-  if (!card) return "wish_done";
-  return offer.requested ? "requested" : "open";
-}
-
-/** The entry of one stored answer; the live offer wins over the copied names, which only serve when the offer is gone. */
-function entryOf(
-  a: StoredMatchAnswer,
-  offer: ExchangeOffer | undefined,
-  card: MatchCard | null,
-): MatchEntry {
-  const state = stateOf(offer, card);
-  return {
-    offerId: a.offerId,
-    answer: a.answer,
-    answeredOn: a.answeredOn,
-    speciesLatin: offer?.speciesLatin ?? a.speciesLatin,
-    speciesGerman: offer?.speciesGerman ?? a.speciesGerman,
-    giverName: offer?.ownerName ?? a.giverName,
-    state,
-    card: state === "open" ? card : null,
-  };
 }

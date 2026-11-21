@@ -1058,6 +1058,43 @@ describe("US-QG-05 QG-D2 the swap and match outputs carry only the whitelisted f
           "entries[].card.reasons",
         );
   });
+
+  it("US-QS-32 US-QG-05 QG-D2 the match card carries the catalog picture of its species and its Wikipedia page, and no photo of the friend", async () => {
+    // subD's wish for this species is set by the test above (same describe, the scenarios run in order).
+    const PICTURE = "https://upload.wikimedia.org/qs32/handover.jpg";
+    const PAGE = "https://de.wikipedia.org/wiki/Handover_qs32";
+    const id = await specimen(subA, "QS32");
+    expect((await call(subA, "PUT", `/sharing/specimens/${id}`, { share: "friends" })).status).toBe(
+      200,
+    );
+    const offerId = (
+      await call(subA, "POST", "/offers", { specimenId: id, type: "cutting", mode: "swap" })
+    ).body.id as string;
+    const probe = (await call(subD, "GET", "/exchange/offers?timeZone=Europe%2FBerlin")).body
+      .offers as { offerId: string; speciesLatin: string | null }[];
+    const latin = probe.find((x) => x.offerId === offerId)?.speciesLatin ?? null;
+    expect(latin).toBeTruthy();
+    // The catalog row of the species: the lock of this file is held, and the row goes away again at the end.
+    await admin.query(
+      `insert into taxon (latin_name, status, accepted_name, genus, family, catalog_fingerprint, built_at, image_url, page_url)
+       values ($1, 'resolved', $1, 'Handoverus', 'Testaceae', 'qs32', now(), $2, $3)`,
+      [latin, PICTURE, PAGE],
+    );
+    try {
+      const body = (await deck(subD)).body as { cards: Record<string, unknown>[] };
+      const card = body.cards.find((c) => c.offerId === offerId) as
+        (Record<string, unknown> & { reasons: { kind: string }[] }) | undefined;
+      expect(card).toBeDefined();
+      expectExactKeys(card, MATCH_CARD, "GET /exchange/match cards[]");
+      expect(card?.imageUrl).toBe(PICTURE);
+      expect(card?.imageSourceUrl).toBe(PAGE);
+      expect(typeof card?.photosShared).toBe("boolean");
+      for (const r of card?.reasons ?? [])
+        expectExactKeys(r, MATCH_REASONS[r.kind as keyof typeof MATCH_REASONS], "cards[].reasons");
+    } finally {
+      await admin.query("delete from taxon where latin_name = $1", [latin]);
+    }
+  });
 });
 
 // US-TAU-03 and US-TAU-07 through the API (real PostgreSQL), self-contained: its own giver and keepers with their friendships,

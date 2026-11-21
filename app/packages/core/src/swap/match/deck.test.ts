@@ -11,6 +11,7 @@ import type { ExchangeDependencies, FriendOffer, SwapSide } from "../exchange";
 import { execute } from "../../kernel/operation";
 import { InMemoryIdempotencyStore } from "../../kernel/test-helpers";
 import { matchDeck, matchYes } from "./index";
+import type { CatalogPicture, CatalogPictures } from "./deck";
 import { InMemoryMatchAnswers } from "./answer/test-helpers";
 
 const id = (n: number) => `00000000-0000-4000-8000-0000000000${n.toString(16).padStart(2, "0")}`;
@@ -574,5 +575,64 @@ describe("US-TAU-02 the summary counts my open requests from the server", () => 
     (deps.swaps as InMemoryExchange).sides["cleo"] = [mine(A, { swapId: "s-cleo" })];
     expect(await requestedOf(deps)).toBe(0);
     expect(await requestedOf(deps, "cleo")).toBe(0);
+  });
+});
+
+/** The catalog pictures of the test species; a name without a row has none (P-08). */
+class StubPictures implements CatalogPictures {
+  readonly asked: string[][] = [];
+  constructor(private readonly rows: Readonly<Record<string, CatalogPicture>>) {}
+  async of(latinNames: readonly string[]) {
+    this.asked.push([...latinNames]);
+    return new Map(latinNames.flatMap((n) => (this.rows[n] ? [[n, this.rows[n]] as const] : [])));
+  }
+}
+
+describe("US-QS-32 the match card carries the catalog picture of its species", () => {
+  const aloe: CatalogPicture = {
+    imageUrl: "https://upload.wikimedia.org/aloe.jpg",
+    sourceUrl: "https://de.wikipedia.org/wiki/Aloe_vera",
+  };
+  const decking = (deps: ExchangeDependencies, pictures?: StubPictures) =>
+    matchDeck(
+      deps,
+      {
+        answers: new InMemoryMatchAnswers(),
+        clock: () => new Date(),
+        ...(pictures === undefined ? {} : { pictures }),
+      },
+      "anna",
+      { timeZone: "Europe/Berlin" },
+    );
+
+  it("US-QS-32 the card takes the picture and the Wikipedia page of its species from the catalog", async () => {
+    const pictures = new StubPictures({ "Aloe vera": aloe });
+    const r = await decking(setup([offer(1)]), pictures);
+    expect(r.ok && r.value.cards[0]).toMatchObject({
+      imageUrl: aloe.imageUrl,
+      imageSourceUrl: aloe.sourceUrl,
+    });
+  });
+
+  it("US-QS-32 P-08 a species without a catalog picture has no picture: both values are null, the card stays", async () => {
+    const pictures = new StubPictures({ "Aloe vera": aloe });
+    const r = await decking(setup([offer(1), offer(2)]), pictures);
+    expect(
+      r.ok && r.value.cards.map((c) => [c.speciesLatin, c.imageUrl, c.imageSourceUrl]),
+    ).toEqual([
+      ["Aloe vera", aloe.imageUrl, aloe.sourceUrl],
+      ["Echeveria elegans", null, null],
+    ]);
+  });
+
+  it("US-QS-32 without a catalog source every card has no picture (null), and the deck still answers", async () => {
+    const r = await decking(setup([offer(1)]));
+    expect(r.ok && r.value.cards[0]).toMatchObject({ imageUrl: null, imageSourceUrl: null });
+  });
+
+  it("US-QS-32 P-05 the catalog is asked only for the approved species of the cards, never for an unnamed offer", async () => {
+    const pictures = new StubPictures({ "Aloe vera": aloe });
+    await decking(setup([offer(1), offer(4)]), pictures);
+    expect(pictures.asked.flat()).toEqual(["Aloe vera"]);
   });
 });

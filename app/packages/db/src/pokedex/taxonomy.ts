@@ -2,9 +2,11 @@ import type { Pool } from "pg";
 import { beginPlain, inTransaction } from "../kernel/index.ts";
 import {
   CARDS,
+  PICTURES,
   natureRarityOf,
   type CardRow,
   type IucnCategory,
+  type PictureRow,
   type TaxonCardRecord,
 } from "./taxon-cards.ts";
 
@@ -137,6 +139,12 @@ export class TaxonomyPostgres {
         }),
       }),
     );
+  }
+
+  /** The catalog pictures of the given Latin names (US-QS-32): shared by all accounts, no user data; a name without a resolved row is missing. */
+  async picturesOf(latinNames: readonly string[]): Promise<readonly PictureRow[]> {
+    if (latinNames.length === 0) return [];
+    return (await this.pool.query<PictureRow>(PICTURES, [latinNames])).rows;
   }
 
   /** Replaces the whole tree in one transaction: on any error nothing changes (US-POK-03). */
