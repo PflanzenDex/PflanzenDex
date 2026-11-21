@@ -7,6 +7,7 @@ import { DiscoverPageSkeleton } from "./discover-page.skeleton";
 import { decideSuggestion, loadSuggestions, undoSuggestionDecision } from "./discover-api";
 import table from "../discover.de.json";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 
 const t = texts(table);
 
@@ -86,11 +87,7 @@ export function DiscoverPage(props: {
       >
         {(value: SuggestionDeck) => (
           <>
-            {embedded ? null : (
-              <h1 id="discover-title" className="mb-2 text-2xl font-semibold">
-                {t("page.title")}
-              </h1>
-            )}
+            {embedded ? null : <PageHeader headingId="discover-title" title={t("page.title")} />}
             <DeckView
               key={deck}
               takeFocus={deck > 1}

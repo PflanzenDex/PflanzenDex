@@ -33,11 +33,16 @@ export function setGuarded(id: string, ref: { current: boolean }, on: boolean): 
 
 /**
  * Closes from the guard entry above a layer or a form (issue 2158): the guard becomes a plain entry at `to`, as a forward
- * entry cannot be deleted; the step back reaches `to` over the layer's entry, in one handler.
+ * entry cannot be deleted; the step back reaches `to` over the layer's entry, in one handler. `steps` is the number of entries
+ * the walk goes back: the guard and the layer's own entry (2), one more for a form that also leaves the layer below it (US-QS-32).
  */
-export function walkOverGuard(navigate: NavigateFunction, to: Below & { hash: string }): void {
+export function walkOverGuard(
+  navigate: NavigateFunction,
+  to: Below & { hash: string },
+  steps = 2,
+): void {
   void navigate(to, { replace: true });
-  void navigate(-2);
+  void navigate(-steps);
 }
 
 /**

@@ -708,3 +708,51 @@ describe("US-QS-32 a page on its way shows its entries' skeletons, not an empty 
     }
   });
 });
+
+describe("US-QS-32 a row keeps its content height: the rows of a pager never shrink (issue 2315)", () => {
+  it("US-QS-32 every row of a fit pager is a shrink-0 item, so a squeezed list cannot collapse it to its borders (issue 2315)", () => {
+    render(
+      <MemoryRouter>
+        <Pager items={items} pageSize={3} fit label="Pflanzen" renderItem={(t) => t} />
+      </MemoryRouter>,
+    );
+    const rows = screen.getAllByRole("listitem");
+    expect(rows).toHaveLength(3);
+    for (const row of rows) expect(row.classList.contains("shrink-0")).toBe(true);
+  });
+
+  it("US-QS-32 every row of a pager without fit is a shrink-0 item too (issue 2315)", () => {
+    render(<Example />);
+    const rows = screen.getAllByRole("listitem");
+    expect(rows).toHaveLength(3);
+    for (const row of rows) expect(row.classList.contains("shrink-0")).toBe(true);
+  });
+
+  it("US-QS-32 the placeholders of a page on its way are shrink-0 items as well (issue 2315)", () => {
+    render(
+      <MemoryRouter>
+        <Pager
+          items={["a"]}
+          pageSize={3}
+          label="Pflanzen"
+          paging={{
+            total: 5,
+            loading: true,
+            onMore: vi.fn(),
+            onRetry: vi.fn(),
+            loadingText: "Pflanzen werden geladen …",
+            retryText: "Erneut versuchen",
+            placeholder: <span data-testid="tile-skeleton" />,
+          }}
+          renderItem={(item) => <span>{item}</span>}
+        />
+      </MemoryRouter>,
+    );
+    const ul = screen.getByRole("list", { name: "Pflanzen" });
+    const placeholders = Array.from(ul.children).filter(
+      (li) => li.getAttribute("aria-hidden") === "true",
+    );
+    expect(placeholders).toHaveLength(2);
+    for (const li of Array.from(ul.children)) expect(li.classList.contains("shrink-0")).toBe(true);
+  });
+});

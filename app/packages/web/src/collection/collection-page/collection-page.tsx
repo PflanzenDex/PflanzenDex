@@ -52,6 +52,7 @@ export function CollectionPage(props: Props) {
     form,
     plant: formPlant,
     archivedEntry: request.value?.archived.find((e) => e.id === form.plantId),
+    archiveRead: request.status !== "pending",
     hooks,
   });
   const create = useCreate(api, token, newSpecies, {

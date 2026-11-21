@@ -5,7 +5,7 @@ import { growthTrend, type GrowthTrend, type MeasurementView } from "@pflanzende
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient, type Response as ApiResponse } from "@/shared/data";
 import { growthLines } from "../../measure/measurement-header/growth-summary/growth-text";
-import { GROWTH_READINGS } from "./growth-frame/growth-frame";
+import { GROWTH_READINGS, UNMEASURED_READINGS } from "./growth-frame/growth-frame";
 import { PlantGrowth } from "./plant-growth";
 import { PlantGrowthSkeleton } from "./plant-growth.skeleton";
 
@@ -26,10 +26,10 @@ const loadedWith =
   (growth: GrowthTrend): (() => Promise<ApiResponse<MeasurementView>>) =>
   async () => ({ ok: true, value: { growth } as unknown as MeasurementView });
 
-function renderGrowth() {
+function renderGrowth(extra: { measured?: boolean } = {}) {
   return render(
     <QueryClientProvider client={createQueryClient()}>
-      <PlantGrowth api="http://api.test" token={token} specimenId="specimen-1" />
+      <PlantGrowth api="http://api.test" token={token} specimenId="specimen-1" {...extra} />
     </QueryClientProvider>,
   );
 }
@@ -202,5 +202,62 @@ describe("US-QS-32 the growth line reserves its final height in every state (iss
         [2, 3, 4].map((n) => `${shape} n=${n} sameDay=true last=etiolated`),
       ),
     );
+  });
+});
+
+describe("US-QS-23 the growth line of a plant without a measurement reserves one line only (issue 2384)", () => {
+  const NONE: GrowthTrend = { count: 0, ratePerYear: null, trend: null, signal: null };
+
+  it("US-QS-23 the unmeasured frame holds one sizer, the reading 'no measurement', and the measured frame still holds every reading (US-QS-32)", () => {
+    answer.load = never;
+    const unmeasured = renderGrowth({ measured: false });
+    const copies = sizers(unmeasured.container);
+    expect(copies).toHaveLength(1);
+    expect(UNMEASURED_READINGS).toHaveLength(1);
+    expect(drawn(copies[0] as HTMLElement)).toContain("noch keine Messung");
+    unmeasured.unmount();
+    const measured = renderGrowth({ measured: true });
+    expect(sizers(measured.container)).toHaveLength(GROWTH_READINGS.length);
+    expect(GROWTH_READINGS.length).toBeGreaterThan(1);
+    measured.unmount();
+    // Without the flag the frame keeps every reading, as before.
+    expect(sizers(renderGrowth().container)).toHaveLength(GROWTH_READINGS.length);
+  });
+
+  it("US-QS-23 the loaded 'no measurement' reading renders in the one-line frame, as the reading it reserves", async () => {
+    answer.load = loadedWith(NONE);
+    const { container } = renderGrowth({ measured: false });
+    const frame = container.firstElementChild as HTMLElement;
+    await waitFor(() => expect(visibleCell(frame).querySelector("p")).not.toBeNull());
+    const loaded = visibleCell(frame).querySelector("p")?.textContent ?? "";
+    expect(sizers(frame)).toHaveLength(1);
+    expect(wording(drawn(sizers(frame)[0] as HTMLElement))).toBe(wording(loaded));
+  });
+
+  it("US-QS-23 the chunk fallback of a plant without a measurement reserves the same one sizer", () => {
+    expect(
+      sizers(render(<PlantGrowthSkeleton label="Lädt …" measured={false} />).container),
+    ).toHaveLength(1);
+    cleanup();
+    expect(sizers(render(<PlantGrowthSkeleton label="Lädt …" />).container)).toHaveLength(
+      GROWTH_READINGS.length,
+    );
+  });
+
+  it("US-QS-23 a card that says unmeasured while the loaded trend counts measurements: the loaded reading gets the full reserve, the card flag only decides the first render", async () => {
+    answer.load = loadedWith({ count: 3, ratePerYear: 20, trend: "stable", signal: null });
+    const { container } = renderGrowth({ measured: false });
+    expect(sizers(container)).toHaveLength(1);
+    expect(await screen.findByText("Trend: stabil")).toBeTruthy();
+    // The frame of the first render stays (one sizer); the loaded line brings the reserve of every reading.
+    expect(sizers(container).length).toBeGreaterThanOrEqual(GROWTH_READINGS.length);
+    expect(screen.getAllByText("Trend: stabil")).toHaveLength(1);
+  });
+
+  it("US-QS-23 a loaded 'no measurement' reading in an unmeasured frame stays at one sizer", async () => {
+    answer.load = loadedWith(NONE);
+    const { container } = renderGrowth({ measured: false });
+    await screen.findByText(/Wachstum: noch keine Messung/);
+    expect(sizers(container)).toHaveLength(1);
   });
 });

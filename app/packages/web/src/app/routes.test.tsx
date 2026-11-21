@@ -151,7 +151,7 @@ describe("US-QS-07 · DS-08 route-level lazy loading", () => {
   it("US-QS-32 an unknown address shows the not-found view inside the frame, not Heute (F-0058)", async () => {
     renderAt("/gibt-es-nicht");
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Diese Seite gibt es nicht" }),
+      await screen.findByRole("heading", { level: 2, name: "Diese Seite gibt es nicht" }),
     ).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Heute" })).toBeNull();
     expect(screen.getByRole("button", { name: "Zu Heute" })).toBeTruthy();

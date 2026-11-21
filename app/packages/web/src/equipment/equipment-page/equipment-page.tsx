@@ -9,6 +9,7 @@ import { useRecord } from "./equipment-screen/use-record/use-record";
 import { EquipmentLayers } from "./equipment-screen/layers/equipment-layers/equipment-layers";
 import { EquipmentTiles } from "./equipment-screen/tiles/equipment-tiles/equipment-tiles";
 import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 
 const KEY = ["equipment", "list"] as const;
 type Token = () => Promise<string | undefined>;
@@ -93,9 +94,7 @@ export function EquipmentPage(props: { api: string; token: Token; host?: Host })
             Geräte
           </h2>
         ) : (
-          <h1 id="equipment-title" className="text-2xl font-semibold">
-            Geräte
-          </h1>
+          <PageHeader headingId="equipment-title" title="Geräte" />
         )}
         <p className="text-sm text-muted-foreground">
           Alles für die Pflege außer den Pflanzen; Fehlendes bleibt „unbekannt“.

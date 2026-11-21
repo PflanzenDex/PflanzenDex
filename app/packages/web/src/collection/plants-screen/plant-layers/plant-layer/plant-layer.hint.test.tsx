@@ -122,6 +122,39 @@ describe("US-ONB-07 the occasions of the plant layer come from the summary over 
   });
 });
 
+describe("US-ONB-07 · US-QS-23 the plants screen starts the hint request before a layer opens (issue 2384)", () => {
+  it("US-ONB-07 · US-QS-23 on mount the screen asks its hint slot to prefetch the occasions that apply, once", async () => {
+    setViewportWidth(360);
+    const prefetch = vi.fn();
+    const view = show([card()], { slots: { ...SLOTS, hintPrefetch: prefetch } });
+    await screen.findByRole("button", { name: /^Aloe(\s|$)/ });
+    expect(prefetch).toHaveBeenCalledTimes(1);
+    expect(prefetch).toHaveBeenCalledWith(["first_plant_saved", "first_measurement"]);
+    // A layer that opens later does not ask the slot again.
+    await open();
+    expect(prefetch).toHaveBeenCalledTimes(1);
+    view.unmount();
+  });
+
+  it("US-ONB-07 · US-QS-23 no occasion that applies, no prefetch", async () => {
+    setViewportWidth(360);
+    const prefetch = vi.fn();
+    show(
+      [
+        card({
+          lastMeasurement: { date: "2026-10-01", value: 12, quality: "healthy", note: null },
+        }),
+      ],
+      {
+        slots: { ...SLOTS, hintPrefetch: prefetch },
+        summary: { ...summaryOf([card()]), total: 2, anyMeasured: true },
+      },
+    );
+    await screen.findByRole("button", { name: /^Aloe(\s|$)/ });
+    expect(prefetch).not.toHaveBeenCalled();
+  });
+});
+
 describe("US-ONB-07 · US-QS-32 the plant layer places its calm hint", () => {
   it("US-ONB-07 the layer hands its host both occasions that apply, in one list", async () => {
     setViewportWidth(360);
@@ -162,21 +195,47 @@ describe("US-ONB-07 · US-QS-32 the plant layer places its calm hint", () => {
     expect(within(layer).queryByText("NOTE first_measurement")).toBeNull();
   });
 
-  it("US-ONB-07 · US-QS-32 the note of first_measurement stands at the growth line, before the treatment buttons", async () => {
+  it("US-ONB-07 · US-QS-23 the note of first_measurement is not on the overview: the growth line keeps no note, so the overview fits one screen", async () => {
     setViewportWidth(360);
     show([card()], {
       onMeasure: vi.fn(),
       slots: { ...SLOTS, hint: hintHost("first_measurement") },
     });
     const layer = await open();
-    const growth = within(layer).getByText("Trend: stabil");
-    const note = within(layer).getByText("NOTE first_measurement");
-    expect(growth.nextElementSibling).toBe(note);
+    expect(within(layer).getByText("Trend: stabil")).toBeTruthy();
+    expect(within(layer).queryByText("NOTE first_measurement")).toBeNull();
+    expect(within(layer).queryByRole("status", { name: "Hinweis" })).toBeNull();
     expect(within(layer).queryByText("NOTE first_plant_saved")).toBeNull();
-    expect(
-      note.compareDocumentPosition(within(layer).getByRole("button", { name: "Behandeln: Aloe" })) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+  });
+
+  it("US-ONB-07 · US-QS-23 the note of first_measurement stands first in Verlauf, before the measurements", async () => {
+    setViewportWidth(360);
+    show([card()], {
+      onMeasure: vi.fn(),
+      slots: { ...SLOTS, hint: hintHost("first_measurement") },
+    });
+    const layer = await open();
+    await userEvent.click(within(layer).getByRole("tab", { name: "Verlauf" }));
+    const note = within(layer).getByText("NOTE first_measurement");
+    const history = within(layer).getByText("Verlauf der Messungen");
+    expect(note.compareDocumentPosition(history) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(layer).queryByText("NOTE first_plant_saved")).toBeNull();
+    // Back on the overview the note is gone again, and the filled "Messen" stands there as before.
+    await userEvent.click(within(layer).getByRole("tab", { name: "Überblick" }));
+    expect(within(layer).queryByText("NOTE first_measurement")).toBeNull();
+    expect(within(layer).getByRole("button", { name: "Messen: Aloe" })).toBeTruthy();
+  });
+
+  it("US-ONB-07 · US-QS-23 while the first-plant note is the due one, Verlauf shows no note of its own", async () => {
+    setViewportWidth(360);
+    show([card()], {
+      onMeasure: vi.fn(),
+      slots: { ...SLOTS, hint: hintHost("first_plant_saved") },
+    });
+    const layer = await open();
+    await userEvent.click(within(layer).getByRole("tab", { name: "Verlauf" }));
+    expect(within(layer).getByText("Verlauf der Messungen")).toBeTruthy();
+    expect(within(layer).queryByRole("status", { name: "Hinweis" })).toBeNull();
   });
 
   it("US-ONB-07 the notes are part of the overview only: on the tab Pflege neither stands", async () => {
@@ -191,12 +250,14 @@ describe("US-ONB-07 · US-QS-32 the plant layer places its calm hint", () => {
     expect(within(layer).queryByText("NOTE first_plant_saved")).toBeNull();
   });
 
-  it("US-ONB-07 the layer without a hint host keeps its place for the notes: Messen and the growth line stay as they are", async () => {
+  it("US-ONB-07 · US-QS-23 the layer without a hint host shows no note anywhere: Messen stands alone and Verlauf is its history only", async () => {
     setViewportWidth(360);
     show([card()], { onMeasure: vi.fn(), slots: SLOTS });
     const layer = await open();
     const measure = within(layer).getByRole("button", { name: "Messen: Aloe" });
     expect(measure.nextElementSibling).toBeNull();
-    expect(within(layer).getByText("Trend: stabil").nextElementSibling).not.toBeNull();
+    await userEvent.click(within(layer).getByRole("tab", { name: "Verlauf" }));
+    expect(within(layer).getByText("Verlauf der Messungen")).toBeTruthy();
+    expect(within(layer).queryByRole("status", { name: "Hinweis" })).toBeNull();
   });
 });

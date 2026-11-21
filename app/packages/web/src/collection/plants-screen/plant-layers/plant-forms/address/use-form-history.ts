@@ -11,7 +11,14 @@ import { BELOW, belowOf } from "@/shared/patterns/responsive/layer-sheet/use-lay
 import type { Below } from "@/shared/patterns/responsive/layer-sheet/use-layer.history";
 import { isBelow } from "@/shared/patterns/responsive/layer-sheet/layer-sheet.history";
 import { quietFrom } from "@/shared/platform/routing/route-focus/quiet-steps";
-import { FROM_APP, GUARD, guardState, listSearch, stateFlag, type FormKind } from "./form-address";
+import {
+  FROM_APP,
+  GUARD,
+  fallbackBelow,
+  guardState,
+  stateFlag,
+  type FormKind,
+} from "./form-address";
 
 export type Ref<T> = MutableRefObject<T>;
 /** The values of the latest render: the handlers and the effects read them after the render. */
@@ -23,7 +30,10 @@ export type Latest = {
   navigate: ReturnType<typeof useNavigate>;
   type: ReturnType<typeof useNavigationType>;
 };
-/** The last form the address named: where it was, which form it was, and the entry directly below it (issue 2145). */
+/**
+ * The last form the address named: where it was, which form it was, and the entry directly below it, the plant's layer
+ * (issue 2145, US-QS-32).
+ */
 export type Named = {
   at: { pathname: string; search: string; hash: string };
   kind: FormKind;
@@ -53,9 +63,11 @@ export function useKeepNamed(refs: Refs, location: Latest["location"], current: 
   useLayoutEffect(() => {
     if (!current || stateFlag(location.state, GUARD)) return;
     const { pathname, search, hash } = location;
-    // Without a recorded entry below (the push of a reload is not seen yet), the list the form is addressed from is it.
-    const below = belowOf(location.state) ??
-      refs.named.current?.below ?? { pathname, search: listSearch(search) };
+    // Without a recorded entry below (the push of a reload is not seen yet), the plant's layer is it (US-QS-32).
+    const below =
+      belowOf(location.state) ??
+      refs.named.current?.below ??
+      fallbackBelow({ pathname, search }, current.plantId);
     refs.named.current = {
       at: { pathname, search, hash },
       kind: current.kind,
@@ -91,30 +103,6 @@ export function isHeldForm(p: {
 }
 
 /**
- * A form opened without the app (a reload or a link) gets a list entry below it, so Back closes it (US-QS-15). The list is
- * the entry directly below the form, which a Back onto it holds the form on (issue 2145).
- */
-export function useOrdering(latest: Ref<Latest>, fromApp: boolean, key: string, hasForm: boolean) {
-  const ordering = useRef(false);
-  useLayoutEffect(() => {
-    const c = latest.current;
-    if (!hasForm || fromApp) {
-      ordering.current = false;
-      return;
-    }
-    if (ordering.current) return;
-    ordering.current = true;
-    const { pathname, hash, search } = c.location;
-    const list = listSearch(search);
-    void c.navigate({ pathname, search: list, hash }, { replace: true });
-    void c.navigate(
-      { pathname, search, hash },
-      { state: { [FROM_APP]: true, [BELOW]: { pathname, search: list } } },
-    );
-  }, [key, fromApp, hasForm, latest]);
-}
-
-/**
  * Pushes the guard above the committed form entry (US-QS-15, issue 2154). The router applies a history change in a
  * transition, so a Back or a Verwerfen can land before the guard entry commits. A step back then lands on the form
  * entry already on screen: the location key does not change and `usePopGuard` never runs again. So the form entry is
@@ -125,7 +113,7 @@ export function useOrdering(latest: Ref<Latest>, fromApp: boolean, key: string, 
  */
 export function pushGuard(c: Latest, refs: Refs): void {
   const { pathname, hash, search } = c.location;
-  const below = refs.named.current?.below ?? { pathname, search: listSearch(search) };
+  const below = refs.named.current?.below ?? fallbackBelow(c.location, c.current?.plantId);
   void c.navigate(
     { pathname, search, hash },
     { replace: true, state: { [FROM_APP]: true, [BELOW]: below } },

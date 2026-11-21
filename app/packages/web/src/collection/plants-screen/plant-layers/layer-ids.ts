@@ -11,14 +11,14 @@ import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 export const ARCHIVE_LAYER = "archive";
 
 /** The calm hints of one plant (US-ONB-07): the only active plant, and a plant none is measured yet. */
-type PlantHintOccasion = "first_plant_saved" | "first_measurement";
+export type PlantHintOccasion = "first_plant_saved" | "first_measurement";
 
 /** The note of one occasion for its place in the layer: the note while it is the due one, else nothing. */
 export type PlantNote = (occasion: PlantHintOccasion) => ReactNode;
 
 /**
  * The calm hint of the plant layer (US-ONB-07), wired by the app: it asks the server once which of the `applicable`
- * occasions is due, and `children` places its note ("Messen", the growth line). It renders the content at once.
+ * occasions is due, and `children` places its note ("Messen", the tab "Verlauf"). It renders the content at once.
  */
 export type PlantHint = (props: {
   applicable: readonly PlantHintOccasion[];
@@ -50,8 +50,11 @@ export type Handlers = {
 /** What a slot may ask the plant layer for: leave the layer and measure (the layer closes first, P-10). */
 export type SlotContext = { measure: () => void };
 export type SlotRender = (card: SpecimenCard, context: SlotContext) => ReactNode;
-/** The shape of a part while its chunk loads; it gets the layer's loading label, which the layer owns (`slot.loading`). */
-export type SlotFallback = (label: string) => ReactNode;
+/**
+ * The shape of a part while its chunk loads; it gets the layer's loading label, which the layer owns (`slot.loading`), and
+ * the plant's card, so the shape can follow the state of the plant (US-QS-23).
+ */
+export type SlotFallback = (label: string, card: SpecimenCard) => ReactNode;
 
 /**
  * Parts of the plant layer that belong to other modules (US-QS-23): the app wires them, because `collection` does not
@@ -71,8 +74,14 @@ export type PlantSlots = {
   care?: SlotRender | undefined;
   /** The button "Gießen" (`monitoring`). */
   water?: SlotRender | undefined;
-  /** The calm hint of the layer (US-ONB-07, `today-intro`): its note stands under "Messen" or at the growth line. */
+  /** The calm hint of the layer (US-ONB-07, `today-intro`): its note stands under "Messen" or first in "Verlauf". */
   hint?: PlantHint | undefined;
+  /**
+   * Starts the request of the calm hint before a layer opens (US-ONB-07, US-QS-23): the plants screen calls it with the
+   * occasions that apply when it shows, so the layer finds the answer and its note is there on its first render. The app
+   * wires it (`today-intro`).
+   */
+  hintPrefetch?: ((applicable: readonly PlantHintOccasion[]) => void) | undefined;
 };
 
 export type LayerProps = Handlers & {

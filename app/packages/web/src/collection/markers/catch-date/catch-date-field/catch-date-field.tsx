@@ -124,6 +124,8 @@ function CorrectedDateField(props: { control: Control<CatchDateFields>; today: s
  */
 export function CatchDateForm(props: {
   state: Pick<ReturnType<typeof useCatchDate>, "send" | "setOpen"> & { open: CatchDateTarget };
+  /** Opened from the Archiv layer: the back control names it instead of the plant (US-QS-32, owner decision d-054). */
+  fromArchive?: boolean;
 }) {
   const { open, send, setOpen } = props.state;
   const today = useToday();
@@ -144,7 +146,10 @@ export function CatchDateForm(props: {
         headingId="catch-date-title"
         title={tx("title")}
         subject={open.name}
-        back={{ label: tx("back"), onBack: () => setOpen(null) }}
+        back={{
+          label: props.fromArchive ? tx("backArchive") : tx("back", { name: open.name }),
+          onBack: () => setOpen(null),
+        }}
       />
       <Quiet className="mb-5">
         Bisher: {open.caughtAt ? dateText(open.caughtAt) : UNKNOWN}. Nur das Fangdatum ändert sich;

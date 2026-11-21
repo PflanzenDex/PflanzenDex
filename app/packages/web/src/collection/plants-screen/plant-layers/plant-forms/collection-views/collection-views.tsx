@@ -73,6 +73,7 @@ function OpenForm(p: { actions: ListActions; form: FormAddress }): ReactNode {
           open: caught.open,
           setOpen: closeThrough(caught.setOpen, form.requestLeave),
         }}
+        fromArchive={form.fromArchive}
       />
     );
   if (zoned.open)

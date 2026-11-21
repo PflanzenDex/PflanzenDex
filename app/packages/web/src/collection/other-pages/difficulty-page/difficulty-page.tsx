@@ -22,8 +22,9 @@ import { LightNeedAction } from "@/light";
 import { LoadFrame } from "../../../shared/data";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
-import { PageFrame, Plain, Quiet, TITLE } from "../../specimens/cards/parts/parts";
+import { PageFrame, Plain, Quiet } from "../../specimens/cards/parts/parts";
 import { ENTRY_FACTS, entryLine, factsOf, missingValuesText } from "./difficulty-page.values";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 
 /** A species row of the grouped list (US-QS-32, SG-COLOR-02): neutral, with the hover of the grouped rows and the chevron. */
 const ENTRY_ROW =
@@ -160,9 +161,7 @@ function DifficultyTable(props: {
           Artenvergleich
         </h2>
       ) : (
-        <h1 id="difficulty-title" className={TITLE}>
-          Artenvergleich
-        </h1>
+        <PageHeader headingId="difficulty-title" title="Artenvergleich" />
       )}
       <UnreadableNote count={props.unreadable} />
       {rows.length === 0 ? (

@@ -18,7 +18,7 @@ import { PlantCareTab } from "./plant-care-tab/plant-care-tab";
 import { PlantLocation } from "./plant-location/plant-location";
 import { Chips, MeasureButton, PlantOverview } from "./plant-overview/plant-overview";
 import type { SlotPart } from "./plant-layer.skeleton";
-import { Slot } from "./plant-layer.slot";
+import { HistoryTab, Slot } from "./plant-layer.slot";
 
 const t = texts(table);
 /** The status names of a plant and a cutting, compared as values (FR-QG-12); a cutting gets no repot plan (US-BES-04). */
@@ -87,6 +87,7 @@ function tabContents(
     part: SlotPart,
     fallback?: SlotFallback | undefined,
   ) => <Slot render={render} part={part} fallback={fallback} card={card} measure={measure} />;
+  const history = p.slots?.history ? slot(p.slots.history, "history") : <Measurement card={card} />;
   const content: Record<(typeof TABS)[number]["value"], ReactNode> = {
     ueberblick: (
       <PlantOverview
@@ -96,11 +97,10 @@ function tabContents(
           p.slots?.growth ? slot(p.slots.growth, "growth", p.slots.growthFallback) : undefined
         }
         water={p.slots?.water ? slot(p.slots.water, "water") : undefined}
-        hint={note("first_measurement")}
         onTreat={() => tab.choose("pflege")}
       />
     ),
-    verlauf: p.slots?.history ? slot(p.slots.history, "history") : <Measurement card={card} />,
+    verlauf: <HistoryTab note={note("first_measurement")}>{history}</HistoryTab>,
     pflege: (
       <PlantCareTab
         card={card}
@@ -138,7 +138,8 @@ const NO_NOTE: PlantNote = () => null;
 /**
  * One plant as a layer with tabs (US-QS-23, US-QS-15): the name, its chips, the menu "Mehr" with the rarer actions and
  * the tabs "Überblick", "Verlauf", "Pflege" and "Standort". The filled "Messen" sits in the primary slot of the layer
- * and only on the overview; the active tab is in the address.
+ * and only on the overview; the active tab is in the address. The calm notes (US-ONB-07) stand under "Messen" and first
+ * in "Verlauf".
  */
 function PlantLayerSheet(props: Props & { note: PlantNote }) {
   const { card, note } = props;
