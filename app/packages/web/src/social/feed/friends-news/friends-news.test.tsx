@@ -513,7 +513,9 @@ describe("US-QS-32 the rows of the layer on Heute keep their height at 200 % tex
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
     const list = await within(layer).findByRole("list", { name: "Neuigkeiten" });
     expect(within(list).getAllByRole("listitem")).toHaveLength(2);
-    // A squeezed list must not collapse a clipped row to its borders: the rows keep their content (issue 2293, as issue 2272).
-    expect(list.className).toContain("[&>li]:shrink-0");
+    // A squeezed list must not collapse a clipped row to its borders: every row keeps its content (issue 2293, as issue 2272).
+    // The pager gives each of its rows that rule (issue 2315), so the list needs no rule of its own.
+    for (const row of within(list).getAllByRole("listitem"))
+      expect(row.classList.contains("shrink-0")).toBe(true);
   });
 });
