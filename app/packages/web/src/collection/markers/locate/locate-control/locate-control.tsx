@@ -27,7 +27,7 @@ export function LocateControl(props: {
           verwalten“ einen Standort an.
         </Quiet>
         <Actions>
-          <Button type="button" variant="outline" onClick={props.onCreateLocation}>
+          <Button type="button" variant="tinted" onClick={props.onCreateLocation}>
             Standorte verwalten
           </Button>
         </Actions>

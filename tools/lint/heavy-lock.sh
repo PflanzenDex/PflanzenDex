@@ -16,7 +16,9 @@
 # holder; it repeats every 30 seconds. A note that names no owner, this owner or a dead pid is no holder: the wait stays silent,
 # because the holder of a free lock writes its note a moment after it starts and a dead owner's note stays until the next holder
 # replaces it. HEAVY_LOCK_WAIT (seconds, at least 1, default 3600, a starting value) bounds the wait: then the script exits 1
-# and names the holder. HEAVY_LOCK_DIR replaces the git common dir (the tests use it).
+# and names the holder. HEAVY_LOCK_MAX_HOLD (seconds, at least 1, default 1200, a starting value, assumption) is the maximum
+# hold time: a wait line that finds the holder older than that also names its label (directory and target) and its age. It
+# only reports: the script never stops the holder or takes the lock. HEAVY_LOCK_DIR replaces the git common dir (the tests use it).
 # The Makefile does not call this in CI, where CI is set: each CI job is its own machine.
 set -euo pipefail
 
@@ -37,6 +39,12 @@ case "$wait_s" in
   "" | *[!0-9]*) echo "heavy-lock: HEAVY_LOCK_WAIT must be a whole number of seconds, got '$wait_s'" >&2; exit 2 ;;
 esac
 [ "$wait_s" -ge 1 ] || { echo "heavy-lock: HEAVY_LOCK_WAIT must be at least 1 second" >&2; exit 2; }
+
+max_hold="${HEAVY_LOCK_MAX_HOLD:-1200}"
+case "$max_hold" in
+  "" | *[!0-9]*) echo "heavy-lock: HEAVY_LOCK_MAX_HOLD must be a whole number of seconds, got '$max_hold'" >&2; exit 2 ;;
+esac
+[ "$max_hold" -ge 1 ] || { echo "heavy-lock: HEAVY_LOCK_MAX_HOLD must be at least 1 second" >&2; exit 2; }
 
 command -v setsid > /dev/null && command -v flock > /dev/null || {
   echo "heavy-lock: needs setsid and flock (util-linux)" >&2
@@ -69,6 +77,27 @@ holder_text() {
   pid="${line%% *}"
   rest="${line#* }"
   printf 'held by %s (pid %s, since %s)\n' "${rest% *}" "$pid" "${rest##* }"
+}
+
+# The epoch seconds of a note time ("%FT%TZ", UTC), empty when it does not read: GNU date, then the BSD date of macOS.
+note_epoch() {
+  [ -n "$1" ] || return 0
+  date -u -d "$1" +%s 2> /dev/null || date -u -j -f '%Y-%m-%dT%H:%M:%SZ' "$1" +%s 2> /dev/null || true
+}
+
+# "over the maximum hold time (...): <directory and target> has held the lock for <n> s; ..." when the holder in the note is older
+# than HEAVY_LOCK_MAX_HOLD (US-DEV-08, issue 2370). Only reports: nothing is stopped or taken. Empty otherwise.
+over_max_text() {
+  local line="" rest since_at age
+  { IFS= read -r line < "$note"; } 2> /dev/null || true
+  [ -n "$line" ] || return 0
+  rest="${line#* }"
+  since_at="$(note_epoch "${rest##* }")"
+  [ -n "$since_at" ] || return 0
+  age=$(($(date +%s) - since_at))
+  [ "$age" -gt "$max_hold" ] || return 0
+  printf 'over the maximum hold time (HEAVY_LOCK_MAX_HOLD %s s): %s has held the lock for %s s; reported only, nothing is stopped or taken\n' \
+    "$max_hold" "${rest% *}" "$age"
 }
 
 # Whether the note names another owner whose pid is alive. Only such a holder makes a wait a real wait.
@@ -115,6 +144,7 @@ while [ "$(note_owner)" != "$owner" ]; do
     waited=yes
     echo "heavy-lock: waiting for $target in $PWD (since $since), one heavy job at a time (US-DEV-08)"
     holder_text | sed 's/^/heavy-lock: /'
+    over_max_text | sed 's/^/heavy-lock: /'
     next_ms=$((now_at + 30000))
   fi
   if [ $((now - started)) -ge "$wait_s" ]; then

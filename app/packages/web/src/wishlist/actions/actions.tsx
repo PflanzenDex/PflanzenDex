@@ -1,88 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import type { Candidate } from "@pflanzendex/core";
+import { useEffect, useRef } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { errorText } from "@/shared/lib/error-text";
-import { useWriteAction, type ApiError, type Response } from "../../shared/data";
-import { buyWish, discardWish, storeWishImage } from "../wishlist-api";
+import type { ApiError } from "../../shared/data";
+import { useCandidateWrite, type Outcome, type WishToPlant } from "./use-candidate-write";
 
-type Token = () => Promise<string | undefined>;
-type Hint = { text: string; nextAction: string };
+export { useCandidateWrite };
+export type { Outcome, WishToPlant };
 
-/** A bought wish that becomes a plant (US-WUN-05): what the app needs to find its species and to link the specimen. */
-export interface WishToPlant {
-  readonly id: string;
-  /** Latin or working name, the start of the species search. */
-  readonly name: string;
-  /** "German (name)", for texts. */
-  readonly title: string;
-}
-
-/** What a write on a candidate answered: the hint, and for a purchase the wish that can now become a plant. */
-export interface Outcome {
-  readonly hint: Hint;
-  readonly toPlant: WishToPlant | null;
-}
-
-/**
- * "Gekauft" (US-WUN-03) and "Verwerfen" (US-WUN-05) on a candidate: the answer of the server says what happened and what
- * comes next (P-09, P-10).
- */
-export function useCandidateWrite(
-  api: string,
-  token: Token,
-  onWritten: () => void,
-  onRun: () => void,
-) {
-  const write = useWriteAction(token, onWritten);
-  const [done, setDone] = useState<Outcome | null>(null);
-  const run = (
-    c: Candidate,
-    send: (t: string) => Promise<Response<{ hint: Hint }>>,
-    toPlant: boolean,
-  ) => {
-    onRun();
-    void write.run(async (t) => {
-      const r = await send(t);
-      setDone(
-        r.ok
-          ? {
-              hint: r.value.hint,
-              toPlant: toPlant ? { id: c.id, name: c.name, title: c.title } : null,
-            }
-          : null,
-      );
-      return r;
-    }, "");
-  };
-  return {
-    buy: (c: Candidate) => run(c, (t) => buyWish(api, t, c.id), true),
-    discard: (c: Candidate) => run(c, (t) => discardWish(api, t, c.id), false),
-    storeImage: (c: Candidate) => {
-      onRun();
-      void write.run(async (t) => {
-        const r = await storeWishImage(api, t, c.id);
-        setDone(
-          r.ok
-            ? {
-                hint: {
-                  text: `Das Bild von „${c.title}“ ist bei dir gesichert. Quelle und Lizenz stehen am Bild.`,
-                  nextAction:
-                    "Entscheide jetzt: Gekauft oder Verwerfen, oder schau dir die nächste Karte an.",
-                },
-                toPlant: null,
-              }
-            : null,
-        );
-        return r;
-      }, "");
-    },
-    done,
-    running: write.running,
-    error: write.error,
-  };
-}
-
-/** The confirmation takes the focus, so a keeper who tapped far down the list sees what happened (P-10). */
 function Done(props: { done: Outcome; onCreateSpecimen?: (w: WishToPlant) => void }) {
   const { done, onCreateSpecimen } = props;
   const ref = useRef<HTMLDivElement>(null);

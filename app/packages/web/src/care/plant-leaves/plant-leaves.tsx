@@ -8,13 +8,18 @@ import {
   type LeafRow as Leaf,
 } from "@pflanzendex/core";
 import {
+  appendKey,
+  entityKey,
   LoadFrame,
   SIGN_IN,
   currentTimeZone,
   useFeature,
   useInvalidate,
   type ApiError,
+  type KeyScope,
   type Response,
+  useRepeatKey,
+  type WriteOptions,
 } from "@/shared/data";
 import { Button } from "@/shared/ui/button/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
@@ -58,24 +63,38 @@ const countText = (n: number): string => (n === 1 ? t("countOne") : t("count", {
 /** Sends one leaf write with a sign-in check; the caller gets the refusal (P-10), a success refreshes the list. */
 function useLeafWrites(api: string, token: Token, specimenId: string, onDone: () => void) {
   const [busy, setBusy] = useState(false);
+  const keys = useRepeatKey();
   const run = useCallback(
-    async (write: (access: { api: string; token: string }) => Promise<Response<unknown>>) => {
+    async (
+      write: (
+        access: { api: string; token: string },
+        opts: WriteOptions,
+      ) => Promise<Response<unknown>>,
+      scope: KeyScope,
+    ) => {
       const current = await token();
       if (!current) return SIGN_IN;
       setBusy(true);
-      const r = await write({ api, token: current });
+      const r = await keys.run((key) => write({ api, token: current }, { key }), scope);
       setBusy(false);
       if (r.ok) onDone();
       return r.ok ? null : r.error;
     },
-    [api, token, onDone],
+    [api, token, onDone, keys],
   );
   return {
     busy,
+    // An append (a leaf is added to the plant): the operation only, the leaf's input is the body (US-QS-03).
     send: (input: LeafInput): Promise<ApiError | null> =>
-      run((access) => recordLeaf(access, specimenId, input)),
+      run(
+        (access, opts) => recordLeaf(access, specimenId, input, opts),
+        appendKey("specimen", specimenId, "leaf:record"),
+      ),
     remove: (leafId: string): Promise<ApiError | null> =>
-      run((access) => removeLeaf(access, specimenId, leafId)),
+      run(
+        (access, opts) => removeLeaf(access, specimenId, leafId, opts),
+        entityKey("specimen", specimenId, `remove:${leafId}`),
+      ),
   };
 }
 

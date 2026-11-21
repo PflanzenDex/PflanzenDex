@@ -1,6 +1,15 @@
 import type { CreatedInvitation, OperatorCostFigure } from "@pflanzendex/core";
 import { useRef, useState } from "react";
-import { SIGN_IN, useInvalidate, type ApiError, type Response } from "../../../shared/data";
+import {
+  createKey,
+  SIGN_IN,
+  useInvalidate,
+  useRepeatKey,
+  type ApiError,
+  type KeyScope,
+  type Response,
+  type WriteOptions,
+} from "../../../shared/data";
 import {
   createInvitation,
   markIdentityRemoved,
@@ -22,6 +31,36 @@ export const OPERATOR_KEY = ["account", "operator"] as const;
 export type Scope = "cost" | "mode" | "codes" | "deletion";
 export type Notice = { scope: Scope; message: string | null; error: ApiError | null };
 
+/**
+ * The repeat-guard target of the operator's set-state writes (US-QS-03). One settings page is one target: a success of any
+ * of them frees the keys the others still hold.
+ */
+const OPERATOR = "operator";
+
+/**
+ * The key of an operator write (US-QS-03): the invitation codes are a create (their own target, `new:invite`), the other
+ * writes set state on the page. The input is a discrete value or empty: never the body.
+ */
+const keyOf = (scope: Scope, input: string): KeyScope =>
+  scope === "codes"
+    ? createKey("invite", "codes")
+    : { target: OPERATOR, action: `${scope}:${input}` };
+
+/** Sends a write under its held key (US-QS-03): a lost answer repeats the same write under that key. */
+function sendHeld<T>(
+  keys: ReturnType<typeof useRepeatKey>,
+  scope: KeyScope,
+  t: string,
+  send: (t: string, opts: WriteOptions) => Promise<Response<T>>,
+): Promise<Response<T>> {
+  return keys.run((key) => send(t, { key }), scope);
+}
+
+const modeText = (v: { invitationOnly: boolean }) =>
+  v.invitationOnly
+    ? "Registrierung: ab jetzt nur mit Einladungscode."
+    : "Registrierung: ab jetzt offen für alle.";
+
 /** One write at a time (a double tap sends one); a refusal stays visible (P-10), the page reloads afterwards. */
 export function useOperatorActions(api: string, token: Token) {
   const invalidate = useInvalidate(OPERATOR_KEY);
@@ -29,18 +68,26 @@ export function useOperatorActions(api: string, token: Token) {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [created, setCreated] = useState<CreatedInvitation | null>(null);
   const busy = useRef(false);
+  const keys = useRepeatKey();
 
-  /** Resolves true when the write was saved; false when it was refused or skipped because another write runs (US-QS-32). */
+  /**
+   * Resolves true when the write was saved; false when it was refused or skipped because another write runs (US-QS-32).
+   * `input` is the discrete value of the action (a chosen value, an id), never the body of a create or of a whole form:
+   * the key names the operation, the server refuses a changed body under it (US-QS-03). Empty for a whole form.
+   */
   const run = async <T>(
     scope: Scope,
-    send: (t: string) => Promise<Response<T>>,
+    input: string,
+    send: (t: string, opts: WriteOptions) => Promise<Response<T>>,
     done: (value: T) => string,
   ): Promise<boolean> => {
     if (busy.current) return false;
     busy.current = true;
     setRunning(true);
     const t = await token();
-    const r = t ? await send(t) : { ok: false as const, error: SIGN_IN };
+    const r = t
+      ? await sendHeld(keys, keyOf(scope, input), t, send)
+      : { ok: false as const, error: SIGN_IN };
     busy.current = false;
     setRunning(false);
     setNotice(
@@ -57,27 +104,24 @@ export function useOperatorActions(api: string, token: Token) {
     notice,
     created,
     setMode: (on: boolean) =>
-      run(
-        "mode",
-        (t) => setRegistrationMode(api, t, on),
-        (v) =>
-          v.invitationOnly
-            ? "Registrierung: ab jetzt nur mit Einladungscode."
-            : "Registrierung: ab jetzt offen für alle.",
-      ),
+      run("mode", String(on), (t, opts) => setRegistrationMode(api, t, on, opts), modeText),
     setCost: (figure: OperatorCostFigure) =>
       run(
         "cost",
-        (t) => setOperatorCost(api, t, figure),
+        // A whole form: the operation only, the figure is the body (US-QS-03).
+        "",
+        (t, opts) => setOperatorCost(api, t, figure, opts),
         () => "Monatliche Kosten gesichert.",
       ),
     /** Closes an identity removal done by hand (US-ACC-04); the card and its row reload afterwards. */
     markIdentity: (entryId: string) =>
-      run("deletion", (t) => markIdentityRemoved(api, t, entryId), markDone),
+      run("deletion", entryId, (t, opts) => markIdentityRemoved(api, t, entryId, opts), markDone),
     create: (days: number) =>
       run(
         "codes",
-        (t) => createInvitation(api, t, days),
+        // A create (invitation codes are added): the operation only, the days are the body (US-QS-03).
+        "",
+        (t, opts) => createInvitation(api, t, days, opts),
         (v) => {
           setCreated(v);
           return "Einladungscode erstellt.";

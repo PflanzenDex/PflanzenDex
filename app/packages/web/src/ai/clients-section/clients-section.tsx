@@ -4,7 +4,7 @@ import { Button } from "@/shared/ui/button/button";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { Select } from "@/shared/ui/fields/select/select";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
+import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
 import { allowAgain, loadConnections, revokeConnection, setRights } from "../api/connections-api";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";
@@ -18,23 +18,12 @@ const KEY = ["ai", "connections"] as const;
 /** Connected clients per page inside the layer (starting value, assumption; US-QS-15). */
 const PAGE = 2;
 
-const RIGHTS_TEXT: Record<AiRights, string> = {
-  read: "Lesen",
-  drafts: "Lesen und Entwürfe anlegen",
-  write: "Lesen, Entwürfe anlegen und Umkehrbares schreiben",
-};
 const SHORT: Record<AiRights, string> = { read: "Lesen", drafts: "Entwürfe", write: "Schreiben" };
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" });
-
 type Run = ReturnType<typeof useWriteAction>["run"];
-interface RowProps {
-  api: string;
-  row: AiConnection;
-  busy: boolean;
-  run: Run;
-}
+type RowProps = { api: string; row: AiConnection; busy: boolean; run: Run };
 
 /** A request for a higher right: only the keeper's tap allows it (step-up, never silently). */
 function Request({ api, row, busy, run }: RowProps) {
@@ -53,7 +42,13 @@ function Request({ api, row, busy, run }: RowProps) {
         size="sm"
         disabled={busy}
         aria-label={`Recht „${SHORT[wanted]}“ für ${row.clientName} erlauben`}
-        onClick={() => void run((t) => setRights(api, t, row.id, wanted), "Das Recht ist erlaubt.")}
+        onClick={() =>
+          void run(
+            (t, o) => setRights(api, t, { id: row.id, rights: wanted }, o),
+            "Das Recht ist erlaubt.",
+            entityKey("client", row.id, `rights:${wanted}`),
+          )
+        }
       >
         Erlauben
       </Button>
@@ -73,12 +68,16 @@ function Controls({ api, row, busy, run }: RowProps) {
           aria-label={`Recht für ${name}`}
           onChange={(e) => {
             const rights = e.target.value as AiRights;
-            void run((t) => setRights(api, t, row.id, rights), "Das Recht ist geändert.");
+            void run(
+              (t, o) => setRights(api, t, { id: row.id, rights }, o),
+              "Das Recht ist geändert.",
+              entityKey("client", row.id, `rights:${rights}`),
+            );
           }}
         >
-          <option value="read">{RIGHTS_TEXT.read}</option>
-          <option value="drafts">{RIGHTS_TEXT.drafts}</option>
-          <option value="write">{RIGHTS_TEXT.write}</option>
+          <option value="read">{ui("rights.read")}</option>
+          <option value="drafts">{ui("rights.drafts")}</option>
+          <option value="write">{ui("rights.write")}</option>
         </Select>
       </label>
       <Button
@@ -87,7 +86,11 @@ function Controls({ api, row, busy, run }: RowProps) {
         disabled={busy}
         aria-label={`${name} trennen`}
         onClick={() =>
-          void run((t) => revokeConnection(api, t, row.id), "Der KI-Client ist getrennt.")
+          void run(
+            (t, o) => revokeConnection(api, t, row.id, o),
+            "Der KI-Client ist getrennt.",
+            entityKey("client", row.id, "revoke"),
+          )
         }
       >
         Trennen
@@ -104,7 +107,7 @@ function Connection(props: RowProps) {
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <strong className="break-all">{name}</strong>
         <span>
-          {row.revokedAt ? `Getrennt am ${when(row.revokedAt)}` : RIGHTS_TEXT[row.rights]}
+          {row.revokedAt ? `Getrennt am ${when(row.revokedAt)}` : ui(`rights.${row.rights}`)}
         </span>
       </div>
       <p className="m-0 text-sm text-muted-foreground">
@@ -119,7 +122,11 @@ function Connection(props: RowProps) {
           disabled={busy}
           aria-label={`${name} wieder zulassen`}
           onClick={() =>
-            void run((t) => allowAgain(api, t, row.id), "Der KI-Client ist wieder zugelassen.")
+            void run(
+              (t, o) => allowAgain(api, t, row.id, o),
+              "Der KI-Client ist wieder zugelassen.",
+              entityKey("client", row.id, "allow-again"),
+            )
           }
         >
           Wieder zulassen

@@ -1,3 +1,4 @@
+import { entityKey, useRepeatKey } from "@/shared/data";
 import { useCallback, useState } from "react";
 import type { ApiError } from "../../../shared/data";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -22,12 +23,16 @@ export type MarkTarget = {
  */
 export function useMarker(api: string, token: Token, after: () => void, say: Say) {
   const [open, setOpen] = useState<MarkTarget | null>(null);
+  const keys = useRepeatKey();
 
   const send = useCallback(
     async (marker: string): Promise<ApiError | null> => {
       const tok = await token();
       if (!tok || !open) return SIGN_IN;
-      const r = await markSpecimen(api, tok, { id: open.id, marker });
+      const r = await keys.run(
+        (key) => markSpecimen(api, tok, { id: open.id, marker }, { key }),
+        entityKey("specimen", open.id, `marker:${marker}`),
+      );
       if (!r.ok) return r.error;
       say(t("renamed", { name: open.name, marker: r.value.name }));
       setOpen(null);

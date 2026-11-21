@@ -2,6 +2,7 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ERROR_TEXTS } from "@pflanzendex/core";
+import { createWrite, entityKey, useWriteAction } from "../../shared/data";
 
 // The sign-in service is a foreign system: UserManager is replaced, the session logic of the app runs for real.
 const mgr = vi.hoisted(() => {
@@ -1533,5 +1534,43 @@ describe("US-BES-17 the sign-in returns with the query of the address (#1639)", 
     await waitFor(() => expect(result.current.state).toEqual({ kind: "signedOut" }));
     expect(mgr.signinCallback).toHaveBeenCalledOnce();
     expect(window.location.pathname + window.location.search).toBe("/collection?view=plants");
+  });
+});
+
+describe("US-QS-03 · signing out ends the repeat-guard keys of the account", () => {
+  it("US-QS-03 a lost answer's key is not repeated after the sign-out: the next write of that action is a new write", async () => {
+    mgr.getUser.mockResolvedValue(user);
+    const keys: string[] = [];
+    let lost = true;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (_url, init) => {
+        if (init?.method !== "POST") return response(200, account);
+        keys.push((init?.headers as Record<string, string>)["Idempotency-Key"] ?? "");
+        if (lost) {
+          lost = false;
+          throw new TypeError("Failed to fetch");
+        }
+        return response(201, {});
+      }),
+    );
+    const session = renderHook(() => useSession());
+    await waitFor(() => expect(session.result.current.state.kind).toBe("signedIn"));
+    const write = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const save = (t: string, options: Parameters<typeof createWrite>[2]) =>
+      createWrite("http://api", t, options)("POST", "/measurements", { value: 1 });
+    const scope = entityKey("specimen", "e7", "measure:1");
+    await act(async () => write.result.current.run(save, "Gesichert.", scope));
+    expect(write.result.current.error?.code).toBe("network.not_reachable");
+    act(() => session.result.current.signOut());
+    await waitFor(() => expect(mgr.signoutRedirect).toHaveBeenCalled());
+    await act(async () => write.result.current.run(save, "Gesichert.", scope));
+    expect(keys[1]).not.toBe(keys[0]);
+    expect(write.result.current.error).toBeNull();
   });
 });

@@ -1,3 +1,4 @@
+import { entityKey, useRepeatKey } from "@/shared/data";
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
 import { LoadFrame, type Response } from "../../shared/data";
@@ -14,6 +15,31 @@ const SIGN_IN_NEEDED = {
   ok: false as const,
   error: { code: "access.not_signed_in", text: t("page.signIn") },
 };
+
+/**
+ * Decide and undo of a suggestion (US-QS-03). The species is the target; the decision and the undo are its actions, so a
+ * lost answer repeats under the key of its own action and a success on the species frees the other.
+ */
+function useSuggestionWrites(api: string, token: () => Promise<string | undefined>) {
+  const keys = useRepeatKey();
+  const decide = useCallback(
+    (species: string, decision: "yes" | "no") =>
+      keys.run(
+        (key) => signedIn(token, (t) => decideSuggestion(api, t, { species, decision }, { key })),
+        entityKey("species", species, `decide:${decision}`),
+      ),
+    [api, token, keys],
+  );
+  const undo = useCallback(
+    (species: string) =>
+      keys.run(
+        (key) => signedIn(token, (t) => undoSuggestionDecision(api, t, species, { key })),
+        entityKey("species", species, "undo"),
+      ),
+    [api, token, keys],
+  );
+  return { decide, undo };
+}
 
 /** Runs a write with the token of the keeper; without a sign-in the answer says so (P-10). */
 async function signedIn<T>(
@@ -43,15 +69,7 @@ export function DiscoverPage(props: {
     (t: string) => loadSuggestions(api, t, zone === undefined ? { deck } : { deck, zone }),
     [api, deck, zone],
   );
-  const decide = useCallback(
-    (species: string, decision: "yes" | "no") =>
-      signedIn(token, (t) => decideSuggestion(api, t, { species, decision })),
-    [api, token],
-  );
-  const undo = useCallback(
-    (species: string) => signedIn(token, (t) => undoSuggestionDecision(api, t, species)),
-    [api, token],
-  );
+  const { decide, undo } = useSuggestionWrites(api, token);
   return (
     <section
       {...(embedded

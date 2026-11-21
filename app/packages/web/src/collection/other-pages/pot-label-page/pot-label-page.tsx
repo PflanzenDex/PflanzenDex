@@ -7,7 +7,8 @@ import { Tag } from "lucide-react";
 import { isActive, type Specimen } from "@pflanzendex/core";
 import { MeasurePage } from "@/care";
 import { markFertilized, markWatered } from "@/monitoring";
-import { call, useFeature, useInvalidate, useRequest, useWriteAction } from "@/shared/data";
+import { call, dailyRun, entityRun, useFeature, useRequest } from "@/shared/data";
+import { useInvalidate, useWriteAction } from "@/shared/data";
 import { errorText } from "@/shared/lib/error-text";
 import { UNKNOWN, dateText } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -91,49 +92,50 @@ function LabelPlant(props: { api: string; token: Token; id: string }) {
 function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure: () => void }) {
   const { api, token, specimen, onMeasure } = props;
   const write = useWriteAction(token, useInvalidate(["monitoring"]));
+  const daily = dailyRun(write, "specimen", specimen.id);
   return (
     <section aria-labelledby="pot-label-title" className="flex min-w-0 flex-col gap-4">
       <PageHeader headingId="pot-label-title" title={specimen.name} />
-      <>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Button
-            type="button"
-            size="touch"
-            disabled={write.running}
-            onClick={() => void write.run((t) => markWatered(api, t, [specimen.id]), ui("watered"))}
-          >
-            {ui("water")}
-          </Button>
-          <Button
-            type="button"
-            size="touch"
-            variant="outline"
-            disabled={write.running}
-            onClick={() =>
-              void write.run((t) => markFertilized(api, t, specimen.id), ui("fertilized"))
-            }
-          >
-            {ui("fertilize")}
-          </Button>
-          <Button type="button" size="touch" variant="outline" onClick={onMeasure}>
-            {ui("measure")}
-          </Button>
-        </div>
-        <LastFertilized api={api} token={token} specimenId={specimen.id} />
-        {write.message ? (
-          <p role="status" className="text-sm">
-            {write.message}
-          </p>
-        ) : null}
-        {write.error ? (
-          <p role="alert" className="rounded-lg border border-destructive p-2 text-sm">
-            {errorText(write.error.code)}
-          </p>
-        ) : null}
-        <Button asChild variant="link">
-          <Link to={plantAddress(specimen.id)}>{ui("toPlant")}</Link>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Button
+          type="button"
+          size="touch"
+          disabled={write.running}
+          onClick={() =>
+            daily((t, o) => markWatered(api, t, [specimen.id], o), ui("watered"), "water")
+          }
+        >
+          {ui("water")}
         </Button>
-      </>
+        <Button
+          type="button"
+          size="touch"
+          variant="outline"
+          disabled={write.running}
+          onClick={() =>
+            daily((t, o) => markFertilized(api, t, specimen.id, o), ui("fertilized"), "fertilize")
+          }
+        >
+          {ui("fertilize")}
+        </Button>
+        <Button type="button" size="touch" variant="outline" onClick={onMeasure}>
+          {ui("measure")}
+        </Button>
+      </div>
+      <LastFertilized api={api} token={token} specimenId={specimen.id} />
+      {write.message ? (
+        <p role="status" className="text-sm">
+          {write.message}
+        </p>
+      ) : null}
+      {write.error ? (
+        <p role="alert" className="rounded-lg border border-destructive p-2 text-sm">
+          {errorText(write.error.code)}
+        </p>
+      ) : null}
+      <Button asChild variant="link">
+        <Link to={plantAddress(specimen.id)}>{ui("toPlant")}</Link>
+      </Button>
     </section>
   );
 }
@@ -166,6 +168,7 @@ function Archived(props: { api: string; token: Token; id: string; specimen: Spec
     refresh();
     reloadLabel();
   });
+  const run = entityRun(write, "specimen", id);
   return (
     <section aria-labelledby="pot-label-title" className="flex min-w-0 flex-col gap-4">
       <PageHeader headingId="pot-label-title" title={specimen.name} />
@@ -191,7 +194,7 @@ function Archived(props: { api: string; token: Token; id: string; specimen: Spec
         size="touch"
         variant="tinted"
         disabled={write.running}
-        onClick={() => void write.run((t) => restoreSpecimen(api, t, specimen.id), ui("restored"))}
+        onClick={() => run((t, o) => restoreSpecimen(api, t, id, o), ui("restored"), "restore")}
       >
         {ui("restore")}
       </Button>

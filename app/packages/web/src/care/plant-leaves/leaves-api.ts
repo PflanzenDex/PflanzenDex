@@ -1,5 +1,11 @@
 import type { LeafLogView, LeafRow } from "@pflanzendex/core";
-import { call, createWrite, currentTimeZone, type Response } from "../../shared/data";
+import {
+  call,
+  createWrite,
+  currentTimeZone,
+  type Response,
+  type WriteOptions,
+} from "../../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -32,13 +38,14 @@ export function loadLeafLog(
   );
 }
 
-/** Records a leaf; the repeat-guard key stays with the write until it is answered (US-QS-03). */
+/** Records a leaf; the repeat-guard key is the caller's (`options.key`, US-QS-03). */
 export async function recordLeaf(
   access: LeafAccess,
   specimenId: string,
   input: LeafInput,
+  options: WriteOptions,
 ): Promise<Response<LeafRow>> {
-  const r = await createWrite(access.api, access.token, access.fetchFn ?? fetch)(
+  const r = await createWrite(access.api, access.token, { ...options, fetchFn: access.fetchFn })(
     "POST",
     `/specimens/${encodeURIComponent(specimenId)}/leaves`,
     { ...input, timeZone: currentTimeZone() },
@@ -51,11 +58,11 @@ export async function removeLeaf(
   access: LeafAccess,
   specimenId: string,
   leafId: string,
+  options: WriteOptions,
 ): Promise<Response<{ id: string }>> {
-  const r = await createWrite(
-    access.api,
-    access.token,
-    access.fetchFn ?? fetch,
-  )("DELETE", `/specimens/${encodeURIComponent(specimenId)}/leaves/${encodeURIComponent(leafId)}`);
+  const r = await createWrite(access.api, access.token, { ...options, fetchFn: access.fetchFn })(
+    "DELETE",
+    `/specimens/${encodeURIComponent(specimenId)}/leaves/${encodeURIComponent(leafId)}`,
+  );
   return r.ok ? { ok: true, value: r.value as { id: string } } : r;
 }

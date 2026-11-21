@@ -181,7 +181,7 @@ function PlantRepotForm(props: FormState & { open: RepotTarget }) {
           <Button type="button" size="touch" onClick={plan.retry}>
             {t("form.retry")}
           </Button>
-          <Button type="button" size="touch" variant="outline" onClick={() => setOpen(null)}>
+          <Button type="button" size="touch" variant="plain" onClick={() => setOpen(null)}>
             {t("form.cancel")}
           </Button>
         </div>

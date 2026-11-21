@@ -222,9 +222,13 @@ describe("US-ONB-06 function overview", () => {
       </MemoryRouter>,
     );
     expect((await rows()).map((r) => r.name)).toContain("Jahresrückblick");
-    await createWrite("http://api.test", "tok")("PUT", "/achievements/settings/calm-mode", {
-      calmMode: true,
-    });
+    await createWrite("http://api.test", "tok", { key: "test-key" })(
+      "PUT",
+      "/achievements/settings/calm-mode",
+      {
+        calmMode: true,
+      },
+    );
     await vi.waitFor(async () =>
       expect((await rows()).map((r) => r.name)).not.toContain("Jahresrückblick"),
     );

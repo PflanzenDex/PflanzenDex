@@ -35,7 +35,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock quarantine ci-quarantine ci-quarantine-ui
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -69,6 +69,9 @@ export RAW_SHARD := $(value SHARD)
 export RAW_RUNS := $(value RUNS)
 export RAW_TYPE := $(value TYPE)
 export RAW_VERSION := $(value VERSION)
+# RUN of `make heavy` (the command that runs under the heavy lock) reaches tools/lint/heavy-lock.run.sh raw, as RAW_RUN (issue 2370).
+# REST_RUN keeps its meaning, the run id of run-jobs.
+export RAW_RUN := $(value RUN)
 # SCREEN=<id> of `make one-screen` reaches the e2e spec as ONE_SCREEN_ONLY, raw like the REST_ values (issue 1608).
 export ONE_SCREEN_ONLY := $(value SCREEN)
 # FRESH=1 reaches `npm run gates` as an environment variable (issue 1608). Unset, it stays unset: an exported empty FRESH
@@ -278,6 +281,13 @@ ds-snapshots: ## Rewrite the baselines of the ui stories and of the page stories
 heavy-lock: ## Take the machine-wide lock for one heavy job (UI gates, Lighthouse, e2e, make ci) or wait for the job that holds it; released when the owning make ends (US-DEV-08, issue 1745; HEAVY_LOCK_WAIT=<s>)
 	$(if $(CI),,@tools/lint/heavy-lock.sh "$$PFLANZENDEX_HEAVY_OWNER" "$$PFLANZENDEX_HEAVY_TARGET")
 
+# `make heavy RUN="<command>"` (US-DEV-08, issue 2370): the command runs under the lock, around that one command only. The lock
+# is the prerequisite, so an empty RUN is refused before the lock is taken: the $(error) guard runs when make reads the goal, as
+# the SCREEN guards of one-screen do. The recipe starts tools/lint/heavy-lock.run.sh, which runs RAW_RUN in its own process group and
+# exits with the command's exit code; make then exits with 2 and prints "Error <code>" (a failing recipe always gives 2).
+heavy: heavy-lock $(if $(filter heavy,$(MAKECMDGOALS)),$(if $(strip $(value RUN)),,$(error heavy: RUN is empty, use make heavy RUN="<command>", for example make heavy RUN="npm run test:tools"))) ## Runs RUN="<command>" under the heavy lock, released when the command ends; refused without RUN (US-DEV-08, issue 2370; CI runs the command without the lock)
+	tools/lint/heavy-lock.run.sh "$$PFLANZENDEX_HEAVY_OWNER"
+
 e2e-origin: $(if $(PFLANZENDEX_E2E_WEB_PORT),auth-up) ## Allow the e2e web port of this worktree as redirect origin at the shared Keycloak, after auth-up also under -j; no-op without one (US-DEV-08, issue 1745)
 ifdef PFLANZENDEX_E2E_WEB_PORT
 	cd $(APP) && node tools/keycloak/web-port.mjs $(E2E_WEB_PORT)
@@ -286,7 +296,7 @@ endif
 e2e: heavy-lock $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
 	cd $(APP) && npm run e2e
 
-one-screen: heavy-lock $(if $(and $(value SCREEN),$(value SHARD),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with SHARD: one screen is a partial run, not a shard of the gate)) $(if $(and $(value SCREEN),$(filter 1,$(value ONE_SCREEN_WRITE)),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with ONE_SCREEN_WRITE=1: a partial run never rewrites the baseline)) $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## Every view and layer fits the window at 360x640 to 1920x1080, 1920 px width cap at 2560 (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164); ONE_SCREEN_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), SCREEN=<id> measures one screen only (issue 1608; refused with SHARD or ONE_SCREEN_WRITE=1, before anything starts), `npm run one-screen:write` rewrites the baseline; needs Docker
+one-screen: heavy-lock $(if $(and $(value SCREEN),$(value SHARD),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with SHARD: one screen is a partial run, not a shard of the gate)) $(if $(and $(value SCREEN),$(filter 1,$(value ONE_SCREEN_WRITE)),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with ONE_SCREEN_WRITE=1: a partial run never rewrites the baseline)) $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## Every view and layer fits the window from 768 px to 1920x1080; below 768 px (360x640, 390x844, 360x640 at 200 % text) a list and Heute may scroll, but the first screen shows the title, the first rows and the primary action; 1920 px width cap at 2560; no sideways scroll (QG-U8, US-QS-15, DS-58); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164); ONE_SCREEN_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), SCREEN=<id> measures one screen only (issue 1608; refused with SHARD or ONE_SCREEN_WRITE=1, before anything starts), `npm run one-screen:write` rewrites the baseline; needs Docker
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" npm run one-screen
 

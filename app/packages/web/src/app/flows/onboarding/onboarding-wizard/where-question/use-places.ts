@@ -7,6 +7,7 @@ import {
   useQueryClient,
   type ApiError,
   type QueryClient,
+  newRepeatKey,
 } from "../../../../../shared/data";
 import { refreshLight, sharedLocations, sharedZones } from "../../../../../light";
 
@@ -29,7 +30,12 @@ export async function ensureHome(
   const own = await sharedLocations(client, api, token);
   if (!own.ok) return { ok: false, error: own.error };
   if (own.value.length > 0) return { ok: true };
-  const made = await createWrite(api, token)("POST", "/locations/defaults", {});
+  // A per-send key: the location defaults are silent and idempotent; no action of the keeper is repeated here (US-ONB-02).
+  const made = await createWrite(api, token, { key: newRepeatKey() })(
+    "POST",
+    "/locations/defaults",
+    {},
+  );
   if (made.ok) {
     await refreshLight(client);
     return { ok: true };

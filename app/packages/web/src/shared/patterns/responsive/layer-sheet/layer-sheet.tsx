@@ -18,7 +18,7 @@ export { useKeptWhileUnsaved } from "./layer-sheet.history";
 export { useUnsavedInput } from "./use-layer";
 export { LayerHost } from "./layer-host/layer-host";
 
-/** A button that opens the layer `id` (US-QS-15); outline by default, because a layer owns the one filled action. */
+/** A button that opens the layer `id` (US-QS-15); tinted by default, because a layer owns the one filled action. */
 export function LayerOpener({
   id,
   children,
@@ -64,7 +64,7 @@ export type LayerSheetProps = {
   id: string;
   /** The layer heading and its accessible name. */
   title: string;
-  /** The one filled primary action of the layer (US-QS-15); everything else is outline, a row or a tile. */
+  /** The one filled primary action of the layer (US-QS-15); everything else is a tinted or plain button, a row or a tile. */
   primaryAction?: React.ReactNode;
   /** Accessible name of the close button (German). */
   closeLabel?: string;

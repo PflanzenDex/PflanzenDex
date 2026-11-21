@@ -98,7 +98,7 @@ export function NotesForm(props: {
             <p>{alertText}</p>
           </ErrorNotice>
         )}
-        <Button type="button" variant="outline" onClick={() => leave(props.onCancel)}>
+        <Button type="button" variant="plain" onClick={() => leave(props.onCancel)}>
           {t("form.cancel")}
         </Button>
       </FormRoot>

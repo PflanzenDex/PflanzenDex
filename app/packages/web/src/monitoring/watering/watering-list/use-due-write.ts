@@ -3,7 +3,16 @@ import { useAnnounce } from "@/shared/platform/announcer/context";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useUndo, type Held, type Undo } from "@/shared/feedback/undo-row/use-undo";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { useInvalidate, useWriteAction } from "../../../shared/data";
+import {
+  accountKey,
+  appendKey,
+  todayLocal,
+  entityKey,
+  useInvalidate,
+  useWriteAction,
+  type KeyScope,
+  type WriteOptions,
+} from "../../../shared/data";
 import { WATERING_KEY } from "../../api/due-count/due-count";
 import {
   madeEntries,
@@ -20,6 +29,26 @@ export interface WaterEntry {
   readonly row: WateringDueRow;
   readonly index: number;
 }
+
+/**
+ * The repeat-guard key of a watering write (US-QS-03). One plant is its target, so the water and the undo of that plant
+ * are opposite actions on one target; a bulk write belongs to the account.
+ */
+const waterKey = (specimenIds: readonly string[], action: string): KeyScope =>
+  specimenIds.length === 1 && specimenIds[0] !== undefined
+    ? entityKey("specimen", specimenIds[0], action)
+    : accountKey(`${action}:${specimenIds.join(",")}`);
+
+/**
+ * The key of a watering (US-QS-03): a daily append, named by the local day, so a watering the next day is a write of its
+ * own. A bulk watering is an append to several plants: its own target, not the account (set-state).
+ */
+const waterAppend = (specimenIds: readonly string[]): KeyScope => {
+  const day = todayLocal();
+  return specimenIds.length === 1 && specimenIds[0] !== undefined
+    ? appendKey("specimen", specimenIds[0], `water:${day}`)
+    : { target: "bulk:watering", action: `${day}:${specimenIds.join(",")}`, adds: true };
+};
 
 /** The undo of a bulk write, shown below the list where its button was (US-QS-32). */
 export interface BulkUndo {
@@ -69,13 +98,15 @@ function holdWritten(
 async function sendWater(
   api: string,
   tok: string,
-  entries: readonly WaterEntry[],
-  made: { current: { date: string } | null },
+  target: { entries: readonly WaterEntry[]; made: { current: { date: string } | null } },
+  options: WriteOptions,
 ) {
+  const { entries, made } = target;
   const r = await markWatered(
     api,
     tok,
     entries.map((e) => e.row.specimenId),
+    options,
   );
   const date = r.ok && madeEntries(r.value, entries.length) ? dateOf(r.value) : null;
   made.current = date === null ? null : { date };
@@ -86,10 +117,11 @@ async function sendWater(
 async function sendUndo(
   api: string,
   tok: string,
-  input: { specimenIds: readonly string[]; date: string },
-  removed: { current: number },
+  target: { input: { specimenIds: readonly string[]; date: string }; removed: { current: number } },
+  options: WriteOptions,
 ) {
-  const r = await unwaterPlants(api, tok, input);
+  const { input, removed } = target;
+  const r = await unwaterPlants(api, tok, input, options);
   removed.current = r.ok ? removedOf(r.value) : 0;
   return r;
 }
@@ -135,14 +167,20 @@ export function useDueWrite(api: string, token: () => Promise<string | undefined
     if (pending.current !== null || restoring.current !== null) return;
     setResult(null);
     if (isOnline()) pending.current = { entries, bulk: entries.length > 1 };
-    void write.run((tok) => sendWater(api, tok, entries, made), ui("done"));
+    const specimenIds = entries.map((e) => e.row.specimenId);
+    const key = waterAppend(specimenIds);
+    void write.run((tok, opts) => sendWater(api, tok, { entries, made }, opts), ui("done"), key);
   };
   const undoPlant = (group: string) => {
     const date = dates.current.get(group);
     if (date === undefined || pending.current !== null || restoring.current !== null) return;
     const specimenIds = undo.held.filter((h) => h.group === group).map((h) => h.key);
     restoring.current = group;
-    void restore.run((tok) => sendUndo(api, tok, { specimenIds, date }, removed), ui("restored"));
+    void restore.run(
+      (tok, opts) => sendUndo(api, tok, { input: { specimenIds, date }, removed }, opts),
+      ui("restored"),
+      waterKey(specimenIds, `unwater:${date}`),
+    );
   };
   return {
     result,

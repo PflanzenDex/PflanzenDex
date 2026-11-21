@@ -12,3 +12,15 @@ export function setProfileTimeZone(timeZone: string | null): void {
 
 /** Phases, due dates and "today" use this one place, so a change in the profile reaches every request. */
 export const currentTimeZone = (): string => chosen ?? deviceTimeZone();
+
+/**
+ * The local calendar date `YYYY-MM-DD` of `now` in the time zone of the profile (NFR-08), for a key that names the day of an
+ * occasion (US-QS-03). A web-side helper: the shared write layer must not import the core package on the eager path.
+ */
+export const todayLocal = (now: Date = new Date(), timeZone: string = currentTimeZone()): string =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);

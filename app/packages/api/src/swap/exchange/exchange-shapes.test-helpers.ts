@@ -23,8 +23,17 @@ export const EXCHANGE_OFFER: KeyShape = {
   requested: true,
 };
 
-/** A match card: the offer plus its reasons (checked per kind, see `MATCH_REASONS`). */
-export const MATCH_CARD: KeyShape = { ...EXCHANGE_OFFER, reasons: true };
+/**
+ * A match card: the offer plus its reasons (checked per kind, see `MATCH_REASONS`) and the catalog picture of its species
+ * (US-QS-32): a link to the picture and to its Wikipedia page, the same public source as the collector cards. No photo of
+ * the friend's specimen and no photo name is on the card; `photosShared` stays a boolean (P-05).
+ */
+export const MATCH_CARD: KeyShape = {
+  ...EXCHANGE_OFFER,
+  reasons: true,
+  imageUrl: true,
+  imageSourceUrl: true,
+};
 
 /** The reasons of a card by kind: the own wish, and "fits both ways" (US-TAU-05). */
 export const MATCH_REASONS = {

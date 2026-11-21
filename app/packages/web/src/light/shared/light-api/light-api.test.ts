@@ -14,17 +14,19 @@ describe("US-LIC-05 client of the light API", () => {
     expect(header["Authorization"]).toBe("Bearer tok");
   });
 
-  it("writing sends a new Idempotency-Key per call", async () => {
+  it("US-QS-03 writing sends the key of its action: two sends of one action carry that key", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => response(201, { id: "z" }));
-    const write = createWrite("http://api", "tok", fetchFn as unknown as typeof fetch);
+    const write = createWrite("http://api", "tok", {
+      key: "action-1",
+      fetchFn: fetchFn as unknown as typeof fetch,
+    });
     await write("POST", "/light-zones", { name: "A" });
     await write("POST", "/light-zones", { name: "A" });
     const key = fetchFn.mock.calls.map(
       (a) =>
         ((a as unknown[])[1] as { headers: Record<string, string> }).headers["Idempotency-Key"],
     );
-    expect(key[0]).toBeTruthy();
-    expect(key[0]).not.toBe(key[1]);
+    expect(key).toEqual(["action-1", "action-1"]);
   });
 
   it("passes on the server's error together with the users of the zone", async () => {
@@ -33,8 +35,10 @@ describe("US-LIC-05 client of the light API", () => {
       text: "Genutzt",
       data: [{ kind: "location", id: "s", name: "Regal" }],
     };
-    const write = createWrite("http://api", "t", (async () =>
-      response(409, { error })) as unknown as typeof fetch);
+    const write = createWrite("http://api", "t", {
+      key: "k",
+      fetchFn: (async () => response(409, { error })) as unknown as typeof fetch,
+    });
     expect(await write("DELETE", "/light-zones/z")).toEqual({ ok: false, error });
   });
 

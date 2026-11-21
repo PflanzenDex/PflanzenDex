@@ -2,7 +2,10 @@ import type { Suggestion } from "@pflanzendex/core";
 import { useId, useState, type Ref } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { Badge } from "@/shared/ui/display/badge/badge";
-import { CardPicture } from "@/shared/patterns/display/card/card-picture/card-picture";
+import {
+  CardPicture,
+  PICTURE_HEIGHT_CAP,
+} from "@/shared/patterns/display/card/card-picture/card-picture";
 import { cn } from "@/shared/lib/utils";
 import { AttributeSources, attributeRows, UNKNOWN } from "./attribute-view/attribute-view";
 import { DifficultyStars, WikipediaSource } from "@/pokedex";
@@ -10,13 +13,6 @@ import table from "../discover.de.json";
 import { texts } from "@/shared/lib/text-rules/texts";
 
 const t = texts(table);
-
-/**
- * At the normal text size the picture is capped by the height of the screen less the room the card's text needs (about 600 px,
- * measured at 360 × 640 to 430 × 852, US-QS-21): the width follows the height, so the box stays 4:3 and is centred. At large
- * text the card has its own height and the picture is not capped.
- */
-const PICTURE_CAP = "mx-auto w-[min(100%,calc((100dvh_-_600px)*4/3))]";
 
 /**
  * The picture with its credit directly under it (US-QS-32, SG-PHOTO-03): the image is a link to its source, not a
@@ -28,7 +24,7 @@ function Picture({ s, fill }: { s: Suggestion; fill: boolean }) {
     <CardPicture
       src={s.imageUrl}
       alt={t("card.imageAlt", { species: s.species })}
-      boxClassName={fill ? PICTURE_CAP : undefined}
+      boxClassName={fill ? PICTURE_HEIGHT_CAP : undefined}
       credit={
         s.sourceUrl !== null || shown ? (
           <WikipediaSource
