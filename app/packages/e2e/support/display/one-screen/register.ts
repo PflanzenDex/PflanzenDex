@@ -22,10 +22,12 @@ export interface Step {
 // the source file of its LayerSheet; `capExempt`: why the 1920 px cap does not apply; `sidewaysExempt`: why a region of it deliberately scrolls
 // sideways (the page itself never may); `unstable`: why its content
 // changes between runs (it is never reported as fitting now, only as new or worse). `test4` is the gate account with more
-// than 100 plants (issue 1378, seeded by the states profile).
+// than 100 plants (issue 1378), `test5` and `test6` are the hint accounts with one plant, style few and a calm hint due
+// (issue 2384): `test5` shows `first_plant_saved` on the plant layer,
+// `test6` `first_measurement` in "Verlauf"; both show `function_unlocked` on Heute. All three are seeded by the states profile.
 export interface Screen {
   id: string;
-  account: "test" | "test2" | "test3" | "test4" | "anon";
+  account: "test" | "test2" | "test3" | "test4" | "test5" | "test6" | "anon";
   path: string;
   steps?: Step[];
   route?: string;

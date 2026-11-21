@@ -1436,5 +1436,41 @@
     "account": "test4",
     "path": "/collection?view=plants&from=99999",
     "title": "Sammlung"
+  },
+  {
+    "id": "collection-plant-layer-hint",
+    "account": "test5",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
+    "title": "Fensterblatt"
+  },
+  {
+    "id": "collection-plant-course-hint",
+    "account": "test6",
+    "path": "/collection?view=plants",
+    "steps": [
+      {
+        "css": "ul[aria-label=\"Pflanzen\"] button",
+        "nth": 0
+      },
+      {
+        "role": "tab",
+        "name": "Verlauf"
+      }
+    ],
+    "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
+    "title": "Fensterblatt"
+  },
+  {
+    "id": "today-hint",
+    "account": "test5",
+    "path": "/today",
+    "title": "Heute"
   }
 ]

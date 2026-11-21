@@ -10,7 +10,7 @@ import {
 export type HintState = { hint: string | null; guideEnded: boolean };
 
 /**
- * The occasions that have a note in the web (US-ONB-07): the plant occasions at the plant layer ("Messen", the growth line)
+ * The occasions that have a note in the web (US-ONB-07): the plant occasions at the plant layer ("Messen", the tab "Verlauf")
  * and the function occasion on "Heute". Core keeps `plant_without_place` in its list for stored rows; the web shows no note for it.
  */
 const NOTE_OCCASIONS = ["first_plant_saved", "first_measurement", "function_unlocked"] as const;
@@ -19,6 +19,13 @@ export const isNoteOccasion = (value: unknown): value is NoteOccasion =>
   (NOTE_OCCASIONS as readonly unknown[]).includes(value);
 /** The function occasion of "Heute" (US-ONB-07): the note that a rule's unlock names; compared by this constant (FR-QG-12). */
 export const FUNCTION_UNLOCKED = "function_unlocked" as const;
+
+/**
+ * The key of the answer for a list of occasions in the data layer (DS-09): read by `ContextHint`, filled early by
+ * `prefetchHints`, so both mean the same copy. The occasions are part of the key, as they are of the request.
+ */
+export const hintsKey = (applicable: readonly string[]) =>
+  ["onboarding", "hints", applicable.join(",")] as const;
 
 export function loadHints(
   api: string,

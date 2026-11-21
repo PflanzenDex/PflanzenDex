@@ -72,8 +72,6 @@ export function PlantOverview(props: {
   access: PhotoAccess;
   /** The growth trend; without it the overview says "unbekannt". */
   growth?: ReactNode;
-  /** The calm hint at the growth line (US-ONB-07), directly after the trend. */
-  hint?: ReactNode;
   /** The button "Gießen". */
   water?: ReactNode;
   /** Opens the planning of a treatment (tab "Pflege"). */
@@ -92,7 +90,6 @@ export function PlantOverview(props: {
         </div>
       </div>
       {props.growth ?? <Quiet>{t("overview.trend", { value: UNKNOWN })}</Quiet>}
-      {props.hint}
       <div className="grid gap-1.5 text-sm">
         <Treatment card={card} />
       </div>
