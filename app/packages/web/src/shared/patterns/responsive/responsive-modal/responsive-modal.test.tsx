@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useState, type RefObject } from "react";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { useInLayer } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { ResponsiveModal } from "./responsive-modal";
 
 beforeAll(() => {
@@ -30,6 +31,33 @@ function Example() {
     </ResponsiveModal>
   );
 }
+
+function Scope() {
+  return <p>{useInLayer() ? "in a layer" : "on a page"}</p>;
+}
+
+describe("US-QS-32 · SG-LIST-01 what a ResponsiveModal holds is in a layer", () => {
+  // The children are rendered through a portal into a host node, so the scope of the sheet and the dialog does not reach them.
+  it.each([
+    ["a sheet below md", 360],
+    ["a dialog from md", 1024],
+  ])("US-QS-32 · SG-LIST-01 %s: its lists keep their pages", async (_name, width) => {
+    setViewportWidth(width);
+    render(
+      <ResponsiveModal trigger={<button>Öffnen</button>} title="Pflanze bearbeiten">
+        <Scope />
+      </ResponsiveModal>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    expect(await screen.findByText("in a layer")).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-LIST-01 a component beside the modal is on a page", () => {
+    setViewportWidth(360);
+    render(<Scope />);
+    expect(screen.getByText("on a page")).toBeTruthy();
+  });
+});
 
 describe("ResponsiveModal (US-QS-07, DS-23)", () => {
   it("US-QS-32 · SG-SHEET-02 below md the sheet's close button takes the closeLabel the caller gives", async () => {

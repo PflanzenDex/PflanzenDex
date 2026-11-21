@@ -1,5 +1,6 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { returnFocusOnClose } from "@/shared/platform/routing/route-focus/view-start";
@@ -96,7 +97,8 @@ function usePreloadDialog(isMd: boolean) {
 /**
  * Modal for content a phone user fills in (US-QS-07, DS-23): bottom sheet below `md`, centered dialog from `md`.
  * The children are rendered once into a stable host node that moves between the two containers,
- * so their state survives a viewport change across `md`.
+ * so their state survives a viewport change across `md`. A portal keeps the React tree of this component, so the layer
+ * scope of the sheet and the dialog does not reach the children: they get it here (US-QS-32, SG-LIST-01).
  */
 export function ResponsiveModal({
   title,
@@ -157,7 +159,7 @@ export function ResponsiveModal({
           </SheetContent>
         </Sheet>
       )}
-      {createPortal(children, host)}
+      {createPortal(<LayerScope.Provider value>{children}</LayerScope.Provider>, host)}
     </>
   );
 }

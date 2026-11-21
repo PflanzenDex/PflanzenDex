@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { Pager } from "../../pager";
 import type { PagerPaging } from "../paging";
 
@@ -88,7 +89,7 @@ describe("US-QS-32 · SG-LIST-01 a list on a phone scrolls instead of paging", (
     expect(screen.queryByRole("button", { name: "Zurück" })).toBeNull();
   });
 
-  it("US-QS-32 · SG-LIST-01 on a phone a fit list is marked like a paged one, so its sheet or layer takes its full height", () => {
+  it("US-QS-32 · SG-LIST-01 on a phone a fit list is marked like a paged one, so the frame around it passes the height down", () => {
     setViewportWidth(360);
     render(
       <MemoryRouter>
@@ -101,6 +102,14 @@ describe("US-QS-32 · SG-LIST-01 a list on a phone scrolls instead of paging", (
     // The room the frame leaves can be none (200 % text): the list keeps one row and a bit, then the frame scrolls.
     expect(list.className).toContain("min-h-24");
     expect(list.className).not.toContain("min-h-0");
+  });
+
+  it("US-QS-32 · SG-LIST-01 inside a sheet or a dialog a phone list keeps its pages, as on dev (issue 1861 owns the layers)", () => {
+    setViewportWidth(360);
+    render(<LayerScope.Provider value>{list(plants)}</LayerScope.Provider>);
+    expect(screen.getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.getByRole("button", { name: "Weiter" })).toBeTruthy();
+    expect(screen.getByRole("list", { name: "Pflanzen" }).hasAttribute("tabindex")).toBe(false);
   });
 
   it("US-QS-32 · SG-LIST-01 from 768 px the list still pages by its size", () => {

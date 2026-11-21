@@ -737,15 +737,16 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     ).toContain("sr-only");
   });
 
-  it("US-BEH-01 · A-04 · US-QS-32 the planning is a layer with search, a location filter and one list of plants on a phone; saving returns to Behandlungen", async () => {
+  it("US-BEH-01 · A-04 the planning is a layer with search, a location filter and pages of plants; saving returns to Behandlungen", async () => {
     const posts = fakeServer({ cards: FIVE });
     const user = userEvent.setup();
     show("/today?sheet=treatments");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
-    // On a phone the plants are one scrolling list, with the search and the location filter above it (US-QS-32).
-    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(5);
-    expect(within(form).queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    // A list in a layer keeps its pages on a phone (SG-LIST-01: only the lists of pages scroll; issue 1861 owns the layers):
+    // three plants per page, the position in text, search and location filter above the list.
+    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(3);
+    expect(within(form).getByText("Seite 1 von 2")).toBeTruthy();
     await user.type(within(form).getByRole("searchbox", { name: "Pflanze suchen" }), "EFE");
     expect(within(form).queryByRole("checkbox", { name: /^Aloe/ })).toBeNull();
     expect(within(form).getByRole("checkbox", { name: /^Efeu/ })).toBeTruthy();
@@ -753,7 +754,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     await user.selectOptions(within(form).getByRole("combobox", { name: "Standort" }), "Balkon");
     const balcony = within(form).getByRole("list", { name: "Pflanzen" });
     expect(within(balcony).getAllByRole("listitem")).toHaveLength(2);
-    expect(within(form).queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(within(form).queryByText("Seite 1 von 2")).toBeNull();
     await user.selectOptions(within(form).getByRole("combobox", { name: "Standort" }), "");
     await user.click(within(form).getByRole("checkbox", { name: /^Aloe/ }));
     // The date and the reason are one view further; the save button stays in the layer's footer.

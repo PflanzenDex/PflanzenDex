@@ -2,6 +2,7 @@ import * as React from "react";
 import { Drawer } from "vaul";
 import { cn, mergeRefs } from "@/shared/lib/utils";
 import { StatusBarDim } from "@/shared/platform/device/status-bar/status-bar";
+import { LayerScope } from "../../layer-scope/layer-scope";
 import { focusOnOpen } from "./open-focus";
 import { TitleRow } from "./title-row/title-row";
 
@@ -149,7 +150,7 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
               </Drawer.Description>
             ) : null}
             <div className="overflow-y-auto p-4 has-[[data-page-fit]]:flex has-[[data-page-fit]]:min-h-0 has-[[data-page-fit]]:flex-1 has-[[data-page-fit]]:flex-col">
-              {children}
+              <LayerScope.Provider value>{children}</LayerScope.Provider>
             </div>
           </Drawer.Content>
         </Drawer.Portal>

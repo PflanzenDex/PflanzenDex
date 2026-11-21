@@ -3,6 +3,7 @@ import * as React from "react";
 import { X } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { StatusBarDim } from "@/shared/platform/device/status-bar/status-bar";
+import { LayerScope } from "../layer-scope/layer-scope";
 
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -44,7 +45,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
             {description}
           </DialogPrimitive.Description>
         ) : null}
-        {children}
+        <LayerScope.Provider value>{children}</LayerScope.Provider>
         <DialogPrimitive.Close
           aria-label={closeLabel}
           className="absolute right-2 top-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-control forced-colors:border forced-colors:border-[color:ButtonText] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"

@@ -2,6 +2,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { useInLayer } from "../layer-scope/layer-scope";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
 
 beforeAll(() => {
@@ -213,5 +214,19 @@ describe("US-QS-32 · SG-SHEET-02 a sheet has a visible close control beside its
     expect(grabber).not.toBeNull();
     expect(grabber?.classList.contains("bg-input")).toBe(true);
     expect(grabber?.classList.contains("bg-muted")).toBe(false);
+  });
+
+  it("US-QS-32 · SG-LIST-01 what a sheet holds is in a layer, so its lists keep their pages on a phone", async () => {
+    function Probe() {
+      return <p>{useInLayer() ? "in a layer" : "on a page"}</p>;
+    }
+    render(
+      <Sheet open>
+        <SheetContent title="Filter">
+          <Probe />
+        </SheetContent>
+      </Sheet>,
+    );
+    expect(await screen.findByText("in a layer")).toBeTruthy();
   });
 });
