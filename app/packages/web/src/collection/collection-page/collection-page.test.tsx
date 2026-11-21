@@ -210,7 +210,11 @@ describe("US-BES-02 Seite Sammlung", () => {
     fakeServer();
     const onSpeciesChoose = vi.fn();
     render(page({ newSpecies: species, onSpeciesChoose }));
-    await userEvent.click(await screen.findByRole("button", { name: "Zurück zur Art" }));
+    // The chevron in the header and the cancel under the fields both lead back to the species choice (US-QS-32).
+    await screen.findAllByRole("button", { name: "Zurück zur Art" });
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "Zurück zur Art" })[0] as HTMLElement,
+    );
     expect(onSpeciesChoose).toHaveBeenCalledOnce();
   });
 

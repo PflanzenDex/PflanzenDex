@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { Button } from "@/shared/ui/button/button";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LayerHost, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LoadFrame, SCREEN_STALE_TIME, useInvalidate, useRequest } from "../../../shared/data";
 import { loadFriends, type FriendsData } from "../../api/friends-api";
@@ -171,9 +172,8 @@ export function FriendsPage(props: {
   return (
     <LayerHost data-fit-screen="">
       <section aria-labelledby="friends-title" className="flex min-w-0 flex-col gap-3">
-        <h1 id="friends-title" className="text-2xl font-semibold">
-          Freunde
-        </h1>
+        {/* The title is the page's header: in the top bar below md (US-QS-32, SG-HEAD-01). */}
+        <PageHeader headingId="friends-title" title={tx("friendsPage.title")} />
         <LoadFrame
           queryKey={FRIENDS_KEY}
           token={token}

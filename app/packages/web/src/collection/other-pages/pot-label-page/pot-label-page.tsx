@@ -138,18 +138,21 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
   );
 }
 
-/** Foreign and unknown labels (P-05): one view with no name, its own mark, the cause in one line, and the two ways on (US-QS-32). */
+/** Foreign and unknown labels (P-05): no name, its own mark, the cause in one line, two ways on; its title is the bar's (US-QS-32). */
 function NotFound() {
   const navigate = useNavigate();
   return (
-    <EmptyState
-      level={1}
-      icon={Tag}
-      title={ui("notFound")}
-      description={ui("notFoundCause")}
-      action={{ label: ui("addPlant"), onClick: () => void navigate(ADD_PLANT_PATH) }}
-      secondary={{ label: ui("toCollection"), onClick: () => void navigate(PATHS.collection) }}
-    />
+    <>
+      <PageHeader title={ui("notFoundPage")} />
+      <EmptyState
+        level={2}
+        icon={Tag}
+        title={ui("notFound")}
+        description={ui("notFoundCause")}
+        action={{ label: ui("addPlant"), onClick: () => void navigate(ADD_PLANT_PATH) }}
+        secondary={{ label: ui("toCollection"), onClick: () => void navigate(PATHS.collection) }}
+      />
+    </>
   );
 }
 

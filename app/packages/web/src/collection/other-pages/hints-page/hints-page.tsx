@@ -4,14 +4,7 @@ import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { LoadFrame, useInvalidate, useQueryClient, useWriteAction } from "../../../shared/data";
 import { HintsPageSkeleton } from "./hints-page.skeleton";
-import {
-  GRID,
-  PageFrame,
-  Plain,
-  Status,
-  TITLE,
-  ErrorNotice,
-} from "../../specimens/cards/parts/parts";
+import { GRID, PageFrame, Plain, Status, ErrorNotice } from "../../specimens/cards/parts/parts";
 import { refusalText } from "@/shared/lib/error-text";
 import { sharedLocations } from "../../../light";
 import { loadSpecimenHints } from "../../insights/api/hints-api";
@@ -21,6 +14,7 @@ import { HintCard, type HintTarget } from "./hint-card/hint-card";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import table from "./hints-page.de.json";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 
 const ui = texts(table);
 export type { HintTarget };
@@ -148,11 +142,7 @@ function HintList(props: {
       aria-labelledby={props.host ? undefined : "hints-title"}
       {...(props.host ? { className: FILL } : {})}
     >
-      {!props.host && (
-        <h1 id="hints-title" className={TITLE}>
-          {ui("heading")}
-        </h1>
-      )}
+      {!props.host && <PageHeader headingId="hints-title" title={ui("heading")} />}
       {props.data.hints.length === 0 ? (
         <EmptyState
           title={ui("emptyTitle")}

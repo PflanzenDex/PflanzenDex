@@ -17,7 +17,6 @@ import {
 } from "@/shared/ui/fields/form/form";
 import { Select } from "@/shared/ui/fields/select/select";
 import { CatchDateField } from "../../../markers/catch-date/catch-date-field/catch-date-field";
-import { TITLE } from "../../cards/parts/parts";
 import type { CreateFields } from "../../model/schemas";
 
 /** The own light zone of the specimen, chosen from the own zones (US-LIC-02); empty = derived (P-08). */
@@ -110,16 +109,15 @@ export function OtherFields(props: {
   );
 }
 
-export function Heading({ species }: { species: Species }) {
+/**
+ * The species of the new plant, the subject line under the title (SG-HEAD-01, US-QS-32): the title "Pflanze anlegen" is the
+ * bar's, and this line says which species the form is for.
+ */
+export function SpeciesLine({ species }: { species: Species }) {
   return (
     <>
-      <h1 id="create-title" className={TITLE}>
-        Pflanze anlegen
-      </h1>
-      <p className="mb-5 text-muted-foreground">
-        Art: <i>{species.latinName}</i>
-        {species.germanName ? ` (${species.germanName})` : ""}
-      </p>
+      Art: <i>{species.latinName}</i>
+      {species.germanName ? ` (${species.germanName})` : ""}
     </>
   );
 }

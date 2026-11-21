@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useOnline } from "@/shared/platform/browser/network";
+import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
 import {
   DelayedSkeleton,
@@ -90,7 +91,7 @@ export function RequestState(props: RequestStateProps) {
   if (status === "error")
     return (
       <>
-        {heading ? <h1 className="mb-3 text-2xl font-semibold">{heading}</h1> : null}
+        {heading ? <PageHeader title={heading} className="mb-3" /> : null}
         <EmptyState
           variant="error"
           title={offlineFailure ? offlineTitle : (errorText ?? "Das Laden ist fehlgeschlagen")}
