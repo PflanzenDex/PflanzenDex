@@ -59,13 +59,9 @@ async function settleOverview(page: Page): Promise<void> {
     .toBe(true);
 }
 
-/** Whether the page itself scrolls: below 768 px a list and Heute scroll as the page, there is no frame (issue 1854). */
-const pageScrolls = (page: Page): Promise<boolean> =>
-  page.evaluate(() => (document.scrollingElement?.scrollHeight ?? 0) > window.innerHeight);
-
 /**
- * On the settled "Heute" on a phone, the anniversaries tile covers neither the further tasks nor the later line, and they are
- * hit. The further tasks scroll as one list (SG-LIST-01, issue 1854): no pager stands below them.
+ * On the settled "Heute" on a phone, the anniversaries tile covers neither the further tasks nor the later line, and they
+ * are hit. The further tasks scroll as one list (SG-LIST-01, issue 1854): no pager stands below them.
  */
 async function expectNoCover(page: Page, size: string): Promise<void> {
   const tile = await boxOf(anniversariesTile(page));
@@ -118,14 +114,15 @@ test.describe("US-QS-18 Heute at 360 px", () => {
     await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
     await settleOverview(page);
     await expectNoCover(page, "360x640 at 200 %");
-    // The content is taller than the window and the page scrolls (no frame below 768 px, issue 1854); it does not collapse
-    // under the tile.
-    expect(await pageScrolls(page)).toBe(true);
+    // The content is taller than the window and scrolls inside the frame; it does not collapse under the tile.
+    expect(
+      await page.locator("[data-fit-fill]").evaluate((el) => el.scrollHeight > el.clientHeight),
+    ).toBe(true);
   });
 });
 
 test.describe("US-QS-14 Heute taller than the window", () => {
-  test("US-QS-14: Heute taller than the window: scrolled to the end, the frame and its last entry end above the bottom bar (issue 1835)", async ({
+  test("US-QS-14: Heute taller than the window: scrolled to the end, the frame and the last further task end above the bottom bar (issue 1835)", async ({
     page,
     account,
   }, info) => {
@@ -138,20 +135,22 @@ test.describe("US-QS-14 Heute taller than the window", () => {
     await page.setViewportSize({ width: 360, height: 640 });
     await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
     await settleOverview(page);
-    expect(await pageScrolls(page)).toBe(true);
-    await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight }));
-    // The page ends at the top of the bar, so the last line of the frame (its own bottom padding included) is never under
-    // the bar, whatever the content; before the fix it reached 8 px (0.5 rem) under it.
-    const box = await boxOf(page.locator("[data-fit-fill]"));
+    const frame = page.locator("[data-fit-fill]");
+    expect(await frame.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+    await frame.evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
+    // The scrolling frame itself ends at the top of the bar, so its last line (its own bottom padding included) is
+    // never under the bar, whatever the content; before the fix it reached 8 px (0.5 rem) under it.
+    const box = await boxOf(frame);
     const bar = await boxOf(page.locator("nav[data-bottom-bar]"));
     expect(
       box.y + box.height,
-      "the bottom of the frame against the top of the bar",
+      "the bottom of the scrolling frame against the top of the bar",
     ).toBeLessThanOrEqual(bar.y + 0.5);
-    const last = page.getByRole("list", { name: "Weitere Aufgaben" }).getByRole("listitem").last();
-    const entry = await boxOf(last);
+    const list = page.getByRole("list", { name: "Weitere Aufgaben" });
+    await list.evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
+    const last = await boxOf(list.getByRole("listitem").last());
     expect(
-      entry.y + entry.height,
+      last.y + last.height,
       "the bottom of the last further task against the top of the bar",
     ).toBeLessThanOrEqual(bar.y);
   });

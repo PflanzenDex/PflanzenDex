@@ -77,10 +77,10 @@ function useWanted(list: React.RefObject<HTMLUListElement | null>, reach: Reach)
  * One scrolling list on a phone (SG-LIST-01, US-QS-32): every loaded entry stays on the list, with no "Zurück" and
  * "Weiter". With server paging the next part is asked for once the end of the list comes near, so the list loads more as
  * the keeper scrolls; without an IntersectionObserver every part is asked for at once. A failed part shows its note and
- * its retry (P-10). A list that fills its frame (`fit`) takes the room the frame leaves (a percentage basis counts as
- * content in a container of no fixed height, so with no frame below 768 px it is as tall as its entries and the page
- * scrolls) and scrolls in its own box, so it is a tab stop for the keyboard
- * (WCAG 2.1.1, axe scrollable-region-focusable), and its rows never shrink below their content: a group clips its rows
+ * its retry (P-10). A list that fills its frame (`fit`) takes the room the frame leaves and scrolls in its own box, so it
+ * is a tab stop for the keyboard (WCAG 2.1.1, axe scrollable-region-focusable). It never gets shorter than one row and a
+ * bit (`min-h-24`, in rem, so it follows the text size): where the frame has no room left (200 % text), the frame scrolls
+ * instead and the list does not collapse to nothing. Its rows never shrink below their content: a group clips its rows
  * (`overflow-hidden`), which would let a flex column squeeze them to nothing.
  */
 export function ScrollEntries<T>({
@@ -105,7 +105,7 @@ export function ScrollEntries<T>({
   const holes = placeholderCount(paging, missing, Math.min(wanted, count) - loaded);
 
   return (
-    <div className={cn("flex flex-col gap-3", fit && "min-h-0 flex-1")}>
+    <div className={cn("flex flex-col gap-3", fit && "min-h-24 flex-1")}>
       <ul
         ref={list}
         {...(fit ? { "data-page-fit": "", tabIndex: 0 } : {})}
@@ -113,7 +113,7 @@ export function ScrollEntries<T>({
         {...busyWhile(holes)}
         className={cn(
           "flex flex-col gap-2",
-          fit && "min-h-0 flex-1 content-start overflow-y-auto [&>li]:shrink-0",
+          fit && "min-h-24 flex-1 content-start overflow-y-auto [&>li]:shrink-0",
           listClassName,
         )}
       >

@@ -98,6 +98,9 @@ describe("US-QS-32 · SG-LIST-01 a list on a phone scrolls instead of paging", (
     const list = screen.getByRole("list", { name: "Pflanzen" });
     expect(list.hasAttribute("data-page-fit")).toBe(true);
     expect(list.className).toContain("flex-1");
+    // The room the frame leaves can be none (200 % text): the list keeps one row and a bit, then the frame scrolls.
+    expect(list.className).toContain("min-h-24");
+    expect(list.className).not.toContain("min-h-0");
   });
 
   it("US-QS-32 · SG-LIST-01 from 768 px the list still pages by its size", () => {

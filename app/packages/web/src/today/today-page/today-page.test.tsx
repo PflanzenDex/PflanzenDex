@@ -344,9 +344,7 @@ describe("US-QS-14 Heute mixes no two secondary styles", () => {
     const action = await screen.findByRole("button", { name: "Behandlungen" });
     expect(action.className).toContain("px-[12px]");
     const tasks = screen.getByRole("region", { name: "Weitere Aufgaben" });
-    // Size containment is for the paged list from 768 px: below it the list scrolls with the page and gives its section its height.
-    expect(tasks.querySelector("ul")?.className).toContain("md:[contain:size]");
-    expect(tasks.querySelector("ul")?.className).not.toMatch(/(^|\s)\[contain:size\]/);
+    expect(tasks.querySelector("ul")?.className).toContain("[contain:size]");
   });
 });
 

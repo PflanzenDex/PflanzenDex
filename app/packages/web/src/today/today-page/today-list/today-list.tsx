@@ -76,10 +76,10 @@ export function FurtherTasks(props: {
       pageSize={pageSize}
       {...(props.fit ? { fit: true } : {})}
       label={t("tasks.title")}
-      // From 768 px the rows do not count towards the height of the section (size containment): the section keeps one row
-      // and the pager at a larger text size without growing with the page it shows, so the page size follows the free
-      // height only (issue 1113). Below 768 px the list scrolls with the page and its rows give the section its height.
-      listClassName={props.fit ? `${ROW_GROUP} md:[contain:size]` : ROW_GROUP}
+      // The rows do not count towards the height of the section (size containment): the section keeps one row and the
+      // pager at a larger text size without growing with the page it shows, so the page size follows the free height
+      // only (issue 1113).
+      listClassName={props.fit ? `${ROW_GROUP} [contain:size]` : ROW_GROUP}
       getKey={(item) => item.id}
       {...(props.param ? { param: props.param } : {})}
       renderItem={(item) => <TodayRow item={item} bare />}

@@ -290,9 +290,8 @@
     outline: none;
   }
   /*
-   * One screen (US-QS-15, DS-61, US-QS-19): from 768 px a view that holds an element with `data-fit-screen` makes the frame
-   * exactly the viewport; the main content scrolls inside itself only when it cannot fit (zoom, large text). Below 768 px
-   * there is no frame: the page scrolls (issue 1854, SG-LIST-01). Done in CSS with
+   * One screen (US-QS-15, DS-61, US-QS-19): a view that holds an element with `data-fit-screen` makes the frame exactly
+   * the viewport; the main content scrolls inside itself only when it cannot fit (zoom, large text). Done in CSS with
    * `:has` (never nested: a `:has` inside `:has` is invalid and drops the whole rule), so the app shell needs no code and no route list for it and the initial JavaScript stays within its budget (QG-U6).
    */
   /* In a window shorter than the tall window the frame grows with its content: the page scrolls (see the variant below). */
@@ -341,45 +340,45 @@
     scroll-padding-bottom: 0;
   }
   /*
-   * The tall window (US-QS-14, from 30 rem of height): the bars are sticky and fixed as before and the scroll padding
-   * follows their real heights. Below it nothing is pinned to the window height: the page scrolls and the bars follow the
-   * content in the flow.
+   * The tall window (US-QS-14, from 30 rem of height): the bars are sticky and fixed as before, the scroll padding follows
+   * their real heights, and a one-screen view keeps the frame exactly the viewport, with `main` and the filling view
+   * scrolling inside themselves when their content cannot fit (400 % zoom and large text, DS-61). Below it nothing is
+   * pinned to the window height: the page scrolls and the bars follow the content in the flow.
    */
   @variant tall-window {
     html {
       scroll-padding-top: var(--header-clearance, 0px);
       scroll-padding-bottom: var(--bar-clearance, 0px);
     }
-    /*
-     * From `md` (48 rem) a one-screen view keeps the frame exactly the viewport, with `main` and the filling view scrolling
-     * inside themselves when their content cannot fit (400 % zoom and large text, DS-61). Below it there is no frame
-     * (issue 1854, SG-LIST-01): a list and Heute scroll as the page, so the page scroll padding above keeps a focused
-     * control and the last row clear of the bottom bar (SG-LIST-02), and `main` has no scroll box of its own under it.
-     */
-    @media (width >= 48rem) {
-      div:has(> div > main [data-fit-screen]) {
-        height: 100dvh;
-      }
-      main > div:has(> [data-fit-fill]) {
-        height: 100%;
-      }
-      main > div > [data-fit-fill] {
-        height: calc(100% + 1rem);
-        overflow-y: auto;
-        overscroll-behavior: contain;
-      }
-      main:has([data-fit-screen]) {
-        overflow-y: auto;
-        overscroll-behavior: contain;
-      }
+    div:has(> div > main [data-fit-screen]) {
+      height: 100dvh;
+    }
+    main > div:has(> [data-fit-fill]) {
+      height: 100%;
+    }
+    main > div > [data-fit-fill] {
+      height: calc(100% + 1rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
     /*
-     * With the bottom bar (below 48 rem of width) the filling view ends where the room for the bar begins (issue 1835): only
-     * its top and sides reach into the padding of `main`, so its own bottom padding, the last 0.5 rem of the page, stays above
-     * the bar. From `md` there is no bar and the view keeps its bleed at the bottom too.
+     * `main` is the scroll box of a one-screen view, and a scroll box takes its own scroll padding, not that of `html`: with
+     * the bar's height as padding at its bottom, a focused control and the last row of a list that scrolls in it come to rest
+     * above the fixed bottom bar and never under it (SG-LIST-02, WCAG 2.4.11). From `md` there is no bar: the variable is 0.
+     */
+    main:has([data-fit-screen]) {
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scroll-padding-bottom: var(--bar-clearance, 0px);
+    }
+    /*
+     * With the bottom bar (below 48 rem of width) the view ends where the room for the bar begins (issue 1835): only its
+     * top and sides reach into the padding of `main`, so its own bottom padding, the last 0.5 rem of a scrolled view,
+     * stays above the bar. From `md` there is no bar and the view keeps its bleed at the bottom too.
      */
     @media (width < 48rem) {
       main > div > [data-fit-fill] {
+        height: calc(100% + 0.5rem);
         margin-bottom: 0;
       }
     }

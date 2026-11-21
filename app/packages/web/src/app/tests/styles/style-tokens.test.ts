@@ -224,37 +224,22 @@ describe("US-QS-15 the filling view at a larger text size (issue 1113)", () => {
   });
 });
 
-describe("US-QS-32 · SG-LIST-01 · SG-LIST-02 below 768 px the page scrolls, there is no one-screen frame (issue 1854)", () => {
+describe("US-QS-32 · SG-LIST-02 a list that scrolls on a phone stays clear of the bottom bar (issue 1854)", () => {
   const tall = css.slice(css.indexOf("@variant tall-window"));
-  const from = tall.indexOf("@media (width >= 48rem)");
+  const box = (selector: string) => {
+    const from = tall.indexOf(`${selector} {`);
+    return tall.slice(from, tall.indexOf("}", from));
+  };
 
-  it("US-QS-32 · SG-LIST-01 the frame of the viewport, the scroll box of main and of the filling view start at md", () => {
-    expect(from).toBeGreaterThan(-1);
-    const wide = tall.slice(from, tall.indexOf("\n    }\n", from));
-    for (const line of [
-      "div:has(> div > main [data-fit-screen]) {",
-      "height: 100dvh;",
-      "main:has([data-fit-screen]) {",
-      "overflow-y: auto;",
-    ])
-      expect(wide).toContain(line);
+  it("US-QS-32 · SG-LIST-02 the scroll box of a one-screen view, `main`, has the room of the bar as scroll padding at its bottom", () => {
+    const main = box("main:has([data-fit-screen])");
+    expect(main).toContain("overflow-y: auto;");
+    expect(main).toContain("scroll-padding-bottom: var(--bar-clearance, 0px);");
   });
 
-  it("US-QS-32 · SG-LIST-01 below md nothing is pinned to the window height or scrolls inside main", () => {
-    const narrow = tall.slice(0, from);
-    expect(narrow).not.toContain("100dvh");
-    expect(narrow).not.toContain("overflow-y");
-    expect(narrow).not.toContain("[data-fit-fill]");
-    // The one rule below md keeps the last 0.5 rem of the page above the bottom bar (issue 1835), and sets no height.
-    const bar = tall.slice(tall.indexOf("@media (width < 48rem)"));
-    expect(bar).toContain("margin-bottom: 0;");
-    expect(bar).not.toContain("height");
-  });
-
-  it("US-QS-32 · SG-LIST-02 the page scroll padding keeps a focused control clear of the bottom bar", () => {
-    const narrow = tall.slice(0, from);
-    expect(narrow).toContain("scroll-padding-bottom: var(--bar-clearance, 0px);");
-    expect(narrow).toContain("scroll-padding-top: var(--header-clearance, 0px);");
+  it("US-QS-32 · SG-LIST-02 the page keeps its scroll padding for both bars, and the padding follows the measured height", () => {
+    expect(box("html")).toContain("scroll-padding-top: var(--header-clearance, 0px);");
+    expect(box("html")).toContain("scroll-padding-bottom: var(--bar-clearance, 0px);");
   });
 });
 
