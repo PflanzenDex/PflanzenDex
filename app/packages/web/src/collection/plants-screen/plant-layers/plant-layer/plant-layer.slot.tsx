@@ -9,12 +9,12 @@ import { PlantSlotSkeleton, type SlotPart } from "./plant-layer.skeleton";
 const t = texts(table);
 
 /**
- * "Gießen" while its part loads (SG-STATE-02, F-0082, issue 1889): the same outline button in its place, disabled and
+ * "Gießen" while its part loads (SG-STATE-02, F-0082, issue 1889): the same tinted button in its place, disabled and
  * busy, from the first frame, so the action row has all its buttons at once and nothing moves when the part arrives.
  */
 function WaterPlaceholder() {
   return (
-    <Button type="button" variant="outline" disabled aria-busy="true">
+    <Button type="button" variant="tinted" disabled aria-busy="true">
       {t("slot.water")}
     </Button>
   );

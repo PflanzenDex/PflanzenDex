@@ -16,7 +16,7 @@ import {
   unknownInEvery,
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
 import { Button } from "@/shared/ui/button/button";
-import { SPECIES_ENTRY_ROW } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
+import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { SpeciesName, germanNameOf } from "@/shared/species-name/species-name";
 import { LightNeedAction } from "@/light";
 import { LoadFrame } from "../../../shared/data";
@@ -24,6 +24,10 @@ import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
 import { PageFrame, Plain, Quiet, TITLE } from "../../specimens/cards/parts/parts";
 import { ENTRY_FACTS, entryLine, factsOf, missingValuesText } from "./difficulty-page.values";
+
+/** A species row of the grouped list (US-QS-32, SG-COLOR-02): neutral, with the hover of the grouped rows and the chevron. */
+const ENTRY_ROW =
+  "whitespace-normal text-foreground hover:bg-muted hover:text-foreground focus-visible:ring-inset focus-visible:ring-offset-0";
 
 /** The layer of one species of the comparison: `?sheet=compare-<id>` (US-QS-22). */
 const layerId = (r: DifficultyRow): string => `compare-${r.speciesId}`;
@@ -95,14 +99,15 @@ function Entry({ row, hidden }: { row: DifficultyRow; hidden: readonly string[] 
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="ghost"
+      size="row"
       aria-haspopup="dialog"
       aria-expanded={open}
       aria-label={`Vergleichswerte: ${named}`}
-      className={SPECIES_ENTRY_ROW}
+      className={ENTRY_ROW}
       onClick={(event) => openLayer(event.currentTarget)}
     >
-      <span className="grid min-w-0 gap-0 break-words">
+      <span className="grid min-w-0 flex-1 gap-0 break-words">
         {/* `speciesName` is the German name, or the botanical name where there is none: SpeciesName takes that as none (US-QS-32, F-0121). */}
         <SpeciesName scientific={row.botanicalName} german={row.speciesName} meta={line} />
       </span>
@@ -124,7 +129,7 @@ function Values({ row }: { row: DifficultyRow }) {
         row.lightNeedUnknown ? (
           <LightNeedAction speciesId={row.speciesId} speciesName={row.speciesName} />
         ) : (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="tinted" size="sm">
             <Link to={profileAddress(row.speciesId)}>Artprofil öffnen</Link>
           </Button>
         )
@@ -178,7 +183,7 @@ function DifficultyTable(props: {
             fit
             label="Artenvergleich"
             getKey={(r) => r.speciesId}
-            listClassName="md:grid md:grid-cols-2"
+            listClassName={ROW_GROUP}
             renderItem={(r) => <Entry row={r} hidden={hidden} />}
           />
         </>

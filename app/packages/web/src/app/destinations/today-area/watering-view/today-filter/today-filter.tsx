@@ -19,7 +19,7 @@ export function TodayFilter(props: { onClear: () => void; children: ReactNode })
         <p className="min-w-0 text-sm">
           <span className="font-medium">{t("filter.shown")}</span> {t("filter.hidden")}
         </p>
-        <Button variant="outline" size="sm" onClick={props.onClear}>
+        <Button variant="tinted" size="sm" onClick={props.onClear}>
           {t("filter.clear")}
         </Button>
       </div>

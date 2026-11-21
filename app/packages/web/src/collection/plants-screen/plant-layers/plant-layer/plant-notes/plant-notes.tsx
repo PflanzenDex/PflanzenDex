@@ -32,7 +32,7 @@ export function NotesButton(props: { card: SpecimenCard }) {
     <Button
       id={layerOpenerId(notesLayerId(props.card.id))}
       type="button"
-      variant="outline"
+      variant="plain"
       aria-haspopup="dialog"
       aria-expanded={open}
       aria-label={t("open.label", { name: props.card.name })}
@@ -72,7 +72,7 @@ function NotesFailed(props: { error: ApiError; onRetry: () => void }) {
     <ErrorNotice>
       <p>{t("layer.failed")}</p>
       <p>{refusalText(props.error)}</p>
-      <Button type="button" variant="outline" onClick={props.onRetry}>
+      <Button type="button" variant="tinted" onClick={props.onRetry}>
         {t("layer.retry")}
       </Button>
     </ErrorNotice>

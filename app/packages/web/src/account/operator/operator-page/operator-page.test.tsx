@@ -486,11 +486,12 @@ describe("US-ACC-05 US-QS-32 the new code: one line, share or copy (fixture code
 
   it("US-ACC-05 US-QS-32 after creating a code the layer has one filled button, Code teilen and Code kopieren", async () => {
     const { dialog, box } = await createCode();
+    // "Code teilen" is secondary, which is tinted since the owner decision of 2026-11-20 (SG-BTN-01).
     expect(within(box).getByRole("button", { name: "Code teilen" }).className).toContain(
-      "bg-secondary",
+      "bg-accent",
     );
     expect(within(box).getByRole("button", { name: "Code kopieren" }).className).not.toContain(
-      "bg-secondary",
+      "bg-accent",
     );
     const filled = within(dialog)
       .getAllByRole("button")
