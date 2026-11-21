@@ -48,8 +48,7 @@ function OpenButtons(props: {
     <div className="flex flex-wrap gap-2">
       <Button
         type="button"
-        size="touch"
-        className="w-auto flex-1"
+        className="flex-1"
         disabled={props.busy}
         aria-label={`Annehmen: ${title}`}
         onClick={props.onAccept}
@@ -58,9 +57,8 @@ function OpenButtons(props: {
       </Button>
       <Button
         type="button"
-        size="touch"
         variant="plain"
-        className="w-auto flex-1"
+        className="flex-1"
         aria-label={`Ablehnen: ${title}`}
         onClick={() => props.onMode("decline")}
       >
@@ -68,8 +66,8 @@ function OpenButtons(props: {
       </Button>
       <Button
         type="button"
-        size="touch"
         variant="plain"
+        className="w-full sm:w-auto"
         aria-label={`Anderes vorschlagen: ${title}`}
         onClick={() => props.onMode("propose")}
       >
@@ -114,8 +112,8 @@ function GiverActions(props: { s: SwapSide; busy: boolean; onAnswer: (a: AnswerI
     return (
       <Button
         type="button"
-        size="touch"
         variant="plain"
+        className="w-full sm:w-auto"
         disabled={props.busy}
         aria-label={`Zusage zurückziehen: ${title}`}
         onClick={() => send({ action: "cancel" })}
@@ -145,23 +143,28 @@ export function SwapCard(props: {
   const waiting = s.status === "requested" || s.status === "accepted";
   return (
     <div className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
-      <span className="font-semibold">{swapTitle(s)}</span>
+      {/* The state stands in the title row: two whole cards fit the first screen of a phone (US-QS-32, SG-LIST-01). */}
+      <span className="flex min-w-0 flex-wrap items-start justify-between gap-x-2 gap-y-1">
+        <span className="min-w-0 font-semibold">{swapTitle(s)}</span>
+        <Badge variant={waiting ? "default" : "outline"} className="shrink-0">
+          {STATUS_TEXT[s.status]}
+        </Badge>
+      </span>
       <Facts s={s} />
-      <span className="mt-1 flex flex-wrap items-center gap-2">
-        <Badge variant={waiting ? "default" : "outline"}>{STATUS_TEXT[s.status]}</Badge>
-        {s.role === "recipient" && waiting && (
+      {s.role === "recipient" && waiting && (
+        <span className="mt-1 flex">
           <Button
             type="button"
-            size="touch"
             variant="plain"
+            className="w-full sm:w-auto"
             disabled={props.busy}
             aria-label={`Anfrage zurückziehen: ${swapTitle(s)}`}
             onClick={() => props.onAnswer({ action: "withdraw" })}
           >
             Anfrage zurückziehen
           </Button>
-        )}
-      </span>
+        </span>
+      )}
       <HandoverBox s={s} busy={props.busy} onConfirm={props.onHandover} />
       {s.role === "giver" && <GiverActions s={s} busy={props.busy} onAnswer={props.onAnswer} />}
     </div>

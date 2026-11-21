@@ -112,6 +112,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  setViewportWidth(360);
 });
 
 describe("US-BES-17 printing QR pot labels", () => {
@@ -209,25 +210,28 @@ describe("US-BES-17 printing QR pot labels", () => {
   });
 
   it("US-QS-32 the print button counts the chosen plants across the pages: 2, then 3 Etiketten drucken, 1 Etikett drucken", async () => {
-    setViewportWidth(360);
+    // Paging is the tablet and desktop view: ten plants a page from 1024 px (on a phone one scrolling list).
+    setViewportWidth(1024);
     server(
-      [1, 2, 3, 4, 5].map((n) => card({ id: `e${n}`, name: `Pflanze ${n}` })),
+      Array.from({ length: 12 }, (_, i) =>
+        card({ id: `e${i + 1}`, name: `Pflanze ${String(i + 1).padStart(2, "0")}` }),
+      ),
       { s1: species(null) },
     );
     const user = userEvent.setup();
     show();
-    await screen.findByRole("checkbox", { name: /Pflanze 1/ });
+    await screen.findByRole("checkbox", { name: /Pflanze 01/ });
     expect(printButton().textContent).toBe("Etiketten drucken");
-    await pick(user, /Pflanze 1/);
-    await pick(user, /Pflanze 2/);
+    await pick(user, /Pflanze 01/);
+    await pick(user, /Pflanze 02/);
     await chooseFormat(user, "A4-Bogen");
     expect(screen.getByRole("button", { name: "2\u00a0Etiketten drucken" })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Weiter" }));
-    await pick(user, /Pflanze 5/);
+    await pick(user, /Pflanze 11/);
     expect(screen.getByRole("button", { name: "3\u00a0Etiketten drucken" })).toBeTruthy();
-    await pick(user, /Pflanze 5/);
+    await pick(user, /Pflanze 11/);
     await user.click(screen.getByRole("button", { name: "Zurück" }));
-    await pick(user, /Pflanze 2/);
+    await pick(user, /Pflanze 02/);
     expect(screen.getByRole("button", { name: "1\u00a0Etikett drucken" })).toBeTruthy();
   });
 
@@ -249,6 +253,15 @@ describe("US-BES-17 printing QR pot labels", () => {
     const frame = list.closest("[data-fit-screen]");
     expect(frame?.hasAttribute("data-fit-fill")).toBe(true);
     expect(list.hasAttribute("data-page-fit")).toBe(true);
+  });
+
+  it("US-QS-32 · SG-LIST-01 the text of a plant row breaks inside the row, so at 200 % text a long name or place never widens the list sideways", async () => {
+    server([card({ name: "Birkenfeige", location: "Fensterbank-Ostseite" })]);
+    show();
+    const row = (await screen.findByRole("checkbox", { name: /Birkenfeige/ })).closest("label");
+    expect(row?.className).toContain("min-w-0");
+    expect(row?.className).toContain("[&>span]:min-w-0");
+    expect(row?.className).toContain("[&>span]:break-words");
   });
 
   it("US-BES-17 without plants the page offers the way to the collection (P-09)", async () => {

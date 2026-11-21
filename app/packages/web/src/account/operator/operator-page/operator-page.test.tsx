@@ -70,6 +70,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 /** The page in a router, because each topic's layer lives in the address (`?sheet=`, US-QS-15). */
@@ -621,6 +622,8 @@ describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
   });
 
   it("US-QS-15 a long list of invitations is paged: five per page, 'Seite n von m' and Weiter", async () => {
+    // Paging starts at 768 px; the layer stays a sheet (a dialog) below 1024 px.
+    setViewportWidth(768);
     current = overview({
       invitations: Array.from({ length: 7 }, (_, i) => ({
         id: `i${i}`,

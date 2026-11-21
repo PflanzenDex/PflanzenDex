@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
+import { useInLayer } from "../layer-scope/layer-scope";
 import { Dialog, DialogContent, DialogTrigger } from "./dialog";
 
 afterEach(cleanup);
@@ -72,5 +73,19 @@ describe("Dialog (US-QS-07, DS-23, DS-40)", () => {
     expect(backdrop).not.toBeNull();
     expect(backdrop?.classList.contains("bg-scrim")).toBe(true);
     expect(backdrop?.className).not.toContain("bg-foreground");
+  });
+
+  it("US-QS-32 · SG-LIST-01 what a dialog holds is in a layer, so its lists keep their pages on a phone", async () => {
+    function Probe() {
+      return <p>{useInLayer() ? "in a layer" : "on a page"}</p>;
+    }
+    render(
+      <Dialog open>
+        <DialogContent title="Pflanze löschen">
+          <Probe />
+        </DialogContent>
+      </Dialog>,
+    );
+    expect(await screen.findByText("in a layer")).toBeTruthy();
   });
 });

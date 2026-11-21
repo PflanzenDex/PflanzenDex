@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { WishlistPage } from "./wishlist-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
@@ -115,6 +116,7 @@ afterEach(() => {
   at = "/";
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 describe("US-WUN-01 page of the candidate list", () => {
@@ -991,13 +993,15 @@ describe("US-QS-22 the wishlist fits one screen", () => {
     );
 
   it("US-QS-22 the wishes are compact rows in pages, ranked as before", async () => {
-    fakeServer(many(6));
+    // Paging is the tablet and desktop view: ten compact rows a page from 1024 px (on a phone one scrolling list).
+    setViewportWidth(1024);
+    fakeServer(many(12));
     view(<WishlistPage api="http://api" token={token} />);
     await screen.findByRole("button", { name: /^1\. Wunsch 1\b/ });
-    expect(screen.getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.getAllByRole("listitem")).toHaveLength(10);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByRole("button", { name: /^5\. Wunsch 5\b/ })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^11\. Wunsch 11\b/ })).toBeTruthy();
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
   });
 

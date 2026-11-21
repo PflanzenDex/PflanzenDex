@@ -30,13 +30,14 @@ function useDropStaleLockedSheet(): void {
 
 /**
  * The locked functions as a tile of "Heute" (US-QS-18, issue 1156): `tile` gets the count, the name and the layer, the
- * area draws it like its other tiles. Nothing while nothing is locked. It lives in the shell's chunk, not the area's (QG-U6).
+ * area draws it like its other tiles. The name is the short "Ungeöffnet", so the tile keeps one line at 360 px (issue 1854);
+ * the heading of the rows in the layer stays `locked.title`. Nothing while nothing is locked. It lives in the shell's chunk, not the area's (QG-U6).
  */
 export function LockedTile(props: {
   tile: (count: number, label: string, layer: string) => ReactNode;
 }) {
   const n = useUnlocks().entries.filter(isShownLocked).length;
-  return n === 0 ? null : <>{props.tile(n, t("locked.title"), LAYER)}</>;
+  return n === 0 ? null : <>{props.tile(n, t("locked.tile"), LAYER)}</>;
 }
 
 /** The layer behind the tile (`?sheet=locked`) with the rows of the locked functions (US-ONB-05). */

@@ -224,6 +224,25 @@ describe("US-QS-15 the filling view at a larger text size (issue 1113)", () => {
   });
 });
 
+describe("US-QS-32 · SG-LIST-02 a list that scrolls on a phone stays clear of the bottom bar (issue 1854)", () => {
+  const tall = css.slice(css.indexOf("@variant tall-window"));
+  const box = (selector: string) => {
+    const from = tall.indexOf(`${selector} {`);
+    return tall.slice(from, tall.indexOf("}", from));
+  };
+
+  it("US-QS-32 · SG-LIST-02 the scroll box of a one-screen view, `main`, has the room of the bar as scroll padding at its bottom", () => {
+    const main = box("main:has([data-fit-screen])");
+    expect(main).toContain("overflow-y: auto;");
+    expect(main).toContain("scroll-padding-bottom: var(--bar-clearance, 0px);");
+  });
+
+  it("US-QS-32 · SG-LIST-02 the page keeps its scroll padding for both bars, and the padding follows the measured height", () => {
+    expect(box("html")).toContain("scroll-padding-top: var(--header-clearance, 0px);");
+    expect(box("html")).toContain("scroll-padding-bottom: var(--bar-clearance, 0px);");
+  });
+});
+
 /** Every source file below `dir` without its tests and stories. */
 function appSources(dir: URL): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

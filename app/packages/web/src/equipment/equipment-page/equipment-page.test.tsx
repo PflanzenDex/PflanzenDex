@@ -121,6 +121,7 @@ function fakeServer(
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 describe("US-EQU-01 equipment page", () => {
@@ -579,6 +580,8 @@ describe("US-QS-22 the equipment fits one screen", () => {
   });
 
   it("US-QS-22 the list of what I own is paged inside its layer with its own address part", async () => {
+    // Paging starts at 768 px; the layer stays a sheet (a dialog) below 1024 px.
+    setViewportWidth(768);
     fakeServer([
       item({ id: "e1", name: "Zone 1 · Stecklingslicht" }),
       item({ id: "e2", name: "Zone 2" }),

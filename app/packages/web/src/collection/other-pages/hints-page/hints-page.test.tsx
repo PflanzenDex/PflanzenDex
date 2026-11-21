@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HintsPage } from "./hints-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -129,6 +130,8 @@ describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
   });
 
   it("US-QS-18 · issue 1156 in the layer of Heute the hints page by its free height and leave the page of Heute alone", async () => {
+    // Paging is the view from 768 px (US-QS-32); on a phone the list scrolls.
+    setViewportWidth(768);
     fakeServer(() => response(200, { hints: [noZone, noSpecies, noLocation, noZone] }));
     render(
       <MemoryRouter initialEntries={["/today?sheet=hints&lfrom=3"]}>

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { returnFocusOnClose } from "@/shared/platform/routing/route-focus/view-start";
@@ -116,6 +117,18 @@ function useOpenState(
   return { open, setOpen, opened };
 }
 
+type Hosted = { host: HTMLElement; barHost: React.ContextType<typeof FormBarHostContext> };
+
+/** The children go through a portal, so the sheet and the dialog provide nothing to them: the form bar host (US-QS-32) and the layer scope (SG-LIST-01) come from here. */
+function HostedChildren(props: Hosted & { children: React.ReactNode }) {
+  return createPortal(
+    <FormBarHostContext.Provider value={props.barHost}>
+      <LayerScope.Provider value>{props.children}</LayerScope.Provider>
+    </FormBarHostContext.Provider>,
+    props.host,
+  );
+}
+
 /**
  * Modal for content a phone user fills in (US-QS-07, DS-23): bottom sheet below `md`, centered dialog from `md`.
  * The children are rendered once into a stable host node that moves between the two containers,
@@ -176,10 +189,9 @@ export function ResponsiveModal({
           </SheetContent>
         </Sheet>
       )}
-      {createPortal(
-        <FormBarHostContext.Provider value={barHost}>{children}</FormBarHostContext.Provider>,
-        host,
-      )}
+      <HostedChildren host={host} barHost={barHost}>
+        {children}
+      </HostedChildren>
     </>
   );
 }

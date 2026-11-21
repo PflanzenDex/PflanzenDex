@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { GrowthTrend, MeasurementRow, MeasurementView, PhasesRow } from "@pflanzendex/core";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { PlantCare } from "./plant-care/plant-care";
 import { PlantGrowth } from "./plant-growth/plant-growth";
 import { PlantHistory } from "./plant-history/plant-history";
@@ -55,6 +56,7 @@ const Where = () => <span data-testid="address">{useLocation().search}</span>;
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 describe("US-QS-23 the growth trend of the overview", () => {
@@ -122,6 +124,7 @@ describe("US-QS-23 Verlauf", () => {
     );
 
   it("US-QS-23 pages the measurements newest first, with the position, and the page is in the address", async () => {
+    setViewportWidth(1024);
     server({ "GET /specimens/e1/measurements": () => json(200, view({ measurements })) });
     show();
     const list = await screen.findByRole("list", { name: "Messungen und Fotos" });

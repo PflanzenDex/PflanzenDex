@@ -1,7 +1,11 @@
 import * as React from "react";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { useInLayer } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { usePageFit } from "./use-page-fit";
+import { ScrollEntries } from "./paging/scroll-entries/scroll-entries";
+import { useSwipe } from "./paging/swipe-page";
 import {
   PAGE_PARAM,
   hasOldPart,
@@ -26,32 +30,6 @@ import {
 export type { PagerPaging } from "./paging/paging";
 export type { PagerPart } from "./paging/address";
 export { LAYER_PARAM, PAGE_PARAM, dropPageParts } from "./paging/address";
-
-/** Horizontal distance of a swipe that turns the page (starting value, assumption; US-QS-15). */
-const SWIPE_PX = 48;
-
-/** Pointer handlers that turn a horizontal swipe into a page change, as an alternative to the buttons. */
-function useSwipe(page: number, pages: number, turn: (delta: 1 | -1) => void) {
-  const start = React.useRef<{ x: number; y: number } | null>(null);
-  return {
-    onPointerDown: (e: React.PointerEvent) => {
-      start.current = { x: e.clientX, y: e.clientY };
-    },
-    onPointerUp: (e: React.PointerEvent) => {
-      const from = start.current;
-      start.current = null;
-      if (!from) return;
-      const dx = e.clientX - from.x;
-      const dy = e.clientY - from.y;
-      if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-      if (dx < 0 && page < pages) turn(1);
-      if (dx > 0 && page > 1) turn(-1);
-    },
-    onPointerCancel: () => {
-      start.current = null;
-    },
-  };
-}
 
 /**
  * A disabled plain page button keeps its text neutral: the green at half opacity fell to about 1.8:1 (issue 1045). It stays
@@ -135,13 +113,24 @@ export type PagerProps<T> = {
 };
 
 /**
+ * A list of entries (US-QS-15, SG-LIST-01): from 768 px it pages, on a phone it is one scrolling list. A list in a sheet or a
+ * dialog keeps its pages at every width: the layer is sized by the window, so its list pages by the free height (issue 1861
+ * owns the layers). The view follows the breakpoint live, so a resize swaps it; the address parts belong to the paged view only.
+ */
+export function Pager<T>(props: PagerProps<T>) {
+  const wide = useIsMd();
+  const inLayer = useInLayer();
+  return wide || inLayer ? <PagedPager {...props} /> : <ScrollEntries {...props} />;
+}
+
+/**
  * Pages of whole entries instead of a long scroll (US-QS-15, DS-58): "Zurück" and "Weiter", the position "Seite n von m"
  * in a polite live region, swipe as an alternative. The address names the first entry on screen (`?from=n`, counted from
  * 0, FR-BES-23): a page size differs per screen, so only an entry means the same plants everywhere. A step of the person
  * writes it; a resize writes nothing; an entry past the end shows the last page and the address follows. An old page
  * number (`?page=n`) is converted once, at the first measurement, and then the address holds the entry.
  */
-export function Pager<T>({
+function PagedPager<T>({
   items,
   pageSize: startingSize,
   renderItem,

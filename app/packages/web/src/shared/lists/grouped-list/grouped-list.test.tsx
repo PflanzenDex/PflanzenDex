@@ -83,6 +83,24 @@ describe("US-QS-32 GroupedList (SG-SHAPE-03, SG-HEAD-03)", () => {
   });
 });
 
+describe("US-QS-32 · SG-LIST-01 a dense row (issue 1854)", () => {
+  it("US-QS-32 · SG-LIST-01 a dense row has 8 px above and below instead of 12 px, and still a 44 px hit area", () => {
+    render(
+      wrap(
+        <GroupedList>
+          <GroupedRow title="Dicht" to="/a" dense />
+          <GroupedRow title="Weit" to="/b" />
+        </GroupedList>,
+      ),
+    );
+    const dense = screen.getByRole("link", { name: "Dicht" });
+    expect(dense.className).toContain("py-2");
+    expect(dense.className).not.toContain("py-3");
+    expect(dense.className).toContain("min-h-11");
+    expect(screen.getByRole("link", { name: "Weit" }).className).toContain("py-3");
+  });
+});
+
 describe("US-QS-32 GroupedRow (SG-LIST-04, SG-TYPE-02, SG-COLOR-02)", () => {
   it("US-QS-32 a navigation row is a link and shows a chevron", () => {
     render(

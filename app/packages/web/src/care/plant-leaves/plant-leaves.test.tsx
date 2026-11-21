@@ -68,6 +68,7 @@ const show = (on = true) =>
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 describe("US-WAC-07 the new-leaf log of a plant", () => {
@@ -102,6 +103,8 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
   });
 
   it("US-WAC-07 the count and the leaves are listed newest first, one leaf per page, with unknown sizes shown as unbekannt (P-08)", async () => {
+    // Paging is the tablet and desktop view (768 px and up); on a phone the leaves are one scrolling list (US-QS-32).
+    setViewportWidth(1024);
     server({
       "GET /specimens/e1/leaves": () =>
         json(

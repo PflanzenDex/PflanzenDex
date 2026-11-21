@@ -484,17 +484,16 @@ describe("US-QS-19 management on one screen", () => {
     expect(screen.getByRole("region", { name: "Standorte" }).className).not.toContain("hidden");
   });
 
-  it("US-QS-19 a phone pages the locations with four compact rows a page and says which page it shows", async () => {
+  it("US-QS-19 · US-QS-32 a phone lists the locations in one scrolling list of compact rows: all seven, and no page is turned", async () => {
     setViewportWidth(360);
     fakeServer({ zones: [zone], locations: locationsSeven });
     render(<LightPage api="http://api" token={async () => "tok"} />);
     await userEvent.click(await screen.findByRole("button", { name: "Standorte (7)" }));
     const list = screen.getByRole("list", { name: "Standorte" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(4);
-    expect(screen.getByRole("status").textContent).toContain("Seite 1 von 2");
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
-    expect(screen.getByRole("status").textContent).toContain("Seite 2 von 2");
+    expect(within(list).getAllByRole("listitem")).toHaveLength(7);
+    expect(within(list).getByText("Standort 7")).toBeTruthy();
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
   });
 
   it("US-QS-32 each zone and location is one button named by its visible text, with a chevron, and its layer holds the form", async () => {

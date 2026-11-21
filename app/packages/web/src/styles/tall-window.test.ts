@@ -47,8 +47,9 @@ describe("US-QS-14 tall window: one threshold for the bars and their room", () =
     expect(flat).toContain(
       "main > div > [data-fit-fill] { height: calc(100% + 1rem); overflow-y: auto;",
     );
+    // The scroll box of a one-screen view takes the bar's height as scroll padding (SG-LIST-02).
     expect(flat).toContain(
-      "main:has([data-fit-screen]) { overflow-y: auto; overscroll-behavior: contain; }",
+      "main:has([data-fit-screen]) { overflow-y: auto; overscroll-behavior: contain; scroll-padding-bottom: var(--bar-clearance, 0px); }",
     );
     // Issue 1835: with the bottom bar the view ends at the room for the bar, so its last 0.5 rem is never under it.
     expect(flat).toContain(

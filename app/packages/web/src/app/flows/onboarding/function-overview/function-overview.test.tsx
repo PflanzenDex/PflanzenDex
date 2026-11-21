@@ -15,7 +15,7 @@ import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-con
 import table from "./function-overview.de.json";
 import { FunctionOverviewSkeleton } from "./function-overview.skeleton";
 
-// A phone (US-QS-15): the list is in pages of four and each function opens as a layer.
+// A phone (US-QS-32): the functions are one scrolling list and each function opens as a layer.
 beforeAll(() => setViewportWidth(390));
 
 const json = (status: number, body: unknown) =>
@@ -72,43 +72,25 @@ function show(functions: unknown[], status = 200) {
   return posts;
 }
 
-/** The rows of the list over all pages, in order: name and state word; the list is back on its first page after. */
+/** The rows of the list, in order: name and state word. On a phone the list holds every function (US-QS-32). */
 async function rows(): Promise<{ name: string; state: string }[]> {
-  const out: { name: string; state: string }[] = [];
-  const list = () => screen.findByRole("list", { name: "Funktionen" });
-  for (;;) {
-    for (const b of within(await list()).getAllByRole("button")) {
-      out.push({
-        name: b.querySelector(".font-semibold")?.textContent ?? "",
-        state: b.querySelector(".text-muted-foreground")?.textContent ?? "",
-      });
-    }
-    const next = screen.getByRole("button", { name: "Weiter" }) as HTMLButtonElement;
-    if (next.disabled) break;
-    await userEvent.click(next);
-  }
-  for (;;) {
-    const prev = screen.getByRole("button", { name: "Zurück" }) as HTMLButtonElement;
-    if (prev.disabled) return out;
-    await userEvent.click(prev);
-  }
+  const list = await screen.findByRole("list", { name: "Funktionen" });
+  return within(list)
+    .getAllByRole("button")
+    .map((b) => ({
+      name: b.querySelector(".font-semibold")?.textContent ?? "",
+      state: b.querySelector(".text-muted-foreground")?.textContent ?? "",
+    }));
 }
 
-/** Opens the layer of one function: the list is searched from its first page, the row is chosen by its name. */
+/** Opens the layer of one function: the row is chosen by its name. */
 async function openFunction(name: string) {
-  for (;;) {
-    const list = await screen.findByRole("list", { name: "Funktionen" });
-    const row = within(list)
-      .queryAllByRole("button")
-      .find((b) => b.querySelector(".font-semibold")?.textContent === name);
-    if (row) {
-      await userEvent.click(row);
-      return;
-    }
-    const next = screen.getByRole("button", { name: "Weiter" }) as HTMLButtonElement;
-    if (next.disabled) throw new Error(`no row ${name}`);
-    await userEvent.click(next);
-  }
+  const list = await screen.findByRole("list", { name: "Funktionen" });
+  const row = within(list)
+    .queryAllByRole("button")
+    .find((b) => b.querySelector(".font-semibold")?.textContent === name);
+  if (!row) throw new Error(`no row ${name}`);
+  await userEvent.click(row);
 }
 
 afterEach(() => {

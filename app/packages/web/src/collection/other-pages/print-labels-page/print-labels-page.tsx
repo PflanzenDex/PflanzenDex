@@ -154,7 +154,8 @@ function ChoicePanel(props: {
           <Checkbox
             checked={chosen.some((c) => c.id === card.id)}
             onChange={() => onToggle(card)}
-            rowClassName="min-w-0 flex-1"
+            // The text breaks inside the row: at 200 % text a long name or place would widen the list sideways (SG-LIST-01).
+            rowClassName="min-w-0 flex-1 [&>span]:min-w-0 [&>span]:break-words"
           >
             {card.name}
             <span className="block text-sm text-muted-foreground">

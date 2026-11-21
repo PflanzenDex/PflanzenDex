@@ -55,7 +55,10 @@ export function OfferList(props: {
   );
 }
 
-/** One of my offers with its state; an open or reserved one can be withdrawn (US-SOZ-08). */
+/**
+ * One of my offers with its state; an open or reserved one can be withdrawn (US-SOZ-08). The state stands in the title
+ * row, so a card has no row of its own for it: two whole cards fit the first screen of a phone (US-QS-32, SG-LIST-01).
+ */
 function OfferCard({
   offer: o,
   busy,
@@ -68,7 +71,12 @@ function OfferCard({
   const active = o.status === "open" || o.status === "reserved";
   return (
     <div className="grid break-words rounded-lg border border-border p-3">
-      <span className="font-semibold">{o.specimenName ?? t("offers.plantUnknown")}</span>
+      <span className="flex min-w-0 flex-wrap items-start justify-between gap-x-2 gap-y-1">
+        <span className="min-w-0 font-semibold">{o.specimenName ?? t("offers.plantUnknown")}</span>
+        <Badge variant={active ? "default" : "outline"} className="shrink-0">
+          {STATUS_TEXT[o.status]}
+        </Badge>
+      </span>
       <span className="text-sm">
         {TYPE_TEXT[o.type]} · {MODE_TEXT[o.mode]}
       </span>
@@ -78,9 +86,8 @@ function OfferCard({
       {o.phase === "dormancy" && (
         <span className="text-sm text-muted-foreground">{t("card.dormancy")}</span>
       )}
-      <span className="mt-1 flex flex-wrap items-center gap-2">
-        <Badge variant={active ? "default" : "outline"}>{STATUS_TEXT[o.status]}</Badge>
-        {active && (
+      {active && (
+        <span className="mt-1 flex">
           <Button
             type="button"
             size="touch"
@@ -91,8 +98,8 @@ function OfferCard({
           >
             {t("offers.withdrawButton")}
           </Button>
-        )}
-      </span>
+        </span>
+      )}
     </div>
   );
 }

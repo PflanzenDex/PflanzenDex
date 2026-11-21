@@ -355,14 +355,14 @@ describe("US-QS-22 the comparison fits one screen", () => {
   const many = (n: number) =>
     Array.from({ length: n }, (_, i) => row({ speciesId: `s${i}`, speciesName: `Art ${i + 1}` }));
 
-  it("US-QS-22 the species are paged: four entries on a phone, then the next page", async () => {
+  it("US-QS-22 · US-QS-32 the species are one scrolling list on a phone: every entry is in it and no page is turned", async () => {
     setViewportWidth(360);
     fakeServer(() => response(200, { rows: many(6) }));
     view(<DifficultyPage api="http://api" token={token} />);
     const list = await screen.findByRole("list", { name: "Artenvergleich" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(4);
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(within(list).getAllByRole("listitem")).toHaveLength(6);
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
     expect(await screen.findByText("Art 5")).toBeTruthy();
   });
 

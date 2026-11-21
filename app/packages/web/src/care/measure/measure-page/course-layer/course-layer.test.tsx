@@ -5,6 +5,7 @@ import type { MeasurementRow, MeasurementView } from "@pflanzendex/core";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CourseLayer } from "./course-layer";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 
 afterEach(() => {
   cleanup();
@@ -101,6 +102,8 @@ describe("US-QS-15 · US-WAC-01 the Verlauf layer in three parts", () => {
   });
 
   it("US-QS-15 · US-WAC-01 Messungen lists the entries newest first, paged and marked for the free height", async () => {
+    // Paging is the view from 768 px (US-QS-32); on a phone the list scrolls.
+    setViewportWidth(768);
     await showReady(course, "/collection?sheet=verlauf-e1&teil=messungen");
     const list = screen.getByRole("list", { name: "Messungen und Fotos" });
     expect(list.hasAttribute("data-page-fit")).toBe(true);

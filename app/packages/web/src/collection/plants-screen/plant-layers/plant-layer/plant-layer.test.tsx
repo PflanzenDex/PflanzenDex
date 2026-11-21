@@ -537,7 +537,8 @@ function PagedCare() {
 
 describe("US-QS-15 issue 2147 · a plant opened by a reload closes to its list without the layer's tab and page", () => {
   it("US-QS-15 issue 2147 · a reload on Pflege at a later page, closed, leaves no tab or page in the list: the next plant opens on Überblick and its first page", async () => {
-    setViewportWidth(360);
+    // Paging starts at 768 px; the layer stays a sheet (a dialog) below 1024 px.
+    setViewportWidth(768);
     show(
       [card(), card({ id: "e2", name: "Basilikum", speciesName: "Ocimum basilicum" })],
       { slots: { ...SLOTS, care: () => <PagedCare /> } },

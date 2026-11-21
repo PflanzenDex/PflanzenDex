@@ -13,6 +13,7 @@ import {
   useSearchParams,
 } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { PAGER_PARTS, type PagerPart } from "@/shared/patterns/responsive/pager/paging/address";
@@ -326,6 +327,10 @@ function PagedView({ param }: { param: PagerPart }) {
 }
 
 describe("US-QS-15 · turning a page of a list is no view change (issue 1550)", () => {
+  // Paging is the tablet and desktop view (768 px and up); the pager of this view turns pages there.
+  beforeEach(() => setViewportWidth(1024));
+  afterEach(() => setViewportWidth(360));
+
   it("US-QS-15 turning a page of the measurements (?vfrom) keeps the focus on the pager", async () => {
     render(
       <MemoryRouter initialEntries={["/b"]}>

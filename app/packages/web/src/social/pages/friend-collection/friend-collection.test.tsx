@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import type { SharedSpecimen } from "@pflanzendex/core";
 import { createQueryClient } from "../../../shared/data";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
@@ -69,6 +70,7 @@ function show(body: unknown, status = 200, devices: unknown = NO_DEVICES, path =
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 describe("US-QS-32 F-0265 the line names only whitelisted fields, each by its word (QG-D2, P-05)", () => {
@@ -110,11 +112,13 @@ describe("US-SOZ-07 a friend's shared collection", () => {
   });
 
   it("US-SOZ-07 · US-QS-20 the heading names the friend in the genitive, the cards are paged", async () => {
-    const many = Array.from({ length: 8 }, (_, n) => card({ speciesLatin: `Art ${n}` }));
+    // Paging is the tablet and desktop view: sixteen cards a page from 1024 px (on a phone the cards are one list).
+    setViewportWidth(1024);
+    const many = Array.from({ length: 20 }, (_, n) => card({ speciesLatin: `Art ${n}` }));
     show({ friend: { name: "Clara" }, cards: many });
     expect(await screen.findByRole("heading", { level: 1, name: "Claras Sammlung" })).toBeTruthy();
     const list = await screen.findByRole("list", { name: "Sammlung von Clara" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(4);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(16);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     expect(collectionTitle("Lars")).toBe("Lars' Sammlung");
     expect(collectionTitle(null)).toBe("Sammlung eines Freundes");

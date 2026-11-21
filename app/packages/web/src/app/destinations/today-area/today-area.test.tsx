@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { useInvalidate, useQueryClient, type QueryClient } from "@/shared/data";
@@ -311,6 +312,7 @@ beforeAll(async () => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 describe("US-QS-18 Heute fits one screen", () => {
@@ -618,6 +620,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
   });
 
   it("US-QS-18 · US-BEH-02 the open treatments stand by urgency with a short chip and are paged", async () => {
+    // Paging starts at 768 px; the layer stays a sheet below 1024 px (a pane there has no dialog role).
+    setViewportWidth(768);
     fakeServer({
       treatments: [
         treatment("a", "Aloe", "overdue", "überfällig seit 10 Tagen"),
@@ -637,6 +641,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
   });
 
   it("US-QS-18 · F-0351 ten open treatments, two per page, beside the fitted further tasks of Heute: Weiter moves one page each time to page 5 of 5", async () => {
+    // Paging starts at 768 px; the layer stays a sheet below 1024 px (a pane there has no dialog role).
+    setViewportWidth(768);
     const ten = Array.from({ length: 10 }, (_, i) =>
       treatment(`t${i}`, `Pflanze ${i + 1}`, "overdue", `überfällig seit ${i + 1} Tagen`),
     );
@@ -677,6 +683,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
   });
 
   it("US-QS-18 · US-QS-19 · F-0351 ten due plants, three per page, in the layer Gießen beside the fitted further tasks of Heute: Weiter reaches page 4 of 4 and the further tasks keep their page", async () => {
+    // Paging starts at 768 px; the layer stays a sheet below 1024 px (a pane there has no dialog role).
+    setViewportWidth(768);
     fakeServer({ items: [todayItem, ...FURTHER_TASKS], due: TEN_DUE });
     const restore = stubFittedRegion(100);
     try {
@@ -735,7 +743,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     show("/today?sheet=treatments");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
-    // Three plants per page on a phone (owner decision 2026-11-20), the position in text, search and location filter above the list.
+    // A list in a layer keeps its pages on a phone (SG-LIST-01: only the lists of pages scroll; issue 1861 owns the layers):
+    // three plants per page, the position in text, search and location filter above the list.
     expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(3);
     expect(within(form).getByText("Seite 1 von 2")).toBeTruthy();
     await user.type(within(form).getByRole("searchbox", { name: "Pflanze suchen" }), "EFE");

@@ -4,6 +4,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { deviceTimeZone, setProfileTimeZone } from "../../shared/data";
 import { PokedexPage } from "./pokedex-page";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
@@ -68,6 +69,7 @@ afterEach(() => {
   setProfileTimeZone(null);
   cleanup();
   vi.unstubAllGlobals();
+  setViewportWidth(360);
 });
 
 describe("US-POK-06 page of the caught species", () => {
@@ -271,6 +273,8 @@ const treeCalls = (fetchFn: { mock: { calls: Parameters<typeof fetch>[] } }) =>
 
 describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () => {
   it("US-POK-10 · US-POK-11 the row shows the total, the layer the percent and the orders, the milestones open as their own layer", async () => {
+    // Paging starts at 768 px; the layers stay sheets (dialogs) below 1024 px.
+    setViewportWidth(768);
     fakeServer(
       () => response(200, { ownership: { caught, unidentified: [] } }),
       () => response(200, { tree: { species: tree } }),
@@ -440,16 +444,26 @@ describe("US-QS-22 the species fit one screen", () => {
   );
 
   it("US-QS-22 the caught species are compact entries in pages", async () => {
-    fakeServer(() => response(200, { ownership: { caught: five, unidentified: [] } }));
+    // Paging is the tablet and desktop view: ten compact entries a page from 1024 px (on a phone one scrolling list).
+    setViewportWidth(1024);
+    const twelve = [
+      ...five,
+      ...Array.from({ length: 7 }, (_, i) => ({
+        ...lemon,
+        species: `Citrus ${i + 1}`,
+        genus: "Citrus",
+      })),
+    ];
+    fakeServer(() => response(200, { ownership: { caught: twelve, unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />);
     const list = await screen.findByRole("list", { name: "Gefangene Arten" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(4);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(10);
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByText("Opuntia ficus")).toBeTruthy();
+    expect(await screen.findByText("Seite 2 von 2")).toBeTruthy();
     expect(
       within(screen.getByRole("list", { name: "Gefangene Arten" })).getAllByRole("listitem"),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
   });
 
   it("US-QS-22 the progress layer holds the rank, the orders and the way to the collector cards", async () => {

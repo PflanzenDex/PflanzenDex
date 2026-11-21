@@ -370,9 +370,15 @@
       overflow-y: auto;
       overscroll-behavior: contain;
     }
+    /*
+     * `main` is the scroll box of a one-screen view, and a scroll box takes its own scroll padding, not that of `html`: with
+     * the bar's height as padding at its bottom, a focused control and the last row of a list that scrolls in it come to rest
+     * above the fixed bottom bar and never under it (SG-LIST-02, WCAG 2.4.11). From `md` there is no bar: the variable is 0.
+     */
     main:has([data-fit-screen]) {
       overflow-y: auto;
       overscroll-behavior: contain;
+      scroll-padding-bottom: var(--bar-clearance, 0px);
     }
     /*
      * With the bottom bar (below 48 rem of width) the view ends where the room for the bar begins (issue 1835): only its

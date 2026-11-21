@@ -155,11 +155,10 @@ describe("US-SOZ-10 requests for my offers", () => {
     expect(posts[0]).toEqual({ path: "/swaps/a/answer", body: { action: "cancel" } });
     const list = () => screen.findByRole("list", { name: "Anfragen" });
     expect((await list()).textContent ?? "").toContain("Schon vergeben");
-    // The third and fourth request are on the second page (US-QS-20).
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    const second = (await list()).textContent ?? "";
-    expect(second).toContain("Ihr seid nicht mehr befreundet");
-    expect(second).toContain("Grund: Zu klein");
+    // The third and fourth request are in the same list on a phone (US-QS-32).
+    const rest = (await list()).textContent ?? "";
+    expect(rest).toContain("Ihr seid nicht mehr befreundet");
+    expect(rest).toContain("Grund: Zu klein");
   });
 
   it("a refusal shows the German text of its code (P-10)", async () => {
