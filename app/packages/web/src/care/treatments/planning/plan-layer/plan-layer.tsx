@@ -88,7 +88,7 @@ export function PlanLayer(props: { api: string; token: Token }) {
           disabled={planning.running}
           needsNetwork
         >
-          Behandlung speichern
+          Behandlung sichern
         </Button>
       }
     >

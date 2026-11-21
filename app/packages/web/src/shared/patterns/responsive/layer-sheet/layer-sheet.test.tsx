@@ -46,7 +46,7 @@ function Example({ at = "/" }: { at?: string }) {
     <MemoryRouter initialEntries={["/start", at]} initialIndex={at === "/" ? 0 : 1}>
       <LayerHost>
         <LayerOpener id="licht">Licht</LayerOpener>
-        <LayerSheet id="licht" title="Lichtzonen" primaryAction={<button>Speichern</button>}>
+        <LayerSheet id="licht" title="Lichtzonen" primaryAction={<button>Sichern</button>}>
           <p>Inhalt</p>
         </LayerSheet>
       </LayerHost>
@@ -249,7 +249,7 @@ describe("LayerSheet (US-QS-15)", () => {
   it("US-QS-15 the pane has a close button and shows the one primary action", async () => {
     setViewportWidth(1280);
     render(<Example at="/?sheet=licht" />);
-    expect(screen.getByRole("button", { name: "Speichern" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Sichern" })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Schließen" }));
     expect(screen.queryByRole("complementary")).toBeNull();
   });
@@ -406,7 +406,7 @@ describe("LayerSheet (US-QS-15)", () => {
                 Art suchen
                 <input type="search" />
               </label>
-              <button type="button">Wunsch speichern</button>
+              <button type="button">Wunsch sichern</button>
             </LayerSheet>
           </LayerHost>
         </MemoryRouter>,
@@ -473,7 +473,7 @@ function TypingForm({ save }: { save: boolean }) {
             setText("");
           }}
         >
-          Speichern
+          Sichern
         </button>
       ) : null}
     </>
@@ -680,7 +680,7 @@ describe("US-QS-32 a layer asks before it discards typed input (SG-FORM-06, SG-S
     setViewportWidth(360);
     renderTyping(["/before", "/start"], 1, true);
     await openAndType("Thymian");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
     expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
     expect(seen.search).toBe("");
@@ -875,7 +875,7 @@ describe("US-QS-15 a second Back keeps the layer and its question; a layer opene
     renderTyping(["/start", "/?sheet=notiz"], 1, true);
     const layer = await screen.findByRole("dialog", { name: "Notiz" });
     await userEvent.type(within(layer).getByLabelText("Text"), "Thymian");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
     expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
     expect(seen.pathname).toBe("/");
@@ -964,7 +964,7 @@ describe("US-QS-15 a close over the guard entry leaves no guard entry ahead (iss
     renderTyping(["/before", "/start"], 1, true);
     await openAndType("Thymian");
     await waitFor(() => expect(seen.state).toMatchObject({ layerGuard: true }));
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
     expect(seen.search).toBe("");
     expect(seen.pathname).toBe("/start");
@@ -1010,7 +1010,7 @@ describe("US-QS-15 a close over the guard entry leaves no guard entry ahead (iss
     await userEvent.type(within(layer).getByLabelText("Text"), "Thymian");
     expect(hold.queued).not.toBeNull();
     expect(seen.state).not.toMatchObject({ layerGuard: true });
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
     await releaseHold();
     expect(screen.queryByRole("dialog", QUESTION)).toBeNull();
@@ -1026,7 +1026,7 @@ describe("US-QS-15 a close over the guard entry leaves no guard entry ahead (iss
     hold.on = true;
     await userEvent.type(within(layer).getByLabelText("Text"), "Thymian");
     expect(hold.queued).not.toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Notiz" })).toBeNull());
     await releaseHold();
     expect(seen.pathname).toBe("/");

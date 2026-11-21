@@ -254,7 +254,7 @@ describe("US-BES-09 change my deviation", () => {
     };
     const fetchFn = fakeServer(state);
     open();
-    const save = await screen.findByRole("button", { name: "Speichern: Bogenhanf" });
+    const save = await screen.findByRole("button", { name: "Sichern: Bogenhanf" });
     expect((save as HTMLButtonElement).disabled).toBe(true);
     await userEvent.selectOptions(
       screen.getByLabelText("Soll-Standort Wachstumsphase für „Bogenhanf“"),
@@ -262,7 +262,7 @@ describe("US-BES-09 change my deviation", () => {
     );
     await userEvent.click(save);
     expect((await screen.findByText(SAVED)).textContent).toContain(
-      "Pflegeprofil für „Bogenhanf“ gespeichert.",
+      "Pflegeprofil für „Bogenhanf“ gesichert.",
     );
     expect(sent(fetchFn)).toEqual([{ growthLocationId: "l1" }]);
     expect(String(puts(fetchFn)[0]?.[0])).toBe("http://api/care-profiles/s1");
@@ -288,7 +288,7 @@ describe("US-BES-09 change my deviation", () => {
       screen.getByLabelText("Eigene Hinweise für „Bogenhanf“"),
       "Im Winter trocken",
     );
-    await userEvent.click(screen.getByRole("button", { name: "Speichern: Bogenhanf" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern: Bogenhanf" }));
     await screen.findByText(SAVED);
     expect(sent(fetchFn)).toEqual([{ wateringGrowthDays: 7, ownHints: "Im Winter trocken" }]);
   });
@@ -313,7 +313,7 @@ describe("US-BES-09 change my deviation", () => {
       screen.getByLabelText("Ruhephase bis (Tag) für „Bogenhanf“"),
       "28",
     );
-    await userEvent.click(screen.getByRole("button", { name: "Speichern: Bogenhanf" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern: Bogenhanf" }));
     await screen.findByText(SAVED);
     expect(sent(fetchFn)).toEqual([{ dormancyFrom: "10-15", dormancyUntil: "02-28" }]);
   });
@@ -364,7 +364,7 @@ describe("US-BES-09 change my deviation", () => {
       await screen.findByLabelText("Ruhephase von (Monat) für „Bogenhanf“"),
       "10",
     );
-    await userEvent.click(screen.getByRole("button", { name: "Speichern: Bogenhanf" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern: Bogenhanf" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Gib Beginn und Ende der Ruhephase vollständig an",
     );
@@ -439,7 +439,7 @@ describe("US-BES-09 change my deviation", () => {
       await screen.findByLabelText("Soll-Standort Ruhephase für „Bogenhanf“"),
       "l2",
     );
-    await userEvent.click(screen.getByRole("button", { name: "Speichern: Bogenhanf" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern: Bogenhanf" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Diesen Standort gibt es nicht.",
     );
@@ -457,7 +457,7 @@ describe("US-BES-09 change my deviation", () => {
       await screen.findByLabelText("Soll-Standort Wachstumsphase für „Bogenhanf“"),
       "l1",
     );
-    const save = screen.getByRole("button", { name: "Speichern: Bogenhanf" });
+    const save = screen.getByRole("button", { name: "Sichern: Bogenhanf" });
     await userEvent.dblClick(save);
     finish(new Response("{}", { status: 200 }));
     await screen.findByText(SAVED);
@@ -494,6 +494,6 @@ describe("US-BES-10 a care profile kept on a merged proposal is shown, not edita
     expect(screen.getByText(/übernimm von Hand/)).toBeTruthy();
     expect(screen.getByText("Zielart: Bogenhanf")).toBeTruthy();
     expect(screen.getByText("Mein alter Hinweis")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: /Speichern/ })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /Sichern/ })).toHaveLength(1);
   });
 });

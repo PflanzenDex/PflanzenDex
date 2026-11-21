@@ -108,10 +108,10 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     ).toBeVisible();
     const form = page.getByRole("form", { name: "Messung erfassen" });
     await typeInto(page, form.getByLabel(/^Messwert/), "12,5");
-    // "Messung speichern" sits in the sticky footer beside the form, outside its element (US-QS-15).
-    await press(page, page.getByRole("button", { name: "Messung speichern" }));
+    // "Messung sichern" sits in the sticky footer beside the form, outside its element (US-QS-15).
+    await press(page, page.getByRole("button", { name: "Messung sichern" }));
     // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
-    await expectAnnounced(page, /Gespeichert: 12,5\scm am \d\d\.\d\d\.\d{4}\./);
+    await expectAnnounced(page, /Gesichert: 12,5\scm am \d\d\.\d\d\.\d{4}\./);
     // The course with the new measurement is the layer "Messverlauf" of the measure page (US-QS-15).
     await press(page, page.getByRole("button", { name: /^Messverlauf \(\d+\)$/ }));
     // The layer opens on "Überblick"; the rows are its part "Messungen" (US-QS-15).
@@ -152,7 +152,7 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     );
     await typeInto(page, plan.getByLabel(/^Grund/), "Wollläuse");
     // The save button is the layer's one primary action in its footer, outside the form element (US-QS-21).
-    await press(page, page.getByRole("button", { name: "Behandlung speichern" }));
+    await press(page, page.getByRole("button", { name: "Behandlung sichern" }));
     const done = page.getByRole("button", { name: /^Wollläuse bei .* als erledigt abhaken$/ });
     await press(page, done);
     // The tick-off stays in its place as "Erledigt · Rückgängig" for 8 s, then the row moves (US-QS-32, SG-FEED-03).

@@ -133,7 +133,7 @@ export async function proposeSpecies(
     await proposal.getByLabel("Ruhephase von (Monat-Tag)").fill(dormancy.from);
     await proposal.getByLabel("Ruhephase bis (Monat-Tag)").fill(dormancy.until);
   }
-  await proposal.getByRole("button", { name: "Vorschlag speichern" }).click();
+  await proposal.getByRole("button", { name: "Vorschlag sichern" }).click();
   await page.getByRole("button", { name: "Diese Art wählen" }).click();
 }
 

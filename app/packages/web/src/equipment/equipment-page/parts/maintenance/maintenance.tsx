@@ -118,7 +118,7 @@ function MaintenanceForm(props: { item: EquipmentRow; actions: MaintenanceAction
         </p>
       ) : null}
       <Button type="submit" size="touch" variant="secondary" disabled={props.actions.busy}>
-        Betriebsdaten speichern
+        Betriebsdaten sichern
       </Button>
     </FormRoot>
   );

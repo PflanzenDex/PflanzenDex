@@ -161,7 +161,7 @@ function PlaceChoice(props: WhereProps & { places: Places }) {
 }
 
 /**
- * The actions of the step: "Speichern" writes the location (needs the network, US-ONB-02); "Später" writes nothing. The
+ * The actions of the step: "Sichern" writes the location (needs the network, US-ONB-02); "Später" writes nothing. The
  * reason stands once below both buttons.
  */
 function StepActions(props: { saving: boolean; onSave: () => void; onLater: () => void }) {

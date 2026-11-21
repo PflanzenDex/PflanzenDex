@@ -89,7 +89,7 @@ describe("US-ONB-07 · SG-ONB-02 the note closes with its X, named Hinweis schli
     server(500);
     render(note("first_plant_saved"));
     await userEvent.click(await screen.findByRole("button", { name: "Hinweis schließen" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("nicht speichern");
+    expect((await screen.findByRole("alert")).textContent).toContain("nicht sichern");
     expect(screen.getByRole("status", { name: "Hinweis" })).toBeTruthy();
   });
 });

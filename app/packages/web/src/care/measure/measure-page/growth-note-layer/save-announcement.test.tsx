@@ -120,7 +120,7 @@ function recordPolite(): { taken: string[]; politeText: () => string } {
   return { taken, politeText };
 }
 
-const SAVED = "Gespeichert: 12,5 cm am 01.10.2026.";
+const SAVED = "Gesichert: 12,5 cm am 01.10.2026.";
 const noteOf = (latest: GrowthMoment): string =>
   norm(
     growthNoteText({ moments: { latest, records: new Set(), stale: false }, justSaved: true }) ??
@@ -134,7 +134,7 @@ describe("US-QS-08 the growth note after a save comes from the read the save sta
     showPage();
     const polite = recordPolite();
     await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     await vi.waitFor(() => expect(polite.politeText()).toBe(SAVED));
     // The card shows the earlier note until the new answer comes; the announcer does not read it.
     expect(polite.taken).toEqual([SAVED]);
@@ -151,7 +151,7 @@ describe("US-QS-08 the growth note after a save comes from the read the save sta
     showPage();
     const polite = recordPolite();
     await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     const combined = `${SAVED} ${noteOf(moment("2026-09-01", 3))}`;
     await vi.waitFor(() => expect(polite.politeText()).toBe(combined));
     // Never the note alone, and never the earlier note (issue 2323).
@@ -176,7 +176,7 @@ describe("US-QS-08 the growth note after a save comes from the read the save sta
     const polite = recordPolite();
     await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
     await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     // The read after the save answers while the photo is stored: the save is not confirmed yet, so nothing is said.
     await vi.waitFor(() =>
       expect(
@@ -205,10 +205,10 @@ describe("US-QS-08 the growth note after a save comes from the read the save sta
     const polite = recordPolite();
     await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
     await userEvent.upload(screen.getByLabelText("Foto wählen"), IMAGE);
-    await userEvent.click(screen.getByRole("button", { name: "Messung speichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
     await vi.waitFor(() =>
       expect(document.querySelector('[aria-live="assertive"]')?.textContent).toContain(
-        "Die Messung ist gespeichert, das Foto nicht.",
+        "Die Messung ist gesichert, das Foto nicht.",
       ),
     );
     // The note is read and shown for the kept measurement, but a refused photo confirms nothing: nothing is said.

@@ -71,7 +71,7 @@ Acceptance criteria:
 - Phase tracker and light distribution (lamps 2–4) exclude cuttings.
 - "Potted" is an action: it sets `Status: Plant`, removes the light zone override, and from then on the light zone of the species applies. A "Potted" event goes into the feed if the specimen is shared.
 - The species keeps its target profile (target light zone, `Light_Lux_Demand`).
-- Given a cutting, when I choose "Eingetopft" in its menu "Mehr", then a form opens with the date field "Eingetopft am" preset to today in my time zone (NFR-08), the button "Speichern" and "Abbrechen"; nothing is written before "Speichern" (owner decision 2026-10-30, issue 1028).
+- Given a cutting, when I choose "Eingetopft" in its menu "Mehr", then a form opens with the date field "Eingetopft am" preset to today in my time zone (NFR-08), the button "Sichern" and "Abbrechen"; nothing is written before "Sichern" (owner decision 2026-10-30, issue 1028).
 - Given the form, when I save a day from 1900-01-01 up to today in my time zone, then the cutting becomes a plant that was potted on this day; when I save a later day, then nothing is written and the field says that the day lies in the future; "Abbrechen" changes nothing.
 - Given the form for a cutting with a catch date, when I save a day before that catch date, then nothing is written and the field says that the day lies before the catch date; the catch date itself is allowed. A cutting without a catch date accepts any past day (unknown, P-08).
 - Given the form "Eingetopft" of a cutting or a plant, when I open it, then its address names the form and the specimen (`?form=repot&plant=<id>`); Back with a typed date asks "Eingabe verwerfen?" first (US-QS-15).
