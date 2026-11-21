@@ -122,6 +122,39 @@ describe("US-ONB-07 the occasions of the plant layer come from the summary over 
   });
 });
 
+describe("US-ONB-07 · US-QS-23 the plants screen starts the hint request before a layer opens (issue 2384)", () => {
+  it("US-ONB-07 · US-QS-23 on mount the screen asks its hint slot to prefetch the occasions that apply, once", async () => {
+    setViewportWidth(360);
+    const prefetch = vi.fn();
+    const view = show([card()], { slots: { ...SLOTS, hintPrefetch: prefetch } });
+    await screen.findByRole("button", { name: /^Aloe(\s|$)/ });
+    expect(prefetch).toHaveBeenCalledTimes(1);
+    expect(prefetch).toHaveBeenCalledWith(["first_plant_saved", "first_measurement"]);
+    // A layer that opens later does not ask the slot again.
+    await open();
+    expect(prefetch).toHaveBeenCalledTimes(1);
+    view.unmount();
+  });
+
+  it("US-ONB-07 · US-QS-23 no occasion that applies, no prefetch", async () => {
+    setViewportWidth(360);
+    const prefetch = vi.fn();
+    show(
+      [
+        card({
+          lastMeasurement: { date: "2026-10-01", value: 12, quality: "healthy", note: null },
+        }),
+      ],
+      {
+        slots: { ...SLOTS, hintPrefetch: prefetch },
+        summary: { ...summaryOf([card()]), total: 2, anyMeasured: true },
+      },
+    );
+    await screen.findByRole("button", { name: /^Aloe(\s|$)/ });
+    expect(prefetch).not.toHaveBeenCalled();
+  });
+});
+
 describe("US-ONB-07 · US-QS-32 the plant layer places its calm hint", () => {
   it("US-ONB-07 the layer hands its host both occasions that apply, in one list", async () => {
     setViewportWidth(360);

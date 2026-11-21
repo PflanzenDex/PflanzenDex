@@ -14,6 +14,13 @@ export const isNoteOccasion = (value: unknown): value is NoteOccasion =>
 /** The function occasion of "Heute" (US-ONB-07): the note that a rule's unlock names; compared by this constant (FR-QG-12). */
 export const FUNCTION_UNLOCKED = "function_unlocked" as const;
 
+/**
+ * The key of the answer for a list of occasions in the data layer (DS-09): read by `ContextHint`, filled early by
+ * `prefetchHints`, so both mean the same copy. The occasions are part of the key, as they are of the request.
+ */
+export const hintsKey = (applicable: readonly string[]) =>
+  ["onboarding", "hints", applicable.join(",")] as const;
+
 export function loadHints(
   api: string,
   token: string,

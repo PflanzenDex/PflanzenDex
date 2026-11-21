@@ -24,7 +24,7 @@ import { signsLayerId } from "../../markers/repot/repot-plan/repot-plan";
 import { NotesLayer, notesLayerId } from "./plant-layer/plant-notes/plant-notes";
 import { plantLayerId } from "@/shared/patterns/navigation/navigation/navigation";
 import { ZONES_LAYER } from "../rows/zone-insight/zone-insight";
-import { ARCHIVE_LAYER, type LayerProps } from "./layer-ids";
+import { ARCHIVE_LAYER, useHintPrefetch, type LayerProps } from "./layer-ids";
 import table from "./plant-layers.de.json";
 import { PlantLayerSkeleton } from "./plant-layer/plant-layer.skeleton";
 
@@ -84,6 +84,7 @@ function plantOpenAt(
 
 /** The layers of the plants: the light zones, the archive and the plant of a chosen tile with its tabs (US-QS-19, US-QS-23). */
 export function PlantLayers(props: LayerProps) {
+  useHintPrefetch(props.slots?.hintPrefetch, props.hintOccasions ?? []);
   const [params] = useSearchParams();
   const sheet = params.get("sheet");
   const { card, direct } = useLayerPlant(props, plantIdOf(sheet));

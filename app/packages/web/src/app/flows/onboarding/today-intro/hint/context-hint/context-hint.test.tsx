@@ -2,10 +2,12 @@
 import type { ReactNode } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createQueryClient, type QueryClient } from "@/shared/data";
 import table from "../hint.de.json";
-import { ContextHint } from "./context-hint";
+import { ContextHint, prefetchHints } from "./context-hint";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -29,19 +31,25 @@ function server(due: string | null, status = 200) {
 }
 
 /** The layer's places: the note of an occasion stands in its own place, as the plant layer puts it. */
-function places(applicable: string[], token = async () => "tok") {
+function places(
+  applicable: string[],
+  token = async () => "tok",
+  client: QueryClient = createQueryClient(),
+) {
   return (
-    <MemoryRouter>
-      <ContextHint api="http://api" token={token} applicable={applicable}>
-        {(note) => (
-          <>
-            <div data-place="messen">{note("first_plant_saved")}</div>
-            <div data-place="growth">{note("first_measurement")}</div>
-            <p>Der Rest der Ansicht</p>
-          </>
-        )}
-      </ContextHint>
-    </MemoryRouter>
+    <QueryClientProvider client={client}>
+      <MemoryRouter>
+        <ContextHint api="http://api" token={token} applicable={applicable}>
+          {(note) => (
+            <>
+              <div data-place="messen">{note("first_plant_saved")}</div>
+              <div data-place="growth">{note("first_measurement")}</div>
+              <p>Der Rest der Ansicht</p>
+            </>
+          )}
+        </ContextHint>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -128,5 +136,60 @@ describe("US-ONB-07 · US-QS-32 the calm hint of the plant layer asks once for i
     const growth = await screen.findByRole("status", { name: "Hinweis" });
     const rest = screen.getByText("Der Rest der Ansicht");
     expect(growth.compareDocumentPosition(rest) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  describe("US-ONB-07 · US-QS-23 the hint answer is fetched before the layer opens, so the note is there on its first render (issue 2384)", () => {
+    const hintGets = (calls: string[]) =>
+      calls.filter((c) => c.startsWith("GET /onboarding/hints"));
+
+    it("US-ONB-07 · US-QS-23 a prefetched answer sits in the cache before the layer mounts, and the layer shows the note on its first render without a request", async () => {
+      const calls = server("first_plant_saved");
+      const client = createQueryClient();
+      await prefetchHints(client, "http://api", async () => "tok", [
+        "first_plant_saved",
+        "first_measurement",
+      ]);
+      expect(hintGets(calls)).toHaveLength(1);
+      // The first render already holds the note: no waiting for a request, no waiting for the note's chunk.
+      render(places(["first_plant_saved", "first_measurement"], undefined, client));
+      const note = screen.getByRole("status", { name: "Hinweis" });
+      expect(note.textContent).toBe(table.firstPlantSaved);
+      expect(note.parentElement?.getAttribute("data-place")).toBe("messen");
+      await waitFor(() => expect(calls).toContain("PUT /onboarding/hints/first_plant_saved"));
+      expect(hintGets(calls)).toHaveLength(1);
+    });
+
+    it("US-ONB-07 · US-QS-23 a prefetch without a due hint leaves no note and the layer asks no second time inside the screen window", async () => {
+      const calls = server(null);
+      const client = createQueryClient();
+      await prefetchHints(client, "http://api", async () => "tok", ["first_plant_saved"]);
+      render(places(["first_plant_saved"], undefined, client));
+      expect(screen.queryByRole("status")).toBeNull();
+      expect(screen.getByText("Der Rest der Ansicht")).toBeTruthy();
+      expect(hintGets(calls)).toHaveLength(1);
+    });
+
+    it("US-ONB-07 · P-10 a failed prefetch fails open: the layer asks itself and shows the note when that answer is there", async () => {
+      server("first_plant_saved", 500);
+      const client = createQueryClient();
+      await prefetchHints(client, "http://api", async () => "tok", ["first_plant_saved"]);
+      cleanup();
+      vi.unstubAllGlobals();
+      server("first_plant_saved");
+      render(places(["first_plant_saved"], undefined, client));
+      expect(await screen.findByRole("status", { name: "Hinweis" })).toBeTruthy();
+    });
+
+    it("US-ONB-07 a note dismissed in the layer does not come back when the layer opens again inside the window", async () => {
+      server("first_plant_saved");
+      const client = createQueryClient();
+      await prefetchHints(client, "http://api", async () => "tok", ["first_plant_saved"]);
+      const first = render(places(["first_plant_saved"], undefined, client));
+      await userEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
+      await waitFor(() => expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull());
+      first.unmount();
+      render(places(["first_plant_saved"], undefined, client));
+      expect(screen.queryByRole("status", { name: "Hinweis" })).toBeNull();
+    });
   });
 });

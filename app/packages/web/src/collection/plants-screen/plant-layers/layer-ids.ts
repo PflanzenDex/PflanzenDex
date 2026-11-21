@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type {
   ArchivedEntry,
   Distribution,
@@ -76,6 +76,12 @@ export type PlantSlots = {
   water?: SlotRender | undefined;
   /** The calm hint of the layer (US-ONB-07, `today-intro`): its note stands under "Messen" or first in "Verlauf". */
   hint?: PlantHint | undefined;
+  /**
+   * Starts the request of the calm hint before a layer opens (US-ONB-07, US-QS-23): the plants screen calls it with the
+   * occasions that apply when it shows, so the layer finds the answer and its note is there on its first render. The app
+   * wires it (`today-intro`).
+   */
+  hintPrefetch?: ((applicable: readonly PlantHintOccasion[]) => void) | undefined;
 };
 
 export type LayerProps = Handlers & {
@@ -93,3 +99,22 @@ export type LayerProps = Handlers & {
   onRestore: (e: { id: string; name: string }) => void;
   onArchivedCatchDate: (e: { id: string; name: string; caughtAt: string | null }) => void;
 };
+
+/**
+ * Starts the request of the calm hint when the screen shows (US-ONB-07, US-QS-23, issue 2384): the plant layer that
+ * opens later finds the answer and shows its note on its first render, so it does not grow when the note arrives. It runs
+ * when the occasions that apply change, not when the app hands in a new slot object (the ref holds the latest).
+ */
+export function useHintPrefetch(
+  prefetch: PlantSlots["hintPrefetch"],
+  occasions: readonly PlantHintOccasion[],
+) {
+  const latest = useRef({ prefetch, occasions });
+  useEffect(() => {
+    latest.current = { prefetch, occasions };
+  });
+  const key = occasions.join(",");
+  useEffect(() => {
+    if (key !== "") latest.current.prefetch?.(latest.current.occasions);
+  }, [key]);
+}
