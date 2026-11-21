@@ -183,7 +183,7 @@ function DifficultyTable(props: {
             fit
             label="Artenvergleich"
             getKey={(r) => r.speciesId}
-            listClassName={ROW_GROUP}
+            listClassName={`${ROW_GROUP} [&>li]:shrink-0`}
             renderItem={(r) => <Entry row={r} hidden={hidden} />}
           />
         </>
