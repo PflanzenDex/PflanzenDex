@@ -102,6 +102,16 @@
             "timeout": 900
           }
         ]
+      },
+      {
+        "matcher": "implementer|ticket-lead",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" subagent-push",
+            "timeout": 15
+          }
+        ]
       }
     ],
     "Stop": [
