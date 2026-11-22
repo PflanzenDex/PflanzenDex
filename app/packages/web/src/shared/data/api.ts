@@ -19,6 +19,11 @@ export interface ApiError<D = unknown> {
   text: string;
   details?: { field: string; code: string }[];
   data?: D[];
+  /**
+   * The German text of a key conflict that names what is saved (US-QS-03), e.g. "Gesichert ist: 12 cm am 22.11.2026. …".
+   * Set by the repeat guard when the write describes its saved result; the server never sends it.
+   */
+  conflictText?: string;
 }
 
 export type Response<T, D = unknown> = { ok: true; value: T } | { ok: false; error: ApiError<D> };
@@ -96,6 +101,19 @@ const UNANSWERED = new Set([
  * the action (its key is discarded by the server, US-QS-03).
  */
 export const isUnanswered = (error: ApiError): boolean => UNANSWERED.has(error.code);
+
+/** Whether a refusal is a key conflict: the key came back with other content (US-QS-03). */
+export const isKeyConflict = (error: { code: string }): boolean =>
+  error.code === "idempotency.key_conflict";
+
+/**
+ * The saved result that a key conflict carries in `data.saved` (US-QS-03): the answer of the first write under the key, the
+ * same account's. `undefined` when the refusal carries none.
+ */
+export const savedResult = (error: ApiError): unknown => {
+  const data: unknown = error.data;
+  return data !== null && typeof data === "object" && "saved" in data ? data.saved : undefined;
+};
 
 /**
  * The repeat-guard key (`Idempotency-Key`) of one user action (US-QS-03). It is made once, when the user acts, and every

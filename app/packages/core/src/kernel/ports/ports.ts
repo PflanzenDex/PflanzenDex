@@ -7,11 +7,16 @@ export interface IdempotencyKey {
   readonly key: string;
 }
 
+/**
+ * The answer of `begin`. `repeat`: the same key and the same input, done (the stored result is repeated). `conflict`: the
+ * same key with other input after the first write is done; `result` is its saved result (US-QS-03). A conflict while the
+ * first write still runs is `running`, the same as a repeat while it runs (`idempotency.in_progress`).
+ */
 export type Begin =
   | { readonly kind: "fresh" }
   | { readonly kind: "repeat"; readonly result: unknown }
   | { readonly kind: "running" }
-  | { readonly kind: "conflict" };
+  | { readonly kind: "conflict"; readonly done: true; readonly result: unknown };
 
 /**
  * Adapters must implement `begin` atomically (e.g. unique constraint): of two concurrent calls

@@ -37,9 +37,20 @@ export async function write<E, A>(
     const failure = answeredFailure(r.error);
     if (failure.code === "system.unexpected")
       console.error(`Operation failed (version ${runningVersion()})`, failure.cause);
-    return c.json(errorBody(failure), statusFor(failure));
+    return c.json(errorBody(savedInShape(failure, form.wrapper)), statusFor(failure));
   }
   return c.json(form.wrapper ? form.wrapper(r.value) : (r.value as object), form.success ?? 200);
+}
+
+/**
+ * A key conflict with a saved result (US-QS-03) carries that result in the shape of the write's own answer: the route's
+ * wrapper applies to it as it applies to a success, so the client reads both alike. The saved result is the same account's.
+ */
+function savedInShape<A>(failure: AppError, wrapper?: (value: A) => object): AppError {
+  const saved: unknown = (failure.data as { saved?: unknown } | undefined)?.saved;
+  if (failure.code !== "idempotency.key_conflict" || !wrapper || saved === undefined)
+    return failure;
+  return { ...failure, data: { saved: wrapper(saved as A) } };
 }
 
 /**

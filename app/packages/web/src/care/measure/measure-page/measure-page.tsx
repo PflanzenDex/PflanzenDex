@@ -48,6 +48,7 @@ type MeasuredProps = {
   saves: number;
   send: ReturnType<typeof useMeasureSend>["send"];
   photoStatus: string | null;
+  dismissRefusal: () => void;
   valueRef: NonNullable<ComponentProps<typeof MeasureForm>["focusRef"]>;
   invalidate: () => void;
   onBack: () => void;
@@ -82,6 +83,7 @@ function MeasuredView(props: MeasuredProps) {
           focusRef={valueRef}
           photoStatus={photoStatus}
           onCancel={props.onBack}
+          onDismissRefusal={props.dismissRefusal}
         />
       </GrowthNoteLayer>
       <CourseLayer
@@ -107,7 +109,7 @@ export function MeasurePage(props: MeasurePageProps) {
     [api, specimen.id],
   );
   const say = useSay();
-  const { send, saved, saves, confirmed, photoStatus } = useMeasureSend({
+  const { send, saved, saves, confirmed, photoStatus, dismissRefusal } = useMeasureSend({
     api,
     token,
     specimenId: specimen.id,
@@ -145,6 +147,7 @@ export function MeasurePage(props: MeasurePageProps) {
             saves={saves}
             send={send}
             photoStatus={photoStatus}
+            dismissRefusal={dismissRefusal}
             valueRef={valueRef}
             invalidate={invalidate}
             onBack={props.onBack}

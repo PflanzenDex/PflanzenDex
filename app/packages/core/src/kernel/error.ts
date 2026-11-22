@@ -8,7 +8,7 @@ export const ERROR_TEXTS = {
   "access.denied": "Darauf hast du keinen Zugriff.",
   "idempotency.key_missing": "Der Wiederholungsschutz-Schlüssel fehlt.",
   "idempotency.key_conflict":
-    "Dieser Schlüssel wurde bereits mit anderen Angaben verwendet. Bitte versuche es neu.",
+    "Deine erste Eingabe ist gesichert. Deine Änderung ist noch nicht gesichert.",
   "idempotency.in_progress": "Dieselbe Aktion läuft noch. Bitte warte einen Moment.",
   "request.rate_limited":
     "Zu viele Versuche in kurzer Zeit. Warte eine Minute und versuche es dann erneut.",

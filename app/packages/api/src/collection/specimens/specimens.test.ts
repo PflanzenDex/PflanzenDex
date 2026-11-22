@@ -427,6 +427,24 @@ describe("US-BES-18 write the notes of an own specimen (P-03, Idempotency-Key)",
     expect((await call(subA, "GET", `/specimens/${id}`)).body["notes"]).toBe("Erste");
   });
 
+  it("US-QS-03 a create whose key comes back with other input answers 409 with the saved plant in the shape of its 201 answer (error.data.saved)", async () => {
+    const speciesId = await newSpecies(subA, `Kaktus${run} saved`, `Kaktus ${run}`);
+    const key = randomUUID();
+    const first = await create(subA, { speciesId }, key);
+    expect(first.status).toBe(201);
+    const second = await create(subA, { speciesId, timeZone: "America/New_York" }, key);
+    expect(second).toMatchObject({
+      status: 409,
+      body: {
+        error: {
+          code: "idempotency.key_conflict",
+          data: { saved: { id: first.body["id"], name: first.body["name"] } },
+        },
+      },
+    });
+    expect(typeof second.body["error"]["data"]["saved"]["name"]).toBe("string");
+  });
+
   it("without a token: 401", async () => {
     const id = await ownSpecimen(subA);
     expect((await call(null, "POST", notesPath(id), { notes: "Kein Konto" })).status).toBe(401);

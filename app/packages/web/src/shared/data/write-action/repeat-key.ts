@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { isUnanswered, newRepeatKey, type Response } from "../api";
+import { isKeyConflict, isUnanswered, newRepeatKey, type Response } from "../api";
+import { describeConflict, type DescribeSaved } from "./describe-saved";
 
 /**
  * The action a repeat-guard key belongs to (US-QS-03). `target` is the row, the item or the new entity the write is about
@@ -108,8 +109,6 @@ const held = new Map<string, Map<string, Held>>();
 const take = (scope: KeyScope): string =>
   held.get(scope.target)?.get(scope.action)?.key ?? newRepeatKey();
 
-const KEY_CONFLICT = "idempotency.key_conflict";
-
 const hold = (key: string, scope: KeyScope): void => {
   let actions = held.get(scope.target);
   if (!actions) held.set(scope.target, (actions = new Map()));
@@ -117,30 +116,44 @@ const hold = (key: string, scope: KeyScope): void => {
 };
 
 /**
- * Settles the answer of an action (US-QS-03).
+ * Settles the answer of an action (US-QS-03) and returns it, with the keeper's description of a key conflict.
  * - A lost answer, `idempotency.in_progress` and an answer that never reached an operation (`access.not_signed_in`, no
  *   token) keep the key: the next tap of the same action repeats it, and the server answers with the stored answer.
  * - `idempotency.key_conflict` of a create or an append keeps the key: the server refused that key with another body
  *   because an earlier write under it has landed or still runs, so a tap with another body must not write a second
- *   record. The key stays until its own action is answered (a success, another refusal), `forgetRepeatKeys` or a reload.
+ *   record. The key is freed when the keeper dismisses the conflict banner (`releaseRepeatKey`), by its own answer (a
+ *   success, another refusal), by `forgetRepeatKeys` or by a reload.
  * - `idempotency.key_conflict` of a set-state frees the key: it only sets state, so the next tap is a fresh write.
  * - A success frees the held keys of its target that are set-state (the keeper moved on: archive, restore, archive), and
  *   its own key. An append or a create held on the target stays held: it is freed by its own answer only.
  * - Any other refusal frees the key of its own action only.
  */
-const settle = (key: string, r: Response<unknown, unknown>, scope: KeyScope): void => {
+const settle = <T, D>(
+  key: string,
+  r: Response<T, D>,
+  scope: KeyScope,
+  describeSaved?: DescribeSaved,
+): Response<T, D> => {
   const actions = held.get(scope.target);
   if (r.ok) {
     actions?.delete(scope.action);
     for (const [action, entry] of actions ?? []) if (!entry.adds) actions?.delete(action);
     if (actions?.size === 0) held.delete(scope.target);
-    return;
+    return r;
   }
-  if (isUnanswered(r.error) || (r.error.code === KEY_CONFLICT && scope.adds === true)) {
-    hold(key, scope);
-    return;
-  }
+  if (isUnanswered(r.error) || (isKeyConflict(r.error) && scope.adds === true)) hold(key, scope);
+  else actions?.delete(scope.action);
+  return describeConflict(r, describeSaved);
+};
+
+/**
+ * Frees the key an action holds, when the keeper dismisses the conflict banner of the action (US-QS-03): the next tap is a
+ * fresh write with a key of its own, and the body it carries is written.
+ */
+export const releaseRepeatKey = (scope: KeyScope): void => {
+  const actions = held.get(scope.target);
   actions?.delete(scope.action);
+  if (actions?.size === 0) held.delete(scope.target);
 };
 
 /** Frees every held key, on sign-out or an account change: a key of another account must never be repeated. */
@@ -148,16 +161,17 @@ export const forgetRepeatKeys = (): void => held.clear();
 
 /**
  * Sends one write under the held key of its action and settles the answer (US-QS-03). The one place where a user action
- * takes its key and settles it: the hook `useRepeatKey` and the plain callers (the sign-out) use it.
+ * takes its key and settles it: the hook `useRepeatKey` and the plain callers (the sign-out) use it. `describeSaved` says
+ * what a key conflict of this write saved (see `DescribeSaved`).
  */
 export const runRepeat = async <T, D = unknown>(
   scope: KeyScope,
   send: (key: string) => Promise<Response<T, D>>,
+  describeSaved?: DescribeSaved,
 ): Promise<Response<T, D>> => {
   const key = take(scope);
   const r = await send(key);
-  settle(key, r, scope);
-  return r;
+  return settle(key, r, scope, describeSaved);
 };
 
 /**
@@ -170,10 +184,12 @@ export function useRepeatKey() {
     () => ({
       take,
       settle,
+      release: releaseRepeatKey,
       run: <T, D = unknown>(
         send: (key: string) => Promise<Response<T, D>>,
         scope: KeyScope,
-      ): Promise<Response<T, D>> => runRepeat(scope, send),
+        describeSaved?: DescribeSaved,
+      ): Promise<Response<T, D>> => runRepeat(scope, send, describeSaved),
     }),
     [],
   );

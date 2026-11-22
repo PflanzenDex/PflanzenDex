@@ -8,7 +8,7 @@ import { Input } from "@/shared/ui/fields/input/input";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
 import { Select } from "@/shared/ui/fields/select/select";
 import { Textarea } from "@/shared/ui/fields/textarea/textarea";
-import { currentTimeZone, type ApiError } from "../../../shared/data";
+import { currentTimeZone, isKeyConflict, type ApiError } from "../../../shared/data";
 import { Field } from "@/shared/ui/fields/form/field/field";
 import { photoProblem } from "../measurement-header/measurement-photo";
 import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
@@ -82,6 +82,24 @@ function Fields(props: {
 }
 
 /**
+ * The refusal of the last save and its close. A key conflict closes with its one control, and that frees the key of the save
+ * (`release`, US-QS-03); other refusals stay until the keeper acts (P-10).
+ */
+function useSaveRefusal(release?: () => void) {
+  const [refusal, setRefusal] = useState<ApiError | null>(null);
+  const close = () => {
+    setRefusal(null);
+    release?.();
+  };
+  return { refusal, setRefusal, close };
+}
+
+/** A refusal of the save; a key conflict carries its one control, "Hinweis schließen" (US-QS-03). */
+function SaveRefusal({ error, onClose }: { error: ApiError; onClose: () => void }) {
+  return <RefusalAlert error={error} {...(isKeyConflict(error) ? { onDismiss: onClose } : {})} />;
+}
+
+/**
  * Input of a measurement (US-WAC-01): number in steps of 0.5 cm, quality (preset healthy, US-WAC-02) with the
  * etiolation signs of the species behind "Wie erkennen?", optional note. The date is today in the profile's time zone
  * (the device's as fallback) and can be changed (back-filling); the future is blocked, an emptied date is refused by
@@ -99,13 +117,15 @@ export function MeasureForm(props: {
   photoStatus?: string | null;
   /** "Abbrechen" of the bar: leaves the page the way Back does (US-QS-32, SG-SHEET-04). */
   onCancel: () => void;
+  /** Frees the key of the save when the keeper dismisses a key conflict (US-QS-03). */
+  onDismissRefusal?: () => void;
 }) {
   const today = localToday(new Date(), currentTimeZone());
   const form = useFieldForm<MeasurementFields>({
     resolver: zodResolver(measurementSchema),
     defaultValues: measurementDefaults(today),
   });
-  const [refusal, setRefusal] = useState<ApiError | null>(null);
+  const { refusal, setRefusal, close } = useSaveRefusal(props.onDismissRefusal);
   const [photo, setPhoto] = useState<File | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [inputKey, setInputKey] = useState(0);
@@ -139,7 +159,7 @@ export function MeasureForm(props: {
             photo={<PhotoInput onPick={setPhoto} problem={problem} inputKey={inputKey} />}
             photoOpen={photo !== null || problem !== null}
           />
-          {refusal && <RefusalAlert error={refusal} />}
+          {refusal && <SaveRefusal error={refusal} onClose={close} />}
           <MeasureBar
             formId={FORM_ID}
             saving={form.formState.isSubmitting}

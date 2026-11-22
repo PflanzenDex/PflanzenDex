@@ -194,6 +194,41 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(posts[1]?.key).toBe(posts[0]?.key);
   });
 
+  it("US-QS-03 a lost answer, then an edited tap with the same key: the banner names the saved measurement, and its dismiss control frees the key", async () => {
+    const save = vi
+      .fn<() => Promise<Response>>()
+      .mockImplementationOnce(() => Promise.reject(new TypeError("Failed to fetch")))
+      .mockImplementationOnce(() =>
+        response(409, {
+          error: {
+            code: "idempotency.key_conflict",
+            text: "x",
+            data: { saved: measurement },
+          },
+        }),
+      )
+      .mockImplementation(() => response(201, measurement));
+    const { posts } = fakeServer({ save });
+    show();
+    await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
+    await vi.waitFor(() => expect(posts).toHaveLength(1));
+    await userEvent.clear(screen.getByLabelText(/Messwert/));
+    await userEvent.type(screen.getByLabelText(/Messwert/), "13");
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
+    expect(
+      await screen.findByText(
+        "Gesichert ist: 12,5 cm am 01.10.2026. Deine Änderung ist noch nicht gesichert.",
+      ),
+    ).toBeTruthy();
+    expect(posts[1]?.key).toBe(posts[0]?.key);
+    await userEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByText(/Gesichert ist:/)).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
+    await vi.waitFor(() => expect(posts).toHaveLength(3));
+    expect(posts[2]?.key).not.toBe(posts[0]?.key);
+  });
+
   it('US-WAC-02 "Wie erkennen?" opens the etiolation signs of the species; etiolated/thin is sent', async () => {
     const { posts } = fakeServer({ signs: "Rosette streckt sich, Blätter werden blass." });
     show();

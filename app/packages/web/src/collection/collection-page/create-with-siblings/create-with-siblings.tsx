@@ -39,6 +39,7 @@ export function CreateWithSiblings(p: {
           zones={p.create.zones}
           onSend={p.create.send}
           onCancel={p.onCancel}
+          onDismissRefusal={p.create.dismissRefusal}
         />
       )}
     </RequestState>

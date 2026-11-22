@@ -1,3 +1,4 @@
 {
-  "refusal": "Das hat nicht geklappt. Bitte versuche es noch einmal."
+  "refusal": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
+  "keyConflictSaved": "Gesichert ist: {saved}. Deine Änderung ist noch nicht gesichert."
 }

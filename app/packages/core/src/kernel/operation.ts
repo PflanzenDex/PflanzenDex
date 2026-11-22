@@ -1,4 +1,4 @@
-import { appError, type AppError } from "./error";
+import { appError } from "./error";
 import { failed, ok, type Result } from "./result";
 import { canonical } from "./input";
 import type { SignedInContext, IdempotencyKey, IdempotencyStore, Context } from "./ports/ports";
@@ -67,15 +67,13 @@ async function runProtected<E, A>(
   return result;
 }
 
-const BEGIN_ERROR: Record<"running" | "conflict", AppError> = {
-  running: appError("idempotency.in_progress"),
-  conflict: appError("idempotency.key_conflict"),
-};
-
 /**
  * The only way for writes (P-03, AB-3). Order: check that the idempotency key is present (US-QS-03: every write
  * carries one, whatever else is wrong with the call), validate input, check access, reserve the key, run. Reserving
  * the key comes after validation, so invalid input does not reserve it. If an earlier step fails, nothing is written.
+ * A key of a finished write with other input is `idempotency.key_conflict` and carries the saved result in
+ * `data.saved` (US-QS-03; the same account only, the key is per account). A secret operation never has a saved result
+ * (its key is released after the run), so it never carries one.
  */
 export async function execute<E, A>(
   op: Operation<E, A>,
@@ -94,7 +92,10 @@ export async function execute<E, A>(
   };
   const begin = await deps.idempotency.begin(key, canonical(input.value));
   if (begin.kind === "repeat") return ok(begin.result as A);
-  if (begin.kind !== "fresh") return failed(BEGIN_ERROR[begin.kind]);
+  if (begin.kind === "conflict")
+    return failed(appError("idempotency.key_conflict", { data: { saved: begin.result } }));
+  // What is left is `running`: the first write still runs (a conflict while it runs is the same answer, US-QS-03).
+  if (begin.kind !== "fresh") return failed(appError("idempotency.in_progress"));
   return runProtected(op, deps, key, {
     context: authorized.value,
     input: input.value,

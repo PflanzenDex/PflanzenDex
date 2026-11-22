@@ -13,10 +13,13 @@ import {
   createWrite,
   entityKey,
   forgetRepeatKeys,
+  releaseRepeatKey,
   runRepeat,
   useClearOnSignOut,
   type KeyScope,
+  type Response,
   type WriteOptions,
+  type WriteSend,
 } from "../index";
 import { useWriteAction } from "./use-write-action";
 
@@ -462,6 +465,74 @@ function keyCalls(text: string): string[] {
     return text.slice(start, i);
   });
 }
+
+/** A refusal of a key that comes back after its write is done: the conflict carries the saved result in `data.saved`. */
+const conflictWith = (saved: unknown): Response<unknown> =>
+  ({
+    ok: false,
+    error: { code: "idempotency.key_conflict", text: "x", data: { saved } },
+  }) as unknown as Response<unknown>;
+
+describe("US-QS-03 · a key conflict names what is saved", () => {
+  it("US-QS-03 a conflict after a finished write hands its saved result to the description of the write", async () => {
+    const describeSaved = vi.fn((saved: unknown) => `${(saved as { value: number }).value} cm`);
+    const scope = appendKey("specimen", "e9", "measure");
+    const r = await runRepeat(scope, async () => conflictWith({ value: 12 }), describeSaved);
+    expect(!r.ok && r.error.code).toBe("idempotency.key_conflict");
+    expect(!r.ok && r.error.conflictText).toBe(
+      "Gesichert ist: 12 cm. Deine Änderung ist noch nicht gesichert.",
+    );
+    expect(describeSaved).toHaveBeenCalledWith({ value: 12 });
+  });
+
+  it("US-QS-03 a conflict without a description carries no conflict text: the text of the code says the first entry is saved", async () => {
+    const r = await runRepeat(appendKey("specimen", "e9b", "measure"), async () =>
+      conflictWith({ value: 12 }),
+    );
+    expect(!r.ok && r.error.conflictText).toBeUndefined();
+  });
+
+  it("US-QS-03 dismissing a conflict of an append frees its key: the next edited tap is a fresh write", async () => {
+    const server = keyServer(1);
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const scope = appendKey("specimen", "e10", "measure");
+    const measure = (value: number) =>
+      send(server.fetchFn, "POST", "/specimens/e10/measurements", { value });
+    await tap(result.current, measure(1), scope);
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    await tap(result.current, measure(2), scope);
+    expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    releaseRepeatKey(scope);
+    await tap(result.current, measure(2), scope);
+    expect(result.current.error).toBeNull();
+    expect(server.keys[2]).not.toBe(server.keys[0]);
+    expect(server.applied).toEqual([
+      "POST /specimens/e10/measurements",
+      "POST /specimens/e10/measurements",
+    ]);
+  });
+
+  it("US-QS-03 the write hook gives the description of its write to the conflict it shows", async () => {
+    const { result } = renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+    const scope = appendKey("specimen", "e11", "measure");
+    const describeSaved = (saved: unknown) => `${(saved as { value: number }).value} cm`;
+    const run: WriteSend = async () => conflictWith({ value: 12 });
+    await act(async () => result.current.run(run, "Gesichert.", scope, describeSaved));
+    expect(result.current.error?.conflictText).toBe(
+      "Gesichert ist: 12 cm. Deine Änderung ist noch nicht gesichert.",
+    );
+  });
+});
 
 describe("US-QS-03 · the action of a repeat-guard key names the operation, never the body", () => {
   const files = sourceFiles(SRC).filter(

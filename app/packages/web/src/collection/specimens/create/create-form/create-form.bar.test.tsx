@@ -3,6 +3,7 @@ import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ApiError } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import {
   expectTitleInBar,
@@ -17,7 +18,13 @@ const species = { id: "a1", latinName: "Dracaena trifasciata", germanName: "Boge
 
 afterEach(cleanup);
 
-function show(props: { onCancel?: () => void; onSend?: () => Promise<null> } = {}) {
+function show(
+  props: {
+    onCancel?: () => void;
+    onSend?: () => Promise<ApiError | null>;
+    onDismissRefusal?: () => void;
+  } = {},
+) {
   const onCancel = props.onCancel ?? vi.fn();
   const onSend = props.onSend ?? vi.fn(async () => null);
   render(
@@ -28,6 +35,7 @@ function show(props: { onCancel?: () => void; onSend?: () => Promise<null> } = {
       zones={{ items: [], failed: false }}
       onSend={onSend}
       onCancel={onCancel}
+      {...(props.onDismissRefusal ? { onDismissRefusal: props.onDismissRefusal } : {})}
     />,
   );
   return { onCancel, onSend };
@@ -117,5 +125,26 @@ describe("US-QS-32 · SG-HEAD-01 Pflanze anlegen puts its title into the top bar
     const bar = document.querySelector<HTMLElement>("[data-app-bar-slot]") as HTMLElement;
     await userEvent.click(within(bar).getByRole("button", { name: "Zurück zur Art" }));
     expect(onCancel).toHaveBeenCalledOnce();
+  });
+});
+
+describe("US-QS-03 · a key conflict of the create form names the saved plant", () => {
+  it("US-QS-03 the conflict names the saved plant, its one control frees the key, and editing a field keeps the banner until then", async () => {
+    const onDismissRefusal = vi.fn();
+    const conflict: ApiError = {
+      code: "idempotency.key_conflict",
+      text: "x",
+      conflictText: "Gesichert ist: Monstera. Deine Änderung ist noch nicht gesichert.",
+    };
+    show({ onSend: vi.fn(async () => conflict), onDismissRefusal });
+    await userEvent.click(screen.getByRole("button", { name: "Pflanze anlegen" }));
+    expect(
+      await screen.findByText("Gesichert ist: Monstera. Deine Änderung ist noch nicht gesichert."),
+    ).toBeTruthy();
+    await userEvent.type(fields().first, "x");
+    expect(screen.getByText(/Gesichert ist: Monstera/)).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
+    expect(onDismissRefusal).toHaveBeenCalledOnce();
+    expect(screen.queryByText(/Gesichert ist:/)).toBeNull();
   });
 });

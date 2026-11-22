@@ -22,6 +22,9 @@ export function createdText(specimen: Specimen): string {
   return head + cuttingLight + location;
 }
 
+/** The keeper's words for a plant that a key conflict saved: its name (US-QS-03). */
+const describeCreated = (saved: unknown): string => (saved as Specimen).name;
+
 /**
  * State and action for creating a specimen of the chosen species (US-BES-02, US-BES-03). After success the page reloads
  * (`after`), the result is a toast (`say`, DS-54) and the caller learns that the creation is complete and gets the new
@@ -45,6 +48,7 @@ export function useCreate(
         (key) => createSpecimen(api, t, { speciesId: newSpecies.id, ...input }, { key }),
         // A create: the operation only, the species and the form are the body (US-QS-03).
         createKey("specimen", "create"),
+        describeCreated,
       );
       if (!r.ok) return r.error;
       say(createdText(r.value));
@@ -53,9 +57,11 @@ export function useCreate(
       completed(r.value);
       return null;
     },
-    [api, token, newSpecies, after, completed, say],
+    [api, token, newSpecies, after, completed, say, keys],
   );
-  return { created, send, zones };
+  // Dismissing the conflict banner frees the create key, so the next send is a new specimen (US-QS-03).
+  const dismissRefusal = useCallback(() => keys.release(createKey("specimen", "create")), [keys]);
+  return { created, send, zones, dismissRefusal };
 }
 
 /**

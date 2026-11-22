@@ -12,10 +12,13 @@ export function errorText(code: string | undefined): string {
 
 /**
  * The German text of a refusal (DS-49, P-10): by its error code, never the raw server text. The one code the web app
- * makes up itself (the server did not answer) carries its own German text.
+ * makes up itself (the server did not answer) carries its own German text. A key conflict says what is saved when the
+ * repeat guard named it (`conflictText`, US-QS-03); without it, the text of its code says that the first entry is saved.
  */
-export function refusalText(error: { code: string; text: string }): string {
-  return error.code === "network.not_reachable" ? error.text : errorText(error.code);
+export function refusalText(error: { code: string; text: string; conflictText?: string }): string {
+  if (error.code === "network.not_reachable") return error.text;
+  if (error.code === "idempotency.key_conflict" && error.conflictText) return error.conflictText;
+  return errorText(error.code);
 }
 
 /** Shape of the web `ApiError`; its raw `text` is deliberately ignored (P-10). */

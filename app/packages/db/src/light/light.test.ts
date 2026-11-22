@@ -190,7 +190,11 @@ describe("repeat guard in the database", () => {
       kind: "repeat",
       result: { id: 1 },
     });
-    expect(await idem.begin(s(anna, key), "b")).toEqual({ kind: "conflict" });
+    expect(await idem.begin(s(anna, key), "b")).toEqual({
+      kind: "conflict",
+      done: true,
+      result: { id: 1 },
+    });
   });
 
   it("discarded keys are free again; the same key of two accounts is separate", async () => {

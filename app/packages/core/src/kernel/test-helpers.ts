@@ -19,7 +19,10 @@ export class InMemoryIdempotencyStore implements IdempotencyStore {
       this.entries.set(id(key), { fingerprint, done: false });
       return { kind: "fresh" };
     }
-    if (present.fingerprint !== fingerprint) return { kind: "conflict" };
+    if (present.fingerprint !== fingerprint)
+      return present.done
+        ? { kind: "conflict", done: true, result: present.result }
+        : { kind: "running" };
     return present.done ? { kind: "repeat", result: present.result } : { kind: "running" };
   }
 
