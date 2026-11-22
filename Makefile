@@ -35,7 +35,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-prune db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -188,7 +188,7 @@ docs-check: ## Lint markdown and check relative links (QG-U2)
 # postgresql.auto.conf, and all three are reloadable (no restart). CI does not call this target; its jobs with a Postgres
 # service call `ci-db-tune` right after checkout, which sets the same three on the service container (issue 1698).
 db-up: ## Start the test database (PostgreSQL 18 in Docker) unless it is running; fsync, synchronous_commit and full_page_writes off on every start (issue 1636)
-	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) --memory "$$RAW_DB_MEMORY" \
+	@docker start $(DB_CONTAINER) >/dev/null 2>&1 || docker run -d --name $(DB_CONTAINER) --memory "$$RAW_DB_MEMORY" --label "pflanzendex.worktree=$(CURDIR)" \
 		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pflanzendex_test -p 127.0.0.1:$(DB_PORT):5432 postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395 >/dev/null
 	@until docker exec $(DB_CONTAINER) pg_isready -q -h 127.0.0.1 -d pflanzendex_test; do sleep 1; done
 	@docker exec $(DB_CONTAINER) psql -U postgres -q -v ON_ERROR_STOP=1 -c "alter system set fsync = off" -c "alter system set synchronous_commit = off" -c "alter system set full_page_writes = off" -c "select pg_reload_conf()" >/dev/null
@@ -203,6 +203,12 @@ ci-db-tune: ## CI only (US-QG-02, issue 1698): the Postgres service of a CI job 
 
 db-down: ## Remove the test database with its data (the volume too), so the next db-up starts empty
 	-docker rm -f -v $(DB_CONTAINER)
+
+# Removes the test databases of worktrees that no longer exist (US-DEV-08, issue 2396): the tool keeps the main checkout's and
+# every live worktree's, and matches a container without the label by its port. Run it after removing a worktree; db-down
+# there removes that worktree's own database.
+db-prune: ## Remove the test databases of worktrees that no longer exist (label pflanzendex.worktree, or the port of old containers); the main checkout's and live worktrees' stay; DRY_RUN=1 only prints (US-DEV-08, issue 2396)
+	cd $(APP) && $(if $(value DRY_RUN),DRY_RUN=1 )node tools/workflow/worktree/local-database.prune.mjs
 
 # The local-only targets below change the test database of this worktree and nothing else: each runs
 # tools/workflow/worktree/local-database.mjs first, which refuses a DATABASE_URL that is not this database (US-DEV-01).

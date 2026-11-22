@@ -8,6 +8,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -535,6 +536,50 @@ test("US-QG-02 ci-tests-base runs the api suite first, then db, core and the too
       ran(failed).sort(),
       [...suites].sort(),
       `every suite runs when ${failing} failed`,
+    );
+  }
+});
+
+// US-DEV-08 (issue 2396): every test database names its worktree in a label, so `make db-prune` finds the owner of a container
+// without reading the worktree's .env.worktree. The label comes after the memory cap, which the caps test reads as one line.
+test("US-DEV-08 db-up labels the test database with the path of its worktree, after the memory cap (issue 2396)", (t) => {
+  assert.match(
+    recipeOf("db-up"),
+    /--memory "\$\$RAW_DB_MEMORY" --label "pflanzendex\.worktree=\$\(CURDIR\)"/,
+  );
+  const created = makeRun(t, ["db-up"], { docker: "new" });
+  assert.equal(created.status, 0, created.out);
+  const run = calls(created).find((call) => call.tool === "docker" && call.args[0] === "run");
+  assert.ok(run, "the container is created");
+  const at = run.args.indexOf("--label");
+  assert.ok(at > run.args.indexOf("--memory"), "the label follows the memory cap");
+  const worktree = realpathSync(ROOT).replace(/\/$/, "");
+  assert.equal(run.args[at + 1], `pflanzendex.worktree=${worktree}`);
+});
+
+// US-DEV-08 (issue 2396): db-prune runs the tool from app/ and passes DRY_RUN on as DRY_RUN=1 (unexported above), like the
+// dry run of pokedex-build does; any non-empty value is a dry run, so a value that is not 1 cannot remove anything by mistake.
+test("US-DEV-08 db-prune is declared in .PHONY, has a help sentence and runs the tool; DRY_RUN reaches the tool as DRY_RUN=1", () => {
+  const phony = lines.find((l) => l.startsWith(".PHONY:")).split(/\s+/);
+  assert.ok(phony.includes("db-prune"), "db-prune is not in .PHONY");
+  const header = lines.find((l) => l.startsWith("db-prune:"));
+  assert.ok(header?.split("## ")[1]?.trim(), "db-prune has no help sentence after ##");
+
+  const plain = dryRun(["db-prune"]);
+  assert.equal(plain.status, 0, plain.err);
+  assert.match(
+    plain.out,
+    /^cd app && node tools\/workflow\/worktree\/local-database\.prune\.mjs$/m,
+  );
+  assert.doesNotMatch(plain.out, /DRY_RUN/, "without DRY_RUN the tool removes");
+
+  for (const value of ["1", "0"]) {
+    const dry = dryRun(["db-prune", `DRY_RUN=${value}`]);
+    assert.equal(dry.status, 0, dry.err);
+    assert.match(
+      dry.out,
+      /^cd app && DRY_RUN=1 node tools\/workflow\/worktree\/local-database\.prune\.mjs$/m,
+      `DRY_RUN=${value}`,
     );
   }
 });
