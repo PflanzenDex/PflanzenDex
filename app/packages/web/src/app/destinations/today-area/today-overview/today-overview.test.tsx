@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
-import { TreatmentsEntry } from "./today-overview";
+import { TitleLine, TreatmentsEntry } from "./today-overview";
 
 afterEach(() => {
   cleanup();
@@ -36,5 +36,33 @@ describe("US-QS-32 the Behandlungen row of the treatment card keeps the warning 
     const row = screen.getByRole("button", { name: /^Behandlungen/ });
     expect(row.getAttribute("aria-haspopup")).toBe("dialog");
     expect(row.getAttribute("aria-expanded")).toBe("false");
+  });
+});
+
+describe("US-QS-32 · F-0070 the line under the title of Heute is the summary, or the achievement notice in its place", () => {
+  it("US-QS-32 · F-0070 the slot of the notice comes first and hides itself while empty; the summary hides while the slot holds the notice", () => {
+    render(
+      <TitleLine notice={<div data-slot="" className="peer empty:hidden" />}>
+        <p>2 Gießen</p>
+      </TitleLine>,
+    );
+    const slot = document.querySelector("[data-slot]") as HTMLElement;
+    const line = screen.getByText("2 Gießen").parentElement as HTMLElement;
+    expect(slot.nextElementSibling).toBe(line);
+    expect(slot.className.split(" ")).toEqual(expect.arrayContaining(["peer", "empty:hidden"]));
+    // The wrapper takes no room of its own: no summary, no wrapper (no gap in the column); a notice hides the summary.
+    expect(line.className.split(" ")).toEqual(
+      expect.arrayContaining(["empty:hidden", "peer-[:not(:empty)]:hidden"]),
+    );
+  });
+
+  it("US-QS-32 · F-0070 without a notice slot the summary shows as before, in no wrapper that adds a gap", () => {
+    render(
+      <TitleLine>
+        <p>2 Gießen</p>
+      </TitleLine>,
+    );
+    expect(screen.getByText("2 Gießen")).toBeTruthy();
+    expect(document.querySelector("[data-slot]")).toBeNull();
   });
 });

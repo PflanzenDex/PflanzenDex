@@ -14,6 +14,9 @@ import { WateringList } from "@/monitoring";
 import { TodayPage } from "@/today";
 import { FriendsBanner, FriendsNewsTile, FriendsPage } from "@/social";
 
+// The line under the title of "Heute" that holds the achievement notice (F-0070), next to the other parts of that page.
+export { NoticeSlot } from "./lazy-news-banner/lazy-news-banner";
+
 /** The destinations "Heute" and "Konto" with their sections are their own lazy parts: the shell does not carry them (DS-08, US-QS-14). */
 export const TodayArea = lazyPage(() =>
   import("../today-area/today-area").then((m) => ({ default: m.TodayArea })),
