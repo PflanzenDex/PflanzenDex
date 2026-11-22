@@ -42,7 +42,8 @@ function ChipRow({
   onChoose: (key: string) => void;
 }) {
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
+    // The chip row is a marked sideways region at every size (DS-63, issue 2417); it wraps while the chips fit.
+    <div role="group" aria-label={label} data-scroll-x="chips" className="flex flex-wrap gap-2">
       {choices.map((c) => {
         const selected = c.key === chosen?.key;
         return (

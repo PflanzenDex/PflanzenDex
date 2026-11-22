@@ -105,7 +105,7 @@ export function ScrollEntries<T>({
   const holes = placeholderCount(paging, missing, Math.min(wanted, count) - loaded);
 
   return (
-    <div className={cn("flex flex-col gap-3", fit && "min-h-24 flex-1")}>
+    <div data-pager="" className={cn("flex flex-col gap-3", fit && "min-h-24 flex-1")}>
       <ul
         ref={list}
         {...(fit ? { "data-page-fit": "", tabIndex: 0 } : {})}

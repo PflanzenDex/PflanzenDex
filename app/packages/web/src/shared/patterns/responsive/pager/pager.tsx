@@ -164,6 +164,7 @@ function PagedPager<T>({
   const holes = placeholderCount(paging, missing, room);
   return (
     <div
+      data-pager=""
       className={cn("flex flex-col gap-3 [touch-action:pan-y]", fit && "min-h-0 flex-1")}
       {...swipe}
     >

@@ -1,6 +1,6 @@
 // The baseline of the one-screen gate (FR-QG-17, it only shrinks; issue 1137, QG-U8): how a run is compared with it, how
 // a full run rewrites it, and when a screen was not measured at all because the sign-in was lost. Pure, no browser.
-import type { Baseline, BaselineEntry, Result } from "./judge";
+import { BINARY_RULES, type Baseline, type BaselineEntry, type Result } from "./judge";
 
 /** A listed screen may not get worse by more than this ratio, or this many pixels for the width cap. */
 const WORSE_RATIO = 0.02;
@@ -23,11 +23,16 @@ function worse(r: Result, e: BaselineEntry): string | null {
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
-/** Whether a listed entry was clearly over the limit, so that fitting now means it was fixed, not noise. */
+/** Whether a listed entry was clearly over the limit in its numbers, so that fitting now means it was fixed, not noise. */
 const clearlyOver = (e: BaselineEntry) =>
   (e.cap ?? 0) > 0 || Math.max(e.page, e.inner, e.pageX ?? 1, e.innerX ?? 1) > 1 + STALE_MARGIN;
 
-/** The violations of one screen against the baseline: new failures, listed ones that got worse, listed ones that fit now. */
+/** The listed rules that hold or fail as a whole (a Pager, a marker, a title, an action): no margin, so one that is gone is stale. */
+const binaryListed = (e: BaselineEntry) =>
+  (e.rules ?? []).filter((rule) => BINARY_RULES.includes(rule));
+
+/** The violations of one screen against the baseline: new failures (a rule not listed for it), listed ones that got worse, and
+ * listed ones that fit now. */
 export function judgeScreen(
   results: readonly Result[],
   baseline: Baseline,
@@ -37,12 +42,23 @@ export function judgeScreen(
     const label = `${r.screen} at ${r.size}`;
     const entry = entryOf(baseline, r);
     if (r.failures.length === 0)
-      return entry && !unstable && clearlyOver(entry)
+      return entry && !unstable && (binaryListed(entry).length > 0 || clearlyOver(entry))
         ? [`${label}: fits now, remove it from the baseline (npm run one-screen:write)`]
         : [];
     if (!entry) return [`${label}: ${r.failures.join("; ")}`];
+    const listed = entry.rules ?? [];
+    const fresh = r.rules.filter((rule) => !listed.includes(rule));
     const got = worse(r, entry);
-    return got ? [`${label}: worse than the baseline (${got}): ${r.failures.join("; ")}`] : [];
+    const out: string[] = [];
+    if (fresh.length > 0)
+      out.push(`${label}: new failure (${fresh.join(", ")}): ${r.failures.join("; ")}`);
+    if (got) out.push(`${label}: worse than the baseline (${got}): ${r.failures.join("; ")}`);
+    const fixed = binaryListed(entry).filter((rule) => !r.rules.includes(rule));
+    if (fixed.length > 0 && !unstable)
+      out.push(
+        `${label}: ${fixed.join(", ")} fits now, remove it from the baseline (npm run one-screen:write)`,
+      );
+    return out;
   });
 }
 
@@ -64,7 +80,7 @@ export function judgeBaseline(
   return problems;
 }
 
-/** The baseline a full run would write: every failing screen and size with its measured values. */
+/** The baseline a full run would write: every failing screen and size with its measured values and the rules that fail there. */
 export function buildBaseline(results: readonly Result[]): Baseline {
   const entries = results
     .filter((r) => r.failures.length > 0)
@@ -73,6 +89,7 @@ export function buildBaseline(results: readonly Result[]): Baseline {
       if (r.pageX > 1) e.pageX = r.pageX;
       if (r.innerX > 1) e.innerX = r.innerX;
       if (r.cap > 0) e.cap = r.cap;
+      if (r.rules.length > 0) e.rules = [...r.rules];
       return e;
     });
   return { maxEntries: entries.length, entries };

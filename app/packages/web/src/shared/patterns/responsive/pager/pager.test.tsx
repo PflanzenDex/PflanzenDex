@@ -113,6 +113,15 @@ describe("Pager (US-QS-15)", () => {
     expect(screen.getByRole("list", { name: "Andere" }).hasAttribute("data-page-fit")).toBe(false);
   });
 
+  it("US-QS-15 · issue 2417 the Pager carries the data-pager marker at a tablet width, and on a phone too", () => {
+    const { unmount } = render(<Example />);
+    expect(document.querySelector("[data-pager]")).not.toBeNull();
+    unmount();
+    setViewportWidth(360);
+    render(<Example />);
+    expect(document.querySelector("[data-pager]")).not.toBeNull();
+  });
+
   it("US-QS-15 one page shows no controls", () => {
     render(
       <MemoryRouter>

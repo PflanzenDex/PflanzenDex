@@ -7,14 +7,14 @@ import { SCREENS, screensOf, type Screen } from "../../../support/display/one-sc
 import {
   SIZES,
   evaluate,
-  isPhone,
   type Baseline,
   type Raw,
   type Size,
   type Result,
 } from "../../../support/display/one-screen/judge";
 import { firstSelfTests, goodFirst } from "./one-screen.first";
-import { phoneSelfTests } from "./one-screen.phone";
+import { layerSelfTests } from "./one-screen.phone";
+import { pagerSelfTests } from "./one-screen.pager";
 import { sidewaysSelfTests } from "./one-screen-sideways";
 import { shiftJudgeSelfTests, shiftSelfTests, shiftTests } from "./one-screen.shift";
 import {
@@ -53,7 +53,7 @@ async function measureAll(
       await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
     await settle(page, 400);
     const withPaint = size.kind === "cap" && !screen.capExempt;
-    const first = isPhone(size) ? await firstOf(page) : null;
+    const first = size.kind === "cap" ? null : await firstOf(page);
     const raw: Raw = { ...(await measure(page, withPaint)), first };
     results.push(evaluate(screen.id, size, raw, Boolean(screen.sidewaysExempt)));
   }
@@ -95,8 +95,9 @@ test.describe("US-QS-15 every screen fits the window (QG-U8)", () => {
 const sizeOf = (name: string) => SIZES.find((s) => s.name === name) as Size;
 
 const raw = (over: Partial<Raw>): Raw => ({
-  ...{ scrollHeight: 640, innerHeight: 640, scrollWidth: 360, innerWidth: 360, region: null },
-  ...{ pageEl: "main", hEl: "div", regionX: null, paint: null, first: goodFirst() },
+  ...{ scrollHeight: 640, innerHeight: 640, scrollWidth: 360, innerWidth: 360, rem: 16 },
+  ...{ scrollers: [], sideways: [], markers: [], pagers: [] },
+  ...{ pageEl: "main", hEl: "div", paint: null, first: goodFirst() },
   ...over,
 });
 
@@ -184,7 +185,8 @@ test("QG-U8 self-test: a borderline entry that fits in one run does not flip the
 
 sidewaysSelfTests(raw, sizeOf);
 firstSelfTests(raw, sizeOf);
-phoneSelfTests(raw, sizeOf);
+layerSelfTests(raw, sizeOf);
+pagerSelfTests(raw, sizeOf);
 
 test("QG-U8 self-test: a screen that lands on Heute instead of its path is named", () => {
   expect(lostScreen("http://x/account/data", "http://x/today")).toContain("landed on /today");
