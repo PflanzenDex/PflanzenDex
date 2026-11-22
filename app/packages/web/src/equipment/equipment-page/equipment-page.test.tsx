@@ -726,7 +726,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     fireEvent.keyDown(lamps, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(screen.queryByRole("alert")).toBeNull();
-    await userEvent.click(await screen.findByRole("button", { name: /^Wünsche|Geräte-Wünsche/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /^(Wünsche|Geräte-Wünsche)/ }));
     const wishes = await screen.findByRole("dialog", { name: "Geräte-Wünsche" });
     expect(within(wishes).queryByRole("alert")).toBeNull();
   });
