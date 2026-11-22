@@ -180,4 +180,4 @@ Effect on the waiting tickets: #2418 (2, 15), #2419 (3, 4, 11, 16), #2421 (10, 1
 | Screenshot pass    | Follow-up ticket                                                                                                                                                   | #2445                      |
 | Spec against build | One P2 conformance ticket; the outline-button lines go into the FX-39 sweeps                                                                                       | #2446, #2206, #2207, #2208 |
 
-#2420 and #2422 are confirmed as decided. The open point "screenshots" in "Open" above is #2445.
+Issues #2420 and #2422 are confirmed as decided. The open point "screenshots" in "Open" above is #2445.
