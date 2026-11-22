@@ -1,0 +1,161 @@
+# UX benchmark: PflanzenDéx against the patterns popular apps chose (2026-11-22)
+
+Issue #2424, refs #2412, US-QS-15, US-QS-32. Owner request of 2026-11-21: take the best interaction and layout patterns from popular apps.
+
+## Method and limits
+
+- **Scope:** interaction and layout patterns only (how a sheet opens, where the primary action sits, how a deck is swiped). No third-party branding, icons, artwork, copy or screenshots are in this record. Reference apps are described in words; the platform baselines are public: Material 3 (m3.material.io) and the Apple Human Interface Guidelines (developer.apple.com/design/human-interface-guidelines).
+- **Our side:** inventory read from `docs/guides/reference/app.md`, `docs/guides/reference/design-system.md`, `docs/guides/reference/style-guide.md` and the code of `app/packages/web/src` at `dev` 0a4d6e84. It was read, not run.
+- **Reference side:** the author's knowledge of how the named apps behave (no live check, no third-party captures). Where a claim is a recollection of a pattern that varies by app version, it says "typically". Treat the references as design vocabulary, not as measurements.
+- **Not done:** screenshots of our pages at 360x640 and on the OnePlus 9 Pro (evidence item of the issue), a charts review, and a keyboard or screen-reader pass (`a11y-auditor` covers those). Each is a follow-up if the owner wants it; see "Open".
+- **Already decided, judged only for fit:** scroll model (#2416, US-QS-15, DS-58/61/63, SG-LIST-01/02, d-072 to d-080), the two-level card (#2383/#2421), the news dialog (#2409).
+- **Verdicts:** keep, adjust, replace. Effort: XS under 0.5 day, S about 1 day, M 2 to 4 days, L more.
+- **Flag "T"** marks a proposal that touches #2418 to #2422 (scroll-model tickets, waiting for this record).
+
+## Summary
+
+Our patterns already follow the platform baselines closely: the style guide cites HIG for most rules, and the shell (bottom bar of at most 5, selected-tab reselect, bottom sheets with a grabber, in-place undo, skeletons, one-tap writes) matches what Google Photos, Maps, Calendar, Instagram and the Play Store do. Most verdicts are therefore "keep". The gains are in five places: the complete gesture on task rows (Heute), the friends start page (list first), switches for settings, a fast scroller for the long species lists, and consistency between what the style guide says and what the build does (section "Spec against build").
+
+## Heute
+
+| Pattern | Job | Ours today | Reference apps (typically) | Verdict | Rules |
+|---|---|---|---|---|---|
+| Most urgent first, one row then more | what needs action now | one urgent row, then rows; category tiles Behandlungen, Gießen, Fehlt noch | Google Calendar agenda and Todoist Today: one chronological list, overdue on top; Planta: today's tasks per plant | Keep. The tiles are a good drill-down; the empty state says what is next (P-09) | SG-LIST-09, SG-LIST-10, SG-STATE-01, US-QS-18 |
+| Marking a task done | watering, treatment | outline button "Gegossen"/"Abhaken", then an in-place undo row for 8 s | Todoist, Google Tasks, Reminders: a round check at the leading edge, strike-through, undo bar; Gmail and Mail: swipe a row; Planta: a one-tap "watered" check | Adjust: leading round check as the main control plus swipe as a shortcut; keep the button label as the accessible name. Our outline button is also a spec deviation (see below) | SG-BTN-01, SG-FEED-03, SG-TOUCH-02 |
+| Bulk marking | several plants at once | from 2 marks, button "N eintragen", one bulk undo | Gmail multi-select bar; Photos selection mode | Keep | SG-FEED-03, US-QS-26 |
+| Undo | take back a one-tap write | undo row in place of the change, 8 s | Material 3 snackbar with Undo (4 to 10 s), Gmail "Rückgängig" bar | Keep. In place beats a snackbar here because the bottom bar and the fixed frame leave no free edge; 8 s is within the M3 range | SG-FEED-01, SG-FEED-03 |
+| Long task list | scroll | pager with 3 or 6 rows (to be removed, #2422) | Calendar schedule, Mail: continuous scroll | Keep the decision (#2422); matches the field | SG-LIST-01, DS-60 |
+| Guided first steps | new account, no plant | 3-step guide in place of tasks, skip allowed | Duolingo: value first, short steps, a visible progress bar, skippable; Material onboarding: at most a few screens | Adjust: show "Schritt 1 von 3" progress (S). Keep skip and the in-place placement (no separate tour) | US-QS-16, SG-ONB-01 |
+| One-time hints | tell about a feature at its place | calm note with dismiss, shown once | Material feature discovery and iOS tips: one anchored hint, dismissed once | Keep | SG-ONB-02 |
+| News on Heute | changelog notice | info banner with "Neuerungen ansehen" opening a dialog (#2409) | Play Store "What's new" is a section on the app page; Android and iOS apps show a one-time sheet after an update | Keep the decision. Small adjust: the dialog uses the shared Dialog, not the sheet-below-md of ResponsiveModal; on a phone a bottom sheet is the common form (XS, T for #2418 heights) | US-QS-27, SG-SHEET-01 |
+
+## Sammlung
+
+| Pattern | Job | Ours today | Reference apps (typically) | Verdict | Rules |
+|---|---|---|---|---|---|
+| Four modes | switch plants, species, wishes, equipment | segmented control under the title, Wünsche and Geräte can be switched off | Play Store and Maps: top tabs or chip row; iOS Photos: segmented "Years, Months, All" | Keep. At 200 % text it becomes a chip row (decided 2026-11-21). Four labels at 360 px are the limit | SG-CTRL-01, SG-LIST-01 |
+| Add a plant | create an object | icon button "Pflanze anlegen" in the content row beside "Archiv (n)" | iOS lists: "+" in the bar; Material: FAB; Planta: a prominent "+" | Adjust to the written rule: "+" in the bar slot, Archiv into the bar menu (the style guide rule exists, the build differs). A FAB is not proposed: it covers rows and the bottom bar already holds the thumb zone | SG-HEAD-05, DS-64 |
+| Plant list | browse | rows with thumbnail, grouping by phase or location in a sheet "Ansicht" | iOS Photos albums and Google Photos: one grid or list, grouping with sticky section headers; Planta: cards per plant | Keep rows (dense, scan by name). Adjust (T, #2419): sticky group headers while scrolling replace the chip row for grouped lists; chip row only for jumping | SG-LIST-03, SG-LIST-06, DS-63 |
+| Filter and sort | narrow a list | "Filter (n)" opens a layer; active filters appear as removable chips | Play Store, Maps, Photos: chips directly under the search field; a sheet for "all filters" | Adjust: show the two or three most used filters as chips under the search, the layer for the rest (S, T #2421) | SG-SEARCH-01, US-QS-14 |
+| Plant page | everything about one plant | a layer with title, chips, "Mehr" menu, tabs Überblick, Verlauf, Pflege, Standort, filled "Messen" | Planta: a full page with a hero photo, a row of quick actions (water, feed, photo) and sections; Google Contacts and Maps place sheet: header, action row, tabs | Keep the layer (decided DS-58). Adjust (S, T #2418): a quick-action row under the title (Gießen, Messen, Foto) in place of one filled "Messen" only on the first tab, so the main care actions stay in reach on every tab | SG-NAV-04, SG-SHEET-01, SG-BTN-02 |
+| Tabs inside a sheet | split a long page | tabs that wrap, scroll sideways at 200 % | Material tabs: scrollable above 4; HIG: segmented control inside sheets | Keep | DS-63, SG-CTRL-01 |
+| Archive and restore | take a plant out of the list | form "Archivieren", "Wiederherstellen" in a card without confirm or undo | Gmail archive: one tap and an undo bar; Photos "Archive" the same | Adjust: archive in one tap with in-place undo, drop the form unless a reason is wanted (S). Restore has no data loss: keep | SG-FEED-03, SG-SHEET-05 |
+| Delete a leaf or zone | remove a small record | inline question, then a destructive confirm button | Material: delete at once with undo; HIG: confirm only if not undoable | Adjust: leaf removal with undo instead of a question (XS). A zone that holds plants keeps its question | SG-SHEET-05, SG-FEED-03 |
+| Forms | create or edit | full view with FormBar: "Abbrechen" left, "Sichern" right, fixed at the bottom | iOS sheet: Cancel/Done in the bar at the top; Material full-screen dialog: close at left, Save at the top right | Keep the bottom bar (thumb reach, keyboard-safe). Unsaved-input question matches both systems | SG-FORM-02, SG-FORM-06 |
+| Measurement | add a value next to the plant | measure page, native number and date fields, optional photo and note | Fitness and plant apps: a one-field first step, extras behind "Mehr" | Keep; check that value alone can be saved with one more tap (verify, not built) | US-WAC-01, SG-FORM-01 |
+| Pot label scan | act from a pot | page with Gegossen, Gedüngt, Messen | App Clips and QR flows: one task per page, large buttons | Keep | US-BES-17 |
+| CSV import | bring data | three steps: file, preview with per-row fixes, result | Google Sheets and Contacts import: file, mapping preview, result | Keep | US-BES-18 |
+
+## Entdecken
+
+| Pattern | Job | Ours today | Reference apps (typically) | Verdict | Rules |
+|---|---|---|---|---|---|
+| Suggestion deck | decide one suggestion at a time | one card; swipe right = Wünschen, left = Kein Interesse, up = Später; three labelled buttons; "Rückgängig" | Tinder and Bumble: swipe right yes, left no, up = a stronger yes; round icon buttons; a paid rewind | Keep: labelled buttons are better for accessibility than icon-only. Adjust (S): up means "skip" with us and "super like" in the references, so show the stamps on the first deck and name the gestures once | US-ENT-01, US-ENT-04, US-QS-32 |
+| Card content | decide with facts | 4:3 picture, name, summary, facts, "Warum diese Art?", disclosure "Mehr erfahren" | Tinder profile: a short card, a tap opens the full profile; Play Store: icon, rating, short text, "more" | Keep. The "unbekannt" display is ours and right (P-08) | SG-PHOTO-01, P-08 |
+| Deck end | nothing left | EmptyState "Für heute durch" with "Neuer Stapel" | Tinder "no one new around you" without a way forward; Duolingo: a clear finish screen and next goal | Keep; ours names the next step (P-09) | SG-STATE-01, P-09 |
+| Catalog search | find a species | search field, hit list, filter layer, "Art vorschlagen" when empty | Play Store search: suggestions while typing, filter chips, a "can't find it" path | Adjust (S): recent searches under an empty field. Keep the rest | SG-SEARCH-01, SG-SEARCH-02 |
+| Species page | read and choose | facts grid, filled "Diese Art wählen" | Play Store app page: title block, one primary action (Install) that stays visible | Keep; with the fixed frame of the scroll model the primary action stays visible (SG-LIST-01) | SG-BTN-02, US-BES-01 |
+| Pokédex progress and cards | collecting | progress line, rank, collector cards, uncaught cards in grey | Pokémon GO and Pokédex apps: an index with silhouettes for unseen entries and a counter "x/y"; Duolingo: levels and milestones | Keep the grey card (owner exception); consider a silhouette instead of a grey photo (spoiler-free, S) | SG-COLOR-07, US-POK-01 |
+| Long alphabetical lists | find an entry in hundreds | list with search, family grouping, sort | iOS Contacts: an index strip and sticky letters; Android fast scroller thumb | Adjust (M, T #2419): a fast scroller or letter index for lists over about 100 rows once pages are gone | SG-LIST-01, US-POK-08 |
+| Wishlist | keep wishes | "Wunsch erfassen" in the content, rows with "Gekauft", history layers without a way back | Todoist and Reminders: a completed list from which an item can be reopened; Amazon wish lists: move, not delete | Adjust (S): "Wieder offen" on a bought or discarded wish (P-10: nothing is lost silently). Add action to the bar per SG-HEAD-05 | US-WUN-03, SG-HEAD-05, P-10 |
+| Achievements and rhythm | motivation | calm mode, rhythm with pauses, year in review | Duolingo: loud streaks, a streak freeze; Apple Fitness rings; Strava year in sport | Keep: calm by default is a deliberate difference. The pause is our streak freeze and a good match | US-ACH-08 |
+| AI assistant | connect and review drafts | Konto section with six rows in layers | ChatGPT and Gemini apps: a chat; our model is a client connection | Out of scope as a pattern comparison (a connection panel, not a chat). Keep | US-KI-07 |
+
+## Freunde
+
+| Pattern | Job | Ours today | Reference apps (typically) | Verdict | Rules |
+|---|---|---|---|---|---|
+| Start page | see friends and what is new | tiles Anfragen and Neu bei Freunden, links to Tauschbörse and Passende Angebote, rows "Meine Freunde" and "Was Freunde sehen" in layers | WhatsApp and Instagram: the list of people is the page; requests and activity are a badge or a top row | Adjust (M, T #2419): the friends list becomes the page, requests and news become counted rows on top. The list is the primary object (P-09) | SG-NAV-04, US-SOZ-01 |
+| Add a friend | connect | layer with two tabs: create a code, enter a code | WhatsApp, Instagram, Duolingo: an invite link through the system share sheet, a QR code | Adjust (S): "Teilen" through the Web Share API with a link that carries the code; entering stays. Invitation-only access is a product rule (US-ACC-05), so the owner decides | US-SOZ-01, US-ACC-05 |
+| Requests | accept or decline | rows with Annehmen and Ablehnen | Instagram follow requests: Confirm and Delete beside the name | Keep | US-SOZ-02 |
+| News from friends | what is new | summary, grouped list, filter layer | Instagram feed, Google Photos "For you": a chronological feed with pictures | Keep: a summary suits a private, small circle; no infinite feed by design | US-SOZ-05 |
+| Sharing control | what friends see | one checkbox per plant, bulk confirm | Google Photos sharing and iOS Photos: a share sheet with an audience, and a preview "as others see it" | Adjust (S): add "So sehen Freunde dich" preview next to the switches (P-05 made visible). Switches per SG-CTRL-02 | SG-CTRL-02, P-05 |
+| A friend's collection | compare | segmented Alle, Fehlen dir, Hast du auch; "Auf die Wunschliste" | Letterboxd and Goodreads: overlap with a friend | Keep | US-SOZ-07 |
+| Swap exchange | offers and requests | four-part segmented control (Meine, Freunde, Anfragen, Verlauf) | Marketplace apps: tabs with counts, an item card, a status chip | Adjust (S, T #2421): tabs with count badges; four labels are tight at 360 px | SG-CTRL-01, US-SOZ-08 |
+| Match deck | decide on offers | the deck pattern as in Entdecken, undo | see Entdecken | Keep | US-TAU-02 |
+| End a friendship | destructive | layer with a question and buttons "Ja, beenden" and "Abbrechen" | Instagram unfollow: a short confirm only for private accounts; WhatsApp block: a confirm | Keep the question; wording is a spec finding (verbs, no "Ja") | SG-SHEET-05 |
+
+## Konto
+
+| Pattern | Job | Ours today | Reference apps (typically) | Verdict | Rules |
+|---|---|---|---|---|---|
+| Account index | find a setting | a list of rows with value and chevron, sign-out at the end; wide screens two panes | iOS Settings and Android Settings: the same list; Google app: a profile card on top | Keep | DS-58, DS-61 |
+| Settings switches | change a setting | checkboxes in rows that save at once | iOS and Material: a switch for an immediate setting | Adjust (S): use the switch the spec asks for. The build has no `Switch` component | SG-CTRL-02, SG-CTRL-05 |
+| Choice of a value | pick one of three | native select (shortcut mode, motion) | iOS: a pushed list with a check; Material: a radio dialog | Keep native on phones; fine | SG-CTRL-04 |
+| Notifications | reminders | occasions as checkboxes; push is not yet set up | Android 13 and later: ask for permission in context after saying the value; iOS the same | Keep for now; when push is built, ask after the first reminder is set, never at start | US-QS-30, US-MON-01 |
+| Sign out | leave | a dialog with three choices | Google: account switcher; Instagram: log out with a confirm | Keep | SG-SHEET-05 |
+| Account deletion | leave for good | two steps, a typed word, 7 days to take back | Google, Instagram: a re-authentication; 30 days grace | Keep the 7-day grace. The typed word contradicts SG-SHEET-05 (a decision for the owner: update the spec or the build) | SG-SHEET-05, US-ACC-04 |
+| Data export | take the data | one button, ZIP | Google Takeout: select, then a link by mail; Instagram: request, then a download | Keep: immediate download is simpler | US-ACC-04 |
+| What the app can do | manage features and unlocks | list with state and per-function layer | iOS Settings per-app toggles; Duolingo unlock labels | Keep; locked rows say what unlocks them (SG-NAV-06) | US-ONB-05, SG-STATE-04 |
+| Install the app | add to the home screen | a row "App installieren", an iOS text guide | Chrome install banner; Instagram's "Add to home screen" hint | Keep | US-QS-28 |
+
+## Sheets, shell and cross-cutting patterns
+
+| Pattern | Job | Ours today | Reference apps (typically) | Verdict | Rules |
+|---|---|---|---|---|---|
+| Bottom bar | move between destinations | at most 5, labels wrap, reselect returns to start then to top, locked ones stay and say why | Material 3 navigation bar (3 to 5) and HIG tab bars; Instagram reselect scrolls to top | Keep | SG-NAV-01, SG-NAV-03, SG-NAV-06 |
+| Wide screens | navigation | sidebar from md | M3: a rail at medium widths and a drawer when expanded | Adjust (S, low priority): a rail at 768 to 1023 px | DS-25 |
+| Sheet heights (#2418) | layer over a page | half height, drag to full, scroll inside under a fixed title | Google Maps place sheet: three detents; iOS sheets: medium and large detents; M3 standard bottom sheet | Keep the decision: it is the reference pattern. Note that the build has no detent yet (max 90 dvh); the news dialog and plant layer should get the same detents | SG-SHEET-02, DS-59 |
+| Dialog | interrupt | for data loss only, verbs, safe default | M3 dialogs and HIG alerts | Keep | SG-SHEET-05 |
+| Loading more (#2419) | long list | loader row, end marker "Das waren alle 84", retry row | Instagram and Mail: a spinner at the end and silence; Calendar: a "load earlier" row | Keep; the count end marker is our own and adds certainty. Retry row is better than the field standard | SG-LIST-01, P-10 |
+| Sticky table header (#2420) | table | fixed header and first column | Google Sheets and Excel: freeze panes | Keep; few tables (operator), low priority | DS-63 |
+| Card row and two-level card (#2421) | browse sideways, more per card | next card peeks; "Mehr" sheet | M3 carousel, Play Store shelves: peek; Maps place card: summary then a sheet | Keep | DS-63, #2383 |
+| Pull to refresh | refresh a feed | not found in the build (not verified) | Instagram, Gmail, Photos | Adjust only if a list shows server data that can be stale: Heute and the friends news. Installed web apps do not get it from the browser, so a custom gesture inside a fixed frame (M, T #2419) | SG-NAV-02 |
+| Swipe on rows | quick action | only on decks | Mail, Gmail, Todoist: swipe to complete or archive | Adjust together with the check on Heute (M); always keep a visible control | SG-TOUCH-02 |
+| Feedback | result of a write | in place, no toasts | M3 snackbars, iOS has none | Keep (SG-FEED-01). Toasts still exist for a few refusals | SG-FEED-01..05 |
+| Skeletons and empty states | wait and nothing | skeleton after 200 ms, empty state with one action | Facebook and YouTube skeletons; Duolingo and Notion empty states: picture, one line, one action | Keep. Some empty states have no action (wishlist "Keine offenen Kandidaten") | SG-STATE-01, SG-STATE-02, P-09 |
+| Search | find | one field with a clear button, one per list | iOS pull-down search; Play Store a search page with suggestions | Keep | SG-SEARCH-01 |
+| Photo input | capture a plant | file field | WhatsApp and Instagram: an in-app camera and gallery picker; Planta: camera first | Keep for now; the web file field with `capture` opens the system camera, the same flow as most PWAs. Identifying a plant by camera (PictureThis) is a feature, not a pattern, and outside this record | SG-PHOTO-01 |
+| Keyboard shortcuts | speed on desktop | `?` overview, single keys, optional | Gmail and GitHub: `?` overview, single keys | Keep | US-QS-11 |
+| Charts | show a trend | growth line with axes and unit | Google Fit and Apple Health: a simple line with a tap to read a value | Not reviewed in this pass (code not read) | SG-CHART-01 |
+
+## Spec against build: where the build differs from its own style guide
+
+These are not benchmark findings; the reading showed them. They are candidates for one conformance ticket, not for this PR. Source: inventory by file, to be re-checked before filing.
+
+| Finding | Rule | Where |
+|---|---|---|
+| Outline buttons are used | SG-BTN-01 | treatments, watering, lock page, welcome, wish rows |
+| Settings switches are checkboxes, no `Switch` component | SG-CTRL-02 | `account/settings-page` switch groups |
+| Confirm buttons read "Ja, ..." | SG-SHEET-05 | friend end, wish discard, zone delete |
+| A typed word confirms account deletion | SG-SHEET-05 | `privacy/deletion-card` |
+| The add action is in the content row, not the bar | SG-HEAD-05 | plant list, wishlist, friends |
+| Toasts exist | SG-FEED-01 | add-friend code, light page |
+| Wish form saves with "Speichern", elsewhere "Sichern" | SG-COPY | wish-form |
+| German literals in `.tsx` | FR-QG-26 | pokedex, catalog search, ai section, privacy cards |
+
+## Ranked shortlist (owner decides)
+
+Rank by value for a keeper next to the plant, then by effort. "T" = touches #2418 to #2422.
+
+| # | Proposal | Effort | Rules | T | Recommendation |
+|---|---|---|---|---|---|
+| 1 | Leading round check for a task on Heute, swipe as a shortcut, button name stays | M | SG-BTN-01, SG-FEED-03, SG-TOUCH-02 | no | Do. It is the most repeated action of the app |
+| 2 | Quick-action row (Gießen, Messen, Foto) under the plant title | S | SG-BTN-02, SG-SHEET-01 | T (#2418) | Do, build with the layer heights of #2418 |
+| 3 | Friends list as the Freunde page; requests and news as counted rows | M | SG-NAV-04, P-09 | T (#2419) | Do, after #2419 |
+| 4 | Fast scroller or letter index for lists over about 100 rows | M | SG-LIST-01 | T (#2419) | Do, with #2419 or right after |
+| 5 | Switches for immediate settings (add `Switch`) | S | SG-CTRL-02, SG-CTRL-05 | no | Do; the spec already says so |
+| 6 | One-tap archive and leaf removal with in-place undo | S | SG-FEED-03, SG-SHEET-05 | no | Do |
+| 7 | "Wieder offen" for a bought or discarded wish | S | P-10, US-WUN-03 | no | Do |
+| 8 | Share an invitation through the system share sheet | S | US-SOZ-01, US-ACC-05 | no | Owner decision: touches invitation-only access |
+| 9 | Preview "So sehen Freunde dich" beside the sharing switches | S | P-05, SG-CTRL-02 | no | Do |
+| 10 | Most used filters as chips under the search; layer for the rest | S | SG-SEARCH-01 | T (#2421) | Do, in #2421 |
+| 11 | Sticky group headers instead of the group chip row for grouped lists | S | SG-LIST-06, DS-63 | T (#2419) | Do, in #2419 |
+| 12 | Tabs with count badges for the swap exchange | S | SG-CTRL-01 | T (#2421) | Do, in #2421 |
+| 13 | "Schritt 1 von 3" in the first-plant guide | S | SG-ONB-01 | no | Do |
+| 14 | Gesture names and stamps on the first deck, up = skip | S | US-ENT-01 | no | Do |
+| 15 | News dialog as a bottom sheet on phones | XS | SG-SHEET-01 | T (#2418) | Do, in #2418 |
+| 16 | Pull to refresh on Heute and the friends news | M | SG-NAV-02 | T (#2419) | Do not now; wait for the real-device check of stale data |
+| 17 | Navigation rail at 768 to 1023 px | S | DS-25 | no | Later; low value on phones |
+| 18 | Silhouette instead of a grey photo for uncaught cards | S | SG-COLOR-07 | no | Later |
+| 19 | Recent searches in the catalog | S | SG-SEARCH-02 | no | Later |
+
+Recommended batch for the owner: do 1, 2, 3, 4, 5, 6, 7, 9, 13, 14, 15; fold 10, 11, 12 into the scroll-model tickets they touch; decide 8; park 16 to 19.
+
+Effect on the waiting tickets: #2418 (2, 15), #2419 (3, 4, 11, 16), #2421 (10, 12). #2420 and #2422 are confirmed as decided and need no change.
+
+## Open
+
+- Screenshots at 360x640 and on the OnePlus 9 Pro are not in this record. The owner can ask for a follow-up with `design-judge` and `phone-check.sh`.
+- Charts, AI client panels, operator pages, the welcome screen and the sign-in frame were read shallowly or not at all.
+- Reference behaviour is from the author's knowledge, not a live capture; a short check of the named apps before the owner decides on rank 8 and 16 is worthwhile.
