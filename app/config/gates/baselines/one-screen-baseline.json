@@ -1,4 +1,3897 @@
 {
-  "maxEntries": 0,
-  "entries": []
+  "maxEntries": 556,
+  "entries": [
+    {
+      "screen": "account-achievements-earned",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-achievements-earned",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-achievements-earned",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-achievements-earned",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-achievements-earned",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-achievements-earned",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.35,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-ai-clients",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.98,
+      "rules": ["title"]
+    },
+    {
+      "screen": "account",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.22,
+      "rules": ["title"]
+    },
+    {
+      "screen": "collection-plant-layer",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-layer",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-layer",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-layer",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-layer",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-layer",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-overview",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-overview",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-overview",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-overview",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-overview",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-overview",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-repot",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-repot",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-repot",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-repot",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-repot",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-repot",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-costs",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-costs",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-costs",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-costs",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-costs",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-costs",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.18,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-location",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-location",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-location",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-location",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-location",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-location",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.39,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-page-2",
+      "size": "360x640",
+      "page": 1,
+      "inner": 15.94,
+      "rules": ["frame", "pager", "action"]
+    },
+    {
+      "screen": "collection-view-plants-page-2",
+      "size": "390x844",
+      "page": 1,
+      "inner": 11.5,
+      "rules": ["frame", "pager", "action"]
+    },
+    {
+      "screen": "collection-view-plants-page-2",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-page-2",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-page-2",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-page-2",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 37.4,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species",
+      "size": "360x640",
+      "page": 1,
+      "inner": 10.09,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species",
+      "size": "390x844",
+      "page": 1,
+      "inner": 6.19,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 38.07,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-hints",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-hints",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-hints",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-hints",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-hints",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-hints",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.05,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager", "action"]
+    },
+    {
+      "screen": "collection",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager", "action"]
+    },
+    {
+      "screen": "collection",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-collection",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.1,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "friend-collection",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-collection",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-collection",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-collection",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-collection",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.82,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-friends",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-friends",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-friends",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-friends",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-friends",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-friends",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.46,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "plant-menu-more",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "plant-menu-more",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "plant-menu-more",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "plant-menu-more",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "plant-menu-more",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "plant-menu-more",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "species-compare",
+      "size": "360x640",
+      "page": 1,
+      "inner": 8.81,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "species-compare",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.26,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "species-compare",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "species-compare",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "species-compare",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "species-compare",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 46.59,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-hints",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-hints",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-hints",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-hints",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-hints",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-hints",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.8,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-locked",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.09,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-sheet-locked",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-locked",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-locked",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-locked",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-locked",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.45,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-treatments",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.26,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-sheet-treatments",
+      "size": "390x844",
+      "page": 1,
+      "inner": 2.51,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-sheet-treatments",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-treatments",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-treatments",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-treatments",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 16.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.26,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today",
+      "size": "390x844",
+      "page": 1,
+      "inner": 2.51,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 16.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "welcome-keycloak-registrieren",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 1.97,
+      "rules": ["title"]
+    },
+    {
+      "screen": "account-reminders",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.16,
+      "rules": ["title"]
+    },
+    {
+      "screen": "collection-plant-leaves",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-leaves",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-leaves",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-leaves",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-leaves",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-leaves",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-wishes",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-wishes",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-wishes",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-wishes",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-wishes",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-wishes",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.18,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-hints",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.65,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-hints",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1.03,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-hints",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-hints",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-hints",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-hints",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 8.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-reference",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.65,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-reference",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1.03,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-reference",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-reference",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-reference",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-reference",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 8.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.65,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1.03,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 8.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-view",
+      "size": "360x640",
+      "page": 1,
+      "inner": 10.09,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-view",
+      "size": "390x844",
+      "page": 1,
+      "inner": 6.19,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-view",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-view",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-view",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-view",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 38.07,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-bought",
+      "size": "360x640",
+      "page": 1,
+      "inner": 21.78,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-bought",
+      "size": "390x844",
+      "page": 1,
+      "inner": 12.75,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-bought",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-bought",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-bought",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-bought",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 74.28,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.05,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog",
+      "size": "360x640",
+      "page": 1,
+      "inner": 16.2,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "discover-view-catalog",
+      "size": "390x844",
+      "page": 1,
+      "inner": 8.69,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "discover-view-catalog",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 66.52,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-end",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.1,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "friend-end",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-end",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-end",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-end",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-end",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.82,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-equipment",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.1,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "friend-equipment",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-equipment",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-equipment",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-equipment",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friend-equipment",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.82,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-history",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-history",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-history",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-history",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-history",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-history",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 1.46,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "light-location-edit",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.65,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "light-location-edit",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1.03,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "light-location-edit",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "light-location-edit",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "light-location-edit",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "light-location-edit",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 8.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "light-zone-edit",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "light-zone-edit",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "light-zone-edit",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "light-zone-edit",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "light-zone-edit",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "light-zone-edit",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.05,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "operator-sheet-einladungscodes",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "operator-sheet-einladungscodes",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "operator-sheet-einladungscodes",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "operator-sheet-einladungscodes",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "operator-sheet-einladungscodes",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "operator-sheet-einladungscodes",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.07,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 1.59,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-watering",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.26,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-sheet-watering",
+      "size": "390x844",
+      "page": 1,
+      "inner": 2.51,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-sheet-watering",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-watering",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-watering",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-watering",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 16.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "unlock-unbekannt",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 1.74,
+      "rules": ["title"]
+    },
+    {
+      "screen": "welcome-keycloak-anmelden",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 1.94,
+      "rules": ["title"]
+    },
+    {
+      "screen": "account-measured",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.68,
+      "rules": ["title"]
+    },
+    {
+      "screen": "collection-plant-course-hint",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-course-hint",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-course-hint",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-course-hint",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-course-hint",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-course-hint",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.31,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-notes-form",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-notes-form",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-notes-form",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-notes-form",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-notes-form",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-notes-form",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-repot-signs",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-repot-signs",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-repot-signs",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-repot-signs",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-repot-signs",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-repot-signs",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-species-layer",
+      "size": "360x640",
+      "page": 1,
+      "inner": 10.09,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-species-layer",
+      "size": "390x844",
+      "page": 1,
+      "inner": 6.19,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-species-layer",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-species-layer",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-species-layer",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-species-layer",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 38.07,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-needs",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-needs",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-needs",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-needs",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-needs",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-needs",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.18,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-hints",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-hints",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-hints",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-hints",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-hints",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-hints",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.05,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-reference",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-reference",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-reference",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-reference",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-reference",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-reference",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.05,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-view",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-view",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-view",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-view",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-view",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-view",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-zones",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-zones",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-zones",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-zones",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-zones",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-zones",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-cards",
+      "size": "360x640",
+      "page": 1,
+      "inner": 10.09,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-cards",
+      "size": "390x844",
+      "page": 1,
+      "inner": 6.19,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-cards",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-cards",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-cards",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-cards",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 38.07,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-filters",
+      "size": "360x640",
+      "page": 1,
+      "inner": 10.09,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-filters",
+      "size": "390x844",
+      "page": 1,
+      "inner": 6.19,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-filters",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-filters",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-filters",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-filters",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 38.07,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-family",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-family",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-family",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-family",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-family",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-family",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.14,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-new-wish",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-new-wish",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-new-wish",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-new-wish",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-new-wish",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-new-wish",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.05,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-sheet-offer",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.55,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "friends-exchange-sheet-offer",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-sheet-offer",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-sheet-offer",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-sheet-offer",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-sheet-offer",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 9.22,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-friends",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-friends",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-friends",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-friends",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-friends",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-friends",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.42,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-sharing",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-sharing",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-sharing",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-sharing",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-sharing",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-sharing",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.53,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-show-approved",
+      "size": "360x640",
+      "page": 1,
+      "inner": 6.1,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "review-show-approved",
+      "size": "390x844",
+      "page": 1,
+      "inner": 4.54,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "review-show-approved",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-show-approved",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-show-approved",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-show-approved",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 15.59,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-hint",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-hint",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-hint",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-hint",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-hint",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-hint",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-tasks",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.26,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-tasks",
+      "size": "390x844",
+      "page": 1,
+      "inner": 2.51,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-tasks",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-tasks",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-tasks",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-tasks",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 16.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-achievements",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.89,
+      "rules": ["title"]
+    },
+    {
+      "screen": "account-functions-fn-today",
+      "size": "360x640",
+      "page": 1,
+      "inner": 3.01,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "account-functions-fn-today",
+      "size": "390x844",
+      "page": 1,
+      "inner": 2.21,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "account-functions-fn-today",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-functions-fn-today",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-functions-fn-today",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-functions-fn-today",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 6.92,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-news",
+      "size": "360x640",
+      "page": 1,
+      "inner": 98.83,
+      "rules": ["frame", "pager", "title"]
+    },
+    {
+      "screen": "account-news",
+      "size": "390x844",
+      "page": 1,
+      "inner": 73.36,
+      "rules": ["frame", "pager", "title"]
+    },
+    {
+      "screen": "account-news",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-news",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-news",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-news",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 173.21,
+      "rules": ["pager", "title"]
+    },
+    {
+      "screen": "collection-labels",
+      "size": "360x640",
+      "page": 1,
+      "inner": 5.61,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-labels",
+      "size": "390x844",
+      "page": 1,
+      "inner": 4.05,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-labels",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-labels",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-labels",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-labels",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 20.76,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-care",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-care",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-care",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-care",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-care",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-care",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-notes",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-notes",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-notes",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-notes",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-notes",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-notes",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-items",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-items",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-items",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-items",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-items",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-items",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.18,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-new-zone",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-new-zone",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-new-zone",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-new-zone",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-new-zone",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-sheet-new-zone",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.05,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-archive",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager", "action"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-archive",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager", "action"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-archive",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-archive",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-archive",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-sheet-archive",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager", "action"]
+    },
+    {
+      "screen": "collection-view-plants",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager", "action"]
+    },
+    {
+      "screen": "collection-view-plants",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-milestones",
+      "size": "360x640",
+      "page": 1,
+      "inner": 10.09,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-milestones",
+      "size": "390x844",
+      "page": 1,
+      "inner": 6.19,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-milestones",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-milestones",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-milestones",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-milestones",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 38.07,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-progress",
+      "size": "360x640",
+      "page": 1,
+      "inner": 10.09,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-progress",
+      "size": "390x844",
+      "page": 1,
+      "inner": 6.19,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-progress",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-progress",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-progress",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-progress",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 38.07,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-discarded",
+      "size": "360x640",
+      "page": 1,
+      "inner": 21.78,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-discarded",
+      "size": "390x844",
+      "page": 1,
+      "inner": 12.75,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-discarded",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-discarded",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-discarded",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-wishlist-sheet-discarded",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 74.28,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-filters",
+      "size": "360x640",
+      "page": 1,
+      "inner": 16.2,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-filters",
+      "size": "390x844",
+      "page": 1,
+      "inner": 8.69,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-filters",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-filters",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-filters",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-filters",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 66.52,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-texts",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-texts",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-texts",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-texts",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-texts",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-texts",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.18,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "species-profile-care",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "species-profile-care",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "species-profile-care",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "species-profile-care",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "species-profile-care",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "species-profile-care",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.65,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-plan",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.26,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-sheet-plan",
+      "size": "390x844",
+      "page": 1,
+      "inner": 2.51,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-sheet-plan",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-plan",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-plan",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-plan",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 16.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "unlock-friends",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 1.61,
+      "rules": ["title"]
+    },
+    {
+      "screen": "account-data",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 1.34,
+      "rules": ["title"]
+    },
+    {
+      "screen": "account-functions",
+      "size": "360x640",
+      "page": 1,
+      "inner": 3.01,
+      "rules": ["frame", "pager", "title"]
+    },
+    {
+      "screen": "account-functions",
+      "size": "390x844",
+      "page": 1,
+      "inner": 2.21,
+      "rules": ["frame", "pager", "title"]
+    },
+    {
+      "screen": "account-functions",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-functions",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-functions",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "account-functions",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 6.92,
+      "rules": ["pager", "title"]
+    },
+    {
+      "screen": "collection-plant-course",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-course",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-course",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-course",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-course",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-course",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-layer-hint",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.03,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-layer-hint",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-layer-hint",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-layer-hint",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-layer-hint",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-layer-hint",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.55,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-location",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-location",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plant-location",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-location",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-location",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plant-location",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plants-care-profile",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.92,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plants-care-profile",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.71,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-plants-care-profile",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plants-care-profile",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plants-care-profile",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-plants-care-profile",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 22.43,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-lamps",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-lamps",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-lamps",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-lamps",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-lamps",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-equipment-sheet-lamps",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.25,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-phase",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.22,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-phase",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-phase",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-phase",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-phase",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-group-phase",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.32,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-last-page",
+      "size": "360x640",
+      "page": 1,
+      "inner": 15.94,
+      "rules": ["frame", "pager", "action"]
+    },
+    {
+      "screen": "collection-view-plants-last-page",
+      "size": "390x844",
+      "page": 1,
+      "inner": 11.5,
+      "rules": ["frame", "pager", "action"]
+    },
+    {
+      "screen": "collection-view-plants-last-page",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-last-page",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-last-page",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-last-page",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 37.4,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-new-location",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.65,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-new-location",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1.03,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-new-location",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-new-location",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-new-location",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations-list-locations-sheet-new-location",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 8.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-plants-manage-locations",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.05,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-uncounted",
+      "size": "360x640",
+      "page": 1,
+      "inner": 10.09,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-uncounted",
+      "size": "390x844",
+      "page": 1,
+      "inner": 6.19,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-uncounted",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-uncounted",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-uncounted",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-uncounted",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 38.07,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-difficulty",
+      "size": "360x640",
+      "page": 1,
+      "inner": 8.81,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-difficulty",
+      "size": "390x844",
+      "page": 1,
+      "inner": 5.26,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-difficulty",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-difficulty",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-difficulty",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sort-difficulty",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 46.59,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-propose",
+      "size": "360x640",
+      "page": 1,
+      "inner": 16.2,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-propose",
+      "size": "390x844",
+      "page": 1,
+      "inner": 8.69,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-propose",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-propose",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-propose",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "discover-view-catalog-sheet-propose",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 66.52,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-requests",
+      "size": "360x640",
+      "page": 1,
+      "inner": 2.37,
+      "rules": ["frame", "pager", "action"]
+    },
+    {
+      "screen": "friends-exchange-part-requests",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1.34,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "friends-exchange-part-requests",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-requests",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-requests",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange-part-requests",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 11.69,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.55,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "friends-exchange",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-exchange",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 9.22,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-news",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-news",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-news",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-news",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-news",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "friends-sheet-news",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 2.82,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-decide",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-decide",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-decide",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-decide",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-decide",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "review-case-decide",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 1.59,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-anniversaries",
+      "size": "360x640",
+      "page": 1,
+      "inner": 7.26,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-sheet-anniversaries",
+      "size": "390x844",
+      "page": 1,
+      "inner": 2.51,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-sheet-anniversaries",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-anniversaries",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-anniversaries",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-anniversaries",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 16.97,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-news",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.09,
+      "rules": ["frame", "pager"]
+    },
+    {
+      "screen": "today-sheet-news",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-news",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-news",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-news",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "today-sheet-news",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 4.45,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "wishlist-wish-layer",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "wishlist-wish-layer",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "wishlist-wish-layer",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "wishlist-wish-layer",
+      "size": "1024x768",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "wishlist-wish-layer",
+      "size": "1920x1080",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "wishlist-wish-layer",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 3.49,
+      "rules": ["pager"]
+    }
+  ]
 }

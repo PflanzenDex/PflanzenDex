@@ -97,14 +97,24 @@ describe("Tabs (US-QS-07, DS-34)", () => {
     }
   });
 
-  it("NFR-13 without wrap a label stays on one line in a tab of at least 44 px", () => {
+  it("NFR-13 without wrap a label stays on one line, and a tab is never narrower than its label (US-QS-15, issue 2417)", () => {
     render(<Tabs label="x" tabs={tabs} />);
     for (const tab of screen.getAllByRole("tab")) {
       const classes = tab.className.split(" ");
       expect(classes).toContain("whitespace-nowrap");
-      expect(classes).toContain("min-w-[44px]");
+      expect(classes).toContain("min-w-max");
       expect(classes).not.toContain("whitespace-normal");
     }
+  });
+
+  it("US-QS-15 a strip that does not wrap is the marked tabs region of the one-screen gate (DS-63, issue 2417)", () => {
+    render(<Tabs label="x" tabs={tabs} />);
+    expect(screen.getByRole("tablist").getAttribute("data-scroll-x")).toBe("tabs");
+  });
+
+  it("US-QS-15 a wrapped strip scrolls nothing and carries no sideways marker (issue 2417)", () => {
+    render(<Tabs label="x" tabs={tabs} wrap />);
+    expect(screen.getByRole("tablist").hasAttribute("data-scroll-x")).toBe(false);
   });
 
   it("US-QS-21 the panel takes the classes of its caller", () => {

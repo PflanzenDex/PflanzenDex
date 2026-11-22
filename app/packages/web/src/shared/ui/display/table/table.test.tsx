@@ -14,6 +14,14 @@ import {
 
 afterEach(cleanup);
 
+describe("Table scroll container (US-QS-15, DS-63, issue 2417)", () => {
+  it("US-QS-15 the scroll container of a table is the marked table region of the one-screen gate", () => {
+    render(sample());
+    const region = screen.getByRole("region", { name: "Tabelle" });
+    expect(region.getAttribute("data-scroll-x")).toBe("table");
+  });
+});
+
 function sample(ref?: React.Ref<HTMLTableElement>) {
   return (
     <Table ref={ref}>

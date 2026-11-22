@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
+import { useRevealTab } from "./reveal-tab";
 
 export type TabItem = { value: string; label: string; content: React.ReactNode };
 
@@ -59,10 +60,9 @@ function TabButton(props: TabButtonProps) {
         // Wrap: a tab is never narrower than its label, so the label breaks inside the tab or the strip breaks onto
         // another line (NFR-13, text at 200 %). The narrower padding (8 px a side) keeps the widest label of the layers
         // at normal size within the equal share of a 360 px phone, so the tabs stay equally wide there. Otherwise the
-        // label stays on one line in a tab of at least 44 px.
-        wrap
-          ? "min-w-fit max-w-full whitespace-normal px-2"
-          : "min-w-[44px] whitespace-nowrap px-4",
+        // label stays on one line and a tab is never narrower than it, so the strip scrolls sideways when the labels do not
+        // fit (US-QS-15, DS-63, issue 2417).
+        wrap ? "min-w-fit max-w-full whitespace-normal px-2" : "min-w-max whitespace-nowrap px-4",
         // The selected tab has three cues besides colour (SG-CTRL-01, SG-COLOR-05): a raised card fill, a semibold label
         // and a 1 px boundary in the field colour. The others keep the same boundary, transparent, so nothing jumps.
         active
@@ -100,10 +100,13 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-/** The strip wraps, or stays one row that scrolls sideways; such a row is marked for the one-screen gate (issue 1183). */
+/**
+ * The strip wraps, or stays one row that scrolls sideways; such a row is marked `tabs` for the one-screen gate (DS-63, issue
+ * 2417; the marker of issue 1183 was `row`).
+ */
 function stripLayout(wrap: boolean | undefined) {
   return {
-    "data-scroll-x": wrap ? undefined : "row",
+    "data-scroll-x": wrap ? undefined : "tabs",
     className: cn(
       "flex w-full gap-1 bg-muted p-1",
       wrap ? "flex-wrap rounded-2xl" : "overflow-x-auto rounded-full",
@@ -117,11 +120,12 @@ function stripLayout(wrap: boolean | undefined) {
  * focusable so keyboard users can reach its content after the list. Every tab is a 44 px target on the shared Button.
  */
 export function Tabs(props: TabsProps) {
-  const { tabs, onValueChange } = props;
+  const { tabs, onValueChange, wrap } = props;
   const base = React.useId();
   const [inner, setInner] = React.useState(props.defaultValue ?? tabs[0]?.value);
   const selected = props.value ?? inner;
   const listRef = React.useRef<HTMLDivElement>(null);
+  useRevealTab(listRef, selected, wrap);
 
   const select = (value: string) => {
     setInner(value);

@@ -1,9 +1,10 @@
 import type { JSHandle, Page } from "@playwright/test";
 import { lostScreen } from "./baseline";
+import { boxesOf } from "./fit.boxes";
 import type { Raw } from "./judge";
 import type { Screen, Step } from "./register";
 
-// Browser side of the one-screen gate (issue 1137): opening a screen of the register, measuring one window size.
+// Browser side of the one-screen gate (issue 1137, US-QS-15, issue 2417): opening a screen of the register, measuring one window size.
 
 // Waits until the page has loaded, nothing is busy and the layer has slid in (Vaul needs about 900 ms).
 export async function settle(page: Page, pause = 900): Promise<void> {
@@ -46,9 +47,9 @@ export async function openScreen(page: Page, base: string, screen: Screen): Prom
   }
 }
 
-// Found elements are named for the failure text (tag, role, id, label or classes, start of the text). The scroll region
-// is the visible one with the largest ratio; the farthest element ignores fixed boxes and scroll regions; the painted
-// edges belong to the left-most and right-most visible element that paints text, media, a background or a border.
+// Found elements are named for the failure text (tag, role, id, label or classes, start of the text). The farthest element ignores
+// fixed boxes and scroll regions; the painted edges belong to the left-most and right-most visible element that paints text,
+// media, a background or a border.
 export type Found = JSHandle<Element | null>;
 
 export async function label(handle: Found): Promise<string> {
@@ -65,31 +66,6 @@ export async function label(handle: Found): Promise<string> {
     return text ? `${base} "${text}"` : base;
   });
 }
-
-// The inner region of one axis: the visible element with `overflow-y|x: auto | scroll` and the largest content ratio.
-// `unmarked` leaves out rows that are meant to scroll sideways (`data-scroll-x="row"`, owner decision on issue 1183).
-const regionHandle = (page: Page, axis: "y" | "x", unmarked = false): Promise<Found> =>
-  page.evaluateHandle(
-    ([dir, skip]) => {
-      let best: Element | null = null;
-      let ratio = 0;
-      for (const el of document.querySelectorAll("*")) {
-        if (skip && el.closest('[data-scroll-x="row"]')) continue;
-        const style = getComputedStyle(el);
-        const mode = dir === "y" ? style.overflowY : style.overflowX;
-        const client = dir === "y" ? el.clientHeight : el.clientWidth;
-        const scroll = dir === "y" ? el.scrollHeight : el.scrollWidth;
-        const scrolls = /(auto|scroll)/.test(mode) && style.visibility !== "hidden";
-        if (!scrolls || client < 80 || el.getClientRects().length === 0) continue;
-        if (scroll / client > ratio) {
-          ratio = scroll / client;
-          best = el;
-        }
-      }
-      return best;
-    },
-    [axis, unmarked] as const,
-  );
 
 const farthestHandle = (page: Page, axis: "bottom" | "right"): Promise<Found> =>
   page.evaluateHandle((side) => {
@@ -158,23 +134,7 @@ async function paintOf(page: Page): Promise<Raw["paint"]> {
   return { ...numbers, leftEl: await label(leftEl), rightEl: await label(rightEl) };
 }
 
-async function regionOf(page: Page): Promise<Raw["region"]> {
-  const handle = await regionHandle(page, "y");
-  const size = await handle.evaluate((el) =>
-    el ? { scrollHeight: el.scrollHeight, clientHeight: el.clientHeight } : null,
-  );
-  return size ? { ...size, el: await label(handle) } : null;
-}
-
-async function regionXOf(page: Page, unmarked = false): Promise<Raw["regionX"]> {
-  const handle = await regionHandle(page, "x", unmarked);
-  const size = await handle.evaluate((el) =>
-    el ? { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth } : null,
-  );
-  return size ? { ...size, el: await label(handle) } : null;
-}
-
-/** Measures the open page at its current window size (issue 1137): page height and width, scroll regions in both directions, painted width. */
+/** Measures the open page at its current window size (issue 1137, US-QS-15): page height and width, scroll boxes, markers, Pagers, painted width. */
 export async function measure(page: Page, withPaint: boolean): Promise<Raw> {
   const dims = await page.evaluate(() => {
     const root = document.scrollingElement ?? document.documentElement;
@@ -183,13 +143,13 @@ export async function measure(page: Page, withPaint: boolean): Promise<Raw> {
       innerHeight,
       scrollWidth: root.scrollWidth,
       innerWidth,
+      rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
     };
   });
+  const boxes = await boxesOf(page);
   return {
     ...dims,
-    region: await regionOf(page),
-    regionX: await regionXOf(page),
-    regionXUnmarked: await regionXOf(page, true),
+    ...boxes,
     pageEl:
       dims.scrollHeight > dims.innerHeight + 1
         ? await label(await farthestHandle(page, "bottom"))
