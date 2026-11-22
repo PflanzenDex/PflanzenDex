@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GENERIC_ERROR_TEXT } from "@/shared/lib/error-text";
 import { DeckView } from "./deck-view";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
 
 afterEach(cleanup);
 
@@ -334,5 +335,42 @@ describe("US-QS-32 · SG-TYPE-04 at 200 % text the deck scrolls as a whole", () 
       expect(card.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(card.contains(button)).toBe(false);
     }
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the deck: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 'Kein Interesse' is plain, 'Später' tinted, and 'Wünschen' is the one filled button of the deck", () => {
+    const { container } = render(
+      <DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />,
+    );
+    const no = screen.getByRole("button", { name: "Kein Interesse" });
+    expect(isPlain(no)).toBe(true);
+    expect(hasOwnBorder(no)).toBe(false);
+    expect(isTinted(screen.getByRole("button", { name: "Später" }))).toBe(true);
+    expect(filledIn(container)).toEqual([screen.getByRole("button", { name: "Wünschen" })]);
+  });
+
+  it("US-QS-32 · SG-BTN-01 'Rückgängig' is a plain button without a border", async () => {
+    render(<DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
+    await userEvent.click(screen.getByRole("button", { name: "Wünschen" }));
+    const undo = await screen.findByRole("button", { name: "Rückgängig" });
+    expect(isPlain(undo)).toBe(true);
+    expect(hasOwnBorder(undo)).toBe(false);
+  });
+
+  it("US-QS-32 · SG-BTN-01 'Art vorschlagen' in the notice about a short zone is a tinted link without a border", () => {
+    const short: SuggestionDeck = {
+      ...deck,
+      zoneFilter: {
+        zone: 3,
+        name: "Lampe 3",
+        available: 2,
+        shortfall: { text: "Zu wenige Arten.", nextAction: "Du kannst eine Art vorschlagen." },
+      },
+    };
+    render(<DeckView deck={short} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
+    const propose = screen.getByRole("link", { name: "Art vorschlagen" });
+    expect(isTinted(propose)).toBe(true);
+    expect(hasOwnBorder(propose)).toBe(false);
   });
 });

@@ -14,12 +14,12 @@ export const NEW_TASK_LAYER = "new-task";
 export function StepButton({
   layer,
   label,
-  variant = "outline",
+  variant = "tinted",
   className,
 }: {
   layer: string;
   label: string;
-  variant?: "outline" | "secondary";
+  variant?: "tinted" | "secondary";
   className?: string;
 }) {
   const { openLayer } = useLayer(layer);

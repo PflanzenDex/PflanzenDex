@@ -78,7 +78,7 @@ export function FilterPanel(props: {
             <Button
               key={f.id}
               type="button"
-              variant="outline"
+              variant={selected ? "secondary" : "plain"}
               aria-pressed={selected}
               className={cn("rounded-full px-4", selected && "border-2 border-primary font-bold")}
               onClick={() => props.onFilter(f.id)}

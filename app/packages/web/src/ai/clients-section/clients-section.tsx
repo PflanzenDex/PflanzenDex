@@ -81,7 +81,7 @@ function Controls({ api, row, busy, run }: RowProps) {
         </Select>
       </label>
       <Button
-        variant="outline"
+        variant="tinted"
         size="sm"
         disabled={busy}
         aria-label={`${name} trennen`}
@@ -116,7 +116,7 @@ function Connection(props: RowProps) {
       </p>
       {row.revokedAt ? (
         <Button
-          variant="outline"
+          variant="tinted"
           size="sm"
           className="self-start"
           disabled={busy}

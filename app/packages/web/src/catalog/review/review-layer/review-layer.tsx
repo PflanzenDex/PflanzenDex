@@ -53,7 +53,7 @@ function Similar(props: { entry: ReviewEntry; actions: ReviewActions; done: Done
             </span>
             <Button
               type="button"
-              variant="outline"
+              variant="tinted"
               disabled={actions.running}
               onClick={done(() => actions.onMerge(entry.reviewCase.id, x.id))}
             >
@@ -82,7 +82,7 @@ function Reject(props: { entry: ReviewEntry; actions: ReviewActions; done: Done 
       />
       <Button
         type="button"
-        variant="outline"
+        variant="plain"
         disabled={actions.running || reason.trim() === ""}
         onClick={done(() => actions.onReject(id, reason.trim()))}
       >

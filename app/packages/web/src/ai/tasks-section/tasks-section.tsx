@@ -68,7 +68,7 @@ function Task(props: {
               In KI-Client öffnen
             </Button>
             <Button
-              variant="outline"
+              variant="plain"
               size="sm"
               disabled={props.busy}
               aria-label={`${name} zurückziehen`}

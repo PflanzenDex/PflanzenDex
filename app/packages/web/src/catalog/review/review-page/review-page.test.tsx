@@ -8,6 +8,7 @@ import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ReviewPage } from "./review-page";
 import { ageText, flagsOf, issueText, movedText, summaryText } from "../review-text";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { hasOwnBorder, isFilled, isPlain, isTinted } from "@/shared/ui/button/button-roles";
 
 const NOW = Date.parse("2026-10-10T12:00:00Z");
 const token = async () => "tok";
@@ -549,5 +550,35 @@ describe("US-QS-14 · US-QS-15 the review list is a full-view page: one h1, outs
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     await screen.findByRole("button", { name: /Echeveria elegans/ });
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the review layer: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 the merge is a tinted button, 'Zurückweisen' a plain one, 'Freigeben' the one filled button", async () => {
+    server(
+      list([
+        entry({
+          similar: [
+            { id: "t1", latinName: "Echeveria elegans 'Albicans'", matchedOn: "Echeveria elegans" },
+          ],
+        }),
+      ]),
+    );
+    const user = userEvent.setup();
+    show();
+    const dialog = await openRow("Echeveria elegans");
+    await user.click(within(dialog).getByRole("tab", { name: "Entscheiden" }));
+    const merge = within(dialog).getByRole("button", {
+      name: /Mit Echeveria elegans 'Albicans' zusammenführen/,
+    });
+    const reject = within(dialog).getByRole("button", { name: "Zurückweisen" });
+    expect(isTinted(merge)).toBe(true);
+    expect(hasOwnBorder(merge)).toBe(false);
+    expect(isPlain(reject)).toBe(true);
+    expect(hasOwnBorder(reject)).toBe(false);
+    const filled = within(dialog)
+      .getAllByRole("button")
+      .filter((b) => isFilled(b));
+    expect(filled.map((b) => b.textContent)).toEqual(["Freigeben"]);
   });
 });

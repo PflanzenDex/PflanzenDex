@@ -87,7 +87,7 @@ function Draft(props: {
             Übernehmen
           </Button>
           <Button
-            variant="outline"
+            variant="plain"
             size="sm"
             disabled={busy}
             aria-label={`${title(row)} verwerfen`}

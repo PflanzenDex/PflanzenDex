@@ -66,7 +66,7 @@ export function AchievementNewsBanner(props: { api: string; token: Token }) {
         Zu den Erfolgen
       </Link>
       <Button
-        variant="outline"
+        variant="plain"
         onClick={() => setHidden(new Set([...hidden, ...announced.map((f) => f.id)]))}
       >
         Schließen

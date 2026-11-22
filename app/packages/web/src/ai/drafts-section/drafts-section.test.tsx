@@ -9,6 +9,7 @@ import { DraftsSection } from "./drafts-section";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "../ai.de.json";
 import { DraftsSkeleton } from "./drafts-section.skeleton";
+import { hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button/button-roles";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -111,4 +112,17 @@ describe("US-QS-14 issue 1697 · the drafts show their shaped skeleton once", ()
       <DraftsSkeleton label={table["drafts.loading"]} />,
       table["drafts.loading"],
     ));
+});
+
+describe("US-QS-32 · SG-BTN-01 the drafts: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 'Verwerfen' is a plain button without a border, beside the filled 'Übernehmen'", async () => {
+    fakeServer([row()]);
+    show();
+    const discard = await screen.findByRole("button", { name: "Wunsch: Aloe vera verwerfen" });
+    expect(isPlain(discard)).toBe(true);
+    expect(hasOwnBorder(discard)).toBe(false);
+    expect(isFilled(screen.getByRole("button", { name: "Wunsch: Aloe vera übernehmen" }))).toBe(
+      true,
+    );
+  });
 });

@@ -114,7 +114,7 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
         <Button
           type="button"
           size="touch"
-          variant="outline"
+          variant="tinted"
           disabled={write.running}
           onClick={() =>
             daily((t, o) => markFertilized(api, t, specimen.id, o), ui("fertilized"), "fertilize")
@@ -122,7 +122,7 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
         >
           {ui("fertilize")}
         </Button>
-        <Button type="button" size="touch" variant="outline" onClick={onMeasure}>
+        <Button type="button" size="touch" variant="plain" onClick={onMeasure}>
           {ui("measure")}
         </Button>
       </div>

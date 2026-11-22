@@ -30,7 +30,12 @@ function PauseList(props: { pauses: RhythmPauseItem[]; remove: (id: string) => v
       {props.pauses.map((p) => (
         <li key={p.id} className="flex items-center gap-2">
           <span>{`${dateText(p.from)} bis ${dateText(p.until)}`}</span>
-          <Button type="button" variant="outline" size="sm" onClick={() => props.remove(p.id)}>
+          <Button
+            type="button"
+            variant="destructive-plain"
+            size="sm"
+            onClick={() => props.remove(p.id)}
+          >
             {`Urlaub vom ${dateText(p.from)} entfernen`}
           </Button>
         </li>

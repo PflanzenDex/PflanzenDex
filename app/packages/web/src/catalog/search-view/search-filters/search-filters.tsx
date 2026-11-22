@@ -73,7 +73,7 @@ export function FilterChips(props: {
         <li key={chip.name}>
           <Button
             type="button"
-            variant="outline"
+            variant="tinted"
             size="sm"
             aria-label={`Filter entfernen: ${chip.name}`}
             onClick={chip.remove}

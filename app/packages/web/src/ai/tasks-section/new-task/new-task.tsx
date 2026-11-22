@@ -166,7 +166,7 @@ export function NewTask(props: {
         >
           Auftrag anlegen
         </Button>
-        <Button type="button" variant="outline" onClick={() => void preview()}>
+        <Button type="button" variant="tinted" onClick={() => void preview()}>
           Auftrag als Text anzeigen
         </Button>
       </div>

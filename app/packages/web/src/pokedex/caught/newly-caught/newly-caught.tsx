@@ -61,7 +61,7 @@ export function NewlyCaught(props: {
         </p>
       )}
       <Button
-        variant="outline"
+        variant="tinted"
         pending={write.running}
         pendingLabel="Sichert …"
         onClick={() =>
