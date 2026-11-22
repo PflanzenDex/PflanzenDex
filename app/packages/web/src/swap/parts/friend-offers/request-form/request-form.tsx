@@ -81,7 +81,7 @@ export function RequestForm(props: {
         <Button type="submit" size="touch" disabled={props.busy}>
           Anfrage senden
         </Button>
-        <Button type="button" size="touch" variant="outline" onClick={props.onCancel}>
+        <Button type="button" size="touch" variant="plain" onClick={props.onCancel}>
           Abbrechen
         </Button>
       </div>

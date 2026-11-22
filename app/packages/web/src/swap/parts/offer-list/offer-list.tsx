@@ -91,7 +91,7 @@ function OfferCard({
           <Button
             type="button"
             size="touch"
-            variant="outline"
+            variant="plain"
             disabled={busy}
             aria-label={t("offers.withdraw", { name: o.specimenName ?? t("offers.plant") })}
             onClick={onWithdraw}

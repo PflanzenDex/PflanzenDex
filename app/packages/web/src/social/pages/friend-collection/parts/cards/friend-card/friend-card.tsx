@@ -63,7 +63,7 @@ export function FriendCard(props: { card: Card; busy: boolean; onWish: (card: Ca
           <Button
             type="button"
             size="touch"
-            variant="outline"
+            variant="tinted"
             disabled={props.busy}
             aria-label={tx("friendCard.wishLabel", { name: card.speciesLatin })}
             onClick={() => props.onWish(card)}

@@ -32,7 +32,7 @@ export function Actions(props: {
       <div className="mx-auto flex w-full max-w-md flex-wrap gap-2">
         <NetworkSlot visible={false}>
           <Button
-            variant="outline"
+            variant="plain"
             size="touch"
             className="min-w-24 flex-1"
             disabled={busy}
@@ -43,7 +43,7 @@ export function Actions(props: {
             Ablehnen
           </Button>
           <Button
-            variant="secondary"
+            variant="tinted"
             size="touch"
             className="min-w-24 flex-1"
             disabled={busy}
@@ -150,7 +150,7 @@ export function Empty(props: { reason?: EmptyReason | null }) {
 export function UndoButton(props: { onClick: () => void }) {
   return (
     <div className="text-center">
-      <Button variant="outline" size="touch" onClick={props.onClick}>
+      <Button variant="plain" size="touch" onClick={props.onClick}>
         Rückgängig
       </Button>
     </div>
@@ -183,7 +183,7 @@ export function Confirm(props: {
         </Button>
         {both && (
           <Button
-            variant="outline"
+            variant="tinted"
             size="touch"
             disabled={props.busy}
             onClick={() => props.onYes(null)}
@@ -191,7 +191,7 @@ export function Confirm(props: {
             Ohne Gegengabe anfragen
           </Button>
         )}
-        <Button variant="outline" size="touch" onClick={props.onCancel}>
+        <Button variant="plain" size="touch" onClick={props.onCancel}>
           Abbrechen
         </Button>
       </div>

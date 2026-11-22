@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Candidate } from "@pflanzendex/core";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
 import { WishRow } from "./wish-row";
 
 afterEach(() => {
@@ -58,6 +59,18 @@ describe("US-QS-22 a compact wish row (issue 1045)", () => {
     expect(open.textContent).toContain("Schwierigkeit: unbekannt");
     expect(open.textContent).toContain("Zone 2 · 3 Pflanzen");
     expect(open.textContent).not.toContain("—");
+  });
+});
+
+describe("US-QS-32 · SG-BTN-02 a wish row acts in place with one tinted and one plain button, never a filled one", () => {
+  it("US-QS-32 · SG-BTN-02 'Gekauft' is tinted, 'Verwerfen' is plain, neither has a border and the row has no filled button", () => {
+    const { container } = show();
+    const bought = within(container).getByRole("button", { name: "Gekauft: Aloe (Aloe vera)" });
+    const discard = within(container).getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" });
+    expect(isTinted(bought)).toBe(true);
+    expect(isPlain(discard)).toBe(true);
+    expect(hasOwnBorder(bought) || hasOwnBorder(discard)).toBe(false);
+    expect(filledIn(container)).toEqual([]);
   });
 });
 

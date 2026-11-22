@@ -109,7 +109,7 @@ function FilterToggle(props: {
     <>
       <Button
         type="button"
-        variant="outline"
+        variant="tinted"
         className="self-start"
         aria-expanded={open}
         aria-controls="feed-filters"

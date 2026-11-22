@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import type { Replenishment } from "@pflanzendex/core";
+import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 import { ReplenishWarning } from "./replenish-warning";
 
 afterEach(cleanup);
@@ -58,6 +59,36 @@ describe("US-ENT-07 Discover for the zone from the warning", () => {
   it("US-ENT-07 offers no link while the action does not exist", () => {
     render(<ReplenishWarning replenishment={low} />);
     expect(screen.queryByRole("link")).toBeNull();
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 Discover for the zone is a tinted button, not an outline", () => {
+  it("US-QS-32 · SG-BTN-02 each zone's one action is tinted without a border, and the hint has no filled button", () => {
+    const two: Replenishment = {
+      ...low,
+      actions: { discover: true, suggestions: false },
+      zones: [
+        ...low.zones,
+        {
+          ...(low.zones[0] as (typeof low.zones)[number]),
+          zoneId: "z4",
+          zoneNumber: 4,
+          name: "Zone 4",
+        },
+      ],
+    };
+    const { container } = render(
+      <MemoryRouter>
+        <ReplenishWarning replenishment={two} />
+      </MemoryRouter>,
+    );
+    const links = screen.getAllByRole("link", { name: /^Entdecken für / });
+    expect(links).toHaveLength(2);
+    for (const link of links) {
+      expect(isTinted(link)).toBe(true);
+      expect(hasOwnBorder(link)).toBe(false);
+    }
+    expect(filledIn(container)).toEqual([]);
   });
 });
 

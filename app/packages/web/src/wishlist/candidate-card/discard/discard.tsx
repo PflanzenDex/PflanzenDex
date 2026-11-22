@@ -23,7 +23,7 @@ export function DiscardTrigger(props: {
     <Button
       ref={props.triggerRef}
       type="button"
-      variant="outline"
+      variant="plain"
       size={compact ? "sm" : "touch"}
       className={compact ? undefined : "rounded-full"}
       disabled={props.busy}
@@ -62,7 +62,7 @@ export function DiscardQuestion(props: {
         >
           Ja, verwerfen
         </Button>
-        <Button type="button" variant="outline" size="touch" onClick={() => props.onCancel()}>
+        <Button type="button" variant="plain" size="touch" onClick={() => props.onCancel()}>
           Abbrechen
         </Button>
       </div>

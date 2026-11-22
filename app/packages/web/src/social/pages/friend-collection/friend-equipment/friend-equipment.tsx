@@ -40,7 +40,7 @@ export function FriendEquipmentOpener() {
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="plain"
       size="sm"
       aria-haspopup="dialog"
       onClick={(event) => layer.openLayer(event.currentTarget)}

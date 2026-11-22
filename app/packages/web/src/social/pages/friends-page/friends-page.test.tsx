@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import { errorText } from "@/shared/lib/error-text";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
 import { FriendsPage } from "./friends-page";
 
 beforeAll(() => {
@@ -214,6 +215,18 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Ablehnen: Anfrage von Ben" }));
     expect(await screen.findByText(/nur, dass sie nicht angenommen wurde/)).toBeTruthy();
     expect(calls[0]?.body).toEqual({ decision: "decline" });
+  });
+
+  it("US-QS-32 · SG-BTN-02 a request holds a tinted 'Annehmen' and a plain 'Ablehnen', no filled button and no border", async () => {
+    fakeServer({ incoming: [req()] });
+    show("requests");
+    const accept = await screen.findByRole("button", { name: "Annehmen: Anfrage von Ben" });
+    const decline = screen.getByRole("button", { name: "Ablehnen: Anfrage von Ben" });
+    expect(isTinted(accept)).toBe(true);
+    expect(isPlain(decline)).toBe(true);
+    expect(hasOwnBorder(accept) || hasOwnBorder(decline)).toBe(false);
+    const layer = screen.getByRole("dialog");
+    expect(filledIn(layer)).toHaveLength(0);
   });
 
   it("US-SOZ-02 a request I sent that was declined shows only 'Nicht angenommen'", async () => {

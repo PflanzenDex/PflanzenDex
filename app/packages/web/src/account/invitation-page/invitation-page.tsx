@@ -104,7 +104,7 @@ function InvitationButtons(props: { pending: boolean; onSignOut: () => void }) {
         </Button>
         <Button
           type="button"
-          variant="outline"
+          variant="plain"
           size="touch"
           onClick={props.onSignOut}
           className="sm:flex-1"

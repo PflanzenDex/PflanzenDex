@@ -27,7 +27,7 @@ export function OfferNotices(props: {
           <Button
             type="button"
             size="touch"
-            variant="outline"
+            variant="tinted"
             disabled={props.busy}
             onClick={props.onShare}
           >

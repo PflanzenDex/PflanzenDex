@@ -32,7 +32,7 @@ function EntryRow(props: {
       <span>{`${entryName(e)} · ${germanDate(e.answeredOn)}`}</span>
       {closed && <span className="text-muted-foreground">{STATE_TEXT[e.state]}</span>}
       {e.state === "requested" && (
-        <Button asChild variant="outline" size="touch">
+        <Button asChild variant="plain" size="touch">
           <Link
             to={`${EXCHANGE_PATH}?part=requests`}
             aria-label={t("match.entry.requests.aria", { name: entryName(e) })}
@@ -43,7 +43,7 @@ function EntryRow(props: {
       )}
       {(closed || props.label) && (
         <Button
-          variant="outline"
+          variant="plain"
           size="touch"
           disabled={busy}
           aria-label={`${closed ? "Aus der Liste entfernen" : props.label}: ${entryName(e)}`}
@@ -87,7 +87,7 @@ function LaterList(props: Handlers & { rows: readonly MatchEntry[] }) {
             ))}
           </ul>
           {rows.some((e) => e.card) && (
-            <Button variant="outline" size="touch" onClick={props.onShowLater}>
+            <Button variant="tinted" size="touch" onClick={props.onShowLater}>
               Diese Karten jetzt ansehen
             </Button>
           )}

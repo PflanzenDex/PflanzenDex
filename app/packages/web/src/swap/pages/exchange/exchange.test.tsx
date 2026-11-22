@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { ExchangePage } from "./exchange";
 
@@ -209,6 +210,21 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
         (screen.getByRole("button", { name: "Angebot erstellen" }) as HTMLButtonElement).disabled,
       ).toBe(false),
     );
+  });
+
+  it("US-QS-32 · SG-BTN-01 the sharing action in the notice of the form is tinted, and an open offer's 'Zurückziehen' is plain", async () => {
+    server({ preview: preview({ shared: false }), offers: [offer()] });
+    view("/?sheet=offer");
+    await userEvent.selectOptions(await screen.findByLabelText("Pflanze"), "s1");
+    const share = await screen.findByRole("button", { name: "Jetzt für Freunde freigeben" });
+    expect(isTinted(share)).toBe(true);
+    expect(hasOwnBorder(share)).toBe(false);
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    const withdraw = await screen.findByRole("button", {
+      name: /^Angebot zurückziehen: Haworthia/,
+    });
+    expect(isPlain(withdraw)).toBe(true);
+    expect(hasOwnBorder(withdraw)).toBe(false);
   });
 
   it("US-SOZ-08 an open treatment needs an explicit confirmation before the offer can be made", async () => {

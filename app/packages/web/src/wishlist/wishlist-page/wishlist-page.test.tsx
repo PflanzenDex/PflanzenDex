@@ -7,6 +7,7 @@ import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
+import { classesOf, hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button/button-roles";
 import { WishlistPage } from "./wishlist-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
@@ -874,6 +875,24 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
     expect(within(section).getByLabelText("Neuer Name für Cafe")).toBeTruthy();
     expect(within(section).getByRole("button", { name: "Umbenennen: Cafe" })).toBeTruthy();
     expect(within(section).getByRole("button", { name: "Löschen: Cafe" })).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-BTN-03 'Umbenennen' is filled, 'Löschen' is red plain, and the question has a red filled 'Ja, löschen' and a plain 'Abbrechen'", async () => {
+    repairServer();
+    view(<WishlistPage api="http://api" token={token} />);
+    const rename = await screen.findByRole("button", { name: "Umbenennen: Cafe" });
+    const remove = screen.getByRole("button", { name: "Löschen: Cafe" });
+    expect(isFilled(rename)).toBe(true);
+    expect(classesOf(remove)).toContain("text-destructive");
+    expect(classesOf(remove).some((c) => /^bg-/.test(c))).toBe(false);
+    expect(hasOwnBorder(remove)).toBe(false);
+    await userEvent.click(remove);
+    expect(classesOf(screen.getByRole("button", { name: "Ja, löschen: Cafe" }))).toContain(
+      "bg-destructive",
+    );
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    expect(isPlain(cancel)).toBe(true);
+    expect(hasOwnBorder(cancel)).toBe(false);
   });
 
   it("FR-WUN-06 #303 without duplicates there is no such section", async () => {
