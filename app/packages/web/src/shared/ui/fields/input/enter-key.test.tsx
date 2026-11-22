@@ -257,7 +257,7 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
     },
   );
 
-  it("US-QS-32 · SG-FORM-03 a field with a datalist gets no hint and Enter keeps its default; the field before it still moves onto it", async () => {
+  it("US-QS-32 · SG-FORM-03 the last field is a datalist field: it says done and Enter keeps its default, the submit; the field before it still moves onto it", async () => {
     const onSubmit = vi.fn();
     render(
       <FormRoot onSubmit={onSubmit}>
@@ -272,9 +272,86 @@ describe("Input return-key hint (US-QS-32 · SG-FORM-03)", () => {
     expect(focusAndHint("Name")).toBe("next");
     await userEvent.keyboard("{Enter}");
     expect(document.activeElement).toBe(screen.getByLabelText("Zeitzone"));
-    expect(focusAndHint("Zeitzone")).toBeNull();
+    expect(focusAndHint("Zeitzone")).toBe("done");
     await userEvent.keyboard("{Enter}");
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it("US-QS-32 · SG-FORM-03 a datalist field with a later text field gets no hint, and Enter does not move the focus: it keeps picking a suggestion", async () => {
+    const onSubmit = vi.fn();
+    render(
+      <FormRoot onSubmit={onSubmit}>
+        <Input aria-label="Zeitzone" list="zeitzonen" />
+        <datalist id="zeitzonen">
+          <option value="Europe/Berlin" />
+        </datalist>
+        <Input aria-label="Ort" />
+        <button type="submit">Sichern</button>
+      </FormRoot>,
+    );
+    expect(focusAndHint("Zeitzone")).toBeNull();
+    await userEvent.keyboard("{Enter}");
+    expect(document.activeElement).toBe(screen.getByLabelText("Zeitzone"));
+    expect(focusAndHint("Ort")).toBe("done");
+  });
+
+  it("US-QS-32 · SG-FORM-03 a datalist field with a later text field stays without hint when the caller sets enterKeyHint next: Enter does not move on", async () => {
+    render(
+      <FormRoot onSubmit={() => {}}>
+        <Input aria-label="Zeitzone" list="zeitzonen" enterKeyHint="next" />
+        <datalist id="zeitzonen">
+          <option value="Europe/Berlin" />
+        </datalist>
+        <Input aria-label="Ort" />
+        <button type="submit">Sichern</button>
+      </FormRoot>,
+    );
+    act(() => screen.getByLabelText("Zeitzone").focus());
+    await userEvent.keyboard("{Enter}");
+    expect(document.activeElement).toBe(screen.getByLabelText("Zeitzone"));
+  });
+
+  it("US-QS-32 · SG-FORM-03 the last field is a datalist field but the form cannot submit on Enter (two text fields, no submit button): no hint", async () => {
+    const onSubmit = vi.fn();
+    render(
+      <FormRoot onSubmit={onSubmit}>
+        <Input aria-label="Name" />
+        <Input aria-label="Zeitzone" list="zeitzonen" />
+        <datalist id="zeitzonen">
+          <option value="Europe/Berlin" />
+        </datalist>
+      </FormRoot>,
+    );
+    expect(focusAndHint("Zeitzone")).toBeNull();
+    await userEvent.keyboard("{Enter}");
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-32 · SG-FORM-03 a datalist field that is the only text field of a form without a submit button says done", () => {
+    render(
+      <FormRoot onSubmit={() => {}}>
+        <Input aria-label="Zeitzone" list="zeitzonen" />
+        <datalist id="zeitzonen">
+          <option value="Europe/Berlin" />
+        </datalist>
+      </FormRoot>,
+    );
+    expect(focusAndHint("Zeitzone")).toBe("done");
+  });
+
+  it("US-QS-32 · SG-FORM-03 a datalist field gives no done when the submit button is disabled", () => {
+    render(
+      <FormRoot onSubmit={() => {}}>
+        <Input aria-label="Zeitzone" list="zeitzonen" />
+        <datalist id="zeitzonen">
+          <option value="Europe/Berlin" />
+        </datalist>
+        <button type="submit" disabled>
+          Sichern
+        </button>
+      </FormRoot>,
+    );
+    expect(focusAndHint("Zeitzone")).toBeNull();
   });
 
   it("US-QS-32 · SG-FORM-03 without a submit button, two text fields give no done: the last one has no hint and Enter does not submit", async () => {

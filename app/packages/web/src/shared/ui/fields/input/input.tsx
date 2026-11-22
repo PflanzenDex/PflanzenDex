@@ -39,7 +39,8 @@ const DATE_HINT = { placeholder: "JJJJ-MM-TT", pattern: "\\d{4}-\\d{2}-\\d{2}" }
  * Single-line field (US-QS-07, DS-15, DS-18, DS-19). `type`, `inputMode` and `autoComplete` pass through; dates stay
  * `YYYY-MM-DD` strings (DS-51). The return-key hint (`enterkeyhint`) is set when the field gets the focus or is pressed:
  * "next" when a later text field of its form follows, where Enter moves on, and "done" on the last one, where Enter submits
- * (SG-FORM-03, US-QS-32). A search field says "search". A caller's `enterKeyHint` wins.
+ * (SG-FORM-03, US-QS-32). A search field says "search". A field with a datalist never says "next" (Enter picks a suggestion
+ * there): it says "done" as the last field of a form that submits and has no hint otherwise. A caller's `enterKeyHint` wins.
  */
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (

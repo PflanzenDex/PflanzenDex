@@ -147,6 +147,17 @@ describe("US-ACC-02 settings page: time zone", () => {
     vi.restoreAllMocks();
   });
 
+  it("US-QS-32 · SG-FORM-03 Zeitzone is the last field of the Profil sheet and says done, Anzeigename before it says next", async () => {
+    fakeServer();
+    const user = userEvent.setup();
+    show("profile");
+    const zone = await screen.findByLabelText("Zeitzone");
+    await user.click(screen.getByLabelText("Anzeigename"));
+    expect(screen.getByLabelText("Anzeigename").getAttribute("enterkeyhint")).toBe("next");
+    await user.click(zone);
+    expect(zone.getAttribute("enterkeyhint")).toBe("done");
+  });
+
   it("US-ACC-02 saving a time zone makes it the zone of all later dates (NFR-08)", async () => {
     fakeServer();
     const user = userEvent.setup();

@@ -68,25 +68,32 @@ type Decision = {
 const NO_HINT: Decision = { hint: undefined, next: undefined };
 /** A search field says "search" and Enter submits; it never moves on. */
 const SEARCH: Decision = { hint: "search", next: undefined };
+/** The last text field of a form that submits says "done"; Enter keeps the browser's default and is never prevented. */
+const DONE: Decision = { hint: "done", next: undefined };
 
 /**
  * Decides the hint and the move of one Input in a single pass over the controls of its form (SG-FORM-03, US-QS-32):
  * - a search field (type search, or any input of a form with role search) says "search" and Enter submits;
- * - an input with a `list` (a datalist) and a field that takes no text get no hint, and Enter keeps its default;
+ * - a field that takes no text gets no hint, and Enter keeps its default;
  * - a text field with a later reachable text field says "next", and Enter moves there over selects, checkboxes, radios
  *   and buttons;
  * - the last text field says "done", but only when the form can submit implicitly as HTML defines it: an enabled submit
- *   button, or exactly one field that blocks implicit submission. Otherwise it gets no hint and Enter keeps its default.
+ *   button, or exactly one field that blocks implicit submission. Otherwise it gets no hint and Enter keeps its default;
+ * - an input with a `list` (a datalist) never says "next" and never moves on, because Enter on an open suggestion list
+ *   picks a suggestion and moving the focus would swallow that pick (#2096). With a later reachable text field it gets no
+ *   hint; as the last text field of a form that submits it says "done" (#2167). Enter keeps the browser's default there
+ *   (it picks an open suggestion, otherwise it submits); we never prevent it for "done".
  */
 function decide(el: HTMLInputElement): Decision {
   if (el.type === "search") return SEARCH;
   const form = el.form;
   if (!form) return NO_HINT;
   if (form.getAttribute("role") === "search") return SEARCH;
-  if (!TEXT_TYPES.has(el.type) || el.hasAttribute("list")) return NO_HINT;
+  if (!TEXT_TYPES.has(el.type)) return NO_HINT;
   const { next, submits } = scanForm(el, Array.from(form.elements));
+  if (el.hasAttribute("list")) return !next && submits ? DONE : NO_HINT;
   if (next) return { hint: "next", next };
-  return submits ? { hint: "done", next: undefined } : NO_HINT;
+  return submits ? DONE : NO_HINT;
 }
 
 /**
