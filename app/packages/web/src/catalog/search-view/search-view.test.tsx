@@ -7,6 +7,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { HITS_PER_PAGE } from "./hit-list/hit-list";
 import { SpeciesSearch } from "./search-view";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 
 const species: Species = {
   id: "a1",
@@ -313,5 +314,18 @@ describe("FR-BES-24 the search says when more species match", () => {
   it("FR-BES-24 no notice without hits, even when the flag is set", () => {
     searchWith(true, []);
     expect(screen.queryByText("Mehr als 50 Treffer. Suche genauer.")).toBeNull();
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the catalog filters: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 · SG-COLOR-03 a removable chip of a chosen filter is tinted without a border", () => {
+    search(many(4, { difficulty: 3 }), "/discover?view=catalog&difficulty=3&own=1");
+    const chips = screen.getByRole("list", { name: "Gewählte Filter" });
+    const buttons = within(chips).getAllByRole("button");
+    expect(buttons).toHaveLength(2);
+    for (const chip of buttons) {
+      expect(isTinted(chip), chip.textContent ?? "").toBe(true);
+      expect(hasOwnBorder(chip), chip.textContent ?? "").toBe(false);
+    }
   });
 });

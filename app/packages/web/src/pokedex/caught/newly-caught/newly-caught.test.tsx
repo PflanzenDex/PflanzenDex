@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NewlyCaught } from "./newly-caught";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 
 afterEach(() => {
   cleanup();
@@ -100,5 +101,16 @@ describe("US-POK-12 banner for newly caught species", () => {
     expect(alert.textContent).not.toContain("raw server text");
     expect(screen.getByRole("button", { name: "Als gesehen markieren" })).toBeTruthy();
     expect(screen.getByText(/Neu gefangen: Citrus limon/)).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the banner for newly caught species: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 'Als gesehen markieren' is the one tinted button of the banner, without a border", async () => {
+    fakeServer(["Aloe vera"]);
+    show([card("Aloe vera"), card("Citrus limon")]);
+    await screen.findByRole("status");
+    const mark = screen.getByRole("button", { name: "Als gesehen markieren" });
+    expect(isTinted(mark)).toBe(true);
+    expect(hasOwnBorder(mark)).toBe(false);
   });
 });

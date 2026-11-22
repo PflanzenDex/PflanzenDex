@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "../pokedex-page/pokedex-page";
 import { pokedexReadAnswer } from "../pokedex-page/pokedex-reads-fake";
+import { isPlain, isTinted } from "@/shared/ui/button/button-roles";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>
@@ -311,5 +312,20 @@ describe("US-QS-32 each caught species is one object row in one group (FX-35, SG
     await userEvent.click(row);
     expect(await screen.findByRole("dialog", { name: "Echte Aloe" })).toBeTruthy();
     expect(row.getAttribute("aria-expanded")).toBe("true");
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the filter chips: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 · SG-COLOR-03 a filter chip is plain until it is chosen, the chosen one is tinted with its check and border", async () => {
+    await open();
+    const layer = await openFilters();
+    const all = within(layer).getByRole("button", { name: "Alle" });
+    const caughtChip = within(layer).getByRole("button", { name: "Gefangen" });
+    expect(isTinted(all)).toBe(true);
+    expect(all.className).toContain("border-primary");
+    expect(isPlain(caughtChip)).toBe(true);
+    await userEvent.click(caughtChip);
+    expect(isTinted(within(layer).getByRole("button", { name: "Gefangen" }))).toBe(true);
+    expect(isPlain(within(layer).getByRole("button", { name: "Alle" }))).toBe(true);
   });
 });

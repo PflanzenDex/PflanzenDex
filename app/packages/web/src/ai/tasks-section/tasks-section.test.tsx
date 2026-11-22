@@ -12,6 +12,7 @@ function Address() {
   return <output data-testid="address">{useLocation().search}</output>;
 }
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
 import table from "../ai.de.json";
 import { TasksSkeleton } from "./tasks-section.skeleton";
 
@@ -208,5 +209,26 @@ describe("US-QS-32 the tasks: one line of hint, the rest behind Mehr erfahren (S
     expect(more?.textContent).toContain("Das Ergebnis kommt als Entwurf");
     expect(more?.textContent).toContain("nach 14 Tagen");
     expect(more?.textContent).not.toContain("Ein Auftrag bittet deinen KI-Client um etwas.");
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the tasks: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 'Zurückziehen' of a task is a plain button, beside the filled 'In KI-Client öffnen'", async () => {
+    fakeServer([row()]);
+    show();
+    const withdraw = await screen.findByRole("button", {
+      name: "Artprofil recherchieren: Aloe vera zurückziehen",
+    });
+    expect(isPlain(withdraw)).toBe(true);
+    expect(hasOwnBorder(withdraw)).toBe(false);
+  });
+
+  it("US-QS-32 · SG-BTN-01 'Auftrag als Text anzeigen' is a tinted button without a border, beside the filled 'Auftrag anlegen'", async () => {
+    fakeServer([], true);
+    const { container } = showNew();
+    const preview = await screen.findByRole("button", { name: "Auftrag als Text anzeigen" });
+    expect(isTinted(preview)).toBe(true);
+    expect(hasOwnBorder(preview)).toBe(false);
+    expect(filledIn(container)).toEqual([screen.getByRole("button", { name: "Auftrag anlegen" })]);
   });
 });

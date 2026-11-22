@@ -10,6 +10,7 @@ import { AiSection } from "../ai-section/ai-section";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "../ai.de.json";
 import { ClientsSkeleton } from "./clients-section.skeleton";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 
 /** The address of the router: the layer the last control opened (`?sheet=<id>`, US-QS-15). */
 function Address() {
@@ -171,5 +172,23 @@ describe("US-QS-32 the AI clients: one line of hint, the rest behind Mehr erfahr
     expect(more?.textContent).toContain("Dein KI-Client (zum Beispiel Claude oder ChatGPT)");
     // The visible line says the privacy fact once; the disclosure does not say it again (US-QS-32).
     expect(more?.textContent).not.toMatch(/sieht nur|Freunde/);
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the AI clients: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 'Trennen' is the tinted button of the row of controls, without a border", async () => {
+    fakeServer([row()]);
+    show();
+    const revoke = await screen.findByRole("button", { name: "Claude trennen" });
+    expect(isTinted(revoke)).toBe(true);
+    expect(hasOwnBorder(revoke)).toBe(false);
+  });
+
+  it("US-QS-32 · SG-BTN-01 'Wieder zulassen' is the tinted button of a disconnected client, without a border", async () => {
+    fakeServer([row({ revokedAt: "2026-10-11T08:00:00.000Z" })]);
+    show();
+    const allow = await screen.findByRole("button", { name: "Claude wieder zulassen" });
+    expect(isTinted(allow)).toBe(true);
+    expect(hasOwnBorder(allow)).toBe(false);
   });
 });

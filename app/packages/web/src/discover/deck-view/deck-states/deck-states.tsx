@@ -33,7 +33,7 @@ export function Actions(props: { onDecide: (d: Decision) => void }) {
       <div className="mx-auto flex w-full max-w-md flex-wrap gap-2">
         <NetworkSlot visible={false}>
           <Button
-            variant="outline"
+            variant="plain"
             size="touch"
             className="min-w-24 flex-1"
             needsNetwork
@@ -67,7 +67,7 @@ export function Actions(props: { onDecide: (d: Decision) => void }) {
 export function UndoButton(props: { onClick: () => void }) {
   return (
     <div className="text-center">
-      <Button variant="outline" size="touch" needsNetwork onClick={props.onClick}>
+      <Button variant="plain" size="touch" needsNetwork onClick={props.onClick}>
         {t("deck.undo")}
       </Button>
     </div>

@@ -54,7 +54,7 @@ function ZoneNotice(props: {
           <p className="m-0">{shortfall.text}</p>
           <p className="m-0">{shortfall.nextAction}</p>
           {offerProposal && (
-            <Button asChild variant="outline" size="touch" className="mt-2">
+            <Button asChild variant="tinted" size="touch" className="mt-2">
               <a href={CATALOG_ADDRESS}>{t("deck.propose")}</a>
             </Button>
           )}

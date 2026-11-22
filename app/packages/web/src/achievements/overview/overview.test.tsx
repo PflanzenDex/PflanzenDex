@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { AchievementsOverviewSection } from "./overview";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 
 beforeAll(() => {
   // jsdom has no matchMedia; a wide screen shows the layer as a pane beside the list (US-QS-15), not as a modal.
@@ -306,5 +307,25 @@ describe("US-ACH-03 new achievements in the overview", () => {
     await screen.findByText("Steckling bewurzelt");
     expect(screen.queryByText(/\(neu\)/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Als gesehen markieren" })).toBeNull();
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the achievements overview: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 'Als gesehen markieren' is the one tinted button of the notice, without a border", async () => {
+    serve({
+      calmMode: false,
+      earnedCount: 1,
+      newCount: 1,
+      firstStep: null,
+      groups: [
+        { group: "care", earned: [item("cutting-rooted", { isNew: true })], open: [] },
+        empty("growth"),
+        empty("swapping"),
+        empty("collecting"),
+      ],
+    });
+    const mark = await screen.findByRole("button", { name: "Als gesehen markieren" });
+    expect(isTinted(mark)).toBe(true);
+    expect(hasOwnBorder(mark)).toBe(false);
   });
 });

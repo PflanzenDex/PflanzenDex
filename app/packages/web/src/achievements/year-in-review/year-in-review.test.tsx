@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { YearInReviewSection } from "./year-in-review";
+import { hasOwnBorder, isPlain } from "@/shared/ui/button/button-roles";
 
 afterEach(() => {
   cleanup();
@@ -137,5 +138,17 @@ describe("US-ACH-07 year in review", () => {
     show({ error: { code: "x" } }, 500);
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
     expect(screen.queryByText(/Arten gefangen/)).toBeNull();
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the year in review: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 'Vorjahr' and 'Folgejahr' are plain navigation buttons without a border", async () => {
+    show(answer({ year: thisYear - 1 }));
+    await screen.findByText(`Jahresrückblick ${thisYear - 1}`);
+    for (const name of ["Vorjahr", "Folgejahr"]) {
+      const nav = screen.getByRole("button", { name });
+      expect(isPlain(nav), name).toBe(true);
+      expect(hasOwnBorder(nav), name).toBe(false);
+    }
   });
 });

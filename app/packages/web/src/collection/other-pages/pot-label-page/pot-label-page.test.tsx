@@ -9,6 +9,7 @@ import { PotLabelPage } from "./pot-label-page";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "./pot-label-page.de.json";
 import { PotLabelSkeleton } from "./pot-label-page.skeleton";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
 
 const json = (status: number, body: unknown) => Response.json(body, { status });
 const TOKEN = async () => "tok";
@@ -423,4 +424,18 @@ describe("US-MON-09 Gedüngt on a scanned pot label", () => {
 describe("US-QS-14 issue 1697 · the pot label show their shaped skeleton once", () => {
   it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
     expectOneLoadingStatus(<PotLabelSkeleton label={table["loading"]} />, table["loading"]));
+});
+
+describe("US-QS-32 · SG-BTN-01 the pot label: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 'Gegossen' is the one filled button, 'Gedüngt' is tinted, 'Messen' (it opens the form) is plain", async () => {
+    server({ "GET /specimens/e1": () => json(200, specimen()) });
+    const { container } = show();
+    const water = await screen.findByRole("button", { name: "Gegossen" });
+    const fertilize = screen.getByRole("button", { name: "Gedüngt" });
+    const measure = screen.getByRole("button", { name: "Messen" });
+    expect(filledIn(container)).toEqual([water]);
+    expect(isTinted(fertilize)).toBe(true);
+    expect(isPlain(measure)).toBe(true);
+    for (const button of [fertilize, measure]) expect(hasOwnBorder(button)).toBe(false);
+  });
 });

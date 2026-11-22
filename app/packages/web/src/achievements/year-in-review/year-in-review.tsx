@@ -143,12 +143,12 @@ function YearBody(props: { api: string; token: Token }) {
         )}
       </p>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" onClick={() => setYear(v.year - 1)}>
+        <Button type="button" variant="plain" onClick={() => setYear(v.year - 1)}>
           {t("previous")}
         </Button>
         <Button
           type="button"
-          variant="outline"
+          variant="plain"
           disabled={v.year >= running}
           onClick={() => setYear(v.year + 1 >= running ? null : v.year + 1)}
         >

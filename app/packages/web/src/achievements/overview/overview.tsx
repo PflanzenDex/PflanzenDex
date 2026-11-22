@@ -90,7 +90,7 @@ function NewNotice(props: { api: string; token: Token; ids: string[] }) {
         Erfolgen mit „neu“ markiert.
       </p>
       <Button
-        variant="outline"
+        variant="tinted"
         pending={write.running}
         pendingLabel="Sichert …"
         // A seen mark: a background write with its own key, it frees no held key (US-QS-03).

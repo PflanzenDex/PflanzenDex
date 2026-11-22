@@ -14,13 +14,6 @@ const sources = (area: string) =>
     .map((f) => relative(root, f))
     .filter((f) => /\.tsx?$/.test(f) && !/\.(test|stories)\.tsx?$/.test(f));
 
-/**
- * The file of "Sammlung" and of the app shell that still uses the deprecated outline look: the one that issue 1432 owns
- * until it merges. Every other file of the two areas moved to filled, tinted or plain (FX-39). The lock page moved in
- * sweep 3 (issue 2207).
- */
-const STILL_OUTLINE = new Set(["collection/other-pages/pot-label-page/pot-label-page.tsx"]);
-
 /** The `variant: "outline"` / `variant="outline"` of a button; a badge of the same name is another component. */
 function outlineButtons(text: string): number {
   let count = 0;
@@ -34,17 +27,11 @@ function outlineButtons(text: string): number {
 }
 
 describe("US-QS-32 · SG-BTN-01 there is no outline button in Sammlung and the app shell (FX-39)", () => {
-  it("US-QS-32 · SG-BTN-01 no file of collection/ or app/ takes the outline look, except the one of issue 1432", () => {
+  it("US-QS-32 · SG-BTN-01 no file of collection/ or app/ takes the outline look (the pot label page moved in sweep 4, issue 2208)", () => {
     const using = [...sources("collection"), ...sources("app")].filter(
       (f) => outlineButtons(readFileSync(join(root, f), "utf8")) > 0,
     );
-    expect(using.filter((f) => !STILL_OUTLINE.has(f))).toEqual([]);
-  });
-
-  it("US-QS-32 · SG-BTN-01 the file that is left still uses it, so the list above shrinks when it moves", () => {
-    for (const f of STILL_OUTLINE) {
-      expect(outlineButtons(readFileSync(join(root, f), "utf8")), f).toBeGreaterThan(0);
-    }
+    expect(using).toEqual([]);
   });
 
   it("US-QS-32 · SG-BTN-01 the opener of a layer says tinted, not outline, in its comments", () => {
@@ -87,5 +74,29 @@ describe("US-QS-32 · SG-BTN-01 there is no outline button in care, light, equip
 
   it("US-QS-32 · SG-BTN-01 the guard reads the sources of all six areas, so an empty list means none is left", () => {
     for (const area of SWEEP_3) expect(sources(area).length, area).toBeGreaterThan(5);
+  });
+});
+
+/** The areas of FX-39 sweep 4 (issue 2208): the AI client area, achievements, the catalog, the Pokédex and Discover. */
+const SWEEP_4 = ["ai", "achievements", "catalog", "pokedex", "discover", "collection"];
+
+describe("US-QS-32 · SG-BTN-01 there is no outline button in ai, achievements, catalog, pokedex, discover and collection (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 no file of ai/, achievements/, catalog/, pokedex/, discover/ or collection/ takes the outline look", () => {
+    const using = SWEEP_4.flatMap(sources).filter(
+      (f) => outlineButtons(readFileSync(join(root, f), "utf8")) > 0,
+    );
+    expect(using).toEqual([]);
+  });
+
+  it("US-QS-32 · SG-BTN-01 the guard reads the sources of all six areas, so an empty list means none is left", () => {
+    for (const area of SWEEP_4) expect(sources(area).length, area).toBeGreaterThan(5);
+  });
+
+  it("US-QS-32 · SG-BTN-01 the step button of the AI sheets has no outline default either", () => {
+    const text = readFileSync(
+      join(root, "ai/clients-section/connect-step/connect-step.tsx"),
+      "utf8",
+    );
+    expect(text).not.toMatch(/"outline"/);
   });
 });

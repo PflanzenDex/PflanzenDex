@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient, WRITE_SUCCEEDED } from "../../shared/data";
 import { AchievementNewsBanner } from "./news-banner";
+import { hasOwnBorder, isPlain } from "@/shared/ui/button/button-roles";
 
 afterEach(() => {
   cleanup();
@@ -96,5 +97,19 @@ describe("US-ACH-03 quiet achievement banner", () => {
     await waitFor(() => expect(fetch).toHaveBeenCalled());
     expect(screen.queryByRole("status")).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the achievement banner: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 'Schließen' is a plain button without a border", async () => {
+    const s = server(none);
+    show();
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    s.news = { ...none, fresh: [fresh("cutting-rooted")] };
+    await act(async () => void window.dispatchEvent(new Event(WRITE_SUCCEEDED)));
+    await screen.findByRole("status");
+    const close = screen.getByRole("button", { name: "Schließen" });
+    expect(isPlain(close)).toBe(true);
+    expect(hasOwnBorder(close)).toBe(false);
   });
 });

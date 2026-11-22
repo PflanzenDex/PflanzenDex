@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { CareRhythmSection } from "./care-rhythm";
+import { classesOf, hasOwnBorder, isFilled } from "@/shared/ui/button/button-roles";
 
 afterEach(() => {
   cleanup();
@@ -275,5 +276,17 @@ describe("US-QS-32 · SG-ICON-01 the weeks are lucide icons with a legend, no gl
       expect(entry.className).not.toContain("sr-only");
       expect(list.compareDocumentPosition(entry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the rhythm pauses: no outline button (FX-39 sweep 4)", () => {
+  it("US-QS-32 · SG-BTN-01 'Urlaub vom … entfernen' is a red plain button of its row, 'Urlaub eintragen' stays the one filled button", async () => {
+    const pause = { id: "p1", from: "2026-07-01", until: "2026-07-14" };
+    show(200, answer({ pauses: [pause] }), "/?sheet=pause");
+    const remove = await screen.findByRole("button", { name: /Urlaub vom 01.07.2026 entfernen/ });
+    expect(classesOf(remove)).toContain("text-destructive");
+    expect(isFilled(remove)).toBe(false);
+    expect(hasOwnBorder(remove)).toBe(false);
+    expect(isFilled(screen.getByRole("button", { name: "Urlaub eintragen" }))).toBe(true);
   });
 });
