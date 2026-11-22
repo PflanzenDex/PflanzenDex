@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
 import { HintsPage } from "@/collection";
 import { TreatmentsPage } from "@/care";
@@ -92,6 +93,20 @@ export function TodaySummary(props: {
 }
 
 /**
+ * The line under the title (US-QS-18, F-0070): the summary, or the achievement notice in its place. The notice's slot comes
+ * first and hides itself while it is empty, so a day without a notice looks as before; while it holds the notice (a `peer`)
+ * the summary hides, so the notice adds no height. Without a summary the notice adds its one line.
+ */
+export function TitleLine(props: { notice?: ReactNode; children: ReactNode }) {
+  return (
+    <>
+      {props.notice}
+      <div className="empty:hidden peer-[:not(:empty)]:hidden">{props.children}</div>
+    </>
+  );
+}
+
+/**
  * The overview of "Heute": the page of the day with the summary and one tile per category (US-QS-18). The counts come
  * from the same requests and keys as the lists in the layers: both share one copy and a write updates both. Each
  * module hands its count over (`count`); the app nests them, the modules do not know each other.
@@ -103,6 +118,8 @@ export function TodayOverview(props: {
   open: (d: TodayDestination) => void;
   /** Tiles of other modules after the categories (issue 1156). */
   tiles?: readonly TodayTile[] | undefined;
+  /** The slot of the achievement notice, wired by the app (F-0070). */
+  notice?: ReactNode;
 }) {
   const { api, token } = props;
   return (
@@ -127,12 +144,14 @@ export function TodayOverview(props: {
                   countsPending={[treatments, watering, hints].some((c) => c.status === "pending")}
                   treatmentsEntry={<TreatmentsEntry treatments={treatments} />}
                   summary={(treatmentFirst) => (
-                    <TodaySummary
-                      withTreatments={!treatmentFirst}
-                      treatments={treatments}
-                      watering={watering}
-                      hints={hints}
-                    />
+                    <TitleLine notice={props.notice}>
+                      <TodaySummary
+                        withTreatments={!treatmentFirst}
+                        treatments={treatments}
+                        watering={watering}
+                        hints={hints}
+                      />
+                    </TitleLine>
                   )}
                   tiles={(treatmentFirst) => (
                     <Tiles

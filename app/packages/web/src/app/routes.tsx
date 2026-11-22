@@ -21,6 +21,7 @@ import { HomeRedirect } from "./destinations/area-parts/simple-routes/route-fall
 import { NotFoundView } from "./destinations/area-parts/simple-routes/not-found-view/not-found-view";
 import {
   AccountArea,
+  NoticeSlot,
   TodayArea,
   WhatsNewHint,
   useDestinationPreload,
@@ -104,6 +105,7 @@ function TodayRoute(props: { api: string; token: Token; onOpen: (v: LinkTarget) 
       token={props.token}
       onOpen={props.onOpen}
       tiles={tiles}
+      notice={<NoticeSlot />}
       intro={(sections, fallback) => (
         <>
           <Suspense fallback={null}>

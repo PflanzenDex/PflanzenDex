@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import {
   createKey,
@@ -41,30 +41,20 @@ async function derive(api: string, token: Token, a: DerivationRequest) {
   return { ok: false as const, error: SIGN_IN };
 }
 
-/** Where a result of a write goes: `said` to the announcer (`useSay`), `shown` to a toast that stays until FX-09. */
-type Notify = { said: (message: string) => void; shown: (message: string) => void };
-
-/** One write's options: its body, where its result goes (the announcer by default) and its repeat-guard key (US-QS-03). */
-type WriteOptions = { body?: unknown; notify?: (message: string) => void; scope?: KeyScope };
-
-/** Where the results of this page's writes go (US-QS-32): said by the announcer, a toast only where the row leaves. */
-function useNotify(): Notify {
-  const say = useSay();
-  const toast = useToast();
-  return useMemo(() => ({ said: say, shown: (message) => toast.show({ message }) }), [say, toast]);
-}
+/** One write's options: its body and its repeat-guard key (US-QS-03). */
+type WriteOptions = { body?: unknown; scope?: KeyScope };
 
 function buildActions(
   { api, token, keys }: { api: string; token: Token; keys: ReturnType<typeof useRepeatKey> },
   load: () => Promise<void>,
   setLastError: (f: ApiError | undefined) => void,
-  notify: Notify,
+  say: (message: string) => void,
 ): LightActions {
   const write = async (
     method: "POST" | "PUT" | "DELETE",
     path: string,
     message: string,
-    { body, notify: to = notify.said, scope }: WriteOptions,
+    { body, scope }: WriteOptions,
   ) => {
     const t = await token();
     if (!t) return SIGN_IN;
@@ -75,7 +65,7 @@ function buildActions(
     if (!r.ok) return r.error;
     setLastError(undefined);
     await load();
-    to(message);
+    say(message);
     return null;
   };
   return {
@@ -91,10 +81,9 @@ function buildActions(
         // Set-state on the zone form (a whole form): the operation only (US-QS-03).
         scope: entityKey("zone", id, "update"),
       }),
-    // The zone leaves the list: its result stays a toast until the in-place row of FX-09 (SG-FEED-03).
+    // The zone leaves the list: the list is the result and the live region says it (SG-FEED-01, SG-FEED-04).
     zoneDelete: (id) =>
       write("DELETE", `/light-zones/${id}`, "Lichtzone gelöscht.", {
-        notify: notify.shown,
         scope: entityKey("zone", id, "delete"),
       }),
     defaults: async () => {
@@ -129,7 +118,7 @@ export function LightPage(props: {
 }) {
   const [lastError, setLastError] = useState<ApiError | undefined>();
   const { api, token } = props;
-  const notify = useNotify();
+  const say = useSay();
 
   const client = useQueryClient();
   const loadAll = useCallback(
@@ -156,8 +145,8 @@ export function LightPage(props: {
 
   const keys = useRepeatKey();
   const actions = useMemo(
-    () => buildActions({ api, token, keys }, load, setLastError, notify),
-    [api, token, load, notify, keys],
+    () => buildActions({ api, token, keys }, load, setLastError, say),
+    [api, token, load, say, keys],
   );
 
   const loading = "Standorte und Lichtzonen werden geladen …";

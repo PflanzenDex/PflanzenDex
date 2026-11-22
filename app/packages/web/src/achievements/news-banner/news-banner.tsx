@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router";
+import { useAnnounce } from "@/shared/platform/announcer/context";
 import { accountAddress } from "@/shared/patterns/navigation/navigation/navigation";
 import { Button } from "@/shared/ui/button/button";
 import { useInvalidate, useRequest, WRITE_SUCCEEDED, newRepeatKey } from "../../shared/data";
@@ -10,13 +12,52 @@ type Token = () => Promise<string | undefined>;
 const NEWS_KEY = ["achievements", "news"] as const;
 
 /**
- * The quiet banner "Erfolg: <name>" (US-ACH-03): it appears when an action succeeded and made an achievement new, with
+ * The notice "Erfolg: <name>" (US-ACH-03, F-0070): a single line with the link "Zu den Erfolgen" and "Schließen". It is
+ * drawn into `slot`, the place under the title of "Heute" where it takes the summary's place (SG-FEED-05, US-QS-32), so it
+ * is never inserted above a page. The live region says what is on screen (4.1.3): once, when the notice first shows in the
+ * slot; on a page without the slot nothing shows and nothing is said, and "Heute" shows and says it when it opens. The
+ * notice itself is no live region (SG-FEED-02).
+ */
+function Notice(props: { text: string; slot: HTMLElement | null; onClose: () => void }) {
+  // `announce` is the channel's own function: the same one for the life of the provider, so it never re-runs the effect.
+  const announce = useAnnounce()?.announce;
+  const { text, slot } = props;
+  const said = useRef<string | null>(null);
+  const shown = slot !== null;
+  useEffect(() => {
+    if (!shown || said.current === text) return;
+    said.current = text;
+    announce?.(text);
+  }, [announce, text, shown]);
+  if (!slot) return null;
+  return createPortal(
+    <section aria-label="Erfolg" className="flex flex-wrap items-center gap-x-2 text-sm">
+      <p className="m-0 font-semibold">{text}</p>
+      <Link to={accountAddress("achievements")} className="underline">
+        Zu den Erfolgen
+      </Link>
+      {/* The button keeps its 44 px hit area; the negative margins keep the line one text line high. */}
+      <Button variant="plain" size="sm" className="-my-3" onClick={props.onClose}>
+        Schließen
+      </Button>
+    </section>,
+    slot,
+  );
+}
+
+/**
+ * The quiet notice "Erfolg: <name>" (US-ACH-03): it appears when an action succeeded and made an achievement new, with
  * a link to the overview. It never blocks anything and needs no confirmation; "Schließen" only hides it. The seen state
  * is written by "Als gesehen markieren" in the overview, so a missed moment stays visible there. The state is created silently on the
- * first evaluation (no flood of banners). Calm mode, a read error or an unknown state show nothing (US-ACH-08); there
- * is no push and no e-mail (FR-ACH-06). The text is a status for assistive technology; nothing animates (NFR-13).
+ * first evaluation (no flood of notices). Calm mode, a read error or an unknown state show nothing (US-ACH-08); there
+ * is no push and no e-mail (FR-ACH-06). Nothing animates (NFR-13).
  */
-export function AchievementNewsBanner(props: { api: string; token: Token }) {
+export function AchievementNewsBanner(props: {
+  api: string;
+  token: Token;
+  /** The line under the title of "Heute" the notice is drawn into; `null` on every other page. */
+  slot: HTMLElement | null;
+}) {
   const { api, token } = props;
   const load = useCallback((t: string) => loadNews(api, t), [api]);
   const news = useRequest({ queryKey: NEWS_KEY, token, load });
@@ -56,21 +97,10 @@ export function AchievementNewsBanner(props: { api: string; token: Token }) {
   if (announced.length === 0) return null;
   const names = announced.map((f) => ACHIEVEMENT_NAMES[f.id] ?? f.id).join(", ");
   return (
-    <section
-      role="status"
-      aria-label="Erfolg"
-      className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary p-3"
-    >
-      <p className="m-0 font-semibold">{`Erfolg: ${names}`}</p>
-      <Link to={accountAddress("achievements")} className="underline">
-        Zu den Erfolgen
-      </Link>
-      <Button
-        variant="plain"
-        onClick={() => setHidden(new Set([...hidden, ...announced.map((f) => f.id)]))}
-      >
-        Schließen
-      </Button>
-    </section>
+    <Notice
+      text={`Erfolg: ${names}`}
+      slot={props.slot}
+      onClose={() => setHidden(new Set([...hidden, ...announced.map((f) => f.id)]))}
+    />
   );
 }

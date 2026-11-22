@@ -15,6 +15,7 @@ import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from "r
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_GUARD, stateFlag } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
@@ -45,10 +46,15 @@ const render = (ui: React.ReactElement) =>
     <MemoryRouter>
       <Address />
       <ToastProvider>
-        <LayerHost>{ui}</LayerHost>
+        <AnnouncerProvider>
+          <LayerHost>{ui}</LayerHost>
+        </AnnouncerProvider>
       </ToastProvider>
     </MemoryRouter>,
   );
+
+/** What the shared live region says (DS-69). */
+const said = () => document.querySelector(".sr-only[aria-live=polite]")?.textContent?.trim() ?? "";
 
 const SIGNED_OUT = "Du bist nicht angemeldet. Bitte melde dich an.";
 const response = (status: number, body: unknown) =>
@@ -362,6 +368,30 @@ describe("US-QS-14 feedback on the light page", () => {
     await userEvent.click(await screen.findByRole("button", { name: /^Balkon\b/ }));
     await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     expect(await screen.findByText("Standort gesichert.")).toBeTruthy();
+  });
+
+  it("US-QS-32 · F-0005 · SG-FEED-01 a deleted zone is gone from its list and said by the live region: no toast, the layer closes", async () => {
+    const refuse = ROUTES["DELETE /light-zones/z1"] as Route;
+    ROUTES["DELETE /light-zones/z1"] = async (d) => {
+      d.zones.length = 0;
+      return response(200, {});
+    };
+    try {
+      fakeServer({ zones: [zone] });
+      render(<LightPage api="http://api" token={async () => "tok"} />);
+      await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
+      await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
+      await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
+      await waitFor(() => expect(said()).toBe("Lichtzone gelöscht."));
+      await waitFor(() => expect(screen.queryByRole("button", { name: /^Zone 2\b/ })).toBeNull());
+      expect(screen.queryByRole("dialog")).toBeNull();
+      // The announcer is the one place that holds the text: no toast repeats it.
+      expect(
+        screen.queryAllByText("Lichtzone gelöscht.").filter((e) => !e.hasAttribute("aria-live")),
+      ).toEqual([]);
+    } finally {
+      ROUTES["DELETE /light-zones/z1"] = refuse;
+    }
   });
 
   it("US-QS-14 a refused write shows no success toast", async () => {

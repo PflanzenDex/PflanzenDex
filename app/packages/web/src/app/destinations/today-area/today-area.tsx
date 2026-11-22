@@ -57,6 +57,8 @@ export function TodayArea(props: {
   intro?: (sections: ReactNode, fallback: ReactNode) => ReactNode;
   /** Tiles of other modules with their layers (issue 1156), wired by the app. */
   tiles?: readonly TodayTile[];
+  /** The line under the title that holds the achievement notice, in the place of the summary (F-0070), wired by the app. */
+  notice?: ReactNode;
 }) {
   useFormerAnchors();
   usePreloadParts();
@@ -133,6 +135,7 @@ function Tasks(props: {
   /** Opens the planning layer above the layer Behandlungen (US-QS-18). */
   plan: () => void;
   tiles?: readonly TodayTile[] | undefined;
+  notice?: ReactNode;
 }) {
   const { api, token } = props;
   const watering = useWateringFilter();
@@ -150,6 +153,7 @@ function Tasks(props: {
             onOpen={props.onOpen}
             open={props.open}
             {...(props.tiles ? { tiles: props.tiles } : {})}
+            {...(props.notice ? { notice: props.notice } : {})}
           />
         </Suspense>
       )}

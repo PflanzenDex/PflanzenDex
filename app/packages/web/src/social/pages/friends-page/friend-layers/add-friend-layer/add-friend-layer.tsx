@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { CreatedFriendCode } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
-import { useSay, useToast } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import {
   createKey,
   useWriteAction,
@@ -17,25 +17,32 @@ type Token = () => Promise<string | undefined>;
 
 /**
  * Sends the code form's request and hands a refusal back to the field; one request at a time (a double tap sends one).
- * The confirmation goes to `shown`: the request is not on this layer, so it stays a toast until the in-place row of FX-09
- * (SG-FEED-03, US-QS-32). A refused code is not a toast, it stays at its field (P-10).
+ * The confirmation is the line of the form (`sent`) and is said to the live region, no toast (SG-FEED-01, SG-FEED-04,
+ * US-QS-32). A refused code stays at its field (P-10); a request that never went out (no sign-in) has no field to show it
+ * at, so it is a toast (`useSay`).
  */
-function useSendRequest(
-  api: string,
-  token: Token,
-  reload: () => void,
-  shown: (message: string) => void,
-) {
+function useSendRequest(api: string, token: Token, reload: () => void) {
+  const say = useSay();
+  const [sent, setSent] = useState<string | null>(null);
+  const reached = useRef(false);
   const write = useWriteAction(token, reload, (message, kind) => {
-    if (kind !== "error") shown(message);
+    if (kind === "error") {
+      if (!reached.current) say(message, kind);
+      return;
+    }
+    setSent(message);
+    say(message);
   });
+  const edit = useCallback(() => setSent(null), []);
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const send = async (code: string): Promise<boolean> => {
     let ok = false;
     // A create (a request is sent): the operation only, the code is the body (US-QS-03).
     const key = createKey("friend", "request");
+    reached.current = false;
     await write.run(
       async (t, opts) => {
+        reached.current = true;
         const r = await sendFriendRequest(api, t, code, opts);
         ok = r.ok;
         setRefusal(r.ok ? null : r.error);
@@ -46,7 +53,7 @@ function useSendRequest(
     );
     return ok;
   };
-  return { send, refusal, write };
+  return { send, refusal, write, sent, edit };
 }
 
 type Tab = "invite" | "code";
@@ -70,11 +77,10 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
   const { api, token } = props;
   const [tab, setTab] = useState<Tab>("invite");
   const [created, setCreated] = useState<CreatedFriendCode | null>(null);
-  // The code of an invitation shows in place (the card), so its result is said; a sent request is not on this layer.
+  // The code of an invitation shows in place (the card), so its result is said; a sent request is the line of its form.
   const say = useSay();
-  const toast = useToast();
   const invite = useWriteAction(token, props.onWritten, say);
-  const request = useSendRequest(api, token, props.onWritten, (message) => toast.show({ message }));
+  const request = useSendRequest(api, token, props.onWritten);
   const tabs: { id: Tab; label: string }[] = [
     { id: "invite", label: "Einladen" },
     { id: "code", label: "Code eingeben" },
@@ -112,6 +118,8 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
             <CodeForm
               running={request.write.running}
               refusal={request.refusal}
+              sent={request.sent}
+              onEdit={request.edit}
               onSend={request.send}
             />
           )}
