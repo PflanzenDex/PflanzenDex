@@ -1,6 +1,6 @@
 // What a test of the button roles reads off a rendered view (US-QS-32, SG-BTN-01, SG-BTN-02, SG-COLOR-02): the classes of a
-// button or link, and which of them are filled, tinted or plain. The outline look has no classes of its own (it is the
-// tinted look), so a call site that moved is proved by the role it has now.
+// button or link, and which of them are filled, tinted or plain. There is no outline look, so a call site is proved by the
+// role it has.
 
 /** The classes of one element. */
 export const classesOf = (el: Element): string[] => (el.getAttribute("class") ?? "").split(/\s+/);
