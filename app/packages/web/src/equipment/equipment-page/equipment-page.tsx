@@ -1,6 +1,6 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
-import { LoadFrame, useFeature, useInvalidate } from "../../shared/data";
+import { LoadFrame, useFeature, useInvalidate, type ApiError } from "../../shared/data";
 import { Button } from "@/shared/ui/button/button";
 import { loadEquipment, type EquipmentData } from "../equipment-api";
 import { LampOutcome, useLampActions } from "./lamp-actions/lamp-actions";
@@ -14,8 +14,21 @@ import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header
 const KEY = ["equipment", "list"] as const;
 type Token = () => Promise<string | undefined>;
 /**
- * The equipment on one screen (US-QS-22): the outcome of the last write, the tiles with their counts and the one
- * primary action "Equipment erfassen". "Gekauft" on an equipment wish fills the form and opens it (US-EQU-08).
+ * A refusal belongs to the layer it happened in: it is gone for good when that layer closes or another one opens, so it never
+ * stands in a later sheet, on the page behind or when the same layer is opened again (F-0160, P-10). A new refusal is told by
+ * `failures`, not by the error object: a repeated refusal can be the same object.
+ */
+function useRefusalOf(error: ApiError | null, failures: number, sheet: string | null) {
+  const [born, setBorn] = useState({ failures, sheet, gone: false });
+  if (born.failures !== failures) setBorn({ failures, sheet, gone: false });
+  else if (!born.gone && born.sheet !== sheet) setBorn({ ...born, gone: true });
+  return born.failures === failures && !born.gone ? error : null;
+}
+
+/**
+ * The equipment on one screen (US-QS-22): the tiles with their counts and the one primary action "Gerät erfassen". A
+ * write shows at its row or control and is announced (SG-FEED-01, F-0160); only a refusal is shown, in its layer.
+ * "Gekauft" on an equipment wish fills the form and opens it (US-EQU-08).
  */
 function Body(props: { data: EquipmentData; api: string; token: Token; onWritten: () => void }) {
   const { write, send, prefill, fill, openLayer } = useRecord(
@@ -23,24 +36,19 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
     props.token,
     props.onWritten,
   );
-  // A write inside a layer shows its outcome there, because the screen behind the layer is covered (P-10).
-  const layered = useSearchParams()[0].has("sheet");
+  const sheet = useSearchParams()[0].get("sheet");
   const lamps = useLampActions(props.api, props.token, props.onWritten, props.data.sharing);
   const wishes = useWishActions(props.api, props.token, props.onWritten, fill);
+  const lampError = useRefusalOf(lamps.error, lamps.failures, sheet);
+  const wishError = useRefusalOf(wishes.error, wishes.failures, sheet);
   const outcome = (
     <>
-      <LampOutcome message={lamps.message} error={lamps.error} />
-      <LampOutcome message={wishes.message} error={wishes.error} />
+      <LampOutcome error={lampError} />
+      <LampOutcome error={wishError} />
     </>
   );
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      {write.message ? (
-        <p role="status" className="rounded-lg border border-border p-2">
-          {write.message}
-        </p>
-      ) : null}
-      {layered ? null : outcome}
       <Button type="button" aria-haspopup="dialog" onClick={(e) => openLayer(e.currentTarget)}>
         Gerät erfassen
       </Button>
@@ -54,7 +62,7 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
         wishes={wishes}
         prefill={prefill}
         fill={fill}
-        outcome={layered ? outcome : null}
+        outcome={outcome}
         running={write.running}
         error={write.error}
         onSend={send}

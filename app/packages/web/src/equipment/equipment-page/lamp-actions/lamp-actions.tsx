@@ -1,5 +1,7 @@
+import { useRef } from "react";
 import { errorText } from "@/shared/lib/error-text";
 import {
+  useSay,
   useToast,
   type ToastApi,
 } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
@@ -28,7 +30,7 @@ type LampRef = { id: string; name: string };
 type Write = ReturnType<typeof useWriteAction>;
 
 /** The writes on a lamp (US-EQU-02): move it to another zone, set its state (with "Rückgängig", US-QS-07). */
-function zoneWrites(api: string, write: Write, toast: ToastApi) {
+function zoneWrites(api: string, write: Write, toast: ToastApi, toasted: Toasted) {
   return {
     busy: write.running,
     onZone: (lamp: LampRef, lightZoneId: string) =>
@@ -38,16 +40,18 @@ function zoneWrites(api: string, write: Write, toast: ToastApi) {
         entityKey("lamp", lamp.id, `zone:${lightZoneId}`),
       ),
     onStatus: (lamp: LampRef & { status: EquipmentStatus }, status: EquipmentStatus) =>
-      void saveWithUndo(write, toast, {
-        before: lamp.status,
-        after: status,
-        send: (value) => (t, opts) =>
-          setEquipmentStatus(api, t, { id: lamp.id, status: value }, opts),
-        scope: (value) => entityKey("lamp", lamp.id, `status:${value}`),
-        said: (value) => `Zustand von „${lamp.name}“ ist jetzt „${STATUS_LABELS[value]}“.`,
-        saved: `Zustand von „${lamp.name}“ gesichert.`,
-        undone: `Zustand von „${lamp.name}“ zurückgesetzt.`,
-      }),
+      void toasted(() =>
+        saveWithUndo(write, toast, {
+          before: lamp.status,
+          after: status,
+          send: (value) => (t, opts) =>
+            setEquipmentStatus(api, t, { id: lamp.id, status: value }, opts),
+          scope: (value) => entityKey("lamp", lamp.id, `status:${value}`),
+          said: (value) => `Zustand von „${lamp.name}“ ist jetzt „${STATUS_LABELS[value]}“.`,
+          saved: `Zustand von „${lamp.name}“ gesichert.`,
+          undone: `Zustand von „${lamp.name}“ zurückgesetzt.`,
+        }),
+      ),
   };
 }
 
@@ -72,20 +76,23 @@ function maintenanceWrites(api: string, write: Write): MaintenanceActions {
 }
 
 /** The writes on a consumable (US-EQU-05): its supply (with "Rückgängig", US-QS-07) and the link of a plant agent. */
-function supplyWrites(api: string, write: Write, toast: ToastApi): SupplyActions {
+function supplyWrites(api: string, write: Write, toast: ToastApi, toasted: Toasted): SupplyActions {
   return {
     busy: write.running,
     onSupply: (item, supply) => {
-      if (item.supply === null) return;
-      void saveWithUndo(write, toast, {
-        before: item.supply,
-        after: supply,
-        send: (value) => (t, opts) => setSupply(api, t, { id: item.id, supply: value }, opts),
-        scope: (value) => entityKey("equipment", item.id, `supply:${value}`),
-        said: (value) => `Vorrat von „${item.name}“ ist jetzt „${SUPPLY_LABELS[value]}“.`,
-        saved: `Vorrat von „${item.name}“ gesichert.`,
-        undone: `Vorrat von „${item.name}“ zurückgesetzt.`,
-      });
+      const before = item.supply;
+      if (before === null) return;
+      void toasted(() =>
+        saveWithUndo(write, toast, {
+          before,
+          after: supply,
+          send: (value) => (t, opts) => setSupply(api, t, { id: item.id, supply: value }, opts),
+          scope: (value) => entityKey("equipment", item.id, `supply:${value}`),
+          said: (value) => `Vorrat von „${item.name}“ ist jetzt „${SUPPLY_LABELS[value]}“.`,
+          saved: `Vorrat von „${item.name}“ gesichert.`,
+          undone: `Vorrat von „${item.name}“ zurückgesetzt.`,
+        }),
+      );
     },
     onLink: (item, agentLink) =>
       void write.run(
@@ -98,17 +105,24 @@ function supplyWrites(api: string, write: Write, toast: ToastApi): SupplyActions
   };
 }
 
-/** The writes on a sensor (US-EQU-06): where it sits. */
+/** The writes on a sensor (US-EQU-06): where it sits. It says whether the server saved it, for the row's line (F-0160). */
 function sensorWrites(api: string, write: Write): SensorActions {
   return {
     busy: write.running,
-    onTarget: (sensor, target) =>
-      void write.run(
-        (t, opts) => setSensorTarget(api, t, { id: sensor.id, ...target }, opts),
+    onTarget: async (sensor, target) => {
+      let saved = false;
+      await write.run(
+        async (t, opts) => {
+          const r = await setSensorTarget(api, t, { id: sensor.id, ...target }, opts);
+          saved = r.ok;
+          return r;
+        },
         `Zuordnung von „${sensor.name}“ gesichert.`,
         // Set-state on the sensor's place: the operation only, the target is the body (US-QS-03).
         entityKey("sensor", sensor.id, "target"),
-      ),
+      );
+      return saved;
+    },
   };
 }
 
@@ -133,37 +147,53 @@ function sharingWrites(
   };
 }
 
-/** One write state for everything on a lamp, so the answer shown above the zones is always the latest (P-10). */
+/** Runs a change whose undo toast says its result: the live region stays silent for it, so it is heard once. */
+type Toasted = (run: () => Promise<void>) => Promise<void>;
+
+/**
+ * The writes on a lamp and its device, one state for all of them (P-10). The result of a write is said to the live region,
+ * never boxed: it shows at its row or control (SG-FEED-01, SG-FEED-04, F-0160). A refusal is not said: the layer shows it
+ * as an alert. The state of a lamp and the supply offer "Rückgängig" in a toast that carries the result until the undo
+ * moves into the row (US-QS-32); they are run `toasted`.
+ */
 export function useLampActions(
   api: string,
   token: Token,
   onWritten: () => void,
   shared: readonly { equipmentId: string; note: string | null }[],
 ) {
-  const write = useWriteAction(token, onWritten);
+  const say = useSay();
+  const quiet = useRef(0);
+  const write = useWriteAction(token, onWritten, (message, kind) => {
+    if (kind !== "error" && quiet.current === 0) say(message);
+  });
   const toast = useToast();
+  // A depth, not a flag: a run that ends must not end the silence of another one that is still going.
+  const toasted: Toasted = async (run) => {
+    quiet.current += 1;
+    try {
+      await run();
+    } finally {
+      quiet.current -= 1;
+    }
+  };
   return {
-    actions: zoneWrites(api, write, toast),
+    actions: zoneWrites(api, write, toast, toasted),
     light: lightWrites(api, write),
     maintenance: maintenanceWrites(api, write),
-    supply: supplyWrites(api, write, toast),
+    supply: supplyWrites(api, write, toast, toasted),
     sensors: sensorWrites(api, write),
     sharing: sharingWrites(api, write, new Map(shared.map((r) => [r.equipmentId, r.note]))),
-    message: write.message,
     error: write.error,
+    failures: write.failures,
   };
 }
 
-export function LampOutcome(props: { message: string | null; error: { code: string } | null }) {
-  if (props.error)
-    return (
-      <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
-        {errorText(props.error.code)}
-      </p>
-    );
-  return props.message ? (
-    <p role="status" className="rounded-lg border border-border p-3">
-      {props.message}
+/** The refusal of a write, in the layer it happened in (P-10); a success is never boxed (F-0160). */
+export function LampOutcome(props: { error: { code: string } | null }) {
+  return props.error ? (
+    <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
+      {errorText(props.error.code)}
     </p>
   ) : null;
 }

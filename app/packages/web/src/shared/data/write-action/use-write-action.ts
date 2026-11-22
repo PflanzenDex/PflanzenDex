@@ -26,6 +26,19 @@ const NO_TOKEN = { ok: false as const, error: SIGN_IN };
 /** Says the result of a write: the German text and its kind (`useSay` of the toast provider: a success is announced, an error is a toast, US-QS-32). */
 export type WriteSay = (message: string, kind?: "success" | "error") => void;
 
+/** The latest refusal and how many there were: a repeated refusal can be the very same error object (F-0160). */
+function useRefusals() {
+  const [state, set] = useState<{ error: ApiError | null; count: number }>({
+    error: null,
+    count: 0,
+  });
+  const record = useCallback(
+    (error: ApiError | null) => set((s) => ({ error, count: error ? s.count + 1 : s.count })),
+    [],
+  );
+  return [state, record] as const;
+}
+
 /**
  * Sends a write with the token and the options of the action: the repeat-guard key (US-QS-03) and, while the device is
  * offline, the buffer that takes the write as plain data (US-QS-10). A write API call passes `options` on (see `WriteOptions`).
@@ -59,6 +72,9 @@ const refusalTextLazily = (error: ApiError) =>
  * expired token does not cost the write (US-QS-10). The buffer sends the request later with the same key and settles the
  * key on its answer. A refusal that is still said is also followed by `after`: the page may have been stale.
  *
+ * `failures` counts the refused writes: a repeated refusal can be the very same error object, so `error` alone cannot tell
+ * a new one from the old (F-0160).
+ *
  * `runSilent` is a background write (a seen mark, a feed mark, the zone defaults): a fresh key per send, held nothing, so
  * it frees no held key of the page (US-QS-03). `runQuiet` is a bulk write that says each of its results itself (the
  * buffered entries of a bulk share): it calls no `after` and says nothing, and it keeps the page busy until the bulk is
@@ -71,11 +87,10 @@ export function useWriteAction(
 ) {
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
+  const [{ error, count: failures }, record] = useRefusals();
   const busy = useRef(false);
   const keys = useRepeatKey();
   const announcer = useAnnounce();
-
   const perform = useCallback(
     async (send: WriteSend, success: string, pick: () => string, scope: KeyScope | null) => {
       if (busy.current) return;
@@ -96,7 +111,7 @@ export function useWriteAction(
       busy.current = false;
       setRunning(false);
       if (buffered) return;
-      setError(r.ok ? null : r.error);
+      record(r.ok ? null : r.error);
       if (say) {
         if (r.ok) say(success);
         else void refusalTextLazily(r.error).then((text) => say(text, "error"));
@@ -127,7 +142,7 @@ export function useWriteAction(
     });
   }, []);
 
-  return { running, message, error, run, runSilent, runQuiet };
+  return { running, message, error, failures, run, runSilent, runQuiet };
 }
 
 /**

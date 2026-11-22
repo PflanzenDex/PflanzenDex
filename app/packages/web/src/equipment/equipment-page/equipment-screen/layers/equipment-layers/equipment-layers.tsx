@@ -146,7 +146,7 @@ export function EquipmentLayers(props: {
   prefill: EquipmentFill | null;
   /** Opens the form with what a need names (a lamp of its light zone, US-QS-32). */
   fill: (prefill: EquipmentFill, from: HTMLElement) => void;
-  /** The outcome of a write inside a layer; the screen behind it is covered (P-10). */
+  /** The refusal of a write inside a layer; the screen behind it is covered (P-10). */
   outcome: ReactNode;
   running: boolean;
   error: ApiError | null;
@@ -161,7 +161,7 @@ export function EquipmentLayers(props: {
           <Items data={data} lamps={lamps} />
         </div>
       </LayerSheet>
-      <ItemLayer data={data} lamps={lamps} />
+      <ItemLayer data={data} lamps={lamps} outcome={props.outcome} />
       <LayerSheet id={COSTS_LAYER} title={t("layers.costs")}>
         <CostsPart data={data} />
       </LayerSheet>
