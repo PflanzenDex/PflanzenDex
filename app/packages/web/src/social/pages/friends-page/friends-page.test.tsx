@@ -6,6 +6,7 @@ import { errorText } from "@/shared/lib/error-text";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { FriendsPage } from "./friends-page";
 
 beforeAll(() => {
@@ -172,11 +173,16 @@ type Options = { calm?: boolean; swapMark?: string };
 function show(sheet?: string, options: Options = {}, from = "") {
   const query = [sheet && `sheet=${sheet}`, from && `from=${from}`].filter(Boolean).join("&");
   return render(
-    <MemoryRouter initialEntries={[`/friends${query ? `?${query}` : ""}`]}>
-      <FriendsPage api="http://api" token={token} {...options} />
-    </MemoryRouter>,
+    <AnnouncerProvider>
+      <MemoryRouter initialEntries={[`/friends${query ? `?${query}` : ""}`]}>
+        <FriendsPage api="http://api" token={token} {...options} />
+      </MemoryRouter>
+    </AnnouncerProvider>,
   );
 }
+
+/** What the shared live region says (DS-69). */
+const said = () => document.querySelector(".sr-only[aria-live=polite]")?.textContent?.trim() ?? "";
 
 const friend = (n: number) => ({
   id: `f${n}`,
@@ -259,8 +265,28 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     await userEvent.click(await screen.findByRole("tab", { name: "Code eingeben" }));
     await userEvent.type(await screen.findByLabelText("Freundescode"), "ABCD-EFGH");
     await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));
-    expect(await screen.findByText(/Anfrage gesendet/)).toBeTruthy();
+    expect(await screen.findByText(/Anfrage gesendet/, { selector: "p" })).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/friends/requests", body: { code: "ABCD-EFGH" } });
+  });
+
+  it("US-QS-32 · F-0005 · SG-FEED-01 a sent request is the line of the form, in the place of its hint: announced once, no toast, nothing inserted", async () => {
+    fakeServer();
+    show("add");
+    await userEvent.click(await screen.findByRole("tab", { name: "Code eingeben" }));
+    const hint = await screen.findByText("Wer dir den Code gegeben hat, bekommt eine Anfrage.");
+    await userEvent.type(screen.getByLabelText("Freundescode"), "ABCD-EFGH");
+    await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));
+    const result = "Anfrage gesendet. Sobald die Person sie annimmt, seid ihr befreundet.";
+    // The same paragraph says it: the form gains no element and nothing moves (SG-FEED-05).
+    expect((await screen.findByText(result, { selector: "p" })) === hint).toBe(true);
+    expect(said()).toBe(result);
+    expect(screen.queryAllByText(result).filter((e) => !e.hasAttribute("aria-live"))).toHaveLength(
+      1,
+    );
+    expect(document.querySelector("[aria-live=assertive]")?.textContent).toBe("");
+    // A new code brings the hint back, so a second request reads as a new one.
+    await userEvent.type(screen.getByLabelText("Freundescode"), "X");
+    expect(screen.getByText("Wer dir den Code gegeben hat, bekommt eine Anfrage.")).toBeTruthy();
   });
 
   it("US-SOZ-01 an empty code is refused before sending; a refused code shows its German text at the field (P-10)", async () => {

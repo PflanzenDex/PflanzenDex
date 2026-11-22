@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { WaterAction } from "./water-action";
 
 afterEach(() => {
@@ -12,21 +13,25 @@ afterEach(() => {
 
 const show = () =>
   render(
-    <WaterAction
-      api="http://api"
-      token={async () => "tok"}
-      specimen={{ id: "e1", name: "Aloe" }}
-    />,
+    <AnnouncerProvider>
+      <WaterAction
+        api="http://api"
+        token={async () => "tok"}
+        specimen={{ id: "e1", name: "Aloe" }}
+      />
+    </AnnouncerProvider>,
   );
 
+/** What the shared live region says (DS-69); the toast regions of the test wrapper are no part of it. */
+const said = () => document.querySelector(".sr-only[aria-live=polite]")?.textContent?.trim() ?? "";
+
 describe("US-QS-23 Gießen of a plant", () => {
-  it("US-QS-23 enters the watering through the existing operation and confirms it as a toast with role=status (issue 1644, F8)", async () => {
+  it("US-QS-23 · US-QS-32 enters the watering through the existing operation and shows its result in place (SG-FEED-01)", async () => {
     const fetchFn = vi.fn<typeof fetch>(async () => Response.json({ watered: [] }));
     vi.stubGlobal("fetch", fetchFn);
     show();
     await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
-    const confirmation = await screen.findByRole("status");
-    expect(confirmation.textContent).toBe("„Aloe“ als gegossen eingetragen.");
+    await screen.findByText("Zuletzt gegossen: heute", { selector: "p" });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(new URL(String(url)).pathname).toBe("/watering");
     expect(JSON.parse(String(init?.body))).toMatchObject({ specimenIds: ["e1"] });
@@ -52,7 +57,7 @@ describe("US-QS-23 Gießen of a plant", () => {
     expect(button.hasAttribute("disabled")).toBe(false);
     expect(document.activeElement).toBe(button);
     release();
-    await screen.findByRole("status");
+    await screen.findByText("Zuletzt gegossen: heute", { selector: "p" });
   });
 
   it("US-QS-32 · F-0094 after a successful 'Gießen' the focus stays on the button", async () => {
@@ -63,7 +68,7 @@ describe("US-QS-23 Gießen of a plant", () => {
     show();
     const button = screen.getByRole("button", { name: "Gießen: Aloe" });
     await userEvent.click(button);
-    await screen.findByRole("status");
+    await screen.findByText("Zuletzt gegossen: heute", { selector: "p" });
     expect(document.activeElement).toBe(button);
     expect(button.hasAttribute("disabled")).toBe(false);
   });
@@ -197,19 +202,65 @@ describe("US-QS-32 Gießen stays in place with its undo (SG-FEED-03)", () => {
     }
   });
 
-  it("US-QS-32 a watering that was already entered today has nothing to undo: the result stays a toast", async () => {
+  it("US-QS-32 · SG-FEED-01 a watering that was already entered today has nothing to undo: its result is the line 'Zuletzt gegossen: heute', announced once, no toast", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async () =>
         Response.json({ date: "2026-11-20", specimens: ["e1"], created: 0 }),
       ),
     );
-    show();
-    await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
-    expect((await screen.findByRole("status")).textContent).toBe(
-      "„Aloe“ als gegossen eingetragen.",
+    vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date(2026, 10, 20, 12));
+      show();
+      await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
+      const line = await screen.findByText("Zuletzt gegossen: heute", { selector: "p" });
+      expect(said()).toBe("Zuletzt gegossen: heute");
+      expect(screen.queryByRole("status")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Rückgängig: Aloe" })).toBeNull();
+      // The line is the last of the action row and takes a row of its own: it covers no button (SG-FEED-05).
+      expect(line.className.split(" ")).toContain("order-last");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("US-QS-32 · date-and-timezone the line says 'gestern' for an entry of the day before, read against the keeper's day", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        Response.json({ date: "2026-11-19", specimens: ["e1"], created: 0 }),
+      ),
     );
-    expect(screen.queryByRole("button", { name: "Rückgängig: Aloe" })).toBeNull();
+    vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date(2026, 10, 20, 12));
+      show();
+      await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
+      await screen.findByText("Zuletzt gegossen: gestern", { selector: "p" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("US-QS-32 · SG-FEED-02 a new entry is said once, by its undo row: no second line follows when the 8 s are over", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn<typeof fetch>(async (url) => newEntry(new URL(String(url)).pathname)),
+      );
+      show();
+      await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
+      await screen.findByRole("button", { name: "Rückgängig: Aloe" });
+      expect(said()).toBe("Gegossen heute");
+      act(() => vi.advanceTimersByTime(8000));
+      expect(screen.getByRole("button", { name: "Gießen: Aloe" })).toBeTruthy();
+      expect(screen.queryByText("Zuletzt gegossen: heute", { selector: "p" })).toBeNull();
+      expect(said()).toBe("Gegossen heute");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
@@ -224,8 +275,8 @@ describe("US-QS-32 the undo takes the day of its write and says when nothing was
     show();
     await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
     await userEvent.click(await screen.findByRole("button", { name: "Rückgängig: Aloe" }));
-    expect((await screen.findByRole("status")).textContent).toBe(
-      "Nichts mehr rückgängig zu machen – der Eintrag ist schon weg.",
+    await vi.waitFor(() =>
+      expect(said()).toBe("Nichts mehr rückgängig zu machen – der Eintrag ist schon weg."),
     );
     expect(JSON.parse(String(fetchFn.mock.calls[1]?.[1]?.body))).toMatchObject({
       specimenIds: ["e1"],
