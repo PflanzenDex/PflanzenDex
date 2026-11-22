@@ -25,9 +25,6 @@ const buttonVariants = cva(
         plain: "text-primary hover:bg-accent hover:text-accent-foreground",
         // A destructive action that does not confirm anything (SG-BTN-03): red text, labelled with verb and object.
         "destructive-plain": "text-destructive hover:bg-destructive/10",
-        // Deprecated alias (SG-BTN-01, FX-39 of issue 1853): there is no outline button. It looks like `tinted` until the
-        // remaining call sites move to `tinted` or `plain`; do not use it in new code.
-        outline: "bg-accent text-accent-foreground hover:bg-accent/80",
         // Ghost stays neutral, because tabs, segments, navigation and accordions build on it.
         ghost: "hover:bg-accent hover:text-accent-foreground",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",

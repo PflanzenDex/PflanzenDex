@@ -183,7 +183,6 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
       "tinted",
       "plain",
       "destructive-plain",
-      "outline",
       "ghost",
       "destructive",
       "link",
@@ -217,19 +216,6 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     expect(hasOwnBorder(classes.join(" "))).toBe(false);
   });
 
-  it("US-QS-32 · SG-BTN-01 outline is a deprecated alias with exactly the tinted look", () => {
-    render(
-      <>
-        <Button variant="tinted">Mehr laden</Button>
-        <Button variant="outline">Mehr laden alt</Button>
-      </>,
-    );
-    const tinted = screen.getByRole("button", { name: "Mehr laden" }).className.split(/\s+/);
-    const outline = screen.getByRole("button", { name: "Mehr laden alt" }).className.split(/\s+/);
-    expect(outline.slice().sort()).toEqual(tinted.slice().sort());
-    expect(hasOwnBorder(outline.join(" "))).toBe(false);
-  });
-
   it("US-QS-32 · SG-BTN-01 no button variant draws a border of its own", () => {
     for (const variant of [
       "default",
@@ -237,7 +223,6 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
       "tinted",
       "plain",
       "destructive-plain",
-      "outline",
     ] as const) {
       render(<Button variant={variant}>{`v-${variant}`}</Button>);
       const cls = screen.getByRole("button", { name: `v-${variant}` }).className;
