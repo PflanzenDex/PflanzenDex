@@ -93,6 +93,10 @@ Rules with no automatic primary check: the feel of drag and momentum, the percei
 | #2350 seed gap fails for a non-layout reason | the judge reports a data failure as a layout rule (also #2427 "title") | P-R: a seed precondition check that says "seed gap" and is not baselinable             |
 | #2411 red locally, green in CI               | different Chromium build and fonts, fixed 400 ms pause                 | P-D: one pinned environment, fonts awaited, quiet-DOM wait                             |
 
+## Owner decision (2026-11-22)
+
+All six proposals are accepted (P-D, P-L, P-R, P-S, P-B, P-V). Order: P-D and P-L first, then P-R and P-S, then P-B and P-V; all before the component tickets #2418 to #2422. Tickets: P-D and P-L one each (P1), P-R with P-S (P2), P-B with P-V (P2); each names its finding for E-30 and refs #2425. The layout fix (the two 2026-11-06 spikes in one folder) is accepted.
+
 ## Proposals (owner decisions)
 
 Each is a later ticket; none is in this PR. Gate-file changes are owner-merge (US-QG-07).
