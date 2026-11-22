@@ -80,7 +80,7 @@ function EndConfirm(props: {
         >
           {tx("friendEnd.yes")}
         </Button>
-        <Button type="button" size="touch" variant="outline" onClick={() => closeLayer()}>
+        <Button type="button" size="touch" variant="plain" onClick={() => closeLayer()}>
           {tx("friendEnd.no")}
         </Button>
       </span>

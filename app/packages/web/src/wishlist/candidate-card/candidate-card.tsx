@@ -100,7 +100,7 @@ export function CandidateCard(props: {
       {onBuy && (
         <Button
           type="button"
-          variant="outline"
+          variant="tinted"
           size="touch"
           className="mt-2 rounded-full"
           disabled={props.busy === true}

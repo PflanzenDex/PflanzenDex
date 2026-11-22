@@ -9,9 +9,10 @@ import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/d
 /** A count that is still loading, failed to load, or is known (P-10); calm mode passes `hidden` (US-ACH-08). */
 export type TileCount = number | "loading" | "error" | "hidden";
 
-// Neutral like every count (US-QS-32, SG-COLOR-02): the card colour and foreground text, no green outline.
+// Neutral like every count (US-QS-32, SG-COLOR-02): the card colour and foreground text, no green fill or outline. The tile is
+// a ghost button (neutral, no border): a tile that navigates is a row, not a tinted or plain action (SG-BTN-01).
 const TILE =
-  "h-auto min-h-16 w-full flex-col items-start justify-center gap-0.5 rounded-card border-transparent bg-card p-3 text-left text-foreground hover:bg-muted hover:text-foreground";
+  "h-auto min-h-16 w-full flex-col items-start justify-center gap-0.5 rounded-card bg-card p-3 text-left text-foreground hover:bg-muted hover:text-foreground";
 
 function CountText({ count }: { count: TileCount }) {
   if (count === "hidden") return null;
@@ -52,7 +53,7 @@ export function LayerTile(props: { id: string; name: string; count?: TileCount }
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="ghost"
       className={TILE}
       aria-haspopup="dialog"
       aria-expanded={open}
@@ -69,7 +70,7 @@ export function LayerTile(props: { id: string; name: string; count?: TileCount }
  */
 export function LinkTile(props: { to: string; name: string; count?: TileCount; note?: string }) {
   return (
-    <Button asChild variant="outline" className={TILE}>
+    <Button asChild variant="ghost" className={TILE}>
       <Link to={props.to}>
         <Face name={props.name} {...(props.count !== undefined ? { count: props.count } : {})} />
         <NavNote text={props.note} />
@@ -88,8 +89,8 @@ export function LayerRow(props: { id: string; name: string; state: ReactNode }) 
   return (
     <Button
       type="button"
-      variant="outline"
-      className="h-auto min-h-12 w-full justify-start gap-3 rounded-card border-transparent bg-card px-3 py-2 text-left text-foreground hover:bg-muted hover:text-foreground"
+      variant="ghost"
+      className="h-auto min-h-12 w-full justify-start gap-3 rounded-card bg-card px-3 py-2 text-left text-foreground hover:bg-muted hover:text-foreground"
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}

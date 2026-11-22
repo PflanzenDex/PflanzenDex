@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import type { SharedSpecimen } from "@pflanzendex/core";
+import { filledIn, hasOwnBorder, isFilled, isPlain } from "@/app/tests/buttons/button-roles";
 import table from "../../social.de.json";
 import { SharingPanel, sharingChoice } from "./sharing-panel";
 
@@ -70,5 +71,39 @@ describe("US-QS-32 · US-SOZ-04 one list of shared fields, true to the whitelist
       { id: "b", speciesId: "s", name: "Aloe – B", status: "plant" as const },
     ];
     expect(sharingChoice(specimens, [])).toBe("0 von 2 Pflanzen geteilt");
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the bulk actions of the sharing layer are plain, its question has one filled button", () => {
+  const specimens = [{ id: "a", speciesId: "s", name: "Aloe – A", status: "plant" as const }];
+  const show = () =>
+    render(
+      <MemoryRouter>
+        <SharingPanel
+          specimens={specimens}
+          shared={[]}
+          busy={false}
+          onSet={vi.fn()}
+          onSetAll={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+  it("US-QS-32 · SG-BTN-01 'Alle teilen' and 'Alle zurückziehen' are plain buttons without a border", () => {
+    show();
+    for (const name of ["Alle teilen", "Alle zurückziehen"]) {
+      const b = screen.getByRole("button", { name });
+      expect(isPlain(b), name).toBe(true);
+      expect(hasOwnBorder(b), name).toBe(false);
+    }
+    expect(filledIn(document.body)).toHaveLength(0);
+  });
+
+  it("US-QS-32 · SG-BTN-02 the question holds the one filled 'Ja, alle teilen' and a plain 'Abbrechen'", async () => {
+    show();
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
+    expect(isFilled(screen.getByRole("button", { name: "Ja, alle teilen" }))).toBe(true);
+    expect(isPlain(screen.getByRole("button", { name: "Abbrechen" }))).toBe(true);
+    expect(filledIn(document.body)).toHaveLength(1);
   });
 });

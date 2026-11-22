@@ -3,6 +3,13 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  filledIn,
+  hasOwnBorder,
+  isFilled,
+  isPlain,
+  isTinted,
+} from "@/app/tests/buttons/button-roles";
 import { MatchPage } from "./match";
 
 const response = (status: number, body: unknown) =>
@@ -684,5 +691,68 @@ describe("US-QS-32 · SG-TYPE-04 at 200 % text the match deck scrolls as a whole
     await current();
     const row = screen.getByRole("button", { name: /^Ablehnen:/ }).closest("div.border-t");
     expect(row?.className).toContain("tall-window:sticky");
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the match deck has three button styles and no outline", () => {
+  it("US-QS-32 · SG-BTN-02 the decision row has one filled 'Anfragen', a tinted 'Später' and a plain 'Ablehnen', and 'Rückgängig' is plain", async () => {
+    server([card(1), card(2)]);
+    open();
+    await current();
+    const no = screen.getByRole("button", { name: /^Ablehnen:/ });
+    const later = screen.getByRole("button", { name: /^Später:/ });
+    const yes = screen.getByRole("button", { name: /^Anfragen:/ });
+    expect(isPlain(no)).toBe(true);
+    expect(isTinted(later)).toBe(true);
+    expect(isFilled(yes)).toBe(true);
+    expect([no, later, yes].some(hasOwnBorder)).toBe(false);
+    expect(filledIn(document.body)).toEqual([yes]);
+    await press(/^Ablehnen:/);
+    await screen.findByRole("heading", { name: "Echte Aloe 2" });
+    const undo = screen.getByRole("button", { name: "Rückgängig" });
+    expect(isPlain(undo)).toBe(true);
+    expect(hasOwnBorder(undo)).toBe(false);
+  });
+
+  it("US-QS-32 · SG-BTN-01 the extra confirmation of a both-ways card has a filled 'Mit … anfragen', a tinted 'Ohne Gegengabe anfragen' and a plain 'Abbrechen'", async () => {
+    server([bothCard(1), card(2)]);
+    open();
+    await current();
+    await press(/^Anfragen:/);
+    const withOffer = await screen.findByRole("button", { name: "Mit Echeverie anfragen" });
+    const without = screen.getByRole("button", { name: "Ohne Gegengabe anfragen" });
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    expect(isFilled(withOffer)).toBe(true);
+    expect(isTinted(without)).toBe(true);
+    expect(isPlain(cancel)).toBe(true);
+    expect([withOffer, without, cancel].some(hasOwnBorder)).toBe(false);
+  });
+
+  it("US-QS-32 · SG-BTN-02 in the lists of answers a row's buttons are plain, the one of a list is tinted, none is filled", async () => {
+    server([card(2)], undefined, [
+      entry(1, "no"),
+      entry(3, "later"),
+      entry(5, "no", "requested"),
+      entry(7, "later", "unavailable"),
+    ]);
+    open();
+    await current();
+    const lists = [
+      within(screen.getByRole("region", { name: /^Später ansehen/ })),
+      within(screen.getByRole("region", { name: /^Abgelehnt/ })),
+    ];
+    const rowButtons = lists.flatMap((list) => [
+      ...list.queryAllByRole("link", { name: /^Anfrage ansehen: / }),
+      ...list.queryAllByRole("button", { name: /^(Wieder ansehen|Aus der Liste entfernen)/ }),
+    ]);
+    expect(rowButtons).toHaveLength(4);
+    for (const b of rowButtons) {
+      expect(isPlain(b), b.textContent ?? "").toBe(true);
+      expect(hasOwnBorder(b)).toBe(false);
+    }
+    const showLater = lists[0]?.getByRole("button", { name: "Diese Karten jetzt ansehen" });
+    expect(showLater && isTinted(showLater)).toBe(true);
+    expect(filledIn(screen.getByRole("region", { name: /^Abgelehnt/ }))).toEqual([]);
+    expect(filledIn(screen.getByRole("region", { name: /^Später ansehen/ }))).toEqual([]);
   });
 });

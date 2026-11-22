@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/app/tests/buttons/button-roles";
 import type { SharedSpecimen } from "@pflanzendex/core";
 import { createQueryClient } from "../../../shared/data";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
@@ -503,5 +504,28 @@ describe("US-QS-32 ending a friendship is in the menu of the friend's collection
     ).toBeTruthy();
     expect(client.getQueryData(["social", "friend-collection", "f1"])).toBeUndefined();
     expect(client.getQueryData(["social", "friend-equipment", "f1"])).toBeUndefined();
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the buttons of a friend's collection are tinted or plain, none has a border", () => {
+  it("US-QS-32 · SG-BTN-02 each card's 'Auf die Wunschliste' is tinted, never filled, and 'Geräte' in the bar is plain", async () => {
+    show({ friend: { name: "Anna" }, cards: CARDS });
+    await screen.findByRole("list", { name: "Sammlung von Anna" });
+    const wish = screen.getByRole("button", { name: "Aloe vera auf die Wunschliste setzen" });
+    expect(isTinted(wish)).toBe(true);
+    expect(hasOwnBorder(wish)).toBe(false);
+    const devices = screen.getByRole("button", { name: "Geräte" });
+    expect(isPlain(devices)).toBe(true);
+    expect(hasOwnBorder(devices)).toBe(false);
+    expect(filledIn(document.body)).toHaveLength(0);
+  });
+
+  it("US-QS-32 · SG-BTN-03 the question to end a friendship has a red filled 'Ja, beenden' and a plain 'Abbrechen'", async () => {
+    show({ friend: { name: "Anna" }, cards: CARDS }, 200, NO_DEVICES, "/?sheet=end-friendship");
+    const yes = await screen.findByRole("button", { name: "Ja, beenden" });
+    expect(yes.className).toContain("bg-destructive");
+    const no = screen.getByRole("button", { name: "Abbrechen" });
+    expect(isPlain(no)).toBe(true);
+    expect(hasOwnBorder(no)).toBe(false);
   });
 });

@@ -2,6 +2,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { filledIn, hasOwnBorder, isFilled, isPlain } from "@/app/tests/buttons/button-roles";
 import { InvitationPage } from "./invitation-page";
 
 const token = async () => "tok";
@@ -37,6 +38,18 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+describe("US-QS-32 · SG-BTN-01 the invitation page has one filled button and a plain way out", () => {
+  it("US-QS-32 · SG-BTN-02 'Registrieren' is the one filled button; 'Abmelden' is plain, without a border", () => {
+    open();
+    const register = screen.getByRole("button", { name: "Registrieren" });
+    const signOut = screen.getByRole("button", { name: "Abmelden" });
+    expect(isFilled(register)).toBe(true);
+    expect(isPlain(signOut)).toBe(true);
+    expect(hasOwnBorder(signOut)).toBe(false);
+    expect(filledIn(document.body)).toEqual([register]);
+  });
 });
 
 describe("US-ACC-05 registration with an invitation code", () => {

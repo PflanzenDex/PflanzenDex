@@ -30,7 +30,7 @@ function Incoming(props: {
         <Button
           type="button"
           size="touch"
-          variant="secondary"
+          variant="tinted"
           disabled={props.busy}
           aria-label={`Annehmen: Anfrage von ${who}`}
           onClick={() => props.onAnswer(r.id, "accept")}
@@ -40,7 +40,7 @@ function Incoming(props: {
         <Button
           type="button"
           size="touch"
-          variant="outline"
+          variant="plain"
           disabled={props.busy}
           aria-label={`Ablehnen: Anfrage von ${who}`}
           onClick={() => props.onAnswer(r.id, "decline")}
@@ -67,7 +67,7 @@ function Outgoing({ request: r }: { request: FriendRequest }) {
  * The open requests (US-SOZ-01, US-SOZ-02), the content of the layer "Anfragen" (US-QS-20): what waits for my answer with
  * "Annehmen" and "Ablehnen", and what I sent, in pages. Before acceptance only the display name is shown, never a
  * collection (P-05). A request the other side declined shows only "nicht angenommen". Without any request the section says
- * what to do next (P-09). "Annehmen" is the quiet filled kind, so the layer keeps one primary action (DS-58).
+ * what to do next (P-09). "Annehmen" is tinted and "Ablehnen" plain: a request row holds no filled button (SG-BTN-02).
  */
 export function RequestList(props: {
   requests: OpenRequests;

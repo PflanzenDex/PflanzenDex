@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeedBlock } from "./feed-block";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { filledIn, hasOwnBorder, isTinted } from "@/app/tests/buttons/button-roles";
 import table from "../../social.de.json";
 import { FeedSkeleton } from "./feed-block.skeleton";
 
@@ -243,4 +244,19 @@ describe("US-SOZ-05 block 'Neu bei Freunden'", () => {
 describe("US-QS-14 issue 1697 · the feed show their shaped skeleton once", () => {
   it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
     expectOneLoadingStatus(<FeedSkeleton label={table["feed.loading"]} />, table["feed.loading"]));
+});
+
+describe("US-QS-32 · SG-BTN-01 the feed's actions are tinted, not outlined (owner decision 2026-11-16)", () => {
+  it("US-QS-32 · SG-BTN-01 'Filter (n)' is a tinted button without a border, and the block has no filled button", async () => {
+    server(feed([event()]));
+    render(
+      <MemoryRouter>
+        <FeedBlock api="http://api" token={token} friends={friends} />
+      </MemoryRouter>,
+    );
+    const filter = await screen.findByRole("button", { name: "Filter (0)" });
+    expect(isTinted(filter)).toBe(true);
+    expect(hasOwnBorder(filter)).toBe(false);
+    expect(filledIn(document.body)).toHaveLength(0);
+  });
 });

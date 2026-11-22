@@ -57,3 +57,21 @@ describe("US-QS-32 · SG-BTN-01 there is no outline button in Sammlung and the a
     expect(text).not.toMatch(/outline by default|everything else is outline/);
   });
 });
+
+/** The areas of FX-39 sweep 2 (issue 2206): friends and the exchange, the wishlist and the invitation page. */
+const SWEEP_2 = ["social", "swap", "wishlist", "account/invitation-page"];
+
+describe("US-QS-32 · SG-BTN-01 there is no outline button in Freunde, the exchange, the wishlist and the invitation page (FX-39 sweep 2)", () => {
+  it("US-QS-32 · SG-BTN-01 no file of social/, swap/, wishlist/ or the invitation page takes the outline look", () => {
+    const using = SWEEP_2.flatMap(sources).filter(
+      (f) => outlineButtons(readFileSync(join(root, f), "utf8")) > 0,
+    );
+    expect(using).toEqual([]);
+  });
+
+  it("US-QS-32 · SG-BTN-01 the guard sees a button of these areas but not a badge of the same variant name", () => {
+    expect(outlineButtons('<Button variant="outline" size="touch">Prüfen</Button>')).toBe(1);
+    expect(outlineButtons('<Badge variant="outline">Neu</Badge>')).toBe(0);
+    expect(SWEEP_2.flatMap(sources).length).toBeGreaterThan(30);
+  });
+});

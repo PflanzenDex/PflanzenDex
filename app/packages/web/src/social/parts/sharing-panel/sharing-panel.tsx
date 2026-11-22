@@ -98,7 +98,7 @@ function BulkBar(props: { count: number; busy: boolean; onSetAll: (share: boolea
           >
             {ask ? "Ja, alle teilen" : "Ja, alle zurückziehen"}
           </Button>
-          <Button type="button" size="touch" variant="outline" onClick={() => setAsk(null)}>
+          <Button type="button" size="touch" variant="plain" onClick={() => setAsk(null)}>
             Abbrechen
           </Button>
         </span>
@@ -109,7 +109,7 @@ function BulkBar(props: { count: number; busy: boolean; onSetAll: (share: boolea
       <Button
         type="button"
         size="touch"
-        variant="outline"
+        variant="plain"
         disabled={props.busy}
         onClick={() => setAsk(true)}
       >
@@ -118,7 +118,7 @@ function BulkBar(props: { count: number; busy: boolean; onSetAll: (share: boolea
       <Button
         type="button"
         size="touch"
-        variant="outline"
+        variant="plain"
         disabled={props.busy}
         onClick={() => setAsk(false)}
       >

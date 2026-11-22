@@ -3,7 +3,8 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SKELETON_DELAY_MS } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { LayerRow, LayerTile } from "./friend-tiles";
+import { hasOwnBorder, isNeutral } from "@/app/tests/buttons/button-roles";
+import { LayerRow, LayerTile, LinkTile } from "./friend-tiles";
 
 afterEach(cleanup);
 
@@ -29,12 +30,29 @@ describe("US-QS-20 the tiles of Freunde at zero (issue 1045)", () => {
 });
 
 describe("US-QS-32 the tiles of Freunde are neutral (SG-COLOR-02, SG-LIST-05)", () => {
-  it("US-QS-32 a count tile is on the card colour with foreground text and no green outline", () => {
+  it("US-QS-32 · SG-COLOR-02 a count tile is on the card colour with foreground text, no green fill and no border", () => {
     show(2);
-    const cls = screen.getByRole("button", { name: /Anfragen/ }).className;
-    expect(cls).toContain("bg-card");
-    expect(cls).toContain("border-transparent");
-    expect(cls).not.toMatch(/border-primary|text-primary/);
+    const tile = screen.getByRole("button", { name: /Anfragen/ });
+    expect(tile.className).toContain("bg-card");
+    expect(tile.className).not.toMatch(/border-primary|text-primary/);
+    expect(isNeutral(tile)).toBe(true);
+    expect(hasOwnBorder(tile)).toBe(false);
+  });
+
+  it("US-QS-32 · SG-COLOR-02 a tile that leads to a view and the row of a layer are neutral, without a border", () => {
+    render(
+      <MemoryRouter>
+        <LinkTile to="/swap" name="Tauschbörse" count={0} />
+        <LayerRow id="friends" name="Meine Freunde" state="3 Freunde" />
+      </MemoryRouter>,
+    );
+    for (const el of [
+      screen.getByRole("link", { name: /Tauschbörse/ }),
+      screen.getByRole("button", { name: /Meine Freunde/ }),
+    ]) {
+      expect(isNeutral(el)).toBe(true);
+      expect(hasOwnBorder(el)).toBe(false);
+    }
   });
 
   it("US-QS-32 a row that opens its layer is neutral too, with its state in foreground text", () => {

@@ -73,7 +73,7 @@ function WishActions(props: {
     <div className="flex min-w-0 flex-wrap items-center gap-1">
       <Button
         type="button"
-        variant="outline"
+        variant="tinted"
         size="sm"
         disabled={busy}
         aria-label={t("card.buyLabel", { title: c.title })}

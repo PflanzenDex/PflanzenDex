@@ -4,6 +4,13 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Candidate } from "@pflanzendex/core";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import {
+  classesOf,
+  filledIn,
+  hasOwnBorder,
+  isPlain,
+  isTinted,
+} from "@/app/tests/buttons/button-roles";
 import { CandidateCard } from "./candidate-card";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
@@ -363,5 +370,41 @@ describe("US-WUN-05 the card's own 'Verwerfen' asks in its place and gives the f
     const trigger = screen.getByRole("button", { name: /^Verwerfen: / });
     await waitFor(() => expect(document.activeElement).toBe(trigger));
     expect(onDiscard).not.toHaveBeenCalled();
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the buttons of a wish card are tinted or plain, none has a border", () => {
+  afterEach(cleanup);
+
+  it("US-QS-32 · SG-BTN-02 the card's one tinted button is 'Gekauft'; 'Bild sichern' and 'Verwerfen' are plain; no button is filled", () => {
+    const { container } = render(
+      <CandidateCard
+        c={mockCandidate({ image: image(false) })}
+        rank={1}
+        photoAccess={ACCESS}
+        onBuy={vi.fn()}
+        onDiscard={vi.fn()}
+        onStoreImage={vi.fn()}
+      />,
+    );
+    const bought = screen.getByRole("button", { name: /^Gekauft: / });
+    const store = screen.getByRole("button", { name: /^Bild sichern: / });
+    const discard = screen.getByRole("button", { name: /^Verwerfen: / });
+    expect(isTinted(bought)).toBe(true);
+    expect(isPlain(store)).toBe(true);
+    expect(isPlain(discard)).toBe(true);
+    expect([bought, store, discard].some(hasOwnBorder)).toBe(false);
+    expect(filledIn(container)).toEqual([]);
+  });
+
+  it("US-QS-32 · SG-BTN-03 the question 'Wirklich verwerfen?' has a red filled 'Ja, verwerfen' and a plain 'Abbrechen'", async () => {
+    render(<CandidateCard c={mockCandidate()} rank={1} onDiscard={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: /^Verwerfen: / }));
+    expect(classesOf(screen.getByRole("button", { name: /^Ja, verwerfen: / }))).toContain(
+      "bg-destructive",
+    );
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    expect(isPlain(cancel)).toBe(true);
+    expect(hasOwnBorder(cancel)).toBe(false);
   });
 });

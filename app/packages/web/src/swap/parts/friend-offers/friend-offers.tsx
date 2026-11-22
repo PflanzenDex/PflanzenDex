@@ -63,7 +63,7 @@ function Card(props: {
           <Button
             type="button"
             size="touch"
-            variant="outline"
+            variant="tinted"
             aria-label={t("friends.request", { title: title(o) })}
             onClick={props.onOpen}
           >

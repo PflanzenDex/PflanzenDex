@@ -88,7 +88,7 @@ function DuplicateRow({ w, repair }: { w: DuplicateWish; repair: Repair }) {
         ) : (
           <Button
             type="button"
-            variant="outline"
+            variant="destructive-plain"
             size="touch"
             disabled={repair.running}
             aria-label={`Löschen: ${w.title}`}
@@ -118,7 +118,7 @@ function Confirm(props: { w: DuplicateWish; repair: Repair; onCancel: () => void
         >
           Ja, löschen
         </Button>
-        <Button type="button" variant="outline" size="touch" onClick={props.onCancel}>
+        <Button type="button" variant="plain" size="touch" onClick={props.onCancel}>
           Abbrechen
         </Button>
       </div>

@@ -5,6 +5,13 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FriendOffers } from "./friend-offers";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import {
+  filledIn,
+  hasOwnBorder,
+  isFilled,
+  isPlain,
+  isTinted,
+} from "@/app/tests/buttons/button-roles";
 import table from "../../swap.de.json";
 import { FriendOffersSkeleton } from "./friend-offers.skeleton";
 
@@ -188,6 +195,34 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
     show();
     expect(await screen.findByText("Angefragt")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Pflanze anfragen:/ })).toBeNull();
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the offers of friends have no outline button", () => {
+  it("US-QS-32 · SG-BTN-02 an offer's one button 'Pflanze anfragen' is tinted, and no button of the list is filled", async () => {
+    server({ offers: [offer(), offer({ offerId: "o2", specimenName: "Zweite" })] });
+    show();
+    const list = await screen.findByRole("list", { name: "Angebote von Freunden" });
+    const requests = within(list).getAllByRole("button", { name: /^Pflanze anfragen: / });
+    expect(requests).toHaveLength(2);
+    for (const b of requests) {
+      expect(isTinted(b)).toBe(true);
+      expect(hasOwnBorder(b)).toBe(false);
+    }
+    expect(filledIn(list)).toEqual([]);
+  });
+
+  it("US-QS-32 · SG-BTN-01 the open request has a filled 'Anfrage senden' and a plain 'Abbrechen'", async () => {
+    server();
+    show();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Pflanze anfragen: Echte Aloe" }),
+    );
+    const send = screen.getByRole("button", { name: "Anfrage senden" });
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    expect(isFilled(send)).toBe(true);
+    expect(isPlain(cancel)).toBe(true);
+    expect(hasOwnBorder(cancel)).toBe(false);
   });
 });
 

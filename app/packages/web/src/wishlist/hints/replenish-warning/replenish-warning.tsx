@@ -17,7 +17,7 @@ export function ReplenishWarning({ replenishment }: { replenishment: Replenishme
           <li key={z.zoneId} className="flex flex-wrap items-center gap-2 font-semibold">
             {z.text}
             {replenishment.actions.discover ? (
-              <Button asChild variant="outline" size="touch">
+              <Button asChild variant="tinted" size="touch">
                 <Link
                   to={`/discover?view=suggestions&zone=${z.zoneNumber}`}
                 >{`Entdecken für ${zoneLabel(z.name)}`}</Link>

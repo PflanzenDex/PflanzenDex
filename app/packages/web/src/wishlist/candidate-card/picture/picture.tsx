@@ -129,7 +129,7 @@ export function Picture(props: {
       {onStoreImage && (
         <Button
           type="button"
-          variant="outline"
+          variant="plain"
           size="touch"
           disabled={props.busy}
           aria-label={t("picture.storeLabel", { title: c.title })}
