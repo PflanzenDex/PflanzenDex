@@ -14,6 +14,7 @@ const Table = React.forwardRef<HTMLTableElement, TableProps>(
     <div
       role="region"
       aria-label={containerLabel}
+      data-scroll-x="table"
       tabIndex={0}
       className={cn(
         "relative w-full overflow-x-auto rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",

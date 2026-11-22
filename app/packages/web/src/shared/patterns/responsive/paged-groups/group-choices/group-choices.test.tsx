@@ -102,7 +102,8 @@ describe("US-QS-19 · US-QS-15 group choices: chips on one or two lines, otherwi
     show(choicesOf(3));
     const row = screen.getByRole("group", { name: "Standorte" });
     expect(screen.getAllByRole("button")).toHaveLength(3);
-    expect(row.hasAttribute("data-scroll-x")).toBe(false);
+    // The chip row is the marked `chips` region of the one-screen gate (DS-63, issue 2417); it wraps, so it does not scroll.
+    expect(row.getAttribute("data-scroll-x")).toBe("chips");
     expect(row.className).not.toContain("overflow-x-auto");
     expect(row.className).toContain("flex-wrap");
   });
