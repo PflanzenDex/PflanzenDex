@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import type { TreatmentListRow } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 import { Row } from "./treatment-row";
 
 afterEach(cleanup);
@@ -59,5 +60,15 @@ describe("US-QS-32 a treatment row wraps its action beside the name (issue 2322,
       expect.arrayContaining(["shrink-0", "ml-auto", "max-w-full"]),
     );
     expect(screen.getByRole("button", { name: /Rückgängig/ })).toBeTruthy();
+  });
+});
+
+describe("US-QS-32 · SG-BTN-02 a treatment row acts in place with one tinted button (FX-39 sweep 3)", () => {
+  it("US-QS-32 · SG-BTN-02 'Abhaken' is the one tinted button of the row, without a border, and the row has no filled button", () => {
+    const { container } = render(<Row row={row} running={false} onDone={vi.fn()} host={false} />);
+    const tick = screen.getByRole("button", { name: /als erledigt abhaken/ });
+    expect(isTinted(tick)).toBe(true);
+    expect(hasOwnBorder(tick)).toBe(false);
+    expect(filledIn(container)).toEqual([]);
   });
 });

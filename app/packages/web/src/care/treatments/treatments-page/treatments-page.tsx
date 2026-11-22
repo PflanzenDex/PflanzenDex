@@ -90,7 +90,7 @@ function TreatmentsList(props: { api: string; token: Token; host?: boolean; onPl
             {canPlan && (
               <Button
                 type="button"
-                variant="outline"
+                variant="tinted"
                 className="self-start rounded-full"
                 onClick={plan}
               >

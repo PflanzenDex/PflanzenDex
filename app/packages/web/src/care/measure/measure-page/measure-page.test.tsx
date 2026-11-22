@@ -10,6 +10,7 @@ import type { GrowthMoments } from "@/achievements";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { MeasurePage } from "./measure-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { hasOwnBorder, isPlain } from "@/shared/ui/button/button-roles";
 
 /** The growth moments the page reads; a test sets them before it saves (US-ACH-05, issue 1644). */
 const growth = vi.hoisted(() => ({ moments: null as GrowthMoments | null }));
@@ -387,6 +388,18 @@ describe("US-WAC-01 Seite Messen", () => {
     await screen.findByText(UNKNOWN_NOTE);
     await userEvent.type(field, "4");
     expect(screen.queryByText(UNKNOWN_NOTE)).toBeNull();
+  });
+
+  it("US-QS-32 · SG-BTN-01 the growth note's Schließen is a plain button without a border (a dismiss, FX-39 sweep 3)", async () => {
+    fakeServer();
+    growth.moments = UNKNOWN_GROWTH;
+    show();
+    await userEvent.type(await screen.findByLabelText(/Messwert/), "12,5");
+    await userEvent.click(screen.getByRole("button", { name: "Messung sichern" }));
+    await screen.findByText(UNKNOWN_NOTE);
+    const close = screen.getByRole("button", { name: "Schließen" });
+    expect(isPlain(close)).toBe(true);
+    expect(hasOwnBorder(close)).toBe(false);
   });
 
   it("US-QS-15 · a save with Enter keeps the focus in Messwert, and the note sits below that field, not over it (issue 1644)", async () => {

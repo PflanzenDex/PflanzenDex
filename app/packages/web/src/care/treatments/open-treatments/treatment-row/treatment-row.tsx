@@ -67,7 +67,7 @@ export function Row(props: {
       ) : (
         <Button
           type="button"
-          variant="outline"
+          variant="tinted"
           className={ROW_ACTION}
           aria-disabled={props.running || undefined}
           aria-label={`${row.reason} bei ${row.specimenName} als erledigt abhaken`}

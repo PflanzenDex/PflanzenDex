@@ -33,7 +33,7 @@ function AddButton({ kind }: { kind: ListKind }) {
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="tinted"
       size="icon"
       aria-haspopup="dialog"
       aria-label={kind === "zones" ? t("lists.newZone") : t("lists.newLocation")}

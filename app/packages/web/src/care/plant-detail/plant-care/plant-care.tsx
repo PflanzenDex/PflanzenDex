@@ -148,7 +148,7 @@ function PlanTreatment({
       ) : null}
       <Button
         type="button"
-        variant="outline"
+        variant={open ? "plain" : "tinted"}
         className="self-start"
         aria-expanded={open}
         onClick={() => setOpen(!open)}

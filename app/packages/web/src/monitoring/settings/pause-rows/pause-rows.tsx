@@ -40,7 +40,7 @@ export function PauseRow(props: {
       </div>
       <Button
         type="button"
-        variant="outline"
+        variant="tinted"
         size="sm"
         aria-label={`${OCCASION_TEXT[o]}: eine Woche pausieren`}
         onClick={() => props.onChange(o, addDays(localToday(currentTimeZone()), 7))}

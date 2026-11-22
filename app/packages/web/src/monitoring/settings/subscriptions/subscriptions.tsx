@@ -40,7 +40,7 @@ function List(props: { api: string; token: Token; endpoints: readonly string[] }
             >
               <span>Browser über {host(endpoint)}</span>
               <Button
-                variant="outline"
+                variant="tinted"
                 size="sm"
                 disabled={write.running}
                 aria-label={`Browser über ${host(endpoint)} abmelden`}

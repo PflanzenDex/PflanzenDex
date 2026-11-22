@@ -37,7 +37,7 @@ export function WaterAction(props: {
     <Button
       ref={button}
       type="button"
-      variant="outline"
+      variant="tinted"
       aria-disabled={write.running || undefined}
       className={BUSY_LOOK}
       aria-label={t("label", { name: specimen.name })}

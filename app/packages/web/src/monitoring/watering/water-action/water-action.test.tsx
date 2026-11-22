@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 import { WaterAction } from "./water-action";
 
 afterEach(() => {
@@ -230,5 +231,14 @@ describe("US-QS-32 the undo takes the day of its write and says when nothing was
       specimenIds: ["e1"],
       date: "2026-11-19",
     });
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the watering button of a plant is tinted, not outlined (FX-39 sweep 3)", () => {
+  it("US-QS-32 · SG-BTN-01 'Gießen' is a tinted button without a border", () => {
+    show();
+    const button = screen.getByRole("button", { name: "Gießen: Aloe" });
+    expect(isTinted(button)).toBe(true);
+    expect(hasOwnBorder(button)).toBe(false);
   });
 });
