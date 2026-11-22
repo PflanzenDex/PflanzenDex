@@ -2,6 +2,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { isPlain, isTinted } from "@/shared/ui/button/button-roles";
 import { LocationForm } from "./locations-view";
 
 afterEach(cleanup);
@@ -33,5 +34,32 @@ describe("US-QS-32 · issue 1960 the light zone of a location", () => {
     expect(screen.getByRole("option", { name: "Keine Lichtzone" })).toBeTruthy();
     const hint = screen.getByText("Ohne Lichtzone erscheint der Standort in den Hinweisen.");
     expect((select.getAttribute("aria-describedby") ?? "").split(" ")).toContain(hint.id);
+  });
+});
+
+describe("US-QS-32 · issue 2454 the cancel of the location form (SG-BTN-06)", () => {
+  it("US-QS-32 · issue 2454 'Abbrechen' of the new location form is plain, not tinted", () => {
+    render(<LocationForm zones={[]} onSave={vi.fn(async () => null)} onCancel={vi.fn()} />);
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    expect(isPlain(cancel)).toBe(true);
+    expect(isTinted(cancel)).toBe(false);
+  });
+
+  it("US-QS-32 · issue 2454 'Abbrechen' of the edit location form is plain, not tinted, and still closes the form", async () => {
+    const onCancel = vi.fn();
+    const start = { id: "l1", name: "Fensterbank", lightZoneId: "z1", kind: "indoor" as const };
+    render(
+      <LocationForm
+        zones={[zone]}
+        start={start}
+        onSave={vi.fn(async () => null)}
+        onCancel={onCancel}
+      />,
+    );
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    expect(isPlain(cancel)).toBe(true);
+    expect(isTinted(cancel)).toBe(false);
+    await userEvent.click(cancel);
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });
