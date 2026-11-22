@@ -11,7 +11,7 @@ import {
   isFilled,
   isPlain,
   isTinted,
-} from "@/app/tests/buttons/button-roles";
+} from "@/shared/ui/button/button-roles";
 import table from "../../swap.de.json";
 import { FriendOffersSkeleton } from "./friend-offers.skeleton";
 

@@ -10,7 +10,7 @@ import {
   hasOwnBorder,
   isPlain,
   isTinted,
-} from "@/app/tests/buttons/button-roles";
+} from "@/shared/ui/button/button-roles";
 import { CandidateCard } from "./candidate-card";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 

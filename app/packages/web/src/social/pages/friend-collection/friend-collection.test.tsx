@@ -5,7 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/app/tests/buttons/button-roles";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
 import type { SharedSpecimen } from "@pflanzendex/core";
 import { createQueryClient } from "../../../shared/data";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";

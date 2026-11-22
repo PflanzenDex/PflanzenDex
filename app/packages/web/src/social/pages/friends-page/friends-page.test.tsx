@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router";
 import { errorText } from "@/shared/lib/error-text";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/app/tests/buttons/button-roles";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
 import { FriendsPage } from "./friends-page";
 
 beforeAll(() => {

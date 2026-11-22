@@ -9,7 +9,7 @@ import {
   isFilled,
   isPlain,
   isTinted,
-} from "@/app/tests/buttons/button-roles";
+} from "@/shared/ui/button/button-roles";
 import { MatchPage } from "./match";
 
 const response = (status: number, body: unknown) =>
