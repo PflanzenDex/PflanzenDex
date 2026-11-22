@@ -128,6 +128,19 @@ describe("US-QS-32 · F-0160 · SG-FEED-01 the result of an assignment shows at 
     expect(line().textContent).toBe("");
   });
 
+  it("US-QS-32 · F-0160 · P-10 'Nicht mehr zugeordnet' depends on an empty choice only: a place the data no longer lists reads 'Zugeordnet: <label of the choice>'", async () => {
+    const a = { busy: false, onTarget: vi.fn(async () => true) };
+    render(<SensorsView view={view()} actions={a} />);
+    const select = screen.getByRole("combobox", { name: "Zugeordnet zu Feuchtesensor" });
+    // The data changed under the open list: the option is still there, its id is no longer in the lists.
+    const gone = document.createElement("option");
+    gone.value = "specimen:gone";
+    gone.textContent = "Geist";
+    select.appendChild(gone);
+    await userEvent.setup().selectOptions(select, "specimen:gone");
+    await waitFor(() => expect(line().textContent).toBe("Zugeordnet: Geist"));
+  });
+
   it("US-QS-32 · F-0160 the line names a location by its name", async () => {
     const a = { busy: false, onTarget: vi.fn(async () => true) };
     render(<SensorsView view={view()} actions={a} />);

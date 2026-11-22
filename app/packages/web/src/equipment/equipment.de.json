@@ -30,6 +30,7 @@
   "sensors.assign": "Zugeordnet zu",
   "sensors.unassigned": "Nicht zugeordnet",
   "sensors.placed": "Zugeordnet: {name}",
+  "sensors.placedNameless": "Zugeordnet",
   "sensors.cleared": "Nicht mehr zugeordnet",
   "sensors.groupPlants": "Pflanzen",
   "sensors.groupLocations": "Standorte",

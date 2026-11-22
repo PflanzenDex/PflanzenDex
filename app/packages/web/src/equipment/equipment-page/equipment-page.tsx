@@ -14,16 +14,15 @@ import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header
 const KEY = ["equipment", "list"] as const;
 type Token = () => Promise<string | undefined>;
 /**
- * A refusal belongs to the layer it happened in: it is gone when that layer closes or another one opens, so it never
- * stands in a later sheet or on the page behind (F-0160, P-10).
+ * A refusal belongs to the layer it happened in: it is gone for good when that layer closes or another one opens, so it never
+ * stands in a later sheet, on the page behind or when the same layer is opened again (F-0160, P-10). A new refusal is told by
+ * `failures`, not by the error object: a repeated refusal can be the same object.
  */
-function useRefusalOf(error: ApiError | null, sheet: string | null): ApiError | null {
-  const [born, setBorn] = useState<{ error: ApiError | null; sheet: string | null }>({
-    error: null,
-    sheet: null,
-  });
-  if (born.error !== error) setBorn({ error, sheet });
-  return error !== null && born.sheet === sheet ? error : null;
+function useRefusalOf(error: ApiError | null, failures: number, sheet: string | null) {
+  const [born, setBorn] = useState({ failures, sheet, gone: false });
+  if (born.failures !== failures) setBorn({ failures, sheet, gone: false });
+  else if (!born.gone && born.sheet !== sheet) setBorn({ ...born, gone: true });
+  return born.failures === failures && !born.gone ? error : null;
 }
 
 /**
@@ -40,8 +39,8 @@ function Body(props: { data: EquipmentData; api: string; token: Token; onWritten
   const sheet = useSearchParams()[0].get("sheet");
   const lamps = useLampActions(props.api, props.token, props.onWritten, props.data.sharing);
   const wishes = useWishActions(props.api, props.token, props.onWritten, fill);
-  const lampError = useRefusalOf(lamps.error, sheet);
-  const wishError = useRefusalOf(wishes.error, sheet);
+  const lampError = useRefusalOf(lamps.error, lamps.failures, sheet);
+  const wishError = useRefusalOf(wishes.error, wishes.failures, sheet);
   const outcome = (
     <>
       <LampOutcome error={lampError} />

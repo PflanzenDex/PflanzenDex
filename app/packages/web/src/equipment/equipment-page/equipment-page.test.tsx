@@ -759,6 +759,61 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(within(wishes).queryByText(/Zuordnung|Zugeordnet/)).toBeNull();
   });
 
+  it("US-QS-32 · F-0160 · P-10 a refusal is gone for good when its layer closes: opening the same layer again does not bring it back", async () => {
+    const fetchFn = fakeServer([], undefined, {
+      zones: [zone({ lamps: [lampOf()] }), zone({ zoneId: "z3", name: "Zone 3", lamps: [] })],
+      unassigned: [],
+    });
+    const base = fetchFn.getMockImplementation();
+    fetchFn.mockImplementation(async (url, init) =>
+      new URL(String(url)).pathname === "/equipment/l1/zone"
+        ? response(404, { error: { code: "equipment.not_found", text: "raw" } })
+        : (base?.(url, init) ?? response(404, {})),
+    );
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
+    const lamps = await screen.findByRole("dialog", { name: "Lampen und Zonen" });
+    await userEvent.selectOptions(await within(lamps).findByLabelText("Lichtzone"), "z3");
+    expect(await within(lamps).findByRole("alert")).toBeTruthy();
+    fireEvent.keyDown(lamps, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await userEvent.click(await screen.findByRole("button", { name: /^Lampen/ }));
+    const again = await screen.findByRole("dialog", { name: "Lampen und Zonen" });
+    expect(within(again).queryByRole("alert")).toBeNull();
+  });
+
+  it("US-QS-32 · F-0160 · P-10 the same refusal object twice (the network is down) shows again in the next layer: a new refusal is told by its count, not by its object", async () => {
+    const sensors = {
+      sensors: [{ id: "s1", name: "Bodenfeuchte-Sensor", status: "active", target: null }],
+      specimens: [{ id: "p1", name: "Aloe" }],
+      locations: [],
+    };
+    const zones = {
+      zones: [zone({ lamps: [lampOf()] }), zone({ zoneId: "z3", name: "Zone 3", lamps: [] })],
+      unassigned: [],
+    };
+    const fetchFn = fakeServer([], undefined, zones);
+    const base = fetchFn.getMockImplementation();
+    // A write that cannot reach the server answers with one shared error object (`NETWORK_ERROR`).
+    fetchFn.mockImplementation(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (init?.method === "POST") throw new TypeError("Failed to fetch");
+      return path === "/equipment/sensors"
+        ? response(200, sensors)
+        : (base?.(url, init) ?? response(404, {}));
+    });
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
+    const lamps = await screen.findByRole("dialog", { name: "Lampen und Zonen" });
+    await userEvent.selectOptions(await within(lamps).findByLabelText("Lichtzone"), "z3");
+    expect(await within(lamps).findByRole("alert")).toBeTruthy();
+    fireEvent.keyDown(lamps, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.queryByRole("alert")).toBeNull();
+    await userEvent.click(await screen.findByRole("button", { name: /^Sensoren/ }));
+    const layer = await screen.findByRole("dialog", { name: "Sensoren" });
+    await userEvent.selectOptions(await within(layer).findByRole("combobox"), "specimen:p1");
+    expect(await within(layer).findByRole("alert")).toBeTruthy();
+  });
+
   it("US-EQU-02 equipment status change offers Rückgängig which restores the previous status (P-10)", async () => {
     const fetchFn = fakeServer([], undefined, {
       zones: [zone({ lamps: [lampOf()] })],

@@ -57,5 +57,5 @@ export function useWishActions(
         entityKey("equipment-wish", wish.id, "discard"),
       ),
   };
-  return { actions, error: write.error };
+  return { actions, error: write.error, failures: write.failures };
 }

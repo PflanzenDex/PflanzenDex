@@ -163,17 +163,18 @@ export function useLampActions(
   shared: readonly { equipmentId: string; note: string | null }[],
 ) {
   const say = useSay();
-  const quiet = useRef(false);
+  const quiet = useRef(0);
   const write = useWriteAction(token, onWritten, (message, kind) => {
-    if (kind !== "error" && !quiet.current) say(message);
+    if (kind !== "error" && quiet.current === 0) say(message);
   });
   const toast = useToast();
+  // A depth, not a flag: a run that ends must not end the silence of another one that is still going.
   const toasted: Toasted = async (run) => {
-    quiet.current = true;
+    quiet.current += 1;
     try {
       await run();
     } finally {
-      quiet.current = false;
+      quiet.current -= 1;
     }
   };
   return {
@@ -184,6 +185,7 @@ export function useLampActions(
     sensors: sensorWrites(api, write),
     sharing: sharingWrites(api, write, new Map(shared.map((r) => [r.equipmentId, r.note]))),
     error: write.error,
+    failures: write.failures,
   };
 }
 

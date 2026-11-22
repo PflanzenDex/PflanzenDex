@@ -40,7 +40,7 @@ function SensorCard(props: {
   view: SensorView;
   busy: boolean;
   result: { text: string; n: number } | null;
-  onAssign: (value: string) => void;
+  onAssign: (value: string, label: string) => void;
 }) {
   const { sensor: s, view, result } = props;
   const ids = useId();
@@ -58,7 +58,9 @@ function SensorCard(props: {
           aria-labelledby={`${labelId} ${nameId}`}
           value={valueOf(s.target)}
           disabled={props.busy}
-          onChange={(e) => props.onAssign(e.target.value)}
+          onChange={(e) =>
+            props.onAssign(e.target.value, e.target.selectedOptions[0]?.textContent ?? "")
+          }
         >
           <option value="">{ui("sensors.unassigned")}</option>
           <optgroup label={ui("sensors.groupPlants")}>
@@ -97,13 +99,15 @@ export function SensorsView(props: { view: SensorView; actions: SensorActions })
   // The card whose assignment was just saved, its text and a count that replays the highlight for a repeated result.
   const [placed, setPlaced] = useState<{ id: string; text: string; n: number } | null>(null);
   if (view.sensors.length === 0) return null;
-  const assign = async (s: Sensor, value: string) => {
+  // The text depends on the choice only: an empty one reads "Nicht mehr zugeordnet", any other "Zugeordnet: <the label the
+  // choice showed>", so a list that changed under the open choice never turns an assignment into a removal (P-10).
+  const assign = async (s: Sensor, value: string, label: string) => {
     const target = toTarget(value);
     if (!(await actions.onTarget(s, target))) return;
-    const name =
-      view.specimens.find((x) => x.id === target.specimenId)?.name ??
-      view.locations.find((x) => x.id === target.locationId)?.name;
-    const text = name === undefined ? ui("sensors.cleared") : ui("sensors.placed", { name });
+    const cleared = target.specimenId === null && target.locationId === null;
+    const named =
+      label === "" ? ui("sensors.placedNameless") : ui("sensors.placed", { name: label });
+    const text = cleared ? ui("sensors.cleared") : named;
     setPlaced((last) => ({ id: s.id, text, n: (last?.n ?? 0) + 1 }));
   };
   return (
@@ -116,7 +120,7 @@ export function SensorsView(props: { view: SensorView; actions: SensorActions })
             view={view}
             busy={actions.busy}
             result={placed?.id === s.id ? placed : null}
-            onAssign={(value) => void assign(s, value)}
+            onAssign={(value, label) => void assign(s, value, label)}
           />
         ))}
       </ul>
