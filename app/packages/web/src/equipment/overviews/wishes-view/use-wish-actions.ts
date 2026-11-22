@@ -1,3 +1,4 @@
+import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { createKey, entityKey, useWriteAction } from "../../../shared/data";
 import type { WishActions } from "./wishes-view";
 import {
@@ -11,7 +12,7 @@ type Token = () => Promise<string | undefined>;
 
 /**
  * The writes on equipment wishes (US-EQU-08). "Gekauft" hands the prefill to the equipment form through `onPrefill`.
- * The outcome (message or refusal) is shown by the caller.
+ * The result is said to the live region and shows at its row (SG-FEED-01, SG-FEED-04); a refusal is shown by the caller.
  */
 export function useWishActions(
   api: string,
@@ -19,7 +20,10 @@ export function useWishActions(
   onWritten: () => void,
   onPrefill: (prefill: EquipmentPrefill) => void,
 ) {
-  const write = useWriteAction(token, onWritten);
+  const say = useSay();
+  const write = useWriteAction(token, onWritten, (message, kind) => {
+    if (kind !== "error") say(message);
+  });
   const actions: WishActions = {
     busy: write.running,
     onCreate: async (input) => {
@@ -53,5 +57,5 @@ export function useWishActions(
         entityKey("equipment-wish", wish.id, "discard"),
       ),
   };
-  return { actions, message: write.message, error: write.error };
+  return { actions, error: write.error };
 }

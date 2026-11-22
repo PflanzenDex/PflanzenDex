@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/shared/data";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { EquipmentPage } from "./equipment-page";
@@ -17,11 +18,16 @@ import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
 const view = (ui: ReactElement, url = "/") =>
   render(
     <ToastProvider>
-      <MemoryRouter initialEntries={[url]}>
-        <LayerHost>{ui}</LayerHost>
-      </MemoryRouter>
+      <AnnouncerProvider>
+        <MemoryRouter initialEntries={[url]}>
+          <LayerHost>{ui}</LayerHost>
+        </MemoryRouter>
+      </AnnouncerProvider>
     </ToastProvider>,
   );
+
+/** What the shared live region says (DS-69); the toast regions beside it are no part of it. */
+const said = () => document.querySelector(".sr-only[aria-live=polite]")?.textContent?.trim() ?? "";
 
 // The layers are dialogs and drawers; jsdom lacks pointer capture, which they use.
 Element.prototype.setPointerCapture ??= () => undefined;
@@ -246,7 +252,9 @@ describe("US-EQU-01 equipment page", () => {
       return call;
     });
     expect(JSON.parse(String(post[1]?.body))).toEqual({ status: "defective" });
-    expect(await screen.findByText(/Zustand von „Lampe Regal“ gesichert/)).toBeTruthy();
+    // The undo toast stays (US-EQU-02); the box of the layer is gone (SG-FEED-02, F-0160).
+    expect(await screen.findByText(/Zustand von „Lampe Regal“ ist jetzt „Defekt“/)).toBeTruthy();
+    expect(screen.queryByText(/gesichert/)).toBeNull();
   });
 
   it("US-EQU-01 sends only the given fields and reloads the list", async () => {
@@ -675,22 +683,82 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(within(layer).getByText(/Gerät erfassen/)).toBeTruthy();
   });
 
-  it("US-QS-22 · P-10 a write inside a layer shows its outcome in the layer", async () => {
+  it("US-QS-32 · F-0160 · SG-FEED-02 a write is announced once and boxed nowhere: not in its layer, not on the page behind", async () => {
     const fetchFn = fakeServer([], undefined, {
-      zones: [zone({ lamps: [lampOf()] })],
+      zones: [zone({ lamps: [lampOf()] }), zone({ zoneId: "z3", name: "Zone 3", lamps: [] })],
       unassigned: [],
     });
     const base = fetchFn.getMockImplementation();
     fetchFn.mockImplementation(async (url, init) =>
-      new URL(String(url)).pathname === "/equipment/l1/status"
-        ? response(200, { ...item({ id: "l1" }), status: "defective" })
+      new URL(String(url)).pathname === "/equipment/l1/zone"
+        ? response(200, item({ id: "l1" }))
         : (base?.(url, init) ?? response(404, {})),
     );
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
     const layer = await screen.findByRole("dialog", { name: "Lampen und Zonen" });
-    await userEvent.selectOptions(await within(layer).findByLabelText("Zustand"), "defective");
-    expect(await within(layer).findByText(/Zustand von „Lampe Regal“ gesichert/)).toBeTruthy();
+    await userEvent.selectOptions(await within(layer).findByLabelText("Lichtzone"), "z3");
+    await vi.waitFor(() => expect(said()).toBe("Lampe „Lampe Regal“ umgezogen."));
+    expect(within(layer).queryByRole("status")).toBeNull();
+    fireEvent.keyDown(layer, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    // The text stands in the live region only: no element of the page repeats it.
+    expect(screen.queryAllByText(/umgezogen/).filter((e) => !e.hasAttribute("aria-live"))).toEqual(
+      [],
+    );
+    expect(document.querySelector("[role=status]")).toBeNull();
   });
+
+  it("US-QS-32 · F-0160 · P-10 a refusal shows in the layer where it happened, and is gone when that layer closes and another opens", async () => {
+    const fetchFn = fakeServer([], undefined, {
+      zones: [zone({ lamps: [lampOf()] }), zone({ zoneId: "z3", name: "Zone 3", lamps: [] })],
+      unassigned: [],
+    });
+    const base = fetchFn.getMockImplementation();
+    fetchFn.mockImplementation(async (url, init) =>
+      new URL(String(url)).pathname === "/equipment/l1/zone"
+        ? response(404, { error: { code: "equipment.not_found", text: "raw" } })
+        : (base?.(url, init) ?? response(404, {})),
+    );
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=lamps");
+    const lamps = await screen.findByRole("dialog", { name: "Lampen und Zonen" });
+    await userEvent.selectOptions(await within(lamps).findByLabelText("Lichtzone"), "z3");
+    expect(await within(lamps).findByRole("alert")).toBeTruthy();
+    fireEvent.keyDown(lamps, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.queryByRole("alert")).toBeNull();
+    await userEvent.click(await screen.findByRole("button", { name: /^Wünsche|Geräte-Wünsche/ }));
+    const wishes = await screen.findByRole("dialog", { name: "Geräte-Wünsche" });
+    expect(within(wishes).queryByRole("alert")).toBeNull();
+  });
+
+  it("US-QS-32 · F-0160 an assigned sensor says 'Zugeordnet: <Pflanze>' at its row, the live region says it once, and no later sheet repeats it", async () => {
+    const sensors = {
+      sensors: [{ id: "s1", name: "Bodenfeuchte-Sensor", status: "active", target: null }],
+      specimens: [{ id: "p1", name: "Gummibaum – Wohnzimmer Fenster" }],
+      locations: [],
+    };
+    const fetchFn = fakeServer([]);
+    const base = fetchFn.getMockImplementation();
+    fetchFn.mockImplementation(async (url, init) => {
+      const path = new URL(String(url)).pathname;
+      if (path === "/equipment/sensors") return response(200, sensors);
+      if (path === "/equipment/s1/sensor-target") return response(200, item({ id: "s1" }));
+      return base?.(url, init) ?? response(404, {});
+    });
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=sensors");
+    const layer = await screen.findByRole("dialog", { name: "Sensoren" });
+    await userEvent.selectOptions(await within(layer).findByRole("combobox"), "specimen:p1");
+    expect(
+      await within(layer).findByText("Zugeordnet: Gummibaum – Wohnzimmer Fenster"),
+    ).toBeTruthy();
+    await vi.waitFor(() => expect(said()).toBe("Zuordnung von „Bodenfeuchte-Sensor“ gesichert."));
+    fireEvent.keyDown(layer, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await userEvent.click(await screen.findByRole("button", { name: /^Geräte-Wünsche/ }));
+    const wishes = await screen.findByRole("dialog", { name: "Geräte-Wünsche" });
+    expect(within(wishes).queryByText(/Zuordnung|Zugeordnet/)).toBeNull();
+  });
+
   it("US-EQU-02 equipment status change offers Rückgängig which restores the previous status (P-10)", async () => {
     const fetchFn = fakeServer([], undefined, {
       zones: [zone({ lamps: [lampOf()] })],
@@ -742,7 +810,10 @@ describe("US-QS-22 the equipment fits one screen", () => {
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-s1");
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Wird knapp" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Rückgängig" }));
+    const undo = await screen.findByRole("button", { name: "Rückgängig" });
+    // The toast of the undo carries the result; the live region adds no second message for it (SG-FEED-02).
+    expect(said()).toBe("");
+    fireEvent.click(undo);
     const posts = await vi.waitFor(() => {
       const calls = fetchFn.mock.calls.filter(
         ([url, init]) =>

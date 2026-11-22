@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SensorView } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -86,5 +86,52 @@ describe("US-EQU-06 sensors and their place", () => {
     );
     // A viewport breakpoint would split the card of a pane at 1024 px: no sm:, md:, lg: or xl: on the grid.
     expect(list.className.split(" ").filter((c) => /^(sm|md|lg|xl):/.test(c))).toEqual([]);
+  });
+});
+
+describe("US-QS-32 · F-0160 · SG-FEED-01 the result of an assignment shows at the sensor's row", () => {
+  const assign = async (a: ReturnType<typeof actions>, value: string) =>
+    userEvent
+      .setup()
+      .selectOptions(screen.getByRole("combobox", { name: "Zugeordnet zu Feuchtesensor" }), value);
+  const line = () => document.querySelector("li > p") as HTMLElement;
+
+  it("US-QS-32 · F-0160 a row reserves its line at rest: it is empty and holds one text line, so nothing moves when the result comes", () => {
+    render(<SensorsView view={view()} actions={actions()} />);
+    expect(line().textContent).toBe("");
+    expect(line().className.split(" ")).toContain("min-h-[1lh]");
+  });
+
+  it("US-QS-32 · F-0160 a saved assignment says 'Zugeordnet: <name>' in the row and highlights it briefly (SG-MOTION-07)", async () => {
+    const a = { busy: false, onTarget: vi.fn(async () => true) };
+    render(<SensorsView view={view()} actions={a} />);
+    await assign(a, "specimen:p1");
+    await waitFor(() => expect(line().textContent).toBe("Zugeordnet: Aloe"));
+    expect(line().className.split(" ")).toContain("animate-changed");
+  });
+
+  it("US-QS-32 · F-0160 clearing an assignment says so in the row; a refused write leaves the line empty (P-10)", async () => {
+    const ok = { busy: false, onTarget: vi.fn(async () => true) };
+    render(
+      <SensorsView
+        view={view({ target: { kind: "location", id: "l1", name: "Fenster" } })}
+        actions={ok}
+      />,
+    );
+    await assign(ok, "");
+    await waitFor(() => expect(line().textContent).toBe("Nicht mehr zugeordnet"));
+    cleanup();
+    const refused = { busy: false, onTarget: vi.fn(async () => false) };
+    render(<SensorsView view={view()} actions={refused} />);
+    await assign(refused, "location:l1");
+    await waitFor(() => expect(refused.onTarget).toHaveBeenCalled());
+    expect(line().textContent).toBe("");
+  });
+
+  it("US-QS-32 · F-0160 the line names a location by its name", async () => {
+    const a = { busy: false, onTarget: vi.fn(async () => true) };
+    render(<SensorsView view={view()} actions={a} />);
+    await assign(a, "location:l1");
+    await waitFor(() => expect(line().textContent).toBe("Zugeordnet: Fenster"));
   });
 });

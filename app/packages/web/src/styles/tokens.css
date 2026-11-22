@@ -241,6 +241,13 @@
       transform: translateY(0.5rem);
     }
   }
+  /* A saved value (SG-MOTION-07, US-QS-32): the accent behind it fades out once, in the base duration, so 1 ms under reduced motion. */
+  --animate-changed: changed var(--motion-base) var(--ease-leave) both;
+  @keyframes changed {
+    from {
+      background-color: var(--color-accent);
+    }
+  }
   /* Toast (US-QS-07): enters with a short rise, duration from the motion token, so no movement under reduced motion. */
   --animate-toast-in: toast-in var(--motion-base) var(--ease-enter) both;
   @keyframes toast-in {

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import { zoneLabel } from "@pflanzendex/core";
 import { Badge } from "@/shared/ui/display/badge/badge";
@@ -68,6 +69,8 @@ export function ItemRow(props: { item: EquipmentRow; zone: string | undefined })
 export function ItemLayer(props: {
   data: EquipmentData;
   lamps: ReturnType<typeof useLampActions>;
+  /** The refusal of a write in this layer (P-10, F-0160). */
+  outcome?: ReactNode;
 }) {
   const sheet = useSearchParams()[0].get("sheet") ?? "";
   const item = sheet.startsWith(ITEM_PREFIX)
@@ -78,6 +81,7 @@ export function ItemLayer(props: {
   const { lamps } = props;
   return (
     <LayerSheet id={sheet} title={item.name}>
+      {props.outcome}
       <ItemCard
         item={item}
         zone={zone ? zoneLabel(zone.name) : undefined}
