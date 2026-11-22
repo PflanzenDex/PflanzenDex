@@ -55,6 +55,9 @@ function Switch() {
       <button type="button" onClick={() => setOn(true)}>
         Heute
       </button>
+      <button type="button" onClick={() => setOn(false)}>
+        Andere Seite
+      </button>
       <Page slotted={on} />
     </>
   );
@@ -176,15 +179,24 @@ describe("US-QS-32 · F-0070 · SG-FEED-05 the achievement notice takes a place 
     expect(screen.getByRole("link", { name: "Zu den Erfolgen" })).toBeTruthy();
   });
 
-  it("US-QS-32 · F-0070 on a page without the slot nothing shows and it is still announced; Heute then shows it without a second announcement", async () => {
+  it("US-QS-32 · F-0070 · SG-FEED-04 on a page without the slot nothing shows and nothing is said; Heute then shows it and says it once, also when it is opened again", async () => {
     const s = server(none);
     wrap(<Switch />);
     await waitFor(() => expect(fetch).toHaveBeenCalled());
     await earn(s);
-    await waitFor(() => expect(said()).toBe("Erfolg: Steckling bewurzelt"));
+    // Nothing on screen, nothing announced: the live region says what the page shows (4.1.3).
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    await act(async () => void (await new Promise((done) => setTimeout(done, 50))));
     expect(screen.queryByRole("region", { name: "Erfolg" })).toBeNull();
+    expect(said()).toBe("");
     await userEvent.click(screen.getByRole("button", { name: "Heute" }));
     expect((await notice()).textContent).toContain("Erfolg: Steckling bewurzelt");
+    expect(said()).toBe("Erfolg: Steckling bewurzelt");
+    // Leaving "Heute" and coming back shows the notice again; it is not said a second time.
+    await userEvent.click(screen.getByRole("button", { name: "Andere Seite" }));
+    expect(screen.queryByRole("region", { name: "Erfolg" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Heute" }));
+    expect(await notice()).toBeTruthy();
     expect(said()).toBe("Erfolg: Steckling bewurzelt");
   });
 

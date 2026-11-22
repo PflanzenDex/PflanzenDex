@@ -14,15 +14,21 @@ const NEWS_KEY = ["achievements", "news"] as const;
 /**
  * The notice "Erfolg: <name>" (US-ACH-03, F-0070): a single line with the link "Zu den Erfolgen" and "Schließen". It is
  * drawn into `slot`, the place under the title of "Heute" where it takes the summary's place (SG-FEED-05, US-QS-32), so it
- * is never inserted above a page. The live region says it once, wherever the keeper is (SG-FEED-04); on a page without
- * the slot nothing shows and the notice waits for "Heute". The notice itself is no live region (SG-FEED-02).
+ * is never inserted above a page. The live region says what is on screen (4.1.3): once, when the notice first shows in the
+ * slot; on a page without the slot nothing shows and nothing is said, and "Heute" shows and says it when it opens. The
+ * notice itself is no live region (SG-FEED-02).
  */
 function Notice(props: { text: string; slot: HTMLElement | null; onClose: () => void }) {
+  // `announce` is the channel's own function: the same one for the life of the provider, so it never re-runs the effect.
   const announce = useAnnounce()?.announce;
   const { text, slot } = props;
+  const said = useRef<string | null>(null);
+  const shown = slot !== null;
   useEffect(() => {
+    if (!shown || said.current === text) return;
+    said.current = text;
     announce?.(text);
-  }, [announce, text]);
+  }, [announce, text, shown]);
   if (!slot) return null;
   return createPortal(
     <section aria-label="Erfolg" className="flex flex-wrap items-center gap-x-2 text-sm">

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { CreatedFriendCode } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
@@ -18,13 +18,18 @@ type Token = () => Promise<string | undefined>;
 /**
  * Sends the code form's request and hands a refusal back to the field; one request at a time (a double tap sends one).
  * The confirmation is the line of the form (`sent`) and is said to the live region, no toast (SG-FEED-01, SG-FEED-04,
- * US-QS-32). A refused code stays at its field (P-10).
+ * US-QS-32). A refused code stays at its field (P-10); a request that never went out (no sign-in) has no field to show it
+ * at, so it is a toast (`useSay`).
  */
 function useSendRequest(api: string, token: Token, reload: () => void) {
   const say = useSay();
   const [sent, setSent] = useState<string | null>(null);
+  const reached = useRef(false);
   const write = useWriteAction(token, reload, (message, kind) => {
-    if (kind === "error") return;
+    if (kind === "error") {
+      if (!reached.current) say(message, kind);
+      return;
+    }
     setSent(message);
     say(message);
   });
@@ -34,8 +39,10 @@ function useSendRequest(api: string, token: Token, reload: () => void) {
     let ok = false;
     // A create (a request is sent): the operation only, the code is the body (US-QS-03).
     const key = createKey("friend", "request");
+    reached.current = false;
     await write.run(
       async (t, opts) => {
+        reached.current = true;
         const r = await sendFriendRequest(api, t, code, opts);
         ok = r.ok;
         setRefusal(r.ok ? null : r.error);

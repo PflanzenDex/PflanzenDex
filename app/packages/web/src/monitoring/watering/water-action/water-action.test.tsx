@@ -243,6 +243,31 @@ describe("US-QS-32 Gießen stays in place with its undo (SG-FEED-03)", () => {
     }
   });
 
+  it("US-QS-32 · SG-FEED-02 the line of an earlier write does not come back: a later watering that made an entry clears it for good", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      let created = 0;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn<typeof fetch>(async () =>
+          Response.json({ date: "2026-11-20", specimens: ["e1"], created }),
+        ),
+      );
+      vi.setSystemTime(new Date(2026, 10, 20, 12));
+      show();
+      await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
+      await screen.findByText("Zuletzt gegossen: heute", { selector: "p" });
+      created = 1;
+      await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
+      await screen.findByRole("button", { name: "Rückgängig: Aloe" });
+      act(() => vi.advanceTimersByTime(8000));
+      expect(screen.getByRole("button", { name: "Gießen: Aloe" })).toBeTruthy();
+      expect(screen.queryByText(/Zuletzt gegossen/, { selector: "p" })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("US-QS-32 · SG-FEED-02 a new entry is said once, by its undo row: no second line follows when the 8 s are over", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {

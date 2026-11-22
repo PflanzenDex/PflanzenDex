@@ -78,13 +78,16 @@ export function useWaterWrite(
     if (kind !== "error") undo.release(specimen.id);
     say(kind !== "error" && answer.current.removed === 0 ? t("nothingToUndo") : message, kind);
   });
-  const water = () =>
+  const water = () => {
+    // The line of an earlier write is over once a new one starts: it may come back only from this write's own answer.
+    setLast(null);
     void write.run(
       (tok, opts) => sendWater({ api, tok, specimenId: specimen.id }, answer, opts),
       t("watered", { name: specimen.name }),
       // A daily append: the local day names the occasion, so a watering the next day is a write of its own (US-QS-03).
       appendKey("specimen", specimen.id, `water:${todayLocal()}`),
     );
+  };
   const undoWater = () => {
     const date = answer.current.day;
     if (date === null) return;

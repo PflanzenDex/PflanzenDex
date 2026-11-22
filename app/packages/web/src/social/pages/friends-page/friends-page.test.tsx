@@ -167,7 +167,7 @@ function fakeServer(initial: Initial = {}) {
   return { fetchFn, calls };
 }
 
-type Options = { calm?: boolean; swapMark?: string };
+type Options = { calm?: boolean; swapMark?: string; token?: () => Promise<string | undefined> };
 
 /** Renders the page at its address; `sheet` opens that layer as a reload or a copied link would (US-QS-15). */
 function show(sheet?: string, options: Options = {}, from = "") {
@@ -287,6 +287,23 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     // A new code brings the hint back, so a second request reads as a new one.
     await userEvent.type(screen.getByLabelText("Freundescode"), "X");
     expect(screen.getByText("Wer dir den Code gegeben hat, bekommt eine Anfrage.")).toBeTruthy();
+  });
+
+  it("US-QS-32 · P-10 a request that cannot be sent at all (the sign-in is gone) is not silent: it shows as a toast with the German text", async () => {
+    const { calls } = fakeServer();
+    let signedOut = false;
+    show("add", { token: async () => (signedOut ? undefined : "tok") });
+    await userEvent.click(await screen.findByRole("tab", { name: "Code eingeben" }));
+    await userEvent.type(await screen.findByLabelText("Freundescode"), "ABCD-EFGH");
+    signedOut = true;
+    await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));
+    await waitFor(() =>
+      expect(document.querySelector("[aria-live=assertive]")?.textContent).toContain(
+        "nicht angemeldet",
+      ),
+    );
+    expect(calls.filter((c) => c.path === "/friends/requests")).toEqual([]);
+    expect(said()).toBe("");
   });
 
   it("US-SOZ-01 an empty code is refused before sending; a refused code shows its German text at the field (P-10)", async () => {
