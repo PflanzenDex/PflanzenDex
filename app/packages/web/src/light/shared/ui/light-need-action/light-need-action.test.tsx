@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { useRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 import { LightNeedAction } from "./light-need-action";
 
 afterEach(cleanup);
@@ -54,5 +55,25 @@ describe("US-LIC-01 the next step of an unknown light need (P-09)", () => {
       screen.getByRole("button", { name: "Lichtbedarf eintragen für „Monstera“" }),
     );
     expect(document.activeElement).toBe(screen.getByLabelText("Lichtzone"));
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the next step of an unknown light need is tinted, not outlined (FX-39 sweep 3)", () => {
+  it("US-QS-32 · SG-BTN-01 the link to the care profile is a tinted button without a border", () => {
+    render(
+      <MemoryRouter>
+        <LightNeedAction speciesId="sp7" speciesName="Monstera" />
+      </MemoryRouter>,
+    );
+    const link = screen.getByRole("link", { name: "Lichtbedarf eintragen für „Monstera“" });
+    expect(isTinted(link)).toBe(true);
+    expect(hasOwnBorder(link)).toBe(false);
+  });
+
+  it("US-QS-32 · SG-BTN-01 the button that moves the focus to the zone choice is tinted too", () => {
+    render(<ZoneChoiceNextStep />);
+    const button = screen.getByRole("button", { name: "Lichtbedarf eintragen für „Monstera“" });
+    expect(isTinted(button)).toBe(true);
+    expect(hasOwnBorder(button)).toBe(false);
   });
 });

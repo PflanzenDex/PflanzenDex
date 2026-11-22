@@ -17,6 +17,7 @@ import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_GUARD, stateFlag } from "@/shared/patterns/responsive/layer-sheet/use-layer";
+import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 import { LightPage } from "./light-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 
@@ -234,6 +235,18 @@ describe("US-LIC-05 page locations and light zones", () => {
       sortOrder: null,
     });
     expect(post?.key).toBeTruthy();
+  });
+
+  it("US-QS-32 · SG-BTN-01 the '+' of a list is a tinted icon button without a border, and the page has no filled button (FX-39 sweep 3)", async () => {
+    fakeServer({ zones: [zone], locations: [location] });
+    const { container } = render(<LightPage api="http://api" token={async () => "tok"} />);
+    await screen.findByRole("button", { name: /^Zone 2\b/ });
+    for (const name of ["Neue Lichtzone", "Neuer Standort"]) {
+      const add = screen.getAllByRole("button", { name })[0] as HTMLElement;
+      expect(isTinted(add), name).toBe(true);
+      expect(hasOwnBorder(add), name).toBe(false);
+    }
+    expect(filledIn(container)).toEqual([]);
   });
 
   it("creates a location without zone and names it in the list afterwards", async () => {

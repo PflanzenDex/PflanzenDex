@@ -9,6 +9,7 @@ import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { TreatmentsPage } from "./treatments-page";
 import { OpenTreatments } from "../open-treatments/open-treatments";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -590,6 +591,16 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
     await userEvent.click(screen.getByRole("button", { name: "Behandlung planen" }));
     expect(onPlan).toHaveBeenCalledTimes(1);
   });
+
+  it("US-QS-32 · SG-BTN-01 the host's Behandlung planen is a tinted button without a border, and the section has no filled button", async () => {
+    doneServer();
+    const { container } = showHost();
+    await screen.findByRole("list", { name: "Offene Behandlungen" });
+    const plan = screen.getByRole("button", { name: "Behandlung planen" });
+    expect(isTinted(plan)).toBe(true);
+    expect(hasOwnBorder(plan)).toBe(false);
+    expect(filledIn(container)).toEqual([]);
+  });
 });
 
 describe("US-QS-15 the open treatments fit a layer", () => {
@@ -630,8 +641,8 @@ describe("US-QS-15 the open treatments fit a layer", () => {
     // One heading, no sentence above the list (US-QS-15).
     expect(screen.queryByText(/Behandle diese Pflanzen zuerst/)).toBeNull();
     const done = screen.getByRole("button", { name: "Läuse bei Aloe als erledigt abhaken" });
-    expect(done.className).toContain("bg-accent");
-    expect(done.className).not.toContain("bg-primary");
+    expect(isTinted(done)).toBe(true);
+    expect(hasOwnBorder(done)).toBe(false);
   });
 });
 

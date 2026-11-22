@@ -17,7 +17,7 @@ const ACTIONS = "flex flex-col gap-3";
 
 /**
  * The welcome page in the frame of the sign-in pages (US-QS-14): the wordmark, one line of text, the filled sign-in
- * button and the outline registration button, in that order, as on the sign-in service. Below them, only while this tab
+ * button and the tinted registration button, in that order, as on the sign-in service. Below them, only while this tab
  * knows of a live session at the sign-in service (`canSwitch`), the text action "Konto wechseln" (US-ACC-01, US-QS-32):
  * it ends that session, so another person can sign in.
  */
@@ -53,7 +53,7 @@ export function Welcome(props: {
           </Button>
           <Button
             type="button"
-            variant="outline"
+            variant="tinted"
             size="touch"
             onClick={props.onRegister}
             className="text-base"

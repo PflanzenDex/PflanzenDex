@@ -34,12 +34,12 @@ export function LightNeedAction(props: {
     );
   if (onChoose !== undefined)
     return (
-      <Button type="button" variant="outline" size="sm" aria-label={label} onClick={onChoose}>
+      <Button type="button" variant="tinted" size="sm" aria-label={label} onClick={onChoose}>
         {t("need.action")}
       </Button>
     );
   return (
-    <Button asChild variant="outline" size="sm">
+    <Button asChild variant="tinted" size="sm">
       <Link to={`${profileAddress(props.speciesId)}?sheet=${CARE_SHEET}`} aria-label={label}>
         {t("need.action")}
       </Link>

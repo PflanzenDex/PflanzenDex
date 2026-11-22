@@ -8,6 +8,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { RemindersSection } from "../../reminders-section/reminders-section";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 import table from "../../monitoring.de.json";
 import { SettingsFormSkeleton } from "./settings-form.skeleton";
 
@@ -132,6 +133,15 @@ describe("US-MON-08 reminder settings in layers", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("US-QS-32 · SG-BTN-01 'Eine Woche' is a tinted button without a border (FX-39 sweep 3)", async () => {
+    fakeServer();
+    show("/?sheet=pauses&lfrom=2");
+    await screen.findByLabelText("Gießen pausiert bis");
+    const week = screen.getByRole("button", { name: "Gießen: eine Woche pausieren" });
+    expect(isTinted(week)).toBe(true);
+    expect(hasOwnBorder(week)).toBe(false);
   });
 
   it("US-MON-08 refuses one quiet hour without the other and sends nothing", async () => {

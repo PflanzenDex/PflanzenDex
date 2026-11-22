@@ -7,6 +7,7 @@ import type { UnlockEntry } from "../model/unlock-api";
 import { UnlocksProvider } from "../model/unlocks/unlocks";
 import { LockedRows } from "../locked-rows/locked-rows";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { filledIn, hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button/button-roles";
 import { LockedLayer, LockedTile } from "../locked-rows/collapsed-rows/collapsed-rows";
 import { UnlockPage } from "./unlock-page";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
@@ -329,7 +330,8 @@ describe("US-QS-14 · US-ONB-05 the unlock pages are one card with buttons", () 
     const all = within(card).getByRole("link", { name: "Alle Funktionen ansehen" });
     expect(start.className).not.toContain("underline");
     expect(all.className).not.toContain("underline");
-    expect(all.className).toContain("bg-accent");
+    expect(isPlain(all)).toBe(true);
+    expect(isFilled(start)).toBe(true);
   });
 
   it("US-QS-14 a failed unlock page is a card too: one h1, the alert and the retry button (P-10)", async () => {
@@ -386,4 +388,26 @@ describe("US-QS-15 the unlock pages are one screen (DS-61, NFR-13)", () => {
 describe("US-QS-14 issue 1697 · a locked function show their shaped skeleton once", () => {
   it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
     expectOneLoadingStatus(<UnlockSkeleton label={table["loading"]} />, table["loading"]));
+});
+
+describe("US-QS-32 · SG-BTN-01 the unlock pages have one filled button and a plain way to the overview (FX-39 sweep 3)", () => {
+  it("US-QS-32 · SG-BTN-02 a locked function: 'Jetzt freischalten' is the one filled button, 'Alle Funktionen ansehen' is plain and has no border", async () => {
+    server(() => [swapping()]);
+    page("/unlock/swapping");
+    const unlock = await screen.findByRole("button", { name: "Jetzt freischalten" });
+    const all = screen.getByRole("link", { name: "Alle Funktionen ansehen" });
+    expect(isFilled(unlock)).toBe(true);
+    expect(isPlain(all)).toBe(true);
+    expect(hasOwnBorder(all)).toBe(false);
+    expect(filledIn(document.body)).toEqual([unlock]);
+  });
+
+  it("US-QS-32 · SG-BTN-02 an open function: the button that opens it is the one filled button, the way to the overview is plain", async () => {
+    server(() => [open("friends")]);
+    page("/unlock/friends");
+    const start = await screen.findByRole("link", { name: /öffnen$/ });
+    const all = screen.getByRole("link", { name: "Alle Funktionen ansehen" });
+    expect(isPlain(all)).toBe(true);
+    expect(filledIn(document.body)).toEqual([start]);
+  });
 });

@@ -21,7 +21,7 @@
   "removeConfirm": "Ja, entfernen",
   "cancel": "Abbrechen",
   "removeLabel": "Blatt entfernen: {date}",
-  "removeConfirmLabel": "Ja, Blatt vom {date} entfernen",
+  "removeConfirmLabel": "Ja, entfernen: Blatt vom {date}",
   "form.title": "Neues Blatt festhalten",
   "form.date": "Datum",
   "form.length": "Länge",

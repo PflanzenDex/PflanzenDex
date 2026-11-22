@@ -163,7 +163,7 @@ function LeafLog({ api, token, specimenId }: Props) {
           >
             {t("newLeaf")}
           </Button>
-          <Button type="button" variant="outline" size="touch" onClick={() => setFormOpen(true)}>
+          <Button type="button" variant="tinted" size="touch" onClick={() => setFormOpen(true)}>
             {t("withDetails")}
           </Button>
         </div>

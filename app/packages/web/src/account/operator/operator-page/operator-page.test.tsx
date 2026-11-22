@@ -9,6 +9,7 @@ import { OperatorPage } from "./operator-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 
 const token = async () => "tok";
 const json = (status: number, body: unknown) =>
@@ -492,17 +493,12 @@ describe("US-ACC-05 US-QS-32 the new code: one line, share or copy (fixture code
 
   it("US-ACC-05 US-QS-32 after creating a code the layer has one filled button, Code teilen and Code kopieren", async () => {
     const { dialog, box } = await createCode();
-    // "Code teilen" is secondary, which is tinted since the owner decision of 2026-11-20 (SG-BTN-01).
-    expect(within(box).getByRole("button", { name: "Code teilen" }).className).toContain(
-      "bg-accent",
-    );
-    expect(within(box).getByRole("button", { name: "Code kopieren" }).className).not.toContain(
-      "bg-accent",
-    );
-    const filled = within(dialog)
-      .getAllByRole("button")
-      .filter((b) => b.className.split(" ").includes("bg-primary"));
-    expect(filled.map((b) => b.textContent)).toEqual(["Code erstellen"]);
+    // "Code teilen" is tinted, without a border (SG-BTN-01, FX-39 sweep 3, F-0339); "Code kopieren" is a text link.
+    const share = within(box).getByRole("button", { name: "Code teilen" });
+    expect(isTinted(share)).toBe(true);
+    expect(hasOwnBorder(share)).toBe(false);
+    expect(isTinted(within(box).getByRole("button", { name: "Code kopieren" }))).toBe(false);
+    expect(filledIn(dialog).map((b) => b.textContent)).toEqual(["Code erstellen"]);
   });
 
   it("US-ACC-05 US-QS-32 the code is one line in 16 px monospace that scrolls on its own, and stays selectable", async () => {

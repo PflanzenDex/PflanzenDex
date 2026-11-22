@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../../shared/data";
 import { AnnouncerProvider } from "../../../shared/platform/announcer/announcer";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 import { WateringList } from "./watering-list";
 
 const response = (status: number, body: unknown) =>
@@ -128,6 +129,16 @@ describe("US-MON-05 watering list", () => {
     expect(posts[0]?.timeZone).toBeTruthy();
     expect(screen.getByText("Ficus")).toBeTruthy();
     expect(announced()).toBe("Gegossen");
+  });
+
+  it("US-QS-32 · SG-BTN-02 each due row has one tinted button without a border (FX-39 sweep 3)", async () => {
+    fakeServer([ficus, aloe]);
+    show();
+    for (const name of ["Ficus als gegossen eintragen", "Aloe als gegossen eintragen"]) {
+      const row = await screen.findByRole("button", { name });
+      expect(isTinted(row), name).toBe(true);
+      expect(hasOwnBorder(row), name).toBe(false);
+    }
   });
 
   it("US-QS-32 'Rückgängig' takes the plant back with one request to the undo route; the plant is due again", async () => {

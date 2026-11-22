@@ -40,7 +40,7 @@ function Row(props: {
         </span>
       </Checkbox>
       <Button
-        variant="outline"
+        variant="tinted"
         size="sm"
         disabled={props.busy}
         aria-label={ui("waterOne", { name: r.name })}

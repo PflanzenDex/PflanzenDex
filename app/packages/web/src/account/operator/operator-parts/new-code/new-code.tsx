@@ -72,7 +72,7 @@ export function NewCode(props: { created: CreatedInvitation }) {
         </code>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="secondary" onClick={() => void shareCode()}>
+        <Button type="button" variant="tinted" onClick={() => void shareCode()}>
           {t("code.share")}
         </Button>
         <Button type="button" variant="link" onClick={() => void copyCode()}>

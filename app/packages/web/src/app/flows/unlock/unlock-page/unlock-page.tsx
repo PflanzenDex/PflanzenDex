@@ -62,7 +62,7 @@ function Unavailable(props: { name: string; status: "pending" | "error" | "unkno
         <Button asChild>
           <Link to={PATHS.today}>Zu Heute</Link>
         </Button>
-        <Button asChild variant="outline">
+        <Button asChild variant="plain">
           <Link to={accountAddress("functions")}>Alle Funktionen ansehen</Link>
         </Button>
       </div>
@@ -179,7 +179,7 @@ export function UnlockPage(props: { api: string; token: Token; id?: string }) {
         </div>
       )}
       <div>
-        <Button asChild variant="outline">
+        <Button asChild variant="plain">
           <Link to={accountAddress("functions")}>Alle Funktionen ansehen</Link>
         </Button>
       </div>

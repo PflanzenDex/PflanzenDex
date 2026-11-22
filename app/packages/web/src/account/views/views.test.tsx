@@ -3,6 +3,7 @@ import { renderToString } from "react-dom/server";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { filledIn, hasOwnBorder, isFilled, isTinted } from "@/shared/ui/button/button-roles";
 import { AppError, Loading, Welcome } from "./views";
 import { AccountView } from "./account-views/account-views";
 import type { Account } from "../api/account-api";
@@ -243,5 +244,21 @@ describe("error with a reload of the page (US-ACC-01)", () => {
     expect(screen.queryByRole("button", { name: "Seite neu laden" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(onReload).toHaveBeenCalledOnce();
+  });
+});
+
+describe("US-QS-32 · SG-BTN-01 the welcome page has one filled button and a tinted second one (FX-39 sweep 3)", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("US-QS-32 · SG-BTN-02 'Anmelden' is the one filled button, 'Konto anlegen' is tinted without a border, 'Konto wechseln' a link", () => {
+    render(<Welcome onRegister={nothing} onSignIn={nothing} onSwitchAccount={nothing} canSwitch />);
+    const signIn = screen.getByRole("button", { name: "Anmelden" });
+    const register = screen.getByRole("button", { name: "Konto anlegen" });
+    expect(isFilled(signIn)).toBe(true);
+    expect(isTinted(register)).toBe(true);
+    expect(hasOwnBorder(register)).toBe(false);
+    expect(filledIn(document.body)).toEqual([signIn]);
   });
 });

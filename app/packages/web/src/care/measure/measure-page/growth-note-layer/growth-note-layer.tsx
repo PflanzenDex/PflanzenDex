@@ -122,7 +122,7 @@ export function GrowthNoteLayer(props: {
           className="absolute inset-x-0 top-0 z-[5] mt-2 flex max-h-[40vh] flex-col items-start gap-2 overflow-y-auto break-words rounded-card border border-border bg-card p-3 text-sm text-card-foreground shadow-elevation-2 forced-colors:border-[CanvasText]"
         >
           <p className="m-0 tabular-nums">{note}</p>
-          <Button type="button" variant="outline" size="sm" onClick={close}>
+          <Button type="button" variant="plain" size="sm" onClick={close}>
             {t("close")}
           </Button>
         </div>

@@ -5,6 +5,7 @@ import type { GrowthTrend, MeasurementRow, MeasurementView, PhasesRow } from "@p
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
 import { PlantCare } from "./plant-care/plant-care";
 import { PlantGrowth } from "./plant-growth/plant-growth";
 import { PlantHistory } from "./plant-history/plant-history";
@@ -264,6 +265,18 @@ describe("US-QS-23 Pflege", () => {
       specimenIds: ["e1"],
       reason: "Neem",
     });
+  });
+
+  it("US-QS-32 · SG-BTN-01 Behandlung planen is tinted; while the form is open the same button reads 'Planen abbrechen' and is plain", async () => {
+    server(base);
+    show();
+    const plan = await screen.findByRole("button", { name: "Behandlung planen" });
+    expect(isTinted(plan)).toBe(true);
+    expect(hasOwnBorder(plan)).toBe(false);
+    await userEvent.click(plan);
+    const cancel = screen.getByRole("button", { name: "Planen abbrechen" });
+    expect(isPlain(cancel)).toBe(true);
+    expect(hasOwnBorder(cancel)).toBe(false);
   });
 
   it("US-QS-23 · P-08 a plant without a care phase says unbekannt and where to enter it", async () => {
