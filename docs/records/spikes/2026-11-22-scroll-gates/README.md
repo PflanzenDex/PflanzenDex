@@ -95,7 +95,7 @@ Rules with no automatic primary check: the feel of drag and momentum, the percei
 
 ## Owner decision (2026-11-22)
 
-All six proposals are accepted (P-D, P-L, P-R, P-S, P-B, P-V). Order: P-D and P-L first, then P-R and P-S, then P-B and P-V; all before the component tickets #2418 to #2422. Tickets: P-D and P-L one each (P1), P-R with P-S (P2), P-B with P-V (P2); each names its finding for E-30 and refs #2425. The layout fix (the two 2026-11-06 spikes in one folder) is accepted.
+All six proposals are accepted (P-D, P-L, P-R, P-S, P-B, P-V). Order: P-D and P-L first, then P-R and P-S, then P-B and P-V; all before the component tickets #2418 to #2422. Tickets: #2429 (P-D, P1), #2430 (P-L, P1), #2431 (P-R with P-S, P2), #2432 (P-B with P-V, P2); each names its finding for E-30 and refs #2425. The layout fix (the two 2026-11-06 spikes in one folder) is accepted.
 
 ## Proposals (owner decisions)
 
