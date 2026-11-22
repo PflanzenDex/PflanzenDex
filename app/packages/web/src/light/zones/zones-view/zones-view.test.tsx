@@ -2,6 +2,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { isPlain, isTinted } from "@/shared/ui/button/button-roles";
 import { ZoneForm, type ZoneInput } from "./zones-view";
 
 afterEach(cleanup);
@@ -36,5 +37,26 @@ describe("US-LIC-05 zone form (US-QS-32 · F-0186)", () => {
       ppfd: null,
       sortOrder: null,
     });
+  });
+});
+
+const zone = { id: "z1", name: "Zone 2", luxCeiling: 15000, ppfd: 300, sortOrder: 2 };
+
+describe("US-QS-32 · issue 2454 the cancel of the zone form (SG-BTN-06)", () => {
+  it("US-QS-32 · issue 2454 'Abbrechen' of the new zone form is plain, not tinted", () => {
+    render(<ZoneForm onSave={vi.fn(async () => null)} onCancel={vi.fn()} />);
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    expect(isPlain(cancel)).toBe(true);
+    expect(isTinted(cancel)).toBe(false);
+  });
+
+  it("US-QS-32 · issue 2454 'Abbrechen' of the edit zone form is plain, not tinted, and still closes the form", async () => {
+    const onCancel = vi.fn();
+    render(<ZoneForm start={zone} onSave={vi.fn(async () => null)} onCancel={onCancel} />);
+    const cancel = screen.getByRole("button", { name: "Abbrechen" });
+    expect(isPlain(cancel)).toBe(true);
+    expect(isTinted(cancel)).toBe(false);
+    await userEvent.click(cancel);
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

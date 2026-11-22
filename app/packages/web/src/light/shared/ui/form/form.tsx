@@ -73,7 +73,7 @@ export function FormButtons(props: {
           {props.label}
         </Button>
         {props.onCancel && (
-          <Button type="button" variant="secondary" onClick={props.onCancel}>
+          <Button type="button" variant="plain" onClick={props.onCancel}>
             {t("form.cancel")}
           </Button>
         )}
