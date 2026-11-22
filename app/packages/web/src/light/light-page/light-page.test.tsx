@@ -394,6 +394,46 @@ describe("US-QS-14 feedback on the light page", () => {
     }
   });
 
+  it("US-QS-32 · SG-BASE-01 after a deleted zone the focus lands on the heading of the list view, not on the body (issue 2465)", async () => {
+    const refuse = ROUTES["DELETE /light-zones/z1"] as Route;
+    ROUTES["DELETE /light-zones/z1"] = async (d) => {
+      d.zones.length = 0;
+      return response(200, {});
+    };
+    try {
+      fakeServer({ zones: [zone] });
+      render(
+        <main id="inhalt">
+          <LightPage api="http://api" token={async () => "tok"} />
+        </main>,
+      );
+      await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
+      await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
+      await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
+      await waitFor(() => expect(said()).toBe("Lichtzone gelöscht."));
+      await waitFor(() => expect(screen.queryByRole("button", { name: /^Zone 2\b/ })).toBeNull());
+      const heading = screen.getByRole("heading", { level: 1, name: "Standorte und Lichtzonen" });
+      await waitFor(() => expect(document.activeElement).toBe(heading));
+    } finally {
+      ROUTES["DELETE /light-zones/z1"] = refuse;
+    }
+  });
+
+  it("US-QS-32 · SG-BASE-01 a refused delete keeps the focus where it was: no move to the heading (issue 2465)", async () => {
+    fakeServer({ zones: [zone] });
+    render(
+      <main id="inhalt">
+        <LightPage api="http://api" token={async () => "tok"} />
+      </main>,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
+    expect((await screen.findAllByText(/wird noch genutzt/)).length).toBeGreaterThan(0);
+    const heading = screen.getByRole("heading", { level: 1, name: "Standorte und Lichtzonen" });
+    expect(document.activeElement).not.toBe(heading);
+  });
+
   it("US-QS-14 a refused write shows no success toast", async () => {
     fakeServer({ zones: [], locations: [] });
     render(<LightPage api="http://api" token={async () => "tok"} />);

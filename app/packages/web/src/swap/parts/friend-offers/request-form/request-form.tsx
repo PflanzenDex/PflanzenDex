@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ExchangeOffer } from "@pflanzendex/core";
 import { OFFER_LIMITS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
+import { BUSY_LOOK } from "@/shared/lib/utils";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { Select } from "@/shared/ui/fields/select/select";
 import { Textarea } from "@/shared/ui/fields/textarea/textarea";
@@ -46,7 +47,9 @@ function CounterFields(props: {
 /**
  * The request of one offer (US-SOZ-09). For the mode swap the requester may attach one own specimen that is shared with
  * friends as the counter-offer and/or write what is offered in return, or leave the return open; a gift has nothing to
- * attach. The server decides again (P-03); a refusal is shown by the parent and keeps the form (P-10).
+ * attach. The server decides again (P-03); a refusal is shown by the parent and keeps the form (P-10). While a request goes
+ * out the button is `aria-disabled`, not `disabled`, and a second press sends nothing: a disabled button drops the focus to
+ * the body (F-0094, issue 2464).
  */
 export function RequestForm(props: {
   offer: ExchangeOffer;
@@ -61,6 +64,7 @@ export function RequestForm(props: {
   const [text, setText] = useState("");
   const swap = offer.mode === "swap";
   const send = () => {
+    if (props.busy) return;
     const input: RequestInput = {};
     if (swap && specimen) input.counterSpecimenId = specimen;
     if (swap && text.trim()) input.counterText = text.trim();
@@ -78,7 +82,12 @@ export function RequestForm(props: {
         />
       )}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" size="touch" disabled={props.busy}>
+        <Button
+          type="submit"
+          size="touch"
+          aria-disabled={props.busy || undefined}
+          className={BUSY_LOOK}
+        >
           Anfrage senden
         </Button>
         <Button type="button" size="touch" variant="plain" onClick={props.onCancel}>

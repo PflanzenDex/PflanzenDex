@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
+import { createRef } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { LINE_HIT } from "@/shared/feedback/line-hit";
 import { UndoRow } from "./undo-row";
 
 afterEach(() => {
@@ -71,5 +73,63 @@ describe("US-QS-32 UndoRow shows the result in place with its undo", () => {
       </div>,
     );
     expect(document.activeElement).toBe(input);
+  });
+});
+
+describe("US-QS-32 · SG-FEED-05 the undo row of a control that stays (issue 2462)", () => {
+  it("US-QS-32 the undo takes the focus from the control that caused the change (`from`), which stays on the page", () => {
+    const from = createRef<HTMLButtonElement>();
+    const { rerender } = render(
+      <div>
+        <button ref={from} type="button">
+          Gießen
+        </button>
+      </div>,
+    );
+    from.current?.focus();
+    rerender(
+      <div>
+        <button ref={from} type="button">
+          Gießen
+        </button>
+        <UndoRow result="Gegossen heute" subject="Aloe" from={from} onUndo={() => undefined} />
+      </div>,
+    );
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: /^Rückgängig/ }));
+  });
+
+  it("US-QS-32 the undo does not take the focus from `from` when another control holds it", () => {
+    const from = createRef<HTMLButtonElement>();
+    const { rerender } = render(
+      <div>
+        <button ref={from} type="button">
+          Gießen
+        </button>
+        <input aria-label="Suche" />
+      </div>,
+    );
+    const input = screen.getByRole("textbox", { name: "Suche" });
+    input.focus();
+    rerender(
+      <div>
+        <button ref={from} type="button">
+          Gießen
+        </button>
+        <input aria-label="Suche" />
+        <UndoRow result="Gegossen heute" subject="Aloe" from={from} onUndo={() => undefined} />
+      </div>,
+    );
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("SG-FEED-05 a compact row keeps one text line: the button reaches over it by negative margins; the default row does not", () => {
+    const { rerender } = render(
+      <UndoRow result="Gegossen heute" subject="Aloe" onUndo={() => undefined} compact />,
+    );
+    const undo = () => screen.getByRole("button", { name: /^Rückgängig/ });
+    expect(undo().className.split(" ")).toContain(LINE_HIT);
+    expect(undo().className).toContain("min-h-[44px]");
+    rerender(<UndoRow result="Gegossen heute" subject="Aloe" onUndo={() => undefined} />);
+    expect(undo().className.split(" ")).not.toContain(LINE_HIT);
   });
 });

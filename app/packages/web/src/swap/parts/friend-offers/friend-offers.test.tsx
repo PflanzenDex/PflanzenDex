@@ -190,6 +190,34 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
     expect(screen.getByRole("button", { name: "Anfrage senden" })).toBeTruthy();
   });
 
+  it("US-QS-32 · SG-BASE-01 while a request is sent 'Anfrage senden' is aria-disabled, not disabled: it keeps the focus and a second tap sends nothing (issue 2464, F-0094)", async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    const { posts } = server({
+      post: async () => {
+        await gate;
+        return response(409, { error: { code: "swap.already_requested", text: "raw" } });
+      },
+    });
+    show();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Pflanze anfragen: Echte Aloe" }),
+    );
+    const send = screen.getByRole("button", { name: "Anfrage senden" });
+    await userEvent.click(send);
+    await vi.waitFor(() => expect(send.getAttribute("aria-disabled")).toBe("true"));
+    expect(send.hasAttribute("disabled")).toBe(false);
+    expect(document.activeElement).toBe(send);
+    await userEvent.click(send);
+    release();
+    await screen.findByRole("alert");
+    expect(posts).toHaveLength(1);
+    expect(send.hasAttribute("aria-disabled")).toBe(false);
+    expect(document.activeElement).toBe(send);
+  });
+
   it("an offer I requested already shows 'Angefragt' and no request button", async () => {
     server({ offers: [offer({ requested: true })] });
     show();

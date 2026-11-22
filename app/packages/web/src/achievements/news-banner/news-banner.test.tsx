@@ -7,6 +7,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { createQueryClient, WRITE_SUCCEEDED } from "../../shared/data";
+import { LINE_HIT } from "@/shared/feedback/line-hit";
 import { AchievementNewsBanner } from "./news-banner";
 import { hasOwnBorder, isPlain } from "@/shared/ui/button/button-roles";
 
@@ -209,5 +210,19 @@ describe("US-QS-32 · F-0070 · SG-FEED-05 the achievement notice takes a place 
     const classes = region.className.split(" ");
     expect(classes).not.toContain("border");
     expect(classes.filter((c) => /^p[xy]?-\d/.test(c) || /^m[b]?-\d/.test(c))).toEqual([]);
+  });
+
+  it("US-ACH-03 · US-QS-12 · issue 2466 at 200 % text the controls wrap inside the notice: the margin of 'Schließen' is in lh, so a row of it keeps its height and no row runs under another", async () => {
+    const s = server(none);
+    show();
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    await earn(s);
+    const region = await notice();
+    // The row of the notice may wrap (flex-wrap); the button hangs over its line by half the difference to 44 px, in lh.
+    expect(region.className.split(" ")).toContain("flex-wrap");
+    const close = screen.getByRole("button", { name: "Schließen" });
+    expect(close.className.split(" ")).toContain(LINE_HIT);
+    expect(close.className.split(" ")).not.toContain("-my-3");
+    expect(LINE_HIT).toContain("1lh");
   });
 });

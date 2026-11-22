@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 import type { SensorView } from "@pflanzendex/core";
 import { Select } from "@/shared/ui/fields/select/select";
-import { cn } from "@/shared/lib/utils";
+import { BUSY_LOOK, cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../equipment.de.json";
 
@@ -33,7 +33,8 @@ type Sensor = SensorView["sensors"][number];
 /**
  * One sensor: its name, the choice of its place and the line of its result. The line keeps the height of one text line, so a
  * saved assignment moves nothing, and it is highlighted briefly (SG-FEED-01, SG-MOTION-07, F-0160); `n` replays the
- * highlight for a repeated result.
+ * highlight for a repeated result. While a write runs the choice is `aria-disabled`, not `disabled`, and a change is
+ * ignored: a disabled select loses the focus to the sheet (F-0094, issue 2463, SG-BASE-01).
  */
 function SensorCard(props: {
   sensor: Sensor;
@@ -57,10 +58,12 @@ function SensorCard(props: {
         <Select
           aria-labelledby={`${labelId} ${nameId}`}
           value={valueOf(s.target)}
-          disabled={props.busy}
-          onChange={(e) =>
-            props.onAssign(e.target.value, e.target.selectedOptions[0]?.textContent ?? "")
-          }
+          aria-disabled={props.busy || undefined}
+          className={BUSY_LOOK}
+          onChange={(e) => {
+            if (props.busy) return;
+            props.onAssign(e.target.value, e.target.selectedOptions[0]?.textContent ?? "");
+          }}
         >
           <option value="">{ui("sensors.unassigned")}</option>
           <optgroup label={ui("sensors.groupPlants")}>

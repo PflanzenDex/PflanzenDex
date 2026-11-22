@@ -44,8 +44,8 @@ async function sendUndo(
 }
 
 /**
- * "Gießen" of one plant with its undo (US-QS-32). A write that made the entry holds the plant's button in its place for the
- * undo window; a write without an entry (it was there already) says "Zuletzt gegossen: heute" in place and in the live
+ * "Gießen" of one plant with its undo (US-QS-32). A write that made the entry holds its result with the undo for the undo
+ * window (`held`); a write without an entry (it was there already) says "Zuletzt gegossen: heute" in place and in the live
  * region, no toast (SG-FEED-01); `last` is that day. The undo takes the entry back through `monitoring.unwater`, for the day
  * the write used (its answer), and says so when nothing was left to remove. A refusal stays a toast (P-10).
  */
@@ -75,7 +75,11 @@ export function useWaterWrite(
     say(t("last", { when: summaryDate(day, todayLocal()) }));
   });
   const restore = useWriteAction(token, again, (message, kind) => {
-    if (kind !== "error") undo.release(specimen.id);
+    if (kind !== "error") {
+      undo.release(specimen.id);
+      // A watering taken back is no "Zuletzt gegossen: heute" any more, whatever a later tap said while the undo was open.
+      setLast(null);
+    }
     say(kind !== "error" && answer.current.removed === 0 ? t("nothingToUndo") : message, kind);
   });
   const water = () => {

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
+import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
@@ -95,5 +96,24 @@ describe("US-QS-32 the growth slot shows the fallback of its loaded height while
     const status = await screen.findByRole("status");
     expect(status.querySelectorAll(".animate-pulse")).toHaveLength(1);
     expect(screen.queryByTestId("growth-fallback")).toBeNull();
+  });
+});
+
+describe("US-QS-32 · SG-FEED-05 the water slot gets the place of its result (issue 2462)", () => {
+  it("US-QS-32 · SG-FEED-05 the slot's context holds the box of the 'Art · Status' line, and a result drawn into it adds no row to the buttons", async () => {
+    setViewportWidth(360);
+    show({
+      water: (_card, ctx) => (
+        <>
+          <button type="button">Gießen</button>
+          {ctx.resultHost && createPortal(<p>Zuletzt gegossen: heute</p>, ctx.resultHost)}
+        </>
+      ),
+    });
+    const result = await screen.findByText("Zuletzt gegossen: heute");
+    const facts = screen.getByText(/^Art: Aloe vera · Status: /);
+    expect(result.parentElement?.parentElement).toBe(facts.parentElement);
+    const buttons = screen.getByRole("button", { name: "Gießen" }).parentElement as HTMLElement;
+    expect(buttons.querySelector("p")).toBeNull();
   });
 });

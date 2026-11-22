@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { accountAddress } from "@/shared/patterns/navigation/navigation/navigation";
 import { Button } from "@/shared/ui/button/button";
+import { LINE_HIT } from "@/shared/feedback/line-hit";
 import { useInvalidate, useRequest, WRITE_SUCCEEDED, newRepeatKey } from "../../shared/data";
 import { loadNews, markSeen } from "../achievements-api";
 import { ACHIEVEMENT_NAMES } from "../overview/texts";
@@ -36,8 +37,9 @@ function Notice(props: { text: string; slot: HTMLElement | null; onClose: () => 
       <Link to={accountAddress("achievements")} className="underline">
         Zu den Erfolgen
       </Link>
-      {/* The button keeps its 44 px hit area; the negative margins keep the line one text line high. */}
-      <Button variant="plain" size="sm" className="-my-3" onClick={props.onClose}>
+      {/* The button keeps its 44 px hit area; the margin keeps its row one text line high, also at 200 % text, where the
+          row wraps and a margin in rem would run it under the link above (issue 2466). */}
+      <Button variant="plain" size="sm" className={LINE_HIT} onClick={props.onClose}>
         Schließen
       </Button>
     </section>,

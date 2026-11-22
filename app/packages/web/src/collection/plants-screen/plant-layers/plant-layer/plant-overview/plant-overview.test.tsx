@@ -1,8 +1,11 @@
 // @vitest-environment jsdom
+import { useContext } from "react";
+import { createPortal } from "react-dom";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ResultHost } from "../plant-layer.slot";
 import { MeasureButton, PlantOverview } from "./plant-overview";
 
 const CARD: SpecimenCard = {
@@ -61,10 +64,43 @@ describe("PlantOverview (NFR-13, US-QS-23)", () => {
     expect((measurement.parentElement as HTMLElement).className.split(" ")).toContain("flex-wrap");
   });
 
-  it("NFR-13 a message of the Gießen slot takes a row of its own below the buttons", () => {
-    overview(<p role="status">gegossen</p>);
-    const row = screen.getByRole("status").parentElement as HTMLElement;
-    expect(row.className.split(" ")).toContain("[&>p]:basis-full");
+  it("US-QS-32 · SG-FEED-05 the result of the Gießen slot is drawn into the cell of the 'Art · Status' line, not into the row of the buttons (issue 2462)", () => {
+    function Result() {
+      const host = useContext(ResultHost);
+      return (
+        <>
+          <button type="button">Gießen</button>
+          {host && createPortal(<p>Zuletzt gegossen: heute</p>, host)}
+        </>
+      );
+    }
+    overview(<Result />);
+    const result = screen.getByText("Zuletzt gegossen: heute");
+    const facts = screen.getByText(/^Art: Ficus benjamina · Status: /);
+    const cell = facts.parentElement as HTMLElement;
+    // Both stand in one grid cell: the cell is as high as the taller of the two, so the line coming and going moves nothing.
+    expect(result.parentElement?.parentElement).toBe(cell);
+    expect(facts.className.split(" ")).toEqual(
+      expect.arrayContaining(["col-start-1", "row-start-1"]),
+    );
+    expect(result.parentElement?.className.split(" ")).toEqual(
+      expect.arrayContaining(["col-start-1", "row-start-1"]),
+    );
+    // The facts line is hidden, not removed, while the cell holds a result: `invisible` keeps its height and leaves the
+    // reading order.
+    expect(facts.className.split(" ")).toContain("group-has-[>div:not(:empty)]:invisible");
+    expect(cell.className.split(" ")).toContain("group");
+    const row = screen.getByRole("button", { name: "Gießen" }).parentElement as HTMLElement;
+    expect(row.contains(result)).toBe(false);
+    expect(row.querySelector("p")).toBeNull();
+  });
+
+  it("US-QS-32 · SG-FEED-05 without a result the cell holds only the facts line: its host is an empty box, so nothing is hidden", () => {
+    overview();
+    const facts = screen.getByText(/^Art: Ficus benjamina · Status: /);
+    expect(facts.nextElementSibling?.tagName).toBe("DIV");
+    expect(facts.nextElementSibling?.childElementCount).toBe(0);
+    expect(facts.nextElementSibling?.textContent).toBe("");
   });
 
   it("US-QS-23 shows the texts of the table, with unknown values as unbekannt", () => {

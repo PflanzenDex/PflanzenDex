@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { z } from "zod";
 import { Button } from "@/shared/ui/button/button";
-import { cn } from "@/shared/lib/utils";
+import { BUSY_LOOK, cn } from "@/shared/lib/utils";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
 import { refusalText } from "@/shared/lib/error-text";
@@ -16,7 +16,9 @@ type Fields = z.infer<typeof schema>;
  * used, expired, own, already linked) stays visible at the field with its German text and the focus returns to it (P-10).
  * `onSend` resolves with the refusal, or `null` when the request was sent. A sent request is the line of the form: `sent`
  * takes the place of the hint, so the result shows where the keeper looks and nothing is inserted (SG-FEED-01, SG-FEED-05);
- * typing a new code brings the hint back (`onEdit`).
+ * typing a new code brings the hint back (`onEdit`). While the request goes out the button is `aria-disabled`, not
+ * `disabled`, and a second press sends nothing: a disabled button that holds the focus drops it to the body (F-0094,
+ * issue 2464, SG-BASE-01), so the focus stays on the button.
  */
 export function CodeForm(props: {
   running: boolean;
@@ -36,10 +38,11 @@ export function CodeForm(props: {
     if (refusal)
       setError("code", { type: "server", message: refusalText(refusal) }, { shouldFocus: true });
   }, [refusal, setError]);
+  const pending = props.running || form.formState.isSubmitting;
   const submit = form.handleSubmit(async ({ code }) => {
+    if (pending) return;
     if (await props.onSend(code)) form.reset({ code: "" });
   });
-  const pending = props.running || form.formState.isSubmitting;
   return (
     <section aria-label="Code eingeben" className="flex min-w-0 flex-col gap-3">
       <p className={cn(props.sent ? "font-semibold" : "text-muted-foreground")}>
@@ -56,7 +59,12 @@ export function CodeForm(props: {
             spellCheck={false}
           />
           <div>
-            <Button type="submit" size="touch" disabled={pending}>
+            <Button
+              type="submit"
+              size="touch"
+              aria-disabled={pending || undefined}
+              className={BUSY_LOOK}
+            >
               {pending ? "Sendet …" : "Anfrage senden"}
             </Button>
           </div>
