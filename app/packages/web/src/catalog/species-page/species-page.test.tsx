@@ -238,6 +238,31 @@ describe("US-BES-01 Seite Arten", () => {
     expect(await screen.findByRole("heading", { name: "Dracaena trifasciata" })).toBeTruthy();
   });
 
+  it("US-QS-03 · P-10 a key conflict of a proposal offers 'Hinweis schließen', which clears the notice, keeps the input and frees the key", async () => {
+    fakeServer({
+      proposal: () =>
+        response(409, { error: { code: "idempotency.key_conflict", text: "raw server text" } }),
+    });
+    render(page());
+    await userEvent.click(await screen.findByRole("button", { name: "Art vorschlagen" }));
+    await screen.findByRole("dialog", { name: "Art vorschlagen" });
+    await fillProposal("x", "y");
+    await userEvent.click(screen.getByRole("button", { name: "Vorschlag sichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Deine erste Eingabe ist gesichert.");
+    await userEvent.click(within(alert).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect((screen.getByLabelText(/Vergeilungsanzeichen/) as HTMLTextAreaElement).value).toBe("x");
+    await userEvent.click(screen.getByRole("button", { name: "Vorschlag sichern" }));
+    await screen.findByRole("alert");
+    const keys = vi
+      .mocked(fetch)
+      .mock.calls.filter(([, init]) => init?.method === "POST")
+      .map(([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"]);
+    expect(keys).toHaveLength(2);
+    expect(keys[1]).not.toBe(keys[0]);
+  }, 20_000);
+
   it("US-BES-01 · DS-48 an invalid submission focuses the first invalid field and links its German message", async () => {
     fakeServer();
     render(page());

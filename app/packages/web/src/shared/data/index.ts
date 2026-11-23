@@ -45,6 +45,7 @@ export {
   useRepeatKey,
   type KeyScope,
 } from "./write-action/repeat-key";
+export { withConflictDismiss } from "./write-action/conflict/key-conflict-dismiss";
 export { FeaturesProvider, useFeature, useFeatures } from "./client/features/features";
 export type { FeatureStates } from "./client/features/features";
 export { currentTimeZone, deviceTimeZone, setProfileTimeZone, todayLocal } from "./time-zone";

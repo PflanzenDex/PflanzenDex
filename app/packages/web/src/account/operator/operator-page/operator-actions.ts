@@ -5,6 +5,7 @@ import {
   SIGN_IN,
   useInvalidate,
   useRepeatKey,
+  withConflictDismiss,
   type ApiError,
   type KeyScope,
   type Response,
@@ -85,15 +86,19 @@ export function useOperatorActions(api: string, token: Token) {
     busy.current = true;
     setRunning(true);
     const t = await token();
-    const r = t
-      ? await sendHeld(keys, keyOf(scope, input), t, send)
-      : { ok: false as const, error: SIGN_IN };
+    const held = keyOf(scope, input);
+    const r = t ? await sendHeld(keys, held, t, send) : { ok: false as const, error: SIGN_IN };
     busy.current = false;
     setRunning(false);
+    // A key conflict of the codes holds its key: "Hinweis schließen" frees it and clears the notice (US-QS-03, P-10).
     setNotice(
       r.ok
         ? { scope, message: done(r.value), error: null }
-        : { scope, message: null, error: r.error },
+        : {
+            scope,
+            message: null,
+            error: withConflictDismiss(r.error, held, () => setNotice(null)),
+          },
     );
     if (r.ok) invalidate();
     return r.ok;

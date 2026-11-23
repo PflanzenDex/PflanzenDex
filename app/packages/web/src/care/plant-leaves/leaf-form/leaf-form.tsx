@@ -44,7 +44,7 @@ function Fields(props: { control: Control<LeafFields>; today: string }) {
  */
 export function LeafForm(props: {
   today: string;
-  onSend: (input: LeafInput) => Promise<ApiError | null>;
+  onSend: (input: LeafInput, clear: () => void) => Promise<ApiError | null>;
   onSaved: () => void;
 }) {
   const form = useFieldForm<LeafFields>({
@@ -53,7 +53,7 @@ export function LeafForm(props: {
   });
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const submit = form.handleSubmit(async (values) => {
-    const r = await props.onSend(toLeafInput(values));
+    const r = await props.onSend(toLeafInput(values), () => setRefusal(null));
     setRefusal(r);
     if (!r) props.onSaved();
   });
