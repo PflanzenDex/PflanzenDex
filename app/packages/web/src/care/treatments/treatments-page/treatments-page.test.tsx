@@ -50,6 +50,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   await deliverBuffered();
+  window.localStorage.clear();
 });
 
 describe("US-BEH-01 Seite Behandlung planen", () => {
@@ -502,6 +503,11 @@ describe("US-QS-10 Behandlung abhaken wird angesagt", () => {
   });
 
   it("US-QS-10 offline a tick-off is buffered, the row is hidden, the state is text and announced, and it is delivered once when online", async () => {
+    // The buffer sends a write under the account it was made under (US-QS-07): the device is signed in as one.
+    window.localStorage.setItem(
+      "oidc.user:http://localhost:18081/realms/pflanzendex:pflanzendex-web",
+      JSON.stringify({ access_token: "tok", profile: { sub: "keeper-a" } }),
+    );
     const state = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
     const { ticks } = doneServer();
     const user = userEvent.setup();

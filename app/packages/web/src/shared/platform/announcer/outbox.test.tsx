@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   appendKey,
   createWrite,
@@ -13,13 +13,33 @@ import {
 import { AnnouncerProvider } from "./announcer";
 import { deliverBuffered } from "./outbox";
 
+// The device is signed in as account A for every test; the account tests change it (US-QS-07).
+beforeEach(() => signInAs("A"));
+
 afterEach(async () => {
   cleanup();
   vi.restoreAllMocks();
   // The buffer is shared by the whole page: leave it empty for the next test.
   await deliverBuffered();
+  window.localStorage.clear();
   vi.unstubAllGlobals();
 });
+
+/** The sign-in library keeps the signed-in user under this key (oidc-client-ts, `sub` is the account; US-QS-07). */
+const USER_KEY = "oidc.user:http://localhost:18081/realms/pflanzendex:pflanzendex-web";
+/** Signs the device in as account `sub`, or out for `null`, the way the sign-in library keeps its user (US-QS-07). */
+function signInAs(sub: string | null) {
+  if (sub === null) window.localStorage.removeItem(USER_KEY);
+  else
+    window.localStorage.setItem(
+      USER_KEY,
+      JSON.stringify({ access_token: `token-of-${sub}`, profile: { sub } }),
+    );
+}
+/** The token of the session as `useSession` gives it: the access token of the user the device keeps (US-QS-07). */
+const sessionToken = async () =>
+  (JSON.parse(window.localStorage.getItem(USER_KEY) ?? "null") as { access_token?: string } | null)
+    ?.access_token;
 
 const online = (state: boolean) =>
   vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(state);
@@ -50,8 +70,12 @@ const refusedWith = (code: string) =>
 const page: KeyScope = { target: "page", action: "save" };
 
 /** One tap that writes, shown the way a page does: a button that runs the action. */
-function Page(props: { send: WriteSend; after: () => void }) {
-  const write = useWriteAction(async () => "token", props.after);
+function Page(props: {
+  send: WriteSend;
+  after: () => void;
+  token?: (() => Promise<string | undefined>) | undefined;
+}) {
+  const write = useWriteAction(props.token ?? (async () => "token"), props.after);
   return (
     <>
       <button
@@ -65,10 +89,10 @@ function Page(props: { send: WriteSend; after: () => void }) {
   );
 }
 
-const shell = (send: WriteSend, after = vi.fn()) =>
+const shell = (send: WriteSend, after = vi.fn(), token?: () => Promise<string | undefined>) =>
   render(
     <AnnouncerProvider>
-      <Page send={send} after={after} />
+      <Page send={send} after={after} token={token} />
     </AnnouncerProvider>,
   );
 
@@ -485,5 +509,117 @@ describe("US-QS-30 · a write through useWriteAction stays active offline", () =
     expect(fetchFn).not.toHaveBeenCalled();
     await buffered();
     expect(screen.queryByText(/Keine Verbindung/)).toBeNull();
+  });
+});
+
+/** Two writes of two actions on one page, so both can wait in the buffer at once (US-QS-10). */
+function TwoWrites(props: { send: WriteSend }) {
+  const first = useWriteAction(sessionToken, () => undefined);
+  const second = useWriteAction(sessionToken, () => undefined);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => void first.run(props.send, "Gesichert: Monstera.", rowOf("row-a"))}
+      >
+        Erste
+      </button>
+      <button
+        type="button"
+        onClick={() => void second.run(props.send, "Gesichert: Aloe.", rowOf("row-b"))}
+      >
+        Zweite
+      </button>
+    </>
+  );
+}
+const rowOf = (target: string): KeyScope => ({ target, action: "save" });
+
+const ACCOUNT_CHANGED =
+  "Die Änderung gehört zu einem Konto, das nicht mehr angemeldet ist. Melde dich mit diesem Konto an und wiederhole sie.";
+const refusedNote = `Nicht gesendet: ${ACCOUNT_CHANGED}`;
+
+describe("US-QS-07 · a buffered write is sent only under the account it was made under (P-04)", () => {
+  it("US-QS-07 buffered under account A, the device is signed in as B before delivery: nothing is sent, no token is read, the refusal is visible and announced, the write is dropped", async () => {
+    online(false);
+    const fetchFn = serverWith(ok());
+    const after = vi.fn();
+    const tokenOf = vi.fn(sessionToken);
+    shell(measure(9), after, tokenOf);
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
+    await buffered();
+    signInAs("B");
+    online(true);
+    act(() => void window.dispatchEvent(new Event("online")));
+    await waitFor(() => expect(heard()).toBe(refusedNote));
+    expect(visible(refusedNote)).toHaveLength(1);
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(tokenOf).not.toHaveBeenCalled();
+    expect(after).toHaveBeenCalledTimes(1);
+    await deliverBuffered();
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-07 buffered under account A, no account is signed in at delivery: nothing is sent and the refusal is visible and announced", async () => {
+    online(false);
+    const fetchFn = serverWith(ok());
+    shell(measure(9), vi.fn(), sessionToken);
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
+    await buffered();
+    signInAs(null);
+    online(true);
+    act(() => void window.dispatchEvent(new Event("online")));
+    await waitFor(() => expect(heard()).toBe(refusedNote));
+    expect(visible(refusedNote)).toHaveLength(1);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-07 buffered under account A, the device is still signed in as A: delivered once, with the token of A", async () => {
+    online(false);
+    const fetchFn = serverWith(ok());
+    shell(measure(9), vi.fn(), sessionToken);
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
+    await buffered();
+    online(true);
+    act(() => void window.dispatchEvent(new Event("online")));
+    await waitFor(() => expect(heard()).toBe("Nachträglich gesendet: Gesichert: Monstera."));
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    const init = fetchFn.mock.calls[0]?.[1];
+    expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer token-of-A");
+  });
+
+  it("US-QS-07 two writes refused for the same reason: the text is said once in the note", async () => {
+    online(false);
+    const fetchFn = serverWith(ok());
+    render(
+      <AnnouncerProvider>
+        <TwoWrites send={measure(9)} />
+      </AnnouncerProvider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Erste" }));
+    await userEvent.click(screen.getByRole("button", { name: "Zweite" }));
+    await buffered();
+    signInAs("B");
+    online(true);
+    act(() => void window.dispatchEvent(new Event("online")));
+    await waitFor(() => expect(heard()).toBe(refusedNote));
+    expect(visible(refusedNote)).toHaveLength(1);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-07 two kept users of different accounts on the device count as no account: a buffered write is refused, not sent", async () => {
+    online(false);
+    const fetchFn = serverWith(ok());
+    window.localStorage.setItem(
+      "oidc.user:https://other.example/realms/x:pflanzendex-web",
+      JSON.stringify({ access_token: "token-of-B", profile: { sub: "B" } }),
+    );
+    shell(measure(9), vi.fn(), sessionToken);
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
+    await buffered();
+    online(true);
+    act(() => void window.dispatchEvent(new Event("online")));
+    await waitFor(() => expect(heard()).toBe(refusedNote));
+    expect(fetchFn).not.toHaveBeenCalled();
   });
 });

@@ -13,8 +13,38 @@ export type Write = {
   success: string;
   after: () => void;
 };
-/** The delivery's answer settles the promise of the tapping hook. */
-type Entry = Write & { done: (reply: Response<unknown>) => void };
+/**
+ * The delivery's answer settles the promise of the tapping hook. `account` is the `sub` the write was made under
+ * (US-QS-07).
+ */
+type Entry = Write & { done: (reply: Response<unknown>) => void; account: string | undefined };
+
+/** The sign-in library keeps the signed-in user under `oidc.user:<authority>:<client id>` (account/api/sign-in-client.ts). */
+const USER_KEY_PREFIX = "oidc.user:";
+
+/** The `sub` of one kept user; a user that cannot be read has none. */
+const subOf = (key: string): unknown =>
+  (JSON.parse(window.localStorage.getItem(key) ?? "null") as { profile?: { sub?: unknown } } | null)
+    ?.profile?.sub;
+
+/**
+ * The account (`sub`) the device is signed in as, read from the storage of the sign-in library (US-QS-07, P-04). Every kept
+ * user must name the same account: two different accounts, an unreadable user or unreadable storage count as none, so a
+ * write is never sent under a guess.
+ */
+function signedInSub(): string | undefined {
+  try {
+    const subs = new Set<unknown>(
+      Object.keys(window.localStorage)
+        .filter((key) => key.startsWith(USER_KEY_PREFIX))
+        .map(subOf),
+    );
+    const [sub] = subs;
+    return subs.size === 1 && typeof sub === "string" ? sub : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 const entries: Entry[] = [];
 let announce: Api["announce"] | null = null;
@@ -43,32 +73,58 @@ export function bufferWrite(to: Api["announce"], write: Write): Promise<Response
     window.addEventListener("online", () => void deliverBuffered());
   }
   return new Promise<Response<unknown>>((done) => {
-    entries.push({ ...write, done });
+    // The account is read now, when the write is made, not when it is delivered (US-QS-07).
+    entries.push({ ...write, done, account: signedInSub() });
     say(`Du bist offline. Wird gesendet, sobald du wieder online bist: ${write.success}`, true);
   });
 }
 
-/** Sends the buffered writes in the order they were tapped; stops, and keeps the rest, while the server is unreachable. */
+/** Whether the account the device is signed in as now is the one the write was made under (US-QS-07). */
+function sameAccount(entry: Entry): boolean {
+  const sub = signedInSub();
+  return sub !== undefined && sub === entry.account;
+}
+
+/** The answer of a write whose account is no longer the one signed in: it is refused, nothing is sent (US-QS-07, P-10). */
+const changedAccount = (): Response<unknown> => ({
+  ok: false,
+  error: { code: "access.account_changed", text: errorText("access.account_changed") },
+});
+
+/**
+ * Sends one buffered write under the account it was made under (US-QS-07, P-04). Another or no account: no token is read
+ * and nothing is sent. The account is checked again after the token is read, so a sign-in in between cannot send it.
+ */
+async function sendEntry(entry: Entry): Promise<Response<unknown>> {
+  if (!sameAccount(entry)) return changedAccount();
+  const t = await entry.token();
+  if (!sameAccount(entry)) return changedAccount();
+  if (!t)
+    return { ok: false, error: { code: "access.not_signed_in", text: "Bitte melde dich neu an." } };
+  const { method, url, body, key } = entry.request;
+  return call<unknown>(fetch, url, t, { method, body, key });
+}
+
+/**
+ * Sends the buffered writes in the order they were tapped; stops, and keeps the rest, while the server is unreachable.
+ * A write of another account is refused and dropped (US-QS-07); identical refusals are said once in the note.
+ */
 export async function deliverBuffered(): Promise<void> {
   if (delivering || entries.length === 0) return;
   delivering = true;
   const sent: string[] = [];
-  const refused: string[] = [];
+  const refused = new Set<string>();
   for (let entry = entries[0]; entry; entry = entries[0]) {
-    const t = await entry.token();
-    const { method, url, body, key } = entry.request;
-    const r: Response<unknown> = t
-      ? await call<unknown>(fetch, url, t, { method, body, key })
-      : { ok: false, error: { code: "access.not_signed_in", text: "Bitte melde dich neu an." } };
+    const r = await sendEntry(entry);
     if (!r.ok && r.error.code === "network.not_reachable") break;
     entries.shift();
     if (r.ok) sent.push(entry.success);
-    else refused.push(`Nicht gesendet: ${errorText(r.error.code)}`);
+    else refused.add(`Nicht gesendet: ${errorText(r.error.code)}`);
     entry.after();
     entry.done(r);
   }
   delivering = false;
-  if (sent.length + refused.length === 0) return;
+  if (sent.length + refused.size === 0) return;
   const head = sent.length > 1 ? `${sent.length} Änderungen nachträglich gesendet.` : "";
   const one = sent.length === 1 ? `Nachträglich gesendet: ${sent[0]}` : "";
   say([one, head, ...refused].filter(Boolean).join(" "), false);
