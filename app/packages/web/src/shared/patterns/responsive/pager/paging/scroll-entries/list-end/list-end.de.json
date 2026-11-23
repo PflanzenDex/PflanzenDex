@@ -1,0 +1,6 @@
+{
+  "loading": "Weitere werden geladen …",
+  "end": "Das waren alle {count}",
+  "failed": "Der Rest konnte nicht geladen werden.",
+  "retry": "Erneut versuchen"
+}

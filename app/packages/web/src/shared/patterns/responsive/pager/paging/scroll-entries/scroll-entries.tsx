@@ -2,13 +2,16 @@ import * as React from "react";
 import { cn } from "@/shared/lib/utils";
 import {
   EntryPlaceholders,
-  PagingNote,
   busyWhile,
+  knownCount,
   placeholderCount,
   usePagingMore,
   useRetryFocus,
   type PagerPaging,
 } from "../paging";
+import { ListEnd } from "./list-end/list-end";
+import { useScrollOverflow } from "./use-scroll-overflow";
+import { useStripOldPositions } from "./use-strip-old-positions";
 
 /** How far below the end of the list the next part is asked for, before the keeper reaches it (SG-LIST-01, starting value, assumption). */
 const MORE_MARGIN_PX = 240;
@@ -74,14 +77,16 @@ function useWanted(list: React.RefObject<HTMLUListElement | null>, reach: Reach)
 }
 
 /**
- * One scrolling list on a phone (SG-LIST-01, US-QS-32): every loaded entry stays on the list, with no "Zurück" and
- * "Weiter". With server paging the next part is asked for once the end of the list comes near, so the list loads more as
- * the keeper scrolls; without an IntersectionObserver every part is asked for at once. A failed part shows its note and
- * its retry (P-10). A list that fills its frame (`fit`) takes the room the frame leaves and scrolls in its own box, so it
- * is a tab stop for the keyboard (WCAG 2.1.1, axe scrollable-region-focusable). It never gets shorter than one row and a
- * bit (`min-h-24`, in rem, so it follows the text size): where the frame has no room left (200 % text), the frame scrolls
- * instead and the list does not collapse to nothing. Its rows never shrink below their content: a group clips its rows
- * (`overflow-hidden`), which would let a flex column squeeze them to nothing.
+ * One scrolling list on a phone (SG-LIST-01, US-QS-15, US-QS-32): every loaded entry stays on the list, with no "Zurück" and
+ * "Weiter" and no "Mehr laden". With server paging the next part is asked for once the end of the list comes near, so the
+ * list loads more as the keeper scrolls; without an IntersectionObserver every part is asked for at once. At its end a quiet
+ * loader row shows while a part is on its way, a retry row when it failed (P-10), and "Das waren alle n" once every entry
+ * is there, the total is known and the list is longer than its box (`ListEnd`, only with `paging`: a list without it
+ * renders no row of its own). The address holds no position: an old `?from=n` is stripped once (`useStripOldPositions`).
+ * A list that fills its frame (`fit`) takes the room the frame leaves and scrolls in its own box, so it is a tab stop for the keyboard (WCAG 2.1.1, axe scrollable-region-focusable).
+ * It never gets shorter than one row and a bit (`min-h-24`, in rem, so it follows the text size): where the frame has no
+ * room left (200 % text), the frame scrolls instead and the list does not collapse to nothing. Its rows never shrink
+ * below their content: a group clips its rows (`overflow-hidden`), which would let a flex column squeeze them to nothing.
  */
 export function ScrollEntries<T>({
   items,
@@ -96,11 +101,17 @@ export function ScrollEntries<T>({
 }: ScrollEntriesProps<T>) {
   const paged = paging !== undefined;
   const loaded = items.length;
-  const count = paging ? Math.max(paging.total, loaded) : loaded;
+  const count = knownCount(paging, loaded);
   const list = React.useRef<HTMLUListElement>(null);
+  useStripOldPositions();
   const wanted = useWanted(list, { paged, loaded, count, pageSize, fit, resetKey });
   const missing = usePagingMore(paging, loaded, wanted, count);
   const note = useRetryFocus(paging, missing, list);
+  const longer = useScrollOverflow(list, fit, loaded, paged);
+  // Only a server list ends with rows (SG-LIST-01): a list without `paging` renders no row of its own and measures
+  // nothing, so a screen that scrolls without paging stays as it was. The marker needs the total and every entry.
+  const marker =
+    paging?.total !== undefined && longer && loaded > 0 && loaded === count ? count : undefined;
 
   const holes = placeholderCount(paging, missing, Math.min(wanted, count) - loaded);
 
@@ -123,8 +134,8 @@ export function ScrollEntries<T>({
           </li>
         ))}
         <EntryPlaceholders count={holes} from={loaded} paging={paging} />
+        {note ? <ListEnd paging={note} missing={missing} marker={marker} /> : null}
       </ul>
-      {note ? <PagingNote paging={note} missing={missing} /> : null}
     </div>
   );
 }

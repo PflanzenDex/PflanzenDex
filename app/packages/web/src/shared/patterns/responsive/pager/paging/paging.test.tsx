@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Pager } from "../pager";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { dropPageParts, namedEntry, parseFrom, parsePage, position } from "./address";
+import { knownCount, type PagerPaging } from "./paging";
 
 afterEach(cleanup);
 // The paged view is the one from 768 px (US-QS-32): these tests pin the paging, so they run at a tablet width.
@@ -202,5 +203,23 @@ describe("FR-BES-23 the address parts of a paged list (issue 1492)", () => {
     const params = new URLSearchParams("page=2&from=3&rpage=4&rfrom=5&keep=1");
     dropPageParts(params, "from", "rfrom");
     expect(params.toString()).toBe("keep=1");
+  });
+});
+
+describe("US-QS-15 · FR-BES-23 the count of a server list", () => {
+  const known = (total?: number): PagerPaging => ({
+    total,
+    loading: false,
+    onMore: vi.fn(),
+    onRetry: vi.fn(),
+    loadingText: "",
+    retryText: "",
+  });
+
+  it("US-QS-15 · FR-BES-23 a known total counts all entries, at least the loaded ones; an unknown total counts the loaded ones", () => {
+    expect(knownCount(known(84), 20)).toBe(84);
+    expect(knownCount(known(10), 20)).toBe(20);
+    expect(knownCount(known(undefined), 20)).toBe(20);
+    expect(knownCount(undefined, 7)).toBe(7);
   });
 });

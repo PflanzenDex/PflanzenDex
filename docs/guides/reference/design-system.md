@@ -184,7 +184,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/overlays/dialog/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/shared/ui/overlays/sheet/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/shared/ui/overlays/sheet/sheet";
 
 type Props = {
   open: boolean;
@@ -193,7 +198,12 @@ type Props = {
   children: React.ReactNode;
 };
 
-export function ResponsiveModal({ open, onOpenChange, title, children }: Props) {
+export function ResponsiveModal({
+  open,
+  onOpenChange,
+  title,
+  children,
+}: Props) {
   const isDesktop = useMediaQuery("(min-width: 768px)"); // md, upward-only
   if (isDesktop) {
     return (
@@ -209,7 +219,10 @@ export function ResponsiveModal({ open, onOpenChange, title, children }: Props) 
   }
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90dvh] pb-[env(safe-area-inset-bottom)]">
+      <SheetContent
+        side="bottom"
+        className="max-h-[90dvh] pb-[env(safe-area-inset-bottom)]"
+      >
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
@@ -342,7 +355,8 @@ const buttonVariants = cva(
         tinted: "bg-accent text-accent-foreground hover:bg-accent/80",
         plain: "text-primary hover:bg-accent hover:text-accent-foreground",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
@@ -358,7 +372,9 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 
@@ -366,7 +382,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     return (
-      <Comp ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props} />
+      <Comp
+        ref={ref}
+        className={cn(buttonVariants({ variant, size }), className)}
+        {...props}
+      />
     );
   },
 );
@@ -438,14 +458,22 @@ import {
 } from "@/shared/ui/fields/form/form";
 import { wishSchema, type WishInput } from "../schemas";
 
-export function WishForm({ onSubmit }: { onSubmit: (v: WishInput) => Promise<void> }) {
+export function WishForm({
+  onSubmit,
+}: {
+  onSubmit: (v: WishInput) => Promise<void>;
+}) {
   const form = useFieldForm<WishInput>({
     resolver: zodResolver(wishSchema),
     defaultValues: { name: "" },
   });
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-4"
+        noValidate
+      >
         <FormField
           control={form.control}
           name="name"
@@ -459,7 +487,11 @@ export function WishForm({ onSubmit }: { onSubmit: (v: WishInput) => Promise<voi
             </FormItem>
           )}
         />
-        <Button type="submit" size="touch" disabled={form.formState.isSubmitting}>
+        <Button
+          type="submit"
+          size="touch"
+          disabled={form.formState.isSubmitting}
+        >
           Sichern
         </Button>
       </form>
@@ -483,11 +515,17 @@ export function WishForm({ onSubmit }: { onSubmit: (v: WishInput) => Promise<voi
 // shared/ui/display/skeleton/skeleton.tsx
 import { cn } from "@/shared/lib/utils";
 
-export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function Skeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       aria-hidden
-      className={cn("animate-pulse rounded-md bg-muted motion-reduce:animate-none", className)}
+      className={cn(
+        "animate-pulse rounded-md bg-muted motion-reduce:animate-none",
+        className,
+      )}
       {...props}
     />
   );
@@ -498,7 +536,10 @@ export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivEl
 // collection/specimen-card.skeleton.tsx   (mirrors specimen-card.tsx: p-4, 3 lines, 48px button)
 export function SpecimenCardSkeleton() {
   return (
-    <div role="status" className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4">
+    <div
+      role="status"
+      className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4"
+    >
       <span className="sr-only">Lädt …</span>
       <Skeleton className="h-6 w-2/3" /> {/* h2 */}
       <Skeleton className="h-5 w-1/2" /> {/* next step */}
@@ -622,8 +663,8 @@ Every component in `shared/ui`, in the shared patterns (responsive, states, empt
 | `LayerPart`                      | `shared/patterns/responsive/layer-sheet/layer-part/`        | a row of a list that opens its layer (`LayerOpenRow`: name, value, chevron; `opener` replaces the row with the caller's own control, SG-BTN-03) and the layer beside it in one grid (`LAYER_SLOT`); its `primaryAction` is the foot action of a layer without a form, a plain row at the end of its body and not sticky (US-QS-15, US-QS-17); the actions of a form are in the bar (`FormBar`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `Pager`                          | `shared/patterns/responsive/pager/`                         | a list longer than its region as pages, the address holds the first entry on screen, counted from 0 (`?from=n`, `?lfrom=n` in a layer, `LAYER_PARAM`; an old `?page=n` converts once, `OLD_PARTS`), buttons and swipe; `useRowPageSize` gives 4/8/10 compact rows per page (DS-60, US-QS-22); `PagerPaging.placeholder` is the skeleton of one entry: while a server page loads its missing entries show it in place and the list is `aria-busy` (SG-STATE-02, F-0124); to be removed at every size together with its address parts (owner decision 2026-11-21, issue 2412, DS-60; no position in the address, SG-NAV-02, owner answers 2026-11-21, issue 2415)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `PagedGroups`                    | `shared/patterns/responsive/paged-groups/`                  | groups chosen from a row of chips with their counts when they fit one line below 768 px or up to two lines from 768 px, otherwise from a selection field (`GroupChoices`, `useChipsFit`, `?part=`) and the chosen group as `Pager` pages (US-QS-19, issue 1281); a group may carry its server `count` and `paging` (FR-BES-23, `Pager`), and an optional `countText` that says what the choice counts in words, e.g. "Pflege · 2 von 3" instead of "Pflege (3)" (US-ACH-02, `GroupChoices`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `Paging`                         | `shared/patterns/responsive/pager/paging/`                  | server paging of a `Pager` list (FR-BES-23, P-10): `usePagingMore` asks for the next page, `PagingNote` shows the loading text or a failed page with its retry                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `ScrollEntries`                  | `shared/patterns/responsive/pager/paging/`                  | the list of a page below 768 px, which `Pager` picks by `useIsMd()` and `useInLayer()` (a list in a sheet or dialog keeps its pages; SG-LIST-01, US-QS-32): every loaded entry on one scrolling list with no buttons; with server paging the next part is asked for when the end shows (`IntersectionObserver`, starting value `MORE_MARGIN_PX`), with the same `PagingNote` and skeletons as `Pager`; without an `IntersectionObserver` every part is asked for at once                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `Paging`                         | `shared/patterns/responsive/pager/paging/`                  | server paging of a `Pager` list (FR-BES-23, P-10): `usePagingMore` asks for the next page, `PagingNote` shows the loading text or a failed page with its retry (the paged view); `PagerPaging.total` is optional, absent while the total is not known (P-08: no end marker, nothing asked past the loaded entries), `knownCount` reads it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `ScrollEntries`                  | `shared/patterns/responsive/pager/paging/`                  | the list of a page below 768 px, which `Pager` picks by `useIsMd()` and `useInLayer()` (a list in a sheet or dialog keeps its pages; SG-LIST-01, US-QS-15, US-QS-32): every loaded entry on one scrolling list with no buttons; with server paging the next part is asked for when the end shows (`IntersectionObserver`, starting value `MORE_MARGIN_PX`). `ListEnd` ends the list with rows that are no entries (`data-list-end`): a quiet loader row while a part is on its way (a `PlantLoader` without visible text, status "Weitere werden geladen …" for the screen reader, no focus, still under reduced motion; with `PagerPaging.placeholder` only the status), the retry row of a failed part ("Der Rest konnte nicht geladen werden.", the cause of `failure` below it, "Erneut versuchen", stacked, P-10) and the end marker "Das waren alle n" (no period; only for a list with `paging`, when every entry is there, the total is known and the entries are taller than the box that scrolls them, `useScrollOverflow` after a settle of `SETTLE_MS`; the filtered total in a filtered list); `useStripOldPositions` strips `from`, `page` and the other `PAGER_PARTS` and `OLD_PARTS` once with `replace` and keeps the history state (SG-NAV-02); texts in `list-end.de.json`; stories `shared/ScrollEntries` with plays                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `ResponsiveTable`                | `shared/patterns/responsive/responsive-table/`              | a list of rows: cards below `md`, `Table` from `md`, one column definition (DS-24)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `FactGrid`                       | `shared/patterns/responsive/…/fact-grid/`                   | known facts as a grid; unknown ones fold into one line with the count and the caller's next step; `unknownInEvery` finds a fact unknown in every row; `missingText` and `FoldNext` (the neutral next step) serve a fold of its own, e.g. the collector card on a short screen (US-QS-24, P-08, P-09, issue 1154)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `Banner`                         | `shared/patterns/states/banner/`                            | a page-level message with icon and text, optional action (DS-34, DS-38). `error` is the one error tone of every refused or failed write or load: red border, error mark, `role="alert"` (SG-COLOR-04, SG-STATE-03); amber stays for deviations; `onDismiss` adds the close button "Hinweis schließen", `RefusalClose` is the same control for a notice that is no Banner: it shows only when the refusal carries `dismiss`, which `useWriteAction` sets for a key conflict (US-QS-03)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
