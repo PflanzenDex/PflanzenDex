@@ -6,6 +6,7 @@ import { migrate, openAdminPool, openPool, testDatabaseUrl } from "@pflanzendex/
 import { seedCatalog } from "../../catalog-seed/seed-catalog.ts";
 import { SEED_SPECIES } from "../../catalog-seed/species-list.ts";
 import { Caller } from "../access/caller.ts";
+import { resetDemoFriends, restoreAchievementNews } from "../access/reset-demo.ts";
 import { parseSubjects } from "../access/subjects.ts";
 import { seedAll } from "../accounts/seed-all.ts";
 import { daysAgo, TZ } from "../accounts/common/shared.ts";
@@ -304,4 +305,34 @@ describe("US-DEV-01 states profile makes every inventory state reachable (#1072)
     expect(await due(HINT_MEASURE_SUBJECT, "function_unlocked")).toBe("function_unlocked");
     expect(await rowsOf(HINT_MEASURE_SUBJECT)).toBe(1);
   });
+
+  it("US-DEV-01 a run after a check makes Ben's first-handover new again and Anna's request to Ben open before the states profile declines it (issue 2477)", async () => {
+    type Request = { id: string; otherName: string; status: string };
+    const requestStatus = async (sub: string, side: "incoming" | "outgoing", name: string) =>
+      (((await get(sub, "/friends/requests"))[side] ?? []) as Request[]).find(
+        (r) => r.otherName === name,
+      )?.status;
+    // A device check: Ben opens the achievements, so the handover is seen and no longer new.
+    await api.ok(subjectOf.ben, "POST", "/achievements/seen", {
+      achievements: ["first-handover"],
+      timeZone: TZ,
+    });
+    expect(list(await get(subjectOf.ben, `/achievements/news?timeZone=${TZ}`), "fresh")).toEqual(
+      [],
+    );
+    // The states run of run-demo-seed.ts, in its order: the friends reset, the base seed, the states profile, the restore.
+    await resetDemoFriends(pool, SUBJECTS);
+    await seedAll(pool, { subjects: SUBJECTS });
+    expect(await requestStatus(subjectOf.anna, "incoming", "Ben")).toBe("requested");
+    expect(await requestStatus(subjectOf.ben, "outgoing", "Anna")).toBe("requested");
+    expect((await get(subjectOf.anna, "/feed/banner"))["count"]).toBe(1);
+    await seedStates(pool, { subjects: SUBJECTS, env: SEED_ENV });
+    expect(await requestStatus(subjectOf.ben, "outgoing", "Anna")).toBe("declined");
+    await restoreAchievementNews(pool, SUBJECTS);
+    expect(
+      list(await get(subjectOf.ben, `/achievements/news?timeZone=${TZ}`), "fresh").map(
+        (f) => f["id"],
+      ),
+    ).toContain("first-handover");
+  }, 600_000);
 });

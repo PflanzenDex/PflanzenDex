@@ -6,6 +6,7 @@ import {
 } from "../../src/media/index.ts";
 import { subjectsFromKeycloak } from "./access/subjects.ts";
 import { assertSeedAllowed, SeedRefused } from "./access/guard.ts";
+import { resetDemoFriends, restoreAchievementNews } from "./access/reset-demo.ts";
 import { seedAll } from "./accounts/seed-all.ts";
 import { SEED_SPECIES } from "../catalog-seed/species-list.ts";
 import { seedCatalog } from "../catalog-seed/seed-catalog.ts";
@@ -45,6 +46,11 @@ try {
       : undefined;
   if (!media)
     console.warn("No S3_* variables: placeholder photos are skipped (see app.md, Object storage).");
+  // A run after a device check starts from the base friend requests again (US-DEV-01), before seedAll recreates them.
+  await resetDemoFriends(pool, subjects);
+  console.log(
+    "Demo friend requests reset: Ben's request to Anna and other open, declined or ended requests removed; confirmed friends kept.",
+  );
   await seedAll(pool, {
     subjects,
     withPhotos: !!media,
@@ -57,6 +63,8 @@ try {
     console.log(`Pokédex tree fixture: ${await seedTaxonFixture(pool)}`);
     // The display gates' account with more than 100 plants (issue 1378); its own account, the three above stay as they are.
     await seedGateAccount(pool, { log: console.log });
+    await restoreAchievementNews(pool, subjects);
+    console.log("Achievement news restored: test2's first-handover is new again.");
   }
   console.log(`Demo seed done (${profile}): test, test2 and test3 (password testtest12).`);
 } finally {
