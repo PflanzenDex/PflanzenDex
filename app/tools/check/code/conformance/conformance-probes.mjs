@@ -30,7 +30,9 @@ export function recordStoryRender() {
       channel = next ?? null;
       if (!channel?.on) return;
       channel.on("storyRenderPhaseChanged", (event) => record.phases.push(event.newPhase));
-      channel.on("playFunctionThrewException", (error) => record.playErrors.push(error?.message));
+      channel.on("playFunctionThrewException", (error) =>
+        record.playErrors.push(error?.message ?? String(error)),
+      );
     },
   });
 }
