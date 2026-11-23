@@ -1,17 +1,18 @@
 import { expect } from "@playwright/test";
 import { WEB, test } from "../../../support/display/one-screen/sign-in";
 import { readBaseline, saveResults } from "../../../support/display/reporter";
-import { measure, openScreen, settle } from "../../../support/display/one-screen/fit";
-import { firstOf } from "../../../support/display/one-screen/fit.first";
-import { SCREENS, screensOf, type Screen } from "../../../support/display/one-screen/register";
+import { openScreen } from "../../../support/display/one-screen/fit";
+import { applyFail, checkExpect } from "../../../support/display/one-screen/fit.expect";
+import { SCREENS, screensOf } from "../../../support/display/one-screen/register";
 import {
   SIZES,
   evaluate,
   type Baseline,
   type Raw,
   type Size,
-  type Result,
 } from "../../../support/display/one-screen/judge";
+import { measureAll } from "./one-screen.measure";
+import { registerSelfTests } from "./one-screen.register";
 import { firstSelfTests, goodFirst } from "./one-screen.first";
 import { layerSelfTests } from "./one-screen.phone";
 import { pagerSelfTests } from "./one-screen.pager";
@@ -44,24 +45,6 @@ const SELECTED = screensOf(ONLY, SHARD);
 
 test.describe.configure({ mode: "parallel", timeout: 150_000 });
 
-async function measureAll(
-  page: import("@playwright/test").Page,
-  screen: Screen,
-): Promise<Result[]> {
-  const results: Result[] = [];
-  for (const size of SIZES) {
-    await page.setViewportSize({ width: size.width, height: size.height });
-    if (size.kind === "text200")
-      await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
-    await settle(page);
-    const withPaint = size.kind === "cap" && !screen.capExempt;
-    const first = size.kind === "cap" ? null : await firstOf(page);
-    const raw: Raw = { ...(await measure(page, withPaint)), first };
-    results.push(evaluate(screen.id, size, raw, Boolean(screen.sidewaysExempt)));
-  }
-  return results;
-}
-
 test.describe("US-QS-15 every screen fits the window (QG-U8)", () => {
   for (const screen of SELECTED) {
     test(`US-QS-15 one screen: ${screen.id}`, async ({ browser, states }) => {
@@ -75,10 +58,12 @@ test.describe("US-QS-15 every screen fits the window (QG-U8)", () => {
       await context.route(`${API}/**`, (route) =>
         route.request().method() === "GET" ? route.continue() : route.abort(),
       );
+      await applyFail(context, screen, API);
       const page = await context.newPage();
       page.on("dialog", (dialog) => void dialog.dismiss().catch(() => undefined));
       try {
         await openScreen(page, WEB, screen);
+        await checkExpect(page, screen);
         const results = await measureAll(page, screen);
         const lost = lostScreen(WEB + screen.path, page.url());
         if (lost) throw new Error(`${screen.id}: ${lost}`);
@@ -189,6 +174,7 @@ sidewaysSelfTests(raw, sizeOf);
 firstSelfTests(raw, sizeOf);
 layerSelfTests(raw, sizeOf);
 pagerSelfTests(raw, sizeOf);
+registerSelfTests();
 
 test("QG-U8 self-test: a screen that lands on Heute instead of its path is named", () => {
   expect(lostScreen("http://x/account/data", "http://x/today")).toContain("landed on /today");
