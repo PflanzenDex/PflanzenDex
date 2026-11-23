@@ -141,7 +141,10 @@ describe("US-QS-32 · SG-LIST-01 a list on a phone scrolls instead of paging", (
     const onMore = vi.fn();
     const failed = { ...serverPaging(20, onMore), failure: "Konnte nicht geladen werden" };
     render(list(plants.slice(0, 8), failed));
-    expect(screen.getByRole("alert").textContent).toBe("Konnte nicht geladen werden");
+    // The row of US-QS-15 says what failed in its own sentence and names the cause the caller knows after it.
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Der Rest konnte nicht geladen werden. Konnte nicht geladen werden",
+    );
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
     expect(onMore).not.toHaveBeenCalled();
   });

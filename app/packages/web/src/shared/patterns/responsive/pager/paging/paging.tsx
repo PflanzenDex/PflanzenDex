@@ -14,7 +14,8 @@ import { OLD_PARTS } from "./address";
  * empty page (P-10); a failed page shows its `failure` with a button that retries from the same place.
  */
 export type PagerPaging = {
-  total: number;
+  /** All entries on the server; absent while unknown (P-08): no end marker, no part asked past the loaded entries. */
+  total?: number | undefined;
   /** A page is on its way: the missing entries show the loading note. */
   loading: boolean;
   /** The German text of a failed page; the loaded entries stay on screen. */
@@ -31,6 +32,11 @@ export type PagerPaging = {
    */
   placeholder?: React.ReactNode;
 };
+
+/** The entries of the list: `paging.total` and at least the loaded ones; the loaded ones while the total is unknown. */
+export function knownCount(paging: PagerPaging | undefined, loaded: number): number {
+  return paging ? Math.max(paging.total ?? 0, loaded) : loaded;
+}
 
 /** How many entries of the page on screen show the placeholder: the `room` left on it while its page loads, else none. */
 export function placeholderCount(

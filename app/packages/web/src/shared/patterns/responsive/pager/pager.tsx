@@ -18,6 +18,7 @@ import {
   EntryPlaceholders,
   PagingNote,
   busyWhile,
+  knownCount,
   placeholderCount,
   usePageAddress,
   usePagingMore,
@@ -149,7 +150,7 @@ function PagedPager<T>({
   const measured = fitted?.size ?? null;
   const size = measured ?? startingSize;
   // The entries of the list: all of them on the server (`paging.total`), at least the loaded ones.
-  const count = paging ? Math.max(paging.total, items.length) : items.length;
+  const count = knownCount(paging, items.length);
   const named = namedEntry(params, param, size);
   const { first, page, pages } = position({ from: named, size, count });
   const missing = usePagingMore(paging, items.length, first + size, count);
