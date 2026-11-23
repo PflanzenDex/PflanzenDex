@@ -297,4 +297,23 @@ describe("US-DEV-01 demo seed fills test, test2 and test3 (#924)", () => {
       message: expect.stringContaining("not set"),
     });
   }, 60_000);
+
+  it("US-QS-15 the command refuses an unknown DEMO_TAXON_FIXTURE before it touches the tree (issue 2488)", () => {
+    let stderr = "";
+    try {
+      execFileSync(process.execPath, ["--import", "tsx", RUNNER], {
+        env: {
+          ...process.env,
+          PFLANZENDEX_ENV: "local",
+          DATABASE_URL: scratchUrl(),
+          DEMO_TAXON_FIXTURE: "resset",
+        },
+        stdio: "pipe",
+        encoding: "utf8",
+      });
+    } catch (error) {
+      stderr = (error as { stderr: string }).stderr;
+    }
+    expect(stderr).toContain("unknown DEMO_TAXON_FIXTURE 'resset'");
+  }, 60_000);
 });
