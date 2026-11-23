@@ -1,16 +1,25 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import type { FriendsData } from "../../../../api/friends-api";
 import { SharingSection } from "./sharing-section";
 
+// The buffer sends a write under the account it was made under (US-QS-07): the device is signed in as one account.
+beforeEach(() =>
+  window.localStorage.setItem(
+    "oidc.user:http://localhost:18081/realms/pflanzendex:pflanzendex-web",
+    JSON.stringify({ access_token: "tok", profile: { sub: "keeper-a" } }),
+  ),
+);
+
 afterEach(async () => {
   cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  window.localStorage.clear();
 });
 
 const online = (state: boolean) =>
