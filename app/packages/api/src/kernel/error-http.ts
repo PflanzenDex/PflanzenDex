@@ -14,6 +14,7 @@ const STATUS: Partial<Record<ErrorCode, Status>> = {
   "privacy.entry_not_found": 404,
   "access.not_signed_in": 401,
   "access.account_changed": 403,
+  "access.account_in_other_tab": 403,
   "access.denied": 403,
   "account.email_unconfirmed": 403,
   "account.sign_out_everywhere_failed": 502,

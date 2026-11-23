@@ -1,6 +1,11 @@
 import { isOnline } from "@/shared/platform/browser/network";
+import { texts } from "@/shared/lib/text-rules/texts";
+import refusalTable from "./write-action/write-action.de.json";
 
 type FetchFn = typeof fetch;
+
+/** The account (`sub`) the tab's session loaded (US-QS-07, P-04): the session sets it at once, the check reads it. */
+export const tabAccount: { sub: string | undefined } = { sub: undefined };
 
 /** Fired on `window` after every write that succeeded, so quiet observers (lock states, achievement banner) can look again. */
 export const WRITE_SUCCEEDED = "pflanzendex:write-succeeded";
@@ -48,6 +53,19 @@ const OFFLINE_WRITE_ERROR: ApiError<never> = {
   text: "Keine Verbindung. Deine Eingabe bleibt hier stehen.",
 };
 
+/**
+ * The refusal of a write of a tab that loaded another account (US-QS-07, P-04). The check is its own chunk, so the entry
+ * carries no sign-in reader (DS-08); a chunk that cannot load refuses the write too, nothing is sent unchecked (P-04, P-10).
+ */
+const refusalOfTab = () =>
+  import("./write-action/tab-account/tab-account").then(
+    (m) => m.accountRefusal(),
+    () => ({ code: "system.unexpected", text: texts(refusalTable)("refusal") }),
+  );
+
+/** The refusal of a write of this tab, checked in its own chunk (US-QS-07); the notice asks the same question. */
+export const tabRefusal = refusalOfTab;
+
 /** The error of a request that got no answer: offline writes say that the connection is missing (issue 1863). */
 const unanswered = (method: string): ApiError<never> =>
   method !== "GET" && !isOnline() ? OFFLINE_WRITE_ERROR : NETWORK_ERROR;
@@ -59,6 +77,12 @@ export async function call<T, D = unknown>(
   init: { method?: string; body?: unknown; key?: string } = {},
 ): Promise<Response<T, D>> {
   const method = init.method ?? "GET";
+  // A write of a tab that loaded another account is refused before it is sent: the token may belong to that other account
+  // (US-QS-07, P-04). The check runs here, right before the request, so a token read earlier is checked as well.
+  if (method !== "GET") {
+    const refused = await refusalOfTab();
+    if (refused) return { ok: false, error: refused };
+  }
   try {
     const res = await fetchFn(url, {
       method,

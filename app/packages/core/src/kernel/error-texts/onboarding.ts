@@ -1,9 +1,15 @@
-// German texts of the onboarding errors (epic ONB) and of the account errors (US-ACC-01): the email confirmation for sharing and
-// the sign out on all devices (issue 2065). They also carry the achievement texts, so `error.ts` stays under the file size limit.
+// German texts of the onboarding errors (epic ONB) and of the account errors (US-ACC-01): the email confirmation for sharing,
+// the sign out on all devices (issue 2065) and the access refusals of a stale tab (US-QS-07, P-04). They also carry the achievement texts, so `error.ts` stays under the file size limit.
 import { ACHIEVEMENT_ERROR_TEXTS } from "./achievements";
 
 export const ONBOARDING_ERROR_TEXTS = {
   ...ACHIEVEMENT_ERROR_TEXTS,
+  "access.not_signed_in": "Du bist nicht angemeldet. Bitte melde dich an.",
+  "access.account_changed":
+    "Die Änderung gehört zu einem Konto, das nicht mehr angemeldet ist. Melde dich mit diesem Konto an und wiederhole sie.",
+  "access.account_in_other_tab":
+    "In einem anderen Tab ist jetzt ein anderes Konto angemeldet. Lade die Seite neu.",
+  "access.denied": "Darauf hast du keinen Zugriff.",
   "account.email_unconfirmed":
     "Bestätige zuerst deine E-Mail-Adresse. Erst dann kannst du Daten mit Freunden teilen; den Link dazu findest du in deinem Postfach.",
   "account.sign_out_everywhere_failed":

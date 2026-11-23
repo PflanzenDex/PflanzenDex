@@ -25,6 +25,20 @@ import { StartPageSkeleton } from "../start-frame/start-frame";
 /** The route table is its own chunk: the sign-in screens do not carry it (DS-08, US-QS-14). */
 const AppRoutes = lazyPage(() => import("@/app/routes").then((m) => ({ default: m.AppRoutes })));
 
+/** Another account signed in in another tab (US-QS-07): its own chunk, mounted once for the signed-in shell; it draws nothing while the account is the tab's own. */
+const OtherTabNotice = lazyPage(() =>
+  import("./other-tab-notice/other-tab-notice").then((m) => ({ default: m.OtherTabNotice })),
+);
+
+/** The notice of another tab's account, in its boundary: a failed chunk shows nothing, the refused write still says why (P-10). */
+const OtherTabSlot = () => (
+  <ChunkErrorBoundary resetKey="other-tab-notice" errorView={() => null}>
+    <Suspense fallback={null}>
+      <OtherTabNotice />
+    </Suspense>
+  </ChunkErrorBoundary>
+);
+
 /** The number of the app icon (US-QS-29): its own chunk, mounted once for the signed-in shell; it draws nothing. */
 const AppBadge = lazyPage(() =>
   import("./app-badge/app-badge").then((m) => ({ default: m.AppBadge })),
@@ -123,6 +137,8 @@ export function SignedInFrame({
           {/* The width cap of the page is lifted for a destination with layers: its frame takes the main column and caps only its content, so a pane fits beside it (US-QS-15, #1027). */}
           <div className="mx-auto w-full max-w-180 has-[[data-layer-host]]:max-w-none">
             <div className="mx-auto w-full max-w-180">
+              {/* Another account signed in in another tab: this tab's writes are refused, the notice says so (US-QS-07). */}
+              <OtherTabSlot />
               {navState?.hint && (
                 <p role="alert" className="mb-3 rounded-lg border border-border p-3">
                   {navState.hint}

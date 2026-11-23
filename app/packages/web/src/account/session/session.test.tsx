@@ -2,7 +2,7 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ERROR_TEXTS } from "@pflanzendex/core";
-import { createWrite, entityKey, useWriteAction } from "../../shared/data";
+import { createWrite, entityKey, tabAccount, useWriteAction } from "../../shared/data";
 
 // The sign-in service is a foreign system: UserManager is replaced, the session logic of the app runs for real.
 const mgr = vi.hoisted(() => {
@@ -1572,5 +1572,40 @@ describe("US-QS-03 · signing out ends the repeat-guard keys of the account", ()
     await act(async () => write.result.current.run(save, "Gesichert.", scope));
     expect(keys[1]).not.toBe(keys[0]);
     expect(write.result.current.error).toBeNull();
+  });
+});
+
+describe("US-QS-07 · the session records the account the tab loaded (P-04)", () => {
+  const SIGN_IN_KEY = "oidc.user:http://auth/realm:pflanzendex-web";
+  afterEach(() => {
+    tabAccount.sub = undefined;
+  });
+
+  it("US-QS-07 a session loaded under A refuses a write once the device is signed in as B, and sends nothing", async () => {
+    // One fresh module graph for the session, the shared data and the check: the check is loaded by a dynamic import, so it
+    // must come from the same graph as the session that recorded the account (the earlier tests reset the graph).
+    vi.resetModules();
+    const { useSession: freshUseSession } = await import("./session");
+    const data = await import("../../shared/data");
+    try {
+      mgr.getUser.mockResolvedValue({ ...user, profile: { sub: "A" } });
+      const { result } = renderHook(() => freshUseSession());
+      await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+      window.localStorage.setItem(
+        SIGN_IN_KEY,
+        JSON.stringify({ access_token: "tok-b", profile: { sub: "B" } }),
+      );
+      const sent = vi.mocked(fetch).mock.calls.length;
+      const r = await data.createWrite("http://api", "tok-b", { key: "k" })(
+        "POST",
+        "/measurements",
+        {},
+      );
+      expect(vi.mocked(fetch).mock.calls.length).toBe(sent);
+      expect(r.ok ? null : r.error.code).toBe("access.account_in_other_tab");
+    } finally {
+      data.tabAccount.sub = undefined;
+      window.localStorage.removeItem(SIGN_IN_KEY);
+    }
   });
 });
