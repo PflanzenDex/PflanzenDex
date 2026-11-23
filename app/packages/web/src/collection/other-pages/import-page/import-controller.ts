@@ -2,7 +2,7 @@
 // the server's answer into the page's state. A failed request keeps what the page showed and offers a retry (P-10). The
 // server judges every row; the page never decides that a row is ready (P-01).
 import type { ConfirmResult, ImportPreview } from "@pflanzendex/core";
-import { SIGN_IN, type Response, newRepeatKey, isUnanswered } from "@/shared/data";
+import { SIGN_IN, createKey, runRepeat, type Response } from "@/shared/data";
 import { GENERIC_ERROR_TEXT, errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { Api } from "@/shared/platform/announcer/context";
@@ -22,12 +22,17 @@ import type { Fixes, Flow, Picked, Step, Token } from "./import-flow";
 
 const ui = texts(table);
 
+/**
+ * The repeat-guard key of the confirmation (US-QS-03): a create, so the action names the operation only and the rows are the
+ * body. The registry holds it after a lost answer (a retry repeats it) and frees it on an answer, on sign-out and on an
+ * account change; the page keeps no key of its own.
+ */
+const CONFIRM = createKey("specimen", "import");
+
 /** The refs of the page: the newest request, its retry, and the fixes and answers the server last accepted. */
 export interface Refs {
   readonly sequence: { current: number };
   readonly retry: { current: () => void };
-  /** The repeat-guard key of the confirmation: a retry repeats it, a refusal or a success ends it (US-QS-03). */
-  readonly key: { current: string | null };
   readonly fixes: { current: Fixes };
   readonly answers: { current: readonly MarkerAnswer[] };
 }
@@ -155,11 +160,9 @@ async function confirmImport(ctx: Ctx): Promise<void> {
   ctx.refs.retry.current = () => void confirmImport(ctx);
   ctx.patch({ busy: true, failure: null });
   const credential = await ctx.token();
-  const key = ctx.refs.key.current ?? newRepeatKey();
   const r: Response<ConfirmResult> = credential
-    ? await sendImport(ctx.api, credential, { rows, markers }, { key })
+    ? await runRepeat(CONFIRM, (key) => sendImport(ctx.api, credential, { rows, markers }, { key }))
     : { ok: false, error: SIGN_IN };
-  ctx.refs.key.current = !r.ok && isUnanswered(r.error) ? key : null;
   if (!r.ok) return ctx.patch({ busy: false, failure: r.error });
   ctx.announce?.announce(
     ui("announceResult", {

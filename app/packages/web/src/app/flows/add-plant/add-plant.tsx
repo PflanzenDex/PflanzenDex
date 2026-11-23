@@ -5,6 +5,7 @@ import { ImportEntry } from "@/collection";
 import { Button } from "@/shared/ui/button/button";
 import { PATHS } from "../../../shared/patterns/navigation/navigation/navigation";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
+import { SaveButton } from "../onboarding/onboarding-wizard/save-step/save-button/save-button";
 import { SaveStep } from "../onboarding/onboarding-wizard/save-step/save-step";
 import {
   SpeciesStep,
@@ -63,16 +64,14 @@ function Buttons(props: { f: Plant; species: Species | null; onMore: (s: Species
     );
   return (
     <div className={ACTIONS}>
-      <Button
-        type="button"
-        disabled={f.saving || f.zones === null || f.marker.rule === null}
+      <SaveButton
+        f={f}
         // The press keeps a focused marker in place until the save checks it (issue 2216): leaving the field first
         // would show its message, move the button under the finger and lose the tap (as FormRoot does for a send).
         onMouseDown={(event) => event.preventDefault()}
-        onClick={() => void f.save()}
       >
         {FIRST_PLANT_STEPS[1]?.actionLabel}
-      </Button>
+      </SaveButton>
       <Button type="button" variant="plain" onClick={() => f.setIndex(0)}>
         {ui("back")}
       </Button>

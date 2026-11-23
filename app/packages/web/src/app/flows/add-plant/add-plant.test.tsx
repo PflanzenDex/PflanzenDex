@@ -295,12 +295,12 @@ describe("US-BES-18 the entry Aus Datei importieren sits where plants are added"
   });
 });
 
-/** The save button of the step is enabled once the zones and the plants of the species are read. */
+/** The save button of the step is usable once the zones and the plants of the species are read (US-QS-03). */
 async function untilSaveEnabled() {
   await waitFor(() =>
     expect(
-      (screen.getByRole("button", { name: "Pflanze sichern" }) as HTMLButtonElement).disabled,
-    ).toBe(false),
+      screen.getByRole("button", { name: "Pflanze sichern" }).getAttribute("aria-disabled"),
+    ).toBeNull(),
   );
 }
 
@@ -638,9 +638,10 @@ describe("US-ONB-01 · issue 2098 the zones of a further plant when the device i
     await toSave();
     expect(await screen.findByText(REASON)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
-    expect(
-      (screen.getByRole("button", { name: "Pflanze sichern" }) as HTMLButtonElement).disabled,
-    ).toBe(true);
+    // Inert while the zones are missing, and not busy: the reason and its retry stand in the block (US-QS-03).
+    const save = screen.getByRole("button", { name: "Pflanze sichern" });
+    expect(save.getAttribute("aria-disabled")).toBe("true");
+    expect(save.getAttribute("aria-busy")).toBeNull();
     expect(screen.queryByRole("combobox", { name: "Lichtbedarf" })).toBeNull();
     expect(writes.find((w) => w.path === "/light-zones/defaults")).toBeUndefined();
   });

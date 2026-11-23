@@ -4,7 +4,6 @@ export {
   call,
   createWrite,
   isKeyConflict,
-  isUnanswered,
   newRepeatKey,
   tabAccount,
   tabRefusal,

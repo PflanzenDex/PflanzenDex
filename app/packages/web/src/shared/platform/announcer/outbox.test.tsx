@@ -233,6 +233,80 @@ describe("US-QS-10 · offline writes are announced and visible as text (4.1.3, P
   });
 });
 
+/** A silent background write (a seen mark) next to a named one: `runSilent` takes an empty success text (US-QS-03). */
+function SilentPage(props: { send: WriteSend }) {
+  const silent = useWriteAction(sessionToken, () => undefined);
+  const named = useWriteAction(sessionToken, () => undefined);
+  return (
+    <>
+      <button type="button" onClick={() => void silent.runSilent(props.send, "")}>
+        Als gesehen markieren
+      </button>
+      <button
+        type="button"
+        onClick={() => void named.run(props.send, "Gesichert: Monstera.", rowOf("named"))}
+      >
+        Sichern
+      </button>
+    </>
+  );
+}
+
+const silentShell = (send: WriteSend) =>
+  render(
+    <AnnouncerProvider>
+      <SilentPage send={send} />
+    </AnnouncerProvider>,
+  );
+const markSeen = () => screen.getByRole("button", { name: "Als gesehen markieren" });
+
+describe("US-QS-03 · an offline silent write announces no empty text (US-QS-10, P-10)", () => {
+  it("US-QS-03 an offline silent write is buffered and sent once online, and neither the buffering nor the delivery announces an empty text", async () => {
+    online(false);
+    const fetchFn = serverWith(ok());
+    silentShell(measure(9));
+    await userEvent.click(markSeen());
+    await act(async () => void (await new Promise((done) => setTimeout(done, 20))));
+    expect(fetchFn).not.toHaveBeenCalled();
+    // Nothing is said and no note is shown: the text would end in ": " with nothing after it.
+    expect(region()?.textContent).toBe("");
+    expect(screen.queryByText(/Du bist offline/)).toBeNull();
+    online(true);
+    act(() => void window.dispatchEvent(new Event("online")));
+    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
+    await act(async () => void (await new Promise((done) => setTimeout(done, 20))));
+    expect(region()?.textContent).toBe("");
+    expect(screen.queryByText(/Nachträglich gesendet/)).toBeNull();
+  });
+
+  it("US-QS-03 a silent write queued with a named one: the delivery names only the named one, not a count that includes the silent write", async () => {
+    online(false);
+    const fetchFn = serverWith(ok(), ok());
+    silentShell(measure(9));
+    await userEvent.click(markSeen());
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
+    await buffered();
+    expect(heard()).toBe(
+      "Du bist offline. Wird gesendet, sobald du wieder online bist: Gesichert: Monstera.",
+    );
+    online(true);
+    act(() => void window.dispatchEvent(new Event("online")));
+    await waitFor(() => expect(heard()).toBe("Nachträglich gesendet: Gesichert: Monstera."));
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("US-QS-03 a silent write the server refuses is still said with the text of its code (P-10)", async () => {
+    online(false);
+    serverWith(refusedWith("access.denied"));
+    silentShell(measure(9));
+    await userEvent.click(markSeen());
+    online(true);
+    act(() => void window.dispatchEvent(new Event("online")));
+    await waitFor(() => expect(heard()).toMatch(/^Nicht gesendet: /));
+    expect(heard()).toContain("Darauf hast du keinen Zugriff.");
+  });
+});
+
 /**
  * A server that keeps one record per Idempotency-Key, as the API does (its replay test in `care/measurements.test.ts`).
  * The first `lost` answers are lost on the way back: the record exists, the client sees a network error. With `strict`

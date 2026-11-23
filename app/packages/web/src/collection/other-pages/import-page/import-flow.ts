@@ -58,7 +58,6 @@ export function useImportFlow(api: string, token: Token) {
     retry: useRef<() => void>(() => undefined),
     fixes: useRef<Fixes>({}),
     answers: useRef<readonly MarkerAnswer[]>([]),
-    key: useRef<string | null>(null),
   };
   const patch = (change: Partial<Flow>) => setFlow((cur) => ({ ...cur, ...change }));
   const moveTo = (step: Step, change: Partial<Flow> = {}) =>

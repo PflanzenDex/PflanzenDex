@@ -149,10 +149,11 @@ async function toSaveStep() {
   await userEvent.type(await screen.findByLabelText("Art"), "Monstera");
   await userEvent.click(await screen.findByRole("button", { name: /Monstera deliciosa/ }));
   await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+  // Usable once the zones and the marker rule are read: the button is `aria-disabled` until then (US-QS-03).
   await waitFor(() =>
     expect(
-      (screen.getByRole("button", { name: "Pflanze sichern" }) as HTMLButtonElement).disabled,
-    ).toBe(false),
+      screen.getByRole("button", { name: "Pflanze sichern" }).getAttribute("aria-disabled"),
+    ).toBeNull(),
   );
 }
 

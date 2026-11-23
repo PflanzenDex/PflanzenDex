@@ -3,6 +3,7 @@ import { FIRST_PLANT_STEPS } from "@pflanzendex/core";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { Button } from "@/shared/ui/button/button";
 import { KeeperStyleQuestion } from "../../../../account";
+import { SaveButton } from "./save-step/save-button/save-button";
 import { SaveStep } from "./save-step/save-step";
 import { SpeciesStep, type SpeciesLookup } from "./species-step/species-step";
 import { useFirstPlant } from "./use-first-plant";
@@ -83,13 +84,7 @@ function Buttons({ f, onSkip }: { f: Flow; onSkip: () => void }) {
         </>
       ) : (
         <>
-          <Button
-            type="button"
-            disabled={f.saving || f.zones === null || f.marker.rule === null}
-            onClick={() => void f.save()}
-          >
-            {FIRST_PLANT_STEPS[1]?.actionLabel}
-          </Button>
+          <SaveButton f={f}>{FIRST_PLANT_STEPS[1]?.actionLabel}</SaveButton>
           <Button type="button" variant="plain" onClick={() => f.setIndex(0)}>
             {ui("back")}
           </Button>
