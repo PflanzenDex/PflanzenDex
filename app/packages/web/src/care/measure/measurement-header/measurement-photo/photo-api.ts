@@ -2,6 +2,7 @@ import { MEDIA_LIMITS } from "@pflanzendex/core";
 import {
   announceWrite,
   currentTimeZone,
+  tabRefusal,
   type ApiError,
   type Response,
 } from "../../../../shared/data";
@@ -43,6 +44,9 @@ export async function uploadPhoto(
   if (photo.date) query.set("date", photo.date);
   if (photo.replace) query.set("replace", "true");
   const path = `/specimens/${encodeURIComponent(specimenId)}/measurements/photo?${query}`;
+  // A photo is a write too: a tab that loaded another account sends none under that account's token (US-QS-07, P-04).
+  const refused = await tabRefusal();
+  if (refused) return { ok: false, error: refused };
   try {
     const res = await (access.fetchFn ?? fetch)(`${access.api}${path}`, {
       method: "POST",

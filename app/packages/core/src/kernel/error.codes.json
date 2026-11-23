@@ -1,5 +1,6 @@
 [
   "access.account_changed",
+  "access.account_in_other_tab",
   "access.denied",
   "access.not_signed_in",
   "account.email_unconfirmed",

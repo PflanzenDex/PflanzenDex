@@ -4,10 +4,6 @@ import { WUN_ERROR_TEXTS } from "./error-texts/wun";
 import { IMPORT_ERROR_TEXTS, REVIEW_ERROR_TEXTS } from "./error-texts/catalog";
 export const ERROR_TEXTS = {
   "input.invalid": "Die Eingabe ist ungültig. Bitte prüfe die markierten Felder.",
-  "access.not_signed_in": "Du bist nicht angemeldet. Bitte melde dich an.",
-  "access.account_changed":
-    "Die Änderung gehört zu einem Konto, das nicht mehr angemeldet ist. Melde dich mit diesem Konto an und wiederhole sie.",
-  "access.denied": "Darauf hast du keinen Zugriff.",
   "idempotency.key_missing": "Der Wiederholungsschutz-Schlüssel fehlt.",
   "idempotency.key_conflict":
     "Deine erste Eingabe ist gesichert. Deine Änderung ist noch nicht gesichert.",
