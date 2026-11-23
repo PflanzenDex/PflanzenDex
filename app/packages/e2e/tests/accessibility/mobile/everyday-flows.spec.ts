@@ -10,9 +10,8 @@ import {
   uniqueLatin,
 } from "../../../support/fixtures";
 
-// US-QS-07 (issue 144): the four everyday flows on a phone of 360 x 640 px (starting value, assumption): measure with a
-// photo, water, tick off a treatment and open "Heute". Every view fits the width, and a flow's main action lies in the
-// lower half of the window where the layout puts it by design. Everything runs through the UI against the real API.
+// US-QS-07 (issue 144): the four everyday flows on a phone of 360 x 640 px (starting value, assumption): measure with a photo,
+// water, tick off a treatment and open "Heute". Every view fits the width; a main action lies in the lower half of the window.
 
 const PHONE = { width: 360, height: 640 } as const;
 
@@ -74,9 +73,8 @@ async function startWithPlant(page: Page): Promise<void> {
 const PHOTO_NOT_STORED = /^Die Messung ist gesichert, das Foto nicht\./;
 
 /**
- * After "Messung sichern" with a photo, the page shows the success toast or the partial result of a photo that could not be
- * stored. The e2e stack has no image store, so the photo is stored only where one exists and the measurement is saved
- * either way; the photo upload is checked on the owner's phone (US-QS-07 state note). Both results are accepted.
+ * After "Messung sichern" with a photo the page shows the success toast or the partial result of a photo that could not be
+ * stored (the e2e stack has no image store; the upload is checked on the owner's phone, US-QS-07). Both are accepted.
  */
 async function settleMeasurementSave(page: Page): Promise<void> {
   const saved = page.locator('[aria-live="polite"]').filter({ hasText: "Gesichert: 12,5" }).first();
@@ -87,7 +85,6 @@ async function settleMeasurementSave(page: Page): Promise<void> {
     const notice = page.locator('[aria-live="assertive"]').filter({ has: partial });
     await notice.getByRole("button", { name: "Meldung schließen" }).click({ timeout: 10_000 });
     await expect(partial).toBeHidden();
-    return;
   }
 }
 
@@ -112,6 +109,15 @@ async function measureWithPhoto(page: Page): Promise<void> {
   await settleMeasurementSave(page);
 }
 
+/** Where the buttons and tabs of the plant layer stand: the result of "Gießen" moves none (SG-FEED-05, issue 2462). */
+const placesOf = (page: Page) =>
+  page
+    .getByRole("button", { name: /^(Gießen|Behandeln|Notizen|Messen): / })
+    .or(page.getByRole("tab"))
+    .evaluateAll((all) =>
+      all.map((e) => `${e.textContent}@${JSON.stringify(e.getBoundingClientRect())}`),
+    );
+
 /** 2. Water the plant: the button "Gießen" of its layer "Überblick" writes today's entry (US-MON-05, US-QS-23). */
 async function waterPlant(page: Page): Promise<void> {
   await page.getByRole("link", { name: "Sammlung", exact: true }).click();
@@ -119,12 +125,17 @@ async function waterPlant(page: Page): Promise<void> {
   await expectFitsWidth(page, "Pflanze, Überblick");
   const water = page.getByRole("button", { name: /^Gießen: / });
   await expectLowerHalf(page, water, "water: Gießen");
+  const places = await placesOf(page);
   await water.click();
-  // The watering stays in its place as "Gegossen heute · Rückgängig" for 8 s, then "Gießen" is back; no toast opens
-  // (US-QS-32, SG-FEED-03). The check waits for the window to end.
+  // The result takes a line's place and moves nothing (SG-FEED-05, issue 2462); it stays 8 s, no toast opens (SG-FEED-03).
+  await expect(page.getByRole("button", { name: /^Rückgängig: / })).toBeVisible();
+  expect(await placesOf(page), "the undo row moved the layer").toEqual(places);
   await expectUndoInPlace(page, "Gegossen heute", /^Rückgängig: /);
-  await expect(water).toBeVisible();
-  // Escape closes a layer only while the focus is inside it, so the focus goes to the layer's tab first.
+  // The same day again makes no entry: "Zuletzt gegossen: heute" takes the same place.
+  await water.click();
+  await expect(page.locator("p").filter({ hasText: "Zuletzt gegossen: heute" })).toBeVisible();
+  expect(await placesOf(page), "the line 'Zuletzt gegossen' moved the layer").toEqual(places);
+  // Escape closes a layer only while the focus is inside it: the focus goes to the layer's tab first.
   await page.getByRole("tab", { name: "Überblick" }).focus();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("tab", { name: "Überblick" })).toBeHidden();
@@ -148,14 +159,12 @@ async function tickOffTreatment(page: Page): Promise<void> {
     .click();
   await plan.getByLabel(/^Grund/).fill("Wollläuse");
   await page.getByRole("button", { name: "Behandlung sichern" }).click();
-  // Not in the lower-half check: the layer "Behandlungen" opens from the top of the window, and its first row ("Abhaken")
-  // lies in the upper half by design (docs/records/test-logs/qs-one-screen/360x640-heute-behandeln.png).
+  // Not in the lower-half check: the layer "Behandlungen" opens from the top, its first row ("Abhaken") lies in the upper half.
   await page.getByRole("button", { name: /^Wollläuse bei .* als erledigt abhaken$/ }).click();
   // The tick-off stays in its place as "Erledigt · Rückgängig" for 8 s, then the row moves (US-QS-32, SG-FEED-03).
   await expectUndoInPlace(page, "Erledigt", /^Rückgängig: Wollläuse bei /);
   await page.getByRole("button", { name: "Behandlung planen" }).first().focus();
   await page.keyboard.press("Escape");
-  // The tick-off confirms in the layer's own text (asserted above), not with a toast.
   await expect(page.getByRole("button", { name: "Behandlung planen" }).first()).toBeHidden();
 }
 

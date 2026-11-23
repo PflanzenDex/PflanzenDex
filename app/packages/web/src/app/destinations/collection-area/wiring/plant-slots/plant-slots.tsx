@@ -42,8 +42,14 @@ export function plantSlots(api: string, token: Token, client: QueryClient): Plan
     care: (card) => (
       <PlantCare api={api} token={token} specimen={{ id: card.id, name: card.name }} />
     ),
-    water: (card) => (
-      <WaterAction api={api} token={token} specimen={{ id: card.id, name: card.name }} />
+    // The result of "Gießen" takes the place of a line of the overview, so no button moves (SG-FEED-05, issue 2462).
+    water: (card, ctx) => (
+      <WaterAction
+        api={api}
+        token={token}
+        specimen={{ id: card.id, name: card.name }}
+        resultHost={ctx.resultHost ?? null}
+      />
     ),
   };
 }

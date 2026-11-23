@@ -47,8 +47,13 @@ export type Handlers = {
   onLightZone?: ((e: SpecimenCard) => void) | undefined;
 };
 
-/** What a slot may ask the plant layer for: leave the layer and measure (the layer closes first, P-10). */
-export type SlotContext = { measure: () => void };
+/**
+ * What a slot may ask the plant layer for: leave the layer and measure (the layer closes first, P-10), and the place where
+ * a result of its own may stand. `resultHost` is the line of the overview whose place a result takes (the "Art · Status"
+ * line); a slot draws its result into it (a portal) instead of adding a line, so nothing on the screen moves (SG-FEED-05,
+ * issue 2462). It is `null` until the overview has mounted it and for every part outside the overview.
+ */
+export type SlotContext = { measure: () => void; resultHost?: HTMLElement | null };
 export type SlotRender = (card: SpecimenCard, context: SlotContext) => ReactNode;
 /**
  * The shape of a part while its chunk loads; it gets the layer's loading label, which the layer owns (`slot.loading`), and

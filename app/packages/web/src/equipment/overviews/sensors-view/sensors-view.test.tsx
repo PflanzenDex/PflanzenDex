@@ -148,3 +148,57 @@ describe("US-QS-32 · F-0160 · SG-FEED-01 the result of an assignment shows at 
     await waitFor(() => expect(line().textContent).toBe("Zugeordnet: Fenster"));
   });
 });
+
+describe("US-QS-32 · SG-BASE-01 the focus stays on the select while an assignment saves (issue 2463, F-0094)", () => {
+  const select = () => screen.getByRole("combobox", { name: "Zugeordnet zu Feuchtesensor" });
+
+  it("SG-BASE-01 while the write runs the select is aria-disabled, not disabled, so the focus does not fall to the sheet", () => {
+    render(<SensorsView view={view()} actions={{ busy: true, onTarget: vi.fn() }} />);
+    expect(select().getAttribute("aria-disabled")).toBe("true");
+    expect(select().hasAttribute("disabled")).toBe(false);
+    expect(select().className.split(" ")).toContain("aria-disabled:opacity-50");
+  });
+
+  it("SG-BASE-01 a choice made while the write runs is ignored and shows the saved place again", async () => {
+    const a = { busy: true, onTarget: vi.fn(async () => true) };
+    render(<SensorsView view={view()} actions={a} />);
+    await userEvent.setup().selectOptions(select(), "specimen:p1");
+    expect(a.onTarget).not.toHaveBeenCalled();
+    expect((select() as HTMLSelectElement).value).toBe("");
+  });
+
+  it("US-QS-32 · SG-BASE-01 after an assignment and after clearing it the focus is still on the select", async () => {
+    let release: () => void = () => undefined;
+    const a = {
+      busy: false,
+      onTarget: vi.fn(
+        () =>
+          new Promise<boolean>((done) => {
+            release = () => done(true);
+          }),
+      ),
+    };
+    const { rerender } = render(<SensorsView view={view()} actions={a} />);
+    select().focus();
+    await userEvent.setup().selectOptions(select(), "specimen:p1");
+    rerender(<SensorsView view={view()} actions={{ ...a, busy: true }} />);
+    expect(document.activeElement).toBe(select());
+    release();
+    rerender(
+      <SensorsView
+        view={view({ target: { kind: "specimen", id: "p1", name: "Aloe" } })}
+        actions={{ ...a, busy: false }}
+      />,
+    );
+    await waitFor(() =>
+      expect(document.querySelector("li > p")?.textContent).toBe("Zugeordnet: Aloe"),
+    );
+    expect(document.activeElement).toBe(select());
+    await userEvent.setup().selectOptions(select(), "");
+    release();
+    await waitFor(() =>
+      expect(document.querySelector("li > p")?.textContent).toBe("Nicht mehr zugeordnet"),
+    );
+    expect(document.activeElement).toBe(select());
+  });
+});

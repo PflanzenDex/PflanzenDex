@@ -289,6 +289,36 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(screen.getByText("Wer dir den Code gegeben hat, bekommt eine Anfrage.")).toBeTruthy();
   });
 
+  it("US-QS-32 · SG-BASE-01 the focus does not fall to the body when 'Anfrage senden' is tapped: the button stays focusable while it sends, and a second tap sends nothing (issue 2464, F-0094)", async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    const { calls, fetchFn } = fakeServer();
+    const plain = fetchFn.getMockImplementation();
+    fetchFn.mockImplementation(async (url, init) => {
+      if (new URL(String(url)).pathname === "/friends/requests" && init?.method === "POST")
+        await gate;
+      return plain ? plain(url, init) : new Response("{}", { status: 404 });
+    });
+    show("add");
+    await userEvent.click(await screen.findByRole("tab", { name: "Code eingeben" }));
+    await userEvent.type(await screen.findByLabelText("Freundescode"), "ABCD-EFGH");
+    const send = screen.getByRole("button", { name: "Anfrage senden" });
+    await userEvent.click(send);
+    const sending = await screen.findByRole("button", { name: "Sendet …" });
+    expect(sending).toBe(send);
+    expect(sending.getAttribute("aria-disabled")).toBe("true");
+    expect(sending.hasAttribute("disabled")).toBe(false);
+    expect(document.activeElement).toBe(sending);
+    await userEvent.click(sending);
+    release();
+    await screen.findByText(/Anfrage gesendet/, { selector: "p" });
+    expect(calls.filter((c) => c.path === "/friends/requests")).toHaveLength(1);
+    // The focus stays on the button of the layer: not on the body, not lost (SG-BASE-01).
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Anfrage senden" }));
+  });
+
   it("US-QS-32 · P-10 a request that cannot be sent at all (the sign-in is gone) is not silent: it shows as a toast with the German text", async () => {
     const { calls } = fakeServer();
     let signedOut = false;

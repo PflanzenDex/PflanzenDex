@@ -85,3 +85,14 @@ describe("US-ONB-07 · US-QS-23 the app starts the hint request before the plant
     );
   });
 });
+
+describe("US-QS-32 · SG-FEED-05 the app hands the result place of the plant layer to 'Gießen' (issue 2462)", () => {
+  it("US-QS-32 · SG-FEED-05 the water slot passes the result host of its context to the action, and none when the context has none", () => {
+    const host = document.createElement("div");
+    const water = (ctx: { measure: () => void; resultHost?: HTMLElement | null }) =>
+      (slots.water?.(card(), ctx) as ReactElement<{ resultHost: HTMLElement | null }>).props
+        .resultHost;
+    expect(water({ measure: () => undefined, resultHost: host })).toBe(host);
+    expect(water({ measure: () => undefined })).toBeNull();
+  });
+});
