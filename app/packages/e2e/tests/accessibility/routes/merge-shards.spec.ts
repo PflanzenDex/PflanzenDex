@@ -96,7 +96,13 @@ test.describe("US-QG-01 self-test: the shards of the UI gates", () => {
   test("US-QG-01 self-test: a screen without a weight counts as the median of its gate and still gets a shard", () => {
     expect(weightOf("one-screen", "a-new-screen")).toBe(medianOf("one-screen"));
     expect(weightOf("a11y-routes", "a-new-screen")).toBe(medianOf("a11y-routes"));
-    const fresh: Screen = { id: "a-new-screen", account: "test2", path: "/today" };
+    const fresh: Screen = {
+      id: "a-new-screen",
+      account: "test2",
+      path: "/today",
+      kind: "overview",
+      state: "many",
+    };
     const plan = planShards([...SCREENS, fresh], SPLIT);
     expect(plan.size).toBe(SCREENS.length + 1);
     expect(plan.get("a-new-screen")).toBeGreaterThanOrEqual(1);
