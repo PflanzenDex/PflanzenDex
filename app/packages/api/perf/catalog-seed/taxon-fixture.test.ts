@@ -1,7 +1,13 @@
 import type { Pool, PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { collectorCards } from "@pflanzendex/core";
-import { holdTaxonLock, migrate, openFixturePool, TaxonomyPostgres } from "@pflanzendex/db";
+import {
+  holdTaxonLock,
+  migrate,
+  openFixturePool,
+  openOwnerPool,
+  TaxonomyPostgres,
+} from "@pflanzendex/db";
 import { BEN_SPECIMENS } from "../demo-seed/accounts/ben/ben-plants.ts";
 import { SEED_SPECIES } from "./species-list.ts";
 import {
@@ -17,8 +23,14 @@ import {
 let admin: Pool;
 let release: () => Promise<void>;
 beforeAll(async () => {
+  // The owner role migrates (a superuser-created schema breaks the seed-catalog test on the same database, issue 2491).
+  const owner = openOwnerPool();
+  try {
+    await migrate(owner);
+  } finally {
+    await owner.end();
+  }
   admin = openFixturePool();
-  await migrate(admin);
   release = await holdTaxonLock(admin);
 });
 afterAll(async () => {
