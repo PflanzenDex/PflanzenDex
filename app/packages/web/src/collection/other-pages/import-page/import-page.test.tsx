@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS, IMPORT_LIMITS, type PreviewRow } from "@pflanzendex/core";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FeaturesProvider } from "@/shared/data";
+import { FeaturesProvider, forgetRepeatKeys } from "@/shared/data";
 import { ImportPage } from "./import-page";
 import { TEMPLATE_HEADER } from "./import-api";
 
@@ -230,6 +230,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  // The held key of a confirmation lives in the registry, not in the page (US-QS-03): leave it empty for the next test.
+  forgetRepeatKeys();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   delete (URL as { createObjectURL?: unknown }).createObjectURL;
@@ -472,5 +474,38 @@ describe("US-BES-18 a failed request keeps the state and offers a retry", () => 
     expect(keys).toHaveLength(2);
     expect(keys[0]).toBeTruthy();
     expect(keys[1]).toBe(keys[0]);
+  });
+
+  it("US-QS-03 the key of a confirmation whose answer was lost is held by the registry: forgetRepeatKeys (sign-out) frees it, the retry sends a new key", async () => {
+    const sent = server({ confirmFails: 1 });
+    show();
+    await previewOfCsv();
+    const u = user();
+    await u.click(await screen.findByRole("button", { name: "1 Pflanze importieren" }));
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    forgetRepeatKeys();
+    await u.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    await screen.findByRole("heading", { name: "Import abgeschlossen" });
+    const keys = sentTo(sent, "/specimens/import").map((s) => s.key);
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBeTruthy();
+    expect(keys[1]).toBeTruthy();
+    expect(keys[1]).not.toBe(keys[0]);
+  });
+
+  it("US-QS-03 a confirmation that was answered frees its key: the next import of the page sends a new key", async () => {
+    const sent = server();
+    show();
+    await previewOfCsv();
+    const u = user();
+    await u.click(await screen.findByRole("button", { name: "1 Pflanze importieren" }));
+    await screen.findByRole("heading", { name: "Import abgeschlossen" });
+    await u.click(screen.getByRole("button", { name: "Weitere Datei importieren" }));
+    await previewOfCsv();
+    await u.click(await screen.findByRole("button", { name: "1 Pflanze importieren" }));
+    await screen.findByRole("heading", { name: "Import abgeschlossen" });
+    const keys = sentTo(sent, "/specimens/import").map((s) => s.key);
+    expect(keys).toHaveLength(2);
+    expect(keys[1]).not.toBe(keys[0]);
   });
 });

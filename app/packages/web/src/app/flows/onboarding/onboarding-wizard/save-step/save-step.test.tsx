@@ -25,12 +25,17 @@ const writes: { path: string; body: Record<string, unknown> }[] = [];
 /** Reads of the zones, and a refusal of them by the server (not the network) when `zonesRefused` is set. */
 let zonesReads = 0;
 let zonesRefused = false;
+/** While set, the read of the plants of the species (the marker rule) or the create waits for it (US-QS-03). */
+let rulePending: Promise<void> | null = null;
+let createPending: Promise<void> | null = null;
 
 function server() {
   zones = [];
   locations = [];
   zonesReads = 0;
   zonesRefused = false;
+  rulePending = null;
+  createPending = null;
   writes.length = 0;
   vi.stubGlobal(
     "fetch",
@@ -41,6 +46,7 @@ function server() {
         writes.push({ path, body });
         if (path === "/light-zones/defaults") zones = [...DEFAULT_ZONES];
         if (path === "/locations/defaults") locations = [...DEFAULT_LOCATIONS];
+        if (path === "/specimens") await createPending;
         return response(201, { id: "e1", speciesId: "sp1" });
       }
       if (path === "/light-zones") {
@@ -49,8 +55,10 @@ function server() {
         return response(200, { zones });
       }
       if (path === "/locations") return response(200, { locations });
-      if (path.startsWith("/specimens/cards"))
+      if (path.startsWith("/specimens/cards")) {
+        await rulePending;
         return answerCardRead(new URL(String(url)), []) ?? response(404, {});
+      }
       if (path === "/species") return response(200, { species: [HIT] });
       if (path === "/species/sp1") return response(200, SPECIES);
       return response(404, {});
@@ -97,13 +105,11 @@ async function toSave() {
   await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
 }
 
-/** The save button is enabled once the light need of the species is known (issue 1638). */
+const saveButton = () => screen.getByRole("button", { name: "Pflanze sichern" });
+
+/** The save button is usable once the light need and the marker rule of the species are known (issue 1638, US-QS-03). */
 async function untilSaveEnabled() {
-  await waitFor(() =>
-    expect(
-      (screen.getByRole("button", { name: "Pflanze sichern" }) as HTMLButtonElement).disabled,
-    ).toBe(false),
-  );
+  await waitFor(() => expect(saveButton().getAttribute("aria-disabled")).toBeNull());
 }
 
 afterEach(() => {
@@ -120,9 +126,9 @@ describe("US-ONB-01 offline, the default zones fail with the reason and a retry 
     await toSave();
     expect(await screen.findByText(REASON)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
-    expect(
-      (screen.getByRole("button", { name: "Pflanze sichern" }) as HTMLButtonElement).disabled,
-    ).toBe(true);
+    // Inert while the zones are missing, and not busy: the reason and its retry stand in the block (US-QS-03).
+    expect(saveButton().getAttribute("aria-disabled")).toBe("true");
+    expect(saveButton().getAttribute("aria-busy")).toBeNull();
     expect(screen.queryByRole("combobox", { name: "Lichtbedarf" })).toBeNull();
     // Nothing is sent while the device is offline (US-QS-30): the defaults are not created yet.
     expect(writes.find((w) => w.path === "/light-zones/defaults")).toBeUndefined();
@@ -201,5 +207,65 @@ describe("US-ONB-01 offline, the default zones fail with the reason and a retry 
     });
     expect(zonesReads).toBe(reads);
     expect(screen.queryByRole("combobox", { name: "Lichtbedarf" })).toBeNull();
+  });
+});
+
+/** A promise the test settles by hand: the read or the write it holds in the fake server answers when `release` runs. */
+function held() {
+  let release = () => {};
+  const until = new Promise<void>((done) => {
+    release = done;
+  });
+  return { until, release };
+}
+
+describe("US-QS-03 · a save that waits for the marker rule is shown busy, never a silent no-op (P-10)", () => {
+  it("US-QS-03 while the rule of the species is read the save is aria-disabled and busy, a press sends nothing, and it works once the rule is there", async () => {
+    connection(true);
+    server();
+    const rule = held();
+    rulePending = rule.until;
+    view();
+    await toSave();
+    await screen.findByRole("combobox", { name: "Lichtbedarf" });
+    // The zones are there, the rule is not: the button is inert but visibly busy, and still focusable (PF-045).
+    const button = saveButton();
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect((button as HTMLButtonElement).disabled).toBe(false);
+    expect(button.querySelector(".animate-spin")).not.toBeNull();
+    await userEvent.click(button);
+    expect(writes.find((w) => w.path === "/specimens")).toBeUndefined();
+    expect(screen.getByRole("heading", { name: "Schritt 2 von 2: Pflanze sichern" })).toBeTruthy();
+    expect(saveButton().getAttribute("aria-busy")).toBe("true");
+    rule.release();
+    await untilSaveEnabled();
+    expect(saveButton().getAttribute("aria-busy")).toBeNull();
+    expect(saveButton().querySelector(".animate-spin")).toBeNull();
+    await userEvent.click(saveButton());
+    expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
+    expect(writes.filter((w) => w.path === "/specimens")).toHaveLength(1);
+  });
+
+  it("US-QS-03 while the save runs the button is busy and keeps the focus, and a second press sends no second plant", async () => {
+    connection(true);
+    server();
+    const create = held();
+    createPending = create.until;
+    view();
+    await toSave();
+    await untilSaveEnabled();
+    const button = saveButton();
+    await userEvent.click(button);
+    await userEvent.click(button);
+    await waitFor(() => expect(saveButton().getAttribute("aria-busy")).toBe("true"));
+    await act(async () => {
+      await new Promise((done) => setTimeout(done, 30));
+    });
+    expect(document.activeElement).toBe(saveButton());
+    expect(writes.filter((w) => w.path === "/specimens")).toHaveLength(1);
+    create.release();
+    expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
+    expect(writes.filter((w) => w.path === "/specimens")).toHaveLength(1);
   });
 });

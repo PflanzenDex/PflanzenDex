@@ -75,7 +75,9 @@ export function bufferWrite(to: Api["announce"], write: Write): Promise<Response
   return new Promise<Response<unknown>>((done) => {
     // The account is read now, when the write is made, not when it is delivered (US-QS-07).
     entries.push({ ...write, done, account: signedInSub() });
-    say(`Du bist offline. Wird gesendet, sobald du wieder online bist: ${write.success}`, true);
+    // A silent write (a seen mark) has no success text: nothing is said, an empty text would end in ": " (US-QS-03, P-10).
+    if (write.success)
+      say(`Du bist offline. Wird gesendet, sobald du wieder online bist: ${write.success}`, true);
   });
 }
 
@@ -118,8 +120,9 @@ export async function deliverBuffered(): Promise<void> {
     const r = await sendEntry(entry);
     if (!r.ok && r.error.code === "network.not_reachable") break;
     entries.shift();
-    if (r.ok) sent.push(entry.success);
-    else refused.add(`Nicht gesendet: ${errorText(r.error.code)}`);
+    // A delivered silent write (no success text) is not named: an empty text would read "Nachträglich gesendet: ".
+    if (!r.ok) refused.add(`Nicht gesendet: ${errorText(r.error.code)}`);
+    else if (entry.success) sent.push(entry.success);
     entry.after();
     entry.done(r);
   }

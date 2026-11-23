@@ -153,7 +153,8 @@ export function useFirstPlant(api: string, token: Token) {
     setRefusal(null);
   };
   const save = async () => {
-    // Ruled out before anything is sent: no species or no marker rule yet, nothing is saved (the rule comes with step 2).
+    // Ruled out before anything is sent: no species or no marker rule yet (the rule comes with step 2). The save button
+    // holds the press back while the rule is read and shows the wait, so this never swallows a press (US-QS-03, P-10).
     const rule = marker.rule;
     if (!species || !rule || !(await markerChecked(marker.form))) return;
     setSaving(true);
