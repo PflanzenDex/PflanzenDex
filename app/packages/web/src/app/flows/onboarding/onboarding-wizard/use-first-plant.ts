@@ -144,7 +144,7 @@ export function useFirstPlant(api: string, token: Token) {
   const pick = (s: Species) => {
     setSpecies(s);
     setZoneId("");
-    failure.clear();
+    failure.reset();
     setRefusal(null);
   };
   const save = async () => {

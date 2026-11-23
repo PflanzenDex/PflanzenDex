@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { errorText } from "@/shared/lib/error-text";
-import { createKey, withConflictDismiss, type ApiError } from "@/shared/data";
+import { createKey, releaseRepeatKey, withConflictDismiss, type ApiError } from "@/shared/data";
 
 /**
  * The create of the plant: the action names the operation only, the form is the body (US-QS-03). A key conflict keeps its
@@ -16,6 +16,11 @@ export function useSaveFailure() {
   const [failure, setFailure] = useState<ApiError | null>(null);
   const clear = useCallback(() => setFailure(null), []);
   const show = (error: ApiError) => setFailure(withConflictDismiss(error, FIRST_PLANT, clear));
+  // Another species is a new write: a conflict that held the key must not carry over to it (US-QS-03).
+  const reset = () => {
+    if (failure?.dismiss) releaseRepeatKey(FIRST_PLANT);
+    setFailure(null);
+  };
   const text = failure ? errorText(failure.code) : null;
-  return { text, dismiss: failure?.dismiss, show, clear };
+  return { text, dismiss: failure?.dismiss, show, clear, reset };
 }
