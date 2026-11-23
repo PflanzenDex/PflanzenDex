@@ -53,6 +53,11 @@ export function focusFindings(ctx, focused) {
     .map((f) => `${where(ctx)}: ${f.selector} shows no focus indicator on Tab (DS-37)`);
 }
 
+/** P-B (US-QS-15, issue 2432): a play function that threw fails its story, named as a play failure with its message. */
+export function playFindings(ctx, playErrors) {
+  return playErrors.map((message) => `${where(ctx)}: play function failed: ${message}`);
+}
+
 /** DS-40: overlays close on Esc; when opened from a trigger, focus returns to it. */
 export function overlayFindings(ctx, overlays) {
   const out = [];

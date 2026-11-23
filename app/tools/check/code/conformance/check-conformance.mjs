@@ -15,15 +15,18 @@ import {
   INTERACTIVE,
   overlayResults,
   probeTargets,
+  recordStoryRender,
   settleStyles,
   storyUrl,
   tabThrough,
+  waitForRender,
 } from "./conformance-probes.mjs";
 import {
   axeFindings,
   focusFindings,
   overlayFindings,
   parseAllowlist,
+  playFindings,
   targetFindings,
 } from "./conformance-rules.mjs";
 import { isEntryPoint } from "../../shared/entry-point.mjs";
@@ -97,8 +100,12 @@ async function checkStory({ page, baseUrl, allowlist }, id, scheme) {
     state: "attached",
     timeout: 15000,
   });
+  // P-B (US-QS-15, issue 2432): the probes start after the play function has finished; a play that threw fails by name.
+  const { rendered, playErrors } = await waitForRender(page);
+  if (playErrors.length > 0) return playFindings(ctx, playErrors);
   if (await page.locator("body.sb-show-errordisplay").count())
     return [`${where(ctx)}: the story failed to render`];
+  if (!rendered) return [`${where(ctx)}: the story did not finish rendering or playing`];
   await waitForStory(page);
   await page.evaluate(() => document.fonts.ready);
   await settleBeforeAxe(page);
@@ -155,6 +162,7 @@ export async function runConformance({ outDir, fixtures = false } = {}) {
     let next = 0;
     const worker = async () => {
       const page = await (await browser.newContext(CONTEXT)).newPage();
+      await page.addInitScript(recordStoryRender);
       for (let i = next++; i < jobs.length; i = next++)
         results[i] = await checkStory({ page, baseUrl: url, allowlist }, ...jobs[i]);
     };

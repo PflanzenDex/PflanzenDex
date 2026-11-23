@@ -11,12 +11,19 @@ import { chromium } from "playwright";
 import { runConformance, serve, settleBeforeAxe, waitForStory } from "./check-conformance.mjs";
 import { INTERACTIVE, probeTargets, tabThrough } from "./conformance-probes.mjs";
 
+// The describes below share one run of the fixture stories: the first call builds the catalog and runs it.
+let fixtures;
+const fixtureFindings = () =>
+  (fixtures ??= runConformance({
+    outDir: path.join(os.tmpdir(), `conformance-fixtures-${process.pid}`),
+    fixtures: true,
+  }));
+
 describe("QG-U5 · conformance run catches", () => {
-  const outDir = path.join(os.tmpdir(), `conformance-fixtures-${process.pid}`);
   let findings;
 
   it("QG-U5 · conformance run catches a 36px target and an unlabeled input in the fixture stories", async () => {
-    findings = await runConformance({ outDir, fixtures: true });
+    findings = await fixtureFindings();
     assert.ok(findings.length > 0);
   });
 
@@ -44,6 +51,44 @@ describe("QG-U5 · conformance run catches", () => {
       findings.every((f) => /conformance-fixture/.test(f)),
       findings.join("\n"),
     );
+  });
+});
+
+// P-B (US-QS-15, issue 2432): the play functions of the fixture stories, light and dark.
+describe("QG-U5 · conformance run, play functions (US-QS-15, P-B)", () => {
+  // A play function that throws fails its story by name, with its message, and not as a render failure.
+  it("QG-U5 · a play function that throws is a finding named as a play failure, in light and dark", async () => {
+    const findings = await fixtureFindings();
+    for (const scheme of ["light", "dark"]) {
+      const hit = findings.filter((f) =>
+        f.startsWith(`QG-U5 conformance-fixture-play--fail (${scheme}): play function failed: `),
+      );
+      assert.equal(hit.length, 1, `${scheme}: ${findings.join("\n")}`);
+      assert.match(hit[0], /the fixture play function throws on purpose/);
+    }
+    const all = findings.filter((f) => /conformance-fixture-play--fail/.test(f));
+    assert.equal(all.length, 2, all.join("\n"));
+  });
+
+  it("QG-U5 · a passing play gives no finding", async () => {
+    const findings = await fixtureFindings();
+    assert.deepEqual(
+      findings.filter((f) => /conformance-fixture-play--pass/.test(f)),
+      [],
+    );
+  });
+
+  // The target appears 1.5 s after the render, later than the network settle: only a probe that waits for the play sees it.
+  it("QG-U5 · the probes run after the play, so a target that the play adds is found (DS-15)", async () => {
+    const findings = await fixtureFindings();
+    for (const scheme of ["light", "dark"]) {
+      const hit = findings.filter(
+        (f) =>
+          f.includes(`conformance-fixture-play--late-target (${scheme})`) &&
+          /button.*36 px.*DS-15/.test(f),
+      );
+      assert.equal(hit.length, 1, `${scheme}: ${findings.join("\n")}`);
+    }
   });
 });
 

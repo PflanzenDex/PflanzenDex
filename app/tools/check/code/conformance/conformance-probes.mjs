@@ -12,6 +12,48 @@ export function storyUrl(baseUrl, id, scheme) {
   return `${baseUrl}/iframe.html?id=${id}&viewMode=story&globals=colorScheme:${scheme};a11y.manual:!true`;
 }
 
+// Render phases before the play function has finished (Storybook 10, StoryRender.runPhase).
+const BEFORE_PLAY = ["preparing", "loading", "beforeEach", "rendering", "playing"];
+
+// Runs before the page's scripts (addInitScript, P-B, issue 2432): listens on the channel Storybook installs as
+// `__STORYBOOK_ADDONS_CHANNEL__` and keeps the render phases and the messages of play functions that threw. The channel
+// is synchronous, so a play error is recorded in the same step as its `errored` phase.
+export function recordStoryRender() {
+  const record = { phases: [], playErrors: [] };
+  window.__qgRender = record;
+  let channel = null;
+  Object.defineProperty(window, "__STORYBOOK_ADDONS_CHANNEL__", {
+    configurable: true,
+    get: () => channel,
+    set: (next) => {
+      if (next === channel) return;
+      channel = next ?? null;
+      if (!channel?.on) return;
+      channel.on("storyRenderPhaseChanged", (event) => record.phases.push(event.newPhase));
+      channel.on("playFunctionThrewException", (error) => record.playErrors.push(error?.message));
+    },
+  });
+}
+
+// Waits until the story is past its play function or shows the error display; `rendered` is false when that did not
+// happen within the timeout (P-10: a stuck story is a finding). `playErrors` are the messages of the plays that threw.
+export async function waitForRender(page, timeout = 15000) {
+  const rendered = await page
+    .waitForFunction(
+      (before) =>
+        document.body.classList.contains("sb-show-errordisplay") ||
+        (window.__qgRender?.phases ?? []).some((phase) => !before.includes(phase)),
+      BEFORE_PLAY,
+      { timeout },
+    )
+    .then(
+      () => true,
+      () => false,
+    );
+  const playErrors = await page.evaluate(() => window.__qgRender?.playErrors ?? []);
+  return { rendered, playErrors };
+}
+
 // Runs inside the page (QG-U9, FR-QG-09). Resolves once the style of the story has settled: it lets two frames
 // pass so that the colour scheme (applied while the story renders) has been recalculated and every transition it
 // started exists, then waits until no finite animation or transition is running any more. axe reads computed

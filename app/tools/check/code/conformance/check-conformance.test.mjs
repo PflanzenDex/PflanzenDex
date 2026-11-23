@@ -5,6 +5,7 @@ import {
   focusFindings,
   overlayFindings,
   parseAllowlist,
+  playFindings,
   targetFindings,
 } from "./conformance-rules.mjs";
 import { storyUrl } from "./conformance-probes.mjs";
@@ -132,6 +133,18 @@ describe("QG-U5 · conformance run, overlays (DS-40)", () => {
       ]),
       [],
     );
+  });
+});
+
+describe("QG-U5 · conformance run, play functions (US-QS-15, P-B)", () => {
+  it("QG-U5 · a play that threw is a finding that names the play and its message", () => {
+    assert.deepEqual(playFindings(ctx, ["the tab is not in view"]), [
+      "QG-U5 ui-button--sizes (light): play function failed: the tab is not in view",
+    ]);
+  });
+
+  it("QG-U5 · a story whose play passed has no play finding", () => {
+    assert.deepEqual(playFindings(ctx, []), []);
   });
 });
 
