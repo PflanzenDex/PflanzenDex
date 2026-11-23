@@ -29,8 +29,9 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
       </DialogPrimitive.Overlay>
       <DialogPrimitive.Content
         ref={ref}
+        data-scroll-region=""
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 flex max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto rounded-card bg-card p-6 text-foreground shadow-elevation-2",
+          "fixed left-1/2 top-1/2 z-50 flex max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto overscroll-contain rounded-card bg-card p-6 text-foreground shadow-elevation-2",
           // A list that pages by free height (`data-page-fit`) gets the full height to fill (issue 1156).
           "has-[[data-page-fit]]:h-[90dvh]",
           className,

@@ -30,6 +30,7 @@ const CHAIN = [
   "baseline",
   "design-system",
   "ui-text",
+  "scroll-markers",
   "constants",
   "stories",
   "knip",

@@ -83,6 +83,12 @@ export const BASELINE_FORMATS = {
     limits: ["maxTotal"],
     entries: { key: ["file"], fields: { file: TEXT, count: NUMBER }, judged: ["count"] },
   },
+  // FR-QG-17, issue 2430: the scroll region lines outside the shared scroll components (check-scroll-markers.mjs), the same
+  // shape as the UI text ratchet: a raised count or maxTotal is growth, a lowered one a shrink.
+  "scroll-markers-baseline.json": {
+    limits: ["maxTotal"],
+    entries: { key: ["file"], fields: { file: TEXT, count: NUMBER }, judged: ["count"] },
+  },
   "reference-baseline.json": { lists: ["routes", "operations", "components"] },
   "layout-baseline.json": { nested: true },
   // US-QG-06: the quarantine list (`make quarantine`). An entry or a raised maxEntries is growth, a removal a shrink; `since`,

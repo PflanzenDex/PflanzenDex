@@ -24,6 +24,7 @@ export const GATE_STEPS = [
   npmStep("baseline", needsSharedPass),
   npmStep("design-system"),
   npmStep("ui-text", needsSharedPass),
+  npmStep("scroll-markers"),
   npmStep("constants", needsSharedPass),
   npmStep("stories"),
   npmStep("knip"),

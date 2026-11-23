@@ -24,6 +24,7 @@
     "baseline": "node tools/check/quality/gates/check-baseline.mjs",
     "design-system": "node tools/check/code/design-system/check-design-system.mjs",
     "ui-text": "node tools/check/code/ui-text/check-ui-text.mjs",
+    "scroll-markers": "node tools/check/code/scroll-markers/check-scroll-markers.mjs",
     "constants": "node tools/check/code/constants/check-constants.mjs",
     "stories": "node tools/check/quality/check-stories.mjs",
     "bundle-budget": "node tools/check/delivery/supply/check-bundle-budget.mjs",

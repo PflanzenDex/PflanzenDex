@@ -505,6 +505,11 @@ make ci      # all gates: lint, types, boundaries, format, tests, build; every p
 
 - **Constants gate (FR-QG-12, QG-C9):** ESLint rules `constants/no-magic-number` (inline numbers in `core` and `api`; `MS_PER_DAY` in `core` kernel is the one definition of a day in milliseconds) and `constants/no-enum-literal` (values of exported `as const` arrays of `core` used as comparison, `case` or `.includes()` key outside their file; also `web`) in `app/tools/check/code/constants/eslint-constants.mjs`. `npm run constants` (`check-constants.mjs`, in `make gates`) keeps `app/config/gates/baselines/constants-baseline.json` exact (`{ maxTotal, entries: [{ file, numbers?, enums? }] }`); it only shrinks (`--write` regenerates it).
 
+## Scroll regions and their markers (FR-QG-17, DS-61, issue 2430)
+
+- **Gate:** `npm run scroll-markers` (`app/tools/check/code/scroll-markers/check-scroll-markers.mjs`, in `make gates`) reads the non-test, non-story `.ts` and `.tsx` files of `app/packages/web/src`. A scroll region is a line with `overflow-auto`, `overflow-scroll` or their `x` and `y` forms, also behind a variant. The shared scroll components (table, tabs, scroll entries, layer pane, sheet panel, dialog) carry `data-scroll-region` or `data-scroll-x` and `overscroll-contain` in their statement. Other files count per file in `app/config/gates/baselines/scroll-markers-baseline.json`; the baseline only shrinks. `data-scroll-x` takes `table`, `cards`, `chips`, `tabs` or `row`.
+- **Runtime twin:** the one-screen check (QG-U8, #2423) measures the rendered screens; this gate reads the source in under two seconds. Not read: the CSS scroll regions of `styles/tokens.css` (`[data-fit-fill]`, `main:has([data-fit-screen])`).
+
 ## AI access: the MCP endpoint (E-04, US-KI-07, ADR 0013)
 
 - **Endpoint:** `POST /mcp` (behind the proxy `https://<host>/api/mcp`, the value of `AI_RESOURCE_URL`) speaks MCP over Streamable HTTP: JSON-RPC 2.0, one message per POST, one JSON answer (no SSE, no `Mcp-Session-Id`, stateless). `GET /mcp`, `DELETE /mcp`, `PUT /mcp` and `PATCH /mcp` answer 405 with `Allow: POST`. Code: `api/src/ai/mcp` (`protocol.ts` wire format, `tool-call.ts`, `tools/` catalog, `mcp-routes.ts`); own implementation, no SDK (reason in ADR 0013).

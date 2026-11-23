@@ -109,7 +109,7 @@ function stripLayout(wrap: boolean | undefined) {
     "data-scroll-x": wrap ? undefined : "tabs",
     className: cn(
       "flex w-full gap-1 bg-muted p-1",
-      wrap ? "flex-wrap rounded-2xl" : "overflow-x-auto rounded-full",
+      wrap ? "flex-wrap rounded-2xl" : "overflow-x-auto overscroll-contain rounded-full",
     ),
   };
 }
