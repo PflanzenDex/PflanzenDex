@@ -47,6 +47,23 @@ test("US-QG-01 settle waits for a CSS transition that changes no DOM (the Vaul l
   expect(left, "the slide ended at its last frame").toBeGreaterThanOrEqual(299);
 });
 
+test("US-QG-01 settle waits for an animation that starts after the network idle (a 900 ms delay)", async ({
+  page,
+}) => {
+  // The slide starts after the 500 ms network idle and changes no DOM: the settle loop must poll until it has ended, not check once.
+  await page.setContent(`<style>
+    #late { width: 40px; height: 40px; background: red; animation: late 400ms linear 900ms both; }
+    @keyframes late { from { transform: translateX(0); } to { transform: translateX(300px); } }
+  </style><div id="late"></div>`);
+  await settle(page);
+  const { running, left } = await page.evaluate(() => ({
+    running: document.getAnimations().filter((a) => a.playState === "running").length,
+    left: document.getElementById("late")?.getBoundingClientRect().left ?? -1,
+  }));
+  expect(running, "no animation runs when settle returns, the delayed one included").toBe(0);
+  expect(left, "the slide ended at its last frame").toBeGreaterThanOrEqual(299);
+});
+
 test("US-QG-01 settle ends after the quiet time, not after the old fixed pause", async ({
   page,
 }) => {

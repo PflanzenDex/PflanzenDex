@@ -26,12 +26,14 @@ export const gateBrowserWsEndpoint = (port) => `ws://127.0.0.1:${port}/`;
 /** The name of the container of one run: the process id keeps two runs apart. */
 export const containerName = (pid) => `${NAME_PREFIX}${pid}`;
 
-/** The `docker run` arguments: detached, removed on stop, published to the loopback only, the Playwright of node_modules. */
+/**
+ * The `docker run` arguments: detached, published to the loopback only, the Playwright of node_modules. No `--rm`: a container
+ * that dies keeps its logs for the failure message, and the wrapper removes it by name (removeContainer, removeStale).
+ */
 export function gateBrowserRunArgs({ name, image, port, nodeModules, label }) {
   return [
     "run",
     "-d",
-    "--rm",
     "--init",
     "--ipc=host",
     "--name",
@@ -102,9 +104,15 @@ export function ensureImage(docker, image) {
   console.error(`gate browser: pulled ${image} in ${Math.round((Date.now() - began) / 1000)} s`);
 }
 
-// Containers of earlier runs that a crash left behind; the heavy lock keeps one gate run at a time on this machine.
-export function removeStale(docker) {
-  const ps = spawnSync(docker, ["ps", "-aq", "--filter", `label=${LABEL}`], { encoding: "utf8" });
+// The label value of a checkout: the sweep and the containers of one worktree never touch another worktree's containers.
+export const ownerLabel = (root) => `${LABEL}=${root}`;
+
+// Containers of earlier runs of THIS checkout that a crash left behind (filtered on its label value); the heavy lock keeps one
+// gate run at a time on this machine.
+export function removeStale(docker, root = appRoot) {
+  const ps = spawnSync(docker, ["ps", "-aq", "--filter", `label=${ownerLabel(root)}`], {
+    encoding: "utf8",
+  });
   const ids = (ps.stdout ?? "")
     .split("\n")
     .map((id) => id.trim())
@@ -112,18 +120,29 @@ export function removeStale(docker) {
   if (ids.length > 0) spawnSync(docker, ["rm", "-f", ...ids]);
 }
 
-/** Resolves when the container logs its listener; throws when it stopped, a stop was asked or the deadline passed. */
+// docker's text when the host port of the publish was taken between the free-port check and the start (a loopback race).
+const BIND_RACE = /failed to bind host port|address already in use/;
+export const isBindRace = (message) => BIND_RACE.test(message);
+
+/** Removes a container by name, even one a failed start left behind with its name reserved. */
+export function removeName(docker, name) {
+  spawnSync(docker, ["rm", "-f", name], { encoding: "utf8" });
+}
+
+/** Resolves when the container logs its listener; throws when it stopped or was removed, a stop was asked or the deadline passed. */
 export async function waitListening(docker, state, deadline) {
   for (;;) {
     const logs = spawnSync(docker, ["logs", state.name], { encoding: "utf8" });
     const text = `${logs.stdout ?? ""}${logs.stderr ?? ""}`;
     if (text.includes(READY_TEXT)) return;
+    // A container that exited (false) or was removed (inspect fails) will not report a listener: fail at once with its logs.
     const running = spawnSync(docker, ["inspect", "-f", "{{.State.Running}}", state.name], {
       encoding: "utf8",
     });
-    if (running.stdout?.trim() === "false" || state.stopping || Date.now() > deadline)
+    const exited = running.status !== 0 || running.stdout?.trim() === "false";
+    if (exited || state.stopping || Date.now() > deadline)
       throw new Error(
-        `the gate browser did not start (${state.name}): ${text.trim().slice(-400) || "no output"}`,
+        `the gate browser did not start (${state.name}${exited ? ", it stopped or was removed" : ""}): ${text.trim().slice(-400) || "no output"}`,
       );
     await new Promise((resolveWait) => setTimeout(resolveWait, 200));
   }

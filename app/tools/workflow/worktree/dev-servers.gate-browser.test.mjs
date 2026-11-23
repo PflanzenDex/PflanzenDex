@@ -14,6 +14,7 @@ import {
   hostMode,
   pinnedImage,
 } from "./dev-servers.gate-browser.mjs";
+import { appRoot as gateAppRoot, removeStale } from "./dev-servers.gate-browser.container.mjs";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const appRoot = join(here, "../../..");
@@ -22,16 +23,53 @@ const INSTALLED = JSON.parse(
   readFileSync(join(appRoot, "node_modules", "playwright", "package.json"), "utf8"),
 ).version;
 
-// Each call is logged; the answers are set by environment variables (see the tests below).
+// Each call is logged; the answers are set by environment variables (see the tests below). FAKE_BIND_FAIL=once makes the first
+// start lose its port (docker's bind race), always makes every start do so; FAKE_INSPECT=false|gone is a container that
+// stopped or was removed; FAKE_LOG_TEXT is what a failing container logged.
 const FAKE_DOCKER = `#!/bin/sh
 echo "$*" >> "$FAKE_DOCKER_LOG"
 case "$1" in
   image) [ -n "$FAKE_IMAGE_PRESENT" ] && exit 0; exit 1 ;;
   pull) echo "pulled $2"; exit 0 ;;
   ps) [ -n "$FAKE_STALE" ] && echo "$FAKE_STALE"; exit 0 ;;
-  run) [ -n "$FAKE_RUN_FAIL" ] && { echo "no docker here" >&2; exit 1; }; echo "fake-container"; exit 0 ;;
-  logs) [ -n "$FAKE_NO_LISTEN" ] || echo "Listening on ws://0.0.0.0:1/"; exit 0 ;;
-  inspect) echo true; exit 0 ;;
+  run)
+    if [ "$FAKE_BIND_FAIL" = always ] || { [ "$FAKE_BIND_FAIL" = once ] && [ ! -e "$FAKE_DOCKER_LOG.bound" ]; }; then
+      touch "$FAKE_DOCKER_LOG.bound"
+      echo "driver failed programming external connectivity: failed to bind host port 127.0.0.1:1/tcp: address already in use" >&2
+      exit 1
+    fi
+    [ -n "$FAKE_RUN_FAIL" ] && { echo "no docker here" >&2; exit 1; }; echo "fake-container"; exit 0 ;;
+  logs)
+    if [ -n "$FAKE_NO_LISTEN" ]; then [ -n "$FAKE_LOG_TEXT" ] && echo "$FAKE_LOG_TEXT"; else echo "Listening on ws://0.0.0.0:1/"; fi
+    exit 0 ;;
+  inspect)
+    case "$FAKE_INSPECT" in
+      false) echo false; exit 0 ;;
+      gone) echo "Error: No such object" >&2; exit 1 ;;
+      *) echo true; exit 0 ;;
+    esac ;;
+  *) exit 0 ;;
+esac
+`;
+
+// A docker that answers `ps` with a label filter like docker does: `label=<key>=<value>` matches that value only, a bare
+// `label=<key>` matches every container with the key. FAKE_TABLE holds "<name> <owner>" lines.
+const TABLE_DOCKER = `#!/bin/sh
+echo "$*" >> "$FAKE_DOCKER_LOG"
+case "$1" in
+  ps)
+    want=""
+    for a in "$@"; do
+      case "$a" in
+        label=pflanzendex.gate-browser=*) want="\${a#label=pflanzendex.gate-browser=}" ;;
+        label=pflanzendex.gate-browser) want="*" ;;
+      esac
+    done
+    while read -r name owner; do
+      [ -n "$name" ] || continue
+      if [ "$want" = "*" ] || [ "$owner" = "$want" ]; then echo "$name"; fi
+    done < "$FAKE_TABLE"
+    exit 0 ;;
   *) exit 0 ;;
 esac
 `;
@@ -104,7 +142,13 @@ describe("US-QG-01 the gate browser image and run arguments (issue 2429)", () =>
       label: "/Users/homelab/code/PflanzenDex",
     });
     assert.equal(args[0], "run");
-    for (const flag of ["-d", "--rm", "--init", "--ipc=host"]) assert.ok(args.includes(flag), flag);
+    for (const flag of ["-d", "--init", "--ipc=host"]) assert.ok(args.includes(flag), flag);
+    // No --rm: a container that dies keeps its logs for the failure message; the wrapper removes it (review of 3f030cae).
+    assert.ok(!args.includes("--rm"), "the container stays until the wrapper removes it");
+    assert.equal(
+      pairOf(args, "--label"),
+      "pflanzendex.gate-browser=/Users/homelab/code/PflanzenDex",
+    );
     assert.equal(pairOf(args, "-p"), "127.0.0.1:45123:45123");
     assert.equal(
       pairOf(args, "-v"),
@@ -250,6 +294,132 @@ describe("US-QG-01 the gate browser run (issue 2429)", () => {
     assert.equal(result.code, 0, result.out);
     const log = calls(sb);
     assert.ok(log.indexOf("rm -f old-run-1") < log.findIndex((c) => c.startsWith("run -d")));
+  });
+});
+
+describe("US-QG-01 the gate browser: other checkouts, dead containers and port races (review of 3f030cae)", () => {
+  test("US-QG-01 a stale-container sweep names this checkout's label and removes only its own containers", () => {
+    const sb = sandbox();
+    const table = join(sb.dir, "table.txt");
+    writeFileSync(
+      table,
+      "pflanzendex-gate-browser-101 /checkouts/a/app\npflanzendex-gate-browser-202 /checkouts/b/app\n",
+    );
+    const docker = join(sb.bin, "docker-table");
+    writeFileSync(docker, TABLE_DOCKER, { mode: 0o755 });
+    const before = {
+      FAKE_TABLE: process.env["FAKE_TABLE"],
+      FAKE_DOCKER_LOG: process.env["FAKE_DOCKER_LOG"],
+    };
+    process.env["FAKE_TABLE"] = table;
+    process.env["FAKE_DOCKER_LOG"] = sb.log;
+    try {
+      removeStale(docker, "/checkouts/a/app");
+    } finally {
+      for (const key of ["FAKE_TABLE", "FAKE_DOCKER_LOG"]) {
+        if (before[key] === undefined) Reflect.deleteProperty(process.env, key);
+        else process.env[key] = before[key];
+      }
+    }
+    const log = calls(sb);
+    assert.ok(
+      log.some((c) => c === "ps -aq --filter label=pflanzendex.gate-browser=/checkouts/a/app"),
+      `the sweep filters on its own label, got ${JSON.stringify(log)}`,
+    );
+    assert.ok(log.includes("rm -f pflanzendex-gate-browser-101"), "its own stale container goes");
+    assert.ok(
+      !log.some((c) => c.includes("pflanzendex-gate-browser-202")),
+      "another checkout's container is left alone",
+    );
+  });
+
+  test("US-QG-01 the wrapper's own sweep is filtered on its checkout's label", async () => {
+    const sb = sandbox();
+    const { done } = runWrapper(sb, probeCommand(sb), { FAKE_IMAGE_PRESENT: "1" });
+    const result = await done;
+    assert.equal(result.code, 0, result.out);
+    assert.ok(
+      calls(sb).some((c) => c === `ps -aq --filter label=pflanzendex.gate-browser=${gateAppRoot}`),
+      "the sweep names this checkout",
+    );
+  });
+
+  test("US-QG-01 a container that is gone (removed by docker) fails the run at once, not after the deadline", async () => {
+    const sb = sandbox();
+    const started = Date.now();
+    const { done } = runWrapper(sb, probeCommand(sb), {
+      FAKE_IMAGE_PRESENT: "1",
+      FAKE_NO_LISTEN: "1",
+      FAKE_INSPECT: "gone",
+      FAKE_LOG_TEXT: "chromium: crashed before it listened",
+      GATE_BROWSER_READY_S: "30",
+    });
+    const result = await done;
+    assert.equal(result.code, 1);
+    assert.ok(Date.now() - started < 10_000, "did not wait for the 30 s deadline");
+    assert.match(result.out, /did not start/);
+    assert.match(
+      result.out,
+      /chromium: crashed before it listened/,
+      "the logs of the container are kept",
+    );
+    assert.equal(existsSync(sb.probe), false, "the tests did not start");
+  });
+
+  test("US-QG-01 a container that exited fails the run at once and names its logs", async () => {
+    const sb = sandbox();
+    const started = Date.now();
+    const { done } = runWrapper(sb, probeCommand(sb), {
+      FAKE_IMAGE_PRESENT: "1",
+      FAKE_NO_LISTEN: "1",
+      FAKE_INSPECT: "false",
+      FAKE_LOG_TEXT: "run-server: out of memory",
+      GATE_BROWSER_READY_S: "30",
+    });
+    const result = await done;
+    assert.equal(result.code, 1);
+    assert.ok(Date.now() - started < 10_000, "did not wait for the 30 s deadline");
+    assert.match(result.out, /run-server: out of memory/);
+    assert.ok(calls(sb).some((c) => c.startsWith("rm -f pflanzendex-gate-browser-")));
+  });
+
+  test("US-QG-01 a bind race on the chosen port is retried once on a new port, and the run goes on", async () => {
+    const sb = sandbox();
+    const { done } = runWrapper(sb, probeCommand(sb), {
+      FAKE_IMAGE_PRESENT: "1",
+      FAKE_BIND_FAIL: "once",
+    });
+    const result = await done;
+    assert.equal(result.code, 0, result.out);
+    const log = calls(sb);
+    const runs = log.filter((c) => c.startsWith("run -d"));
+    assert.equal(runs.length, 2, `the start was retried once, got ${JSON.stringify(log)}`);
+    const ports = runs.map((r) => pairOf(r.split(" "), "-p").split(":")[1]);
+    assert.notEqual(ports[0], ports[1], "the retry picks a new port");
+    assert.equal(
+      readFileSync(sb.probe, "utf8"),
+      `ws://127.0.0.1:${ports[1]}/`,
+      "the tests reach the port of the container that started",
+    );
+    const removed = log.findIndex((c) => /^rm -f pflanzendex-gate-browser-\d+$/.test(c));
+    assert.ok(
+      removed > log.indexOf(runs[0]) && removed < log.indexOf(runs[1]),
+      "the failed start's name is freed before the retry",
+    );
+    assert.match(result.out, /taken/);
+  });
+
+  test("US-QG-01 a second bind race fails the run; the start is retried only once", async () => {
+    const sb = sandbox();
+    const { done } = runWrapper(sb, probeCommand(sb), {
+      FAKE_IMAGE_PRESENT: "1",
+      FAKE_BIND_FAIL: "always",
+    });
+    const result = await done;
+    assert.equal(result.code, 1);
+    assert.equal(calls(sb).filter((c) => c.startsWith("run -d")).length, 2);
+    assert.match(result.out, /could not start/);
+    assert.equal(existsSync(sb.probe), false, "the tests did not start");
   });
 });
 

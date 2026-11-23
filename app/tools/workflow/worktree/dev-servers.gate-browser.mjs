@@ -21,9 +21,11 @@ import {
   gateState,
   hostMode,
   installedVersion,
+  isBindRace,
   pinnedImage,
   readyTimeoutS,
   removeContainer,
+  removeName,
   removeStale,
   waitListening,
 } from "./dev-servers.gate-browser.container.mjs";
@@ -66,6 +68,7 @@ function onSignal(state, signal) {
   stopChild(state);
 }
 
+// One start of the container on a port: `{ started }`, or the docker message and whether it was the loopback bind race.
 function startContainer(docker, state, image, port) {
   const run = spawnSync(
     docker,
@@ -78,11 +81,12 @@ function startContainer(docker, state, image, port) {
     }),
     { encoding: "utf8" },
   );
-  if (run.status !== 0)
-    throw new Error(
-      `the gate browser could not start: ${(run.stderr || run.error?.message || "no output").trim()}`,
-    );
-  state.started = true;
+  if (run.status === 0) {
+    state.started = true;
+    return { started: true };
+  }
+  const message = (run.stderr || run.error?.message || "no output").trim();
+  return { started: false, bindRace: isBindRace(message), message };
 }
 
 async function runInContainer(command, docker, env) {
@@ -96,10 +100,22 @@ async function runInContainer(command, docker, env) {
   process.on("exit", onExit);
   try {
     ensureImage(docker, image);
-    removeStale(docker);
-    const port = await findFreePort();
-    const began = Date.now();
-    startContainer(docker, state, image, port);
+    removeStale(docker, appRoot);
+    let port = await findFreePort();
+    let began = Date.now();
+    let start = startContainer(docker, state, image, port);
+    if (!start.started && start.bindRace) {
+      // The port was free when it was read and taken before docker published it: one retry on a new port (review of 3f030cae).
+      // The failed start leaves its name reserved, so the name is freed first.
+      console.error(
+        `gate browser: port ${port} was taken before the container published it, starting again on a new port`,
+      );
+      removeName(docker, state.name);
+      port = await findFreePort();
+      began = Date.now();
+      start = startContainer(docker, state, image, port);
+    }
+    if (!start.started) throw new Error(`the gate browser could not start: ${start.message}`);
     await waitListening(docker, state, began + readyTimeoutS(env) * 1000);
     const ws = gateBrowserWsEndpoint(port);
     const seconds = ((Date.now() - began) / 1000).toFixed(1);
