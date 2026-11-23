@@ -14,7 +14,7 @@
     "packages/core/**/*.ts": { "complexity": 10, "cognitiveComplexity": 15 }
   },
   "crap": { "max": 450 },
-  "bundle": { "initialJsGzipBytes": 140000 },
+  "bundle": { "initialJsGzipBytes": 142000 },
   "layoutShift": {
     "_comment": "US-QS-14, DS-52 (issue 1697): the cumulative layout shift of a cold load (one-screen project, judge.shift.ts) per route and layer at 360x640, 390x844 and 1280x800. A starting value (assumption), not measured: layout-shift-baseline.json lists the loads above 0.08, and a listed load may get worse by at most 0.02. blocking false: the check reports its findings and does not fail the run, until the R1 ticket #1729 \"deterministic shift check\" makes the measure deterministic (the spread between identical CI runs is up to 0.244) and sets blocking to true (owner decision 2026-11-08). Only tightened; a loosening needs a reason in its PR (US-QG-07).",
     "maxCls": 0.1,

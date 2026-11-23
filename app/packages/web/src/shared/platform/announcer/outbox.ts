@@ -1,5 +1,6 @@
 import { errorText } from "@/shared/lib/error-text";
 import { call, type BufferedRequest, type Response } from "@/shared/data/api";
+import { accountRefusal, signedInSub } from "@/shared/data/write-action/tab-account/tab-account";
 import type { Api } from "./context";
 
 /**
@@ -18,33 +19,6 @@ export type Write = {
  * (US-QS-07).
  */
 type Entry = Write & { done: (reply: Response<unknown>) => void; account: string | undefined };
-
-/** The sign-in library keeps the signed-in user under `oidc.user:<authority>:<client id>` (account/api/sign-in-client.ts). */
-const USER_KEY_PREFIX = "oidc.user:";
-
-/** The `sub` of one kept user; a user that cannot be read has none. */
-const subOf = (key: string): unknown =>
-  (JSON.parse(window.localStorage.getItem(key) ?? "null") as { profile?: { sub?: unknown } } | null)
-    ?.profile?.sub;
-
-/**
- * The account (`sub`) the device is signed in as, read from the storage of the sign-in library (US-QS-07, P-04). Every kept
- * user must name the same account: two different accounts, an unreadable user or unreadable storage count as none, so a
- * write is never sent under a guess.
- */
-function signedInSub(): string | undefined {
-  try {
-    const subs = new Set<unknown>(
-      Object.keys(window.localStorage)
-        .filter((key) => key.startsWith(USER_KEY_PREFIX))
-        .map(subOf),
-    );
-    const [sub] = subs;
-    return subs.size === 1 && typeof sub === "string" ? sub : undefined;
-  } catch {
-    return undefined;
-  }
-}
 
 const entries: Entry[] = [];
 let announce: Api["announce"] | null = null;
@@ -71,6 +45,12 @@ export function bufferWrite(to: Api["announce"], write: Write): Promise<Response
   if (!listening) {
     listening = true;
     window.addEventListener("online", () => void deliverBuffered());
+  }
+  // A write of a tab that loaded another account is refused and not buffered (US-QS-07, P-04); the keeper is told (P-10).
+  const refused = accountRefusal();
+  if (refused) {
+    say(`Nicht gesendet: ${errorText(refused.code)}`, false);
+    return Promise.resolve({ ok: false, error: refused });
   }
   return new Promise<Response<unknown>>((done) => {
     // The account is read now, when the write is made, not when it is delivered (US-QS-07).

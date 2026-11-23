@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { UserManager } from "oidc-client-ts";
-import { setProfileTimeZone } from "../../shared/data";
+import type { User, UserManager } from "oidc-client-ts";
+import { setProfileTimeZone, tabAccount } from "../../shared/data";
 import { apiUrl, getAccount, type Account } from "../api/account-api";
 import { here, hereState, newManager, processReturn } from "../api/sign-in-client";
 import { failureOf } from "./session-failure";
@@ -46,6 +46,14 @@ async function silentAttempt(mgr: UserManager): Promise<State> {
   }
 }
 
+/**
+ * The account this tab loaded is the `sub` of its sign-in. A sign-in without one records `null`: the tab then refuses its
+ * writes rather than send them unchecked (US-QS-07, P-04).
+ */
+const recordAccountOf = (user: User) => {
+  tabAccount.sub = user.profile?.sub ?? null;
+};
+
 async function loadState(mgr: UserManager, retrying: boolean): Promise<State> {
   try {
     // Read and cleared at once: Strict Mode runs the load twice, and only the first run acts on the intent.
@@ -74,6 +82,8 @@ async function loadState(mgr: UserManager, retrying: boolean): Promise<State> {
     }
     // The sign-in service handed out a token, so its session lives and this tab knows of it (US-QS-32).
     window.sessionStorage.setItem(LIVE, "1");
+    // The account this tab loaded: its writes go out only under it, whatever the shared sign-in storage says later (US-QS-07, P-04).
+    recordAccountOf(user);
     const account = await getAccount(apiUrl(env), user.access_token);
     // Phases, due dates and "today" are computed in the time zone of the profile (NFR-08, US-ACC-02).
     setProfileTimeZone(account.timeZone ?? null);

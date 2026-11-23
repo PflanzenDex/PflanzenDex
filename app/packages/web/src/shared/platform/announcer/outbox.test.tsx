@@ -10,6 +10,7 @@ import {
   type WriteOptions,
   type WriteSend,
 } from "@/shared/data";
+import { tabAccount } from "@/shared/data/api";
 import { AnnouncerProvider } from "./announcer";
 import { deliverBuffered } from "./outbox";
 
@@ -695,5 +696,54 @@ describe("US-QS-07 · a buffered write is sent only under the account it was mad
     act(() => void window.dispatchEvent(new Event("online")));
     await waitFor(() => expect(heard()).toBe(refusedNote));
     expect(fetchFn).not.toHaveBeenCalled();
+  });
+});
+
+describe("US-QS-07 · a tab that loaded another account buffers and sends nothing of it (P-04)", () => {
+  // The tab loaded account A (session), so its writes are checked against A; the device is signed in as A unless a test says so.
+  beforeEach(() => {
+    tabAccount.sub = "A";
+  });
+  afterEach(() => {
+    tabAccount.sub = undefined;
+  });
+
+  it("US-QS-07 offline, the device signed in as B and the tab loaded A: the buffer refuses the write and says so; nothing is buffered or sent", async () => {
+    online(false);
+    signInAs("B");
+    const fetchFn = serverWith(ok());
+    shell(measure(9), vi.fn(), sessionToken);
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
+    // The buffer refuses the write and says why (P-10): the note names the refusal; it is neither "offline" nor buffered.
+    await waitFor(() =>
+      expect(heard()).toBe(
+        "Nicht gesendet: In einem anderen Tab ist jetzt ein anderes Konto angemeldet. Lade die Seite neu.",
+      ),
+    );
+    online(true);
+    act(() => void window.dispatchEvent(new Event("online")));
+    await deliverBuffered();
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-07 online, the device signed in as B and the tab loaded A: nothing is sent and the refusal is returned to the page", async () => {
+    online(true);
+    signInAs("B");
+    const fetchFn = serverWith(ok());
+    const { result } = renderHook(() => useWriteAction(sessionToken, () => undefined));
+    await act(async () => result.current.run(measure(9), "Gesichert.", page));
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(result.current.error?.code).toBe("access.account_in_other_tab");
+  });
+
+  it("US-QS-07 the device still signed in as A, the tab loaded A: a write is sent with A's token", async () => {
+    online(true);
+    const fetchFn = serverWith(ok());
+    const { result } = renderHook(() => useWriteAction(sessionToken, () => undefined));
+    await act(async () => result.current.run(measure(9), "Gesichert.", page));
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(result.current.error).toBeNull();
+    const init = fetchFn.mock.calls[0]?.[1];
+    expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer token-of-A");
   });
 });
