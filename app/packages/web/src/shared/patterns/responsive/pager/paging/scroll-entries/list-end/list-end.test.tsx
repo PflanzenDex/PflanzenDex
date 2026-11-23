@@ -171,11 +171,27 @@ describe("US-QS-15 · SG-LIST-01 the end marker 'Das waren alle n'", () => {
     expect(marker()).toBeNull();
   });
 
-  it("US-QS-15 · SG-LIST-01 a list that fills no box shows a count only without paging when it is longer than the box", async () => {
+  it("US-QS-15 · SG-LIST-01 a list without paging renders no row of its own and measures nothing, so the screen stays as it was", async () => {
     setViewportWidth(360);
     stubLayout();
+    const measured = vi.fn();
+    const Observer = globalThis.ResizeObserver;
+    vi.stubGlobal(
+      "ResizeObserver",
+      class extends Observer {
+        constructor(callback: ResizeObserverCallback) {
+          super(callback);
+          measured();
+        }
+      },
+    );
     render(list(plants.slice(0, 12)));
-    await screen.findByText("Das waren alle 12");
+    await settle();
+    const rows = screen.getByRole("list", { name: "Pflanzen" }).children;
+    expect(rows).toHaveLength(12);
+    expect(document.querySelector("[data-list-end]")).toBeNull();
+    expect(marker()).toBeNull();
+    expect(measured).not.toHaveBeenCalled();
   });
 
   it("US-QS-15 · SG-LIST-01 without a ResizeObserver nothing is measured, so no marker shows", async () => {

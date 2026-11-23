@@ -81,9 +81,9 @@ function useWanted(list: React.RefObject<HTMLUListElement | null>, reach: Reach)
  * "Weiter" and no "Mehr laden". With server paging the next part is asked for once the end of the list comes near, so the
  * list loads more as the keeper scrolls; without an IntersectionObserver every part is asked for at once. At its end a quiet
  * loader row shows while a part is on its way, a retry row when it failed (P-10), and "Das waren alle n" once every entry
- * is there, the count is known and the list is longer than its box (`ListEnd`). The address holds no position: an old
- * `?from=n` is stripped once (`useStripOldPositions`). A list that fills its frame (`fit`) takes the room the frame
- * leaves and scrolls in its own box, so it is a tab stop for the keyboard (WCAG 2.1.1, axe scrollable-region-focusable).
+ * is there, the total is known and the list is longer than its box (`ListEnd`, only with `paging`: a list without it
+ * renders no row of its own). The address holds no position: an old `?from=n` is stripped once (`useStripOldPositions`).
+ * A list that fills its frame (`fit`) takes the room the frame leaves and scrolls in its own box, so it is a tab stop for the keyboard (WCAG 2.1.1, axe scrollable-region-focusable).
  * It never gets shorter than one row and a bit (`min-h-24`, in rem, so it follows the text size): where the frame has no
  * room left (200 % text), the frame scrolls instead and the list does not collapse to nothing. Its rows never shrink
  * below their content: a group clips its rows (`overflow-hidden`), which would let a flex column squeeze them to nothing.
@@ -107,10 +107,11 @@ export function ScrollEntries<T>({
   const wanted = useWanted(list, { paged, loaded, count, pageSize, fit, resetKey });
   const missing = usePagingMore(paging, loaded, wanted, count);
   const note = useRetryFocus(paging, missing, list);
-  const longer = useScrollOverflow(list, fit, loaded);
-  // The count is known without paging (the list holds every entry) and with a total; the marker waits for every entry.
-  const known = paging === undefined || paging.total !== undefined;
-  const marker = known && longer && loaded > 0 && loaded === count ? count : undefined;
+  const longer = useScrollOverflow(list, fit, loaded, paged);
+  // Only a server list ends with rows (SG-LIST-01): a list without `paging` renders no row of its own and measures
+  // nothing, so a screen that scrolls without paging stays as it was. The marker needs the total and every entry.
+  const marker =
+    paging?.total !== undefined && longer && loaded > 0 && loaded === count ? count : undefined;
 
   const holes = placeholderCount(paging, missing, Math.min(wanted, count) - loaded);
 
@@ -133,7 +134,7 @@ export function ScrollEntries<T>({
           </li>
         ))}
         <EntryPlaceholders count={holes} from={loaded} paging={paging} />
-        <ListEnd paging={note} missing={missing} marker={marker} />
+        {note ? <ListEnd paging={note} missing={missing} marker={marker} /> : null}
       </ul>
     </div>
   );

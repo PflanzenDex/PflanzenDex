@@ -84,12 +84,12 @@ export function ListEnd({
   missing,
   marker,
 }: {
-  paging: PagerPaging | undefined;
+  paging: PagerPaging;
   missing: boolean;
   marker: number | undefined;
 }) {
-  const loading = useHeldLoader(missing && paging?.failure === undefined);
-  if (loading) return <LoaderRow quiet={paging?.placeholder !== undefined} />;
-  if (missing && paging) return <RetryRow paging={paging} />;
+  const loading = useHeldLoader(missing && paging.failure === undefined);
+  if (loading) return <LoaderRow quiet={paging.placeholder !== undefined} />;
+  if (missing) return <RetryRow paging={paging} />;
   return marker === undefined ? null : <EndMarker count={marker} />;
 }
