@@ -10,14 +10,15 @@ import { resetDemoFriends, restoreAchievementNews } from "./access/reset-demo.ts
 import { seedAll } from "./accounts/seed-all.ts";
 import { SEED_SPECIES } from "../catalog-seed/species-list.ts";
 import { seedCatalog } from "../catalog-seed/seed-catalog.ts";
-import { seedTaxonFixture } from "../catalog-seed/taxon-fixture.ts";
+import { replaceTaxonWithFixture, seedTaxonFixture } from "../catalog-seed/taxon-fixture.ts";
 import { PROFILES, seedStates, type Profile } from "./states/profile.ts";
 import { seedGateAccount } from "./accounts/common/gate-account.ts";
 
 // Usage: PFLANZENDEX_ENV=local npm run seed:demo -w @pflanzendex/api
 // Fills the dev accounts test, test2 and test3 (#924). Local or test setups only; idempotent. See app.md "Demo seed".
 // `DEMO_SEED_PROFILE=states` adds the feature states of states/states-map.md after the base seed (US-DEV-01, #1072): worktree or test
-// databases only, never the shared dev database.
+// databases only, never the shared dev database. `DEMO_TAXON_FIXTURE=reset` replaces the Pokédex tree by the fixture CI uses
+// (issue 2488); unset, a tree that is already there is kept.
 const databaseUrl = process.env["DATABASE_URL"] ?? testDatabaseUrl();
 try {
   assertSeedAllowed(process.env, databaseUrl);
@@ -32,6 +33,14 @@ const profile = (process.env["DEMO_SEED_PROFILE"] ?? "base") as Profile;
 if (!PROFILES.includes(profile)) {
   console.error(
     `Demo seed refused: unknown DEMO_SEED_PROFILE '${profile}'. Allowed: ${PROFILES.join(", ")}.`,
+  );
+  process.exit(1);
+}
+// An unknown value would keep a tree the owner meant to reset, so it refuses like an unknown profile (issue 2488).
+const taxonFixture = process.env["DEMO_TAXON_FIXTURE"] ?? "";
+if (taxonFixture !== "" && taxonFixture !== "reset") {
+  console.error(
+    `Demo seed refused: unknown DEMO_TAXON_FIXTURE '${taxonFixture}'. Allowed: reset (or unset).`,
   );
   process.exit(1);
 }
@@ -60,7 +69,10 @@ try {
   if (profile === "states") {
     await seedStates(pool, { subjects, log: console.log });
     // The Pokédex tree without foreign servers, so the card layers show content with TAXONOMY_BUILD=off (issue 1164).
-    console.log(`Pokédex tree fixture: ${await seedTaxonFixture(pool)}`);
+    // `reset` replaces any other tree, so a local one-screen run measures the tree CI measures (issue 2488).
+    const reset = taxonFixture === "reset";
+    const outcome = reset ? await replaceTaxonWithFixture(pool) : await seedTaxonFixture(pool);
+    console.log(`Pokédex tree fixture${reset ? " (reset)" : ""}: ${outcome}`);
     // The display gates' account with more than 100 plants (issue 1378); its own account, the three above stay as they are.
     await seedGateAccount(pool, { log: console.log });
     await restoreAchievementNews(pool, subjects);
