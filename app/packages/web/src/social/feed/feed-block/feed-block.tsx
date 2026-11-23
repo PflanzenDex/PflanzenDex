@@ -7,7 +7,7 @@ import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
 import { keepTogether } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { LoadFrame } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadFeed, type FeedFilter } from "../../api/feed-api";
 import { dateText } from "../../parts/invite-card/invite-card";
 import { nameOf } from "../../parts/request-list/request-list";

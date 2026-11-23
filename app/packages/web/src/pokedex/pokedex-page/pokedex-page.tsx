@@ -9,7 +9,8 @@ import { CollectorCards } from "../pokedex-cards/collector-cards/collector-cards
 import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { plurals, texts } from "@/shared/lib/text-rules/texts";
-import { LoadFrame, SCREEN_STALE_TIME } from "../../shared/data";
+import { SCREEN_STALE_TIME } from "../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { Browse } from "../pokedex-browse/pokedex-browse";
 import { loadOwnership } from "../caught/ownership-api";
 import { MilestonesSkeleton, PokedexPageSkeleton, ProgressSkeleton } from "./pokedex-page.skeleton";

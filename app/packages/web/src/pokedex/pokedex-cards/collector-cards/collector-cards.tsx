@@ -1,6 +1,7 @@
 import type { CollectorCard as Card } from "@pflanzendex/core";
 import { useCallback } from "react";
-import { call, currentTimeZone, LoadFrame, type Response } from "@/shared/data";
+import { call, currentTimeZone, type Response } from "@/shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { CollectorCard } from "../collector-card/collector-card";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { texts } from "@/shared/lib/text-rules/texts";

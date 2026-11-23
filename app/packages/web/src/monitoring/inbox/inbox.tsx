@@ -9,7 +9,7 @@ import {
   PHASES_ADDRESS,
   todayAddress,
 } from "@/shared/patterns/navigation/navigation/navigation";
-import { LoadFrame } from "../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadInbox } from "../api/reminders-api";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../monitoring.de.json";

@@ -7,7 +7,8 @@ import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { placeHeld, useUndo } from "@/shared/feedback/undo-row/use-undo";
-import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { entityKey, useInvalidate, useWriteAction } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { LIST_CLASSES, RefusalAlert } from "../../shared/notices";
 import { PAGE_SIZE, Row } from "./treatment-row/treatment-row";
 import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
@@ -18,7 +19,6 @@ import {
 } from "../../shared/api/treatments-api";
 import { OPEN_KEY, TREATMENTS } from "../../shared/api/query-keys";
 import table from "./open-treatments.de.json";
-
 // `t` names the token in the callbacks of this file, so the texts are `ui`.
 const ui = texts(table);
 type Token = () => Promise<string | undefined>;

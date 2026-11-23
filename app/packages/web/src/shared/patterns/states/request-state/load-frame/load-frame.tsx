@@ -6,8 +6,8 @@ import {
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import type { Response } from "../../api";
-import { useRequest } from "../request/use-request";
+import type { Response } from "@/shared/request/response";
+import { useRequest } from "@/shared/request/use-request";
 import type { QueryKey } from "@tanstack/react-query";
 
 /** The words of an empty place: its title, and an optional description and next step. */

@@ -1,7 +1,8 @@
 import { useCallback } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
+import { entityKey, useInvalidate, useWriteAction } from "../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { adoptDraft, discardDraft, loadDrafts, type AiDraftRow } from "../api/connections-api";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";

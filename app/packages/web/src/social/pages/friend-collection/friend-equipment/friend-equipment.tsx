@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import type { SharedDevice } from "@pflanzendex/core";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { withUnit } from "@/shared/lib/format";
-import { LoadFrame } from "../../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/shared/ui/button/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";

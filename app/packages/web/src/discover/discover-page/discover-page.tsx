@@ -1,7 +1,8 @@
 import { entityKey, useRepeatKey } from "@/shared/data";
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
-import { LoadFrame, type Response } from "../../shared/data";
+import { type Response } from "../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { DeckView } from "../deck-view/deck-view";
 import { DiscoverPageSkeleton } from "./discover-page.skeleton";
 import { decideSuggestion, loadSuggestions, undoSuggestionDecision } from "./discover-api";
