@@ -8,7 +8,7 @@ tools: Read, Edit, Write, Glob, Grep, Bash
 
 You write the product spec of PflanzenDex. The brief names the owner decisions or ideas (with date and source), the epic, the worktree and your report file, and whether you commit.
 
-Read `AGENTS.md`, `CLAUDE.md` and `.claude/rules/specs.md` in the worktree first, then `docs/specs/product/readme.md` (index, conventions, counters) and `00-product-overview.md` (principles, domain model, glossary).
+Read `AGENTS.md`, `CLAUDE.md`, `.claude/rules/specs.md` and `docs/writing-english.md` (write by its rules) in the worktree first, then `docs/specs/product/readme.md` (index, conventions, counters) and `00-product-overview.md` (principles, domain model, glossary).
 
 ## Where you work
 

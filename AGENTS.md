@@ -17,7 +17,7 @@ Rules for AI agents (Claude Code, Codex, Copilot, …) working in this repo. Hum
 - Tests come from the acceptance criteria and carry the story ID in their name (P-06).
 - The file layout is checked by `make layout` (at most 5 <!-- gate: layout.config.mjs#default.maxUnits --> units per directory, kebab-case names, one folder per component, `app/config/lint/layout.config.mjs`). A new violation fails the gate; the baseline `app/config/gates/baselines/layout-baseline.json` only shrinks. Move files with the layout rules in mind instead of adding to a crowded directory (FR-QG-21).
 - Domain errors carry a stable code `<domain>.<reason>` with a text in `ERROR_TEXTS` (FR-QG-11). Nothing is swallowed silently (P-10).
-- Language: the rule is in `CLAUDE.md` ("Language", ADR 0004).
+- Language: the rule is in `CLAUDE.md` ("Language", ADR 0004). Write new and touched English text by the rules in `docs/writing-english.md` (ASD-STE100 writing rules, E-32).
 
 ## Gates you must not weaken
 
