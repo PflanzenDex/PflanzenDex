@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { withRouter } from "@/shared/testing/story-frame/story-frame";
+import { pressEscape, waitUntil } from "@/shared/testing/story-frame/story-play";
 import { Button } from "@/shared/ui/button/button";
 import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
 
@@ -27,7 +28,27 @@ const render: Story["render"] = (args) => (
   </LayerHost>
 );
 
-export const Closed: Story = { render };
+const layerOf = (): Element | null => document.querySelector('[role="dialog"]');
+
+// Opening the layer moves the focus into it, and Escape closes it with the focus back on the opener (US-QS-15, DS-40,
+// P-B issue 2432). The play leaves the story closed, so the conformance probes start from the state a keeper starts from.
+export const Closed: Story = {
+  render,
+  play: async ({ canvasElement }) => {
+    const opener = canvasElement.querySelector<HTMLElement>('[aria-haspopup="dialog"]');
+    if (!opener) throw new Error("play: the opener of the layer is missing");
+    opener.click();
+    await waitUntil(() => layerOf() !== null, "the layer opens", 5000);
+    await waitUntil(
+      () => layerOf()?.contains(document.activeElement) === true,
+      "the focus moves into the layer",
+    );
+    pressEscape(document.activeElement ?? document.body);
+    await waitUntil(() => layerOf() === null, "the layer closes on Escape", 3000);
+    await waitUntil(() => document.activeElement === opener, "the focus returns to the opener");
+  },
+};
+
 // Open from the address, as after a reload or a copied link: there is no opener to return to.
 export const Open: Story = {
   render: (args) => (
