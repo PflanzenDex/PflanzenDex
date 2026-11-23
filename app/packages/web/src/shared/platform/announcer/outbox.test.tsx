@@ -11,8 +11,9 @@ import {
   type WriteSend,
 } from "@/shared/data";
 import { tabAccount } from "@/shared/data/api";
+import { drainOutbox } from "@/shared/testing/test-setup/drain-outbox";
 import { AnnouncerProvider } from "./announcer";
-import { deliverBuffered } from "./outbox";
+import { bufferWrite, deliverBuffered } from "./outbox";
 
 // The device is signed in as account A for every test; the account tests change it (US-QS-07).
 beforeEach(() => signInAs("A"));
@@ -20,10 +21,9 @@ beforeEach(() => signInAs("A"));
 afterEach(async () => {
   cleanup();
   vi.restoreAllMocks();
-  // The buffer is shared by the whole page: leave it empty for the next test.
-  await deliverBuffered();
-  window.localStorage.clear();
   vi.unstubAllGlobals();
+  // The buffer is shared by the whole page: leave it empty for the next test (signed out first, so nothing is sent).
+  await drainOutbox();
 });
 
 /** The sign-in library keeps the signed-in user under this key (oidc-client-ts, `sub` is the account; US-QS-07). */
@@ -745,5 +745,51 @@ describe("US-QS-07 · a tab that loaded another account buffers and sends nothin
     expect(result.current.error).toBeNull();
     const init = fetchFn.mock.calls[0]?.[1];
     expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer token-of-A");
+  });
+});
+
+describe("US-QS-10 · drainOutbox leaves the buffer empty for the next test (the buffer is shared by the file)", () => {
+  /** A buffered write as plain data (US-QS-03): the request, the token, what it says and what it does after delivery. */
+  const plain = (key: string) => ({
+    token: async () => "tok",
+    request: { method: "PUT" as const, url: `http://api/${key}`, body: {}, key },
+    success: `Gesendet: ${key}`,
+    after: vi.fn(),
+  });
+
+  it("US-QS-10 a write an earlier test left in the buffer is dropped by the drain: the next delivery sends nothing", async () => {
+    const fetchFn = serverWith();
+    const pending = bufferWrite(vi.fn(), plain("one"));
+    await drainOutbox();
+    expect((await pending).ok).toBe(false);
+    signInAs("A");
+    online(true);
+    await deliverBuffered();
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-10 a delivery still running at the drain: its answer comes within the drain, the writes behind it are refused, none is sent to the next test", async () => {
+    let answer: () => void = () => undefined;
+    const fetchFn = vi.fn<typeof fetch>(
+      () =>
+        new Promise<Response>((done) => {
+          answer = () => done(ok());
+        }),
+    );
+    vi.stubGlobal("fetch", fetchFn);
+    online(true);
+    const first = bufferWrite(vi.fn(), plain("one"));
+    const second = bufferWrite(vi.fn(), plain("two"));
+    act(() => void window.dispatchEvent(new Event("online")));
+    // "one" is on its way; its answer arrives on the next turn of the event loop, while the drain waits for it.
+    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
+    setTimeout(answer, 0);
+    await drainOutbox();
+    // The next test signs in again before anything else runs: "two" must not be sent under that account.
+    signInAs("A");
+    expect((await first).ok).toBe(true);
+    expect((await second).ok).toBe(false);
+    await deliverBuffered();
+    expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 });

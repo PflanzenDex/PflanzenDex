@@ -4,8 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { deliverBuffered } from "@/shared/platform/announcer/outbox";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import { drainOutbox } from "@/shared/testing/test-setup/drain-outbox";
 import { TreatmentsPage } from "./treatments-page";
 import { OpenTreatments } from "../open-treatments/open-treatments";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
@@ -49,8 +49,8 @@ afterEach(async () => {
   cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
-  await deliverBuffered();
-  window.localStorage.clear();
+  // The buffer is shared by the whole file: a write this test left in it is dropped, not sent by the next test (US-QS-10).
+  await drainOutbox();
 });
 
 describe("US-BEH-01 Seite Behandlung planen", () => {
