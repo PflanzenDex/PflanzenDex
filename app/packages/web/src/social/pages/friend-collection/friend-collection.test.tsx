@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { drainOutbox } from "@/shared/testing/test-setup/drain-outbox";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
 import type { SharedSpecimen } from "@pflanzendex/core";
@@ -68,10 +69,12 @@ function show(body: unknown, status = 200, devices: unknown = NO_DEVICES, path =
   return fetchFn;
 }
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
   vi.unstubAllGlobals();
   setViewportWidth(360);
+  // The offline ending leaves its write in the buffer; signed out, the buffer drops it and sends nothing (US-QS-10).
+  await drainOutbox();
 });
 
 describe("US-QS-32 F-0265 the line names only whitelisted fields, each by its word (QG-D2, P-05)", () => {

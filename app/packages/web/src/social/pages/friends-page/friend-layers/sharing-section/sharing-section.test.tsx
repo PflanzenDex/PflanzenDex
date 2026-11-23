@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import { drainOutbox } from "@/shared/testing/test-setup/drain-outbox";
 import type { FriendsData } from "../../../../api/friends-api";
 import { SharingSection } from "./sharing-section";
 
@@ -19,11 +20,22 @@ afterEach(async () => {
   cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
-  window.localStorage.clear();
+  // The buffer is shared by the whole file: a write this test left in it would be sent by the next test (US-QS-03).
+  await drainOutbox();
 });
 
 const online = (state: boolean) =>
   vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(state);
+/**
+ * Waits until the three species are buffered: the note names the last one, which is said after the first two (US-QS-10).
+ * The network comes back only then, because the buffer hears the `online` event once its first write is in it.
+ */
+const buffered = () =>
+  waitFor(() =>
+    expect(document.querySelector("[aria-live=polite]")?.textContent).toMatch(
+      /Freigegeben: „Farn“/,
+    ),
+  );
 
 /** Three species, one plant each; the sharing starts empty (US-SOZ-04). */
 const data = {
@@ -114,6 +126,7 @@ describe("US-SOZ-04 · US-QS-03 a bulk share of three species", () => {
     const { onWritten } = renderSection();
     await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    await buffered();
     expect(srv.fetchFn).not.toHaveBeenCalled();
     online(true);
     act(() => void window.dispatchEvent(new Event("online")));
@@ -134,6 +147,7 @@ describe("US-SOZ-04 · US-QS-03 a bulk share of three species", () => {
     renderSection();
     await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    await buffered();
     online(true);
     act(() => void window.dispatchEvent(new Event("online")));
     await waitFor(() =>
