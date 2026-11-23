@@ -32,8 +32,8 @@ export function CreateLayers(props: { data: LightData; actions: LightActions }) 
     <>
       <LayerSheet id={NEW_ZONE} title={t("lists.newZone")}>
         <ZoneForm
-          onSave={async (e) => {
-            const f = await actions.zoneCreate(e);
+          onSave={async (e, clearNote) => {
+            const f = await actions.zoneCreate(e, clearNote);
             if (!f) zone.closeLayer();
             return f;
           }}
@@ -43,8 +43,8 @@ export function CreateLayers(props: { data: LightData; actions: LightActions }) 
       <LayerSheet id={NEW_LOCATION} title={t("lists.newLocation")}>
         <LocationForm
           zones={data.zones}
-          onSave={async (e) => {
-            const f = await actions.locationCreate(e);
+          onSave={async (e, clearNote) => {
+            const f = await actions.locationCreate(e, clearNote);
             if (!f) location.closeLayer();
             return f;
           }}

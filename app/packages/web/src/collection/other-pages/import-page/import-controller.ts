@@ -2,7 +2,7 @@
 // the server's answer into the page's state. A failed request keeps what the page showed and offers a retry (P-10). The
 // server judges every row; the page never decides that a row is ready (P-01).
 import type { ConfirmResult, ImportPreview } from "@pflanzendex/core";
-import { SIGN_IN, createKey, runRepeat, type Response } from "@/shared/data";
+import { SIGN_IN, createKey, runRepeat, withConflictDismiss, type Response } from "@/shared/data";
 import { GENERIC_ERROR_TEXT, errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { Api } from "@/shared/platform/announcer/context";
@@ -24,8 +24,7 @@ const ui = texts(table);
 
 /**
  * The repeat-guard key of the confirmation (US-QS-03): a create, so the action names the operation only and the rows are the
- * body. The registry holds it after a lost answer (a retry repeats it) and frees it on an answer, on sign-out and on an
- * account change; the page keeps no key of its own.
+ * body. A lost answer or a key conflict keeps it until the note is dismissed (`withConflictDismiss`), an answer frees it.
  */
 const CONFIRM = createKey("specimen", "import");
 
@@ -163,7 +162,9 @@ async function confirmImport(ctx: Ctx): Promise<void> {
   const r: Response<ConfirmResult> = credential
     ? await runRepeat(CONFIRM, (key) => sendImport(ctx.api, credential, { rows, markers }, { key }))
     : { ok: false, error: SIGN_IN };
-  if (!r.ok) return ctx.patch({ busy: false, failure: r.error });
+  const noteGone = () => ctx.patch({ failure: null });
+  if (!r.ok)
+    return ctx.patch({ busy: false, failure: withConflictDismiss(r.error, CONFIRM, noteGone) });
   ctx.announce?.announce(
     ui("announceResult", {
       created: r.value.created.length,
