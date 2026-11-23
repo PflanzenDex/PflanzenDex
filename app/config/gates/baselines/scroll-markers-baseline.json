@@ -1,0 +1,29 @@
+{
+  "maxTotal": 8,
+  "entries": [
+    {
+      "file": "packages/web/src/account/operator/operator-parts/new-code/new-code.tsx",
+      "count": 1
+    },
+    {
+      "file": "packages/web/src/account/views/auth-frame/auth-frame.tsx",
+      "count": 1
+    },
+    {
+      "file": "packages/web/src/app/frame/side-nav/side-nav.tsx",
+      "count": 2
+    },
+    {
+      "file": "packages/web/src/care/measure/measure-page/growth-note-layer/growth-note-layer.tsx",
+      "count": 1
+    },
+    {
+      "file": "packages/web/src/catalog/profile-view/profile-view.tsx",
+      "count": 2
+    },
+    {
+      "file": "packages/web/src/discover/suggestion-card/suggestion-card.tsx",
+      "count": 1
+    }
+  ]
+}

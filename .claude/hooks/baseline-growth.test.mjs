@@ -77,6 +77,9 @@ const CON_C = { file: "app/packages/web/src/c.ts", enums: 1 };
 const UI_A = { file: "app/packages/web/src/a.tsx", count: 6 };
 const UI_B = { file: "app/packages/web/src/b.tsx", count: 4 };
 const UI_C = { file: "app/packages/web/src/c.tsx", count: 1 };
+// FR-QG-17, issue 2430: the scroll region lines outside the shared components.
+const SM_A = { file: "app/packages/web/src/a.tsx", count: 2 };
+const SM_B = { file: "app/packages/web/src/b.tsx", count: 1 };
 // US-QG-06: the quarantine list, one entry per quarantined job of ci.yml.
 const Q_A = {
   job: "lighthouse",
@@ -307,6 +310,22 @@ const CASES = {
       "a lowered maxTotal": { maxTotal: 9, entries: [UI_A, UI_B] },
     },
   },
+  "scroll-markers-baseline.json": {
+    base: { maxTotal: 3, entries: [SM_A, SM_B] },
+    grow: {
+      "a new entry": {
+        maxTotal: 4,
+        entries: [SM_A, SM_B, { file: "app/packages/web/src/c.tsx", count: 1 }],
+      },
+      "a higher count": { maxTotal: 4, entries: [{ ...SM_A, count: 3 }, SM_B] },
+      "a raised maxTotal": { maxTotal: 4, entries: [SM_A, SM_B] },
+    },
+    shrink: {
+      "a removed entry": { maxTotal: 2, entries: [SM_A] },
+      "a lower count": { maxTotal: 2, entries: [{ ...SM_A, count: 1 }, SM_B] },
+      "a lowered maxTotal": { maxTotal: 2, entries: [SM_A, SM_B] },
+    },
+  },
   "reference-baseline.json": {
     base: {
       routes: ["DELETE /a", "GET /a"],
@@ -376,9 +395,9 @@ const CASES = {
   },
 };
 
-test("US-QG-07: the eleven baseline files each have a growth format, and the formats name exactly those files", () => {
+test("US-QG-07: the twelve baseline files each have a growth format, and the formats name exactly those files", () => {
   assert.deepEqual(Object.keys(BASELINE_FORMATS).sort(), Object.keys(CASES).sort());
-  assert.equal(Object.keys(BASELINE_FORMATS).length, 11);
+  assert.equal(Object.keys(BASELINE_FORMATS).length, 12);
 });
 
 test("US-QG-06: the quarantine list grows on a new entry or a raised maxEntries, and shrinks when an entry is removed", () => {

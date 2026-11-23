@@ -110,6 +110,18 @@ function SheetDescription(props: { text: string | undefined }) {
   );
 }
 
+/** The scrolling body of the sheet: it scrolls, the title above it stays (DS-61). */
+function SheetBody({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      data-scroll-region=""
+      className="overflow-y-auto overscroll-contain p-4 has-[[data-page-fit]]:flex has-[[data-page-fit]]:min-h-0 has-[[data-page-fit]]:flex-1 has-[[data-page-fit]]:flex-col"
+    >
+      <LayerScope.Provider value>{children}</LayerScope.Provider>
+    </div>
+  );
+}
+
 /**
  * The Vaul part of the bottom sheet (US-QS-07, DS-23, DS-40, DS-08): drag handle, safe-area padding, max height 90dvh.
  * `autoFocus` is required: Vaul 1.1 cancels Radix's focus-on-open by default, which left the focus on the trigger
@@ -170,9 +182,7 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
               compact={cramped}
             />
             <SheetDescription text={description} />
-            <div className="overflow-y-auto p-4 has-[[data-page-fit]]:flex has-[[data-page-fit]]:min-h-0 has-[[data-page-fit]]:flex-1 has-[[data-page-fit]]:flex-col">
-              <LayerScope.Provider value>{children}</LayerScope.Provider>
-            </div>
+            <SheetBody>{children}</SheetBody>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>

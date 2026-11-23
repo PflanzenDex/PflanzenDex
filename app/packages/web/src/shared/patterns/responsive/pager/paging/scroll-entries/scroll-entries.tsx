@@ -108,12 +108,12 @@ export function ScrollEntries<T>({
     <div data-pager="" className={cn("flex flex-col gap-3", fit && "min-h-24 flex-1")}>
       <ul
         ref={list}
-        {...(fit ? { "data-page-fit": "", tabIndex: 0 } : {})}
+        {...(fit ? { "data-page-fit": "", "data-scroll-region": "", tabIndex: 0 } : {})}
         aria-label={label}
         {...busyWhile(holes)}
         className={cn(
           "flex flex-col gap-2",
-          fit && "min-h-24 flex-1 content-start overflow-y-auto [&>li]:shrink-0",
+          fit && "min-h-24 flex-1 content-start overflow-y-auto overscroll-contain [&>li]:shrink-0",
           listClassName,
         )}
       >
