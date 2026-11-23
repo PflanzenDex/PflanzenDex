@@ -9,6 +9,7 @@ import { createSharpProcessor } from "../../src/media/index.ts";
 import { seedCatalog } from "../catalog-seed/seed-catalog.ts";
 import { SEED_SPECIES } from "../catalog-seed/species-list.ts";
 import { Caller } from "./access/caller.ts";
+import { resetDemoFriends } from "./access/reset-demo.ts";
 import { parseSubjects } from "./access/subjects.ts";
 import { seedAll } from "./accounts/seed-all.ts";
 import { speciesByLatin } from "./accounts/common/shared.ts";
@@ -52,6 +53,8 @@ const counts = async (): Promise<Record<string, number>> => {
 };
 const accountId = async (sub: string): Promise<string> =>
   (await pool.query("select id from account where subject = $1", [sub])).rows[0].id;
+const count = async (sql: string, args: unknown[] = []): Promise<number> =>
+  Number((await pool.query(sql, args)).rows[0].n);
 const own = (sub: string, table: string) =>
   accountId(sub).then((id) =>
     withAccount(pool, id, async (c) =>
@@ -168,6 +171,76 @@ describe("US-DEV-01 demo seed fills test, test2 and test3 (#924)", () => {
     await run();
     expect(await counts()).toEqual(first);
   }, 180_000);
+
+  it("US-DEV-01 a run after a check that accepted Ben's request makes it open again; the other confirmed friends and the foreign rows stay", async () => {
+    const api = new Caller(pool, new Map());
+    type Request = { id: string; otherName: string; status: string };
+    const requests = async (sub: string) =>
+      (await api.ok(sub, "GET", "/friends/requests")) as Record<string, Request[] | undefined>;
+    const named = (list: Request[] | undefined, name: string) =>
+      (list ?? []).find((r) => r.otherName === name);
+    // The friendship rows of account `sub` with the account `other` (the subjects), with their ids and `since`.
+    const pairRows = async (sub: string, other: string) =>
+      (
+        await pool.query(
+          "select f.id, f.status, f.since from friendship f join account a on a.id = f.account_id join account o on o.id = f.other_id where a.subject = $1 and o.subject = $2 order by f.id",
+          [sub, other],
+        )
+      ).rows;
+    // A device check answers Ben's request: Anna accepts it. The pair is confirmed then, and `befriend` skips a confirmed pair.
+    const asked = named((await requests(SUBJECTS.test))["incoming"], "Ben");
+    expect(asked?.status).toBe("requested");
+    await api.ok(SUBJECTS.test, "POST", `/friends/requests/${asked?.id}/answer`, {
+      decision: "accept",
+    });
+    expect((await pairRows(SUBJECTS.test, SUBJECTS.test2)).map((r) => r["status"])).toEqual([
+      "confirmed",
+    ]);
+    // A foreign account, not one of the three demo accounts: a confirmed friendship with Anna and a friend code.
+    const FOREIGN = `foreign-${DB}`;
+    const foreignId = randomUUID();
+    await pool.query("insert into account (id, subject) values ($1, $2)", [foreignId, FOREIGN]);
+    await pool.query(
+      `insert into friendship (account_id, other_id, other_name, direction, status, since)
+       select a.id, f.id, 'Fremd', 'sent', 'confirmed', now() from account a, account f where a.subject = $1 and f.subject = $2
+       union all
+       select f.id, a.id, 'Anna', 'received', 'confirmed', now() from account a, account f where a.subject = $1 and f.subject = $2`,
+      [SUBJECTS.test, FOREIGN],
+    );
+    await pool.query(
+      "insert into friend_code (code_hash, created_by, expires_at) values (sha256(convert_to('foreign-code', 'UTF8')), $1, now() + interval '7 days')",
+      [foreignId],
+    );
+    const annaClara = await pairRows(SUBJECTS.test, SUBJECTS.test3);
+    const foreignFriendship = await pairRows(SUBJECTS.test, FOREIGN);
+    const foreignCodes = await count(
+      "select count(*) n from friend_code where created_by = (select id from account where subject = $1)",
+      [FOREIGN],
+    );
+
+    await resetDemoFriends(pool, SUBJECTS);
+    await run();
+
+    // Ben's request is open again: Ben sent it and Anna has not answered it (one row per side).
+    expect(named((await requests(SUBJECTS.test))["incoming"], "Ben")?.status).toBe("requested");
+    expect(named((await requests(SUBJECTS.test2))["outgoing"], "Anna")?.status).toBe("requested");
+    expect((await pairRows(SUBJECTS.test, SUBJECTS.test2)).map((r) => r["status"])).toEqual([
+      "requested",
+    ]);
+    expect((await pairRows(SUBJECTS.test2, SUBJECTS.test)).map((r) => r["status"])).toEqual([
+      "requested",
+    ]);
+    // Anna and Clara stay confirmed, with the same rows and the same start (the feed counts from it, US-SOZ-06).
+    expect(await pairRows(SUBJECTS.test, SUBJECTS.test3)).toEqual(annaClara);
+    // The foreign account's rows are not touched.
+    expect(await pairRows(SUBJECTS.test, FOREIGN)).toEqual(foreignFriendship);
+    expect(
+      await count(
+        "select count(*) n from friend_code where created_by = (select id from account where subject = $1)",
+        [FOREIGN],
+      ),
+    ).toBe(foreignCodes);
+  }, 300_000);
 
   it("US-DEV-01 the tenants stay apart after the seed (P-04)", async () => {
     // Each account sees only its own rows through row security, and a foreign specimen looks like an unknown one.
