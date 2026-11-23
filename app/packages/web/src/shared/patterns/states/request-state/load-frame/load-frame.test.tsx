@@ -6,8 +6,9 @@ import { useState, type ReactNode } from "react";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { LoadFrame, useClearOnSignOut, useWriteAction, useInvalidate, type Response } from "../..";
+import { useClearOnSignOut, useWriteAction, useInvalidate, type Response } from "@/shared/data";
 import { SLOW_LOAD_MS } from "@/shared/ui/display/skeleton/loading-contract";
+import { LoadFrame } from "./load-frame";
 
 const token = async () => "tok";
 /** A load that answers after the delay of DS-57 (issue 1726): its skeleton shows before the rows. */

@@ -1,5 +1,5 @@
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
-import type { ApiError, Response } from "../../api";
+import type { ApiError, Response } from "./response";
 import { RequestFailure } from "./query-client";
 
 /**

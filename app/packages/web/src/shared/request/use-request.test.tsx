@@ -3,7 +3,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { RequestFailure } from "./query-client";
-import { SIGN_IN } from "../../write-action/use-write-action";
+import { SIGN_IN } from "./response";
 import { requestQueryFn, useInvalidate, useRequest } from "./use-request";
 
 const KEY = ["NFR-12", "US-ONB-01", "1795", "refetch"];

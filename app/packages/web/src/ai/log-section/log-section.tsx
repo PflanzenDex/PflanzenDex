@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { LoadFrame } from "../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadLog, type AiLogEntry } from "../api/connections-api";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";

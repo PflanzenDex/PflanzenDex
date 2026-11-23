@@ -10,7 +10,6 @@ import {
 import {
   appendKey,
   entityKey,
-  LoadFrame,
   SIGN_IN,
   currentTimeZone,
   useFeature,
@@ -22,6 +21,7 @@ import {
   withConflictDismiss,
   type WriteOptions,
 } from "@/shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { Button } from "@/shared/ui/button/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";

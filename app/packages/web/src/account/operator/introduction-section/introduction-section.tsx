@@ -1,7 +1,7 @@
 import type { IntroductionFigure, IntroductionFigures } from "@pflanzendex/core";
 import { useCallback, type ReactNode } from "react";
 import { Check, X } from "lucide-react";
-import { LoadFrame } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadIntroduction } from "../../api/access-api";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";

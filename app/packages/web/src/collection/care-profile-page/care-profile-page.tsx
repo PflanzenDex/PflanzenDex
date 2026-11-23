@@ -5,13 +5,8 @@ import type {
   LightLocation,
   LightZone,
 } from "@pflanzendex/core";
-import {
-  entityKey,
-  LoadFrame,
-  useInvalidate,
-  useQueryClient,
-  useWriteAction,
-} from "../../shared/data";
+import { entityKey, useInvalidate, useQueryClient, useWriteAction } from "../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { sharedLocations, sharedZones } from "../../light";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { loadCareProfiles, saveCareProfile } from "../care-profile/care-profile-api";

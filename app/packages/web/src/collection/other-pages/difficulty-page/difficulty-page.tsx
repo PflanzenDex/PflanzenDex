@@ -19,7 +19,7 @@ import { Button } from "@/shared/ui/button/button";
 import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { SpeciesName, germanNameOf } from "@/shared/species-name/species-name";
 import { LightNeedAction } from "@/light";
-import { LoadFrame } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadDifficulty } from "../../insights/api/difficulty-api";
 import { DifficultyPageSkeleton } from "./difficulty-page.skeleton";
 import { PageFrame, Plain, Quiet } from "../../specimens/cards/parts/parts";

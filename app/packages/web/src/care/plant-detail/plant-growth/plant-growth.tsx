@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { LoadFrame } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
 import { GrowthFrame, GrowthLines } from "./growth-frame/growth-frame";

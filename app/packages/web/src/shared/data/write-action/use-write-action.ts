@@ -13,13 +13,12 @@ import {
 import { todayLocal } from "../time-zone";
 import { appendKey, entityKey, useRepeatKey, type KeyScope, type RepeatEntity } from "./repeat-key";
 import { useRefusalDismiss } from "./conflict/refusal-dismiss";
+import { SIGN_IN } from "@/shared/request/response";
 import table from "./write-action.de.json";
 
-export { WRITE_SUCCEEDED };
+export { SIGN_IN, WRITE_SUCCEEDED };
 
 const t = texts(table);
-
-export const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte melde dich neu an." };
 
 /** The answer of a write that was not sent: no token. The client made it, so the held key stays (US-QS-03). */
 const NO_TOKEN = { ok: false as const, error: SIGN_IN };

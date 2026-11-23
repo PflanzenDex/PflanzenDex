@@ -7,7 +7,8 @@ import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-secti
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { errorText } from "@/shared/lib/error-text";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
-import { appendKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { appendKey, useInvalidate, useWriteAction } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import {
   loadFriendOffers,
   requestOffer,
