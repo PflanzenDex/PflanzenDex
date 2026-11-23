@@ -177,6 +177,28 @@ describe("US-BEH-01 Seite Behandlung planen", () => {
     await user.click(screen.getByRole("button", { name: "Behandlung sichern" }));
     expect((await screen.findByRole("alert")).textContent).toContain("archiviert");
     expect((screen.getByLabelText("Grund") as HTMLInputElement).value).toBe("Wollläuse");
+    // Only a key conflict has the control that frees its key (US-QS-03).
+    expect(screen.queryByRole("button", { name: "Hinweis schließen" })).toBeNull();
+  });
+
+  it("US-QS-03 · P-10 a key conflict of the plan offers 'Hinweis schließen', which clears the notice, keeps the input and frees the key", async () => {
+    const { posts } = fakeServer([specimen("e1", "Bogenhanf")], () =>
+      response(409, { error: { code: "idempotency.key_conflict", text: "RAW SERVER TEXT" } }),
+    );
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
+    await user.type(screen.getByLabelText("Grund"), "Wollläuse");
+    await user.click(screen.getByRole("button", { name: "Behandlung sichern" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Deine erste Eingabe ist gesichert.");
+    await user.click(within(alert).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect((screen.getByLabelText("Grund") as HTMLInputElement).value).toBe("Wollläuse");
+    await user.click(screen.getByRole("button", { name: "Behandlung sichern" }));
+    await screen.findByRole("alert");
+    expect(posts).toHaveLength(2);
+    expect(posts[1]?.key).not.toBe(posts[0]?.key);
   });
 });
 

@@ -171,6 +171,30 @@ describe("US-SOZ-10 requests for my offers", () => {
     expect(alert.textContent).toContain("Die Anfrage ist schon beantwortet");
     expect(alert.textContent).not.toContain("raw server text");
   });
+
+  it("US-QS-03 · P-10 a key conflict of an answer offers 'Hinweis schließen', which clears the notice and returns the focus to the button", async () => {
+    server({ received: [side()] }, () =>
+      response(409, { error: { code: "idempotency.key_conflict", text: "raw server text" } }),
+    );
+    show();
+    const accept = await screen.findByRole("button", { name: "Annehmen: Echte Aloe" });
+    await userEvent.click(accept);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Deine erste Eingabe ist gesichert.");
+    await userEvent.click(within(alert).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(document.activeElement).toBe(accept);
+  });
+
+  it("US-QS-03 · P-10 any other refusal of an answer has no 'Hinweis schließen'", async () => {
+    server({ received: [side()] }, () =>
+      response(409, { error: { code: "swap.wrong_state", text: "raw server text" } }),
+    );
+    show();
+    await userEvent.click(await screen.findByRole("button", { name: "Annehmen: Echte Aloe" }));
+    await screen.findByRole("alert");
+    expect(screen.queryByRole("button", { name: "Hinweis schließen" })).toBeNull();
+  });
 });
 
 describe("US-SOZ-10 requests I sent", () => {

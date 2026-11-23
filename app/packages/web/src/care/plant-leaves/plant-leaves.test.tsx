@@ -301,6 +301,55 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
   });
 });
 
+describe("US-QS-03 · P-10 a key conflict of a new leaf can be dismissed", () => {
+  const CONFLICT = () =>
+    json(409, { error: { code: "idempotency.key_conflict", text: "raw server text" } });
+  const postKeys = () =>
+    vi
+      .mocked(fetch)
+      .mock.calls.filter(([, init]) => init?.method === "POST")
+      .map(([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"]);
+
+  it("US-QS-03 · P-10 the quick leaf: 'Hinweis schließen' clears the notice and frees the key for the next leaf", async () => {
+    server({
+      "GET /specimens/e1/leaves": () => json(200, view([])),
+      "POST /specimens/e1/leaves": CONFLICT,
+    });
+    const user = userEvent.setup();
+    show();
+    const newLeaf = await screen.findByRole("button", { name: "Neues Blatt" });
+    await user.click(newLeaf);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Deine erste Eingabe ist gesichert.");
+    await user.click(within(alert).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(document.activeElement).toBe(newLeaf);
+    await user.click(newLeaf);
+    await screen.findByRole("alert");
+    const keys = postKeys();
+    expect(keys).toHaveLength(2);
+    expect(keys[1]).not.toBe(keys[0]);
+  });
+
+  it("US-QS-03 · P-10 the details form: 'Hinweis schließen' clears the notice in the form and keeps the input", async () => {
+    server({
+      "GET /specimens/e1/leaves": () => json(200, view([])),
+      "POST /specimens/e1/leaves": CONFLICT,
+    });
+    setViewportWidth(1024);
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByRole("button", { name: "Mit Details" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.type(screen.getByLabelText("Notiz (optional)"), "Fenster");
+    await user.click(screen.getByRole("button", { name: "Blatt sichern" }));
+    const alert = await within(dialog).findByRole("alert");
+    await user.click(within(alert).getByRole("button", { name: "Hinweis schließen" }));
+    expect(within(dialog).queryByRole("alert")).toBeNull();
+    expect((screen.getByLabelText("Notiz (optional)") as HTMLInputElement).value).toBe("Fenster");
+  });
+});
+
 describe("US-QS-14 issue 1697 · the leaf log show their shaped skeleton once", () => {
   it("US-QS-14 issue 1697 · a slow load shows one status with the loading text, and nothing before the delay", () =>
     expectOneLoadingStatus(<LeafLogSkeleton label={table["loading"]} />, table["loading"]));

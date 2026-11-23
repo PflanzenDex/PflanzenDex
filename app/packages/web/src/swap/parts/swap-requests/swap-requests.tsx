@@ -3,6 +3,7 @@ import type { SwapOverview, SwapSide } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { errorText } from "@/shared/lib/error-text";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { entityKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { answerSwap, confirmHandover, loadSwaps, type AnswerInput } from "../../api/swaps-api";
 import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
@@ -117,6 +118,7 @@ function Body(props: { data: SwapOverview; api: string; token: Token; onWritten:
       {write.error && (
         <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
           {errorText(write.error.code)}
+          <RefusalClose error={write.error} />
         </p>
       )}
       <Section

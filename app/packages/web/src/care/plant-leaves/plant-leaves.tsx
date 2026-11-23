@@ -19,6 +19,7 @@ import {
   type KeyScope,
   type Response,
   useRepeatKey,
+  withConflictDismiss,
   type WriteOptions,
 } from "@/shared/data";
 import { Button } from "@/shared/ui/button/button";
@@ -60,7 +61,11 @@ const COMPARISON: Record<LeafMeasure, Record<LeafDirection, keyof typeof table>>
 
 const countText = (n: number): string => (n === 1 ? t("countOne") : t("count", { n }));
 
-/** Sends one leaf write with a sign-in check; the caller gets the refusal (P-10), a success refreshes the list. */
+/**
+ * Sends one leaf write with a sign-in check; the caller gets the refusal (P-10), a success refreshes the list. `clear` is
+ * how the caller removes its notice: a key conflict of a new leaf comes back with `dismiss`, which frees the key and
+ * calls it (US-QS-03).
+ */
 function useLeafWrites(api: string, token: Token, specimenId: string, onDone: () => void) {
   const [busy, setBusy] = useState(false);
   const keys = useRepeatKey();
@@ -71,6 +76,7 @@ function useLeafWrites(api: string, token: Token, specimenId: string, onDone: ()
         opts: WriteOptions,
       ) => Promise<Response<unknown>>,
       scope: KeyScope,
+      clear: () => void,
     ) => {
       const current = await token();
       if (!current) return SIGN_IN;
@@ -78,22 +84,24 @@ function useLeafWrites(api: string, token: Token, specimenId: string, onDone: ()
       const r = await keys.run((key) => write({ api, token: current }, { key }), scope);
       setBusy(false);
       if (r.ok) onDone();
-      return r.ok ? null : r.error;
+      return r.ok ? null : withConflictDismiss(r.error, scope, clear);
     },
     [api, token, onDone, keys],
   );
   return {
     busy,
     // An append (a leaf is added to the plant): the operation only, the leaf's input is the body (US-QS-03).
-    send: (input: LeafInput): Promise<ApiError | null> =>
+    send: (input: LeafInput, clear: () => void): Promise<ApiError | null> =>
       run(
         (access, opts) => recordLeaf(access, specimenId, input, opts),
         appendKey("specimen", specimenId, "leaf:record"),
+        clear,
       ),
-    remove: (leafId: string): Promise<ApiError | null> =>
+    remove: (leafId: string, clear: () => void): Promise<ApiError | null> =>
       run(
         (access, opts) => removeLeaf(access, specimenId, leafId, opts),
         entityKey("specimen", specimenId, `remove:${leafId}`),
+        clear,
       ),
   };
 }
@@ -143,8 +151,9 @@ function LeafLog({ api, token, specimenId }: Props) {
     [api, specimenId],
   );
   const today = localToday(new Date(), currentTimeZone());
-  const quick = async () => setRefusal(await writes.send({}));
-  const remove = async (row: Leaf) => setRefusal(await writes.remove(row.id));
+  const clear = () => setRefusal(null);
+  const quick = async () => setRefusal(await writes.send({}, clear));
+  const remove = async (row: Leaf) => setRefusal(await writes.remove(row.id, clear));
   const drop = (row: Leaf) => void remove(row);
   return (
     <section aria-labelledby="leaf-heading" className="grid gap-3">

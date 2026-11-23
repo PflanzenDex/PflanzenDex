@@ -9,6 +9,7 @@ import {
   type ApiError,
   type Request,
   useRepeatKey,
+  withConflictDismiss,
 } from "../../../shared/data";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
 import { TreatmentForm } from "../treatment-form/treatment-form";
@@ -22,6 +23,9 @@ import {
 import table from "./planning.de.json";
 
 const ui = texts(table);
+
+/** A create (treatments are added to the plan): the operation only, the plan is the body (US-QS-03). */
+const PLAN = createKey("treatment", "plan");
 
 type Token = () => Promise<string | undefined>;
 /**
@@ -41,15 +45,12 @@ export function usePlanning(api: string, token: Token, onPlanned: (message: stri
       setRunning(true);
       const t = await token();
       const r = t
-        ? await keys.run(
-            (key) => planTreatments(api, t, input, { key }),
-            // A create (treatments are added to the plan): the operation only, the plan is the body (US-QS-03).
-            createKey("treatment", "plan"),
-          )
+        ? await keys.run((key) => planTreatments(api, t, input, { key }), PLAN)
         : { ok: false as const, error: SIGN_IN };
       busy.current = false;
       setRunning(false);
-      setError(r.ok ? null : r.error);
+      // A key conflict of the plan holds its key: "Hinweis schließen" frees it and clears the notice (US-QS-03, P-10).
+      setError(r.ok ? null : withConflictDismiss(r.error, PLAN, () => setError(null)));
       const text = r.ok ? treatmentsPlannedText(r.value) : null;
       setMessage(text);
       if (text !== null) onPlanned(text);

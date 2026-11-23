@@ -220,6 +220,45 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
     expect(screen.getByRole("button", { name: "Anfrage senden" })).toBeTruthy();
   });
 
+  it("US-QS-03 · P-10 a key conflict of a request offers 'Hinweis schließen', which clears the notice and frees the key for the next request", async () => {
+    const { posts } = server({
+      post: () =>
+        response(409, { error: { code: "idempotency.key_conflict", text: "raw server text" } }),
+    });
+    show();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Pflanze anfragen: Echte Aloe" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Deine erste Eingabe ist gesichert.");
+    await userEvent.click(within(alert).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));
+    await screen.findByRole("alert");
+    expect(posts).toHaveLength(2);
+    const keys = vi
+      .mocked(fetch)
+      .mock.calls.filter(([, init]) => init?.method === "POST")
+      .map(([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"]);
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).not.toBe(keys[1]);
+  });
+
+  it("US-QS-03 · P-10 any other refusal of a request has no 'Hinweis schließen'", async () => {
+    server({
+      post: () =>
+        response(409, { error: { code: "swap.already_requested", text: "raw server text" } }),
+    });
+    show();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Pflanze anfragen: Echte Aloe" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));
+    await screen.findByRole("alert");
+    expect(screen.queryByRole("button", { name: "Hinweis schließen" })).toBeNull();
+  });
+
   it("US-QS-32 · SG-BASE-01 while a request is sent 'Anfrage senden' is aria-disabled, not disabled: it keeps the focus and a second tap sends nothing (issue 2464, F-0094)", async () => {
     let release: () => void = () => undefined;
     const gate = new Promise<void>((done) => {
