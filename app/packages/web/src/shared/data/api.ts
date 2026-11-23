@@ -4,8 +4,11 @@ import refusalTable from "./write-action/write-action.de.json";
 
 type FetchFn = typeof fetch;
 
-/** The account (`sub`) the tab's session loaded (US-QS-07, P-04): the session sets it at once, the check reads it. */
-export const tabAccount: { sub: string | undefined } = { sub: undefined };
+/**
+ * The account (`sub`) the tab's session loaded (US-QS-07, P-04): the session sets it at once, the check reads it. `undefined`:
+ * no session loaded one yet (writes behave as before); `null`: the session loaded a sign-in without an account (fail closed).
+ */
+export const tabAccount: { sub: string | null | undefined } = { sub: undefined };
 
 /** Fired on `window` after every write that succeeded, so quiet observers (lock states, achievement banner) can look again. */
 export const WRITE_SUCCEEDED = "pflanzendex:write-succeeded";

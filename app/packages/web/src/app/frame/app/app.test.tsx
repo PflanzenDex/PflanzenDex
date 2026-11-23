@@ -350,7 +350,15 @@ describe("US-ACC-01 App", () => {
         return response(404);
       }),
     );
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue({
+      access_token: "tok",
+      expired: false,
+      profile: { sub: "newcomer" },
+    });
+    window.localStorage.setItem(
+      "oidc.user:http://auth/realm:pflanzendex-web",
+      JSON.stringify({ access_token: "tok", profile: { sub: "newcomer" } }),
+    );
     renderApp();
     expect(await screen.findByRole("heading", { name: "Einladungscode" })).toBeTruthy();
     expect(screen.queryByRole("navigation")).toBeNull();

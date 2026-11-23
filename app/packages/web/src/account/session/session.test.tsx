@@ -47,6 +47,9 @@ const account = {
   mayShareWithFriends: true,
 };
 const user = { access_token: "tok", expired: false };
+// A signed-in keeper: the sign-in library keeps the user with its profile, so the writes of the tab can be checked (US-QS-07).
+const KEEPER_KEY = "oidc.user:http://auth/realm:pflanzendex-web";
+const keeper = { ...user, profile: { sub: "keeper" } };
 const response = (status: number, body: unknown = {}) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 
@@ -77,6 +80,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  window.localStorage.removeItem(KEEPER_KEY);
 });
 
 describe("US-ACC-01 session", () => {
@@ -723,8 +727,11 @@ describe("US-QS-32 Konto wechseln only with a live session at the sign-in servic
   });
 
   it("US-QS-32 signing out on all devices ends the live session too: after a reload no switch shows", async () => {
-    mgr.getUser.mockResolvedValue(user);
-    const { result } = renderHook(() => useSession());
+    vi.resetModules();
+    const { useSession: freshUseSession } = await import("./session");
+    mgr.getUser.mockResolvedValue(keeper);
+    window.localStorage.setItem(KEEPER_KEY, JSON.stringify(keeper));
+    const { result } = renderHook(() => freshUseSession());
     await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
     vi.stubGlobal(
       "fetch",
@@ -734,7 +741,7 @@ describe("US-QS-32 Konto wechseln only with a live session at the sign-in servic
     expect(window.sessionStorage.getItem(LIVE)).toBeNull();
     cleanup();
     mgr.getUser.mockResolvedValue(null);
-    const back = renderHook(() => useSession());
+    const back = renderHook(() => freshUseSession());
     await waitFor(() => expect(back.result.current.state).toEqual({ kind: "signedOut" }));
   });
 
@@ -754,7 +761,8 @@ describe("US-QS-32 Konto wechseln only with a live session at the sign-in servic
       revoked.push(url);
     });
     try {
-      mgr.getUser.mockResolvedValue(user);
+      mgr.getUser.mockResolvedValue(keeper);
+      window.localStorage.setItem(KEEPER_KEY, JSON.stringify(keeper));
       const { result } = renderHook(() => useFreshSession());
       await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
       vi.stubGlobal(
@@ -1606,6 +1614,57 @@ describe("US-QS-07 · the session records the account the tab loaded (P-04)", ()
     } finally {
       data.tabAccount.sub = undefined;
       window.localStorage.removeItem(SIGN_IN_KEY);
+    }
+  });
+  it("US-QS-07 signing out on all devices from a tab that loaded another account sends nothing and says why", async () => {
+    vi.resetModules();
+    const { useSession: freshUseSession } = await import("./session");
+    const data = await import("../../shared/data");
+    const sent = vi.fn<typeof fetch>(async () => response(200, { ended: true }));
+    vi.stubGlobal("fetch", sent);
+    mgr.getUser.mockResolvedValue({ ...user, profile: { sub: "A" } });
+    window.localStorage.setItem(
+      SIGN_IN_KEY,
+      JSON.stringify({ access_token: "tok-a", profile: { sub: "A" } }),
+    );
+    try {
+      const { result } = renderHook(() => freshUseSession());
+      await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+      window.localStorage.setItem(
+        SIGN_IN_KEY,
+        JSON.stringify({ access_token: "tok-b", profile: { sub: "B" } }),
+      );
+      await act(() => result.current.everywhereSignOut());
+      expect(sent.mock.calls.filter(([, init]) => init?.method === "POST")).toEqual([]);
+      expect(mgr.removeUser).not.toHaveBeenCalled();
+      expect(result.current.state).toEqual(
+        expect.objectContaining({ everywhereError: ERROR_TEXTS["access.account_in_other_tab"] }),
+      );
+    } finally {
+      data.tabAccount.sub = undefined;
+      window.localStorage.removeItem(SIGN_IN_KEY);
+    }
+  });
+
+  it("US-QS-07 a sign-in without an account (no profile.sub) refuses the tab's writes, fail closed (P-04)", async () => {
+    vi.resetModules();
+    const { useSession: freshUseSession } = await import("./session");
+    const data = await import("../../shared/data");
+    const sent = vi.fn<typeof fetch>(async () => response(200, {}));
+    vi.stubGlobal("fetch", sent);
+    mgr.getUser.mockResolvedValue({ access_token: "tok-x", expired: false });
+    try {
+      const { result } = renderHook(() => freshUseSession());
+      await waitFor(() => expect(result.current.state.kind).toBe("signedIn"));
+      const r = await data.createWrite("http://api", "tok-x", { key: "k" })(
+        "POST",
+        "/measurements",
+        {},
+      );
+      expect(sent.mock.calls.filter(([, init]) => init?.method === "POST")).toEqual([]);
+      expect(r.ok ? null : r.error.code).toBe("access.not_signed_in");
+    } finally {
+      data.tabAccount.sub = undefined;
     }
   });
 });

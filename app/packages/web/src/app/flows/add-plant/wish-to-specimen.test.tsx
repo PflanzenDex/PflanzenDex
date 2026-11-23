@@ -152,11 +152,21 @@ const sent = (f: ReturnType<typeof server>, path: string) =>
   f.mock.calls.filter(([u, i]) => i?.method === "POST" && new URL(String(u)).pathname === path);
 
 /** The main navigation of the shared shell lists every destination as a link (DS-25). */
+const SIGNED_IN_KEY = "oidc.user:http://auth/realm:pflanzendex-web";
 const tab = (name: string) =>
   within(screen.getByRole("navigation", { name: "Hauptnavigation" })).getByRole("link", { name });
 
 const open = async () => {
-  mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+  // The keeper signed in: the sign-in library keeps the user with its profile, so the tab's writes are checked against it (US-QS-07).
+  mgr.getUser.mockResolvedValue({
+    access_token: "tok",
+    expired: false,
+    profile: { sub: "keeper" },
+  });
+  window.localStorage.setItem(
+    SIGNED_IN_KEY,
+    JSON.stringify({ access_token: "tok", profile: { sub: "keeper" } }),
+  );
   render(
     <MemoryRouter initialEntries={["/collection?view=wishlist&sheet=bought"]}>
       <App />
@@ -175,6 +185,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  window.localStorage.removeItem(SIGNED_IN_KEY);
 });
 
 describe("US-WUN-05 the species is preselected from the catalog", { timeout: 20000 }, () => {

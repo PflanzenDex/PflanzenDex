@@ -5,15 +5,16 @@
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { call, createWrite, tabAccount } from "../../api";
-import { accountInOtherTabText, accountRefusal, signedInSub } from "./tab-account";
-
-/** The account the tab's session loaded (the slot the session sets, US-QS-07). */
-const recordTabAccount = (sub: string | undefined) => {
-  tabAccount.sub = sub;
-};
+import { accountRefusal, signedInSub } from "./tab-account";
 
 const USER_KEY = "oidc.user:http://localhost:18081/realms/pflanzendex:pflanzendex-web";
-const TEXT = "In einem anderen Tab ist jetzt ein anderes Konto angemeldet. Lade die Seite neu.";
+const OTHER_TAB = ERROR_TEXTS["access.account_in_other_tab"];
+const NOT_SIGNED_IN = ERROR_TEXTS["access.not_signed_in"];
+
+/** The account the tab's session loaded (the slot the session sets, US-QS-07). */
+const recordTabAccount = (sub: string | null | undefined) => {
+  tabAccount.sub = sub;
+};
 
 /** Signs the device in as `sub`, or out for `null`, the way the sign-in library keeps its user. */
 function signInAs(sub: string | null) {
@@ -55,23 +56,24 @@ describe("US-QS-07 · the account the tab loaded decides what its writes may do 
     expect(accountRefusal()).toBeUndefined();
   });
 
-  it("US-QS-07 another account signed in on the device: refused with access.account_in_other_tab and its text", () => {
+  it("US-QS-07 another account signed in on the device: refused with access.account_in_other_tab and its ERROR_TEXTS text", () => {
     recordTabAccount("A");
     signInAs("B");
-    expect(accountRefusal()).toEqual({ code: "access.account_in_other_tab", text: TEXT });
-  });
-
-  it("US-QS-07 the text of the refusal and of its code in ERROR_TEXTS are one sentence", () => {
-    expect(accountInOtherTabText).toBe(ERROR_TEXTS["access.account_in_other_tab"]);
+    expect(accountRefusal()).toEqual({ code: "access.account_in_other_tab", text: OTHER_TAB });
   });
 
   it("US-QS-07 no account signed in on the device (signed out in another tab): refused as access.not_signed_in", () => {
     recordTabAccount("A");
     signInAs(null);
-    expect(accountRefusal()).toEqual({
-      code: "access.not_signed_in",
-      text: "Bitte melde dich neu an.",
-    });
+    expect(accountRefusal()).toEqual({ code: "access.not_signed_in", text: NOT_SIGNED_IN });
+  });
+
+  it("US-QS-07 a session that loaded a sign-in without an account refuses every write, fail closed (P-04)", () => {
+    recordTabAccount(null);
+    signInAs(null);
+    expect(accountRefusal()?.code).toBe("access.not_signed_in");
+    signInAs("A");
+    expect(accountRefusal()?.code).toBe("access.not_signed_in");
   });
 
   it("US-QS-07 unreadable sign-in storage counts as no account, so a write is refused, not guessed (P-04)", () => {
@@ -116,7 +118,10 @@ describe("US-QS-07 · an online write of a tab that loaded another account is re
       { value: 9 },
     );
     expect(fetchFn).not.toHaveBeenCalled();
-    expect(r).toEqual({ ok: false, error: { code: "access.account_in_other_tab", text: TEXT } });
+    expect(r).toEqual({
+      ok: false,
+      error: { code: "access.account_in_other_tab", text: OTHER_TAB },
+    });
   });
 
   it('US-QS-07 a bulk write without an id in its route ("Alle freigeben") is refused the same way', async () => {

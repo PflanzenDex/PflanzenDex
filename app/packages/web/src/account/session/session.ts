@@ -46,9 +46,12 @@ async function silentAttempt(mgr: UserManager): Promise<State> {
   }
 }
 
-/** The account this tab loaded is the `sub` of its sign-in; a sign-in without a profile records none (US-QS-07, P-04). */
+/**
+ * The account this tab loaded is the `sub` of its sign-in. A sign-in without one records `null`: the tab then refuses its
+ * writes rather than send them unchecked (US-QS-07, P-04).
+ */
 const recordAccountOf = (user: User) => {
-  tabAccount.sub = user.profile?.sub;
+  tabAccount.sub = user.profile?.sub ?? null;
 };
 
 async function loadState(mgr: UserManager, retrying: boolean): Promise<State> {

@@ -3,9 +3,11 @@ import type { User, UserManager } from "oidc-client-ts";
 import {
   setProfileTimeZone,
   type ApiError,
+  type Response,
   accountKey,
   forgetRepeatKeys,
   runRepeat,
+  tabRefusal,
 } from "../../shared/data";
 import { SIGN_OUT_UNREACHABLE, signOutEverywhere } from "../api/account-api";
 import { here, hereState } from "../api/sign-in-client";
@@ -17,7 +19,10 @@ import type { State } from "./session";
  * Ends the sessions on all devices. The press is held by the registry like any account action (US-QS-03): a lost answer is
  * repeated under its key, and `forgetRepeatKeys` (sign-out) frees it.
  */
-function endEverywhere(api: string, token: string) {
+async function endEverywhere(api: string, token: string): Promise<Response<unknown>> {
+  // A stale tab must not end the sessions of another account (US-QS-07, P-04): refused before the request, the keeper is told.
+  const refused = await tabRefusal();
+  if (refused) return { ok: false, error: refused };
   return runRepeat(accountKey("sign-out-everywhere"), (key) =>
     signOutEverywhere(api, token, { key }),
   );
