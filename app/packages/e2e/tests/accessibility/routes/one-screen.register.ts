@@ -45,7 +45,7 @@ function familyTests(): void {
   // layout does not give every required state. Until one does, the checked-in register names only the family of "today".
   test("US-QS-15 the checked-in register has no family that is not complete: the list and deck families wait for their states", () => {
     const families = SCREENS.flatMap((s) => (s.family === undefined ? [] : [s.family]));
-    expect([...new Set(families)]).toEqual(["today"]);
+    expect([...new Set(families)].sort()).toEqual(["friends-match", "today"]);
     expect(registerProblems(SCREENS)).toEqual([]);
   });
 
@@ -86,12 +86,14 @@ function problemTests(): void {
       entry({ id: "sz", sizes: ["1000x1000"] }),
       entry({ id: "m1", kind: "list", state: "many", family: "m" }),
       entry({ id: "m2", kind: "deck", state: "card", family: "m" }),
+      entry({ id: "ex", expect: { absent: true } as NonNullable<Screen["expect"]> }),
     ];
     const problems = registerProblems(wrong);
     expect(problems.some((p) => p.includes('kind "grid"'))).toBe(true);
     expect(problems.some((p) => p.includes('state "loading"'))).toBe(true);
     expect(problems.some((p) => p.includes('size "1000x1000"'))).toBe(true);
     expect(problems.some((p) => p.includes("different kinds"))).toBe(true);
+    expect(problems.some((p) => p.includes("neither a text nor a css"))).toBe(true);
   });
 
   test("US-QS-15 the new states run at three sizes (360x640, 390x844, 360x640 at 200 %); the old screens keep every size", () => {

@@ -212,7 +212,21 @@
     "expect": {
       "css": "article[aria-labelledby='match-title']",
       "absent": true
-    }
+    },
+    "family": "friends-match"
+  },
+  {
+    "id": "friends-match-card",
+    "account": "test3",
+    "path": "/friends/match",
+    "kind": "deck",
+    "state": "card",
+    "family": "friends-match",
+    "title": "Passende Angebote",
+    "expect": {
+      "css": "article[aria-labelledby='match-title']"
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
   },
   {
     "id": "friends-exchange-part-friends",

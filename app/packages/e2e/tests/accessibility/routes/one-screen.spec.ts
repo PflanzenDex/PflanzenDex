@@ -16,6 +16,7 @@ import { registerSelfTests } from "./one-screen.register";
 import { firstSelfTests, goodFirst } from "./one-screen.first";
 import { layerSelfTests } from "./one-screen.phone";
 import { pagerSelfTests } from "./one-screen.pager";
+import { measuredSelfTests, sizeSelfTests } from "./one-screen.size";
 import { sidewaysSelfTests } from "./one-screen-sideways";
 import { shiftJudgeSelfTests, shiftSelfTests, shiftTests } from "./one-screen.shift";
 // Registers the browser self-test of the settle (US-QG-01, issue 2429): its tests run in the browser of the gate.
@@ -174,6 +175,8 @@ sidewaysSelfTests(raw, sizeOf);
 firstSelfTests(raw, sizeOf);
 layerSelfTests(raw, sizeOf);
 pagerSelfTests(raw, sizeOf);
+sizeSelfTests(raw, sizeOf);
+measuredSelfTests(raw, sizeOf);
 registerSelfTests();
 
 test("QG-U8 self-test: a screen that lands on Heute instead of its path is named", () => {

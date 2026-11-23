@@ -1,7 +1,8 @@
 // The pure part of the one-screen gate (US-QS-15, DS-58, DS-60, DS-61, DS-63, issue 1137, QG-U8): what a measurement means.
 // The baseline comparison is in baseline.ts; the data types are in judge.types.ts. No browser here, so the self-tests run
 // without one. A display tolerance: loosening it turns a red run green (US-QG-07).
-import type { First, Raw, Result, Rule, Scroller, Size, Spot } from "./judge.types";
+import { sizeFound } from "./judge.size";
+import type { First, Found, Raw, Result, Rule, Scroller, Size, Spot } from "./judge.types";
 export type {
   Baseline,
   BaselineEntry,
@@ -34,11 +35,10 @@ const SIDEWAYS_KINDS: readonly string[] = ["table", "cards", "chips", "tabs"]; /
 const ROW_KIND = "row"; // a segmented control: at 200 % text only (issue 1183)
 const KINDS: readonly string[] = [...SIDEWAYS_KINDS, ROW_KIND];
 /** Rules that hold or fail as a whole: a listed one that no longer fails must leave the baseline. */
-export const BINARY_RULES: readonly Rule[] = ["pager", "marker", "title", "action"];
+export const BINARY_RULES: readonly Rule[] = ["pager", "marker", "title", "action", "size"];
 
 const round = (n: number) => Math.round(n * 100) / 100;
 const fmt = (n: number) => n.toFixed(2);
-type Found = [Rule, string];
 
 function capOver(raw: Raw): { over: number; text: string } {
   const p = raw.paint;
@@ -132,7 +132,7 @@ const where = (s: Spot) =>
 // The title and the primary action stay in the window at load and while the largest region scrolls (US-QS-15, DS-58). In a frame
 // that may scroll (200 % text, a window under 30 rem) only the title is judged.
 function firstFound(first: First | null | undefined, fixed: boolean): Found[] {
-  if (!first) return [["title", "first screen not measured"]];
+  if (!first) return [["measured", "first screen not measured"]]; // never baselined (issue 2427)
   const found: Found[] = [];
   const { title, action, scrolled } = first;
   if (!title) found.push(["title", "no page title (heading of the layer, or h1)"]);
@@ -172,12 +172,13 @@ export function evaluate(screen: string, size: Size, raw: Raw, sidewaysExempt = 
     ...markerFound(raw),
     ...pagerFound(raw, size),
     ...firstFound(raw.first, fixed),
+    ...sizeFound(raw.sized, size),
   ];
   const unmarked = raw.scrollers.filter((s: Scroller) => !s.marked).map((s) => s.scroll / s.client);
   return {
     ...base,
     page: round(raw.scrollHeight / raw.innerHeight),
-    inner: round(Math.max(1, ...unmarked)),
+    inner: fixed ? round(Math.max(1, ...unmarked)) : 1, // a frame that may scroll has no inner limit (issue 2427)
     pageX: round(sideways.pageX),
     innerX: round(sideways.innerX),
     cap: 0,

@@ -53,6 +53,7 @@ export function RowContent(props: RowContentProps) {
       )}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span
+          data-row-name={props.object ? "" : undefined}
           className={cn(
             "text-base [overflow-wrap:anywhere]",
             props.object && OBJECT_TITLE,

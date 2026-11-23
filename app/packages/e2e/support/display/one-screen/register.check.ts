@@ -33,6 +33,8 @@ function entryProblems(s: Screen, sizeNames: ReadonlySet<string>): string[] {
     problems.push(`${s.id}: state "${String(s.state)}" is not one of ${STATES.join(", ")}`);
   for (const name of s.sizes ?? [])
     if (!sizeNames.has(name)) problems.push(`${s.id}: size "${name}" is not in SIZES`);
+  if (s.expect && !s.expect.text && !s.expect.css)
+    problems.push(`${s.id}: expect names neither a text nor a css selector`);
   return problems;
 }
 
