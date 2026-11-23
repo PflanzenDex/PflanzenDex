@@ -11,10 +11,10 @@
 
 ## Targets
 
-| Number     | Value  | Effect                                                                                                                |
-| ---------- | ------ | --------------------------------------------------------------------------------------------------------------------- |
-| Goal       | 125 kB | `GOAL_BYTES` in `report-bundle.mjs` (owner decision 2026-10-29, ADR 0018). Report only, never blocks.                 |
-| Hard limit | 140 kB | `bundle.initialJsGzipBytes` in `app/config/gates/quality-limits.json`; the blocking gate; a fixed ceiling (ADR 0018). |
+| Number     | Value  | Effect                                                                                                                                                |
+| ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Goal       | 125 kB | `GOAL_BYTES` in `report-bundle.mjs` (owner decision 2026-10-29, ADR 0018). Report only, never blocks.                                                 |
+| Hard limit | 142 kB | `bundle.initialJsGzipBytes` in `app/config/gates/quality-limits.json`; the blocking gate; a fixed ceiling (ADR 0018, raised from 140 kB by ADR 0019). |
 
 The gap between the goal and the limit is room for a story that cannot load its code lazily, not room to spend: the goal is where the bundle should stay, the limit is where a PR stops.
 
@@ -26,6 +26,6 @@ The gap between the goal and the limit is room for a story that cannot load its 
 
 ## When the numbers change
 
-- The hard limit is a fixed ceiling, not a ratchet: it stays at 140 kB when the bundle shrinks (ADR 0018). Until 2026-10-29 it was lowered to the measurement plus about 5 kB after every saving (170 → 152 → 136 → 125 kB); at 125.0 of 125.0 kB every web change failed the gate, and freeing room would have meant byte-golfing in the framework code (react-dom, react-router, tailwind-merge), not in our own.
+- The hard limit is a fixed ceiling, not a ratchet: it stays at 142 kB when the bundle shrinks (ADR 0018, ADR 0019). Until 2026-10-29 it was lowered to the measurement plus about 5 kB after every saving (170 → 152 → 136 → 125 kB); at 125.0 of 125.0 kB every web change failed the gate, and freeing room would have meant byte-golfing in the framework code (react-dom, react-router, tailwind-merge), not in our own.
 - Changing the limit or the goal is an owner decision and a change to a gate file: its own PR with the reason, human merge (US-QG-07). Raising the limit again needs a new ADR that names what the extra code buys.
 - When the total is over the goal, the next story that touches the web app first looks for code that can leave the first load (a library used by one route, DS-08).
