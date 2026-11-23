@@ -8,11 +8,15 @@ import {
   type ApiError,
   type Request,
   useRepeatKey,
+  withConflictDismiss,
 } from "../shared/data";
 import { loadSpecies, propose, searchSpeciesPage } from "./species-api";
 
 type Token = () => Promise<string | undefined>;
 export const SEARCH_KEY = ["catalog", "search"] as const;
+
+/** A create (a species proposal is added): the operation only, the form is the body (US-QS-03). */
+const PROPOSE = createKey("species", "propose");
 
 /** The text after a short pause, so typing does not send a request per letter. */
 function useDebounced(text: string, ms: number): string {
@@ -56,20 +60,20 @@ export function useProfile(api: string, token: Token, id: string | null): Reques
   return useRequest({ queryKey: ["catalog", "species", id], token, load, enabled: id !== null });
 }
 
-/** Sends the proposal of a species; the search forgets its cached hits and `onSaved` gets the new id (US-BES-01). */
+/**
+ * Sends the proposal of a species; the search forgets its cached hits and `onSaved` gets the new id (US-BES-01). A refusal
+ * comes back to the form; `clear` is how the form removes its notice: a key conflict carries `dismiss`, which frees the key
+ * and calls it (US-QS-03).
+ */
 export function useSend(api: string, token: Token, onSaved: (id: string) => void) {
   const searchChanged = useInvalidate(SEARCH_KEY);
   const keys = useRepeatKey();
-  return async (input: Record<string, unknown>): Promise<ApiError | null> => {
+  return async (input: Record<string, unknown>, clear: () => void): Promise<ApiError | null> => {
     const t = await token();
     const r = t
-      ? await keys.run(
-          (key) => propose(api, t, input, { key }),
-          // A create (a species proposal is added): the operation only, the form is the body (US-QS-03).
-          createKey("species", "propose"),
-        )
+      ? await keys.run((key) => propose(api, t, input, { key }), PROPOSE)
       : { ok: false as const, error: SIGN_IN };
-    if (!r.ok) return r.error;
+    if (!r.ok) return withConflictDismiss(r.error, PROPOSE, clear);
     searchChanged();
     onSaved(r.value.id);
     return null;

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import type { MeasurementRow } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { cn } from "@/shared/lib/utils";
-import { LoadFrame } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
 import { MeasurementPhoto } from "../../measure/measurement-header/measurement-photo";
 import { CARD_CLASSES } from "../../shared/notices/notices";

@@ -6,7 +6,9 @@ import { Button } from "@/shared/ui/button/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { errorText } from "@/shared/lib/error-text";
-import { appendKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
+import { appendKey, useInvalidate, useWriteAction } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import {
   loadFriendOffers,
   requestOffer,
@@ -118,6 +120,7 @@ function Offers(props: {
       {write.error && (
         <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
           {errorText(write.error.code)}
+          <RefusalClose error={write.error} />
         </p>
       )}
       <Pager

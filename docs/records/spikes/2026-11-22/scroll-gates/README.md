@@ -131,3 +131,13 @@ Not proposed: a new Storybook test runner (cost and a second browser run, no rul
 - The sample holds 27 ready runs; flake rates per layer are too small to give percentages.
 
 Raw data: the scout's run lists (`ci.yml`, 100 runs) were kept in the session scratchpad and are not part of the repository.
+
+## Result of P-B and P-V (issue 2432, 2026-11-23)
+
+- **P-B, built.** The QG-U5 run plays the `play` function of each story before it probes the story. A play that throws fails the story as `QG-U5 <story> (<scheme>): play function failed: <message>`. The run waits for the render to pass the play, through the Storybook channel (`storyRenderPhaseChanged`, `playFunctionThrewException`). No runner, addon, dependency or CI job was added.
+- **Before the change, a failing play passed.** The self-test fixture `conformance-fixture/Play` `Fail` gave no finding in the red run. The old wait ended at the first `sb-show-main`, which Storybook sets before the play runs.
+- **Examples on existing components.** `data-display/Tabs` `ActiveTabInView` checks that the selected last tab is scrolled into view on a 360 px strip (DS-63). `shared/LayerSheet` `Closed` checks that focus moves into the layer on open, that Escape closes it and that focus returns to the opener. The overlay probe already checked the focus return, so the play adds the focus on open.
+- **Not a play yet.** The half-height rule (DS-60) is not built: the sheet panel caps its height at `max-h-[90dvh]` and has no half or full snap. Its play comes with the sheet ticket #2418.
+- **The examples can fail.** With the tab reveal and the layer's focus on open disabled in a scratch edit, the run reported four findings: two per example, in light and dark. The edit was reverted.
+- **Cost.** Same machine, heavy lock, 8 pages. The real run alone: 83 s before, 82 s after. `make conformance` (real run and self-test): 99 s before, 99 s after. Stories: 222 to 223 (`ActiveTabInView`).
+- **Look only (P-V).** No snapshot was added: the new story sits outside the `shared/ui` set and the page set of `ds-snapshots`. The rule is written in PRIN-057 and in design-system section 6.

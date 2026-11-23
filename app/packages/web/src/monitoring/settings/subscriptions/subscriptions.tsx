@@ -1,7 +1,8 @@
 import { useCallback } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
-import { accountKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
+import { accountKey, useInvalidate, useWriteAction } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadSubscriptions, removeSubscription } from "../../api/reminders-api";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../monitoring.de.json";

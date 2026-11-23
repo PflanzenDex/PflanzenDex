@@ -113,6 +113,8 @@ interface Opts {
   missing?: { id: string; name: string };
   previewFails?: number;
   confirmFails?: number;
+  /** Answers of the confirmation that are `idempotency.key_conflict` (the key came back with another body, US-QS-03). */
+  confirmConflicts?: number;
   /** Rows the confirmation says were there already, and rows it refuses (P-10). */
   skipOnConfirm?: number[];
   refuseOnConfirm?: number[];
@@ -123,6 +125,7 @@ function server(opts: Opts = {}) {
   const sent: Sent[] = [];
   let previewFails = opts.previewFails ?? 0;
   let confirmFails = opts.confirmFails ?? 0;
+  let confirmConflicts = opts.confirmConflicts ?? 0;
   vi.stubGlobal(
     "fetch",
     vi.fn<typeof fetch>(async (url, init) => {
@@ -136,6 +139,8 @@ function server(opts: Opts = {}) {
       }
       if (path === "/specimens/import") {
         if (confirmFails-- > 0) return Promise.reject(new TypeError("Failed to fetch"));
+        if (confirmConflicts-- > 0)
+          return json(409, { error: { code: "idempotency.key_conflict", text: "x" } });
         return json(200, confirmAnswer(body, opts));
       }
       return json(404, { error: { code: "system.not_found", text: "x" } });
@@ -507,5 +512,38 @@ describe("US-BES-18 a failed request keeps the state and offers a retry", () => 
     const keys = sentTo(sent, "/specimens/import").map((s) => s.key);
     expect(keys).toHaveLength(2);
     expect(keys[1]).not.toBe(keys[0]);
+  });
+
+  it("US-QS-03 · P-10 a key conflict of the confirmation offers Hinweis schließen: it clears the note, returns the focus and frees the key", async () => {
+    const sent = server({ confirmConflicts: 1 });
+    show();
+    await previewOfCsv();
+    const u = user();
+    const start = await screen.findByRole("button", { name: "1 Pflanze importieren" });
+    await u.click(start);
+    const note = await screen.findByRole("alert");
+    // The conflict keeps its key: the retry would send it again, so the note gives the keeper the way on.
+    await u.click(within(note).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByText("1 bereit")).toBeTruthy();
+    expect(document.activeElement).toBe(start);
+    await u.click(start);
+    await screen.findByRole("heading", { name: "Import abgeschlossen" });
+    const keys = sentTo(sent, "/specimens/import").map((s) => s.key);
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBeTruthy();
+    expect(keys[1]).toBeTruthy();
+    expect(keys[1]).not.toBe(keys[0]);
+  });
+
+  it("US-QS-03 a lost answer of the confirmation has no Hinweis schließen: the retry is its way on", async () => {
+    server({ confirmFails: 1 });
+    show();
+    await previewOfCsv();
+    const u = user();
+    await u.click(await screen.findByRole("button", { name: "1 Pflanze importieren" }));
+    const note = await screen.findByRole("alert");
+    expect(within(note).getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
+    expect(within(note).queryByRole("button", { name: "Hinweis schließen" })).toBeNull();
   });
 });

@@ -21,13 +21,15 @@ const REASON = "Keine Verbindung. Deine Eingabe bleibt hier stehen.";
 /** The account on the server: a new account has no zones and no places until the defaults are created (US-ONB-02). */
 let zones: unknown[] = [];
 let locations: unknown[] = [];
-const writes: { path: string; body: Record<string, unknown> }[] = [];
+const writes: { path: string; body: Record<string, unknown>; key: string | null }[] = [];
 /** Reads of the zones, and a refusal of them by the server (not the network) when `zonesRefused` is set. */
 let zonesReads = 0;
 let zonesRefused = false;
 /** While set, the read of the plants of the species (the marker rule) or the create waits for it (US-QS-03). */
 let rulePending: Promise<void> | null = null;
 let createPending: Promise<void> | null = null;
+/** The error codes the server answers the next creates of the plant with, one each; empty = it saves (US-QS-03). */
+let createRefusals: string[] = [];
 
 function server() {
   zones = [];
@@ -36,6 +38,7 @@ function server() {
   zonesRefused = false;
   rulePending = null;
   createPending = null;
+  createRefusals = [];
   writes.length = 0;
   vi.stubGlobal(
     "fetch",
@@ -43,10 +46,12 @@ function server() {
       const path = new URL(String(url)).pathname;
       if (init?.method === "POST") {
         const body = JSON.parse(String(init.body)) as Record<string, unknown>;
-        writes.push({ path, body });
+        writes.push({ path, body, key: new Headers(init.headers).get("Idempotency-Key") });
         if (path === "/light-zones/defaults") zones = [...DEFAULT_ZONES];
         if (path === "/locations/defaults") locations = [...DEFAULT_LOCATIONS];
         if (path === "/specimens") await createPending;
+        const refused = path === "/specimens" ? createRefusals.shift() : undefined;
+        if (refused) return response(409, { error: { code: refused, text: refused } });
         return response(201, { id: "e1", speciesId: "sp1" });
       }
       if (path === "/light-zones") {
@@ -267,5 +272,42 @@ describe("US-QS-03 · a save that waits for the marker rule is shown busy, never
     create.release();
     expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
     expect(writes.filter((w) => w.path === "/specimens")).toHaveLength(1);
+  });
+});
+
+describe("US-QS-03 · P-10 a key conflict of the first plant can be dismissed", () => {
+  it("US-QS-03 a key conflict of the save offers Hinweis schließen: it clears the note, returns the focus to the save button and frees the key", async () => {
+    connection(true);
+    server();
+    createRefusals = ["idempotency.key_conflict"];
+    view();
+    await toSave();
+    await untilSaveEnabled();
+    await userEvent.click(saveButton());
+    const note = await screen.findByRole("alert");
+    // The conflict keeps its key: without the dismiss the next press would send it again.
+    await userEvent.click(within(note).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(document.activeElement).toBe(saveButton());
+    await userEvent.click(saveButton());
+    expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
+    const keys = writes.filter((w) => w.path === "/specimens").map((w) => w.key);
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBeTruthy();
+    expect(keys[1]).toBeTruthy();
+    expect(keys[1]).not.toBe(keys[0]);
+  });
+
+  it("US-QS-03 a refusal that is no key conflict shows its text without Hinweis schließen", async () => {
+    connection(true);
+    server();
+    createRefusals = ["server.error"];
+    view();
+    await toSave();
+    await untilSaveEnabled();
+    await userEvent.click(saveButton());
+    const note = await screen.findByRole("alert");
+    expect(note.textContent?.length).toBeGreaterThan(0);
+    expect(within(note).queryByRole("button", { name: "Hinweis schließen" })).toBeNull();
   });
 });

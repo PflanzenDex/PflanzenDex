@@ -3,7 +3,8 @@ import { Button } from "@/shared/ui/button/button";
 import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { LoadFrame, useInvalidate } from "../../../shared/data";
+import { useInvalidate } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadKeeperStyle, type KeeperStyleState } from "./keeper-style-api";
 import {
   KEEPER_STYLE_CHOICES,

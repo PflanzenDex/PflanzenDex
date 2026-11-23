@@ -4,14 +4,8 @@ import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
 import { refusalText } from "@/shared/lib/error-text";
 import { cn } from "@/shared/lib/utils";
-import {
-  accountKey,
-  LoadFrame,
-  SIGN_IN,
-  useInvalidate,
-  type ApiError,
-  useRepeatKey,
-} from "../../shared/data";
+import { accountKey, SIGN_IN, useInvalidate, type ApiError, useRepeatKey } from "../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import {
   loadAchievementSettings,
   setCalmMode,

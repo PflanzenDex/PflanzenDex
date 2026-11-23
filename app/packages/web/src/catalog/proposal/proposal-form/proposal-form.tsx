@@ -59,7 +59,13 @@ function RefusalNotice(props: {
   return (
     <>
       {error && !props.namesField && (
-        <Banner variant="error" tabIndex={-1} ref={props.alertRef} className="md:col-span-2">
+        <Banner
+          variant="error"
+          tabIndex={-1}
+          ref={props.alertRef}
+          className="md:col-span-2"
+          {...(error.dismiss ? { onDismiss: error.dismiss } : {})}
+        >
           {refusalText(error)}
         </Banner>
       )}
@@ -105,13 +111,13 @@ function useProposalSteps(
   form: UseFormReturn<ProposalFields>,
   props: {
     startStep?: 1 | 2;
-    onSend: (input: Record<string, unknown>) => Promise<ApiError | null>;
+    onSend: (input: Record<string, unknown>, clear: () => void) => Promise<ApiError | null>;
   },
 ) {
   const [error, setError] = useState<ApiError | null>(null);
   const [step, setStep] = useState<1 | 2>(props.startStep ?? 1);
   const submit = form.handleSubmit(async (values) => {
-    const refused = await props.onSend(toProposalInput(values));
+    const refused = await props.onSend(toProposalInput(values), () => setError(null));
     // A refusal of a step-1 field brings that step back, so its field is on screen to take the focus.
     if (refused && refusedFields(refused).some(({ field }) => REQUIRED_STEP.includes(field)))
       setStep(1);
@@ -133,7 +139,7 @@ function useProposalSteps(
  */
 export function ProposalForm(props: {
   start?: string;
-  onSend: (input: Record<string, unknown>) => Promise<ApiError | null>;
+  onSend: (input: Record<string, unknown>, clear: () => void) => Promise<ApiError | null>;
   onExisting: (id: string) => void;
   /** The step to start on (tests and stories); the form starts on step 1. */
   startStep?: 1 | 2;

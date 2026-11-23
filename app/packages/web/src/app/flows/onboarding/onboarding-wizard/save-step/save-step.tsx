@@ -11,6 +11,7 @@ import { Label } from "@/shared/ui/display/label/label";
 import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
 import { MarkerSection, type MarkerSectionProps } from "@/collection";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./save-step.de.json";
@@ -85,6 +86,16 @@ function ZoneField(props: {
   );
 }
 
+/** The refusal of the save as text; a key conflict of the create also offers "Hinweis schließen" (US-QS-03, P-10). */
+function SaveRefusal(props: { text: string; dismiss: (() => void) | undefined }) {
+  return (
+    <p role="alert">
+      {props.text}
+      <RefusalClose error={{ dismiss: props.dismiss }} />
+    </p>
+  );
+}
+
 /**
  * Step 2 of the first plant (US-ONB-01): the light need is prefilled from the species as a value to change, never as
  * a question. Empty value = derived, so nothing derived is stored (P-01).
@@ -100,6 +111,8 @@ export function SaveStep(props: {
   zoneId: string;
   onZone: (id: string) => void;
   error: string | null;
+  /** Frees the key of a key conflict and clears `error`: "Hinweis schließen" shows only with it (US-QS-03). */
+  dismiss?: (() => void) | undefined;
   /**
    * The marker of a further plant (US-BES-03, US-QS-15): its section reads the rule of the species and reports it to
    * the flow, which enables the save with it (issue 1638).
@@ -153,7 +166,7 @@ export function SaveStep(props: {
         onRetryZones={retry}
       />
       {props.children}
-      {props.error && <p role="alert">{props.error}</p>}
+      {props.error && <SaveRefusal text={props.error} dismiss={props.dismiss} />}
     </section>
   );
 }

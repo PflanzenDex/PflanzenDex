@@ -21,7 +21,8 @@ export interface ZoneInput {
   sortOrder: number | null;
 }
 
-type Save = (e: ZoneInput) => Promise<ApiError | null>;
+/** `clearNote` removes the form's refusal: a key conflict of a new zone carries a dismiss that calls it (US-QS-03). */
+type Save = (e: ZoneInput, clearNote: () => void) => Promise<ApiError | null>;
 
 const numeric = (limits: readonly [number, number]) =>
   ({ type: "number", inputMode: "numeric", min: limits[0], max: limits[1], step: 1 }) as const;
@@ -42,7 +43,7 @@ export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: ()
   const sent = useSaveForm<ZoneFields>({
     schema: zoneSchema,
     defaults: zoneDefaults(z),
-    save: (f) => props.onSave(toZoneInput(f)),
+    save: (f, clearNote) => props.onSave(toZoneInput(f), clearNote),
     refusable: ZONE_REFUSABLE,
     clear: !z,
   });

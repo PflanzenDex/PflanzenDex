@@ -1,7 +1,8 @@
 import { useCallback } from "react";
 import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
-import { entityKey, LoadFrame, type Response, useRepeatKey } from "../../../shared/data";
+import { entityKey, type Response, useRepeatKey } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import {
   answerYes,
   loadMatchDeck,

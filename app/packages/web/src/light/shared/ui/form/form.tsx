@@ -23,11 +23,13 @@ const t = texts(table);
 /**
  * A form that saves through an operation: validates with its zod schema (focus goes to the first invalid field),
  * hands a server refusal to the fields it names (German text by error code, DS-49) and keeps the input on an error.
+ * `save` gets `clearNote`, the way to remove the form's refusal: the key conflict of a create comes back with a `dismiss`
+ * that frees the key and calls it (US-QS-03).
  */
 export function useSaveForm<F extends FieldValues>(opts: {
   schema: z.ZodType<F, F>;
   defaults: DefaultValues<F>;
-  save: (values: F) => Promise<ApiError | null>;
+  save: (values: F, clearNote: () => void) => Promise<ApiError | null>;
   refusable: readonly FieldPath<F>[];
   /** Empties the form after a successful save (create forms). */
   clear: boolean;
@@ -41,11 +43,19 @@ export function useSaveForm<F extends FieldValues>(opts: {
   );
   const { alertText, alertRef } = useServerRefusal(error, form.setError, fieldsOf);
   const send = form.handleSubmit(async (values) => {
-    const refusal = await save(values);
+    const refusal = await save(values, () => setError(null));
     setError(refusal);
     if (!refusal && clear) form.reset();
   });
-  return { form, send, alertText, alertRef, running: form.formState.isSubmitting };
+  return {
+    form,
+    send,
+    alertText,
+    alertRef,
+    /** Frees the key of a key conflict and clears the note; `undefined` for every other refusal (US-QS-03). */
+    dismiss: error?.dismiss,
+    running: form.formState.isSubmitting,
+  };
 }
 
 type Sent<F extends FieldValues> = ReturnType<typeof useSaveForm<F>>;
@@ -54,7 +64,13 @@ type Sent<F extends FieldValues> = ReturnType<typeof useSaveForm<F>>;
 export function RefusalAlert<F extends FieldValues>({ sent }: { sent: Sent<F> }) {
   if (sent.alertText === null) return null;
   return (
-    <Banner variant="error" tabIndex={-1} ref={sent.alertRef} className="md:col-span-2">
+    <Banner
+      variant="error"
+      tabIndex={-1}
+      ref={sent.alertRef}
+      className="md:col-span-2"
+      {...(sent.dismiss ? { onDismiss: sent.dismiss } : {})}
+    >
       {sent.alertText}
     </Banner>
   );

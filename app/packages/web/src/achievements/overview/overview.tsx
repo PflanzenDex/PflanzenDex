@@ -10,7 +10,8 @@ import {
   type PagedGroup,
 } from "@/shared/patterns/responsive/paged-groups/paged-groups";
 import { errorText } from "@/shared/lib/error-text";
-import { LoadFrame, useInvalidate, useWriteAction } from "../../shared/data";
+import { useInvalidate, useWriteAction } from "../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import {
   loadAchievements,
   markSeen,
@@ -20,7 +21,6 @@ import {
 import { ACHIEVEMENT_NAMES, GROUP_TITLES, MISSING_TEXTS, germanDate, nextStepText } from "./texts";
 import { StateSection, type AchievementSection } from "./state-section/state-section";
 import table from "./overview.de.json";
-
 const text = texts(table);
 type Token = () => Promise<string | undefined>;
 type Shown = Extract<AchievementsOverview, { calmMode: false }>;

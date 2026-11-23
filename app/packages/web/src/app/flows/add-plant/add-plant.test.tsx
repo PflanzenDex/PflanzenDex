@@ -28,7 +28,7 @@ const CARDS = [
   { id: "e9", name: "B", speciesId: "y", location: "Balkon", caughtAt: "2026-05-01" },
 ];
 
-const writes: { path: string; body: Record<string, unknown> }[] = [];
+const writes: { path: string; body: Record<string, unknown>; key: string | null }[] = [];
 /** A refusal the server gives a write instead of saving it (its error code); `null` saves. */
 type Refuse = (body: Record<string, unknown>) => { code: string } | null;
 
@@ -45,7 +45,7 @@ function server(
       const path = new URL(String(url)).pathname;
       if (init?.method === "POST") {
         const body = JSON.parse(String(init.body)) as Record<string, unknown>;
-        writes.push({ path, body });
+        writes.push({ path, body, key: new Headers(init.headers).get("Idempotency-Key") });
         const refused = refuse(body);
         if (refused) return response(409, { error: { code: refused.code, text: refused.code } });
         return response(201, { id: "e1", speciesId: "sp1" });
@@ -515,6 +515,31 @@ describe("US-BES-03 · US-QS-15 the marker of a further plant in the short form 
     expect((await screen.findByRole("alert")).textContent?.length).toBeGreaterThan(0);
     expect(screen.queryByRole("heading", { name: /ist angelegt/ })).toBeNull();
     expect(screen.queryByLabelText("Kennzeichen")).toBeNull();
+  });
+
+  it("US-QS-03 · P-10 a key conflict of the save of a further plant offers Hinweis schließen: it clears the note, returns the focus and frees the key", async () => {
+    let refusals = 1;
+    server(CARDS, ZONES, LOCATIONS, () =>
+      refusals-- > 0 ? { code: "idempotency.key_conflict" } : null,
+    );
+    view();
+    await toSave();
+    await untilSaveEnabled();
+    const save = () => screen.getByRole("button", { name: "Pflanze sichern" });
+    // By keyboard: a press with the pointer keeps the focus where it was (mousedown is held, issue 2216).
+    save().focus();
+    await userEvent.keyboard("{Enter}");
+    const note = await screen.findByRole("alert");
+    await userEvent.click(within(note).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(document.activeElement).toBe(save());
+    await userEvent.click(save());
+    expect(await screen.findByRole("heading", { name: /ist angelegt/ })).toBeTruthy();
+    const keys = writes.filter((w) => w.path === "/specimens").map((w) => w.key);
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBeTruthy();
+    expect(keys[1]).toBeTruthy();
+    expect(keys[1]).not.toBe(keys[0]);
   });
 
   it("US-ONB-01 · US-BES-03 Zurück keeps the marker the keeper typed when the second step comes back (issue 1638)", async () => {

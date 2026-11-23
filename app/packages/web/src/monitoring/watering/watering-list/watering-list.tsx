@@ -4,7 +4,7 @@ import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-secti
 import type { PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { placeHeld } from "@/shared/feedback/undo-row/use-undo";
-import { LoadFrame } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { DueCountOf, WATERING_KEY, type DueCount } from "../../api/due-count/due-count";
 import { loadWateringDue, type WateringDueRow } from "../../api/reminders-api";
 import { WateringListSkeleton } from "./watering-list.skeleton";

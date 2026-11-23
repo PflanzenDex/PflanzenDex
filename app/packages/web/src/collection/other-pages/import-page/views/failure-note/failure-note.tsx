@@ -1,6 +1,8 @@
 // A request that failed (US-BES-18, P-10): what the server refused, by its code, and the retry. What the page showed stays.
+// A key conflict of the confirmation also offers "Hinweis schließen", which frees the held key (US-QS-03).
 import type { ApiError } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Button } from "@/shared/ui/button/button";
 import table from "../../import-page.de.json";
@@ -17,6 +19,7 @@ export function FailureNote(props: { error: ApiError; onRetry: () => void }) {
           {ui("retry")}
         </Button>
       </div>
+      <RefusalClose error={props.error} />
     </div>
   );
 }

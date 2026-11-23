@@ -87,3 +87,90 @@ export async function seedTaxonFixture(
   ]);
   return "written";
 }
+
+/**
+ * Every column of `taxon` (migrations 0025 and 0066). The fixture sets nine of them and leaves the rest NULL. A test
+ * checks this list against the table, so a new column cannot slip past the comparison of `replaceTaxonWithFixture`.
+ */
+export const TAXON_COLUMNS = [
+  "latin_name",
+  "status",
+  "failure_code",
+  "accepted_name",
+  "genus",
+  "family",
+  "order_name",
+  "ott_id",
+  "summary",
+  "summary_language",
+  "image_url",
+  "page_url",
+  "genus_species_count",
+  "nature_iucn_category",
+  "nature_gbif_occurrences",
+  "provenance",
+  "catalog_fingerprint",
+  "built_at",
+] as const;
+
+const COLUMNS = TAXON_COLUMNS.join(", ");
+// The fixture row of each seed name, in the order of TAXON_COLUMNS: the nine values it sets, NULL for the others.
+const FIXTURE_ROWS = `select name, 'resolved', null::text, name, genus, family, order_name, null::bigint, null::text,
+    null::text, null::text, null::text, null::integer, null::text, null::bigint, $5::jsonb, $6::text, $7::timestamptz
+  from unnest($1::text[], $2::text[], $3::text[], $4::text[]) as t(name, genus, family, order_name)`;
+// True when `taxon` holds exactly the fixture rows (no extra, missing or differing row) and no researched attribute.
+const IS_FIXTURE = `select not exists (
+    select from ((select ${COLUMNS} from taxon except ${FIXTURE_ROWS})
+      union all (${FIXTURE_ROWS} except select ${COLUMNS} from taxon)) as differing
+  ) and not exists (select from taxon_attribute) as same`;
+
+/** Runs `work` in one transaction: its own on a pool, the caller's on a client (a test rolls back its own). */
+async function atomically<T>(
+  db: Pool | PoolClient,
+  work: (c: Pool | PoolClient) => Promise<T>,
+): Promise<T> {
+  if ("release" in db) return work(db);
+  const client = await db.connect();
+  try {
+    await client.query("begin");
+    const result = await work(client);
+    await client.query("commit");
+    return result;
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Makes `taxon` hold exactly the fixture (issue 2488). A local `make one-screen` run measured a worktree database that
+ * held a real build with other content, so the overflow showed only locally. Any other tree goes, and so do its
+ * researched attributes (`taxon_attribute`: no build writes them, and the seed writes none, so CI's table is empty at
+ * this point). Returns "kept" when both tables already are exactly the fixture. Same connections as `seedTaxonFixture`,
+ * and a worktree or test database only (the seed guard). One transaction: a failure keeps the previous tree.
+ */
+export async function replaceTaxonWithFixture(
+  db: Pool | PoolClient,
+  rows: readonly SeedRow[] = SEED_SPECIES,
+): Promise<"written" | "kept"> {
+  const taxa = taxonFixtureRows(rows);
+  const params = [
+    taxa.map((t) => t.latinName),
+    taxa.map((t) => t.genus),
+    taxa.map((t) => t.family),
+    taxa.map((t) => t.order),
+    JSON.stringify({ lineage: LINEAGE_SOURCE }),
+    TAXON_FIXTURE_FINGERPRINT,
+    BUILT_AT,
+  ];
+  return atomically(db, async (c) => {
+    const same = await c.query<{ same: boolean }>(IS_FIXTURE, params);
+    if (same.rows[0]?.same) return "kept";
+    await c.query("delete from taxon_attribute");
+    await c.query("delete from taxon");
+    await c.query(INSERT, params);
+    return "written";
+  });
+}

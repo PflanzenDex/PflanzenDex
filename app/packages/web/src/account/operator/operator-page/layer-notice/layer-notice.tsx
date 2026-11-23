@@ -1,4 +1,5 @@
 import { refusalText } from "@/shared/lib/error-text";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import type { Notice, Scope } from "../operator-actions";
 
 /** The outcome of the last write, when it belongs to this layer. */
@@ -14,6 +15,7 @@ export function LayerNotice({ notice, scope }: { notice: Notice | null; scope: S
       {notice.error && (
         <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
           {refusalText(notice.error)}
+          <RefusalClose error={notice.error} />
         </p>
       )}
     </>

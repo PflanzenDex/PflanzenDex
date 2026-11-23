@@ -2,7 +2,7 @@ import type { TreatmentRow } from "@pflanzendex/core";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Label } from "@/shared/ui/display/label/label";
 import { Select } from "@/shared/ui/fields/select/select";
-import { LoadFrame } from "../../../shared/data";
+import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { historyKey } from "../../shared/api/query-keys";
 import { CARD_CLASSES, LIST_CLASSES } from "../../shared/notices/notices";
 import { dateText } from "../../shared/text";

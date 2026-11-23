@@ -378,6 +378,27 @@ describe("US-ACC-05 invitation codes", () => {
     expect(screen.queryByRole("region", { name: "Neuer Einladungscode" })).toBeNull();
   });
 
+  it("US-QS-03 · P-10 a key conflict of the code offers 'Hinweis schließen', which clears the notice and frees the key for the next code", async () => {
+    serve(async () =>
+      json(409, { error: { code: "idempotency.key_conflict", text: "raw server text" } }),
+    );
+    await open();
+    await topic(/^Einladungscodes/);
+    const user = userEvent.setup();
+    const create = screen.getByRole("button", { name: "Code erstellen" });
+    await user.click(create);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Deine erste Eingabe ist gesichert.");
+    await user.click(within(alert).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(document.activeElement).toBe(create);
+    await user.click(create);
+    await screen.findByRole("alert");
+    const keys = calls.filter((c) => c.method === "POST").map((c) => c.headers["Idempotency-Key"]);
+    expect(keys).toHaveLength(2);
+    expect(keys[1]).not.toBe(keys[0]);
+  });
+
   it("US-ACC-05 lists invitations with a visible state in words, never a code", async () => {
     current = overview({
       invitations: [

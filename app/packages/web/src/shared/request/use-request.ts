@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import {
   keepPreviousData,
   useInfiniteQuery,
@@ -6,10 +6,8 @@ import {
   useQueryClient,
   type QueryKey,
 } from "@tanstack/react-query";
-import type { ApiError, Response } from "../../api";
 import { NETWORK_DOWN, RequestFailure } from "./query-client";
-import { SIGN_IN } from "../../write-action/use-write-action";
-import { forgetRepeatKeys } from "../../write-action/repeat-key";
+import { SIGN_IN, type ApiError, type Response } from "./response";
 import type { RequestStatus } from "@/shared/patterns/states/request-state/request-state";
 
 type Token = () => Promise<string | undefined>;
@@ -97,18 +95,6 @@ export function useRequest<T>(props: {
     },
     retry,
   };
-}
-
-/** Drops every cached copy while nobody is signed in, so the next account never sees data of the last one (P-04). */
-export function useClearOnSignOut(signedIn: boolean): void {
-  const client = useQueryClient();
-  useEffect(() => {
-    // The held repeat-guard keys go with the account: a key of another account is never repeated (US-QS-03).
-    if (!signedIn) {
-      client.clear();
-      forgetRepeatKeys();
-    }
-  }, [client, signedIn]);
 }
 
 /** Marks everything under `queryKey` stale and loads it again; resolves when the new data is there. */
