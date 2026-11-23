@@ -11,7 +11,6 @@ import {
   type WriteOptions,
 } from "../api";
 import { todayLocal } from "../time-zone";
-import type { DescribeSaved } from "./describe-saved";
 import { appendKey, entityKey, useRepeatKey, type KeyScope, type RepeatEntity } from "./repeat-key";
 import table from "./write-action.de.json";
 
@@ -45,14 +44,6 @@ function useRefusals() {
  * offline, the buffer that takes the write as plain data (US-QS-10). A write API call passes `options` on (see `WriteOptions`).
  */
 export type WriteSend = (token: string, options: WriteOptions) => Promise<Response<unknown>>;
-
-/** One tap that writes: the send, the success text, the key scope (null for a background write) and its description (US-QS-03). */
-type WriteCall = {
-  send: WriteSend;
-  success: string;
-  scope: KeyScope | null;
-  describeSaved?: DescribeSaved | undefined;
-};
 
 /**
  * The German text of a refusal. The error-text module (the error code table) is loaded when a refusal is said, not
@@ -101,10 +92,10 @@ export function useWriteAction(
   const keys = useRepeatKey();
   const announcer = useAnnounce();
   const perform = useCallback(
-    async ({ send, success, scope, describeSaved }: WriteCall) => {
+    async (send: WriteSend, success: string, pick: () => string, scope: KeyScope | null) => {
       if (busy.current) return;
       busy.current = true;
-      const key = scope ? keys.take(scope) : newRepeatKey();
+      const key = pick();
       let buffered = false;
       const buffer = announcer
         ? (request: BufferedRequest) => {
@@ -115,9 +106,8 @@ export function useWriteAction(
       const offline = !isOnline();
       if (!offline) setRunning(true);
       const tok = buffer && offline ? "" : await token();
-      const sent = tok === undefined ? NO_TOKEN : await send(tok, { key, buffer });
-      // A key conflict names what is saved when this write describes its saved result (US-QS-03).
-      const r = scope ? keys.settle(key, sent, scope, describeSaved) : sent;
+      const r = tok === undefined ? NO_TOKEN : await send(tok, { key, buffer });
+      if (scope) keys.settle(key, r, scope);
       busy.current = false;
       setRunning(false);
       if (buffered) return;
@@ -132,13 +122,13 @@ export function useWriteAction(
   );
 
   const run = useCallback(
-    (send: WriteSend, success: string, scope: KeyScope, describeSaved?: DescribeSaved) =>
-      perform({ send, success, scope, describeSaved }),
-    [perform],
+    (send: WriteSend, success: string, scope: KeyScope) =>
+      perform(send, success, () => keys.take(scope), scope),
+    [perform, keys],
   );
 
   const runSilent = useCallback(
-    (send: WriteSend, success: string) => perform({ send, success, scope: null }),
+    (send: WriteSend, success: string) => perform(send, success, newRepeatKey, null),
     [perform],
   );
 

@@ -107,15 +107,6 @@ export const isKeyConflict = (error: { code: string }): boolean =>
   error.code === "idempotency.key_conflict";
 
 /**
- * The saved result that a key conflict carries in `data.saved` (US-QS-03): the answer of the first write under the key, the
- * same account's. `undefined` when the refusal carries none.
- */
-export const savedResult = (error: ApiError): unknown => {
-  const data: unknown = error.data;
-  return data !== null && typeof data === "object" && "saved" in data ? data.saved : undefined;
-};
-
-/**
  * The repeat-guard key (`Idempotency-Key`) of one user action (US-QS-03). It is made once, when the user acts, and every
  * send of that action carries it, so a repeat after a lost answer reaches the server as the same write and the server
  * answers it with the stored answer. The server scopes a key per account and operation and refuses the same key with

@@ -1,7 +1,14 @@
 import { useCallback, useState } from "react";
 import type { LightZone, Species, Specimen } from "@pflanzendex/core";
-import { createKey, REFERENCE_STALE_TIME, useRequest, useRepeatKey } from "../../../shared/data";
+import {
+  createKey,
+  REFERENCE_STALE_TIME,
+  releaseRepeatKey,
+  useRequest,
+  useRepeatKey,
+} from "../../../shared/data";
 import { ZONES_KEY, loadZones } from "../../../light";
+import { describeConflict } from "@/shared/data/write-action/describe-saved";
 import type { ApiError } from "../../../shared/data";
 import type { CreateInput } from "./create-input";
 import { createSpecimen } from "../model/specimens-api";
@@ -48,9 +55,8 @@ export function useCreate(
         (key) => createSpecimen(api, t, { speciesId: newSpecies.id, ...input }, { key }),
         // A create: the operation only, the species and the form are the body (US-QS-03).
         createKey("specimen", "create"),
-        describeCreated,
       );
-      if (!r.ok) return r.error;
+      if (!r.ok) return describeConflict(r.error, describeCreated);
       say(createdText(r.value));
       setCreated(r.value);
       after();
@@ -60,7 +66,7 @@ export function useCreate(
     [api, token, newSpecies, after, completed, say, keys],
   );
   // Dismissing the conflict banner frees the create key, so the next send is a new specimen (US-QS-03).
-  const dismissRefusal = useCallback(() => keys.release(createKey("specimen", "create")), [keys]);
+  const dismissRefusal = useCallback(() => releaseRepeatKey(createKey("specimen", "create")), []);
   return { created, send, zones, dismissRefusal };
 }
 

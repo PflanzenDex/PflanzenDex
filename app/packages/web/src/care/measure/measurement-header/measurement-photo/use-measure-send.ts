@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import {
   appendKey,
+  releaseRepeatKey,
   todayLocal,
   SIGN_IN,
   type ApiError,
@@ -11,6 +12,7 @@ import type { MeasurementRow } from "@pflanzendex/core";
 import { recordMeasurement, type MeasurementInput } from "../../../shared/api/measurements-api";
 import { measurementText } from "../../../shared/text";
 import { refusalText } from "@/shared/lib/error-text";
+import { describeConflict } from "@/shared/data/write-action/describe-saved";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { uploadPhoto } from "./photo-api";
@@ -63,9 +65,8 @@ export function useMeasureSend(props: {
       const r = await keys.run(
         (key) => recordMeasurement({ api, token: tok }, specimenId, input, { key }),
         measureScope(specimenId),
-        describeMeasurement,
       );
-      if (!r.ok) return r.error;
+      if (!r.ok) return describeConflict(r.error, describeMeasurement);
       const text = measurementText(r.value);
       count.current += 1;
       const save = count.current;
@@ -96,8 +97,8 @@ export function useMeasureSend(props: {
   );
   // Dismissing the conflict banner frees the key of the save, so the next save is a fresh write (US-QS-03).
   const dismissRefusal = useCallback(
-    () => keys.release(measureScope(specimenId)),
-    [keys, specimenId],
+    () => releaseRepeatKey(measureScope(specimenId)),
+    [specimenId],
   );
   const confirmed = confirmation !== null && confirmation.save === saves ? confirmation.text : null;
   const photoStatus = photoPending ? t("photoSaving") : null;
