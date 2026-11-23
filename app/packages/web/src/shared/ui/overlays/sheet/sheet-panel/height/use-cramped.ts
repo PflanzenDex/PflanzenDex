@@ -8,7 +8,7 @@ import * as React from "react";
 const CRAMPED_REM = 16;
 
 /** The height the sheet lives in: the visual viewport, which a phone keyboard shrinks (SG-FORM-02), else the window. */
-const windowHeight = (): number => window.visualViewport?.height ?? window.innerHeight;
+export const windowHeight = (): number => window.visualViewport?.height ?? window.innerHeight;
 
 /**
  * Whether the window is too short for the sheet's full header (US-QS-32, SG-FORM-02): with the keyboard open at 200 % text

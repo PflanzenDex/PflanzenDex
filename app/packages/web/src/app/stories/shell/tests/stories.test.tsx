@@ -10,6 +10,8 @@ import * as pageSkeleton from "../../../../shared/patterns/states/page-skeleton/
 import * as plantLoader from "../../../../shared/patterns/states/plant-loader/plant-loader.stories";
 import * as requestState from "../../../../shared/patterns/states/request-state/request-state.stories";
 import * as layerSheet from "../../../../shared/patterns/responsive/layer-sheet/layer-sheet.stories";
+import * as layerSheetHeights from "../../../../shared/patterns/responsive/layer-sheet/layer-sheet.heights.stories";
+import * as layerSheetStates from "../../../../shared/patterns/responsive/layer-sheet/layer-sheet.states.stories";
 import * as pager from "../../../../shared/patterns/responsive/pager/pager.stories";
 import * as responsiveModal from "../../../../shared/patterns/responsive/responsive-modal/responsive-modal.stories";
 import * as responsiveTable from "../../../../shared/patterns/responsive/responsive-table/responsive-table.stories";
@@ -21,6 +23,8 @@ const catalog = {
   Banner: composeStories(banner),
   EmptyState: composeStories(emptyState),
   LayerSheet: composeStories(layerSheet),
+  LayerSheetHeights: composeStories(layerSheetHeights),
+  LayerSheetStates: composeStories(layerSheetStates),
   Pager: composeStories(pager),
   PageSkeleton: composeStories(pageSkeleton),
   PlantLoader: composeStories(plantLoader),

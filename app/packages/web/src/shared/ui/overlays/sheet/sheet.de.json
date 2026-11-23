@@ -2,5 +2,9 @@
   "sheet.loading": "Fenster wird geladen …",
   "sheet.loadFailed": "Das Fenster konnte nicht geladen werden.",
   "sheet.retry": "Erneut versuchen",
-  "sheet.close": "Schließen"
+  "sheet.close": "Schließen",
+  "sheet.full": "Vollbild",
+  "sheet.half": "Halbe Höhe",
+  "sheet.handle": "Höhe ändern",
+  "sheet.announce": "{title}, {height}"
 }

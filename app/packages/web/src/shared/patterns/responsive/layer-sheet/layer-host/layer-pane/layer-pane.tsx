@@ -2,6 +2,7 @@ import * as React from "react";
 import { Button } from "@/shared/ui/button/button";
 import { leadingTextField } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { cn } from "@/shared/lib/utils";
+import { useScrollAccess } from "@/shared/ui/overlays/dialog/scroll-access";
 import { FormBarHostContext, rowHost } from "@/shared/ui/button/form-bar/form-bar.host";
 import { keptOpener } from "../../use-layer";
 
@@ -21,17 +22,29 @@ export function LayerBody({
   children: React.ReactNode;
   primaryAction?: React.ReactNode;
 }) {
+  const [region, setRegion] = React.useState<HTMLElement | null>(null);
+  useScrollAccess(region);
   return (
     <div data-layer-body="" className="flex min-h-0 flex-1 flex-col gap-4">
-      {/* Below lg the sheet or dialog around it scrolls, so a sticky bar inside sticks to that; from lg the pane scrolls this region. */}
+      {/* The content of the layer is the scroll region of the sheet, the dialog and the pane: the title and the primary action stay (US-QS-15). */}
       {/* A list that pages by free height (`data-page-fit`) needs this region to pass the height down (issue 1156). */}
+      {/* The margin and the padding are the 1 rem that the sheet, the dialog and the pane keep around the content: the region reaches to their edge, so the focus ring of a control at its edge is not clipped and a content that is a little too wide spills into the padding, as it did before the region scrolled. */}
       <div
+        ref={setRegion}
         data-scroll-region=""
-        className={cn("min-h-0 flex-1 lg:overflow-y-auto lg:overscroll-contain", FIT_FLEX)}
+        className={cn(
+          "-m-4 min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+          FIT_FLEX,
+        )}
       >
         {children}
       </div>
-      {primaryAction ? <div className="flex flex-col gap-2">{primaryAction}</div> : null}
+      {/* The sheet adds the height of what stays in place to its header, to see whether half height holds title and actions (US-QS-15). */}
+      {primaryAction ? (
+        <div data-sheet-pinned="" className="flex flex-col gap-2">
+          {primaryAction}
+        </div>
+      ) : null}
     </div>
   );
 }

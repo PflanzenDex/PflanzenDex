@@ -41,12 +41,13 @@ describe("Sheet (US-QS-07, DS-23, DS-40)", () => {
     expect(await screen.findByRole("dialog", { name: "Filter" })).toBeTruthy();
   });
 
-  it("US-QS-07 · DS-23 the content respects the safe area and 90dvh", async () => {
+  it("US-QS-07 · DS-23 the content respects the safe area; without a height of its own (US-QS-15) it stops at 90dvh", async () => {
     render(<Example />);
     await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
     const cls = (await screen.findByRole("dialog")).className;
     expect(cls).toContain("pb-[env(safe-area-inset-bottom)]");
-    expect(cls).toContain("max-h-[90dvh]");
+    expect(cls).toContain("max-h-[var(--sheet-max,90dvh)]");
+    expect(cls).toContain("h-(--sheet-height)");
   });
 
   it("US-QS-15 · DS-37 the sheet title, which takes the focus by script, draws no browser outline", async () => {

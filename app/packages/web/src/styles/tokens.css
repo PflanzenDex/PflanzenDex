@@ -457,6 +457,16 @@
 }
 
 /*
+ * Sheet heights (US-QS-15, owner decision 4 of 2026-11-21, issue 2412): a sheet with two heights slides between half and
+ * full height over the same token; Vaul's rule moves a sheet by `transform` only. A drag on the handle writes
+ * `transition: none` into the sheet's style while the finger moves. With reduced motion the sheet marks itself `snap`,
+ * keeps Vaul's rule and changes its height at once (the reduced-motion blocks above end every transition anyway).
+ */
+[data-vaul-drawer][data-sheet-motion="slide"] {
+  transition-property: transform, height;
+}
+
+/*
  * Route transition (US-QS-14, ADR 0011 decision 5): while a view change runs (the marker is set by the router for its
  * duration only), the main content cross-fades over `--motion-slow`; the app bar and navigation stay still. The page
  * snapshot does not animate, and the main group does not morph, so the content never stretches. Under reduced

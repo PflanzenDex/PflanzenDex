@@ -1,10 +1,13 @@
 import * as React from "react";
 import { Drawer } from "vaul";
-import { cn, mergeRefs } from "@/shared/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { StatusBarDim } from "@/shared/platform/device/status-bar/status-bar";
 import { LayerScope } from "../../layer-scope/layer-scope";
-import { focusOnOpen } from "./open-focus";
-import { useCrampedWindow } from "./use-cramped";
+import { SheetHandle } from "./height/sheet-handle/sheet-handle";
+import { useSnapBack } from "./height/sheet-handle/snap-back";
+import { useCrampedWindow } from "./height/use-cramped";
+import { useSheetHeight } from "./height/use-sheet-height";
+import { useSheetFocus } from "./open-focus";
 import { TitleRow } from "./title-row/title-row";
 
 export type SheetPanelProps = Omit<
@@ -27,76 +30,21 @@ export type SheetPanelProps = Omit<
   barActive?: boolean;
 };
 
-/** Vaul's timing of a reset (`resetDrawer` of Vaul 1.1): half a second on the sheet and on its overlay. */
-const SNAP = "0.5s cubic-bezier(0.32, 0.72, 0, 1)";
-
 /**
- * Brings the sheet and its overlay back to their place. Vaul moves them with the drag and only resets them when it
- * releases a sheet that stays open; a close that the parent refused (typed input unsaved, US-QS-32) leaves them where the
- * finger put them, so the sheet does it here.
+ * The look of the sheet. Its height comes from two CSS variables that `useSheetHeight` sets (`--sheet-height`, `--sheet-max`;
+ * without them the sheet is as high as its content, at most 90 %). The class `has-[[data-page-fit]]:h-[90dvh]` gives a list that pages by free height (`data-page-fit`)
+ * the full height to fill (issue 1156); the sheet's own height (US-QS-15) leaves a sheet with such a list as it is until
+ * `Pager` is replaced.
  */
-function snapBack(sheet: HTMLElement | null, overlay: HTMLElement | null): void {
-  if (sheet) {
-    sheet.style.transition = `transform ${SNAP}`;
-    sheet.style.transform = "translate3d(0, 0, 0)";
-  }
-  if (overlay) {
-    overlay.style.transition = `opacity ${SNAP}`;
-    overlay.style.opacity = "1";
-  }
-}
+const SHEET =
+  "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-(--sheet-height) max-h-[var(--sheet-max,90dvh)] flex-col rounded-t-card bg-card shadow-elevation-2 pb-[env(safe-area-inset-bottom)] text-foreground has-[[data-page-fit]]:h-[90dvh]";
 
-/** Vaul's focus on close: the caller's handler first, then the opener when it is still on the page. */
-function closeFocus(
-  opener: { current: HTMLElement | null },
-  next: ((e: Event) => void) | undefined,
-) {
-  return (e: Event) => {
-    next?.(e);
-    if (e.defaultPrevented) return;
-    e.preventDefault();
-    if (opener.current?.isConnected) opener.current.focus();
-  };
-}
-
-/**
- * Vaul's focus on open: the opener is remembered, then the caller's handler runs, then the focus goes where Radix puts it
- * when the handler left it (`focusOnOpen`, which passes the close button over).
- */
-function openFocus(
-  opener: { current: HTMLElement | null },
-  close: { current: HTMLElement | null },
-  next: ((e: Event) => void) | undefined,
-) {
-  return (e: Event) => {
-    opener.current = document.activeElement as HTMLElement | null;
-    next?.(e);
-    if (!e.defaultPrevented) focusOnOpen(e, close.current);
-  };
-}
-
-/**
- * Snaps the sheet back at each close the parent refused (US-QS-32); a sheet that mounts after one does not move. Gives the
- * refs of the sheet and of its overlay.
- */
-function useSnapBack(closeRefusals: number, ref: React.ForwardedRef<HTMLDivElement>) {
-  const sheet = React.useRef<HTMLDivElement | null>(null);
-  const overlay = React.useRef<HTMLDivElement | null>(null);
-  // One callback per forwarded ref: a new one each render would make Vaul detach and attach the sheet on every render.
-  const content = React.useMemo(() => mergeRefs(ref, sheet), [ref]);
-  const seen = React.useRef(closeRefusals);
-  React.useEffect(() => {
-    if (closeRefusals === seen.current) return;
-    seen.current = closeRefusals;
-    snapBack(sheet.current, overlay.current);
-  }, [closeRefusals]);
-  return { content, overlay };
-}
-
-/** The grabber is drawn in the input boundary token: 4.8:1 on the card in light, 4.4:1 in dark (WCAG 1.4.11). */
-function Grabber() {
+/** The backdrop; it dims the status bar as long as it is on screen. */
+function Scrim(props: { overlay: React.Ref<HTMLDivElement> }) {
   return (
-    <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-input" />
+    <Drawer.Overlay ref={props.overlay} className="fixed inset-0 z-50 bg-scrim">
+      <StatusBarDim />
+    </Drawer.Overlay>
   );
 }
 
@@ -110,23 +58,63 @@ function SheetDescription(props: { text: string | undefined }) {
   );
 }
 
-/** The scrolling body of the sheet: it scrolls, the title above it stays (DS-61). */
-function SheetBody({ children }: { children: React.ReactNode }) {
+type SheetHeaderProps = {
+  title: string;
+  description: string | undefined;
+  closeLabel: string;
+  onBarSlot: ((element: HTMLElement | null) => void) | undefined;
+  barActive: boolean | undefined;
+  height: ReturnType<typeof useSheetHeight>;
+  cramped: boolean;
+  close: React.RefObject<HTMLButtonElement | null>;
+  onClose: () => void;
+};
+
+/** What stays in place above the body: the handle, the title row with the toggle of the height and the close button, the description. */
+function SheetHeader({ height, cramped, ...props }: SheetHeaderProps) {
   return (
-    <div
-      data-scroll-region=""
-      className="overflow-y-auto overscroll-contain p-4 has-[[data-page-fit]]:flex has-[[data-page-fit]]:min-h-0 has-[[data-page-fit]]:flex-1 has-[[data-page-fit]]:flex-col"
-    >
-      <LayerScope.Provider value>{children}</LayerScope.Provider>
+    <div ref={height.headerRef} data-sheet-header="" className="shrink-0">
+      {cramped ? null : <SheetHandle drag={height.drag} keys={height.keys} />}
+      <TitleRow
+        title={props.title}
+        closeLabel={props.closeLabel}
+        close={props.close}
+        onClose={props.onClose}
+        barSlot={props.onBarSlot}
+        barActive={props.barActive}
+        compact={cramped}
+        toggle={height.toggle}
+        handle={!cramped}
+      />
+      <SheetDescription text={props.description} />
     </div>
   );
 }
 
 /**
- * The Vaul part of the bottom sheet (US-QS-07, DS-23, DS-40, DS-08): drag handle, safe-area padding, max height 90dvh.
+ * The scrolling body of the sheet: it scrolls, the header above it stays (DS-61, US-QS-15). A layer inside it (`LayerBody`)
+ * is a column that takes the height of the body, so its content scrolls under the layer's action, which stays.
+ */
+function SheetBody(props: { children: React.ReactNode; ref: React.Ref<HTMLDivElement> }) {
+  return (
+    <div
+      ref={props.ref}
+      data-sheet-body=""
+      data-scroll-region=""
+      className="overflow-y-auto overscroll-contain p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring has-[[data-layer-body]]:flex has-[[data-layer-body]]:min-h-0 has-[[data-layer-body]]:flex-1 has-[[data-layer-body]]:flex-col has-[[data-page-fit]]:flex has-[[data-page-fit]]:min-h-0 has-[[data-page-fit]]:flex-1 has-[[data-page-fit]]:flex-col"
+    >
+      <LayerScope.Provider value>{props.children}</LayerScope.Provider>
+    </div>
+  );
+}
+
+/**
+ * The Vaul part of the bottom sheet (US-QS-07, DS-23, DS-40, DS-08): handle, safe-area padding, the heights of US-QS-15.
  * `autoFocus` is required: Vaul 1.1 cancels Radix's focus-on-open by default, which left the focus on the trigger
- * and Tab walking the page behind the sheet (US-QS-14, issue 604, WCAG 2.4.3).
- * Only `sheet.tsx` imports this file, and only through a dynamic import, so Vaul stays out of the initial JS.
+ * and Tab walking the page behind the sheet (US-QS-14, issue 604, WCAG 2.4.3). `handleOnly` turns Vaul's own drag off:
+ * the sheet's height changes by the handle only (`useSheetHeight`), and a swipe on the content scrolls it.
+ * Only `sheet.tsx` imports this file, and only through a dynamic import, so Vaul and the height code stay out of the
+ * initial JS.
  */
 const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
   (
@@ -147,42 +135,35 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
     },
     ref,
   ) => {
-    // Radix returns focus through its Dialog.Trigger, which the sheet does not use, so remember the opener here.
-    const opener = React.useRef<HTMLElement | null>(null);
-    const close = React.useRef<HTMLButtonElement | null>(null);
-    const { content, overlay } = useSnapBack(closeRefusals, ref);
-    // With the keyboard open at a large text size the full header leaves no room for a field (US-QS-32, SG-FORM-02).
+    const focus = useSheetFocus(onOpenAutoFocus, onCloseAutoFocus);
+    const [sheet, setSheet] = React.useState<HTMLDivElement | null>(null);
+    const { content, overlay } = useSnapBack(closeRefusals, ref, setSheet);
     const cramped = useCrampedWindow(barActive === true);
+    const height = useSheetHeight({ title, open, sheet, cramped, closeRefusals, onOpenChange });
     return (
-      <Drawer.Root open={open} onOpenChange={onOpenChange} autoFocus>
+      <Drawer.Root open={open} onOpenChange={onOpenChange} autoFocus handleOnly>
         <Drawer.Portal>
-          <Drawer.Overlay ref={overlay} className="fixed inset-0 z-50 bg-scrim">
-            <StatusBarDim />
-          </Drawer.Overlay>
+          <Scrim overlay={overlay} />
           <Drawer.Content
             ref={content}
-            className={cn(
-              "fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[90dvh] flex-col rounded-t-card bg-card shadow-elevation-2 pb-[env(safe-area-inset-bottom)] text-foreground",
-              // A list that pages by free height (`data-page-fit`) gets the full height to fill (issue 1156).
-              "has-[[data-page-fit]]:h-[90dvh]",
-              className,
-            )}
+            className={cn(SHEET, className)}
             {...props}
-            onOpenAutoFocus={openFocus(opener, close, onOpenAutoFocus)}
-            onCloseAutoFocus={closeFocus(opener, onCloseAutoFocus)}
+            {...height.attributes}
+            onOpenAutoFocus={focus.onOpenAutoFocus}
+            onCloseAutoFocus={focus.onCloseAutoFocus}
           >
-            {cramped ? null : <Grabber />}
-            <TitleRow
+            <SheetHeader
+              height={height}
+              cramped={cramped}
               title={title}
+              description={description}
               closeLabel={closeLabel}
-              close={close}
+              close={focus.close}
               onClose={() => onOpenChange(false)}
-              barSlot={onBarSlot}
+              onBarSlot={onBarSlot}
               barActive={barActive}
-              compact={cramped}
             />
-            <SheetDescription text={description} />
-            <SheetBody>{children}</SheetBody>
+            <SheetBody ref={height.bodyRef}>{children}</SheetBody>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
