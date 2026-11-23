@@ -59,9 +59,9 @@ export function useWaterWrite(
   const again = useInvalidate(["monitoring", "watering"]);
   const undo = useUndo<string>();
   const answer = useRef<Answer>({ made: false, day: null, removed: 0 });
-  const write = useWriteAction(token, again, (message, kind) => {
+  const write = useWriteAction(token, again, (message, kind, onClose) => {
     if (kind === "error") {
-      say(message, kind);
+      say(message, kind, onClose);
       return;
     }
     if (answer.current.made) {
@@ -74,13 +74,17 @@ export function useWaterWrite(
     setLast(day);
     say(t("last", { when: summaryDate(day, todayLocal()) }));
   });
-  const restore = useWriteAction(token, again, (message, kind) => {
+  const restore = useWriteAction(token, again, (message, kind, onClose) => {
     if (kind !== "error") {
       undo.release(specimen.id);
       // A watering taken back is no "Zuletzt gegossen: heute" any more, whatever a later tap said while the undo was open.
       setLast(null);
     }
-    say(kind !== "error" && answer.current.removed === 0 ? t("nothingToUndo") : message, kind);
+    say(
+      kind !== "error" && answer.current.removed === 0 ? t("nothingToUndo") : message,
+      kind,
+      onClose,
+    );
   });
   const water = () => {
     // The line of an earlier write is over once a new one starts: it may come back only from this write's own answer.

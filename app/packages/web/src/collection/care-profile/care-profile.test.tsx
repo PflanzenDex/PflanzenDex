@@ -458,6 +458,27 @@ describe("US-BES-09 change my deviation", () => {
       "Diesen Standort gibt es nicht.",
     );
     expect(screen.queryByText(SAVED)).toBeNull();
+    // Only a key conflict has the control that frees its key (US-QS-03).
+    expect(screen.queryByRole("button", { name: "Hinweis schließen" })).toBeNull();
+  });
+
+  it("US-QS-03 · P-10 a key conflict of the save offers 'Hinweis schließen', which clears the notice and returns the focus to the save", async () => {
+    fakeServer({
+      entries: [entry()],
+      save: () => response(409, { error: { code: "idempotency.key_conflict", text: "Konflikt." } }),
+    });
+    open();
+    await userEvent.selectOptions(
+      await screen.findByLabelText("Soll-Standort Ruhephase für „Bogenhanf“"),
+      "l2",
+    );
+    const save = screen.getByRole("button", { name: "Sichern: Bogenhanf" });
+    await userEvent.click(save);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Deine erste Eingabe ist gesichert.");
+    await userEvent.click(within(alert).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(document.activeElement).toBe(save);
   });
 
   it("US-QS-32 · SG-COLOR-06 the save is inactive while nothing changed and turns into the primary fill once a value changed, never white on white (issue 1969)", async () => {

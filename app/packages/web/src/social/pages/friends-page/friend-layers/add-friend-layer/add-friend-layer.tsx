@@ -53,7 +53,12 @@ function useSendRequest(api: string, token: Token, reload: () => void) {
     );
     return ok;
   };
-  return { send, refusal, write, sent, edit };
+  // The key conflict of a request is shown above the code field; its control frees the key of the request (US-QS-03).
+  const dismiss = useCallback(() => {
+    write.error?.dismiss?.();
+    setRefusal(null);
+  }, [write.error]);
+  return { send, refusal, write, sent, edit, dismiss };
 }
 
 type Tab = "invite" | "code";
@@ -120,6 +125,7 @@ export function AddFriendLayer(props: { api: string; token: Token; onWritten: ()
               refusal={request.refusal}
               sent={request.sent}
               onEdit={request.edit}
+              onDismiss={request.dismiss}
               onSend={request.send}
             />
           )}

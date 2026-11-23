@@ -2,6 +2,7 @@
 // "Gegossen" and "Messen". The address carries only the specimen id, which is opaque (FR-BES-25); nothing of the plant
 // is read before the keeper is signed in (the app shows the sign-in first), and a foreign id looks like an unknown one.
 import { useState } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { Tag } from "lucide-react";
 import { isActive, type Specimen } from "@pflanzendex/core";
@@ -135,6 +136,7 @@ function Quick(props: { api: string; token: Token; specimen: Specimen; onMeasure
       {write.error ? (
         <p role="alert" className="rounded-lg border border-destructive p-2 text-sm">
           {errorText(write.error.code)}
+          <RefusalClose error={write.error} />
         </p>
       ) : null}
       <Button asChild variant="link">

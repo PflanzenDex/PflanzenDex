@@ -31,6 +31,9 @@ const ICONS: Record<BannerVariant, LucideIcon> = {
 
 export type BannerAction = { label: string; onClick: () => void };
 
+/** The accessible name of the close control of a notice (German). */
+const DISMISS_LABEL = "Hinweis schließen";
+
 export type BannerProps = Omit<React.HTMLAttributes<HTMLDivElement>, "title"> &
   VariantProps<typeof bannerVariants> & {
     /** Short heading; the text below says what to do next (P-09). */
@@ -55,7 +58,7 @@ const Banner = React.forwardRef<HTMLDivElement, BannerProps>(
       title,
       action,
       onDismiss,
-      dismissLabel = "Hinweis schließen",
+      dismissLabel = DISMISS_LABEL,
       children,
       ...props
     },
@@ -108,4 +111,25 @@ const Banner = React.forwardRef<HTMLDivElement, BannerProps>(
 );
 Banner.displayName = "Banner";
 
-export { Banner, bannerVariants };
+/**
+ * The one control of a key conflict in a notice that is no Banner (a refusal line of a form or a list, US-QS-03, P-10):
+ * "Hinweis schließen" frees the key the write holds and clears the refusal, so the keeper can go on. The error of
+ * `useWriteAction` carries `dismiss` for `idempotency.key_conflict` only, so every other refusal shows none. Place it
+ * inside the notice, after its text; it is `type="button"`, so it never submits a form around it.
+ */
+function RefusalClose({ error }: { error: { dismiss?: (() => void) | undefined } | null }) {
+  if (!error?.dismiss) return null;
+  return (
+    <Button
+      type="button"
+      variant="tinted"
+      size="sm"
+      className="mt-2 flex w-fit"
+      onClick={error.dismiss}
+    >
+      {DISMISS_LABEL}
+    </Button>
+  );
+}
+
+export { Banner, RefusalClose, bannerVariants };

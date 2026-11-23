@@ -8,7 +8,7 @@ import {
   useRepeatKey,
 } from "../../../shared/data";
 import { ZONES_KEY, loadZones } from "../../../light";
-import { describeConflict } from "@/shared/data/write-action/describe-saved";
+import { describeConflict } from "@/shared/data/write-action/conflict/describe-saved";
 import type { ApiError } from "../../../shared/data";
 import type { CreateInput } from "./create-input";
 import { createSpecimen } from "../model/specimens-api";

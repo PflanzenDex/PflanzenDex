@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "../../../shared/data";
@@ -83,6 +83,20 @@ describe("DM-TAU-02 the switch of a wish for friends", () => {
     await userEvent.click(await screen.findByRole("checkbox"));
     expect((await screen.findByRole("alert")).textContent).toContain("gekauft");
     expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(false);
+    // Only a key conflict has the control that frees its key (US-QS-03).
+    expect(screen.queryByRole("button", { name: "Hinweis schließen" })).toBeNull();
+  });
+
+  it("US-QS-03 · P-10 a key conflict of the switch offers 'Hinweis schließen': the notice goes and the focus returns to the switch", async () => {
+    server([], () => response(409, { error: { code: "idempotency.key_conflict", text: "x" } }));
+    render(<FriendsSwitch {...props} />);
+    const box = await screen.findByRole("checkbox");
+    await userEvent.click(box);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Deine erste Eingabe ist gesichert.");
+    await userEvent.click(within(alert).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole("checkbox"));
   });
 
   it("US-DEV-06 the switch does not exist while the social part is off", async () => {

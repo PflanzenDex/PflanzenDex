@@ -28,7 +28,7 @@ export function ProfileList(props: {
     <div className="@container">
       {write.message && <Status>{write.message}</Status>}
       {write.error && (
-        <ErrorNotice>
+        <ErrorNotice onDismiss={write.error.dismiss}>
           <p>{refusalText(write.error)}</p>
         </ErrorNotice>
       )}

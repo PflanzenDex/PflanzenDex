@@ -1,4 +1,5 @@
 import type { Specimen } from "@pflanzendex/core";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { entityRun, useInvalidate, useWriteAction } from "@/shared/data";
 import { errorText } from "@/shared/lib/error-text";
 import { UNKNOWN, dateText } from "@/shared/lib/format";
@@ -41,6 +42,7 @@ export function Archived(props: { api: string; token: Token; id: string; specime
       {write.error ? (
         <p role="alert" className="rounded-lg border border-destructive p-2 text-sm">
           {errorText(write.error.code)}
+          <RefusalClose error={write.error} />
         </p>
       ) : null}
       <Button

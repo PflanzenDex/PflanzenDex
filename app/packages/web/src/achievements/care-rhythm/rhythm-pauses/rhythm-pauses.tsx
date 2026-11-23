@@ -1,4 +1,5 @@
 import { forwardRef, useId, useRef, useState } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { localToday, MAX_PAUSE_DAYS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button/button";
 import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
@@ -165,6 +166,7 @@ export function RhythmPauses(props: { api: string; token: Token; pauses: RhythmP
       {write.error && write.error.code !== TOO_LONG && (
         <p role="alert" className="mt-2 text-destructive">
           {errorText(write.error.code)}
+          <RefusalClose error={write.error} />
         </p>
       )}
       {write.message && (

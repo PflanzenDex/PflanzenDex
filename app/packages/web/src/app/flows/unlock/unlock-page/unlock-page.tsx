@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { Link, useParams } from "react-router";
 import { Button } from "@/shared/ui/button/button";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -95,7 +96,7 @@ function LockedBody(props: { entry: Entry; name: string; running: boolean; onUnl
 /** The outcome of the tap: what changed (announced politely) or the refusal, which stays visible (P-10). */
 function WriteNotes(props: {
   message: string | null;
-  error: { code: string; text: string } | null;
+  error: { code: string; text: string; dismiss?: (() => void) | undefined } | null;
 }) {
   const { message, error } = props;
   return (
@@ -108,6 +109,7 @@ function WriteNotes(props: {
       {error && (
         <p role="alert" className={ALERT}>
           {refusalText(error)}
+          <RefusalClose error={error} />
         </p>
       )}
     </>

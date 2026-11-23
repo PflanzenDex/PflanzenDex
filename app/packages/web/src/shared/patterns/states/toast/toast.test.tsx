@@ -154,6 +154,22 @@ describe("Toast (US-QS-07, P-10)", () => {
     expect(screen.queryByText("Zwei.")).toBeNull();
   });
 
+  it("US-QS-03 · P-10 onClose runs once when the toast is gone, by its close button, by Escape or by its time (a key conflict frees its key then)", () => {
+    setup();
+    const closed = vi.fn();
+    show({ message: "Eins.", kind: "error", onClose: closed });
+    fireEvent.click(screen.getByRole("button", { name: "Meldung schließen" }));
+    expect(closed).toHaveBeenCalledTimes(1);
+    show({ message: "Zwei.", kind: "error", onClose: closed });
+    fireEvent.keyDown(screen.getByRole("button", { name: "Meldung schließen" }), { key: "Escape" });
+    expect(closed).toHaveBeenCalledTimes(2);
+    show({ message: "Drei.", kind: "error", onClose: closed });
+    expect(closed).toHaveBeenCalledTimes(2);
+    wait(toastDuration({ kind: "error", message: "Drei." }));
+    expect(screen.queryByText("Drei.")).toBeNull();
+    expect(closed).toHaveBeenCalledTimes(3);
+  });
+
   it("US-QS-07 · dismiss by id removes only that toast", () => {
     setup();
     let id = 0;
@@ -225,6 +241,18 @@ describe("US-QS-32 · a result is said, a refusal stays a toast (SG-FEED-01, SG-
     act(() => say("Sichern fehlgeschlagen.", "error"));
     expect(within(region("assertive")).getByText("Sichern fehlgeschlagen.")).toBeTruthy();
     expect(announcer()?.textContent).toBe("");
+  });
+
+  it("US-QS-03 · useSay hands the onClose of a refusal to its toast", () => {
+    render(
+      <ToastProvider>
+        <CaptureSay />
+      </ToastProvider>,
+    );
+    const closed = vi.fn();
+    act(() => say("Deine erste Eingabe ist gesichert.", "error", closed));
+    fireEvent.click(screen.getByRole("button", { name: "Meldung schließen" }));
+    expect(closed).toHaveBeenCalledTimes(1);
   });
 
   it("US-QS-32 · without an announcer above, a success is a toast, so nothing is lost (P-10)", () => {

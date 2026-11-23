@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, renderHook } from "@testing-library/react";
+import { act, cleanup, render, renderHook, screen } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -20,7 +20,7 @@ import {
   type Response,
   type WriteOptions,
 } from "../index";
-import { describeConflict } from "./describe-saved";
+import { describeConflict } from "./conflict/describe-saved";
 import { useWriteAction } from "./use-write-action";
 
 afterEach(() => {
@@ -516,6 +516,97 @@ describe("US-QS-03 · a key conflict names what is saved", () => {
       "POST /specimens/e10/measurements",
       "POST /specimens/e10/measurements",
     ]);
+  });
+});
+
+describe("US-QS-03 · the dismiss of a key conflict is part of the write layer (issue 2469)", () => {
+  const measure = (server: ReturnType<typeof keyServer>, id: string, value: number) =>
+    send(server.fetchFn, "POST", `/specimens/${id}/measurements`, { value });
+  const hookOf = () =>
+    renderHook(() =>
+      useWriteAction(
+        async () => "tok",
+        () => undefined,
+      ),
+    );
+
+  it("US-QS-03 the error of a key conflict carries dismiss: it frees the held key and clears the refusal, the next tap sends a fresh key", async () => {
+    const server = keyServer(1);
+    const { result } = hookOf();
+    const scope = appendKey("specimen", "e20", "measure");
+    await tap(result.current, measure(server, "e20", 1), scope);
+    expect(result.current.error?.dismiss).toBeUndefined();
+    await tap(result.current, measure(server, "e20", 2), scope);
+    expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    expect(typeof result.current.error?.dismiss).toBe("function");
+    // Still held: another edited tap is refused again, and no second record exists.
+    await tap(result.current, measure(server, "e20", 3), scope);
+    expect(result.current.error?.code).toBe("idempotency.key_conflict");
+    act(() => result.current.error?.dismiss?.());
+    expect(result.current.error).toBeNull();
+    await tap(result.current, measure(server, "e20", 3), scope);
+    expect(result.current.error).toBeNull();
+    expect(server.keys[3]).not.toBe(server.keys[0]);
+    expect(server.applied).toEqual([
+      "POST /specimens/e20/measurements",
+      "POST /specimens/e20/measurements",
+    ]);
+  });
+
+  it("US-QS-03 a refusal that is no key conflict carries no dismiss, and dismissRefusal never frees the key of a lost answer", async () => {
+    const server = keyServer(1);
+    const { result } = hookOf();
+    const scope = appendKey("specimen", "e21", "measure");
+    await tap(result.current, measure(server, "e21", 1), scope);
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    expect(result.current.error?.dismiss).toBeUndefined();
+    act(() => result.current.dismissRefusal());
+    expect(result.current.error).toBeNull();
+    // The answer was lost: the retap repeats the key, so the server answers with the stored answer, one record.
+    await tap(result.current, measure(server, "e21", 1), scope);
+    expect(server.keys[1]).toBe(server.keys[0]);
+    expect(server.applied).toEqual(["POST /specimens/e21/measurements"]);
+  });
+
+  it("US-QS-03 a stale dismiss frees nothing: a later lost answer of the action keeps its key for the retap, one record", async () => {
+    const server = keyServer(2);
+    const { result } = hookOf();
+    const scope = appendKey("specimen", "e22", "measure");
+    await tap(result.current, measure(server, "e22", 1), scope);
+    await tap(result.current, measure(server, "e22", 2), scope);
+    const stale = result.current.error?.dismiss;
+    expect(stale).toBeDefined();
+    // The original body repeats the key; its answer is lost again, so the key stays held.
+    await tap(result.current, measure(server, "e22", 1), scope);
+    expect(result.current.error?.code).toBe("network.not_reachable");
+    act(() => stale?.());
+    await tap(result.current, measure(server, "e22", 1), scope);
+    expect(result.current.error).toBeNull();
+    expect(new Set(server.keys).size).toBe(1);
+    expect(server.applied).toEqual(["POST /specimens/e22/measurements"]);
+  });
+
+  it("US-QS-03 P-10 dismissing returns the focus to the control that started the write", async () => {
+    const server = keyServer(1);
+    let hook!: ReturnType<typeof useWriteAction>;
+    function Page() {
+      hook = useWriteAction(
+        async () => "tok",
+        () => undefined,
+      );
+      return <button type="button">Sichern</button>;
+    }
+    render(<Page />);
+    const starter = screen.getByRole("button", { name: "Sichern" });
+    const scope = appendKey("specimen", "e23", "measure");
+    starter.focus();
+    await tap(hook, measure(server, "e23", 1), scope);
+    await tap(hook, measure(server, "e23", 2), scope);
+    expect(hook.error?.code).toBe("idempotency.key_conflict");
+    starter.blur();
+    expect(document.activeElement).toBe(document.body);
+    act(() => hook.error?.dismiss?.());
+    expect(document.activeElement).toBe(starter);
   });
 });
 

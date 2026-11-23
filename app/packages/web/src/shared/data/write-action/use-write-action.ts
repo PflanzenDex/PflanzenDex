@@ -12,6 +12,7 @@ import {
 } from "../api";
 import { todayLocal } from "../time-zone";
 import { appendKey, entityKey, useRepeatKey, type KeyScope, type RepeatEntity } from "./repeat-key";
+import { useRefusalDismiss } from "./conflict/refusal-dismiss";
 import table from "./write-action.de.json";
 
 export { WRITE_SUCCEEDED };
@@ -23,8 +24,11 @@ export const SIGN_IN: ApiError = { code: "access.not_signed_in", text: "Bitte me
 /** The answer of a write that was not sent: no token. The client made it, so the held key stays (US-QS-03). */
 const NO_TOKEN = { ok: false as const, error: SIGN_IN };
 
-/** Says the result of a write: the German text and its kind (`useSay` of the toast provider: a success is announced, an error is a toast, US-QS-32). */
-export type WriteSay = (message: string, kind?: "success" | "error") => void;
+/**
+ * Says the result of a write: the German text and its kind (`useSay` of the toast provider: a success is announced, an error is a
+ * toast, US-QS-32). A key conflict comes with `onClose`, which the toast calls when it is gone: it frees the key (US-QS-03).
+ */
+export type WriteSay = (message: string, kind?: "success" | "error", onClose?: () => void) => void;
 
 /** The latest refusal and how many there were: a repeated refusal can be the very same error object (F-0160). */
 function useRefusals() {
@@ -57,6 +61,12 @@ const refusalTextLazily = (error: ApiError) =>
     () => t("refusal"),
   );
 
+/** Says the result of a write to `say`: a success as it is, a refusal by the text of its code (`onClose` of a key conflict). */
+const sayResult = (say: WriteSay, r: Response<unknown>, success: string, onClose?: () => void) => {
+  if (r.ok) say(success);
+  else void refusalTextLazily(r.error).then((text) => say(text, "error", onClose));
+};
+
 /**
  * One tap that writes: only one request runs at a time (a double tap sends one), afterwards `after` reloads the page
  * so it shows the real state, and the message says what changed (P-09). A refusal stays visible (P-10) and no message
@@ -75,6 +85,11 @@ const refusalTextLazily = (error: ApiError) =>
  * `failures` counts the refused writes: a repeated refusal can be the very same error object, so `error` alone cannot tell
  * a new one from the old (F-0160).
  *
+ * A key conflict (`idempotency.key_conflict`) holds the key of its action until the keeper dismisses it (US-QS-03, P-10): its
+ * `error` carries `dismiss`, which frees that key, clears the refusal and returns the focus to the control that started the
+ * write; the notice that shows the refusal offers it as "Hinweis schließen" (`RefusalClose`, `RefusalAlert`, `ErrorNotice`).
+ * `dismissRefusal` is the same function for a caller that has the hook at hand.
+ *
  * `runSilent` is a background write (a seen mark, a feed mark, the zone defaults): a fresh key per send, held nothing, so
  * it frees no held key of the page (US-QS-03). `runQuiet` is a bulk write that says each of its results itself (the
  * buffered entries of a bulk share): it calls no `after` and says nothing, and it keeps the page busy until the bulk is
@@ -91,10 +106,12 @@ export function useWriteAction(
   const busy = useRef(false);
   const keys = useRepeatKey();
   const announcer = useAnnounce();
+  const { start, answered, dismissRefusal } = useRefusalDismiss(record);
   const perform = useCallback(
     async (send: WriteSend, success: string, pick: () => string, scope: KeyScope | null) => {
       if (busy.current) return;
       busy.current = true;
+      start();
       const key = pick();
       let buffered = false;
       const buffer = announcer
@@ -111,14 +128,12 @@ export function useWriteAction(
       busy.current = false;
       setRunning(false);
       if (buffered) return;
-      record(r.ok ? null : r.error);
-      if (say) {
-        if (r.ok) say(success);
-        else void refusalTextLazily(r.error).then((text) => say(text, "error"));
-      } else setMessage(r.ok ? success : null);
+      const shown = answered(r.ok ? null : r.error, scope);
+      if (say) sayResult(say, r, success, shown.onClose);
+      else setMessage(r.ok ? success : null);
       after();
     },
-    [token, after, announcer, say, keys],
+    [token, after, announcer, say, keys, start, answered],
   );
 
   const run = useCallback(
@@ -142,7 +157,7 @@ export function useWriteAction(
     });
   }, []);
 
-  return { running, message, error, failures, run, runSilent, runQuiet };
+  return { running, message, error, failures, dismissRefusal, run, runSilent, runQuiet };
 }
 
 /**

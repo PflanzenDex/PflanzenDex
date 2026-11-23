@@ -7,6 +7,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";
 import { DraftsSkeleton } from "./drafts-section.skeleton";
 import { EmptySheet, NEW_TASK_LAYER } from "../clients-section/connect-step/connect-step";
+import { WriteNotes } from "../write-notes/write-notes";
 
 const ui = texts(table);
 
@@ -135,16 +136,7 @@ function List(props: { api: string; token: Token; rows: readonly AiDraftRow[] })
           )}
         />
       )}
-      {write.error && (
-        <p role="alert" className="rounded-lg border border-destructive p-3">
-          {write.error.text}
-        </p>
-      )}
-      {write.message && (
-        <p role="status" className="rounded-lg border border-border p-3">
-          {write.message}
-        </p>
-      )}
+      <WriteNotes error={write.error} status={write.message} />
     </div>
   );
 }

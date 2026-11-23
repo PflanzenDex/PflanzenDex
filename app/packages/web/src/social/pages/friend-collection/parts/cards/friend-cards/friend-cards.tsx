@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import type { FriendCard as Card } from "@pflanzendex/core";
 import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
@@ -57,7 +58,10 @@ function Next(props: { total: number; shown: number; filter: Filter; name: strin
 }
 
 /** The outcome of a wish that is put on the wishlist (US-SOZ-07): what changed, or the refusal (P-10). */
-function WishNotice(props: { message: string | null; error: { code: string } | null }) {
+function WishNotice(props: {
+  message: string | null;
+  error: { code: string; dismiss?: (() => void) | undefined } | null;
+}) {
   return (
     <>
       {props.message && (
@@ -68,6 +72,7 @@ function WishNotice(props: { message: string | null; error: { code: string } | n
       {props.error && (
         <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
           {errorText(props.error.code)}
+          <RefusalClose error={props.error} />
         </p>
       )}
     </>

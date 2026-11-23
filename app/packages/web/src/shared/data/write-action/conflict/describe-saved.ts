@@ -1,6 +1,6 @@
 import { texts } from "@/shared/lib/text-rules/texts";
-import { isKeyConflict, type ApiError } from "../api";
-import table from "./write-action.de.json";
+import { isKeyConflict, type ApiError } from "../../api";
+import table from "../write-action.de.json";
 
 const t = texts(table);
 

@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { Link, useSearchParams } from "react-router";
 import type { OfferView } from "@pflanzendex/core";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
@@ -84,6 +85,7 @@ function Body(props: { data: ExchangeData; api: string; token: Token; onWritten:
       {withdraw.error && (
         <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
           {errorText(withdraw.error.code)}
+          <RefusalClose error={withdraw.error} />
         </p>
       )}
       <div className="flex flex-wrap items-center gap-2">

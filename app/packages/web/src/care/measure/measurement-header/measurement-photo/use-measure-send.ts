@@ -12,7 +12,7 @@ import type { MeasurementRow } from "@pflanzendex/core";
 import { recordMeasurement, type MeasurementInput } from "../../../shared/api/measurements-api";
 import { measurementText } from "../../../shared/text";
 import { refusalText } from "@/shared/lib/error-text";
-import { describeConflict } from "@/shared/data/write-action/describe-saved";
+import { describeConflict } from "@/shared/data/write-action/conflict/describe-saved";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { uploadPhoto } from "./photo-api";

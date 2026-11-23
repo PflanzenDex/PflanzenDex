@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Banner } from "./banner";
+import { Banner, RefusalClose } from "./banner";
 
 afterEach(cleanup);
 
@@ -99,6 +99,51 @@ describe("Banner (US-QS-07, DS-56)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Wählen" }));
     expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(onAction).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+});
+
+describe("RefusalClose, the control of a key conflict in a notice that is no Banner (US-QS-03, P-10)", () => {
+  it("US-QS-03 a refusal that carries dismiss shows 'Hinweis schließen', and the click calls it", () => {
+    const dismiss = vi.fn();
+    render(
+      <p role="alert">
+        Deine erste Eingabe ist gesichert.
+        <RefusalClose error={{ dismiss }} />
+      </p>,
+    );
+    const button = screen.getByRole("button", { name: "Hinweis schließen" });
+    // On its own line inside the notice, under its text (the class merge drops the button's inline-flex for flex).
+    expect(button.className.split(/\s+/)).toEqual(
+      expect.arrayContaining(["flex", "w-fit", "mt-2"]),
+    );
+    expect(button.className.split(/\s+/)).not.toContain("inline-flex");
+    fireEvent.click(button);
+    expect(dismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it("US-QS-03 a refusal without dismiss (every code but the key conflict) and no refusal show no control", () => {
+    const { rerender } = render(<RefusalClose error={{}} />);
+    expect(screen.queryByRole("button")).toBeNull();
+    rerender(<RefusalClose error={null} />);
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("US-QS-03 the control is type=button: inside a form it never submits the form", () => {
+    const onSubmit = vi.fn();
+    render(
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSubmit();
+        }}
+      >
+        <RefusalClose error={{ dismiss: vi.fn() }} />
+      </form>,
+    );
+    const button = screen.getByRole("button", { name: "Hinweis schließen" });
+    expect(button.getAttribute("type")).toBe("button");
+    fireEvent.click(button);
     expect(onSubmit).not.toHaveBeenCalled();
   });
 });
