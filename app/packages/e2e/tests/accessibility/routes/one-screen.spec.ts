@@ -17,6 +17,8 @@ import { layerSelfTests } from "./one-screen.phone";
 import { pagerSelfTests } from "./one-screen.pager";
 import { sidewaysSelfTests } from "./one-screen-sideways";
 import { shiftJudgeSelfTests, shiftSelfTests, shiftTests } from "./one-screen.shift";
+// Registers the browser self-test of the settle (US-QG-01, issue 2429): its tests run in the browser of the gate.
+import "./one-screen.settle";
 import {
   buildBaseline,
   judgeBaseline,
@@ -51,7 +53,7 @@ async function measureAll(
     await page.setViewportSize({ width: size.width, height: size.height });
     if (size.kind === "text200")
       await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
-    await settle(page, 400);
+    await settle(page);
     const withPaint = size.kind === "cap" && !screen.capExempt;
     const first = size.kind === "cap" ? null : await firstOf(page);
     const raw: Raw = { ...(await measure(page, withPaint)), first };

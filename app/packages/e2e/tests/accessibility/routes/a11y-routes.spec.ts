@@ -27,7 +27,7 @@ async function checkAll(page: Page, screen: Screen): Promise<Result[]> {
   const results: Result[] = [];
   for (const [i, size] of A11Y_SIZES.entries()) {
     await page.setViewportSize({ width: size.width, height: size.height });
-    await settle(page, 400);
+    await settle(page);
     const findings = await axeFindings(page);
     if (checksSkipLink(screen)) findings.push(...(await skipLinkWalk(page)));
     findings.push(...(await keyboardWalk(page)));

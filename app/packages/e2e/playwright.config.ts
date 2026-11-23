@@ -42,6 +42,18 @@ const inCi = Boolean(process.env["CI"]);
 const webBuild = process.env["E2E_WEB_BUILD"] === "1";
 /** The specs of the read-only gates have their own projects and are not part of `make e2e` (anchored on the file name). */
 const GATE_SPECS = /(one-screen|merge-shards|a11y-routes(-self-test)?)\.spec\.ts$/;
+// US-QG-01 (issue 2429): the browser of the two UI gates runs in the pinned Playwright container. dev-servers.gate-browser.mjs
+// starts it and sets PW_GATE_WS to its WebSocket address; `exposeNetwork` lets that browser reach the web and API ports of this
+// machine on the loopback (localhost:<port>). Without PW_GATE_WS (UI_GATES_HOST=1, the host Chromium: informational) the
+// projects run the host browser, as `make e2e` does.
+const GATE_CONNECT = process.env["PW_GATE_WS"]
+  ? {
+      connectOptions: {
+        wsEndpoint: process.env["PW_GATE_WS"],
+        exposeNetwork: "<loopback>",
+      },
+    }
+  : {};
 
 /** The environment of a server: the current one plus these variables (a given `env` replaces the whole environment). */
 const serverEnv = (extra: Record<string, string>): Record<string, string> =>
@@ -75,7 +87,7 @@ export default defineConfig({
       name: "one-screen",
       testMatch: /(one-screen|merge-shards)\.spec\.ts$/,
       outputDir: "test-results/one-screen",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], ...GATE_CONNECT },
     },
     // QG-U7 (issue 467): axe and keyboard walk per route, read-only too; `make a11y-routes` sets --workers. The sizes are set
     // by the test itself (it resizes one page).
@@ -83,7 +95,7 @@ export default defineConfig({
       name: "a11y-routes",
       testMatch: /a11y-routes(-self-test)?\.spec\.ts$/,
       outputDir: "test-results/a11y-routes",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], ...GATE_CONNECT },
     },
   ],
   webServer: [

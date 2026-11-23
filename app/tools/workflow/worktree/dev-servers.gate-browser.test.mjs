@@ -1,0 +1,262 @@
+// Tests of the gate browser (US-QG-01, issue 2429): the browser of one-screen, a11y-routes and ui-gates runs in the pinned
+// Playwright container (ADR 0010), the API, web preview, Keycloak and database stay on the host. The container is started
+// and removed by dev-servers.gate-browser.mjs; these tests put a fake `docker` first on PATH, so no container starts here.
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { delimiter, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { after, describe, test } from "node:test";
+import {
+  gateBrowserRunArgs,
+  gateBrowserWsEndpoint,
+  hostMode,
+  pinnedImage,
+} from "./dev-servers.gate-browser.mjs";
+
+const here = fileURLToPath(new URL(".", import.meta.url));
+const appRoot = join(here, "../../..");
+const WRAPPER = join(here, "dev-servers.gate-browser.mjs");
+const INSTALLED = JSON.parse(
+  readFileSync(join(appRoot, "node_modules", "playwright", "package.json"), "utf8"),
+).version;
+
+// Each call is logged; the answers are set by environment variables (see the tests below).
+const FAKE_DOCKER = `#!/bin/sh
+echo "$*" >> "$FAKE_DOCKER_LOG"
+case "$1" in
+  image) [ -n "$FAKE_IMAGE_PRESENT" ] && exit 0; exit 1 ;;
+  pull) echo "pulled $2"; exit 0 ;;
+  ps) [ -n "$FAKE_STALE" ] && echo "$FAKE_STALE"; exit 0 ;;
+  run) [ -n "$FAKE_RUN_FAIL" ] && { echo "no docker here" >&2; exit 1; }; echo "fake-container"; exit 0 ;;
+  logs) [ -n "$FAKE_NO_LISTEN" ] || echo "Listening on ws://0.0.0.0:1/"; exit 0 ;;
+  inspect) echo true; exit 0 ;;
+  *) exit 0 ;;
+esac
+`;
+
+const sandboxes = [];
+after(() => {
+  for (const dir of sandboxes) rmSync(dir, { recursive: true, force: true });
+});
+
+function sandbox() {
+  const dir = mkdtempSync(join(tmpdir(), "gate-browser-"));
+  sandboxes.push(dir);
+  const bin = join(dir, "bin");
+  mkdirSync(bin);
+  writeFileSync(join(bin, "docker"), FAKE_DOCKER, { mode: 0o755 });
+  return { dir, log: join(dir, "docker.log"), probe: join(dir, "probe.txt"), bin };
+}
+
+const calls = (sb) => (existsSync(sb.log) ? readFileSync(sb.log, "utf8").trim().split("\n") : []);
+
+// The wrapper with a command after `--`. The environment starts without the gate variables, so a shell cannot leak one in.
+const runWrapper = (sb, command, env = {}) => runWrapperArgs(sb, ["--", ...command], env);
+
+function runWrapperArgs(sb, args, env = {}) {
+  const gateKeys = ["UI_GATES_HOST", "GATE_BROWSER_READY_S", "PW_GATE_WS"];
+  const inherited = { ...process.env, PATH: sb.bin + delimiter + process.env["PATH"] };
+  const base = Object.fromEntries(Object.entries(inherited).filter(([k]) => !gateKeys.includes(k)));
+  const child = spawn(process.execPath, [WRAPPER, ...args], {
+    cwd: appRoot,
+    env: {
+      ...base,
+      FAKE_DOCKER_LOG: sb.log,
+      PROBE_FILE: sb.probe,
+      GATE_BROWSER_READY_S: "5",
+      ...env,
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let out = "";
+  child.stdout.on("data", (d) => (out += d));
+  child.stderr.on("data", (d) => (out += d));
+  const done = new Promise((resolve) =>
+    child.on("close", (code, signal) => resolve({ code, signal, out })),
+  );
+  return { child, done };
+}
+
+// Writes what the child saw of PW_GATE_WS (or "unset") to the probe file.
+const probeCommand = () => [
+  process.execPath,
+  "-e",
+  "require('node:fs').writeFileSync(process.env.PROBE_FILE, process.env.PW_GATE_WS ?? 'unset')",
+];
+
+const pairOf = (args, flag) => args[args.indexOf(flag) + 1];
+
+describe("US-QG-01 the gate browser image and run arguments (issue 2429)", () => {
+  test("US-QG-01 the pinned image is the Playwright of the installed package, as ds-snapshots derives it", () => {
+    assert.equal(pinnedImage("1.65.1"), "mcr.microsoft.com/playwright:v1.65.1-noble");
+    assert.equal(pinnedImage(INSTALLED), `mcr.microsoft.com/playwright:v${INSTALLED}-noble`);
+  });
+
+  test("US-QG-01 the container runs the run-server of the mounted node_modules, published to loopback only", () => {
+    const image = pinnedImage("1.65.1");
+    const args = gateBrowserRunArgs({
+      name: "pflanzendex-gate-browser-7",
+      image,
+      port: 45123,
+      nodeModules: "/Users/homelab/code/PflanzenDex/app/node_modules",
+      label: "/Users/homelab/code/PflanzenDex",
+    });
+    assert.equal(args[0], "run");
+    for (const flag of ["-d", "--rm", "--init", "--ipc=host"]) assert.ok(args.includes(flag), flag);
+    assert.equal(pairOf(args, "-p"), "127.0.0.1:45123:45123");
+    assert.equal(
+      pairOf(args, "-v"),
+      "/Users/homelab/code/PflanzenDex/app/node_modules:/work/node_modules:ro",
+    );
+    assert.equal(pairOf(args, "--name"), "pflanzendex-gate-browser-7");
+    assert.deepEqual(args.slice(args.indexOf(image) + 1), [
+      "node",
+      "/work/node_modules/playwright/cli.js",
+      "run-server",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "45123",
+    ]);
+  });
+
+  test("US-QG-01 the browser address is the loopback WebSocket of the published port", () => {
+    assert.equal(gateBrowserWsEndpoint(45123), "ws://127.0.0.1:45123/");
+  });
+
+  test("US-QG-01 only UI_GATES_HOST=1 opts out to the host browser", () => {
+    assert.equal(hostMode({ UI_GATES_HOST: "1" }), true);
+    assert.equal(hostMode({ UI_GATES_HOST: "0" }), false);
+    assert.equal(hostMode({ UI_GATES_HOST: "" }), false);
+    assert.equal(hostMode({}), false);
+  });
+});
+
+describe("US-QG-01 the gate browser run (issue 2429)", () => {
+  test("US-QG-01 the host opt-out starts no container, says it is informational and passes no PW_GATE_WS", async () => {
+    const sb = sandbox();
+    const { done } = runWrapper(sb, probeCommand(sb), { UI_GATES_HOST: "1" });
+    const result = await done;
+    assert.equal(result.code, 0);
+    assert.equal(readFileSync(sb.probe, "utf8"), "unset");
+    assert.deepEqual(calls(sb), [], "no docker call");
+    assert.match(result.out, /informational, not the gate/);
+  });
+
+  test("US-QG-01 the container starts, the run gets PW_GATE_WS on its published port and the container is removed after a passing run", async () => {
+    const sb = sandbox();
+    const { done } = runWrapper(sb, probeCommand(sb), { FAKE_IMAGE_PRESENT: "1" });
+    const result = await done;
+    assert.equal(result.code, 0, result.out);
+    const run = calls(sb).find((c) => c.startsWith("run -d"));
+    assert.ok(run, "docker run was called");
+    const port = pairOf(run.split(" "), "-p").split(":")[1];
+    assert.equal(readFileSync(sb.probe, "utf8"), `ws://127.0.0.1:${port}/`);
+    assert.ok(
+      calls(sb).some((c) => /^rm -f pflanzendex-gate-browser-\d+$/.test(c)),
+      "container removed",
+    );
+  });
+
+  test("US-QG-01 a failing test run passes its exit code on and still removes the container", async () => {
+    const sb = sandbox();
+    const { done } = runWrapper(sb, [process.execPath, "-e", "process.exit(3)"], {
+      FAKE_IMAGE_PRESENT: "1",
+    });
+    const result = await done;
+    assert.equal(result.code, 3);
+    assert.ok(calls(sb).some((c) => c.startsWith("rm -f pflanzendex-gate-browser-")));
+  });
+
+  test("US-QG-01 a Ctrl-C stops the test run and removes the container", async () => {
+    const sb = sandbox();
+    const started = join(sb.dir, "started");
+    const forever = [
+      process.execPath,
+      "-e",
+      `require('node:fs').writeFileSync(${JSON.stringify(started)}, String(process.pid)); setInterval(() => {}, 1000)`,
+    ];
+    const { child, done } = runWrapper(sb, forever, { FAKE_IMAGE_PRESENT: "1" });
+    await waitFor(() => existsSync(started));
+    const runPid = Number(readFileSync(started, "utf8"));
+    child.kill("SIGINT");
+    const result = await done;
+    assert.notEqual(result.code, 0, "the run does not pass");
+    assert.ok(calls(sb).some((c) => c.startsWith("rm -f pflanzendex-gate-browser-")));
+    assert.throws(() => process.kill(runPid, 0), "the test run is gone");
+  });
+
+  test("US-QG-01 a container that never reports its listener is removed and the run fails by name", async () => {
+    const sb = sandbox();
+    const { done } = runWrapper(sb, probeCommand(sb), {
+      FAKE_IMAGE_PRESENT: "1",
+      FAKE_NO_LISTEN: "1",
+      GATE_BROWSER_READY_S: "1",
+    });
+    const result = await done;
+    assert.equal(result.code, 1);
+    assert.match(result.out, /did not start/);
+    assert.equal(existsSync(sb.probe), false, "the tests did not start");
+    assert.ok(calls(sb).some((c) => c.startsWith("rm -f pflanzendex-gate-browser-")));
+  });
+
+  test("US-QG-01 a container that does not start fails the run before any test", async () => {
+    const sb = sandbox();
+    const { done } = runWrapper(sb, probeCommand(sb), {
+      FAKE_IMAGE_PRESENT: "1",
+      FAKE_RUN_FAIL: "1",
+    });
+    const result = await done;
+    assert.equal(result.code, 1);
+    assert.match(result.out, /could not start/);
+    assert.equal(existsSync(sb.probe), false, "the tests did not start");
+  });
+
+  test("US-QG-01 the image is pulled before the container starts when it is missing", async () => {
+    const sb = sandbox();
+    const { done } = runWrapper(sb, probeCommand(sb));
+    const result = await done;
+    assert.equal(result.code, 0, result.out);
+    const log = calls(sb);
+    const pull = log.findIndex((c) => c.startsWith("pull mcr.microsoft.com/playwright:v"));
+    const run = log.findIndex((c) => c.startsWith("run -d"));
+    assert.ok(pull >= 0 && pull < run, `pull before run, got ${JSON.stringify(log)}`);
+  });
+
+  test("US-QG-01 --image pulls the pinned image only when it is missing and starts no container", async () => {
+    const missing = sandbox();
+    const pulled = runWrapperArgs(missing, ["--image"]);
+    const first = await pulled.done;
+    assert.equal(first.code, 0, first.out);
+    assert.ok(calls(missing).some((c) => c.startsWith("pull mcr.microsoft.com/playwright:v")));
+    assert.ok(!calls(missing).some((c) => c.startsWith("run ")), "no container for --image");
+
+    const present = sandbox();
+    const kept = runWrapperArgs(present, ["--image"], { FAKE_IMAGE_PRESENT: "1" });
+    const second = await kept.done;
+    assert.equal(second.code, 0, second.out);
+    assert.ok(!calls(present).some((c) => c.startsWith("pull ")), "a present image is not pulled");
+  });
+
+  test("US-QG-01 a stale container of an earlier run is removed before the new one starts", async () => {
+    const sb = sandbox();
+    const { done } = runWrapper(sb, probeCommand(sb), {
+      FAKE_IMAGE_PRESENT: "1",
+      FAKE_STALE: "old-run-1",
+    });
+    const result = await done;
+    assert.equal(result.code, 0, result.out);
+    const log = calls(sb);
+    assert.ok(log.indexOf("rm -f old-run-1") < log.findIndex((c) => c.startsWith("run -d")));
+  });
+});
+
+async function waitFor(predicate, ms = 20_000) {
+  const until = Date.now() + ms;
+  while (!predicate()) {
+    if (Date.now() > until) throw new Error("waitFor: the condition did not hold");
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}

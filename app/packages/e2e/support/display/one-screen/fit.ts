@@ -3,17 +3,11 @@ import { lostScreen } from "./baseline";
 import { boxesOf } from "./fit.boxes";
 import type { Raw } from "./judge";
 import type { Screen, Step } from "./register";
+import { settle } from "./fit.settle";
+
+export { settle };
 
 // Browser side of the one-screen gate (issue 1137, US-QS-15, issue 2417): opening a screen of the register, measuring one window size.
-
-// Waits until the page has loaded, nothing is busy and the layer has slid in (Vaul needs about 900 ms).
-export async function settle(page: Page, pause = 900): Promise<void> {
-  await page.waitForLoadState("networkidle", { timeout: 6000 }).catch(() => undefined);
-  await page
-    .waitForFunction(() => !document.querySelector("[aria-busy='true']"), null, { timeout: 5000 })
-    .catch(() => undefined);
-  await page.waitForTimeout(pause);
-}
 
 export function locatorOf(page: Page, step: Step) {
   const nth = step.nth ?? 0;
