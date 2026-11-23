@@ -1,6 +1,6 @@
 # 0018 · Bundle budget: a fixed ceiling of 140 kB and a goal of 125 kB
 
-- **Status:** accepted by the project owner (2026-10-29).
+- **Status:** accepted by the project owner (2026-10-29); decision 1 amended by [ADR 0019](0019-bundle-ceiling-142-kb.md) (ceiling 142 kB, 2026-11-23).
 - **Story:** `US-QG-07` (a gate changes only in its own PR with a reason), gate QG-U6 (`docs/specs/product/18-architecture-and-quality-gates.md`), DS-08 (`docs/guides/reference/design-system.md`)
 - **Amends:** ADR [0007](0007-component-library-storybook-bundle-budget.md) decision 5. Measuring first and no invented numbers stay; the ratchet goes.
 - **Tracking:** issue #928, PR #929
