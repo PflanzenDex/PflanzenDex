@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
 import { errorText } from "@/shared/lib/error-text";
 import type { ApiError } from "../../shared/data";
@@ -49,6 +50,7 @@ export function Alert({ error }: { error: ApiError }) {
   return (
     <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
       {errorText(error.code)}
+      <RefusalClose error={error} />
     </p>
   );
 }

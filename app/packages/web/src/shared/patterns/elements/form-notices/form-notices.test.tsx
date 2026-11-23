@@ -65,4 +65,27 @@ describe("FormNotices (US-QS-32 · SG-COLOR-04, SG-STATE-03)", () => {
     expect(status.className).not.toMatch(/warning|destructive/);
     expect(screen.queryByRole("alert")).toBeNull();
   });
+
+  it("US-QS-03 · P-10 with onDismiss a key conflict offers Hinweis schließen; without it no such control is offered", () => {
+    const onDismiss = vi.fn();
+    const { rerender } = render(
+      <FormNotices
+        message={null}
+        alertText="Deine erste Eingabe ist gesichert. Deine Änderung ist noch nicht gesichert."
+        alertRef={createRef()}
+        onDismiss={onDismiss}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    rerender(
+      <FormNotices
+        message={null}
+        alertText="Sichern hat nicht geklappt."
+        alertRef={createRef()}
+        onDismiss={undefined}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Hinweis schließen" })).toBeNull();
+  });
 });

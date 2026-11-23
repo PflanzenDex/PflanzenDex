@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import { errorText } from "@/shared/lib/error-text";
 import {
   useSay,
   useToast,
@@ -187,13 +186,4 @@ export function useLampActions(
     error: write.error,
     failures: write.failures,
   };
-}
-
-/** The refusal of a write, in the layer it happened in (P-10); a success is never boxed (F-0160). */
-export function LampOutcome(props: { error: { code: string } | null }) {
-  return props.error ? (
-    <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
-      {errorText(props.error.code)}
-    </p>
-  ) : null;
 }

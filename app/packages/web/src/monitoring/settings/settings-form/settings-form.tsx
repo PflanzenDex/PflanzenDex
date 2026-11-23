@@ -1,4 +1,5 @@
 import { REMINDER_LIMITS, type ReminderOccasion, type ReminderSettings } from "@pflanzendex/core";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { useCallback, useState, type FormEvent, type ReactNode } from "react";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
@@ -31,9 +32,16 @@ function complaint(quietFrom: string, quietTo: string, days: string): string | n
   return null;
 }
 
-const Alert = ({ text }: { text: string }) => (
+const Alert = ({
+  text,
+  error,
+}: {
+  text: string;
+  error?: { dismiss?: (() => void) | undefined } | null;
+}) => (
   <p role="alert" className="rounded-lg border border-destructive p-3">
     {text}
+    <RefusalClose error={error ?? null} />
   </p>
 );
 
@@ -83,7 +91,7 @@ function TimesForm(props: { api: string; token: Token; saved: ReminderSettings }
         on={{ sendTime: setSendTime, quiet: (f, t) => setQuiet([f, t]), days: setDays }}
       />
       {problem !== null && <Alert text={problem} />}
-      {write.error && <Alert text={write.error.text} />}
+      {write.error && <Alert text={write.error.text} error={write.error} />}
       {write.message && (
         <p role="status" className="rounded-lg border border-border p-3">
           {write.message}
@@ -120,7 +128,7 @@ function PausesForm(props: { api: string; token: Token; saved: ReminderSettings 
       className="flex min-w-0 flex-col gap-4"
     >
       <PauseRows paused={paused} onChange={pause} />
-      {write.error && <Alert text={write.error.text} />}
+      {write.error && <Alert text={write.error.text} error={write.error} />}
       {write.message && (
         <p role="status" className="rounded-lg border border-border p-3">
           {write.message}

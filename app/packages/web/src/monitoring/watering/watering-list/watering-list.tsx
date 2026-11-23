@@ -1,4 +1,5 @@
 import { useCallback, type ReactNode } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import type { PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -84,6 +85,7 @@ function DueList(props: { api: string; token: Token; param?: PagerPart }) {
       {due.failure && (
         <p role="alert" className="mt-3 rounded-lg border border-destructive p-3">
           {due.failure.text}
+          <RefusalClose error={due.failure} />
         </p>
       )}
     </div>

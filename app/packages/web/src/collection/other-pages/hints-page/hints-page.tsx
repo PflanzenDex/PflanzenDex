@@ -91,7 +91,7 @@ function HintsList(props: HintsListProps) {
           <>
             {place.message && <Status>{place.message}</Status>}
             {place.error && (
-              <ErrorNotice>
+              <ErrorNotice onDismiss={place.error.dismiss}>
                 <p>{refusalText(place.error)}</p>
               </ErrorNotice>
             )}

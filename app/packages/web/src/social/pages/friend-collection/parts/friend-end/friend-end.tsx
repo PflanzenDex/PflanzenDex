@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { useNavigate } from "react-router";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Menu } from "@/shared/patterns/display/panels/menu/menu";
@@ -87,6 +88,7 @@ function EndConfirm(props: {
       {props.error && (
         <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
           {errorText(props.error.code)}
+          <RefusalClose error={props.error} />
         </p>
       )}
     </div>

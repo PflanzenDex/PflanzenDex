@@ -9,6 +9,7 @@ import { cancelTask, loadTasks, type AiTaskRow } from "../api/connections-api";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";
 import { NewTaskSkeleton, TasksSkeleton } from "./tasks-section.skeleton";
+import { WriteNotes } from "../write-notes/write-notes";
 import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
 import {
   EmptySheet,
@@ -137,16 +138,7 @@ function List(props: {
           )}
         />
       )}
-      {write.error && (
-        <p role="alert" className="rounded-lg border border-destructive p-3">
-          {write.error.text}
-        </p>
-      )}
-      {(write.message ?? copied) && (
-        <p role="status" className="rounded-lg border border-border p-3">
-          {write.message ?? copied}
-        </p>
-      )}
+      <WriteNotes error={write.error} status={write.message ?? copied} />
     </div>
   );
 }

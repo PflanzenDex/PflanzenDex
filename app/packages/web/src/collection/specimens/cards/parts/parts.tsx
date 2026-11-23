@@ -90,8 +90,11 @@ export function ErrorNotice({
   children: ReactNode;
   title?: string;
   action?: BannerAction;
-  /** Gives the notice its "Hinweis schließen" control (a key conflict frees its key, US-QS-03). */
-  onDismiss?: () => void;
+  /**
+   * Gives the notice its "Hinweis schließen" control (a key conflict frees its key, US-QS-03): pass `error.dismiss` of the
+   * refusal that the notice shows, it is set for a key conflict only.
+   */
+  onDismiss?: (() => void) | undefined;
 }) {
   return (
     <Banner

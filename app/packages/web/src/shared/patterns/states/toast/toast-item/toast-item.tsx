@@ -14,6 +14,8 @@ export type ToastData = {
   action?: ToastAction;
   /** Visible time in ms before the first reading pause; defaults to `toastDuration`. */
   duration?: number;
+  /** Runs when the toast is gone, however it went. */
+  onClose?: () => void;
 };
 
 const PER_CHARACTER_MS = 40; // reading time on top of the base (starting value, assumption)
@@ -26,7 +28,7 @@ export function toastDuration({
   kind,
   action,
   message,
-}: Omit<ToastData, "id" | "duration">): number {
+}: Omit<ToastData, "id" | "duration" | "onClose">): number {
   const base = kind === "error" ? 10_000 : action ? 8_000 : 5_000;
   return base + message.length * PER_CHARACTER_MS;
 }

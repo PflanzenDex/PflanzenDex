@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { entityKey, useRequest, useInvalidate, useWriteAction } from "../../../shared/data";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { errorText } from "@/shared/lib/error-text";
@@ -60,6 +61,7 @@ export default function FriendsSwitch(props: {
       {write.error && (
         <p role="alert" className="text-sm text-destructive">
           {errorText(write.error.code)}
+          <RefusalClose error={write.error} />
         </p>
       )}
       {write.message && !write.error && (

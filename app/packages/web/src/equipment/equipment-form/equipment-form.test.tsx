@@ -116,3 +116,30 @@ describe("US-BES-19 the pot fields of the equipment form", () => {
     expect(screen.queryByLabelText("Lichtzone (optional)")).toBeNull();
   });
 });
+
+describe("US-QS-03 · P-10 the refusal of a key conflict in the equipment form", () => {
+  it("US-QS-03 the dismiss of the write layer shows as 'Hinweis schließen' and the click calls it; another refusal shows none", async () => {
+    const dismiss = vi.fn();
+    const { rerender } = render(
+      <EquipmentForm
+        zones={[]}
+        running={false}
+        message={null}
+        error={{ code: "idempotency.key_conflict", text: "x", dismiss }}
+        onSend={vi.fn(async () => true)}
+      />,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Hinweis schließen" }));
+    expect(dismiss).toHaveBeenCalledTimes(1);
+    rerender(
+      <EquipmentForm
+        zones={[]}
+        running={false}
+        message={null}
+        error={{ code: "access.not_signed_in", text: "x" }}
+        onSend={vi.fn(async () => true)}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Hinweis schließen" })).toBeNull();
+  });
+});

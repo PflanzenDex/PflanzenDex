@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { errorText } from "@/shared/lib/error-text";
 import {
@@ -123,6 +124,7 @@ export function OfferForm(props: {
       {s.write.error && (
         <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
           {errorText(s.write.error.code)}
+          <RefusalClose error={s.write.error} />
         </p>
       )}
       <div className="flex max-w-xl flex-col gap-3">

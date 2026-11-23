@@ -75,6 +75,8 @@ function write(
   if (path === "/friends/requests") {
     if (body.code === "BAD")
       return response(409, { error: { code: "friend.code_used", text: "raw" } });
+    if (body.code === "TWICE")
+      return response(409, { error: { code: "idempotency.key_conflict", text: "raw" } });
     state.outgoing = [req({ direction: "sent", otherName: "Anna" })];
     return response(201, state.outgoing[0]);
   }
@@ -347,6 +349,21 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));
     expect(await screen.findByText(/Freundescode wurde schon benutzt/)).toBeTruthy();
     expect(screen.queryByText("raw")).toBeNull();
+  });
+
+  it("US-QS-03 · P-10 a key conflict of the request is an alert above the field with 'Hinweis schließen', which frees the key and returns the focus to the send button", async () => {
+    fakeServer();
+    show("add");
+    await userEvent.click(await screen.findByRole("tab", { name: "Code eingeben" }));
+    await userEvent.type(await screen.findByLabelText("Freundescode"), "TWICE");
+    const send = screen.getByRole("button", { name: "Anfrage senden" });
+    await userEvent.click(send);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Deine erste Eingabe ist gesichert.");
+    expect(screen.getByLabelText("Freundescode").getAttribute("aria-invalid")).not.toBe("true");
+    await userEvent.click(within(alert).getByRole("button", { name: "Hinweis schließen" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(document.activeElement).toBe(send);
   });
 
   it("US-SOZ-02 shows no collection data of a friend, only name and start (P-05)", async () => {

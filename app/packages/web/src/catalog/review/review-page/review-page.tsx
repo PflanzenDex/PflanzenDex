@@ -1,4 +1,5 @@
 import type { KeyScope, WriteSend } from "@/shared/data";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import type { MergeOutcome, ReviewList } from "@pflanzendex/core";
 import { useCallback, useState } from "react";
 import { useLocation, useSearchParams } from "react-router";
@@ -156,6 +157,7 @@ export function ReviewPage(props: { api: string; token: Token; now?: () => numbe
         {review.error && (
           <div role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
             <p>{refusalText(review.error)}</p>
+            <RefusalClose error={review.error} />
           </div>
         )}
         <LoadFrame

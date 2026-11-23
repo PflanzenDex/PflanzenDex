@@ -32,6 +32,12 @@ export interface ApiError<D = unknown> {
    * Set by the repeat guard when the write describes its saved result; the server never sends it.
    */
   conflictText?: string;
+  /**
+   * The one control of a key conflict (US-QS-03, P-10): frees the key the write holds and clears the refusal, so the keeper
+   * can go on. Set by `useWriteAction` on the error it hands out, for `idempotency.key_conflict` only; the notice that shows
+   * the refusal shows "Hinweis schließen" when it is there (`RefusalClose`, `RefusalAlert`, `ErrorNotice`).
+   */
+  dismiss?: () => void;
 }
 
 export type Response<T, D = unknown> = { ok: true; value: T } | { ok: false; error: ApiError<D> };

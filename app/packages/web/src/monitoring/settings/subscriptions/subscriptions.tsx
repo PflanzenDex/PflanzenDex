@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
 import { accountKey, LoadFrame, useInvalidate, useWriteAction } from "../../../shared/data";
 import { loadSubscriptions, removeSubscription } from "../../api/reminders-api";
@@ -61,6 +62,7 @@ function List(props: { api: string; token: Token; endpoints: readonly string[] }
       {write.error && (
         <p role="alert" className="rounded-lg border border-destructive p-3">
           {write.error.text}
+          <RefusalClose error={write.error} />
         </p>
       )}
       {write.message && (

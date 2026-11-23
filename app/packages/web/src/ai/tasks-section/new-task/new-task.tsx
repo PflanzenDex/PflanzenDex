@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
 import { Input } from "@/shared/ui/fields/input/input";
 import { Select } from "@/shared/ui/fields/select/select";
@@ -95,17 +96,25 @@ function NoClientStep() {
   );
 }
 
-function Messages(props: { error: string | null; status: string | null }) {
+function Messages(props: {
+  write: Pick<ReturnType<typeof useWriteAction>, "error" | "message">;
+  problem: string | null;
+  notice: string | null;
+}) {
+  const { write, problem, notice } = props;
+  const error = write.error?.text ?? problem;
+  const status = write.message ?? notice;
   return (
     <>
-      {props.error && (
+      {error && (
         <p role="alert" className="m-0 rounded-lg border border-destructive p-3">
-          {props.error}
+          {error}
+          <RefusalClose error={write.error} />
         </p>
       )}
-      {props.status && (
+      {status && (
         <p role="status" className="m-0 rounded-lg border border-border p-3">
-          {props.status}
+          {status}
         </p>
       )}
     </>
@@ -171,7 +180,7 @@ export function NewTask(props: {
         </Button>
       </div>
       {text && <TextBox text={text} onCopy={() => void copy(text)} />}
-      <Messages error={write.error?.text ?? problem} status={write.message ?? notice} />
+      <Messages write={write} problem={problem} notice={notice} />
     </div>
   );
 }

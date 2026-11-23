@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button/button";
 import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
@@ -83,6 +84,7 @@ function WriteNotes(props: Write) {
       {props.error && (
         <p role="alert" className="m-0 rounded-lg border border-destructive p-3 text-destructive">
           {errorText(props.error.code)}
+          <RefusalClose error={props.error} />
         </p>
       )}
     </>

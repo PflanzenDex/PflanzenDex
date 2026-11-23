@@ -1,4 +1,5 @@
 import { errorText } from "@/shared/lib/error-text";
+import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { SIGN_IN, type ApiError } from "../../../../../shared/data";
 
 /** What the last write did: a notice, or the German text of its refusal (P-10). */
@@ -14,6 +15,7 @@ export function Outcome(props: { message: string | null; error: ApiError | null 
       {error && (
         <p role="alert" className="rounded-lg border border-destructive p-3 text-destructive">
           {error.code === SIGN_IN.code ? SIGN_IN.text : errorText(error.code)}
+          <RefusalClose error={error} />
         </p>
       )}
     </>

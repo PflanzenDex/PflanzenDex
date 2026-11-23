@@ -22,6 +22,8 @@ export type ToastOptions = {
   /** Optional undo or follow-up action; taking it closes the toast. */
   action?: ToastAction;
   duration?: number;
+  /** Runs once when the toast is gone: closed, left with Escape or timed out. */
+  onClose?: () => void;
 };
 
 export type ToastApi = {
@@ -40,8 +42,11 @@ export function useToast(): ToastApi {
   return api;
 }
 
-/** Says a result: a `success` (default) goes to the announcer, an `error` is a toast at once (US-QS-32). */
-export type Say = (message: string, kind?: ToastKind) => void;
+/**
+ * Says a result: a `success` (default) goes to the announcer, an `error` is a toast at once (US-QS-32). `onClose` runs when
+ * the toast is gone, however it went (its close button, Escape, its time): a key conflict frees its key then (US-QS-03).
+ */
+export type Say = (message: string, kind?: ToastKind, onClose?: () => void) => void;
 
 /**
  * The result of a write (US-QS-07, US-QS-32). A success is not a toast: the change shows in place (SG-FEED-01) and the
@@ -54,12 +59,12 @@ export function useSay(): Say {
   const toast = useToast();
   const announcer = useAnnounce();
   return useCallback(
-    (message, kind) => {
+    (message, kind, onClose) => {
       if (kind !== "error" && announcer) {
         announcer.announce(message);
         return;
       }
-      toast.show(kind ? { message, kind } : { message });
+      toast.show({ message, ...(kind ? { kind } : {}), ...(onClose ? { onClose } : {}) });
     },
     [toast, announcer],
   );
@@ -91,7 +96,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     visible
       .filter((toast) => toast.kind === kind)
       .map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onDismiss={() => api.dismiss(toast.id)} />
+        <ToastItem
+          key={toast.id}
+          toast={toast}
+          onDismiss={() => {
+            toast.onClose?.();
+            api.dismiss(toast.id);
+          }}
+        />
       ));
   return (
     <Context.Provider value={api}>

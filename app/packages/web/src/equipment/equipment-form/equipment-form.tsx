@@ -80,6 +80,7 @@ export function EquipmentForm(props: {
         message={refused ? null : props.message}
         alertText={alertText}
         alertRef={alertRef}
+        onDismiss={props.error?.dismiss}
       />
       <Form {...form}>
         <FormRoot id={formId} onSubmit={submit} className="flex max-w-xl flex-col gap-4">
