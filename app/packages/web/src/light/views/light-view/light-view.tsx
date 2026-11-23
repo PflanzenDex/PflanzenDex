@@ -21,11 +21,11 @@ const t = texts(table);
 type AppError = Promise<ApiError | null>;
 
 export interface LightActions {
-  zoneCreate: (e: ZoneInput) => AppError;
+  zoneCreate: (e: ZoneInput, clearNote: () => void) => AppError;
   zoneUpdate: (id: string, e: ZoneInput) => AppError;
   zoneDelete: (id: string) => AppError;
   defaults: () => AppError;
-  locationCreate: (e: LocationInput) => AppError;
+  locationCreate: (e: LocationInput, clearNote: () => void) => AppError;
   locationUpdate: (id: string, e: LocationInput) => AppError;
   zoneDerive: Derive;
 }

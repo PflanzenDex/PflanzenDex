@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { type Resolver, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { localToday, specimenName, speciesDisplayName, type Species } from "@pflanzendex/core";
-import { errorText, refusalText } from "@/shared/lib/error-text";
+import { refusalText } from "@/shared/lib/error-text";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import {
   createSchema,
@@ -15,13 +15,8 @@ import {
   type CreateFields,
   type MarkerRule,
 } from "../../../../collection";
-import {
-  createKey,
-  currentTimeZone,
-  SIGN_IN,
-  type ApiError,
-  useRepeatKey,
-} from "../../../../shared/data";
+import { currentTimeZone, SIGN_IN, type ApiError, useRepeatKey } from "../../../../shared/data";
+import { FIRST_PLANT, useSaveFailure } from "./save-step/save-failure";
 import { useOwnZones } from "./save-step/use-own-zones";
 import { useFieldForm } from "@/shared/ui/fields/form/form";
 
@@ -75,7 +70,7 @@ async function createPlant(args: {
         },
         { key },
       ),
-    createKey("specimen", "first-plant"),
+    FIRST_PLANT,
   );
 }
 
@@ -127,7 +122,7 @@ export function useFirstPlant(api: string, token: Token) {
   const [zoneId, setZoneId] = useState("");
   // Only the flow for further plants offers a place; a shown and changeable value, never stored unseen (US-ONB-01).
   const [locationId, setLocationId] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const failure = useSaveFailure();
   // A refused marker goes to its field (US-BES-03, US-QS-15); every other refusal is shown as text.
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const [saving, setSaving] = useState(false);
@@ -149,7 +144,7 @@ export function useFirstPlant(api: string, token: Token) {
   const pick = (s: Species) => {
     setSpecies(s);
     setZoneId("");
-    setError(null);
+    failure.reset();
     setRefusal(null);
   };
   const save = async () => {
@@ -160,8 +155,7 @@ export function useFirstPlant(api: string, token: Token) {
     setSaving(true);
     const r = await createPlant({ api, token, species, marker, rule, zoneId, locationId, keys });
     setSaving(false);
-    if (!r.ok)
-      return refusesMarker(r.error) ? setRefusal(r.error) : setError(errorText(r.error.code));
+    if (!r.ok) return refusesMarker(r.error) ? setRefusal(r.error) : failure.show(r.error);
     setCreated({ name: specimenName(speciesDisplayName(species), null), id: r.value.id });
   };
   return {
@@ -176,7 +170,8 @@ export function useFirstPlant(api: string, token: Token) {
     setZoneId,
     locationId,
     setLocationId,
-    error,
+    error: failure.text,
+    dismissError: failure.dismiss,
     saving,
     created,
     zones: own.zones,

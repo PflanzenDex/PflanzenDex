@@ -28,7 +28,8 @@ export interface LocationInput {
   kind: "indoor" | "outdoor";
 }
 
-type Save = (e: LocationInput) => Promise<ApiError | null>;
+/** `clearNote` removes the form's refusal: a key conflict of a new location carries a dismiss that calls it (US-QS-03). */
+type Save = (e: LocationInput, clearNote: () => void) => Promise<ApiError | null>;
 
 export function LocationForm(props: {
   zones: readonly LightZone[];
@@ -40,7 +41,7 @@ export function LocationForm(props: {
   const sent = useSaveForm<LocationFields>({
     schema: locationSchema,
     defaults: { name: s?.name ?? "", lightZoneId: s?.lightZoneId ?? "", kind: s?.kind ?? "indoor" },
-    save: (f) => props.onSave(toLocationInput(f)),
+    save: (f, clearNote) => props.onSave(toLocationInput(f), clearNote),
     refusable: LOCATION_REFUSABLE,
     clear: !s,
   });

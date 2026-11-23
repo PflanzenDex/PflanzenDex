@@ -15,7 +15,11 @@ import { releaseRepeatKey, type KeyScope } from "../repeat-key";
  * (the one that started the write), as the notice that showed it takes the focus away. The notice that shows the refusal
  * offers it as "Hinweis schließen" (`RefusalClose`, `RefusalAlert`, `ErrorNotice`, `FormNotices`).
  */
-export function withConflictDismiss(error: ApiError, scope: KeyScope, clear: () => void): ApiError {
+export function withConflictDismiss<E extends ApiError>(
+  error: E,
+  scope: KeyScope,
+  clear: () => void,
+): E {
   if (scope.adds !== true || !isKeyConflict(error)) return error;
   const starter = document.activeElement;
   return {

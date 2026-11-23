@@ -108,6 +108,7 @@ function Flow(props: Props & { onAnother: () => void }) {
           zoneId={f.zoneId}
           onZone={f.setZoneId}
           error={f.error}
+          dismiss={f.dismissError}
           marker={f.marker}
           stepLabel={stepLabel}
         >

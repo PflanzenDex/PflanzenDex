@@ -114,8 +114,15 @@ const ROUTES: Record<string, Route> = {
     response(200, { kind: "zone", zone, level: 2, reason: "standard" }),
 };
 
-function fakeServer(start: { zones?: unknown[]; locations?: unknown[] } = {}) {
+/**
+ * The fake server. `conflicts` are the routes ("METHOD path") that answer `idempotency.key_conflict` once, as the server does
+ * for a key that comes back with another body (US-QS-03).
+ */
+function fakeServer(
+  start: { zones?: unknown[]; locations?: unknown[]; conflicts?: string[] } = {},
+) {
   const data: Data = { zones: start.zones ?? [], locations: start.locations ?? [] };
+  const conflicts = new Set(start.conflicts ?? []);
   const calls: { method: string; url: string; body: unknown; key: string | undefined }[] = [];
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     const path = new URL(String(url)).pathname;
@@ -123,6 +130,10 @@ function fakeServer(start: { zones?: unknown[]; locations?: unknown[] } = {}) {
     const body = init?.body ? (JSON.parse(String(init.body)) as unknown) : undefined;
     const header = init?.headers as Record<string, string>;
     calls.push({ method, url: path, body, key: header["Idempotency-Key"] });
+    if (conflicts.delete(`${method} ${path}`))
+      return response(409, {
+        error: { code: "idempotency.key_conflict", text: "raw server text" },
+      });
     return (ROUTES[`${method} ${path}`] ?? (() => response(404, {})))(data, body);
   });
   vi.stubGlobal("fetch", fetchFn);
@@ -358,6 +369,78 @@ describe("US-LIC-05 page locations and light zones", () => {
       lightZoneId: "z1",
       kind: "outdoor",
     });
+  });
+});
+
+/** The notice of a refusal inside the form that was sent (the alert the layer shows, US-QS-03). */
+const DISMISS = { name: "Hinweis schließen" };
+
+describe("US-QS-03 · P-10 a key conflict of a new zone or location can be dismissed", () => {
+  it("US-QS-03 a key conflict of a new zone offers Hinweis schließen: it clears the note, keeps the input, returns the focus and frees the key", async () => {
+    const { calls } = fakeServer({ conflicts: ["POST /light-zones"] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await screen.findByText("Noch keine Lichtzonen", { exact: false });
+    await pressFirst("Neue Lichtzone");
+    const form = screen.getByRole("form", { name: "Lichtzone anlegen" });
+    await userEvent.type(within(form).getByLabelText("Name"), "Fensterbank");
+    await userEvent.type(within(form).getByLabelText("Lux-Obergrenze"), "8000");
+    const submit = within(form).getByRole("button", { name: "Lichtzone anlegen" });
+    await userEvent.click(submit);
+    const note = await screen.findByRole("alert");
+    // The conflict keeps its key: the next press would send it again, so the note gives the keeper the way on.
+    await userEvent.click(within(note).getByRole("button", DISMISS));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect((within(form).getByLabelText("Name") as HTMLInputElement).value).toBe("Fensterbank");
+    expect(document.activeElement).toBe(submit);
+    await userEvent.click(submit);
+    expect(await screen.findByRole("button", { name: /^Fensterbank\b/ })).toBeTruthy();
+    const keys = calls.filter((a) => a.method === "POST" && a.url === "/light-zones");
+    expect(keys).toHaveLength(2);
+    expect(keys[0]?.key).toBeTruthy();
+    expect(keys[1]?.key).toBeTruthy();
+    expect(keys[1]?.key).not.toBe(keys[0]?.key);
+  });
+
+  it("US-QS-03 a key conflict of a new location offers Hinweis schließen: it clears the note, returns the focus and frees the key", async () => {
+    const { calls } = fakeServer({ zones: [zone], conflicts: ["POST /locations"] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await screen.findByRole("button", { name: /^Zone 2\b/ });
+    await pressFirst("Neuer Standort");
+    const form = screen.getByRole("form", { name: "Standort anlegen" });
+    await userEvent.type(within(form).getByLabelText("Name"), "Fensterbank");
+    const submit = within(form).getByRole("button", { name: "Standort anlegen" });
+    await userEvent.click(submit);
+    const note = await screen.findByRole("alert");
+    await userEvent.click(within(note).getByRole("button", DISMISS));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(document.activeElement).toBe(submit);
+    await userEvent.click(submit);
+    expect(await screen.findByRole("button", { name: /^Fensterbank\b/ })).toBeTruthy();
+    const keys = calls.filter((a) => a.method === "POST" && a.url === "/locations");
+    expect(keys).toHaveLength(2);
+    expect(keys[1]?.key).toBeTruthy();
+    expect(keys[1]?.key).not.toBe(keys[0]?.key);
+  });
+
+  it("US-QS-03 a key conflict of a change to a zone shows its note without Hinweis schließen: its key is freed at once", async () => {
+    const { calls } = fakeServer({ zones: [zone], conflicts: ["PUT /light-zones/z1"] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
+    const form = await screen.findByRole("form", { name: "Zone 2 ändern" });
+    await userEvent.clear(within(form).getByLabelText("Name"));
+    await userEvent.type(within(form).getByLabelText("Name"), "Zone 3");
+    await userEvent.click(within(form).getByRole("button", { name: "Sichern" }));
+    const note = await screen.findByRole("alert");
+    expect(within(note).queryByRole("button", DISMISS)).toBeNull();
+    // The next press is a fresh write under a key of its own.
+    await userEvent.click(within(form).getByRole("button", { name: "Sichern" }));
+    await waitFor(() =>
+      expect(calls.filter((a) => a.method === "PUT" && a.url === "/light-zones/z1")).toHaveLength(
+        2,
+      ),
+    );
+    const keys = calls.filter((a) => a.method === "PUT").map((a) => a.key);
+    expect(keys[1]).not.toBe(keys[0]);
   });
 });
 

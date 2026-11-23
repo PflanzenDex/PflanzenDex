@@ -11,6 +11,7 @@ import {
   useRepeatKey,
   useReload,
   useRequest,
+  withConflictDismiss,
 } from "../../shared/data";
 import { LightView, type LightActions } from "../views/light-view/light-view";
 import { LightPageSkeleton } from "./light-page.skeleton";
@@ -41,8 +42,11 @@ async function derive(api: string, token: Token, a: DerivationRequest) {
   return { ok: false as const, error: SIGN_IN };
 }
 
-/** One write's options: its body and its repeat-guard key (US-QS-03). */
-type WriteOptions = { body?: unknown; scope?: KeyScope };
+/**
+ * One write's options: its body and its repeat-guard key (US-QS-03). `clearNote` removes the form's refusal; a create gets
+ * it, so its key conflict comes back with a dismiss that frees the key (a set-state conflict frees it at once).
+ */
+type WriteOptions = { body?: unknown; scope?: KeyScope; clearNote?: () => void };
 
 function buildActions(
   { api, token, keys }: { api: string; token: Token; keys: ReturnType<typeof useRepeatKey> },
@@ -54,7 +58,7 @@ function buildActions(
     method: "POST" | "PUT" | "DELETE",
     path: string,
     message: string,
-    { body, scope }: WriteOptions,
+    { body, scope, clearNote }: WriteOptions,
   ) => {
     const t = await token();
     if (!t) return SIGN_IN;
@@ -62,18 +66,19 @@ function buildActions(
     // is a background write (the zone defaults): its own key, it frees no held key of the page.
     const send = (key: string) => createWrite(api, t, { key })(method, path, body);
     const r = scope ? await keys.run(send, scope) : await send(newRepeatKey());
-    if (!r.ok) return r.error;
+    if (!r.ok) return scope && clearNote ? withConflictDismiss(r.error, scope, clearNote) : r.error;
     setLastError(undefined);
     await load();
     say(message);
     return null;
   };
   return {
-    zoneCreate: (e) =>
+    zoneCreate: (e, clearNote) =>
       write("POST", "/light-zones", "Lichtzone angelegt.", {
         body: e,
         // A create: the operation only, the zone's fields are the body (US-QS-03).
         scope: createKey("zone", "create"),
+        clearNote,
       }),
     zoneUpdate: (id, e) =>
       write("PUT", `/light-zones/${id}`, "Lichtzone gesichert.", {
@@ -93,11 +98,12 @@ function buildActions(
       setLastError(f ?? undefined);
       return f;
     },
-    locationCreate: (e) =>
+    locationCreate: (e, clearNote) =>
       write("POST", "/locations", "Standort angelegt.", {
         body: e,
         // A create: the operation only, the location's fields are the body (US-QS-03).
         scope: createKey("location", "create"),
+        clearNote,
       }),
     locationUpdate: (id, e) =>
       write("PUT", `/locations/${id}`, "Standort gesichert.", {
