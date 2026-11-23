@@ -17,6 +17,7 @@ import {
 import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { RequestForm } from "./request-form/request-form";
+import { useRequestFocus } from "./request-form/use-request-focus";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
 import { FriendOffersSkeleton } from "./friend-offers.skeleton";
@@ -38,6 +39,7 @@ function Card(props: {
   onSend: (input: RequestInput) => void;
 }) {
   const { o } = props;
+  const { opener, badge, onSend, onCancel } = useRequestFocus(props, o.requested);
   return (
     <div className="grid min-w-0 gap-1 break-words rounded-lg border border-border p-3">
       <span className="font-semibold">{title(o)}</span>
@@ -56,11 +58,12 @@ function Card(props: {
       <span className="mt-1 flex flex-wrap items-center gap-2">
         {o.lack === true && <Badge variant="default">{t("friends.lack")}</Badge>}
         {o.onWishlist && <Badge variant="outline">{t("friends.onWishlist")}</Badge>}
-        {o.requested && <Badge variant="default">{t("friends.requested")}</Badge>}
+        {o.requested && <Badge {...badge}>{t("friends.requested")}</Badge>}
       </span>
       {!o.requested && !props.open && (
         <div className="mt-1">
           <Button
+            ref={opener}
             type="button"
             size="touch"
             variant="tinted"
@@ -77,8 +80,8 @@ function Card(props: {
           title={title(o)}
           choices={props.data.counterChoices}
           busy={props.busy}
-          onSend={props.onSend}
-          onCancel={props.onCancel}
+          onSend={onSend}
+          onCancel={onCancel}
         />
       )}
     </div>

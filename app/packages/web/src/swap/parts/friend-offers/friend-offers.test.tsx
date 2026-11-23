@@ -146,6 +146,36 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
     expect(screen.queryByRole("button", { name: /Pflanze anfragen: Echte Aloe/ })).toBeNull();
   });
 
+  it("US-QS-32 · SG-BASE-01 issue 2468 · after a sent request the focus is on the 'Angefragt' badge of that offer, not on the body", async () => {
+    const { posts } = server({
+      offers: [offer(), offer({ offerId: "o2", specimenName: "Zweite" })],
+    });
+    show();
+    await userEvent.click(
+      (
+        await screen.findAllByRole("button", { name: /^Pflanze anfragen: Echte Aloe$/ })
+      )[0] as HTMLElement,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Anfrage senden" }));
+    await vi.waitFor(() => expect(screen.getAllByText("Angefragt").length).toBeGreaterThan(0));
+    const badge = screen.getAllByText("Angefragt")[0] as HTMLElement;
+    await vi.waitFor(() => expect(document.activeElement).toBe(badge));
+    expect(document.activeElement).not.toBe(document.body);
+    expect(badge.getAttribute("tabindex")).toBe("-1");
+    expect(posts).toHaveLength(1);
+  });
+
+  it("US-QS-32 · SG-BASE-01 issue 2468 · 'Abbrechen' closes the request and returns the focus to the 'Pflanze anfragen' button that opened it", async () => {
+    server();
+    show();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Pflanze anfragen: Echte Aloe" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    const again = await screen.findByRole("button", { name: "Pflanze anfragen: Echte Aloe" });
+    expect(document.activeElement).toBe(again);
+  });
+
   it("the counter-offer lists only my active specimens that I share, and is sent by id", async () => {
     const { posts } = server();
     show();
