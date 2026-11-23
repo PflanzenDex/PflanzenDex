@@ -20,10 +20,34 @@ export function idempotencyStoreContract(name: string, make: () => IdempotencySt
       expect(await store.begin(key(), "f")).toEqual({ kind: "repeat", result: { id: "x" } });
     });
 
-    it("the same key with another fingerprint is a conflict", async () => {
+    it("US-QS-03 the same key with another fingerprint while the first write runs is running, not a conflict", async () => {
       const store = make();
       await store.begin(key(), "f");
-      expect(await store.begin(key(), "other")).toEqual({ kind: "conflict" });
+      expect(await store.begin(key(), "other")).toEqual({ kind: "running" });
+    });
+
+    it("US-QS-03 the same key with another fingerprint after the first write is done is a conflict that carries its saved result", async () => {
+      const store = make();
+      await store.begin(key(), "f");
+      await store.complete(key(), { id: "x" });
+      expect(await store.begin(key(), "other")).toEqual({
+        kind: "conflict",
+        done: true,
+        result: { id: "x" },
+      });
+    });
+
+    it("US-QS-03 P-04 a conflict carries only the saved result of its own account", async () => {
+      const store = make();
+      await store.begin(key("k1", "u1"), "f");
+      await store.complete(key("k1", "u1"), { id: "anna" });
+      expect(await store.begin(key("k1", "u2"), "other")).toEqual({ kind: "fresh" });
+      await store.complete(key("k1", "u2"), { id: "ben" });
+      expect(await store.begin(key("k1", "u2"), "again")).toEqual({
+        kind: "conflict",
+        done: true,
+        result: { id: "ben" },
+      });
     });
 
     it("a discarded key can be used again", async () => {

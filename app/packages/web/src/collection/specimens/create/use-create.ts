@@ -1,7 +1,14 @@
 import { useCallback, useState } from "react";
 import type { LightZone, Species, Specimen } from "@pflanzendex/core";
-import { createKey, REFERENCE_STALE_TIME, useRequest, useRepeatKey } from "../../../shared/data";
+import {
+  createKey,
+  REFERENCE_STALE_TIME,
+  releaseRepeatKey,
+  useRequest,
+  useRepeatKey,
+} from "../../../shared/data";
 import { ZONES_KEY, loadZones } from "../../../light";
+import { describeConflict } from "@/shared/data/write-action/describe-saved";
 import type { ApiError } from "../../../shared/data";
 import type { CreateInput } from "./create-input";
 import { createSpecimen } from "../model/specimens-api";
@@ -21,6 +28,9 @@ export function createdText(specimen: Specimen): string {
   const location = specimen.locationId === null ? tx("unknownLocation") : "";
   return head + cuttingLight + location;
 }
+
+/** The keeper's words for a plant that a key conflict saved: its name (US-QS-03). */
+const describeCreated = (saved: unknown): string => (saved as Specimen).name;
 
 /**
  * State and action for creating a specimen of the chosen species (US-BES-02, US-BES-03). After success the page reloads
@@ -46,16 +56,18 @@ export function useCreate(
         // A create: the operation only, the species and the form are the body (US-QS-03).
         createKey("specimen", "create"),
       );
-      if (!r.ok) return r.error;
+      if (!r.ok) return describeConflict(r.error, describeCreated);
       say(createdText(r.value));
       setCreated(r.value);
       after();
       completed(r.value);
       return null;
     },
-    [api, token, newSpecies, after, completed, say],
+    [api, token, newSpecies, after, completed, say, keys],
   );
-  return { created, send, zones };
+  // Dismissing the conflict banner frees the create key, so the next send is a new specimen (US-QS-03).
+  const dismissRefusal = useCallback(() => releaseRepeatKey(createKey("specimen", "create")), []);
+  return { created, send, zones, dismissRefusal };
 }
 
 /**

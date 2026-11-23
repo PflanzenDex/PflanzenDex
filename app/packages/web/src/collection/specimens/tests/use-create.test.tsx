@@ -22,8 +22,10 @@ afterEach(() => {
  */
 function createServer(lost: number) {
   const records = new Map<string, string>();
+  const saved = new Map<string, unknown>();
   const keys: string[] = [];
   let left = lost;
+  const plant = { id: "e1", name: "Monstera", status: "plant", locationId: "loc1" };
   const fetchFn = vi.fn<typeof fetch>(async (url, init) => {
     if (init?.method === undefined || init.method === "GET")
       return new Response(JSON.stringify({ zones: [] }), { status: 200 });
@@ -31,20 +33,23 @@ function createServer(lost: number) {
     const request = `${init.method} ${String(url)} ${String(init.body ?? "")}`;
     keys.push(key);
     const seen = records.get(key);
+    // A conflict carries the saved result of the first write under the key (US-QS-03, data.saved).
     if (seen !== undefined && seen !== request)
       return new Response(
-        JSON.stringify({ error: { code: "idempotency.key_conflict", text: "x" } }),
+        JSON.stringify({
+          error: { code: "idempotency.key_conflict", text: "x", data: { saved: saved.get(key) } },
+        }),
         { status: 409 },
       );
-    if (seen === undefined) records.set(key, request);
+    if (seen === undefined) {
+      records.set(key, request);
+      saved.set(key, plant);
+    }
     if (left > 0) {
       left -= 1;
       throw new TypeError("Failed to fetch");
     }
-    return new Response(
-      JSON.stringify({ id: "e1", name: "Monstera", status: "plant", locationId: "loc1" }),
-      { status: 201 },
-    );
+    return new Response(JSON.stringify(plant), { status: 201 });
   });
   return { fetchFn, keys, records };
 }
@@ -89,5 +94,40 @@ describe("US-QS-03 · a create keeps its key: a lost answer and an edited form g
     expect(after).toHaveBeenCalledTimes(1);
     expect(completed).toHaveBeenCalledTimes(1);
     expect(say).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("US-QS-03 · a key conflict of a create names the saved plant, and dismissing it frees the key", () => {
+  it("US-QS-03 the conflict names the saved plant; dismissing it frees the key, so the next edited tap is a new specimen", async () => {
+    const server = createServer(1);
+    vi.stubGlobal("fetch", server.fetchFn);
+    const after = vi.fn();
+    const { result } = renderHook(
+      () =>
+        useCreate("http://api", async () => "tok", SPECIES, {
+          after,
+          completed: vi.fn(),
+          say: vi.fn(),
+        }),
+      { wrapper },
+    );
+    const answers: (ApiError | null)[] = [];
+    const tap = (input: CreateInput) =>
+      act(async () => {
+        answers.push(await result.current.send(input));
+      });
+
+    await tap({ marker: "Fensterbank" });
+    expect(answers[0]?.code).toBe("network.not_reachable");
+    await tap({ marker: "Kühlschrank" });
+    expect(answers[1]).toMatchObject({
+      code: "idempotency.key_conflict",
+      conflictText: "Gesichert ist: Monstera. Deine Änderung ist noch nicht gesichert.",
+    });
+    act(() => result.current.dismissRefusal());
+    await tap({ marker: "Kühlschrank" });
+    expect(answers[2]).toBeNull();
+    expect(server.records.size).toBe(2);
+    expect(after).toHaveBeenCalledTimes(1);
   });
 });

@@ -14,13 +14,14 @@ export function StatusNote(props: { children: React.ReactNode }) {
 
 /**
  * A refusal of an action: stays visible with the text of its code and takes the focus (P-10). The one error tone of the app
- * (SG-COLOR-04, SG-STATE-03): red border and error mark.
+ * (SG-COLOR-04, SG-STATE-03): red border and error mark. A key conflict names what is saved (US-QS-03); `onDismiss` gives it
+ * its one control, "Hinweis schließen", which frees the key of the action.
  */
-export function RefusalAlert({ error }: { error: ApiError }) {
+export function RefusalAlert({ error, onDismiss }: { error: ApiError; onDismiss?: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => ref.current?.focus(), [error]);
   return (
-    <Banner variant="error" tabIndex={-1} ref={ref}>
+    <Banner variant="error" tabIndex={-1} ref={ref} {...(onDismiss ? { onDismiss } : {})}>
       {refusalText(error)}
     </Banner>
   );

@@ -31,7 +31,9 @@ export class IdempotencyPostgres {
         [s.operation, s.key],
       );
       const z = r.rows[0] as Row;
-      if (z.fingerprint !== fingerprint) return { kind: "conflict" };
+      // A conflict tells a finished write (with its saved result, US-QS-03) from one that still runs (a running key).
+      if (z.fingerprint !== fingerprint)
+        return z.done ? { kind: "conflict", done: true, result: z.result } : { kind: "running" };
       return z.done ? { kind: "repeat", result: z.result } : { kind: "running" };
     });
   }

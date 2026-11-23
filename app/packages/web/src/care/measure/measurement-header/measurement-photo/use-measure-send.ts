@@ -1,21 +1,34 @@
 import { useCallback, useRef, useState } from "react";
 import {
   appendKey,
+  releaseRepeatKey,
   todayLocal,
   SIGN_IN,
   type ApiError,
   useRepeatKey,
   newRepeatKey,
 } from "../../../../shared/data";
+import type { MeasurementRow } from "@pflanzendex/core";
 import { recordMeasurement, type MeasurementInput } from "../../../shared/api/measurements-api";
 import { measurementText } from "../../../shared/text";
 import { refusalText } from "@/shared/lib/error-text";
+import { describeConflict } from "@/shared/data/write-action/describe-saved";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { uploadPhoto } from "./photo-api";
 import table from "./measurement-photo.de.json";
 
 const t = texts(table);
+
+/** The keeper's words for a measurement that a key conflict saved, e.g. "12 cm am 22.11.2026" (US-QS-03). */
+const describeMeasurement = (saved: unknown): string => measurementText(saved as MeasurementRow);
+
+/**
+ * The repeat-guard key of a save: an append (a measurement is added to the plant), the operation and the local day, the
+ * values are the body (US-QS-03).
+ */
+const measureScope = (specimenId: string) =>
+  appendKey("specimen", specimenId, `measure:${todayLocal()}`);
 
 /**
  * Saves a measurement and then its optional photo (US-WAC-01, US-WAC-05, US-WAC-06). The measurement is written first and
@@ -51,10 +64,9 @@ export function useMeasureSend(props: {
       if (!tok) return SIGN_IN;
       const r = await keys.run(
         (key) => recordMeasurement({ api, token: tok }, specimenId, input, { key }),
-        // An append (a measurement is added to the plant): the operation and the local day, the values are the body (US-QS-03).
-        appendKey("specimen", specimenId, `measure:${todayLocal()}`),
+        measureScope(specimenId),
       );
-      if (!r.ok) return r.error;
+      if (!r.ok) return describeConflict(r.error, describeMeasurement);
       const text = measurementText(r.value);
       count.current += 1;
       const save = count.current;
@@ -69,15 +81,11 @@ export function useMeasureSend(props: {
       }
       setPhotoPending(true);
       // A per-send key: the form resets after the measurement, so this form never repeats a lost photo answer (US-WAC-06).
-      const photoKey = newRepeatKey();
       const p = await uploadPhoto(
         { api, token: tok },
         specimenId,
-        {
-          file: photo,
-          date: r.value.date,
-        },
-        photoKey,
+        { file: photo, date: r.value.date },
+        newRepeatKey(),
       );
       setPhotoPending(false);
       if (p.ok) setConfirmation({ save, text: t("saved", { measurement: text }) });
@@ -85,8 +93,14 @@ export function useMeasureSend(props: {
       invalidate();
       return null;
     },
-    [api, token, specimenId, invalidate, say, onSaved],
+    [api, token, specimenId, invalidate, say, onSaved, keys],
+  );
+  // Dismissing the conflict banner frees the key of the save, so the next save is a fresh write (US-QS-03).
+  const dismissRefusal = useCallback(
+    () => releaseRepeatKey(measureScope(specimenId)),
+    [specimenId],
   );
   const confirmed = confirmation !== null && confirmation.save === saves ? confirmation.text : null;
-  return { send, saved, saves, confirmed, photoStatus: photoPending ? t("photoSaving") : null };
+  const photoStatus = photoPending ? t("photoSaving") : null;
+  return { send, saved, saves, confirmed, photoStatus, dismissRefusal };
 }

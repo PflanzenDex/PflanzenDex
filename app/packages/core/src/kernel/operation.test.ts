@@ -205,3 +205,62 @@ describe("US-ACC-05 operations with a secret result", () => {
     expect(counter.n).toBe(0);
   });
 });
+
+describe("US-QS-03 a key conflict names what is saved", () => {
+  it("US-QS-03 a key of a completed write with other input answers idempotency.key_conflict with the saved result in data.saved", async () => {
+    await call({ name: "Fensterbank" });
+    const r = await call({ name: "Balkon" });
+    expect(!r.ok && r.error.code).toBe("idempotency.key_conflict");
+    expect(!r.ok && r.error.data).toEqual({
+      saved: { id: "s1", userId: "u1", name: "Fensterbank" },
+    });
+    expect(locations.rows).toHaveLength(1);
+  });
+
+  it("US-QS-03 the conflict text names no key and says what is saved", async () => {
+    await call({ name: "Fensterbank" });
+    const r = await call({ name: "Balkon" });
+    const text = !r.ok ? r.error.text : "";
+    expect(text).toBe(
+      "Deine erste Eingabe ist gesichert. Deine Änderung ist noch nicht gesichert.",
+    );
+    expect(text).not.toMatch(/Schlüssel|vielleicht/);
+  });
+
+  it("US-QS-03 a key of a write that still runs with other input answers idempotency.in_progress, not a conflict", async () => {
+    await idem.begin({ userId: "u1", operation: "location.create", key: "k1" }, '{"name":"A"}');
+    const r = await call({ name: "B" });
+    expect(!r.ok && r.error.code).toBe("idempotency.in_progress");
+    expect(!r.ok && r.error.data).toBeUndefined();
+    expect(locations.writes).toBe(0);
+  });
+
+  it("US-QS-03 P-04 another account with the same key gets a fresh write, and its conflict carries only its own result", async () => {
+    const anna = await call({ name: "Fensterbank" }, "k1", { userId: "u1" });
+    const ben = await call({ name: "Balkon" }, "k1", { userId: "u2" });
+    expect(anna.ok).toBe(true);
+    expect(ben.ok && ben.value.userId).toBe("u2");
+    const benAgain = await call({ name: "Terrasse" }, "k1", { userId: "u2" });
+    expect(!benAgain.ok && benAgain.error.code).toBe("idempotency.key_conflict");
+    expect(!benAgain.ok && benAgain.error.data).toEqual({
+      saved: ben.ok ? ben.value : undefined,
+    });
+  });
+
+  it("US-QS-03 US-ACC-05 a secret operation never returns a stored result: after its success the key is released, another input runs again", async () => {
+    const counter = { n: 0 };
+    const op = defineOperation({
+      name: "test.secret_conflict",
+      schema: shape({ name: textField("name", { min: 1, max: 10 }) }),
+      secret: true,
+      run: async () => ok({ code: `secret-${++counter.n}` }),
+    });
+    const secret = (name: string) =>
+      execute(op, { idempotency: idem }, { context: user, input: { name }, idempotencyKey: "k1" });
+    const first = await secret("a");
+    const second = await secret("b");
+    expect(first.ok && first.value.code).toBe("secret-1");
+    expect(second.ok && second.value.code).toBe("secret-2");
+    expect(counter.n).toBe(2);
+  });
+});

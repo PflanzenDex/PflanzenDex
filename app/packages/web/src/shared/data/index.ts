@@ -1,5 +1,5 @@
 // Public interface of the module `kernel` (ADR 0003): access to the API with sign-in and replay protection, the data layer, shared load error.
-export { announceWrite, call, createWrite, isUnanswered, newRepeatKey } from "./api";
+export { announceWrite, call, createWrite, isKeyConflict, isUnanswered, newRepeatKey } from "./api";
 export type { Response, ApiError, Write, WriteOptions } from "./api";
 export { LoadFrame } from "./client/load-frame/load-frame";
 export {
@@ -32,6 +32,7 @@ export {
   createKey,
   entityKey,
   forgetRepeatKeys,
+  releaseRepeatKey,
   runRepeat,
   useRepeatKey,
   type KeyScope,

@@ -85,10 +85,13 @@ export function ErrorNotice({
   children,
   title,
   action,
+  onDismiss,
 }: {
   children: ReactNode;
   title?: string;
   action?: BannerAction;
+  /** Gives the notice its "Hinweis schließen" control (a key conflict frees its key, US-QS-03). */
+  onDismiss?: () => void;
 }) {
   return (
     <Banner
@@ -96,6 +99,7 @@ export function ErrorNotice({
       className="mb-3"
       {...(title ? { title } : {})}
       {...(action ? { action } : {})}
+      {...(onDismiss ? { onDismiss } : {})}
     >
       <div className="grid gap-1">{children}</div>
     </Banner>

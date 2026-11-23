@@ -143,6 +143,16 @@ const settle = (key: string, r: Response<unknown, unknown>, scope: KeyScope): vo
   actions?.delete(scope.action);
 };
 
+/**
+ * Frees the key an action holds when the keeper dismisses its conflict banner (US-QS-03): the next tap is a fresh write
+ * with a key of its own, and its body is written.
+ */
+export const releaseRepeatKey = (scope: KeyScope): void => {
+  const actions = held.get(scope.target);
+  actions?.delete(scope.action);
+  if (actions?.size === 0) held.delete(scope.target);
+};
+
 /** Frees every held key, on sign-out or an account change: a key of another account must never be repeated. */
 export const forgetRepeatKeys = (): void => held.clear();
 

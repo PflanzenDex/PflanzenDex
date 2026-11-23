@@ -11,7 +11,7 @@ import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { FormBarRegion } from "@/shared/ui/button/form-bar/form-bar.page";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
-import type { ApiError } from "../../../../shared/data";
+import { isKeyConflict, type ApiError } from "../../../../shared/data";
 import { refusesCatchDate } from "../../../markers/catch-date/catch-date-field/catch-date-field";
 import { useToday } from "../../../markers/catch-date/use-today";
 import { NamePreview, OtherFields, SpeciesLine } from "../create-fields/create-fields";
@@ -51,10 +51,19 @@ function fieldsOfRefusal(error: ApiError): (keyof CreateFields)[] {
   return error.code === "specimen.marker_taken" ? ["marker"] : [];
 }
 
-function ErrorBox({ text, error }: { text: string; error: ApiError }) {
+/** A key conflict keeps its one control, which closes it and frees the key (US-QS-03); other refusals stay until acted on. */
+function ErrorBox({
+  text,
+  error,
+  onDismiss,
+}: {
+  text: string;
+  error: ApiError;
+  onDismiss: () => void;
+}) {
   const conflict = nameConflict(error);
   return (
-    <ErrorNotice>
+    <ErrorNotice {...(isKeyConflict(error) ? { onDismiss } : {})}>
       <p>{text}</p>
       {conflict && (
         <>
@@ -88,6 +97,19 @@ function CreateHeader(props: { species: Species; onBack: () => void }) {
 }
 
 /**
+ * The refusal the form shows and its close. A key conflict closes with its one control, which frees the key of the create
+ * (`release`, US-QS-03); other refusals stay until the keeper acts (P-10).
+ */
+function useCreateRefusal(start: ApiError | undefined, release: (() => void) | undefined) {
+  const [error, setError] = useState<ApiError | null>(start ?? null);
+  const dismiss = () => {
+    setError(null);
+    release?.();
+  };
+  return { error, setError, dismiss };
+}
+
+/**
  * Create specimen (US-BES-02, US-BES-03): only the species is required for the first specimen. The name is fixed
  * before saving and is already shown here (DM-BES-03). From the second specimen on the marker is required (preset
  * "Klammer"); from the third on the form asks for the markers that existing specimens still miss, before it saves.
@@ -104,18 +126,22 @@ export function CreateForm(props: {
   onSend: (input: CreateInput) => Promise<ApiError | null>;
   onCancel: () => void;
   errorStart?: ApiError;
+  /** Frees the key of the create when the keeper dismisses a key conflict (US-QS-03). */
+  onDismissRefusal?: () => void;
 }) {
   const rule = markerRule(props.siblings);
   const today = useToday();
-  const [error, setError] = useState<ApiError | null>(props.errorStart ?? null);
+  const { error, setError, dismiss } = useCreateRefusal(props.errorStart, props.onDismissRefusal);
   const form = useFieldForm<CreateFields>({
     resolver: zodResolver(createSchema(rule)),
     defaultValues: createStart(rule, today),
   });
   const alertText = useRefusal(error, form.setError, fieldsOfRefusal);
+  // Editing takes a refusal away, but a key conflict stays until its banner is dismissed: its text says that the change
+  // is not saved yet (US-QS-03).
   useEdited(
     form,
-    useCallback(() => setError(null), []),
+    useCallback(() => setError((e) => (e && isKeyConflict(e) ? e : null)), []),
   );
   const speciesName = speciesDisplayName(props.species);
   const submit = form.handleSubmit(async (values) =>
@@ -145,7 +171,9 @@ export function CreateForm(props: {
               zones={props.zones}
               today={today}
             />
-            {error && alertText !== null && <ErrorBox text={alertText} error={error} />}
+            {error && alertText !== null && (
+              <ErrorBox text={alertText} error={error} onDismiss={dismiss} />
+            )}
             <CreateBar pending={form.formState.isSubmitting} onCancel={props.onCancel} />
           </FormBarRegion>
         </FormRoot>

@@ -54,4 +54,23 @@ describe("error-text (US-QS-07 · DS-49, FR-QG-11)", () => {
       "Keine Verbindung.",
     );
   });
+
+  it("US-QS-03 a key conflict that the repeat guard described shows its text, which names what is saved", () => {
+    expect(
+      refusalText({
+        code: "idempotency.key_conflict",
+        text: "raw server text",
+        conflictText:
+          "Gesichert ist: 12 cm am 22.11.2026. Deine Änderung ist noch nicht gesichert.",
+      }),
+    ).toBe("Gesichert ist: 12 cm am 22.11.2026. Deine Änderung ist noch nicht gesichert.");
+  });
+
+  it("US-QS-03 a key conflict without a description says the first entry is saved, and names no key (P-10)", () => {
+    const text = refusalText({ code: "idempotency.key_conflict", text: "raw server text" });
+    expect(text).toBe(
+      "Deine erste Eingabe ist gesichert. Deine Änderung ist noch nicht gesichert.",
+    );
+    expect(text).not.toMatch(/Schlüssel|vielleicht/);
+  });
 });

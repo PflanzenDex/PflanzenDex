@@ -188,6 +188,30 @@ describe("US-WAC-01 record and view a measurement", () => {
       body: { error: { code: "idempotency.key_conflict" } },
     });
   });
+
+  it("US-QS-03 a conflict after the first measurement is done answers 409 with the saved measurement in error.data.saved; another account's key never does", async () => {
+    const e = await newSpecimen(subA, "Gespeichert");
+    const key = randomUUID();
+    const first = await measure(subA, e, { value: 9, date: "2026-10-01" }, key);
+    const conflict = await measure(subA, e, { value: 10, date: "2026-10-01" }, key);
+    expect(conflict).toMatchObject({
+      status: 409,
+      body: {
+        error: {
+          code: "idempotency.key_conflict",
+          data: { saved: { id: first.body["id"], value: 9, date: "2026-10-01" } },
+        },
+      },
+    });
+    expect(
+      (await call(subA, "GET", `/specimens/${e}/measurements`)).body["measurements"],
+    ).toHaveLength(1);
+    // Account B has no measurement of this specimen; its own write with A's key is fresh and carries no result of A.
+    const foreign = await measure(subB, e, { value: 11, date: "2026-10-01" }, key);
+    expect(foreign.status).not.toBe(409);
+    expect(foreign.body["error"]?.data).toBeUndefined();
+    expect(JSON.stringify(foreign.body)).not.toContain(first.body["id"]);
+  });
 });
 
 describe("US-WAC-02 assess etiolation while measuring", () => {

@@ -78,13 +78,21 @@ const Banner = React.forwardRef<HTMLDivElement, BannerProps>(
           {title ? <p className="font-semibold">{title}</p> : null}
           {children ? <div>{children}</div> : null}
           {action ? (
-            <Button variant="tinted" size="sm" className="mt-2" onClick={action.onClick}>
+            // type="button": a banner inside a form must not submit it (US-QS-03).
+            <Button
+              type="button"
+              variant="tinted"
+              size="sm"
+              className="mt-2"
+              onClick={action.onClick}
+            >
               {action.label}
             </Button>
           ) : null}
         </div>
         {onDismiss ? (
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             aria-label={dismissLabel}

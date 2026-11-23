@@ -74,4 +74,31 @@ describe("Banner (US-QS-07, DS-56)", () => {
     expect(screen.getByTestId("b")).toBe(ref.current);
     expect(ref.current?.className.endsWith("mx-auto")).toBe(true);
   });
+
+  it("US-QS-03 the dismiss and the action control of a banner inside a form do not submit the form", () => {
+    const onSubmit = vi.fn();
+    const onDismiss = vi.fn();
+    const onAction = vi.fn();
+    render(
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSubmit();
+        }}
+      >
+        <Banner
+          variant="error"
+          onDismiss={onDismiss}
+          action={{ label: "Wählen", onClick: onAction }}
+        >
+          Text
+        </Banner>
+      </form>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Hinweis schließen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Wählen" }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });
