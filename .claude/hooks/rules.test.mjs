@@ -45,6 +45,7 @@ test("US-QG-07: gate configs need a human confirmation, ordinary code does not",
     ".github/workflows/ci.yml",
     ".github/rulesets/main-protection.json",
     ".githooks/pre-push",
+    ".github/dependabot.yml",
     ".claude/settings.json",
     "Makefile",
     "tools/lint/gitleaks.sh",
@@ -57,6 +58,8 @@ test("US-QG-07: gate configs need a human confirmation, ordinary code does not",
     assert.equal(isGateFile(f), true, f);
   }
   for (const f of [
+    // Renovate is gone (#2534 replaced it with Dependabot): its path is no gate file any more.
+    ".github/renovate.json5",
     "tools/repo/pr-ready.sh",
     "app/packages/core/src/index.ts",
     "docs/specs/product/02-collection.md",

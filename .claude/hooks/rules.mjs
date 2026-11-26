@@ -10,7 +10,7 @@ const GATE_FILES = [
   /^\.github\/workflows\//,
   /^\.github\/rulesets\//,
   /^\.github\/CODEOWNERS$/,
-  /^\.github\/renovate\.json5?$/,
+  /^\.github\/dependabot\.ya?ml$/,
   // Everything under .claude/ (hooks, settings, rules, agents, skills, mods) as AGENTS.md says (owner decision d-128,
   // 2026-11-26, issue 2528).
   /^\.claude\//,
