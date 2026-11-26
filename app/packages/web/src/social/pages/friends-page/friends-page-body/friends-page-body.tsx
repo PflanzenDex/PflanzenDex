@@ -1,6 +1,6 @@
 import { texts } from "@/shared/lib/text-rules/texts";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import table from "./friends-page-body.de.json";
 
 const t = texts(table);

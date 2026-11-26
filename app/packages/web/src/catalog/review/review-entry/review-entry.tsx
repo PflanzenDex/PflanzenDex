@@ -1,5 +1,5 @@
 import type { ReviewEntry } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { ageText, flagsOf, isBatch } from "../review-text";
 

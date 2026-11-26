@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { KeyboardShortcutMode, MotionSetting } from "@pflanzendex/core";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
-import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { Checkbox } from "@/shared/ui/checkbox";
+import { NetworkSlot } from "@/shared/ui/button.network-gate";
+import { MoreHelp } from "@/shared/ui/more-help";
 import { ChoiceRow, type Choice } from "./choice-row/choice-row";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";

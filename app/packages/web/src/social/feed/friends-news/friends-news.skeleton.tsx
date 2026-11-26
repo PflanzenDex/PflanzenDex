@@ -1,6 +1,6 @@
 import { cn } from "@/shared/lib/utils";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 
 /**

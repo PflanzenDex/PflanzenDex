@@ -3,9 +3,9 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
+import { LayerScope } from "@/shared/ui/layer-scope";
 import { HintsPage } from "./hints-page";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 
 const response = (status: number, body: unknown) =>

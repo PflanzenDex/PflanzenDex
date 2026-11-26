@@ -21,7 +21,7 @@ import {
 } from "@/shared/patterns/navigation/nav-item";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { PageSkeleton } from "@/shared/patterns/states/page-skeleton/page-skeleton";
-import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import { Skeleton } from "@/shared/ui/skeleton";
 import {
   PageTitle,
   TitleRow,

@@ -1,6 +1,6 @@
 import type { CreatedInvitation } from "@pflanzendex/core";
 import { useLayoutEffect, useRef, useState, type RefObject } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { copyText, shareText } from "@/shared/platform/browser/clipboard";

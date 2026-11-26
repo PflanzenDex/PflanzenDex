@@ -1,5 +1,5 @@
 import { zoneLabel, type SpecimenCard } from "@pflanzendex/core";
-import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { useObjectPhoto } from "@/shared/lists/object-row/use-object-photo";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";

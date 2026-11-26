@@ -1,8 +1,8 @@
 import { SpeciesPageSkeleton } from "@/catalog";
 import { DiscoverPageSkeleton } from "@/discover";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton } from "@/shared/ui/skeleton";
 import type { DiscoverView } from "../discover-mode";
 import table from "../discover-area.de.json";
 

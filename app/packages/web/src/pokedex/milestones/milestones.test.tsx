@@ -5,7 +5,7 @@ import type { CaughtSpecies, MilestoneTree } from "@pflanzendex/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { MemoryRouter } from "react-router";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
+import { LayerScope } from "@/shared/ui/layer-scope";
 import { Milestones } from "./milestones";
 
 afterEach(() => {

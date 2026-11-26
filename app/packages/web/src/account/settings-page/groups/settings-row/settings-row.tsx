@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 
 /** One group of the settings (US-QS-17): its name, its current value and the layer it opens (`?sheet=<id>`). */

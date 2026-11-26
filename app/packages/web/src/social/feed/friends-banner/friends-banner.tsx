@@ -1,5 +1,5 @@
 import { localToday, type Banner, type BannerItem } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { summaryDate } from "@/shared/lib/format";
 import { refusalText } from "@/shared/lib/error-text";

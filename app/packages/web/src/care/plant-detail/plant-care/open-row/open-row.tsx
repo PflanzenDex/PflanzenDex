@@ -1,5 +1,5 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { dateText } from "../../../shared/text";
 
 /** One open treatment of the plant with "Abhaken" (US-BEH-02); a row of the list "Offene Behandlungen"; a row action is tinted, the layer has no second filled button (US-QS-15). */

@@ -1,7 +1,7 @@
 import { useCallback, type ReactNode } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
 import { useRequest, type Request } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadDeletions, type DeletionEntry, type DeletionsView } from "../../api/access-api";

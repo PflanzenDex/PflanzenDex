@@ -7,10 +7,10 @@ import type { UnlockEntry } from "../model/unlock-api";
 import { UnlocksProvider } from "../model/unlocks/unlocks";
 import { LockedRows } from "../locked-rows/locked-rows";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { filledIn, hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button.roles";
 import { LockedLayer, LockedTile } from "../locked-rows/collapsed-rows/collapsed-rows";
 import { UnlockPage } from "./unlock-page";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import table from "./unlock-page.de.json";
 import { UnlockSkeleton } from "./unlock-page.skeleton";
 

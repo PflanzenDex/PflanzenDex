@@ -13,13 +13,10 @@ import {
   FormMessage,
   FormRoot,
   useFieldForm,
-} from "@/shared/ui/fields/form/form";
-import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
+} from "@/shared/ui/form";
+import { SearchInput } from "@/shared/ui/search-input";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
-import {
-  DelayedSkeleton,
-  useHeldLoader,
-} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 import { searchSchema, type SearchFields } from "../shared/schemas";
 import { SearchResultsSkeleton } from "./search-view.skeleton";
 import { HitList } from "./hit-list/hit-list";

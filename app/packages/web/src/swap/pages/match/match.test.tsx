@@ -3,13 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  filledIn,
-  hasOwnBorder,
-  isFilled,
-  isPlain,
-  isTinted,
-} from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isFilled, isPlain, isTinted } from "@/shared/ui/button.roles";
 import { MatchPage } from "./match";
 
 const response = (status: number, body: unknown) =>

@@ -11,7 +11,7 @@ import { UnlocksProvider } from "../../unlock/model/unlocks/unlocks";
 import { FUNCTION_EMPTY, FUNCTION_NAMES, functionAddress } from "../../unlock/model/unlock-texts";
 import FunctionOverview from "./function-overview";
 import { FUNCTION_PURPOSES } from "./function-layer/function-purposes";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import table from "./function-overview.de.json";
 import { FunctionOverviewSkeleton } from "./function-overview.skeleton";
 

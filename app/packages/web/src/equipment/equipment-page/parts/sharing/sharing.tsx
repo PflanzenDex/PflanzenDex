@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { SHARE_NOTE_LIMITS } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { FormRoot } from "@/shared/ui/fields/form/form";
-import { Input } from "@/shared/ui/fields/input/input";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Button } from "@/shared/ui/button";
+import { MoreHelp } from "@/shared/ui/more-help";
+import { FormRoot } from "@/shared/ui/form";
+import { Input } from "@/shared/ui/input";
+import { Select } from "@/shared/ui/select";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { EquipmentRow } from "../../../equipment-api";
 import table from "../../../equipment.de.json";

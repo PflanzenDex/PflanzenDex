@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { withRouter } from "@/shared/testing/story-frame/story-frame";
 import { pressEscape, waitUntil } from "@/shared/testing/story-frame/story-play";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
 
 // Catalog of the LayerSheet (US-QS-15, DS-58): bottom sheet at 360 px, dialog at tablet width, pane from 1024 px.

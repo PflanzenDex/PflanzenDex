@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { DifficultyPage } from "./difficulty-page";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
 
 afterEach(releaseSheetExits);
 

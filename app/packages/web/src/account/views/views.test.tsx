@@ -3,7 +3,7 @@ import { renderToString } from "react-dom/server";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { filledIn, hasOwnBorder, isFilled, isTinted } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isFilled, isTinted } from "@/shared/ui/button.roles";
 import { AppError, Loading, Welcome } from "./views";
 import { AccountView } from "./account-views/account-views";
 import type { Account } from "../api/account-api";

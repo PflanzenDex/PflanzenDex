@@ -9,7 +9,7 @@ import {
   useLayer,
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/pager";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { errorText } from "@/shared/lib/error-text";

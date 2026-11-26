@@ -1,7 +1,7 @@
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { Button } from "@/shared/ui/button/button";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { Button } from "@/shared/ui/button";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import { DISPLAY_NAME } from "@/shared/patterns/navigation/nav-item";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { AuthFrame } from "./auth-frame/auth-frame";

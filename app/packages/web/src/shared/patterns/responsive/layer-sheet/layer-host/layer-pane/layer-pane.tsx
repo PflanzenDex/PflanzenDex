@@ -1,10 +1,10 @@
 import * as React from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { leadingTextField } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
-import { useScrollAccess } from "@/shared/ui/overlays/dialog/scroll-access";
-import { FormBarHostContext, usePinnedBarHost } from "@/shared/ui/button/form-bar/form-bar.host";
-import { PinnedBar } from "@/shared/ui/button/form-bar/form-bar.slot";
+import { LayerScope } from "@/shared/ui/layer-scope";
+import { useScrollAccess } from "@/shared/ui/dialog.scroll-access";
+import { FormBarHostContext, usePinnedBarHost } from "@/shared/ui/form-bar.host";
+import { PinnedBar } from "@/shared/ui/form-bar.slot";
 import { keptOpener } from "../../use-layer";
 
 /** The body of a layer, shared by the pane and by the sheet or dialog around it (US-QS-15). */

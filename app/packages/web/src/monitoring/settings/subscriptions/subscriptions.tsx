@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { accountKey, useInvalidate, useWriteAction } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadSubscriptions, removeSubscription } from "../../api/reminders-api";

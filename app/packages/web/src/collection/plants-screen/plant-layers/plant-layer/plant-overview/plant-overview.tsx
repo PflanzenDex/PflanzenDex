@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { zoneLabel, type SpecimenCard } from "@pflanzendex/core";
-import { Badge } from "@/shared/ui/display/badge/badge";
-import { Button } from "@/shared/ui/button/button";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Photo, Quiet } from "../../../../specimens/cards/parts/parts";

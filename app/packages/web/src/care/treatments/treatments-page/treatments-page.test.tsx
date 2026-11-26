@@ -8,8 +8,8 @@ import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { drainOutbox } from "@/shared/testing/test-setup/drain-outbox";
 import { TreatmentsPage } from "./treatments-page";
 import { OpenTreatments } from "../open-treatments/open-treatments";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
-import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
+import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { motionReduced } from "@/shared/platform/device/motion/motion-setting";
 

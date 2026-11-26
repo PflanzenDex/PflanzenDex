@@ -4,8 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeedBlock } from "./feed-block";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
-import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
+import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 import table from "../../social.de.json";
 import { FeedSkeleton } from "./feed-block.skeleton";
 

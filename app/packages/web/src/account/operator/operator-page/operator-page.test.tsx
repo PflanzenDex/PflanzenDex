@@ -6,10 +6,10 @@ import { BrowserRouter, MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseAmount } from "../../schemas";
 import { OperatorPage } from "./operator-page";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 
 const token = async () => "tok";
 const json = (status: number, body: unknown) =>

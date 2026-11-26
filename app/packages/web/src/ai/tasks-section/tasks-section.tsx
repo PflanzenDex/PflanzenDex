@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { NewTask } from "./new-task/new-task";
-import { Button } from "@/shared/ui/button/button";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { Button } from "@/shared/ui/button";
+import { MoreHelp } from "@/shared/ui/more-help";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { copyText } from "@/shared/platform/browser/clipboard";
 import { entityKey, useInvalidate, useWriteAction } from "../../shared/data";
@@ -11,7 +11,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../ai.de.json";
 import { NewTaskSkeleton, TasksSkeleton } from "./tasks-section.skeleton";
 import { WriteNotes } from "../write-notes/write-notes";
-import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import { DisclosureSummary } from "@/shared/ui/more-help.disclosure-summary";
 import {
   EmptySheet,
   HOWTO_LAYER,

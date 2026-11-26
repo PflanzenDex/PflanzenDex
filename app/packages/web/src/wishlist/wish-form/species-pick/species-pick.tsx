@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { SpeciesHit } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
-import { Label } from "@/shared/ui/display/label/label";
+import { Button } from "@/shared/ui/button";
+import { SearchInput } from "@/shared/ui/search-input";
+import { Label } from "@/shared/ui/label";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { CATALOG_ADDRESS } from "@/shared/patterns/navigation/navigation/navigation";
 import { searchSpecies } from "../../../catalog";

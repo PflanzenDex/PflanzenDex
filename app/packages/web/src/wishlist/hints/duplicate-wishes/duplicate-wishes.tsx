@@ -1,8 +1,8 @@
 import { useId, useState } from "react";
 import { WISH_LIMITS, type CandidateList, type DuplicateWish } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { Input } from "@/shared/ui/fields/input/input";
-import { Label } from "@/shared/ui/display/label/label";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
 import { entityKey, useWriteAction, type Response } from "../../../shared/data";
 import { removeDuplicateWish, renameWish } from "../../wishlist-api";
 

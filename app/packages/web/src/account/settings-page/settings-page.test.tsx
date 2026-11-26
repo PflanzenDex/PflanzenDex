@@ -11,7 +11,7 @@ import {
   useShortcuts,
 } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 import { SettingsPage } from "./settings-page";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

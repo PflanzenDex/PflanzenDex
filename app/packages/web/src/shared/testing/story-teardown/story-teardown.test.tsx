@@ -3,7 +3,7 @@ import { composeStories, setProjectAnnotations } from "@storybook/react-vite";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import preview from "../../../../.storybook/preview";
-import * as badge from "../../ui/display/badge/badge.stories";
+import * as badge from "@/shared/ui/badge.stories";
 import { unmountStoryRuns } from "./story-teardown";
 
 setProjectAnnotations([preview]);

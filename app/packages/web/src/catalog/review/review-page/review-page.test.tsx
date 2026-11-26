@@ -7,8 +7,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ReviewPage } from "./review-page";
 import { ageText, flagsOf, issueText, movedText, summaryText } from "../review-text";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
-import { hasOwnBorder, isFilled, isPlain, isTinted } from "@/shared/ui/button/button-roles";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
+import { hasOwnBorder, isFilled, isPlain, isTinted } from "@/shared/ui/button.roles";
 
 const NOW = Date.parse("2026-10-10T12:00:00Z");
 const token = async () => "tok";

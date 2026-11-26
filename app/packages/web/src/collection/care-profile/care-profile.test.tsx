@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
+import { LayerScope } from "@/shared/ui/layer-scope";
 import type { CareProfileEntry, Layered } from "@pflanzendex/core";
 import { CareProfileSection } from "../care-profile-page/care-profile-page";
 import { loadCareProfiles, saveCareProfile } from "./care-profile-api";

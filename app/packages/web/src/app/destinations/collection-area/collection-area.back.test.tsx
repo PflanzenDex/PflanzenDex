@@ -72,7 +72,7 @@ beforeAll(async () => {
   await Promise.all([
     import("../../../collection/collection-page/collection-page"),
     import("../../../care/measure/measure-page/measure-page"),
-    import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"),
+    import("@/shared/ui/sheet.panel"),
     import("@/shared/platform/routing/route-focus/focus-moves"),
     import("../../../collection/plants-screen/plants-parts/plants-parts"),
     import("../../../care/plant-detail/plant-growth/plant-growth"),

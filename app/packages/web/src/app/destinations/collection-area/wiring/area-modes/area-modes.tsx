@@ -13,10 +13,7 @@ import { PokedexPage } from "@/pokedex";
 import { WishlistPage, type WishToPlant } from "@/wishlist";
 import { EquipmentPage } from "@/equipment";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
-import {
-  DelayedSkeleton,
-  useHeldLoader,
-} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 import { useQueryClient } from "@/shared/data";
 import { plantSlots } from "../plant-slots/plant-slots";
 import type { PlantGroup } from "../../../../sammlung-view";

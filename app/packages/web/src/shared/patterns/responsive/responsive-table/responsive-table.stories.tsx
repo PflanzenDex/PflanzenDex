@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { EmptyState } from "../../elements/empty-state/empty-state";
 import { PageSkeleton } from "../../states/page-skeleton/page-skeleton";
 import { ResponsiveTable, type ResponsiveColumn } from "./responsive-table";

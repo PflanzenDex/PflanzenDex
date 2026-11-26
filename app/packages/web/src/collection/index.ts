@@ -72,7 +72,7 @@ export {
   type FormPlant,
 } from "./plants-screen/plant-layers/plant-forms/address/form-address";
 export { usePlantForm } from "./plants-screen/plant-layers/plant-forms/address/use-plant-form";
-export { UnsavedInputDialog } from "@/shared/ui/overlays/unsaved-input-dialog/unsaved-input-dialog";
+export { UnsavedInputDialog } from "@/shared/patterns/responsive/unsaved-input-dialog/unsaved-input-dialog";
 // The skeleton of the hints in the shape of their cards, the layer's skeleton on "Heute" (US-QS-14, issue 1697).
 export { HintsPageSkeleton } from "./other-pages/hints-page/hints-page.skeleton";
 // The skeleton of the care profile in the shape of its card, the section's skeleton on a species profile (US-QS-14, issue 1697).

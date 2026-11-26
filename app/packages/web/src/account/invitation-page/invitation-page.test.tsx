@@ -2,7 +2,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
-import { filledIn, hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button.roles";
 import { InvitationPage } from "./invitation-page";
 
 const token = async () => "tok";

@@ -2,7 +2,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MeasurementPhoto } from "./measurement-photo";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
 
 const calls: { url: string; auth: string | undefined }[] = [];
 const stub = (status: number, body: BodyInit | null = new Uint8Array([1, 2, 3])) =>

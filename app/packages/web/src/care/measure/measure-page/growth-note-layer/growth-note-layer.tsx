@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import table from "./growth-note-layer.de.json";
 
 const t = texts(table);

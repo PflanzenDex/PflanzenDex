@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Pager } from "../pager";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
+import { LayerScope } from "@/shared/ui/layer-scope";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { dropPageParts } from "./address";
 import { knownCount, type PagerPaging } from "./paging";

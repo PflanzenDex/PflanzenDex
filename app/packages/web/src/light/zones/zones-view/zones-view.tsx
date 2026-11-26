@@ -1,8 +1,8 @@
 import { useId } from "react";
-import { Form, FormRoot } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot } from "@/shared/ui/form";
 import type { ApiError, LightZone } from "../../shared/light-api/light-api";
 import { FORM_GRID, RefusalAlert, SaveBar, useSaveForm } from "../../shared/ui/form/form";
-import { TextField } from "@/shared/ui/fields/input/input";
+import { TextField } from "@/shared/ui/input";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import {
   LUX_LIMITS,

@@ -1,8 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useWatch, type Control, type ControllerRenderProps } from "react-hook-form";
 import { localToday, TREATMENT_LIMITS } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { Button } from "@/shared/ui/button";
+import { Checkbox } from "@/shared/ui/checkbox";
 import {
   Form,
   FormField,
@@ -11,11 +11,11 @@ import {
   useFormField,
   FormRoot,
   useFieldForm,
-} from "@/shared/ui/fields/form/form";
-import { Input } from "@/shared/ui/fields/input/input";
-import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+} from "@/shared/ui/form";
+import { Input } from "@/shared/ui/input";
+import { DateField } from "@/shared/ui/input.date-field";
 import { currentTimeZone } from "../../../shared/data";
-import { Field } from "@/shared/ui/fields/form/field/field";
+import { Field } from "@/shared/ui/field";
 import {
   toTreatmentInput,
   treatmentDefaults,

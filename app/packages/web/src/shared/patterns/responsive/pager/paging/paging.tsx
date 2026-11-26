@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
 
 /**
  * Server paging of a list (FR-BES-23): `items` are the loaded entries, `total` all of them on the server. The pages count

@@ -9,7 +9,7 @@ import { FeaturesProvider } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { PrintLabelsPage } from "./print-labels-page";
 import type { LabelFormat } from "./label-sheet/label-sheet";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import table from "./print-labels-page.de.json";
 import { PrintLabelsSkeleton } from "./print-labels-page.skeleton";
 

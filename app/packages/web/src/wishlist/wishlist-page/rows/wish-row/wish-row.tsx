@@ -1,6 +1,6 @@
 import type { Ref } from "react";
 import type { Candidate } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { useObjectPhoto } from "@/shared/lists/object-row/use-object-photo";

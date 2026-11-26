@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { CareRhythmSection } from "./care-rhythm";
-import { classesOf, hasOwnBorder, isFilled } from "@/shared/ui/button/button-roles";
+import { classesOf, hasOwnBorder, isFilled } from "@/shared/ui/button.roles";
 
 afterEach(() => {
   cleanup();

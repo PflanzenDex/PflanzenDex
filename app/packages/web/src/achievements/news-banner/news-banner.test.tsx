@@ -9,7 +9,7 @@ import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { createQueryClient, WRITE_SUCCEEDED } from "../../shared/data";
 import { LINE_HIT } from "@/shared/feedback/line-hit";
 import { AchievementNewsBanner } from "./news-banner";
-import { hasOwnBorder, isPlain } from "@/shared/ui/button/button-roles";
+import { hasOwnBorder, isPlain } from "@/shared/ui/button.roles";
 
 afterEach(() => {
   cleanup();

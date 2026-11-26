@@ -1,12 +1,6 @@
 import { useFormContext, useWatch, type Control } from "react-hook-form";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/shared/ui/fields/form/form";
-import { Select } from "@/shared/ui/fields/select/select";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
+import { Select } from "@/shared/ui/select";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { MONTHS } from "../care-profile-fields";
 import table from "../care-profile-fields.de.json";

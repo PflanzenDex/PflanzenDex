@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import { Button } from "@/shared/ui/button/button";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Button } from "@/shared/ui/button";
+import { Select } from "@/shared/ui/select";
 import { refusalText } from "@/shared/lib/error-text";
 import { BUSY_LOOK, cn } from "@/shared/lib/utils";
 import { accountKey, SIGN_IN, type ApiError, useRepeatKey } from "../../../../shared/data";

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { keepTogether } from "@/shared/lib/format";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { UndoRow } from "@/shared/feedback/undo-row/undo-row";
 import type { Held } from "@/shared/feedback/undo-row/use-undo";

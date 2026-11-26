@@ -1,5 +1,5 @@
 import type { TreatmentListRow } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { UndoRow } from "@/shared/feedback/undo-row/undo-row";
 import { keepTogether, overdueChip } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";

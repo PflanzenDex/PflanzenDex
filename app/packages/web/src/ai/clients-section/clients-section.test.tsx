@@ -7,10 +7,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { AiClientsSection } from "./clients-section";
 import { AiSection } from "../ai-section/ai-section";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import table from "../ai.de.json";
 import { ClientsSkeleton } from "./clients-section.skeleton";
-import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 
 /** The address of the router: the layer the last control opened (`?sheet=<id>`, US-QS-15). */
 function Address() {

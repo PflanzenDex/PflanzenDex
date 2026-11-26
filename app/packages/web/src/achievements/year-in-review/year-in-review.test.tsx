@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { YearInReviewSection } from "./year-in-review";
-import { hasOwnBorder, isPlain } from "@/shared/ui/button/button-roles";
+import { hasOwnBorder, isPlain } from "@/shared/ui/button.roles";
 
 afterEach(() => {
   cleanup();

@@ -11,8 +11,8 @@ import {
   FormLabel,
   FormRoot,
   useFieldForm,
-} from "@/shared/ui/fields/form/form";
-import { Select } from "@/shared/ui/fields/select/select";
+} from "@/shared/ui/form";
+import { Select } from "@/shared/ui/select";
 import type { ApiError } from "../../../../shared/data";
 import { loadCard } from "../../../specimens/cards/cards-api";
 import { FormButtons, Quiet, ErrorNotice } from "../../../specimens/cards/parts/parts";

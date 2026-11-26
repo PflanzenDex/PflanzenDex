@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Dialog, DialogContent } from "@/shared/ui/overlays/dialog/dialog";
+import { Dialog, DialogContent } from "@/shared/ui/dialog";
 
 export type DialogModalProps = {
   open: boolean;

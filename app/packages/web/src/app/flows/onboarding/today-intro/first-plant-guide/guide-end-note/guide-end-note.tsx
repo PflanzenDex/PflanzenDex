@@ -1,5 +1,5 @@
 import type { ApiError } from "@/shared/data";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./guide-end-note.de.json";

@@ -6,7 +6,7 @@ import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from "rea
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { drainOutbox } from "@/shared/testing/test-setup/drain-outbox";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button.roles";
 import type { SharedSpecimen } from "@pflanzendex/core";
 import { createQueryClient } from "../../../shared/data";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";

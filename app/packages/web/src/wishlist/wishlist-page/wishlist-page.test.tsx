@@ -7,9 +7,9 @@ import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
-import { classesOf, hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button/button-roles";
+import { classesOf, hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button.roles";
 import { WishlistPage } from "./wishlist-page";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
 
 afterEach(releaseSheetExits);
 

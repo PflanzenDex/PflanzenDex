@@ -1,7 +1,7 @@
 import { LEAF_LIMITS, localToday } from "@pflanzendex/core";
 import { z } from "zod";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { dateValue } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
+import { dateValue } from "@/shared/ui/input.date-schema";
 import { currentTimeZone } from "../../../shared/data";
 import table from "../plant-leaves.de.json";
 import type { LeafInput } from "../leaves-api";

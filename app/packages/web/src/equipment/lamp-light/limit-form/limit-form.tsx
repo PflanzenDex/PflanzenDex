@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
-import { Button } from "@/shared/ui/button/button";
-import { FormRoot } from "@/shared/ui/fields/form/form";
-import { Input } from "@/shared/ui/fields/input/input";
+import { Button } from "@/shared/ui/button";
+import { FormRoot } from "@/shared/ui/form";
+import { Input } from "@/shared/ui/input";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../equipment.de.json";
 import { wholeNumber } from "../parse";

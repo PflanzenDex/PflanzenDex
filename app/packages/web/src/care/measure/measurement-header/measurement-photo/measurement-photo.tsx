@@ -1,6 +1,6 @@
 import { measurementPhotoPath } from "@pflanzendex/core";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { dateText } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";

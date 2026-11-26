@@ -1,9 +1,5 @@
-import { Select } from "@/shared/ui/fields/select/select";
-import {
-  NetworkReason,
-  useNetworkGate,
-  type NetworkGate,
-} from "@/shared/ui/button/network-gate/network-gate";
+import { Select } from "@/shared/ui/select";
+import { NetworkReason, useNetworkGate, type NetworkGate } from "@/shared/ui/button.network-gate";
 
 export type Choice<V extends string> = { value: V; label: string };
 

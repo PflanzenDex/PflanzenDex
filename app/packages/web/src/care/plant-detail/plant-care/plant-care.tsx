@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import type { TreatmentListRow, TreatmentRow } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { entityKey, useInvalidate, useWriteAction } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import {

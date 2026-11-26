@@ -18,7 +18,7 @@ import { barSlotsOf } from "../../mobile-nav-bar/bar-slots";
 import { GlobalHeader } from "../../global-header/global-header";
 import { MobileNavBar } from "../../mobile-nav-bar/mobile-nav-bar";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { beginAppStart } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { beginAppStart } from "@/shared/ui/skeleton.delayed";
 import { BAR_LABELS_KEY } from "./bar-labels";
 import {
   AppBarSlotProvider,

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { withRouter } from "@/shared/testing/story-frame/story-frame";
 import { AppBarSlotProvider, useAppBarSlot } from "./app-bar-slot/app-bar-slot";
 import { PageHeader } from "./page-header";

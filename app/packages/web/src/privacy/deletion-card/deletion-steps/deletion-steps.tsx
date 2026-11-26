@@ -1,12 +1,12 @@
-import { Button } from "@/shared/ui/button/button";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
-import { Input } from "@/shared/ui/fields/input/input";
+import { Button } from "@/shared/ui/button";
+import { FormBar } from "@/shared/ui/form-bar";
+import { Input } from "@/shared/ui/input";
 import { errorText } from "@/shared/lib/error-text";
 import { keepTogether } from "@/shared/lib/format";
 import { accountKey, type ApiError } from "../../../shared/data";
 import { cancelDeletion, requestDeletion, type DeletionState } from "../../privacy-api";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { MoreHelp } from "@/shared/ui/more-help";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
 import { CONFIRM_WORD, WhatHappens } from "../what-happens/what-happens";
 import type { useDeletionAction } from "../use-deletion-action/use-deletion-action";
 

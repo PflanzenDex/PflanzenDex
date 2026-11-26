@@ -18,9 +18,9 @@ import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toa
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_GUARD, stateFlag } from "@/shared/patterns/responsive/layer-sheet/use-layer";
-import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 import { LightPage } from "./light-page";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
 
 /** The navigator and the address of the page, so a test can press Back (US-QS-32); the guard flag is the committed one. */
 const route: { navigate: NavigateFunction | null; search: string; guarded: boolean } = {

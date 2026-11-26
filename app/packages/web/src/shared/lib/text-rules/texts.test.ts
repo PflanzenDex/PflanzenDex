@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { plurals, texts } from "./texts";
@@ -72,9 +72,17 @@ describe("FR-QG-26 every feature message table is a flat table of German texts",
     "FR-QG-26 %s holds only non-empty strings, named after its feature",
     (file, table) => {
       // The table sits in its feature folder and is named after it; the feature folder may lie below app/ (flows).
+      // The flat primitives of shared/ui (rule R3, issue 2509) have no folder: a table is named after its component file.
       const parts = file.split("/");
-      const feature = parts.at(-2);
-      expect(file).toBe(`${parts.slice(0, -1).join("/")}/${feature}.de.json`);
+      if (file.startsWith("shared/ui/")) {
+        const component = join(root, file.replace(/\.de\.json$/, ".tsx"));
+        expect(existsSync(component), `${file} has no component ${relative(root, component)}`).toBe(
+          true,
+        );
+      } else {
+        const feature = parts.at(-2);
+        expect(file).toBe(`${parts.slice(0, -1).join("/")}/${feature}.de.json`);
+      }
       expect(typeof table).toBe("object");
       for (const [key, text] of Object.entries(table as object)) {
         for (const part of key.split(".")) expect(part, key).toMatch(/^[a-z][a-zA-Z0-9]*$/);

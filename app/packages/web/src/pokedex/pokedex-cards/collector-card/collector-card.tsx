@@ -10,7 +10,7 @@ import {
   FoldNext,
   missingText,
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
-import { Badge } from "@/shared/ui/display/badge/badge";
+import { Badge } from "@/shared/ui/badge";
 import { SpeciesName } from "@/shared/species-name/species-name";
 import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -19,7 +19,7 @@ import table from "./collector-card.de.json";
 import { SourcesRow } from "./sources-row/sources-row";
 import { WikipediaSource } from "./wikipedia-source/wikipedia-source";
 import { appRarityLine, rarityLines, type CardLine } from "./rarity-note/rarity-note";
-import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import { DisclosureSummary } from "@/shared/ui/more-help.disclosure-summary";
 
 const t = texts(table);
 

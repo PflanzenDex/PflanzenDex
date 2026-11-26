@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
+import { FormBar } from "@/shared/ui/form-bar";
 import { ResponsiveModal } from "./responsive-modal";
 
 beforeAll(() => {

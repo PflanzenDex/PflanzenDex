@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { currentTimeZone } from "../../../shared/data";
 import { localToday, type Species, type SpecimenCard } from "@pflanzendex/core";
-import { showDateText } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+import { showDateText } from "@/shared/ui/input.date-field";
 import { MemoryRouter } from "react-router";
 import { findCardButton, openPlant } from "./plants-test-helpers";
 import { afterEach, describe, expect, it, vi } from "vitest";

@@ -6,16 +6,10 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import {
-  filledIn,
-  hasOwnBorder,
-  isFilled,
-  isPlain,
-  isTinted,
-} from "@/shared/ui/button/button-roles";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
+import { filledIn, hasOwnBorder, isFilled, isPlain, isTinted } from "@/shared/ui/button.roles";
+import { LayerScope } from "@/shared/ui/layer-scope";
 import { PlantLeaves } from "./plant-leaves";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import table from "./plant-leaves.de.json";
 import { LeafLogSkeleton } from "./plant-leaves.skeleton";
 

@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Link } from "react-router";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { LayerOpenRow } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { useOverviewPageSize } from "./overview-page-size/overview-page-size";

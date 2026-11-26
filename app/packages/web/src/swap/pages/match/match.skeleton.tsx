@@ -1,7 +1,7 @@
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";
 

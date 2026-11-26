@@ -1,10 +1,10 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useNavigationType } from "react-router";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
-import { UnsavedQuestion } from "@/shared/ui/overlays/unsaved-input-dialog/unsaved-question/unsaved-question";
+import { UnsavedQuestion } from "@/shared/patterns/responsive/unsaved-input-dialog/unsaved-question/unsaved-question";
 import { LayerGuardContext, layerOpenerId, useLayer } from "./use-layer";
 import { useLayerGuard, type LayerGuard } from "./layer-sheet.guard";
 import { LayerHostContext } from "./layer-host/layer-host";

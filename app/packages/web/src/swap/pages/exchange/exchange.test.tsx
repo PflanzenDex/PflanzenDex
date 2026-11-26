@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
+import { hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button.roles";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { ExchangePage } from "./exchange";
 

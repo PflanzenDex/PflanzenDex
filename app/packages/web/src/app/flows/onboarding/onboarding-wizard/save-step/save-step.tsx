@@ -6,10 +6,10 @@ import {
   type Species,
   zoneLabel,
 } from "@pflanzendex/core";
-import { Select } from "@/shared/ui/fields/select/select";
-import { Label } from "@/shared/ui/display/label/label";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import { Select } from "@/shared/ui/select";
+import { Label } from "@/shared/ui/label";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { MarkerSection, type MarkerSectionProps } from "@/collection";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";

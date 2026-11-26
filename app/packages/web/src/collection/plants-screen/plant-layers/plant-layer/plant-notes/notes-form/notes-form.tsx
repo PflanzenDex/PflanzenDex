@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Control } from "react-hook-form";
 import { SPECIMEN_LIMITS } from "@pflanzendex/core";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
+import { FormBar } from "@/shared/ui/form-bar";
 import {
   Form,
   FormControl,
@@ -13,8 +13,8 @@ import {
   FormMessage,
   FormRoot,
   useFieldForm,
-} from "@/shared/ui/fields/form/form";
-import { Textarea } from "@/shared/ui/fields/textarea/textarea";
+} from "@/shared/ui/form";
+import { Textarea } from "@/shared/ui/textarea";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ApiError } from "@/shared/data";
 import { texts } from "@/shared/lib/text-rules/texts";

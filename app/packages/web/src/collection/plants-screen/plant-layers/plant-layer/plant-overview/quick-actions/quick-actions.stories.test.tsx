@@ -9,7 +9,7 @@ import {
   setWindowHeight,
   stubBoxes,
   stubSheetLayout,
-} from "@/shared/ui/overlays/sheet/sheet.test-helpers";
+} from "@/shared/ui/sheet.test-helpers";
 import * as stories from "./quick-actions.stories";
 
 // US-QS-15 · issue 2536: the play of the result under the row runs in jsdom with the layout of a phone (360 x 640 px, as the

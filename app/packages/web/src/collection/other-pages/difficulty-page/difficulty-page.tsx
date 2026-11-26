@@ -15,7 +15,7 @@ import {
   FactGrid,
   unknownInEvery,
 } from "@/shared/patterns/responsive/responsive-table/fact-grid/fact-grid";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { SpeciesName, germanNameOf } from "@/shared/species-name/species-name";
 import { LightNeedAction } from "@/light";

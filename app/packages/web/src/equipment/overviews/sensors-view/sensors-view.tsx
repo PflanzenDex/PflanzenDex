@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import type { SensorView } from "@pflanzendex/core";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Select } from "@/shared/ui/select";
 import { BUSY_LOOK, cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../equipment.de.json";

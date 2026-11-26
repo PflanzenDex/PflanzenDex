@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useLocation, useNavigate, useNavigationType } from "react-router";
-import { preloadUnsavedQuestion } from "@/shared/ui/overlays/unsaved-input-dialog/unsaved-question/unsaved-question";
+import { preloadUnsavedQuestion } from "@/shared/patterns/responsive/unsaved-input-dialog/unsaved-question/unsaved-question";
 import { FROM_APP, LAYER_GUARD, focusLayer, stateFlag, type UnsavedGuard } from "./use-layer";
 import { isClosing, setClosing, setGuarded } from "./use-layer.history";
 import {

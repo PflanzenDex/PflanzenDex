@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Clock, Ellipsis, Lock } from "lucide-react";
 import { useLocation } from "react-router";
-import { Button } from "@/shared/ui/button/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
+import { Button } from "@/shared/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/sheet";
 import { cn } from "@/shared/lib/utils";
 import {
   BAR_SHOW_CLASS,

@@ -1,4 +1,4 @@
-import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { OBJECT_GROUP } from "../grouped-list/group-classes";
 
 /**

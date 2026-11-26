@@ -7,7 +7,7 @@ import { TransitionRouter } from "../shared/platform/routing/route-transition/tr
 import { scheduleAppWorker } from "../shared/platform/device/service-worker/register";
 import { startInstallPrompt } from "../shared/platform/device/service-worker/install-prompt";
 import { restoreMotion } from "../shared/platform/device/motion/motion-setting";
-import { beginAppStart } from "../shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { beginAppStart } from "@/shared/ui/skeleton.delayed";
 import "../styles/tokens.css";
 
 // Before the first frame (US-QS-33): the last motion choice known on this device, so nothing moves that it forbids.

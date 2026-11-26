@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { useInLayer } from "@/shared/ui/overlays/layer-scope/layer-scope";
+import { useInLayer } from "@/shared/ui/layer-scope";
 import { LayerHost, LayerOpener, LayerSheet } from "../../layer-sheet";
 
 beforeAll(() => {

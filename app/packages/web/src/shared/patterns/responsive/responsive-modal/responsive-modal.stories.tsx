@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { ResponsiveModal } from "./responsive-modal";
 
 // Catalog of the ResponsiveModal (TE-17, DS-23): bottom sheet on the phone viewport, dialog on the tablet viewport.

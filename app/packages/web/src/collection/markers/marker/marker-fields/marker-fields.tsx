@@ -1,7 +1,7 @@
 import { useWatch, type Control, type FieldValues, type Path } from "react-hook-form";
 import { specimenName } from "@pflanzendex/core";
-import { Field } from "@/shared/ui/fields/form/field/field";
-import { Input } from "@/shared/ui/fields/input/input";
+import { Field } from "@/shared/ui/field";
+import { Input } from "@/shared/ui/input";
 import { Quiet } from "../../../specimens/cards/parts/parts";
 import type { CreateFields } from "../../../specimens/model/schemas";
 import type { Sibling } from "../marker-rule";

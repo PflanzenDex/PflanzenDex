@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import type { AiConnection, AiRights } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Button } from "@/shared/ui/button";
+import { MoreHelp } from "@/shared/ui/more-help";
+import { Select } from "@/shared/ui/select";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { entityKey, useInvalidate, useWriteAction } from "../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";

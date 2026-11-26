@@ -7,7 +7,7 @@ import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import table from "../whats-new.de.json";
 import { markAllNewsSeen, NEWS_ENTRIES, appVersion } from "../whats-new";
 

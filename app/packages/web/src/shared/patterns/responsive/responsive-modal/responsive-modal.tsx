@@ -1,10 +1,10 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
-import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
+import { LayerScope } from "@/shared/ui/layer-scope";
+import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/sheet";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { returnFocusOnClose } from "@/shared/platform/routing/route-focus/view-start";
-import { FormBarHostContext, useModalBarHost } from "@/shared/ui/button/form-bar/form-bar.host";
+import { FormBarHostContext, useModalBarHost } from "@/shared/ui/form-bar.host";
 import { DialogPart } from "./dialog-part/dialog-part";
 import { useOpenState, usePreloadDialog } from "./responsive-modal.state";
 

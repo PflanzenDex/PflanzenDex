@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useWatch } from "react-hook-form";
 import { specimenName } from "@pflanzendex/core";
-import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/form";
 import type { ApiError } from "../../../../shared/data";
 import { MarkerInput } from "../marker-fields/marker-fields";
 import { FormButtons, Quiet, ErrorNotice } from "../../../specimens/cards/parts/parts";

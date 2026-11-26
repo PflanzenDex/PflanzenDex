@@ -3,7 +3,7 @@ import type { RepotHint, RepotSign } from "@pflanzendex/core";
 import { entityKey, SIGN_IN, type ApiError, useRepeatKey } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { Checkbox } from "@/shared/ui/checkbox";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { Quiet, ErrorNotice } from "../../../../specimens/cards/parts/parts";
 import { setRepotSign } from "../../repot-api";

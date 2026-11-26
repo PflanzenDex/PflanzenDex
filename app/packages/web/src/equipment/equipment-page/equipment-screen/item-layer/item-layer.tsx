@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import { zoneLabel } from "@pflanzendex/core";
-import { Badge } from "@/shared/ui/display/badge/badge";
+import { Badge } from "@/shared/ui/badge";
 import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { withUnit } from "@/shared/lib/format";

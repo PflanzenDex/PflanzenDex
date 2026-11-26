@@ -1,6 +1,6 @@
 import type { PhasesRow } from "@pflanzendex/core";
 import { useLocation, useSearchParams } from "react-router";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { texts } from "@/shared/lib/text-rules/texts";
 import {

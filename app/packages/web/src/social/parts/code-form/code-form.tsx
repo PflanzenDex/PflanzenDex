@@ -1,11 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef } from "react";
 import { z } from "zod";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { BUSY_LOOK, cn } from "@/shared/lib/utils";
-import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
-import { TextField } from "@/shared/ui/fields/input/input";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/form";
+import { TextField } from "@/shared/ui/input";
 import { refusalText } from "@/shared/lib/error-text";
 import { isKeyConflict, type ApiError } from "../../../shared/data";
 

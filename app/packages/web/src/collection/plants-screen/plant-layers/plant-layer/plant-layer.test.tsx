@@ -12,7 +12,7 @@ import { EMPTY_DISTRIBUTION } from "../../../insights/distribution-test-helpers"
 import { PlantsScreen } from "../../plants-screen";
 import { pagesOf, summaryOf } from "../../../specimens/tests/plants-test-helpers";
 import type { PlantSlots } from "../layer-ids";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import table from "../plant-layers.de.json";
 import { PlantLayerSkeleton } from "./plant-layer.skeleton";
 

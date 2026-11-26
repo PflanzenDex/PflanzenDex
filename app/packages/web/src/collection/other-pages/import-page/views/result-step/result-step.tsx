@@ -8,7 +8,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { PATHS, todayAddress } from "@/shared/patterns/navigation/navigation/navigation";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
-import { Button, buttonVariants } from "@/shared/ui/button/button";
+import { Button, buttonVariants } from "@/shared/ui/button";
 import { focusIt } from "@/shared/platform/routing/route-focus/view-start";
 import type { ImportFlow } from "../../import-flow";
 import table from "../../import-page.de.json";

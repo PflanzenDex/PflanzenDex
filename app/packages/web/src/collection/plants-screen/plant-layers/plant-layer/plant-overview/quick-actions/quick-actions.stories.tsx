@@ -18,7 +18,7 @@ import {
 } from "@/shared/testing/story-frame/sheet-play";
 import { withRouter } from "@/shared/testing/story-frame/story-frame";
 import { check, hasLayout, must, waitUntil } from "@/shared/testing/story-frame/story-play";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { PlantLayer } from "../../plant-layer";
 import { ResultHost } from "../../plant-layer.slot";
 

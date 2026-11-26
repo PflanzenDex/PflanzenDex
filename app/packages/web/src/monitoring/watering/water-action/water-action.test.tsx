@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LINE_HIT } from "@/shared/feedback/line-hit";
-import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { Context as AnnouncerContext } from "@/shared/platform/announcer/context";
 import { WaterAction } from "./water-action";

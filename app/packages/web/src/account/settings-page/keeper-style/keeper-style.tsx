@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/shared/ui/button/button";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { Button } from "@/shared/ui/button";
+import { MoreHelp } from "@/shared/ui/more-help";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useInvalidate } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";

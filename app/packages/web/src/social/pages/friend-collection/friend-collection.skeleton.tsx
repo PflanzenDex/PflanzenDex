@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 
 /**
  * Placeholder with the layout of the page on a phone: the filter and two cards (DS-52, DS-53). The route's fallback of a

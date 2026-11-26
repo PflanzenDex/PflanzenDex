@@ -6,7 +6,7 @@ import {
 } from "@pflanzendex/core";
 import { z } from "zod";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { requiredDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
+import { requiredDate } from "@/shared/ui/input.date-schema";
 import type { MeasurementInput } from "./api/measurements-api";
 import type { TreatmentInput } from "./api/treatments-api";
 import table from "./shared.de.json";

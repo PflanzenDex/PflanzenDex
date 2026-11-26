@@ -1,7 +1,7 @@
 import { REMINDER_OCCASIONS, type ReminderOccasion } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
-import { Label } from "@/shared/ui/display/label/label";
+import { Button } from "@/shared/ui/button";
+import { DateField } from "@/shared/ui/input.date-field";
+import { Label } from "@/shared/ui/label";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { currentTimeZone } from "../../../shared/data";
 import { addDays, localToday } from "./pause";

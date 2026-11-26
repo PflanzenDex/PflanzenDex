@@ -6,7 +6,7 @@ import {
 } from "@pflanzendex/core";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { UndoRow } from "@/shared/feedback/undo-row/undo-row";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LIST_CLASSES } from "../../shared/notices/notices";

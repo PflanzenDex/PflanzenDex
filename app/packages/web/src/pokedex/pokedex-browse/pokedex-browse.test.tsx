@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "../pokedex-page/pokedex-page";
 import { pokedexReadAnswer } from "../pokedex-page/pokedex-reads-fake";
-import { isPlain, isTinted } from "@/shared/ui/button/button-roles";
+import { isPlain, isTinted } from "@/shared/ui/button.roles";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { localToday, type MeasurementView } from "@pflanzendex/core";
-import { Badge } from "@/shared/ui/display/badge/badge";
+import { Badge } from "@/shared/ui/badge";
 import { GrowthSummary } from "./growth-summary/growth-summary";
 import { dateText, massName, QUALITY_NAME, valueText } from "../../shared/text";
 import { onDate } from "@/shared/lib/format";

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import type { SharedSpecimen } from "@pflanzendex/core";
-import { filledIn, hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button.roles";
 import table from "../../social.de.json";
 import { SharingPanel, sharingChoice } from "./sharing-panel";
 

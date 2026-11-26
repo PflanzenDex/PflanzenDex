@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { FactGrid } from "./fact-grid";
 
 // Catalog of the FactGrid (US-QS-24): known facts as a grid, unknown ones folded into one line with the next step.

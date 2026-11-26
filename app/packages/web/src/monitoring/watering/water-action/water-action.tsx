@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { BUSY_LOOK } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { summaryDate } from "@/shared/lib/format";

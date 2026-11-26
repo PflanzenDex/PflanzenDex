@@ -1,10 +1,10 @@
 import { useEffect, useId } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type UseFormReturn } from "react-hook-form";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
-import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
-import { FormMoreFields } from "@/shared/ui/fields/form/more-fields/more-fields";
-import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
+import { FormBar } from "@/shared/ui/form-bar";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/form";
+import { FormMoreFields } from "@/shared/ui/form.more-fields";
+import { useServerRefusal } from "@/shared/ui/form.server-refusal";
 import { FormNotices } from "@/shared/patterns/elements/form-notices/form-notices";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import type { ApiError } from "../../shared/data";

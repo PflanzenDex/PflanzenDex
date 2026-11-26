@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Button } from "@/shared/ui/button/button";
-import { FormRoot } from "@/shared/ui/fields/form/form";
-import { Input } from "@/shared/ui/fields/input/input";
+import { Button } from "@/shared/ui/button";
+import { FormRoot } from "@/shared/ui/form";
+import { Input } from "@/shared/ui/input";
 import type { EquipmentRow, SupplyLevel } from "../../../equipment-api";
 import { SUPPLY_LABELS } from "../../../labels";
-import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { DisclosureSummary } from "@/shared/ui/more-help.disclosure-summary";
+import { MoreHelp } from "@/shared/ui/more-help";
 import {
   SegmentedControl,
   type SegmentedOption,

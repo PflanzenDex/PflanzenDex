@@ -5,7 +5,7 @@ import { LayerOpener, useLayer } from "@/shared/patterns/responsive/layer-sheet/
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { zoneLabel } from "@pflanzendex/core";
 import type { LightData } from "../../../shared/light-api/light-api";

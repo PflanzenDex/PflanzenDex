@@ -9,8 +9,8 @@ import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import type { GrowthMoments } from "@/achievements";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { MeasurePage } from "./measure-page";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
-import { hasOwnBorder, isPlain } from "@/shared/ui/button/button-roles";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
+import { hasOwnBorder, isPlain } from "@/shared/ui/button.roles";
 
 /** The growth moments the page reads; a test sets them before it saves (US-ACH-05, issue 1644). */
 const growth = vi.hoisted(() => ({ moments: null as GrowthMoments | null }));

@@ -2,8 +2,8 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { SKELETON_DELAY_MS } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { hasOwnBorder, isNeutral } from "@/shared/ui/button/button-roles";
+import { SKELETON_DELAY_MS } from "@/shared/ui/skeleton.delayed";
+import { hasOwnBorder, isNeutral } from "@/shared/ui/button.roles";
 import {
   LayerCountRow,
   LayerRow,

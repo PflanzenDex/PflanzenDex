@@ -9,11 +9,8 @@ import { PAGE_BACKGROUND, SCRIM_OPACITY, dimmedPageColour } from "./theme-colour
 const here = (path: string) => new URL(path, import.meta.url);
 const tokens = readFileSync(here("../../../../styles/tokens.css"), "utf8");
 const indexHtml = readFileSync(here("../../../../../index.html"), "utf8");
-const dialogSource = readFileSync(here("../../../ui/overlays/dialog/dialog.tsx"), "utf8");
-const sheetSource = readFileSync(
-  here("../../../ui/overlays/sheet/sheet-panel/sheet-panel.tsx"),
-  "utf8",
-);
+const dialogSource = readFileSync(here("../../../ui/dialog.tsx"), "utf8");
+const sheetSource = readFileSync(here("../../../ui/sheet.panel.tsx"), "utf8");
 
 const darkAt = tokens.search(/^@media \(prefers-color-scheme: dark\) \{/m);
 const lightRoot = tokens.slice(0, darkAt);

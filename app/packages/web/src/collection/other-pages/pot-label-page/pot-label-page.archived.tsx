@@ -5,7 +5,7 @@ import { errorText } from "@/shared/lib/error-text";
 import { UNKNOWN, dateText } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { restoreSpecimen } from "../../archived/archived-api";
 import { COLLECTION_KEY } from "../../specimens/hooks/use-collection";
 import table from "./pot-label-page.de.json";

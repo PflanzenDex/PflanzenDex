@@ -1,7 +1,7 @@
 import { Suspense, useRef, useState, type ReactNode } from "react";
 import { FIRST_PLANT_STEPS } from "@pflanzendex/core";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { KeeperStyleQuestion } from "../../../../account";
 import { SaveButton } from "./save-step/save-button/save-button";
 import { SaveStep } from "./save-step/save-step";

@@ -7,13 +7,13 @@ import {
   type FieldValues,
 } from "react-hook-form";
 import type { z } from "zod";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
-import { Field } from "@/shared/ui/fields/form/field/field";
-import { Select } from "@/shared/ui/fields/select/select";
+import { FormBar } from "@/shared/ui/form-bar";
+import { Field } from "@/shared/ui/field";
+import { Select } from "@/shared/ui/select";
 import type { ApiError } from "../../light-api/light-api";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
-import { useFieldForm } from "@/shared/ui/fields/form/form";
+import { useServerRefusal } from "@/shared/ui/form.server-refusal";
+import { useFieldForm } from "@/shared/ui/form";
 
 /**
  * A form that saves through an operation: validates with its zod schema (focus goes to the first invalid field),

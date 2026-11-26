@@ -1,6 +1,6 @@
 import { localToday, type Feed } from "@pflanzendex/core";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { summaryDate } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { currentTimeZone } from "../../../../shared/data";

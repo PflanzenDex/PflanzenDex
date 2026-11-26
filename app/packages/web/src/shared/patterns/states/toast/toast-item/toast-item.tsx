@@ -1,6 +1,6 @@
 import { CircleAlert, CircleCheck, X } from "lucide-react";
 import { useEffect, useRef, type FocusEvent } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
 export type ToastKind = "success" | "error";

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useFeature, useInvalidate, type ApiError } from "../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { loadEquipment, type EquipmentData } from "../equipment-api";
 import { useLampActions } from "./lamp-actions/lamp-actions";
 import { LampOutcome } from "./lamp-actions/lamp-outcome/lamp-outcome";

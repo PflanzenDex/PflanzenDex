@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
-import { Label } from "@/shared/ui/display/label/label";
+import { Button } from "@/shared/ui/button";
+import { SearchInput } from "@/shared/ui/search-input";
+import { Label } from "@/shared/ui/label";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./species-step.de.json";

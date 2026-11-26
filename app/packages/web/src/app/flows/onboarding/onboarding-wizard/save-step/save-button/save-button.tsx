@@ -1,5 +1,5 @@
 import type { MouseEventHandler, ReactNode } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { BUSY_LOOK } from "@/shared/lib/utils";
 import type { useFirstPlant } from "../../use-first-plant";
 

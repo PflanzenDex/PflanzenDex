@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type Ref } from "react";
 import { useCalmMode } from "@/achievements";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import table from "../whats-new.de.json";
 import type { NewsEntry } from "../news-lines.mjs";
 import { appVersion, bannerBatch, endBanner, markAllNewsSeen } from "../whats-new";

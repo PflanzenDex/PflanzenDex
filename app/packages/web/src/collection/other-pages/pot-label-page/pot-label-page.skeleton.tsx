@@ -1,5 +1,5 @@
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 
 /** The plant of a pot label while it loads: the heading area, the photo, the name and the actions (US-BES-17, DS-52, DS-53); shows after the delay (DS-57). */
 export function PotLabelSkeleton({ label }: { label: string }) {

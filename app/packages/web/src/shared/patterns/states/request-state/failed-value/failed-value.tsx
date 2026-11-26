@@ -1,5 +1,5 @@
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import table from "./failed-value.de.json";
 
 const ui = texts(table);

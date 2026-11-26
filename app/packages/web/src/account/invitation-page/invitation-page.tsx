@@ -1,13 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
+import { NetworkSlot } from "@/shared/ui/button.network-gate";
 import { useRef, useState } from "react";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
+import { Button } from "@/shared/ui/button";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/form";
 import { SIGN_IN, type ApiError } from "../../shared/data";
 import { redeemInvitation } from "../api/access-api";
-import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
-import { TextField } from "@/shared/ui/fields/input/input";
+import { useServerRefusal } from "@/shared/ui/form.server-refusal";
+import { TextField } from "@/shared/ui/input";
 import { invitationCodeSchema, type InvitationCodeFields } from "../schemas";
 
 type Token = () => Promise<string | undefined>;

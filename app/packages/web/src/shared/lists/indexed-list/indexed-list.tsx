@@ -1,7 +1,7 @@
 import { useMemo, useRef, type ReactNode } from "react";
 import { scrollToTop } from "@/shared/platform/device/motion/scroll-top";
-import { LetterStrip } from "@/shared/ui/fields/input/letter-strip/letter-strip";
-import { firstIndexes, MIN_ROWS } from "@/shared/ui/fields/input/letter-strip/letters";
+import { LetterStrip } from "@/shared/ui/letter-strip";
+import { firstIndexes, MIN_ROWS } from "@/shared/ui/letter-strip.letters";
 
 /**
  * A long list sorted by name with the letter index at its trailing edge (SG-LIST-11, issue 2419). The index shows only when

@@ -1,5 +1,5 @@
 import type { LightLocation, SpecimenCard } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { LightNeedAction } from "@/light";
 import { LocateControl } from "../../../../markers/locate/locate-control/locate-control";
 import { Actions, Quiet } from "../../../../specimens/cards/parts/parts";

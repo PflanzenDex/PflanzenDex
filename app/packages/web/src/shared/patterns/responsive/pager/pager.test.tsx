@@ -4,7 +4,7 @@ import { act, cleanup, render as plainRender, screen } from "@testing-library/re
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Pager } from "./pager";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
+import { LayerScope } from "@/shared/ui/layer-scope";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 
 afterEach(cleanup);

@@ -4,7 +4,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { useStoredPhoto } from "@/shared/platform/browser/use-stored-photo";
 import { GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { plantAddress } from "@/shared/patterns/navigation/navigation/navigation";
-import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import { DisclosureSummary } from "@/shared/ui/more-help.disclosure-summary";
 import { useRequest } from "../../shared/data";
 import {
   loadAnniversaries,

@@ -1,5 +1,5 @@
 import { MATCH_ANSWERS, type EmptyReason, type MatchCard as Card } from "@pflanzendex/core";
-import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
+import { NetworkSlot } from "@/shared/ui/button.network-gate";
 import { Link } from "react-router";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
@@ -9,7 +9,7 @@ import {
   PATHS,
   WISHLIST_MODE_ADDRESS,
 } from "@/shared/patterns/navigation/navigation/navigation";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../../swap.de.json";
 import { cardTitle as title } from "../deck-state";

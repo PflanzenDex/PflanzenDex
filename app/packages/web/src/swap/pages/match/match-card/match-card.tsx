@@ -1,5 +1,5 @@
 import type { MatchCard as Card } from "@pflanzendex/core";
-import { Badge } from "@/shared/ui/display/badge/badge";
+import { Badge } from "@/shared/ui/badge";
 import {
   CardPicture,
   PICTURE_HEIGHT_CAP,

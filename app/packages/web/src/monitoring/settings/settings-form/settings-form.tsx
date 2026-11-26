@@ -1,9 +1,9 @@
 import { REMINDER_LIMITS, type ReminderOccasion, type ReminderSettings } from "@pflanzendex/core";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { useCallback, useState, type FormEvent, type ReactNode } from "react";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
-import { FormRoot } from "@/shared/ui/fields/form/form";
-import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
+import { FormBar } from "@/shared/ui/form-bar";
+import { FormRoot } from "@/shared/ui/form";
+import { isHandedDate } from "@/shared/ui/input.date-schema";
 import { accountKey, useInvalidate, useWriteAction } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadReminderSettings, saveReminderSettings } from "../../api/reminders-api";

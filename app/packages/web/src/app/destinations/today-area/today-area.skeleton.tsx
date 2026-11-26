@@ -2,8 +2,8 @@ import { HintsPageSkeleton } from "@/collection";
 import { OpenTreatmentsSkeleton } from "@/care";
 import { WateringListSkeleton } from "@/monitoring";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { SkeletonGroup } from "@/shared/ui/skeleton";
 import type { ReactNode } from "react";
 import table from "./today-area.de.json";
 

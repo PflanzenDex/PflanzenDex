@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { copyText } from "@/shared/platform/browser/clipboard";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { texts } from "@/shared/lib/text-rules/texts";

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import { Button } from "@/shared/ui/button/button";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { Button } from "@/shared/ui/button";
+import { MoreHelp } from "@/shared/ui/more-help";
 import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { errorText } from "@/shared/lib/error-text";
 import { SIGN_IN, type ApiError } from "../../shared/data";

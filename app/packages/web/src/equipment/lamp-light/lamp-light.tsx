@@ -8,7 +8,7 @@ import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { keepTogether } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { zoneLabel } from "@pflanzendex/core";
-import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import { DisclosureSummary } from "@/shared/ui/more-help.disclosure-summary";
 import table from "../equipment.de.json";
 
 const t = texts(table);
