@@ -21,6 +21,10 @@ const NUMBER = "number";
  * - `limits`: numbers that bound the whole file (maxEntries, maxTotal); a missing limit is no limit.
  * - `entries.key`: the fields that identify an entry. `fields` are required; `optional` numbers have a default, the
  *   value the checker uses for a missing count (`e[k] ?? 0`, `e.pageX ?? 1`). `judged` numbers are compared: higher is worse.
+ * - `entries.sets`: fields of one entry that are lists of unique texts (the one-screen `rules`): a text that the
+ *   entry did not have before is growth, a lost one a shrink; a missing list is an empty one.
+ * - `entries.meta`: optional fields that are metadata (the `issue` and `reason` of an entry): checked for their type,
+ *   never compared.
  * - `lists`: named lists of unique texts (reference): a new text is growth.
  * - `nested`: { rule: { directory: value } } (layout): the value per rule and directory is judged.
  */
@@ -29,7 +33,13 @@ export const BASELINE_FORMATS = {
     limits: ["maxEntries"],
     entries: {
       key: ["screen", "size", "kind", "rule"],
-      fields: { screen: TEXT, size: TEXT, kind: TEXT, rule: TEXT, count: NUMBER },
+      fields: {
+        screen: TEXT,
+        size: TEXT,
+        kind: TEXT,
+        rule: TEXT,
+        count: NUMBER,
+      },
       judged: ["count"],
     },
   },
@@ -40,6 +50,8 @@ export const BASELINE_FORMATS = {
       fields: { screen: TEXT, size: TEXT, page: NUMBER, inner: NUMBER },
       optional: { pageX: 1, innerX: 1, cap: 0 },
       judged: ["page", "inner", "pageX", "innerX", "cap"],
+      sets: ["rules"],
+      meta: { issue: NUMBER, reason: TEXT },
     },
   },
   "layout-shift-baseline.json": {
@@ -58,7 +70,13 @@ export const BASELINE_FORMATS = {
     limits: ["maxEntries"],
     entries: {
       key: ["rule", "file", "function"],
-      fields: { rule: TEXT, file: TEXT, function: TEXT, value: NUMBER, date: TEXT },
+      fields: {
+        rule: TEXT,
+        file: TEXT,
+        function: TEXT,
+        value: NUMBER,
+        date: TEXT,
+      },
       judged: ["value"],
     },
   },
@@ -81,13 +99,21 @@ export const BASELINE_FORMATS = {
   },
   "ui-text-baseline.json": {
     limits: ["maxTotal"],
-    entries: { key: ["file"], fields: { file: TEXT, count: NUMBER }, judged: ["count"] },
+    entries: {
+      key: ["file"],
+      fields: { file: TEXT, count: NUMBER },
+      judged: ["count"],
+    },
   },
   // FR-QG-17, issue 2430: the scroll region lines outside the shared scroll components (check-scroll-markers.mjs), the same
   // shape as the UI text ratchet: a raised count or maxTotal is growth, a lowered one a shrink.
   "scroll-markers-baseline.json": {
     limits: ["maxTotal"],
-    entries: { key: ["file"], fields: { file: TEXT, count: NUMBER }, judged: ["count"] },
+    entries: {
+      key: ["file"],
+      fields: { file: TEXT, count: NUMBER },
+      judged: ["count"],
+    },
   },
   "reference-baseline.json": { lists: ["routes", "operations", "components"] },
   "layout-baseline.json": { nested: true },
@@ -133,7 +159,20 @@ function rowsOf(list, spec) {
   const rows = new Map();
   for (const entry of list) {
     if (!isObject(entry)) throw new Error("an entry is not an object");
-    onlyKeys(entry, [...Object.keys(spec.fields), ...Object.keys(optional)]);
+    const sets = spec.sets ?? [];
+    const meta = spec.meta ?? {};
+    onlyKeys(entry, [
+      ...Object.keys(spec.fields),
+      ...Object.keys(optional),
+      ...sets,
+      ...Object.keys(meta),
+    ]);
+    for (const name of sets)
+      if (entry[name] !== undefined && (!Array.isArray(entry[name]) || !entry[name].every(isText)))
+        throw new Error(`entry field ${name} is not a list of texts`);
+    for (const [name, type] of Object.entries(meta))
+      if (entry[name] !== undefined && !CHECK[type](entry[name]))
+        throw new Error(`entry field ${name} is not a ${type}`);
     for (const [name, type] of Object.entries(spec.fields))
       if (!CHECK[type](entry[name]))
         throw new Error(`entry field ${name} is missing or not a ${type}`);
@@ -146,6 +185,7 @@ function rowsOf(list, spec) {
     rows.set(key, {
       label,
       values: Object.fromEntries(spec.judged.map((name) => [name, entry[name] ?? optional[name]])),
+      sets: Object.fromEntries(sets.map((name) => [name, new Set(entry[name] ?? [])])),
     });
   }
   return rows;
@@ -220,12 +260,18 @@ export function baselineGrows(relativePath, before, after, { gateNamesFile = tru
   try {
     was = modelOf(format, before);
   } catch (error) {
-    return { grows: true, reasons: [`the current text does not parse: ${error.message}`] };
+    return {
+      grows: true,
+      reasons: [`the current text does not parse: ${error.message}`],
+    };
   }
   try {
     now = modelOf(format, after);
   } catch (error) {
-    return { grows: true, reasons: [`the new text does not parse: ${error.message}`] };
+    return {
+      grows: true,
+      reasons: [`the new text does not parse: ${error.message}`],
+    };
   }
   const reasons = [];
   for (const limit of new Set([...was.limits.keys(), ...now.limits.keys()])) {
@@ -242,6 +288,9 @@ export function baselineGrows(relativePath, before, after, { gateNamesFile = tru
     for (const [judged, value] of Object.entries(row.values))
       if (value > old.values[judged])
         reasons.push(`${row.label}: ${judged} rose from ${old.values[judged]} to ${value}`);
+    for (const [name, items] of Object.entries(row.sets ?? {}))
+      for (const item of items)
+        if (!old.sets?.[name]?.has(item)) reasons.push(`${row.label}: new ${name} entry ${item}`);
   }
   return { grows: reasons.length > 0, reasons };
 }
@@ -278,14 +327,22 @@ export function baselineChanges(pr, { mergeBase, readAt, namedAtHead }) {
   try {
     base = mergeBase();
   } catch (error) {
-    return files.map((path) => ({ path, error: `the merge base is unknown: ${error.message}` }));
+    return files.map((path) => ({
+      path,
+      error: `the merge base is unknown: ${error.message}`,
+    }));
   }
   return files.map((path) => {
     try {
       const before = readAt(base, path);
       const after = readAt(pr.headRefOid, path);
       if (before === null && after === null) throw new Error("the file exists on neither side");
-      return { path, before, after, gateNamesFile: after === null ? namedAtHead(path) : true };
+      return {
+        path,
+        before,
+        after,
+        gateNamesFile: after === null ? namedAtHead(path) : true,
+      };
     } catch (error) {
       return { path, error: error.message.split("\n")[0] };
     }
