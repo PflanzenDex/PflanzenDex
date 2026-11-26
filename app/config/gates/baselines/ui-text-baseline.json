@@ -435,7 +435,7 @@
     },
     {
       "file": "packages/web/src/pokedex/pokedex-browse/pokedex-browse.tsx",
-      "count": 8
+      "count": 7
     },
     {
       "file": "packages/web/src/pokedex/pokedex-cards/collector-card/collector-card.tsx",
