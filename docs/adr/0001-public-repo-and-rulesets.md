@@ -37,6 +37,6 @@ Settings that come free with a public repo: secret scanning with push protection
 - Specs, roadmap, business case and commit metadata (author names and email addresses) are public. Before the switch, gitleaks scanned the full history of all branches with no findings. New commits should use the GitHub `noreply` address.
 - Non-admin PRs need a second human. Admins may merge their own PRs after a green `ci-status`; this trades review for speed in a small team and is recorded here so it can be revisited when the team grows.
 - An agent running under an admin's account could technically use the admin bypass. It is stopped by `AGENTS.md` and the Claude Code hook that denies `gh pr merge`, not by GitHub. If that ever proves insufficient, run agents under a non-admin bot account.
-- Renovate PRs need an approval (or an admin merge) too; auto-merge only fires after it (FR-QG-15).
+- Dependabot PRs need an approval (or an admin merge) too; auto-merge only fires after it (FR-QG-15).
 - semantic-release does not commit back to `main` (the ruleset would block it); version and notes come from the tag and the GitHub release (US-DEV-06).
 - The GitHub project (roadmap board) stays private; its visibility is independent of the repo.

@@ -13,7 +13,7 @@ x-logging: &logging
 # Every service runs without extra privileges (TE-03, #761): `no-new-privileges` (no setuid escalation), every Linux
 # capability dropped, and a non-root user (from the image or `user:` below). Nothing needs a capability back: Docker lets
 # unprivileged users bind ports below 1024 inside a container, so the proxy listens on 80/443 as the user `caddy`.
-# Images are pinned to an exact version and a digest; Renovate keeps both current (FR-QG-15, `config:best-practices`).
+# Images are pinned to an exact version and a digest; Dependabot keeps both current (FR-QG-15).
 services:
   db:
     logging: *logging
