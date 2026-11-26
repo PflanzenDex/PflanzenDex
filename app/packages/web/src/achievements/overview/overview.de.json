@@ -1,5 +1,12 @@
 {
   "earned": "Erreicht",
   "open": "Noch offen",
-  "count": "{earned} von {total}"
+  "count": "{earned} von {total}",
+  "jump": "Zu Gruppe springen",
+  "card.new": "(neu)",
+  "card.earnedOn": "Erreicht am {date}",
+  "card.with": "mit",
+  "card.unknown": "unbekannt",
+  "card.nextStep": "Nächster Schritt: {step}",
+  "card.missingFallback": "Es fehlen Daten."
 }

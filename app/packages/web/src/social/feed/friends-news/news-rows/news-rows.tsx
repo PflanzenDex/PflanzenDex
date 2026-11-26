@@ -1,12 +1,13 @@
 import type { Banner, BannerItem } from "@pflanzendex/core";
-import type { PagedGroup } from "@/shared/patterns/responsive/paged-groups/paged-groups";
+import type { SectionGroup } from "@/shared/lists/grouped-list/grouped-sections/group-section/group-section";
 import { GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
-import { texts } from "@/shared/lib/text-rules/texts";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { speciesText } from "../../friends-banner/friends-banner";
 import { nameOf } from "../../../parts/request-list/request-list";
 import table from "../../../social.de.json";
 
 const t = texts(table);
+const plural = plurals(table);
 
 /** One row of the layer: a species of one friend; `friend` names the friend where the choice does not (the read plants). */
 export type NewsRow = { key: string; item: BannerItem; friend: string | null };
@@ -23,20 +24,21 @@ const rowsOf = (items: readonly BannerItem[], named: boolean): NewsRow[] =>
   }));
 
 /**
- * The choices of the layer (US-QS-32): one per friend with new plants, in the order of the banner, and "Gelesen" last with
- * what was read (US-SOZ-06). Each choice counts its plants; the friend's name is its label, so its rows do not repeat it.
+ * The sections of the layer (US-QS-32, SG-LIST-06): one per friend with new plants, in the order of the banner, and "Gelesen" last
+ * with what was read (US-SOZ-06). Each section counts its plants; the friend's name is its label, so its rows do not repeat it.
  */
-export function groupsOf(banner: Banner): PagedGroup<NewsRow>[] {
+export function groupsOf(banner: Banner): SectionGroup<NewsRow>[] {
   const friends = new Map<string, { name: string | null; items: BannerItem[] }>();
   for (const item of banner.items) {
     const friend = friends.get(item.friendId) ?? { name: item.friendName, items: [] };
     friend.items.push(item);
     friends.set(item.friendId, friend);
   }
-  const groups: PagedGroup<NewsRow>[] = [...friends].map(([friendId, friend]) => ({
+  const groups: SectionGroup<NewsRow>[] = [...friends].map(([friendId, friend]) => ({
     key: `friend-${friendId}`,
     label: nameOf(friend.name),
     count: plantsOf(friend.items),
+    countText: plural.counted("news.plants", plantsOf(friend.items)),
     items: rowsOf(friend.items, false),
   }));
   if (banner.read.length > 0)
@@ -44,6 +46,7 @@ export function groupsOf(banner: Banner): PagedGroup<NewsRow>[] {
       key: "read",
       label: t("news.read"),
       count: plantsOf(banner.read),
+      countText: plural.counted("news.plants", plantsOf(banner.read)),
       items: rowsOf(banner.read, true),
     });
   return groups;

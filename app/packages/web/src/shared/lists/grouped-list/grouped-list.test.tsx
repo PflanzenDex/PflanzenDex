@@ -397,3 +397,65 @@ describe("US-QS-32 the groups of a pager keep the room a fitting list measures (
     });
   });
 });
+
+describe("US-QS-15 · SG-LIST-06 a section of a long grouped list: sticky label, one action, its own list", () => {
+  it("US-QS-15 a plain label has no wrapper and does not stick", () => {
+    render(wrap(<GroupedList label="Konto">{null}</GroupedList>));
+    const heading = screen.getByRole("heading", { name: "Konto" });
+    expect(heading.parentElement?.tagName).toBe("SECTION");
+    expect(document.querySelector("[data-group-heading]")).toBeNull();
+  });
+
+  it("US-QS-15 a sticky label sticks to the top of its region on the surface it stands on, and its switch can turn it off", () => {
+    render(
+      wrap(
+        <>
+          <GroupedList label="Seite" sticky="page" groupKey="a">
+            {null}
+          </GroupedList>
+          <GroupedList label="Layer" sticky="layer">
+            {null}
+          </GroupedList>
+        </>,
+      ),
+    );
+    const [page, layer] = [...document.querySelectorAll("[data-group-heading]")];
+    expect(page?.className).toContain("sticky top-0");
+    expect(page?.className).toContain("bg-background");
+    expect(page?.className).toContain("group-data-[sticky=off]/sections:static");
+    expect(layer?.className).toContain("bg-card");
+    expect(screen.getByRole("region", { name: "Seite" }).getAttribute("data-group-key")).toBe("a");
+  });
+
+  it("US-QS-15 an action stands beside the heading, outside it, so the heading stays the name of the section", () => {
+    render(
+      wrap(
+        <GroupedList
+          label="Standort unbekannt"
+          action={<button type="button">Standort setzen</button>}
+        >
+          {null}
+        </GroupedList>,
+      ),
+    );
+    const action = screen.getByRole("button", { name: "Standort setzen" });
+    const heading = screen.getByRole("heading", { name: "Standort unbekannt" });
+    expect(heading.contains(action)).toBe(false);
+    expect(heading.parentElement).toBe(action.parentElement);
+    expect(heading.parentElement?.hasAttribute("data-group-heading")).toBe(true);
+    // Without `sticky` the label with an action stays in the flow.
+    expect(heading.parentElement?.className).not.toContain("sticky");
+  });
+
+  it("US-QS-15 a free section brings its own list: the children are not wrapped in a group", () => {
+    render(
+      wrap(
+        <GroupedList label="Eigene Liste" free>
+          <p>Leer</p>
+        </GroupedList>,
+      ),
+    );
+    expect(screen.queryByRole("list")).toBeNull();
+    expect(screen.getByText("Leer")).toBeTruthy();
+  });
+});

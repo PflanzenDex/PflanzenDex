@@ -189,35 +189,48 @@ describe("US-POK-08 sort", () => {
     expect(within(layer).getByText(/Artenzahl der Gattungen ist noch unbekannt/)).toBeTruthy();
   });
 
-  it("US-POK-08 · US-QS-22 · US-QS-32 · SG-ICON-01 by family: the family is chosen from a row with its count, 'n / unbekannt' is named", async () => {
+  it("US-POK-08 · US-QS-15 · SG-LIST-06 · SG-LIST-08 by family: every family is a section with its count, the chips only jump, 'n / unbekannt' is named", async () => {
     await open();
     await sortBy("Familie");
-    const choices = screen.getByRole("group", { name: "Familie wählen" });
-    // The chosen family carries a check icon, the others none (SG-ICON-01).
+    const jump = screen.getByRole("group", { name: "Zu Familie springen" });
+    // The chips are no filter: none is pressed and none carries a check icon (SG-LIST-06).
     expect(
-      within(choices)
+      within(jump)
         .getAllByRole("button")
-        .map((b) => [b.textContent, b.querySelector("svg") !== null]),
+        .map((b) => [
+          b.textContent,
+          b.hasAttribute("aria-pressed"),
+          b.querySelector("svg") !== null,
+        ]),
     ).toEqual([
-      ["Asphodelaceae (1)", true],
-      ["Moraceae (2)", false],
+      ["Asphodelaceae · 1 / unbekannt", false, false],
+      ["Moraceae · 2 / unbekannt", false, false],
     ]);
-    expect(shown()).toEqual(["Aloe vera"]);
-    await userEvent.click(within(choices).getByRole("button", { name: /Moraceae/ }));
-    expect(screen.getByText(/Moraceae \(Maulbeergewächse\) · 2 \/ unbekannt/)).toBeTruthy();
-    expect(shown()).toEqual(["Ficus lyrata", "Ficus elastica"]);
+    // Every family is on the page: no chooser hides one (owner decision 2026-11-22).
+    expect(shown()).toEqual(["Aloe vera", "Ficus lyrata", "Ficus elastica"]);
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toContain(
+      "Moraceae (Maulbeergewächse) · 2 / unbekannt",
+    );
+    const moraceae = screen.getByRole("region", { name: /^Moraceae/ });
+    expect(
+      [...moraceae.querySelectorAll("[data-species]")].map((el) => el.getAttribute("data-species")),
+    ).toEqual(["Ficus lyrata", "Ficus elastica"]);
   });
 
-  it("US-POK-08 a species without a known family is grouped under 'Ohne bekannte Familie', last", async () => {
+  it("US-POK-08 · SG-LIST-06 a species without a known family is grouped under 'Ohne bekannte Familie', last", async () => {
     await open([species("Citrus limon"), ...caught]);
     await sortBy("Familie");
-    const choices = screen.getByRole("group", { name: "Familie wählen" });
-    const labels = within(choices)
+    const jump = screen.getByRole("group", { name: "Zu Familie springen" });
+    const labels = within(jump)
       .getAllByRole("button")
       .map((b) => b.textContent);
     expect(labels.at(-1)).toContain("Ohne bekannte Familie");
-    await userEvent.click(within(choices).getByRole("button", { name: /Ohne bekannte Familie/ }));
-    expect(shown()).toEqual(["Citrus limon"]);
+    const sections = screen.getAllByRole("region").filter((r) => r.hasAttribute("data-group-key"));
+    const last = sections.at(-1) as HTMLElement;
+    expect(last.querySelector("h2")?.textContent).toContain("Ohne bekannte Familie");
+    expect(
+      [...last.querySelectorAll("[data-species]")].map((el) => el.getAttribute("data-species")),
+    ).toEqual(["Citrus limon"]);
   });
 });
 
@@ -225,7 +238,7 @@ describe("US-POK-09 · US-QS-22 the details of a species are a layer", () => {
   it("US-POK-08 the group without a known family reads 'Ohne bekannte Familie' and does not say 'unbekannt' twice", async () => {
     await open([species("Citrus limon")]);
     await sortBy("Familie");
-    const title = screen.getByText(/Ohne bekannte Familie · /);
+    const title = screen.getByRole("heading", { name: /Ohne bekannte Familie · / });
     expect(title.textContent).toContain("1 Art");
     expect(title.textContent).not.toContain("unbekannt");
     expect(screen.queryByText(/Familie unbekannt/)).toBeNull();

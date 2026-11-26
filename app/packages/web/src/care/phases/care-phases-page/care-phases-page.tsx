@@ -103,7 +103,7 @@ export function CarePhasesPage(props: { api: string; token: Token; host?: Phases
   const load = useCallback((t: string) => loadBoth(client, api, t), [api, client]);
   const loading = ui("loading");
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
       <h2 id="care-phases-title" className="sr-only">
         {ui("title")}
       </h2>

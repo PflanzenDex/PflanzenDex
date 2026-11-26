@@ -93,16 +93,17 @@ describe("US-ACH-02 achievements overview", () => {
         empty("collecting"),
       ],
     });
-    const list = await screen.findByRole("list", { name: "Erfolge" });
-    expect(within(list).getByText("Steckling bewurzelt")).toBeTruthy();
-    expect(list.textContent).toContain("Erreicht am 04.05.2026 mit Aloe 1");
-    expect(list.textContent).toContain(
+    // Every group is a section of the one list (US-QS-15, SG-LIST-06): no choice hides the group "Wachstum".
+    const [care, growth] = (await screen.findAllByRole("list", { name: "Erfolge" })) as [
+      HTMLElement,
+      HTMLElement,
+    ];
+    expect(within(care).getByText("Steckling bewurzelt")).toBeTruthy();
+    expect(care.textContent).toContain("Erreicht am 04.05.2026 mit Aloe 1");
+    expect(care.textContent).toContain(
       "Nächster Schritt: Hake die offene Behandlung bei Aloe 2 ab.",
     );
-    await userEvent.click(screen.getByRole("button", { name: /^Wachstum/ }));
-    expect((await screen.findByRole("list", { name: "Erfolge" })).textContent).toContain(
-      "Es gibt noch keine Messung.",
-    );
+    expect(growth.textContent).toContain("Es gibt noch keine Messung.");
     expect(screen.queryByText(/Dein erster Schritt/)).toBeNull();
   });
 
@@ -131,10 +132,12 @@ describe("US-ACH-02 achievements overview", () => {
     expect(within(open).queryByText("Steckling bewurzelt")).toBeNull();
     // Earned comes first (the order of the server), open follows.
     expect(earned.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 3, name: "Erreicht" })).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 3, name: "Noch offen" })).toBeTruthy();
+    // The state is one level below the heading of its group, which is one below the layer's title (SG-HEAD-03).
+    expect(screen.getByRole("heading", { level: 3, name: "Pflege · 1 von 2" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 4, name: "Erreicht" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 4, name: "Noch offen" })).toBeTruthy();
     // The icon of a section heading is a decoration; the text names the state.
-    expect(earned.querySelector("h3 svg")?.getAttribute("aria-hidden")).toBe("true");
+    expect(earned.querySelector("h4 svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("US-ACH-02 the group choice counts earned of all, e.g. Pflege · 2 von 3", async () => {
@@ -168,14 +171,15 @@ describe("US-ACH-02 achievements overview", () => {
         empty("collecting"),
       ],
     });
-    expect(
-      (await screen.findByRole("button", { name: "Pflege · 2 von 3" })).getAttribute(
-        "aria-pressed",
-      ),
-    ).toBe("true");
+    // The chip jumps to the group and is no filter (SG-LIST-06): it holds no pressed state.
+    const chip = await screen.findByRole("button", { name: "Pflege · 2 von 3" });
+    expect(chip.hasAttribute("aria-pressed")).toBe(false);
     expect(screen.getByRole("button", { name: "Wachstum · 0 von 2" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Tauschen · 0 von 1" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /\(\d+\)/ })).toBeNull();
+    // Every group has its section with the same count in its heading (SG-LIST-08).
+    for (const name of ["Pflege · 2 von 3", "Wachstum · 0 von 2", "Tauschen · 0 von 1"])
+      expect(screen.getByRole("heading", { level: 3, name })).toBeTruthy();
   });
 
   it("US-ACH-02 a new account's group choice reads 0 von 3 and shows no section Erreicht, only the open ones", async () => {
@@ -205,7 +209,9 @@ describe("US-ACH-02 achievements overview", () => {
     expect(screen.queryByRole("region", { name: /Erreicht/ })).toBeNull();
     expect(screen.queryByRole("heading", { name: /Erreicht/ })).toBeNull();
     expect(
-      within(screen.getByRole("region", { name: "Noch offen" })).getByText("Steckling bewurzelt"),
+      within(screen.getAllByRole("region", { name: "Noch offen" })[0] as HTMLElement).getByText(
+        "Steckling bewurzelt",
+      ),
     ).toBeTruthy();
   });
 
@@ -257,7 +263,7 @@ describe("US-ACH-02 achievements overview", () => {
 
   it("US-ACH-02 no percentage, no score, no comparison with others is shown", async () => {
     serve({ calmMode: false, earnedCount: 0, firstStep: null, groups: [empty("care")] });
-    await screen.findByRole("button", { name: /^Pflege/ });
+    await screen.findByRole("heading", { name: /^Pflege/ });
     expect(document.body.textContent).not.toMatch(/%|Punkte|Rang \d|seltener/);
   });
 

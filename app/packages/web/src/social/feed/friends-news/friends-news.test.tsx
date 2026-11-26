@@ -144,7 +144,9 @@ describe("US-QS-18 · US-SOZ-06 the new plants of friends are a tile on Heute (i
     render(<Today />);
     await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
-    expect(within(layer).getByRole("button", { name: "Clara (1)" })).toBeTruthy();
+    expect(
+      within(layer).getByRole("heading", { level: 3, name: "Clara · 1\u00a0Pflanze" }),
+    ).toBeTruthy();
     expect(within(layer).getByRole("link", { name: "Glücksfeder" })).toBeTruthy();
     expect(layer.textContent).toContain("Stand: 06.10.2026");
     expect(within(layer).queryByRole("button", { name: "Als gelesen markieren" })).toBeNull();
@@ -172,8 +174,8 @@ describe("US-QS-18 · US-SOZ-06 the new plants of friends are a tile on Heute (i
     await userEvent.click(await screen.findByRole("button", { name: "0 Neu bei Freunden" }));
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
     expect(layer.textContent).toContain("Gerade nichts Neues von Freunden.");
-    // Without new plants "Gelesen" is the only choice, so it is the one shown (US-QS-32).
-    expect(within(layer).getByRole("button", { name: "Gelesen (1)" })).toBeTruthy();
+    // Without new plants "Gelesen" is the only section, so it is the one shown (US-QS-32).
+    expect(within(layer).getByRole("heading", { name: "Gelesen · 1\u00a0Pflanze" })).toBeTruthy();
     expect(within(layer).getByRole("link", { name: /Glücksfeder.*Clara/ })).toBeTruthy();
     expect(within(layer).queryByRole("button", { name: "Als gelesen markieren" })).toBeNull();
   });
@@ -266,7 +268,9 @@ describe("US-QS-18 · US-SOZ-06 the new plants of friends are a tile on Heute (i
     server(banner(0, [CLARA]));
     render(<Today at="/today?sheet=news" />);
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
-    expect(await within(layer).findByRole("button", { name: "Gelesen (1)" })).toBeTruthy();
+    expect(
+      await within(layer).findByRole("heading", { name: "Gelesen · 1\u00a0Pflanze" }),
+    ).toBeTruthy();
     // The open dialog hides the rest of the page from the accessibility tree, so the address is read by its label.
     expect(screen.getByLabelText("Adresse").textContent).toBe("?sheet=news");
   });
@@ -360,51 +364,63 @@ function Routed() {
   );
 }
 
-describe("US-QS-32 the layer on Heute is flat grouped rows: one choice per friend, rows per species (issue 2198)", () => {
-  it("US-QS-32 one choice per friend with the count of its plants; choosing one shows a row per species, 'N ×' for more than one plant", async () => {
+describe("US-QS-32 the layer on Heute is flat grouped rows: one section per friend, rows per species (issue 2198)", () => {
+  it("US-QS-15 · US-QS-32 · SG-LIST-06 every friend is a section with the count of its plants, a row per species, 'N ×' for more than one plant", async () => {
     server(twoFriends());
     render(<Today />);
     await userEvent.click(await screen.findByRole("button", { name: "4 Neu bei Freunden" }));
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
-    expect(within(layer).getByRole("button", { name: "Clara (3)" })).toBeTruthy();
-    expect(within(layer).getByRole("button", { name: "Lars (1)" })).toBeTruthy();
-    expect(within(layer).getByRole("link", { name: "Glücksfeder 2 ×" })).toBeTruthy();
-    expect(within(layer).getByRole("link", { name: "Epipremnum aureum" })).toBeTruthy();
-    expect(within(layer).queryByRole("link", { name: /Monstera/ })).toBeNull();
-    await userEvent.click(within(layer).getByRole("button", { name: "Lars (1)" }));
-    expect(within(layer).getByRole("link", { name: "Monstera deliciosa" })).toBeTruthy();
-    expect(within(layer).queryByRole("link", { name: /Glücksfeder/ })).toBeNull();
+    // No choice hides a friend: both sections stand in the one list, each under its own heading (SG-LIST-08).
+    const clara = within(layer).getByRole("region", { name: "Clara · 3\u00a0Pflanzen" });
+    const lars = within(layer).getByRole("region", { name: "Lars · 1\u00a0Pflanze" });
+    expect(within(clara).getByRole("link", { name: "Glücksfeder 2 ×" })).toBeTruthy();
+    expect(within(clara).getByRole("link", { name: "Epipremnum aureum" })).toBeTruthy();
+    expect(within(clara).queryByRole("link", { name: /Monstera/ })).toBeNull();
+    expect(within(lars).getByRole("link", { name: "Monstera deliciosa" })).toBeTruthy();
+    expect(within(lars).queryByRole("link", { name: /Glücksfeder/ })).toBeNull();
+    expect(
+      within(layer).getByRole("heading", { level: 3, name: "Lars · 1\u00a0Pflanze" }),
+    ).toBeTruthy();
   });
 
-  it("US-QS-32 the choices keep the order of the banner, and 'Gelesen' comes last with the friend's name in its rows", async () => {
+  it("US-QS-15 · US-QS-32 the sections keep the order of the banner, and 'Gelesen' comes last with the friend's name in its rows", async () => {
     server(twoFriends([LARS]));
     render(<Today />);
     await userEvent.click(await screen.findByRole("button", { name: "4 Neu bei Freunden" }));
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
-    const group = within(layer).getByRole("group", { name: "Gruppen der Neuigkeiten" });
-    const names = within(group)
-      .getAllByRole("button")
-      .map((b) => b.textContent);
-    expect(names).toEqual(["Clara (3)", "Lars (1)", "Gelesen (1)"]);
-    await userEvent.click(within(layer).getByRole("button", { name: "Gelesen (1)" }));
-    expect(within(layer).getByRole("link", { name: /Monstera deliciosa.*Lars/ })).toBeTruthy();
-    expect(within(layer).queryByRole("link", { name: /Glücksfeder/ })).toBeNull();
+    // The chips jump to a section, in the same order (SG-LIST-06).
+    const chips = within(layer).getByRole("group", { name: "Zu Gruppe springen" });
+    expect(
+      within(chips)
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["Clara · 3\u00a0Pflanzen", "Lars · 1\u00a0Pflanze", "Gelesen · 1\u00a0Pflanze"]);
+    expect(
+      within(layer)
+        .getAllByRole("heading", { level: 3 })
+        .map((h) => h.textContent),
+    ).toEqual(["Clara · 3\u00a0Pflanzen", "Lars · 1\u00a0Pflanze", "Gelesen · 1\u00a0Pflanze"]);
+    const read = within(layer).getByRole("region", { name: "Gelesen · 1\u00a0Pflanze" });
+    expect(within(read).getByRole("link", { name: /Monstera deliciosa.*Lars/ })).toBeTruthy();
+    expect(within(read).queryByRole("link", { name: /Glücksfeder/ })).toBeNull();
   });
 
-  it("US-QS-32 closing the layer after a choice leaves no choice or page in the address, so the next opening starts at the first choice", async () => {
+  it("US-QS-15 · US-QS-32 a jump writes nothing into the address, and closing the layer leaves it clean, so the next opening starts at the first section", async () => {
     const { posts } = server(twoFriends());
     render(<Today />);
     await userEvent.click(await screen.findByRole("button", { name: "4 Neu bei Freunden" }));
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
-    await userEvent.click(within(layer).getByRole("button", { name: "Lars (1)" }));
-    expect(screen.getByLabelText("Adresse").textContent).toBe("?sheet=news&part=friend-f2");
+    await userEvent.click(within(layer).getByRole("button", { name: "Lars · 1\u00a0Pflanze" }));
+    expect(screen.getByLabelText("Adresse").textContent).toBe("?sheet=news");
     await userEvent.keyboard("{Escape}");
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByLabelText("Adresse").textContent).toBe("");
     await userEvent.click(await screen.findByRole("button", { name: "0 Neu bei Freunden" }));
     const again = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
-    expect(await within(again).findByRole("button", { name: "Gelesen (4)" })).toBeTruthy();
+    expect(
+      await within(again).findByRole("heading", { name: "Gelesen · 4\u00a0Pflanzen" }),
+    ).toBeTruthy();
   });
 
   it("US-QS-32 · US-SOZ-06 a row links to the friend's collection, and following it marks what the layer showed as read, once", async () => {
@@ -511,11 +527,12 @@ describe("US-QS-32 the rows of the layer on Heute keep their height at 200 % tex
     server(twoFriends());
     render(<Today at="/today?sheet=news" />);
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
-    const list = await within(layer).findByRole("list", { name: "Neuigkeiten" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    const lists = await within(layer).findAllByRole("list", { name: "Neuigkeiten" });
+    expect(lists).toHaveLength(2);
     // A squeezed list must not collapse a clipped row to its borders: every row keeps its content (issue 2293, as issue 2272).
-    // The pager gives each of its rows that rule (issue 2315), so the list needs no rule of its own.
-    for (const row of within(list).getAllByRole("listitem"))
-      expect(row.classList.contains("shrink-0")).toBe(true);
+    // The list gives each of its rows that rule (issue 2315), so it needs no rule of its own.
+    const rows = lists.flatMap((list) => within(list).getAllByRole("listitem"));
+    expect(rows).toHaveLength(3);
+    for (const row of rows) expect(row.classList.contains("shrink-0")).toBe(true);
   });
 });

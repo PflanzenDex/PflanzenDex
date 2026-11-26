@@ -12,7 +12,7 @@ export type AchievementSection = { kind: "earned" | "open"; items: AchievementIt
 /**
  * One state of a group (US-ACH-02): "Erreicht" or "Noch offen" with its icon, then its cards (`card`). A state without
  * achievements is not shown at all: the group choice already says how many are earned (SG-LIST-07). The heading is one
- * level below the layer's title (SG-HEAD-03); the icon is a decoration, the text names the state (SG-COLOR-05).
+ * level below the heading of its group (SG-HEAD-03); the icon is a decoration, the text names the state (SG-COLOR-05).
  */
 export function StateSection({
   section,
@@ -26,10 +26,10 @@ export function StateSection({
   const Icon = earned ? CircleCheck : CircleDashed;
   return (
     <section aria-labelledby={id} className="flex min-w-0 flex-col gap-2">
-      <h3 id={id} className="m-0 flex items-center gap-2 text-base font-semibold">
+      <h4 id={id} className="m-0 flex items-center gap-2 text-base font-semibold">
         <Icon aria-hidden="true" className="size-5 shrink-0" />
         <span>{t(earned ? "earned" : "open")}</span>
-      </h3>
+      </h4>
       {section.items.map((item) => (
         <Card key={item.id} item={item} />
       ))}
