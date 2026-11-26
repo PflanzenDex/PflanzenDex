@@ -153,17 +153,24 @@ test.describe("US-QS-15 the list of a page scrolls in its own box", () => {
     expect((await heights()).fill, "the frame around the list scrolls").toBeLessThanOrEqual(1);
     expect((await heights()).page, "the page scrolls").toBeLessThanOrEqual(1);
 
-    // At its end the list says how many plants there were, and the last row ends above the bottom bar.
-    await box.evaluate((list) => void (list.scrollTop = list.scrollHeight));
+    // At its end the list says how many plants there were, and the last row ends above the bottom bar. The marker comes after
+    // a settle and adds its row, so the list is scrolled to its end again until the marker stands above the bar.
     const marker = page.getByText(`Das waren alle ${MANY}`);
-    await expect(marker).toBeVisible();
     const bar = page.getByRole("navigation", { name: "Navigation unten" });
     const barTop = (await bar.boundingBox())?.y ?? Number.POSITIVE_INFINITY;
-    expect(await bottomOf(marker), "the end marker is behind the bottom bar").toBeLessThanOrEqual(
-      barTop + 0.5,
-    );
+    await expect
+      .poll(
+        async () => {
+          await box.evaluate((list) => void (list.scrollTop = list.scrollHeight));
+          return (await marker.isVisible()) ? await bottomOf(marker) : Number.POSITIVE_INFINITY;
+        },
+        { message: "the end marker is missing or behind the bottom bar" },
+      )
+      .toBeLessThanOrEqual(barTop + 0.5);
 
-    // Another destination and Back: the list stands where it was, and the address holds no position.
+    // Another destination and Back: the list stands where it was, and the address holds no position. The Sammlung stays
+    // mounted behind the other destination, so this does not tell the restore of `ScrollMemory` from the kept list; the
+    // restore of a list that mounts again is pinned by the unit test of `ScrollMemory` (US-QS-15, SG-NAV-02).
     const place = await box.evaluate((list) => (list.scrollTop = Math.floor(list.scrollTop / 2)));
     expect(place).toBeGreaterThan(0);
     await page.waitForTimeout(300);
