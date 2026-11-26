@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -71,39 +71,18 @@ describe("US-DEV-06 the page Neu in PflanzenDéx", () => {
     }
   });
 
-  it("US-DEV-06 · US-QS-15 · SG-LIST-01 a long changelog shows its first 40 lines and loads 40 more when the end of the list comes near", () => {
-    const callbacks: IntersectionObserverCallback[] = [];
-    vi.stubGlobal(
-      "IntersectionObserver",
-      class {
-        constructor(callback: IntersectionObserverCallback) {
-          callbacks.push(callback);
-        }
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      },
-    );
-    const lines = Array.from({ length: 100 }, (_, i) => `Zeile ${i + 1}`);
+  it("US-DEV-06 · US-QS-15 only a line of more than 400 characters is clamped, so the changelog does not put a keyboard stop on every line", () => {
+    const lines = [
+      ...Array.from({ length: 60 }, (_, i) => `Zeile ${i + 1} ${"Wort ".repeat(60)}`.trim()),
+      Array(120).fill("Wort").join(" "),
+    ];
     render(
       <MemoryRouter>
         <WhatsNewList entries={entriesOf(lines)} version="1.0.0" />
       </MemoryRouter>,
     );
-    expect(lineTexts()).toHaveLength(40);
-    expect(screen.queryByText("Das waren alle 100")).toBeNull();
-    const reach = () =>
-      act(() => {
-        for (const callback of callbacks)
-          callback(
-            [{ isIntersecting: true } as IntersectionObserverEntry],
-            {} as IntersectionObserver,
-          );
-      });
-    reach();
-    expect(lineTexts()).toHaveLength(80);
-    reach();
-    expect(lineTexts()).toEqual(lines);
+    expect(lineTexts()).toHaveLength(61);
+    expect(screen.getAllByRole("button", { name: "Mehr anzeigen" })).toHaveLength(1);
   });
 
   it("US-DEV-06 · SG-NAV-02 an old position in the address (?from=) is dropped: the list starts with the newest line", async () => {
@@ -122,7 +101,7 @@ describe("US-DEV-06 the page Neu in PflanzenDéx", () => {
   });
 
   it("US-DEV-06 a long line shows its start, and Mehr anzeigen shows all of it (P-10)", async () => {
-    const long = Array(40).fill("Wort").join(" ");
+    const long = Array(100).fill("Wort").join(" ");
     render(
       <MemoryRouter>
         <WhatsNewList entries={entriesOf([long])} version="1.2.3" />
@@ -137,7 +116,7 @@ describe("US-DEV-06 the page Neu in PflanzenDéx", () => {
   });
 
   it("US-DEV-06 US-QS-12 a long line is marked as clamped until Mehr anzeigen opens it, a short line is not", async () => {
-    const long = Array(40).fill("Wort").join(" ");
+    const long = Array(100).fill("Wort").join(" ");
     render(
       <MemoryRouter>
         <WhatsNewList entries={entriesOf([long, "Kurz"])} version="1.2.3" />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { germanDate, type NewsEntry } from "../news-lines.mjs";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -13,19 +13,16 @@ import { markAllNewsSeen, NEWS_ENTRIES, appVersion } from "../whats-new";
 
 const t = texts(table);
 
-/**
- * Lines per page (starting values, assumption): two on a phone, three from 1024 px. The lines run long (a median of
- * about 270 characters, one of more than 1500), so a page holds few of them and every row is kept short (see LONG).
- */
+/** The size the `Pager` asks for; the list has no server paging and scrolls, so it only needs a number (starting values). */
 const PAGE_PHONE = 2;
 const PAGE_LG = 3;
 /**
- * Lines on the list at first, and added each time its end comes near (starting value, assumption): the changelog holds
- * hundreds of lines, so the list loads more at its end (SG-LIST-01) instead of putting every line, and its control, on the page.
+ * A line longer than this shows its start in three lines and the button "Mehr anzeigen" for the rest (P-10). The list scrolls
+ * in its own box, so a line needs no clamp to fit a page any more; a clamp is one more stop of the keyboard, and the changelog
+ * holds 390 lines (the walk of the accessibility gate ends before the navigation behind so many stops). Starting value,
+ * assumption: 400 characters, so about one line in ten is clamped.
  */
-const PART = 40;
-/** A line longer than this shows its start in three lines and the button "Mehr anzeigen" for the rest (P-10). */
-const LONG = 80;
+const LONG = 400;
 
 /**
  * One line of the changelog; a long one is clamped to three lines until the keeper asks for all of it. While clamped,
@@ -80,20 +77,6 @@ export function WhatsNewList(props: {
 }) {
   const navigate = useNavigate();
   const pageSize = useIsLg() ? PAGE_LG : PAGE_PHONE;
-  const [shown, setShown] = useState(PART);
-  const more = useCallback(() => setShown((n) => n + PART), []);
-  // The lines are all here; the list shows them in parts, so its end marker and its loader work as for a server list.
-  const paging = useMemo(
-    () => ({
-      total: props.entries.length,
-      loading: false,
-      onMore: more,
-      onRetry: more,
-      loadingText: "",
-      retryText: "",
-    }),
-    [props.entries.length, more],
-  );
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
       <p className="m-0 text-sm text-muted-foreground">
@@ -107,9 +90,8 @@ export function WhatsNewList(props: {
         />
       ) : (
         <Pager
-          items={props.entries.slice(0, shown)}
+          items={props.entries}
           pageSize={pageSize}
-          paging={paging}
           fit
           label={t("list.label")}
           getKey={(_entry, index) => index}
