@@ -74,7 +74,7 @@ function Thumbnail({ src, alt }: { src: string | undefined; alt: string }) {
 export function ObjectRow(props: ObjectRowProps) {
   const hasAction = props.action !== undefined;
   return (
-    <div ref={props.rootRef} className={SURFACE}>
+    <div ref={props.rootRef} data-object-row="" className={SURFACE}>
       <div className={cn("flex min-w-0", OBJECT_TEXT)}>
         <GroupedRow
           bare

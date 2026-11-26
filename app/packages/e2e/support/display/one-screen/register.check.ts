@@ -1,0 +1,82 @@
+import { SIZES, type Size } from "./judge";
+import type { Kind, Screen, State } from "./register.types";
+
+// The checks of the screen register (US-QS-15, QG-U8; issue 2431): which states a family of a kind needs, what is wrong with the
+// kinds, states, sizes and families of the entries, and the sizes an entry is measured at. Pure, no browser. Registered through
+// the spec self-test (one-screen.register.ts), which runs on the checked-in register.
+
+/** The states that a family of an enforced kind must have (owner decision 2026-11-23). Other kinds have no rule. */
+export const REQUIRED_STATES: Partial<Record<Kind, readonly State[]>> = {
+  list: ["empty", "one", "many", "error"],
+  deck: ["card", "empty"],
+  sheet: ["fitting", "half"],
+};
+
+const KINDS: readonly Kind[] = ["overview", "list", "table", "sheet", "card-row", "deck"];
+const STATES: readonly State[] = [
+  "empty",
+  "one",
+  "many",
+  "due-hints",
+  "error",
+  "card",
+  "fitting",
+  "half",
+];
+
+/** The kind of an entry and its family's states: a message for each kind, state or size name that is unknown, and each missing state. */
+function entryProblems(s: Screen, sizeNames: ReadonlySet<string>): string[] {
+  const problems: string[] = [];
+  if (!KINDS.includes(s.kind))
+    problems.push(`${s.id}: kind "${String(s.kind)}" is not one of ${KINDS.join(", ")}`);
+  if (!STATES.includes(s.state))
+    problems.push(`${s.id}: state "${String(s.state)}" is not one of ${STATES.join(", ")}`);
+  for (const name of s.sizes ?? [])
+    if (!sizeNames.has(name)) problems.push(`${s.id}: size "${name}" is not in SIZES`);
+  if (s.expect && !s.expect.text && !s.expect.css)
+    problems.push(`${s.id}: expect names neither a text nor a css selector`);
+  return problems;
+}
+
+/** The problems of one family: its entries must share one kind, and an enforced kind needs each required state. */
+function familyProblems(family: string, members: readonly Screen[]): string[] {
+  const kinds = [...new Set(members.map((m) => m.kind))];
+  if (kinds.length > 1)
+    return [`family ${family}: its entries have different kinds (${kinds.join(", ")})`];
+  const kind = kinds[0];
+  const required = kind ? REQUIRED_STATES[kind] : undefined;
+  if (!required) return [];
+  const have = new Set(members.map((m) => m.state));
+  return required
+    .filter((state) => !have.has(state))
+    .map(
+      (state) =>
+        `family ${family} (${kind}) has no "${state}" state: add its register entry (US-QS-15)`,
+    );
+}
+
+/**
+ * What is wrong with the register's kinds, states, sizes and families (issue 2431), as messages. An entry without a family is
+ * not enforced; a kind without a rule has no required state.
+ */
+export function registerProblems(screens: readonly Screen[]): string[] {
+  const sizeNames = new Set(SIZES.map((s) => s.name));
+  const families = new Map<string, Screen[]>();
+  for (const s of screens)
+    if (s.family !== undefined) families.set(s.family, [...(families.get(s.family) ?? []), s]);
+  return [
+    ...screens.flatMap((s) => entryProblems(s, sizeNames)),
+    ...[...families].flatMap(([family, members]) => familyProblems(family, members)),
+  ];
+}
+
+/** The sizes an entry is measured at: its own `sizes` by name, or every size of SIZES. */
+export function sizesOf(screen: Screen): readonly Size[] {
+  if (screen.sizes === undefined) return SIZES;
+  return SIZES.filter((s) => screen.sizes?.includes(s.name));
+}
+
+/** How many measurements a full run makes: every screen at each of its sizes (the reporter's check of a complete run). */
+export function measurementsOf(screens: readonly Screen[]): number {
+  return screens.reduce((n, s) => n + sizesOf(s).length, 0);
+}

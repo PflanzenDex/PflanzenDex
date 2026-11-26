@@ -88,4 +88,19 @@ describe("Dialog (US-QS-07, DS-23, DS-40)", () => {
     );
     expect(await screen.findByText("in a layer")).toBeTruthy();
   });
+
+  it("US-QS-15 what a dialog holds is its scroll region; the title and the close button stay outside it", async () => {
+    render(<Example />);
+    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+    const dialog = screen.getByRole("dialog", { name: "Pflanze löschen" });
+    const region = dialog.querySelector<HTMLElement>("[data-scroll-region]");
+    expect(region).not.toBeNull();
+    expect(region?.className).toContain("overflow-y-auto");
+    expect(region?.className).toContain("overscroll-contain");
+    expect(region?.contains(screen.getByRole("button", { name: "Bestätigen" }))).toBe(true);
+    expect(region?.contains(screen.getByRole("heading", { name: "Pflanze löschen" }))).toBe(false);
+    expect(region?.contains(screen.getByRole("button", { name: "Schließen" }))).toBe(false);
+    // The dialog itself no longer scrolls: its height is the limit, and the region takes what the title leaves.
+    expect(dialog.className).not.toContain("overflow-y-auto");
+  });
 });

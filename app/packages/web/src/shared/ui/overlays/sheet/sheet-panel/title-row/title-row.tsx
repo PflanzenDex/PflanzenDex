@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Drawer } from "vaul";
-import { X } from "lucide-react";
+import { Maximize2, Minimize2, X } from "lucide-react";
 import { cva } from "class-variance-authority";
 
 /**
@@ -27,9 +27,15 @@ const titleLook = cva(TITLE, {
 const CLOSE =
   "-mr-2 my-[calc(0.875rem_-_22px)] inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-control forced-colors:border forced-colors:border-[color:ButtonText] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
+/** The toggle between half and full height (US-QS-15): the close button's shape, beside it. */
+const TOGGLE = CLOSE.replace("-mr-2 ", "");
+
+/** The toggle of a sheet with two heights: its name is the height it switches to ("Vollbild", "Halbe Höhe"). */
+export type HeightToggle = { full: boolean; label: string; onToggle: () => void };
+
 /**
  * The title row of a bottom sheet (SG-SHEET-02, SG-SHEET-04): the title, and at its trailing edge the close button, which
- * calls `onClose`. The button is `data-close`, so a layer's focus rules never take it for the first control of the content
+ * calls `onClose`. A sheet with two heights has the toggle of the height beside the close button (US-QS-15). The button is `data-close`, so a layer's focus rules never take it for the first control of the content
  * (US-QS-32).
  *
  * A sheet that offers a bar slot (`barSlot`) has the bar above the title: a form draws "Abbrechen" and its confirming
@@ -48,10 +54,14 @@ export function TitleRow(props: {
   barActive?: boolean | undefined;
   /** The window is too short for the full header (`useCrampedWindow`): the title stays for assistive technology only. */
   compact?: boolean | undefined;
+  /** A sheet with two heights: the toggle between them. */
+  toggle?: HeightToggle | undefined;
+  /** The handle stands above the row and brings the space of its own: the row needs no top padding. */
+  handle?: boolean | undefined;
 }) {
   const bar = props.barActive === true;
   return (
-    <div className="px-4 pt-3">
+    <div className={props.handle ? "px-4" : "px-4 pt-3"}>
       {props.barSlot ? (
         <div ref={props.barSlot} data-sheet-bar="" className="flex flex-col pb-1 empty:hidden" />
       ) : null}
@@ -62,6 +72,21 @@ export function TitleRow(props: {
         >
           {props.title}
         </Drawer.Title>
+        {props.toggle ? (
+          <button
+            type="button"
+            data-sheet-chrome=""
+            aria-label={props.toggle.label}
+            onClick={props.toggle.onToggle}
+            className={TOGGLE}
+          >
+            {props.toggle.full ? (
+              <Minimize2 aria-hidden="true" className="size-5" />
+            ) : (
+              <Maximize2 aria-hidden="true" className="size-5" />
+            )}
+          </button>
+        ) : null}
         {/* A close is the same as Back and a tap on the scrim: the parent's guard asks for unsaved input (US-QS-32). */}
         {bar ? null : (
           <button

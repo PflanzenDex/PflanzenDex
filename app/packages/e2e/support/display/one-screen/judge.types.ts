@@ -10,7 +10,26 @@ export interface Size {
 }
 
 /** What a failure is about. */
-export type Rule = "frame" | "sideways" | "marker" | "pager" | "title" | "action" | "cap";
+export type Rule =
+  | "frame"
+  | "sideways"
+  | "marker"
+  | "pager"
+  | "title"
+  | "action"
+  | "cap"
+  | "size" // a floor of judge.size.ts (issue 2431)
+  | "measured"; // the first screen was not measured: never listed in the baseline (issue 2427)
+/** A named failure: its rule and its text. */
+export type Found = [Rule, string];
+
+/** The sized boxes of the page (fit.sizes.ts), judged by the floors of judge.size.ts (issue 2431, P-S). */
+export interface Sized {
+  pictures: { el: string; width: number; height: number }[];
+  texts: { el: string; height: number; lineHeight: number }[];
+  rows: { el: string; height: number }[];
+  names: { el: string; width: number }[];
+}
 
 /** A vertical scroll region, marked `data-scroll-region` or not. */
 export type Scroller = { el: string; marked: boolean; scroll: number; client: number };
@@ -43,6 +62,7 @@ export interface Raw {
   pageEl: string;
   hEl: string;
   first?: First | null;
+  sized?: Sized;
   paint: {
     left: number;
     right: number;
@@ -73,6 +93,7 @@ export interface BaselineEntry {
   innerX?: number;
   cap?: number;
   rules?: Rule[]; // the rules that fail at this size (FR-QG-17)
+  issue?: number; // the issue that owns this debt, for an entry added by an owner decision (issue 2431)
 }
 
 export interface Baseline {

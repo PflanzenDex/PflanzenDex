@@ -40,6 +40,8 @@ const GATE_FILES = [
   // Loosening any of them turns a red run green.
   /^app\/packages\/e2e\/support\/display\/one-screen\/baseline\.ts$/,
   /^app\/packages\/e2e\/support\/display\/one-screen\/judge\.ts$/,
+  // The size floors of the judge (issue 2431, P-S): picture, text box, row and name minimums.
+  /^app\/packages\/e2e\/support\/display\/one-screen\/judge\.size\.ts$/,
   // The layout-shift judgement (US-QS-14, DS-52, issue 1697): the cumulative shift, its limit and the baseline comparison.
   /^app\/packages\/e2e\/support\/display\/one-screen\/judge\.shift\.ts$/,
   /^app\/packages\/e2e\/support\/display\/a11y\/findings\.ts$/,

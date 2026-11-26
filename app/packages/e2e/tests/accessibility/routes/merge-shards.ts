@@ -10,6 +10,7 @@ import {
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SCREENS } from "../../../support/display/one-screen/register";
+import { sizesOf } from "../../../support/display/one-screen/register.check";
 import { SIZES, type Result as OneScreenResult } from "../../../support/display/one-screen/judge";
 import { A11Y_SIZES, type Result as A11yResult } from "../../../support/display/a11y/findings";
 import {
@@ -44,14 +45,18 @@ export interface Measured {
 
 /**
  * The screen and size pairs that are missing, repeated or not in the register. An empty list means every screen and
- * every size was measured exactly once.
+ * every size was measured exactly once. `sizesFor` names the sizes of one screen when they differ per screen (a new
+ * one-screen state runs at three sizes, issue 2431); without it every screen is due at every size.
  */
 export function coverageProblems(
   measured: readonly Measured[],
   screens: readonly string[],
   sizes: readonly string[],
+  sizesFor?: (screen: string) => readonly string[],
 ): string[] {
-  const expected = new Set(screens.flatMap((s) => sizes.map((z) => `${s} @ ${z}`)));
+  const expected = new Set(
+    screens.flatMap((s) => (sizesFor ? sizesFor(s) : sizes).map((z) => `${s} @ ${z}`)),
+  );
   const count = new Map<string, number>();
   for (const m of measured) {
     const key = `${m.screen} @ ${m.size}`;
@@ -141,7 +146,16 @@ export function mergeGate(gate: string, shardsDir: string): number {
   for (const shard of shards)
     console.log(`${gate}: ${shard.file}: ${shard.rows.length} measurements`);
   const screens = SCREENS.map((s) => s.id);
-  const problems = coverageProblems(measured, screens, spec.sizes);
+  const own = (id: string) => {
+    const screen = SCREENS.find((s) => s.id === id);
+    return screen ? sizesOf(screen).map((z) => z.name) : spec.sizes;
+  };
+  const problems = coverageProblems(
+    measured,
+    screens,
+    spec.sizes,
+    gate === "one-screen" ? own : undefined,
+  );
   mkdirSync(spec.dir, { recursive: true });
   writeFileSync(new URL("results.json", spec.dir), JSON.stringify(measured));
   const shift = gate === "one-screen" ? shiftShardRows(shardsDir) : [];

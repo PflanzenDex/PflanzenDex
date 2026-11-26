@@ -9,8 +9,9 @@ import { DialogPart, preloadDialog } from "./dialog-part/dialog-part";
 
 const TEXT_FIELD =
   "input:not([type='hidden']):not([disabled]), select:not([disabled]), textarea:not([disabled])";
-// A close button marked `data-close` is chrome, not the content of the layer: it never counts as the first control (US-QS-32).
-const CONTROL = `${TEXT_FIELD}, button:not([disabled]):not([data-close]), a[href], [tabindex]:not([tabindex='-1'])`;
+// A close button marked `data-close`, and the handle and the toggle of the height of a sheet (`data-sheet-chrome`, US-QS-15),
+// are chrome, not the content of the layer: they never count as the first control (US-QS-32).
+const CONTROL = `${TEXT_FIELD}, button:not([disabled]):not([data-close]):not([data-sheet-chrome]), a[href], [tabindex]:not([tabindex='-1']):not([data-sheet-chrome])`;
 
 /**
  * The text field a layer starts with, when its first control is one; otherwise `null` (US-QS-15, issue 1104). The actions of

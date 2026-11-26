@@ -96,7 +96,13 @@ test.describe("US-QG-01 self-test: the shards of the UI gates", () => {
   test("US-QG-01 self-test: a screen without a weight counts as the median of its gate and still gets a shard", () => {
     expect(weightOf("one-screen", "a-new-screen")).toBe(medianOf("one-screen"));
     expect(weightOf("a11y-routes", "a-new-screen")).toBe(medianOf("a11y-routes"));
-    const fresh: Screen = { id: "a-new-screen", account: "test2", path: "/today" };
+    const fresh: Screen = {
+      id: "a-new-screen",
+      account: "test2",
+      path: "/today",
+      kind: "overview",
+      state: "many",
+    };
     const plan = planShards([...SCREENS, fresh], SPLIT);
     expect(plan.size).toBe(SCREENS.length + 1);
     expect(plan.get("a-new-screen")).toBeGreaterThanOrEqual(1);
@@ -138,4 +144,25 @@ test("US-QS-14 the merged summary carries the layout-shift section, read from th
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("US-QG-01 self-test: a screen with its own sizes is due only at those (issue 2431)", () => {
+  const own = (screen: string) => (screen === "new" ? ["s1"] : ["s1", "s2"]);
+  const rows = [
+    { screen: "old", size: "s1" },
+    { screen: "old", size: "s2" },
+    { screen: "new", size: "s1" },
+  ];
+  expect(coverageProblems(rows, ["old", "new"], ["s1", "s2"], own)).toEqual([]);
+  expect(coverageProblems(rows.slice(0, 2), ["old", "new"], ["s1", "s2"], own)[0]).toContain(
+    "not measured (1)",
+  );
+  expect(
+    coverageProblems(
+      [...rows, { screen: "new", size: "s2" }],
+      ["old", "new"],
+      ["s1", "s2"],
+      own,
+    )[0],
+  ).toContain("not in the register");
 });
