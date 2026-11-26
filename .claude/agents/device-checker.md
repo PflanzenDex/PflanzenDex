@@ -20,15 +20,7 @@ Read `AGENTS.md` and `CLAUDE.md` in the directory of the brief first; they hold.
 
 ## The tool
 
-`make device-check` (US-DEV-01, issue 2504, `docs/guides/reference/app.md`, section "Device check") runs the parametrized check. Filters are comma lists, all optional except that a run needs `SCREEN` or `FLOW`:
-
-- `SCREEN=<id>[,<id>…]`: screen ids of `app/packages/e2e/support/display/screens.json`.
-- `FLOW=<name>[,<name>…]`: scripted flows in `app/packages/e2e/support/device-check/flows/`. A flow runs on the screen it opens.
-- `DEVICE=iphone16,oneplus15r,large,phone` (default the three emulated ones; `phone` is the attached real Android phone), `THEME=light,dark` and `TEXT=100,200` (default both), `FORCED=1` for forced colors.
-
-Examples: `make device-check SCREEN=today` (12 cells: 3 devices × 2 themes × 2 text sizes); `make device-check FLOW=water-plant DEVICE=iphone16 THEME=dark TEXT=200`; `make device-check SCREEN=today DEVICE=phone`. An unknown value is refused before anything starts, and the message names the valid values.
-
-Output: `app/packages/e2e/device-check-report/<timestamp>/` with `summary.md` (the table, the failing checks with their measured values, the screenshots, what is not checked), `summary.json` (the same, for you to read) and `shots/<screen-or-flow>-<device>-<theme>-<text>-<screen|after>.png`. The command prints the summary path and a short table. Exit 1 means a check failed (or a cell stopped on an error): read the summary, then judge.
+`make device-check` (US-DEV-01, issue 2504) runs the parametrized check. Its filters (`SCREEN`, `FLOW`, `DEVICE`, `THEME`, `TEXT`, `FORCED`), examples, output, checks, flows, real phone and limits are in `docs/guides/operations/device-checks.md`; read it before the first run.
 
 Your job per brief: run the tool with the filters that cover the fix (one screen or flow at a time, the chunk the summary lists), open each screenshot that a failing or changed check names, and judge. Read the screenshots yourself: the tool's checks are the measurements, the picture is your check.
 
