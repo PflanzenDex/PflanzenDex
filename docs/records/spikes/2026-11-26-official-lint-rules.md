@@ -4,11 +4,11 @@ As of: 2026-11-26 · Issue 2511 · Story: US-QG-01 (find errors early and locall
 
 ## Summary
 
-- **No check found a defect that a keeper would see.** The checks gave 2,000+ hits in tests and 300+ in product code. After triage, the hits are noise, style, or conflicts with a project rule. No bug issue was filed (the one real finding, a `useCallback` that never memoizes, has no effect a keeper can see: see the check 2 table).
+- **No check found a defect that a keeper would see.** The checks gave 8,000+ hits in tests and about 200 in product code. After triage, the hits are noise, style, or conflicts with a project rule. No bug issue was filed (the one real finding, a `useCallback` that never memoizes, has no effect a keeper can see: see the check 2 table).
 - **Hooks (check 1):** 198 hits in 79 files, 168 in product code. 21 `exhaustive-deps` hits and 0 inline disables show that the repo does not use the classic rules today. Almost all hits are false positives of the React Compiler rules. They belong to the compiler that the owner decided not to enable (spike 2026-11-20). Proposal: do not gate the compiler rules; the owner decides whether to gate only `rules-of-hooks` and `exhaustive-deps` (0 and 21 product hits).
 - **TanStack Query (check 2):** 1 hit. Proposal: gate with an empty baseline (cost 0.7 s).
 - **Storybook (check 3):** 0 hits. Proposal: gate with an empty baseline, or drop (nothing to catch today).
-- **squawk (check 4):** 1,088 hits in 116 files over 16 rules, 0 on a new-style migration that squawk is right about. 7 of the rules conflict with how the project applies migrations (one transaction per file, forward-only, never edited). Proposal: drop as a gate; at most run it on new migrations with a short rule list.
+- **squawk (check 4):** 1,088 hits in 116 files over 16 rules. 7 of the rules conflict with how the project applies migrations (one transaction per file, forward-only, never edited). Proposal: drop as a gate; at most run it on new migrations with a short rule list.
 - **Information checks (check 5):** every plugin is noise-heavy as shipped. `no-floating-promises` on `e2e` has 0 hits. The rest: drop, or take single rules (see below).
 
 ## Method
