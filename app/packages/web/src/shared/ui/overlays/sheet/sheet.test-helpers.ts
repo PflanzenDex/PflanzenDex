@@ -16,10 +16,11 @@ export const heightOf = (sheet: HTMLElement): string =>
   sheet.style.getPropertyValue("--sheet-height");
 export const maxOf = (sheet: HTMLElement): string => sheet.style.getPropertyValue("--sheet-max");
 
-/** The height of a sheet in px, from its variables and the fake layout. */
+/** The height of a sheet in px, from its variables and the fake layout; a sheet with a paging list keeps its 90 % (its class). */
 function sheetPx(sheet: HTMLElement): number {
   const set = parseFloat(heightOf(sheet));
   if (!Number.isNaN(set)) return set;
+  if (sheet.querySelector("[data-page-fit]")) return window.innerHeight * 0.9;
   const max = parseFloat(maxOf(sheet));
   const natural = layout.header + layout.content + layout.pinned;
   return Number.isNaN(max) ? natural : Math.min(natural, max);
@@ -35,21 +36,36 @@ export function stubSheetLayout(): void {
     return this.hasAttribute("data-sheet-header") ? layout.header : 0;
   });
   vi.spyOn(Element.prototype, "scrollHeight", "get").mockImplementation(function (this: Element) {
-    return this.hasAttribute("data-sheet-body") ? layout.content : 0;
+    return scrolls(this) ? layout.content : 0;
   });
   vi.spyOn(Element.prototype, "clientHeight", "get").mockImplementation(function (this: Element) {
-    const sheet = this.hasAttribute("data-sheet-body") ? sheetOf(this) : null;
+    const sheet = scrolls(this) ? sheetOf(this) : null;
     return sheet ? Math.min(layout.content, sheetPx(sheet) - layout.header - layout.pinned) : 0;
   });
 }
 
-/** A primary action and the scroll region around it have boxes, so that the sheet can tell whether the region cuts the action off. */
-export function stubActionBox(): void {
-  const rect = (bottom: number) =>
-    ({ top: 0, left: 0, right: 0, width: 0, height: 0, x: 0, y: 0, bottom }) as DOMRect;
+/** The region that holds the content: the body of the sheet, or the region of a layer inside it (the body then shows no overflow). */
+function scrolls(el: Element): boolean {
+  if (el.matches("[data-layer-body] > [data-scroll-region]")) return true;
+  return el.hasAttribute("data-sheet-body") && el.querySelector("[data-layer-body]") === null;
+}
+
+/**
+ * Boxes: a primary action and the scroll region around it, so that the sheet can tell whether the region cuts the action off;
+ * the sheet (its height) and its handle (44 px), which the plays of the stories measure. Every element has a client rect, so
+ * `hasLayout` of the plays is true.
+ */
+export function stubBoxes(): void {
+  const rect = (bottom: number, height = 0) =>
+    ({ top: 0, left: 0, right: 0, width: 0, height, x: 0, y: 0, bottom }) as DOMRect;
   vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
     if (this.classList.contains("bg-primary")) return rect(layout.actionBottom);
+    if (this.hasAttribute("data-sheet-height")) return rect(0, sheetPx(this as HTMLElement));
+    if (this.hasAttribute("data-sheet-handle")) return rect(0, 44);
     return rect(this.hasAttribute("data-scroll-region") ? 400 : 0);
+  });
+  vi.spyOn(Element.prototype, "getClientRects").mockImplementation(function (this: Element) {
+    return [this.getBoundingClientRect()] as unknown as DOMRectList;
   });
 }
 

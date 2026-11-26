@@ -10,7 +10,7 @@ import {
   layout,
   maxOf,
   setWindowHeight,
-  stubActionBox,
+  stubBoxes,
   stubSheetLayout,
 } from "./sheet.test-helpers";
 
@@ -36,7 +36,7 @@ beforeEach(() => {
   layout.content = 200;
   layout.actionBottom = 0;
   stubSheetLayout();
-  stubActionBox();
+  stubBoxes();
   setWindowHeight(800);
 });
 
