@@ -126,14 +126,15 @@ describe("US-QS-18 the most urgent item of Heute", () => {
     ).toBe("/collection?view=plants&group=phase");
   });
 
-  it("US-QS-18 · issue 1182 the rows of the layer page by its free height, so the pager stays inside the pane", async () => {
+  it("US-QS-15 · US-QS-18 · issue 1182 the rows of the layer are its scroll content: no pages, no marker of a paging list", async () => {
     fakeServer(() =>
       response(200, { date: "2026-10-03", upcoming: 0, items: [OVERDUE, PHASE, INCOMPLETE] }),
     );
     render(<TodayPage api="http://api" token={token} onOpen={vi.fn()} />, "/today?sheet=tasks");
     const layer = await screen.findByRole("dialog", { name: "Weitere Aufgaben" });
     const list = await within(layer).findByRole("list", { name: "Weitere Aufgaben" });
-    expect(list.hasAttribute("data-page-fit")).toBe(true);
+    expect(list.hasAttribute("data-page-fit")).toBe(false);
+    expect(within(layer).queryByRole("button", { name: "Weiter" })).toBeNull();
   });
 
   it("US-QS-18 the further tasks list no treatment: they are counted in the one Behandlungen entry", async () => {

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
+import { useInLayer } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import {
   EntryPlaceholders,
   busyWhile,
@@ -99,6 +100,7 @@ export function ScrollEntries<T>({
   fit = false,
   paging,
 }: ScrollEntriesProps<T>) {
+  const inLayer = useInLayer();
   const paged = paging !== undefined;
   const loaded = items.length;
   const count = knownCount(paging, loaded);
@@ -116,7 +118,10 @@ export function ScrollEntries<T>({
   const holes = placeholderCount(paging, missing, Math.min(wanted, count) - loaded);
 
   return (
-    <div data-pager="" className={cn("flex flex-col gap-3", fit && "min-h-24 flex-1")}>
+    <div
+      {...(inLayer ? {} : { "data-pager": "" })}
+      className={cn("flex flex-col gap-3", fit && "min-h-24 flex-1")}
+    >
       <ul
         ref={list}
         {...(fit ? { "data-page-fit": "", "data-scroll-region": "", tabIndex: 0 } : {})}

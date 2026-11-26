@@ -161,9 +161,9 @@ export const ToggleAndKeys: Story = {
 
 const PLANTS = Array.from({ length: 14 }, (_, index) => `Monstera ${index + 1}`);
 
-// A list that pages by its free height (`data-page-fit`) keeps the 90 % of the sheet until `Pager` is removed; title and the
-// primary action stay in the window (US-QS-15, issue 1156).
-export const PagedListKeepsItsHeight: Story = {
+// A list in a layer is never cut into pages (US-QS-15, DS-60): it is the content of the layer, which scrolls under the title
+// and the primary action. The sheet has two heights, and nothing is marked as a Pager.
+export const ListScrollsInLayer: Story = {
   render: () => (
     <Layer>
       <Pager
@@ -176,19 +176,19 @@ export const PagedListKeepsItsHeight: Story = {
     </Layer>
   ),
   play: async ({ canvasElement }) => {
-    await openLayer(canvasElement);
+    const layer = await openLayer(canvasElement);
+    const list = layer.querySelector("ul[aria-label='Pflanzen']");
+    if (!list) throw new Error("play: the list is missing");
+    if (list.children.length !== PLANTS.length)
+      throw new Error("play: the list must hold every entry, not one page");
+    if (layer.querySelector("[data-pager], [data-page-fit]"))
+      throw new Error("play: a list in a layer carries no marker of a paging list");
+    if (Array.from(layer.querySelectorAll("button")).some((b) => b.textContent === "Weiter"))
+      throw new Error("play: a list in a layer has no Weiter");
     const sheet = sheetOf();
     if (sheet && hasLayout(sheet)) {
-      await waitForKind(sheet, "legacy");
-      await waitForHeight(sheet, visibleHeight() * 0.9, "the sheet keeps 90 % of the window");
-      const action = Array.from(sheet.querySelectorAll("button")).find(
-        (b) => b.textContent === "Sichern",
-      );
-      if (!action) throw new Error("play: the primary action is missing");
-      await waitUntil(
-        () => action.getBoundingClientRect().bottom <= visibleHeight(),
-        "the primary action stays in the window",
-      );
+      await waitForKind(sheet, "two");
+      await waitForHeight(sheet, visibleHeight() / 2, "the sheet opens at half height");
     }
     await closeLayer();
   },

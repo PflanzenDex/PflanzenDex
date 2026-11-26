@@ -162,8 +162,8 @@ describe("US-LIC-05 page locations and light zones", () => {
     // US-QS-32: the zones are one grouped list, a labelled region with one row per zone.
     expect(screen.getByRole("region", { name: "Deine Lichtzonen" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Deine Lichtzonen", level: 3 })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    // US-QS-15: the parts of the layer are one scroll list, so the last one is there without a page turn.
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
     expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
   });
 
@@ -679,7 +679,7 @@ describe("US-QS-19 management on one screen", () => {
     ).toBeTruthy();
   });
 
-  it("US-QS-19 the reference layer shows one part at a time; the overview pages by the free height (issue 1155)", async () => {
+  it("US-QS-15 · US-QS-19 the reference layer shows one part at a time; its lists are scroll content, never pages (issue 1155)", async () => {
     setViewportWidth(360);
     const { fetchFn } = fakeServer({ zones: [zone], locations: [] });
     const normal = fetchFn.getMockImplementation() as typeof fetch;
@@ -700,9 +700,10 @@ describe("US-QS-19 management on one screen", () => {
     expect(
       (await screen.findByRole("button", { name: "Lichtbedarf" })).getAttribute("aria-pressed"),
     ).toBe("true");
-    // The species page by the free height of the layer (issue 1155); jsdom has no layout, so the starting value holds all three.
+    // The species are the scroll content of the layer (US-QS-15): no page of its own, no marker of a paging list.
     const list = screen.getByRole("list", { name: "Lichtbedarf der Arten" });
-    expect(list.hasAttribute("data-page-fit")).toBe(true);
+    expect(list.hasAttribute("data-page-fit")).toBe(false);
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
     for (const name of ["Art a", "Art b", "Art c"])
       expect(within(list).getByText(name)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Regeln" }));

@@ -265,26 +265,19 @@ describe("LayerSheet (US-QS-15)", () => {
     );
   });
 
-  it("US-QS-15 · issue 1156 a layer that holds a list paging by free height takes its full height as sheet, dialog and pane", async () => {
+  it("US-QS-15 a layer holds no list that pages by a free height: sheet, dialog and pane keep no class for it, and a list in any of them is scroll content", async () => {
     setViewportWidth(360);
     render(<Example at="/?sheet=licht" />);
-    const fill = "has-[[data-page-fit]]:";
     const sheet = await screen.findByRole("dialog", { name: "Lichtzonen" });
-    expect(sheet.className).toContain(`${fill}h-[90dvh]`);
-    // The regions down to the list pass the height on as a flex column; other layers keep their flow.
-    const body = sheet.querySelector("[data-layer-body]") as HTMLElement;
-    expect((body.firstElementChild as HTMLElement).className).toContain(`${fill}flex-col`);
-    expect((body.parentElement?.parentElement?.parentElement as HTMLElement).className).toContain(
-      `${fill}flex-col`,
-    );
+    expect(sheet.className).not.toContain("page-fit");
+    expect(sheet.querySelector("[data-page-fit]")).toBeNull();
     act(() => setViewportWidth(800));
-    expect(screen.getByRole("dialog", { name: "Lichtzonen" }).className).toContain(
-      `${fill}h-[90dvh]`,
-    );
+    expect(screen.getByRole("dialog", { name: "Lichtzonen" }).className).not.toContain("page-fit");
     act(() => setViewportWidth(1280));
-    expect(screen.getByRole("complementary", { name: "Lichtzonen" }).className).toContain(
-      `${fill}h-[calc(100dvh-3rem)]`,
-    );
+    const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
+    expect(pane.className).not.toContain("page-fit");
+    // The pane is a layer too: what it holds is in the layer scope, so a Pager there does not page.
+    expect(pane.querySelector("[data-layer-body] > [data-scroll-region]")).not.toBeNull();
   });
 
   it("US-QS-15 from 1024 px the pane takes the frame's second column, beside the content and top-aligned with it", () => {

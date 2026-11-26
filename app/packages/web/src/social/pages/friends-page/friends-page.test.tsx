@@ -686,29 +686,25 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(screen.getByText(/Ein Zurückziehen gilt ab dem nächsten Abruf/)).toBeTruthy();
   });
 
-  it("US-QS-20 a list longer than the layer is paged with 'Zurück' and 'Weiter'", async () => {
-    // Paging is the tablet and desktop view: the friends page in pages of three from 768 px (on a phone one list).
+  it("US-QS-15 · US-QS-20 a list longer than the layer is one scroll list: every friend, no 'Seite n von m', no 'Zurück' and 'Weiter'", async () => {
     setViewportWidth(1024);
     fakeServer({ friends: [1, 2, 3, 4, 5].map(friend) });
     show("friends");
     const list = await screen.findByRole("list", { name: "Freunde" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByText("Seite 2 von 2")).toBeTruthy();
-    expect(
-      within(screen.getByRole("list", { name: "Freunde" })).getAllByRole("listitem"),
-    ).toHaveLength(2);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(5);
     expect(screen.getByText("Freund5")).toBeTruthy();
+    expect(screen.queryByText(/Seite \d+ von \d+/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
   });
 
-  it("US-QS-20 requests are paged too, and an entry past the end shows the last page", async () => {
+  it("US-QS-15 · US-QS-20 the requests are one scroll list too, and an old address with a position shows the list from its start", async () => {
     setViewportWidth(1024);
     fakeServer({
       incoming: [1, 2, 3, 4, 5].map((n) => req({ id: `r${n}`, otherName: `Person${n}` })),
     });
     show("requests", {}, "9");
-    expect(await screen.findByText("Seite 2 von 2")).toBeTruthy();
+    expect(await screen.findByText(/Person1 möchte/)).toBeTruthy();
     expect(screen.getByText(/Person5 möchte/)).toBeTruthy();
+    expect(screen.queryByText(/Seite \d+ von \d+/)).toBeNull();
   });
 });

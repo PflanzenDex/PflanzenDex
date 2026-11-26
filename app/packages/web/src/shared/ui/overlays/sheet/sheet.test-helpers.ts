@@ -16,11 +16,10 @@ export const heightOf = (sheet: HTMLElement): string =>
   sheet.style.getPropertyValue("--sheet-height");
 export const maxOf = (sheet: HTMLElement): string => sheet.style.getPropertyValue("--sheet-max");
 
-/** The height of a sheet in px, from its variables and the fake layout; a sheet with a paging list keeps its 90 % (its class). */
+/** The height of a sheet in px, from its variables and the fake layout;. */
 function sheetPx(sheet: HTMLElement): number {
   const set = parseFloat(heightOf(sheet));
   if (!Number.isNaN(set)) return set;
-  if (sheet.querySelector("[data-page-fit]")) return window.innerHeight * 0.9;
   const max = parseFloat(maxOf(sheet));
   const natural = layout.header + layout.content + layout.pinned;
   return Number.isNaN(max) ? natural : Math.min(natural, max);

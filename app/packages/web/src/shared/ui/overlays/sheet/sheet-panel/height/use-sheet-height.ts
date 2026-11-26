@@ -43,8 +43,7 @@ function useWindowHeight(): number {
  * The height of the sheet as the two CSS variables its classes read (`h-(--sheet-height)`, `max-h-[var(--sheet-max,90dvh)]`,
  * DS-32; US-QS-15): a fitting sheet is as high as its content (`auto`) and at most half; a sheet with two heights has the
  * one it is at, or the height the finger drags it to; a sheet with full height only has that. The highest height stays the
- * limit while the height changes, so a sheet that gets lower is not cut off at once and slides. A list that pages by free
- * height keeps the classes that set its 90 % (`legacy`): without the variables the fallback of the class holds.
+ * limit while the height changes, so a sheet that gets lower is not cut off at once and slides.
  */
 function sheetVars(
   kind: SheetKind,
@@ -52,7 +51,6 @@ function sheetVars(
   heights: Heights,
   dragged: number | null,
 ): React.CSSProperties {
-  if (kind === "legacy") return {};
   const vars = (height: string, max: number) =>
     ({ "--sheet-height": height, "--sheet-max": `${max}px` }) as React.CSSProperties;
   if (kind === "fit") return vars("auto", heights.half);

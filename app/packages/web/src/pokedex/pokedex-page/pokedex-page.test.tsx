@@ -295,9 +295,9 @@ describe("US-POK-10 · US-POK-11 the progress with the tree of the server", () =
     const milestones = await screen.findByRole("dialog", { name: "Meilensteine" });
     expect(within(milestones).getByText("4 Meilensteine erreicht")).toBeTruthy();
     expect(within(milestones).getByText("Entdecker der Ordnungen")).toBeTruthy();
-    expect(within(milestones).getByText("Seite 1 von 2")).toBeTruthy();
+    // US-QS-15: the milestones are one scroll list in the layer, no page turn between them.
+    expect(within(milestones).queryByText(/Seite \d+ von \d+/)).toBeNull();
     expect(within(milestones).getByText("Cactaceae: Vollständig")).toBeTruthy();
-    await userEvent.click(within(milestones).getByRole("button", { name: "Weiter" }));
     expect(await within(milestones).findByText("Citrus: Vollständig")).toBeTruthy();
     // The German name leads, the scientific name is italic in brackets (US-QS-32, SG-TYPE-08).
     const remaining = within(milestones)

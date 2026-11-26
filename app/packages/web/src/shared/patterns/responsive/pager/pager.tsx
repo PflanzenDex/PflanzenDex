@@ -114,14 +114,17 @@ export type PagerProps<T> = {
 };
 
 /**
- * A list of entries (US-QS-15, SG-LIST-01): from 768 px it pages, on a phone it is one scrolling list. A list in a sheet or a
- * dialog keeps its pages at every width: the layer is sized by the window, so its list pages by the free height (issue 1861
- * owns the layers). The view follows the breakpoint live, so a resize swaps it; the address parts belong to the paged view only.
+ * A list of entries (US-QS-15, SG-LIST-01): a list in a sheet, a dialog or a pane is never cut into pages at any width: it is
+ * the content of the layer, which scrolls under the title and the actions of the layer (owner decision 2026-11-23, issue
+ * 2418). On a page it is one scrolling list on a phone and pages from 768 px, until `Pager` is removed from the pages
+ * (issues 2419 and 2422). The view follows the breakpoint live, so a resize swaps it; the address parts belong to the paged
+ * view only.
  */
 export function Pager<T>(props: PagerProps<T>) {
   const wide = useIsMd();
   const inLayer = useInLayer();
-  return wide || inLayer ? <PagedPager {...props} /> : <ScrollEntries {...props} />;
+  if (inLayer) return <ScrollEntries {...props} fit={false} />;
+  return wide ? <PagedPager {...props} /> : <ScrollEntries {...props} />;
 }
 
 /**

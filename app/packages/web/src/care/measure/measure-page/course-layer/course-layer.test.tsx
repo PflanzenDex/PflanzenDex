@@ -101,19 +101,16 @@ describe("US-QS-15 · US-WAC-01 the Verlauf layer in three parts", () => {
     expect(screen.queryByRole("img", { name: /^Messverlauf:/ })).toBeNull();
   });
 
-  it("US-QS-15 · US-WAC-01 Messungen lists the entries newest first, paged and marked for the free height", async () => {
-    // Paging is the view from 768 px (US-QS-32); on a phone the list scrolls.
+  it("US-QS-15 · US-WAC-01 Messungen lists the entries newest first in one scroll list, no pages", async () => {
     setViewportWidth(768);
     await showReady(course, "/collection?sheet=verlauf-e1&teil=messungen");
     const list = screen.getByRole("list", { name: "Messungen und Fotos" });
-    expect(list.hasAttribute("data-page-fit")).toBe(true);
-    const first = within(list).getAllByRole("heading", { level: 3 })[0];
-    expect(first?.textContent).toMatch(/^30\scm/);
-    expect(screen.getByText("Seite 1 von 3")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByText("Seite 2 von 3")).toBeTruthy();
-    const second = within(list).getAllByRole("heading", { level: 3 })[0];
-    expect(second?.textContent).toMatch(/^20\scm/);
+    expect(list.hasAttribute("data-page-fit")).toBe(false);
+    const headings = within(list).getAllByRole("heading", { level: 3 });
+    expect(headings[0]?.textContent).toMatch(/^30\scm/);
+    expect(headings[1]?.textContent).toMatch(/^20\scm/);
+    expect(screen.queryByText(/Seite \d+ von \d+/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
   });
 
   it("US-QS-15 · US-WAC-01 an unknown or absent part shows Überblick", async () => {

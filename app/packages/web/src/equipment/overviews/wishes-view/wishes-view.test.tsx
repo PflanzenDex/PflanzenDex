@@ -145,7 +145,7 @@ describe("US-EQU-08 equipment wishes in the equipment page", () => {
     });
   });
 
-  it("US-EQU-08 · US-QS-15 · issue 1154 a segment shows one group with its count, paged by the free height of the layer", async () => {
+  it("US-QS-15 · US-EQU-08 · issue 1154 a segment shows one group with its count, as a scroll list in the layer", async () => {
     fakeServer({
       open: [wish()],
       bought: [wish({ id: "w2", name: "Heizmatte", status: "bought" })],
@@ -154,7 +154,8 @@ describe("US-EQU-08 equipment wishes in the equipment page", () => {
     view();
     const user = userEvent.setup();
     const open = await screen.findByRole("list", { name: "Offene Geräte-Wünsche" });
-    expect(open.hasAttribute("data-page-fit")).toBe(true);
+    // US-QS-15: the list is the scroll content of the layer, it does not page by a free height.
+    expect(open.hasAttribute("data-page-fit")).toBe(false);
     const segment = screen.getByRole("group", { name: "Geräte-Wünsche nach Stand" });
     expect(
       within(segment)

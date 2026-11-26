@@ -73,7 +73,6 @@ export function useSheetKind(parts: Parts, heights: Heights, open: boolean) {
             overflow: overflowOf(sheet),
             chrome: header.offsetHeight + pinnedOf(sheet, rem),
             rem,
-            legacy: body.querySelector("[data-page-fit]") !== null,
           },
           heights,
         ),
