@@ -9,6 +9,20 @@ export const stemOf = (name) => name.split(".")[0];
 // Entries starting with "." (tooling folders, dotfiles) are not part of the layout.
 export const isIgnored = (p) => p.split("/").some((s) => s.startsWith("."));
 
+// The extension family of a file (FR-QG-21, d-133): its last extension, where .ts and .tsx are one family and .js, .jsx
+// and .mjs are one family. undefined for a file without an extension.
+const FAMILY_OF = new Map([
+  ["ts", "ts"],
+  ["tsx", "ts"],
+  ["js", "js"],
+  ["jsx", "js"],
+  ["mjs", "js"],
+]);
+export function familyOf(name) {
+  const ext = name.includes(".") ? name.split(".").at(-1) : "";
+  return ext === "" ? undefined : (FAMILY_OF.get(ext) ?? ext);
+}
+
 // Map<dir, Map<name, "file" | "dir">>; the root directory is "".
 export function buildTree(paths) {
   const tree = new Map([["", new Map()]]);

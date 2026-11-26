@@ -1,6 +1,7 @@
 // Rules LY-1 to LY-5 over a path list. Returns findings { rule, dir, value, items }.
 import {
   buildTree,
+  familyOf,
   globMatch,
   isIgnored,
   isKebab,
@@ -33,10 +34,16 @@ function rootFindings(children, config) {
   return bad.length ? [finding("LY-5", "", bad)] : [];
 }
 
+// The entries that count as units (FR-QG-21): the root's whitelisted files do not, and a rule's `uncounted` pattern names
+// the tool files of a package root (d-133). LY-3 still checks all of them.
+const isCounted =
+  (dir, rule, config) =>
+  ([name, kind]) =>
+    !(dir === "" && config.rootFiles.includes(name)) &&
+    !(kind === "file" && rule?.uncounted?.test(name));
+
 function fanoutFindings(dir, children, rule, config) {
-  const counted =
-    dir === "" ? [...children].filter(([n]) => !config.rootFiles.includes(n)) : children;
-  const units = unitCount(new Map(counted));
+  const units = unitCount(new Map([...children].filter(isCounted(dir, rule, config))));
   const limit = rule?.maxUnits ?? config.maxUnits;
   if (units <= limit) return [];
   return [
@@ -49,6 +56,22 @@ function fanoutFindings(dir, children, rule, config) {
   ];
 }
 
+// Automatic collection (FR-QG-21, d-133, d-135): a directory without a per-path rule that holds `autoCollectionMin` files of
+// one extension family. Its files have no unit limit and LY-3 still applies to them; its subfolders still count as units
+// against maxUnits (d-135), so 8 files with 9 subfolders fail LY-1.
+function isAutoCollection(rule, children, config) {
+  if (rule) return false;
+  const perFamily = new Map();
+  for (const [name, kind] of children) {
+    const family = kind === "file" ? familyOf(name) : undefined;
+    if (family) perFamily.set(family, (perFamily.get(family) ?? 0) + 1);
+  }
+  return Math.max(0, ...perFamily.values()) >= (config.autoCollectionMin ?? Infinity);
+}
+
+// The entries that count as units in an automatic collection (d-135): its subfolders; its files do not count.
+const subfoldersOnly = (children) => new Map([...children].filter(([, kind]) => kind === "dir"));
+
 function dirFindings(dir, children, config) {
   const rule = config.dirs.find((r) => matchDir(r.path, dir));
   const out = dir === "" ? rootFindings(children, config) : [];
@@ -56,7 +79,8 @@ function dirFindings(dir, children, config) {
     const bad = [...children.keys()].filter((n) => !rule.collection.test(n));
     return bad.length ? [...out, finding("LY-2", dir, bad)] : out;
   }
-  out.push(...fanoutFindings(dir, children, rule, config));
+  const counted = isAutoCollection(rule, children, config) ? subfoldersOnly(children) : children;
+  out.push(...fanoutFindings(dir, counted, rule, config));
   const badNames = [...children]
     .filter(([n, k]) => !nameOk(n, k, config) && !(k === "file" && nameExempt(dir, n, config)))
     .map(([n]) => n);

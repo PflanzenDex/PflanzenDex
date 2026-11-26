@@ -76,8 +76,15 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
       stdio: "ignore",
     });
 
-  // A repo whose directory app/x has `files` units, so it violates LY-1 when files > 5.
-  function repo(files) {
+  // Units with three extensions in turn, so no automatic collection applies (d-133) and each unit counts (FR-QG-21).
+  const EXTS = ["md", "json", "css"];
+  const writeUnits = (root, dir, n) => {
+    fs.mkdirSync(path.join(root, dir), { recursive: true });
+    for (let i = 0; i < n; i++) fs.writeFileSync(path.join(root, dir, `f${i}.${EXTS[i % 3]}`), "");
+  };
+
+  // A repo whose directory app/x has `units` units, so it violates LY-1 when units > 8.
+  function repo(units) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "layout-cli-"));
     for (const [from, to] of copies) {
       fs.mkdirSync(path.dirname(path.join(dir, to)), { recursive: true });
@@ -85,10 +92,7 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
     }
     fs.mkdirSync(path.join(dir, "app/config/gates/baselines"), { recursive: true });
     fs.writeFileSync(path.join(dir, "README.md"), "");
-    for (let i = 0; i < files; i++) {
-      fs.mkdirSync(path.join(dir, "app/x"), { recursive: true });
-      fs.writeFileSync(path.join(dir, `app/x/f${i}.md`), "");
-    }
+    writeUnits(dir, "app/x", units);
     gitIn(dir, "init", "-q");
     gitIn(dir, "add", "-A");
     gitIn(dir, "commit", "-qm", "init");
@@ -110,7 +114,7 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
   }
 
   it("a damaged baseline gives a readable error, not a stack trace", () => {
-    const r = repo(6);
+    const r = repo(9);
     try {
       fs.writeFileSync(r.baselineFile, "{not json");
       const out = r.run();
@@ -123,12 +127,12 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
   });
 
   it("an empty {} baseline can be written once, then the check passes", () => {
-    const r = repo(6);
+    const r = repo(9);
     try {
       fs.writeFileSync(r.baselineFile, "{}\n");
       assert.equal(r.run(["--write-baseline"]).status, 0);
       assert.deepEqual(JSON.parse(fs.readFileSync(r.baselineFile, "utf8")), {
-        "LY-1": { "app/x": 6 },
+        "LY-1": { "app/x": 9 },
       });
       assert.equal(r.run().status, 0);
     } finally {
@@ -137,12 +141,12 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
   });
 
   it("--write-baseline refuses to enlarge the baseline and leaves the file alone", () => {
-    const r = repo(6);
+    const r = repo(9);
     try {
       fs.writeFileSync(r.baselineFile, "{}\n");
       r.run(["--write-baseline"]);
       const before = fs.readFileSync(r.baselineFile, "utf8");
-      fs.writeFileSync(path.join(r.dir, "app/x/f6.md"), "");
+      fs.writeFileSync(path.join(r.dir, "app/x/f9.md"), "");
       const out = r.run(["--write-baseline"]);
       assert.equal(out.status, 1);
       assert.match(out.stderr, /refusing to enlarge/);
@@ -153,7 +157,7 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
   });
 
   it("in CI a missing base ref fails instead of skipping the comparison", () => {
-    const r = repo(6);
+    const r = repo(9);
     try {
       fs.writeFileSync(r.baselineFile, "{}\n");
       r.run(["--write-baseline"]);
@@ -166,19 +170,16 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
   });
 
   it("an entry that the base ref does not have fails the check", () => {
-    const r = repo(6);
+    const r = repo(9);
     try {
-      fs.writeFileSync(r.baselineFile, `${JSON.stringify({ "LY-1": { "app/x": 6 } })}\n`);
+      fs.writeFileSync(r.baselineFile, `${JSON.stringify({ "LY-1": { "app/x": 9 } })}\n`);
       gitIn(r.dir, "add", "-A");
       gitIn(r.dir, "commit", "-qm", "baseline");
       gitIn(r.dir, "branch", "base");
-      for (let i = 0; i < 6; i++) {
-        fs.mkdirSync(path.join(r.dir, "app/y"), { recursive: true });
-        fs.writeFileSync(path.join(r.dir, `app/y/f${i}.md`), "");
-      }
+      writeUnits(r.dir, "app/y", 9);
       fs.writeFileSync(
         r.baselineFile,
-        `${JSON.stringify({ "LY-1": { "app/x": 6, "app/y": 6 } })}\n`,
+        `${JSON.stringify({ "LY-1": { "app/x": 9, "app/y": 9 } })}\n`,
       );
       const out = r.run([], { LAYOUT_BASE: "base" });
       assert.equal(out.status, 1);

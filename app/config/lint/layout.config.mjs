@@ -2,7 +2,12 @@
 // match yet is listed in layout-baseline.json and only shrinks (FR-QG-22).
 const story = "[a-z0-9][a-z0-9-]*";
 export default {
-  maxUnits: 5,
+  // The unit limit of a module directory (FR-QG-21; 5 before owner decision d-133 of 2026-11-26, issue 2543). The per-path
+  // rules below keep their own limits.
+  maxUnits: 8,
+  // A directory without a per-path rule that holds this many files of one extension family is an automatic collection:
+  // no unit limit, LY-3 still applies (FR-QG-21, d-133).
+  autoCollectionMin: 8,
   rootFiles: [
     "README.md",
     "LICENSE",
@@ -36,6 +41,13 @@ export default {
     // has none; a module holds up to 10 feature directories (starting value, assumption), inside a feature 5 applies.
     // The app root: package.json, package-lock.json, eslint.config.js (ESLint finds it only here), packages, tools, config.
     { path: "app", maxUnits: 6 },
+    // A package root (d-133): its tool configuration files (package and lock files, tsconfig, components.json and the
+    // *.config.* files of Vite, Vitest, Playwright and ESLint) are no units; LY-3 still checks their names.
+    {
+      path: "app/packages/*",
+      uncounted:
+        /^(package(-lock)?\.json|tsconfig[a-z0-9.-]*\.json|components\.json|[a-z0-9.-]+\.config\.(m?js|ts|cjs))$/,
+    },
     { path: "app/packages/*/src", maxUnits: Infinity },
     { path: "app/packages/*/src/*", maxUnits: 10 },
     // The changelog fragments (US-DEV-06, issue 1486): one JSON file per PR, named by its issue number and a slug. Each
@@ -75,6 +87,16 @@ export default {
     {
       path: "docs/records/test-logs/*",
       collection: new RegExp(`^${story}\\.(png|md|txt|json)$`),
+    },
+    // The spike folders (d-133, issue 2543): `<yyyy-mm-dd>-<topic>` with a kebab-case topic, or te-15-oauth by name. A
+    // collection has no unit limit.
+    { path: "docs/records/spikes", collection: /^(\d{4}-\d{2}-\d{2}-[a-z0-9-]+|te-15-oauth)$/ },
+    // Inside a spike folder: flat kebab-case names with dotted extensions (a dot needs a letter or digit after it, so no
+    // nested repetition: ESLint security/detect-unsafe-regex); README.md is the one conventional capital name. A folder
+    // inside a spike follows the default unit limit.
+    {
+      path: "docs/records/spikes/*",
+      collection: /^(README\.md|[a-z0-9](?:[a-z0-9-]|\.(?=[a-z0-9]))*)$/,
     },
     // Redesign mockup sources: the canvas's own file names (mixed case such as M-Pflanzen.dc.html) stay as they are.
     { path: "docs/records/design", collection: /^(README\.md|directions|greenhouse)$/ },
