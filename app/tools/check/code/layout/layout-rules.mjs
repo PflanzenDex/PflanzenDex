@@ -56,8 +56,9 @@ function fanoutFindings(dir, children, rule, config) {
   ];
 }
 
-// Automatic collection (FR-QG-21, d-133): a directory without a per-path rule that holds `autoCollectionMin` files of one
-// extension family has no unit limit; LY-3 still applies to its entries.
+// Automatic collection (FR-QG-21, d-133, d-135): a directory without a per-path rule that holds `autoCollectionMin` files of
+// one extension family. Its files have no unit limit and LY-3 still applies to them; its subfolders still count as units
+// against maxUnits (d-135), so 8 files with 9 subfolders fail LY-1.
 function isAutoCollection(rule, children, config) {
   if (rule) return false;
   const perFamily = new Map();
@@ -68,6 +69,9 @@ function isAutoCollection(rule, children, config) {
   return Math.max(0, ...perFamily.values()) >= (config.autoCollectionMin ?? Infinity);
 }
 
+// The entries that count as units in an automatic collection (d-135): its subfolders; its files do not count.
+const subfoldersOnly = (children) => new Map([...children].filter(([, kind]) => kind === "dir"));
+
 function dirFindings(dir, children, config) {
   const rule = config.dirs.find((r) => matchDir(r.path, dir));
   const out = dir === "" ? rootFindings(children, config) : [];
@@ -75,8 +79,8 @@ function dirFindings(dir, children, config) {
     const bad = [...children.keys()].filter((n) => !rule.collection.test(n));
     return bad.length ? [...out, finding("LY-2", dir, bad)] : out;
   }
-  if (!isAutoCollection(rule, children, config))
-    out.push(...fanoutFindings(dir, children, rule, config));
+  const counted = isAutoCollection(rule, children, config) ? subfoldersOnly(children) : children;
+  out.push(...fanoutFindings(dir, counted, rule, config));
   const badNames = [...children]
     .filter(([n, k]) => !nameOk(n, k, config) && !(k === "file" && nameExempt(dir, n, config)))
     .map(([n]) => n);

@@ -67,6 +67,16 @@ describe("US-QG-09 LY-1 automatic collection (d-133)", () => {
   it("collects 8 files of one family, so one more unit still passes", () => {
     assert.deepEqual(run([...files("app/x", 8), "app/x/notes.json"]), []);
   });
+  const ts8 = Array.from({ length: 8 }, (_, i) => `app/x/f${i}.ts`);
+  const subfolders = (n) => Array.from({ length: n }, (_, i) => `app/x/s${i + 1}/a.md`);
+  it("US-QG-09 (d-135): 8 files of one family and 9 subfolders fail LY-1, the subfolders count", () => {
+    const f = run([...ts8, ...subfolders(9)]);
+    assert.deepEqual(rules(f), ["LY-1 app/x"]);
+    assert.equal(f[0].value, 9);
+  });
+  it("US-QG-09 (d-135): 8 files of one family and 3 subfolders pass", () => {
+    assert.deepEqual(run([...ts8, ...subfolders(3)]), []);
+  });
   it("fails a mixed directory with 7 files of one family and 2 other units at 9 units", () => {
     assert.deepEqual(rules(run([...files("app/x", 7), "app/x/notes.json", "app/x/sub/a.ts"])), [
       "LY-1 app/x",
