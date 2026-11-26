@@ -26,15 +26,15 @@
       "screen": "account-functions-fn-today",
       "size": "360x640",
       "page": 1,
-      "inner": 3.01,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "account-functions-fn-today",
       "size": "390x844",
       "page": 1,
-      "inner": 2.21,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "account-functions-fn-today",
@@ -68,15 +68,15 @@
       "screen": "account-functions",
       "size": "360x640",
       "page": 1,
-      "inner": 3.01,
-      "rules": ["frame", "pager", "title"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "account-functions",
       "size": "390x844",
       "page": 1,
-      "inner": 2.21,
-      "rules": ["frame", "pager", "title"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "account-functions",
@@ -104,7 +104,7 @@
       "size": "360x640@200%",
       "page": 1,
       "inner": 1,
-      "rules": ["pager", "title"]
+      "rules": ["pager"]
     },
     {
       "screen": "account-measured",
@@ -117,15 +117,15 @@
       "screen": "account-news",
       "size": "360x640",
       "page": 1,
-      "inner": 98.83,
-      "rules": ["frame", "pager", "title"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "account-news",
       "size": "390x844",
       "page": 1,
-      "inner": 73.36,
-      "rules": ["frame", "pager", "title"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "account-news",
@@ -153,7 +153,7 @@
       "size": "360x640@200%",
       "page": 1,
       "inner": 1,
-      "rules": ["pager", "title"]
+      "rules": ["pager"]
     },
     {
       "screen": "account-reminders",
@@ -173,15 +173,15 @@
       "screen": "collection-labels",
       "size": "360x640",
       "page": 1,
-      "inner": 5.61,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-labels",
       "size": "390x844",
       "page": 1,
-      "inner": 4.05,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-labels",
@@ -215,15 +215,15 @@
       "screen": "collection-plant-care",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-care",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-care",
@@ -299,15 +299,15 @@
       "screen": "collection-plant-course",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-course",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-course",
@@ -383,15 +383,15 @@
       "screen": "collection-plant-layer",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-layer",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-layer",
@@ -425,15 +425,15 @@
       "screen": "collection-plant-leaves",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-leaves",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-leaves",
@@ -467,15 +467,15 @@
       "screen": "collection-plant-location",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-location",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-location",
@@ -509,15 +509,15 @@
       "screen": "collection-plant-notes-form",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-notes-form",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-notes-form",
@@ -551,15 +551,15 @@
       "screen": "collection-plant-notes",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-notes",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-notes",
@@ -593,15 +593,15 @@
       "screen": "collection-plant-overview",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-overview",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-overview",
@@ -635,15 +635,15 @@
       "screen": "collection-plant-repot-signs",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-repot-signs",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-repot-signs",
@@ -677,15 +677,15 @@
       "screen": "collection-plant-repot",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-repot",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-repot",
@@ -719,15 +719,15 @@
       "screen": "collection-plants-care-profile",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plants-care-profile",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plants-care-profile",
@@ -887,15 +887,15 @@
       "screen": "collection-view-plants-last-page",
       "size": "360x640",
       "page": 1,
-      "inner": 15.94,
-      "rules": ["frame", "pager", "action"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants-last-page",
       "size": "390x844",
       "page": 1,
-      "inner": 11.5,
-      "rules": ["frame", "pager", "action"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants-last-page",
@@ -1265,15 +1265,15 @@
       "screen": "collection-view-plants-page-2",
       "size": "360x640",
       "page": 1,
-      "inner": 15.94,
-      "rules": ["frame", "pager", "action"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants-page-2",
       "size": "390x844",
       "page": 1,
-      "inner": 11.5,
-      "rules": ["frame", "pager", "action"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants-page-2",
@@ -1307,15 +1307,15 @@
       "screen": "collection-view-plants-sheet-archive",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager", "action"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants-sheet-archive",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager", "action"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants-sheet-archive",
@@ -1349,15 +1349,15 @@
       "screen": "collection-view-plants-sheet-view",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants-sheet-view",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants-sheet-view",
@@ -1391,15 +1391,15 @@
       "screen": "collection-view-plants-sheet-zones",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants-sheet-zones",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants-sheet-zones",
@@ -1433,15 +1433,15 @@
       "screen": "collection-view-plants",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager", "action"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager", "action"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-plants",
@@ -2063,15 +2063,15 @@
       "screen": "collection",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager", "action"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager", "action"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "collection",
@@ -2700,15 +2700,15 @@
       "screen": "plant-menu-more",
       "size": "360x640",
       "page": 1,
-      "inner": 7.92,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "plant-menu-more",
       "size": "390x844",
       "page": 1,
-      "inner": 5.71,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "plant-menu-more",
@@ -2868,15 +2868,15 @@
       "screen": "review-show-approved",
       "size": "360x640",
       "page": 1,
-      "inner": 6.1,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "review-show-approved",
       "size": "390x844",
       "page": 1,
-      "inner": 4.54,
-      "rules": ["frame", "pager"]
+      "inner": 1,
+      "rules": ["pager"]
     },
     {
       "screen": "review-show-approved",

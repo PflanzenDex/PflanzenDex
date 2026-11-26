@@ -955,21 +955,11 @@
     "title": "Geräte-Wünsche"
   },
   {
-    "id": "friends-sheet-friends",
-    "account": "test2",
-    "path": "/friends?sheet=friends",
-    "kind": "list",
-    "state": "one",
-    "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
-    "title": "Meine Freunde"
-  },
-  {
     "id": "friends-error",
     "account": "test2",
-    "path": "/friends?sheet=friends",
+    "path": "/friends",
     "kind": "list",
     "state": "error",
-    "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
     "title": "Freunde",
     "fail": "/friends",
     "expect": {
@@ -989,12 +979,12 @@
   {
     "id": "friend-collection",
     "account": "test2",
-    "path": "/friends?sheet=friends",
+    "path": "/friends",
     "kind": "sheet",
     "state": "many",
     "steps": [
       {
-        "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
+        "css": "main a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
       }
     ],
     "route": "/friends/:friendId",
@@ -1732,12 +1722,12 @@
   {
     "id": "friend-equipment",
     "account": "test2",
-    "path": "/friends?sheet=friends",
+    "path": "/friends",
     "kind": "sheet",
     "state": "many",
     "steps": [
       {
-        "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
+        "css": "main a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
       },
       {
         "role": "button",
@@ -1751,12 +1741,12 @@
   {
     "id": "friend-end",
     "account": "test2",
-    "path": "/friends?sheet=friends",
+    "path": "/friends",
     "kind": "sheet",
     "state": "many",
     "steps": [
       {
-        "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
+        "css": "main a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
       },
       {
         "role": "button",

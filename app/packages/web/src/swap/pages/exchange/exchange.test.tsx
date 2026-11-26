@@ -111,16 +111,16 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     expect(await screen.findByLabelText("Pflanze", { selector: "select" })).toBeTruthy();
   });
 
-  it("US-QS-20 my offers are paged and the other parts open one at a time behind a switch", async () => {
-    // Paging is the tablet and desktop view: three cards a page from 768 px (on a phone two a page).
+  it("US-QS-20 my offers are one scrolling list and the other parts open one at a time behind a switch", async () => {
+    // The list of a page scrolls at every width (US-QS-15, SG-LIST-01): every offer, no pages, also from 768 px.
     setViewportWidth(1024);
     server({
       offers: [1, 2, 3, 4].map((n) => offer({ id: `o${n}`, specimenName: `Pflanze ${n}` })),
     });
     view();
     const list = await screen.findByRole("list", { name: "Meine Angebote" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    expect(within(list).getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
     expect(screen.queryByRole("heading", { name: "Tauschverlauf" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Verlauf" }));
     expect(await screen.findByRole("heading", { name: "Tauschverlauf" })).toBeTruthy();

@@ -1,6 +1,5 @@
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
-import { useInLayer } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import {
   EntryPlaceholders,
   busyWhile,
@@ -34,6 +33,11 @@ export type ScrollEntriesProps<T> = {
   fit?: boolean;
   /** The entries live on the server in parts (FR-BES-23): the next part is asked for when the end shows, see `PagerPaging`. */
   paging?: PagerPaging;
+  /**
+   * The list is a use of `Pager` (its call sites go in issue 2422): it carries the marker `data-pager`, which the gate QG-U8 counts
+   * until then. A list that uses `ScrollEntries` itself, such as the friends of "Freunde", is no `Pager` and carries none.
+   */
+  pagerMark?: boolean;
 };
 
 type Reach = {
@@ -78,12 +82,14 @@ function useWanted(list: React.RefObject<HTMLUListElement | null>, reach: Reach)
 }
 
 /**
- * One scrolling list on a phone (SG-LIST-01, US-QS-15, US-QS-32): every loaded entry stays on the list, with no "Zurück" and
+ * One scrolling list at every width (SG-LIST-01, US-QS-15, US-QS-32): every loaded entry stays on the list, with no "Zurück" and
  * "Weiter" and no "Mehr laden". With server paging the next part is asked for once the end of the list comes near, so the
  * list loads more as the keeper scrolls; without an IntersectionObserver every part is asked for at once. At its end a quiet
  * loader row shows while a part is on its way, a retry row when it failed (P-10), and "Das waren alle n" once every entry
- * is there, the total is known and the list is longer than its box (`ListEnd`, only with `paging`: a list without it
- * renders no row of its own). The address holds no position: an old `?from=n` is stripped once (`useStripOldPositions`).
+ * is there, the count is known (the total of a server list, the entries of a list without `paging`) and the list is longer
+ * than its box (`ListEnd`). A list without `paging` is measured only in a box that is a marked scroll region, and adds the
+ * marker row only when it is longer, so a list that fits has no row of its own and a page that scrolls does not grow by one.
+ * The address holds no position: an old `?from=n` is stripped once (`useStripOldPositions`).
  * A list that fills its frame (`fit`) takes the room the frame leaves and scrolls in its own box, so it is a tab stop for the keyboard (WCAG 2.1.1, axe scrollable-region-focusable).
  * It never gets shorter than one row and a bit (`min-h-24`, in rem, so it follows the text size): where the frame has no
  * room left (200 % text), the frame scrolls instead and the list does not collapse to nothing. Its rows never shrink
@@ -99,8 +105,8 @@ export function ScrollEntries<T>({
   resetKey,
   fit = false,
   paging,
+  pagerMark = false,
 }: ScrollEntriesProps<T>) {
-  const inLayer = useInLayer();
   const paged = paging !== undefined;
   const loaded = items.length;
   const count = knownCount(paging, loaded);
@@ -110,16 +116,16 @@ export function ScrollEntries<T>({
   const missing = usePagingMore(paging, loaded, wanted, count);
   const note = useRetryFocus(paging, missing, list);
   const longer = useScrollOverflow(list, fit, loaded, paged);
-  // Only a server list ends with rows (SG-LIST-01): a list without `paging` renders no row of its own and measures
-  // nothing, so a screen that scrolls without paging stays as it was. The marker needs the total and every entry.
-  const marker =
-    paging?.total !== undefined && longer && loaded > 0 && loaded === count ? count : undefined;
+  // The count is known for a list without `paging` (every entry is loaded) and for a server list with its total (P-08). The
+  // marker needs every entry, and a list that is longer than its box: a list that fits renders no row of its own.
+  const known = paging === undefined || paging.total !== undefined;
+  const marker = known && longer && loaded > 0 && loaded === count ? count : undefined;
 
   const holes = placeholderCount(paging, missing, Math.min(wanted, count) - loaded);
 
   return (
     <div
-      {...(inLayer ? {} : { "data-pager": "" })}
+      {...(pagerMark ? { "data-pager": "" } : {})}
       className={cn("flex flex-col gap-3", fit && "min-h-24 flex-1")}
     >
       <ul
@@ -139,7 +145,9 @@ export function ScrollEntries<T>({
           </li>
         ))}
         <EntryPlaceholders count={holes} from={loaded} paging={paging} />
-        {note ? <ListEnd paging={note} missing={missing} marker={marker} /> : null}
+        {note || marker !== undefined ? (
+          <ListEnd paging={note} missing={missing} marker={marker} />
+        ) : null}
       </ul>
     </div>
   );

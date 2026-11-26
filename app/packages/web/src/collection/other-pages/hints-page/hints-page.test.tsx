@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { HintsPage } from "./hints-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
@@ -129,19 +130,22 @@ describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
     expect(screen.getByText(noZone.text).closest("div")?.className).toContain("bg-warning");
   });
 
-  it("US-QS-18 · issue 1156 in the layer of Heute the hints page by its free height and leave the page of Heute alone", async () => {
-    // Paging is the view from 768 px (US-QS-32); on a phone the list scrolls.
+  it("US-QS-18 · US-QS-15 in the layer of Heute the hints are one scrolling list, with no pages and no position in the address (issue 2418)", async () => {
+    // A sheet, a dialog or a pane never pages: the layer scrolls (SG-LIST-01).
     setViewportWidth(768);
     fakeServer(() => response(200, { hints: [noZone, noSpecies, noLocation, noZone] }));
     render(
       <MemoryRouter initialEntries={["/today?sheet=hints&lfrom=3"]}>
-        <HintsPage api="http://api" token={token} onOpen={noop} host />
+        <LayerScope.Provider value>
+          <HintsPage api="http://api" token={token} onOpen={noop} host />
+        </LayerScope.Provider>
       </MemoryRouter>,
     );
     const list = await screen.findByRole("list", { name: "Fehlende Angaben" });
-    expect(list.hasAttribute("data-page-fit")).toBe(true);
-    // The first entry of the layer is `lfrom`, so the list of "Heute" behind it keeps its own `from`.
-    expect(screen.getByRole("status").textContent).toBe("Seite 2 von 2");
+    expect(list.hasAttribute("data-page-fit")).toBe(false);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
   });
 
   it("US-QS-14 · US-BES-08 without hints the empty state is a level 3 heading with the way to the collection", async () => {

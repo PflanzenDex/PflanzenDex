@@ -128,8 +128,9 @@ function ChoicePanel(props: {
   const { list, rows, chosen, onToggle, format, onFormat, cultivars } = props;
   const ready = chosen.length > 0 && cultivars.status === "ready";
   return (
-    // No min-h-0: at a larger text size the panel grows with its content and scrolls in the frame (issue 1113).
-    <div className="flex min-w-0 flex-1 flex-col gap-4">
+    // min-h-0: the list takes the free height and scrolls in its box, the print button stays below it; at a larger text size
+    // the list keeps its minimum and the frame scrolls (issue 1113).
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
       <p className="text-sm text-muted-foreground">{ui("intro")}</p>
       <div className="flex flex-col gap-1">
         <p className="font-semibold">{ui("format")}</p>

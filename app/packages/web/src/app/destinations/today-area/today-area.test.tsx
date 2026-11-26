@@ -277,11 +277,11 @@ function stubFittedRegion(height: number, row = height): () => void {
 
 /**
  * The "Seite n von m" texts outside the layer: the lists of the screen behind it stay in the document while the layer is
- * open, so a page change in the layer must leave them where they are (issue 2070).
+ * open. They scroll and hold no page (US-QS-15, SG-LIST-01), so a page change in the layer finds none (issue 2070).
  */
 function positionsBehind(layer: HTMLElement): (string | null)[] {
   return screen
-    .getAllByText(/^Seite \d+ von \d+$/)
+    .queryAllByText(/^Seite \d+ von \d+$/)
     .filter((el) => !layer.contains(el))
     .map((el) => el.textContent);
 }
@@ -639,7 +639,8 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(within(layer).queryByText(/Seite \d+ von \d+/)).toBeNull();
   });
 
-  it("US-QS-15 · US-QS-18 · F-0351 ten open treatments are one scroll list in the layer, beside the fitted further tasks of Heute, which keep their page", async () => {
+  it("US-QS-15 · US-QS-18 · F-0351 ten open treatments are one scroll list in the layer, beside the scrolling further tasks of Heute", async () => {
+    // The layer stays a sheet below 1024 px (a pane there has no dialog role).
     setViewportWidth(768);
     const ten = Array.from({ length: 10 }, (_, i) =>
       treatment(`t${i}`, `Pflanze ${i + 1}`, "overdue", `überfällig seit ${i + 1} Tagen`),
@@ -657,14 +658,15 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
       expect(names).toEqual(Array.from({ length: 10 }, (_, i) => `Pflanze ${i + 1}`));
       expect(within(layer).queryByText(/^Seite \d+ von \d+$/)).toBeNull();
       expect(within(layer).queryByRole("button", { name: "Weiter" })).toBeNull();
-      // The further tasks behind the layer keep their page: the lists do not share the address (issue 2070).
-      expect(positionsBehind(layer)).toEqual(["Seite 1 von 4"]);
+      // The further tasks behind the layer scroll and hold no page (issue 2070, US-QS-15).
+      expect(positionsBehind(layer)).toEqual([]);
     } finally {
       restore();
     }
   });
 
-  it("US-QS-15 · US-QS-18 · US-QS-19 · F-0351 ten due plants are one scroll list in the layer Gießen; the further tasks of Heute keep their page", async () => {
+  it("US-QS-15 · US-QS-18 · US-QS-19 · F-0351 ten due plants are one scroll list in the layer Gießen; the further tasks of Heute scroll and hold no page", async () => {
+    // The layer stays a sheet below 1024 px (a pane there has no dialog role).
     setViewportWidth(768);
     fakeServer({ items: [todayItem, ...FURTHER_TASKS], due: TEN_DUE });
     const restore = stubFittedRegion(100);
@@ -678,7 +680,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
       expect(names).toEqual(Array.from({ length: 10 }, (_, i) => `Gieß ${i + 1}`));
       expect(within(layer).queryByText(/^Seite \d+ von \d+$/)).toBeNull();
       expect(within(layer).queryByRole("button", { name: "Weiter" })).toBeNull();
-      expect(positionsBehind(layer)).toEqual(["Seite 1 von 4"]);
+      expect(positionsBehind(layer)).toEqual([]);
     } finally {
       restore();
     }

@@ -13,14 +13,16 @@ import { markAllNewsSeen, NEWS_ENTRIES, appVersion } from "../whats-new";
 
 const t = texts(table);
 
-/**
- * Lines per page (starting values, assumption): two on a phone, three from 1024 px. The lines run long (a median of
- * about 270 characters, one of more than 1500), so a page holds few of them and every row is kept short (see LONG).
- */
+/** The size the `Pager` asks for; the list has no server paging and scrolls, so it only needs a number (starting values). */
 const PAGE_PHONE = 2;
 const PAGE_LG = 3;
-/** A line longer than this shows its start in three lines and the button "Mehr anzeigen" for the rest (P-10). */
-const LONG = 80;
+/**
+ * A line longer than this shows its start in three lines and the button "Mehr anzeigen" for the rest (P-10). The list scrolls
+ * in its own box, so a line needs no clamp to fit a page any more; a clamp is one more stop of the keyboard, and the changelog
+ * holds 390 lines (the walk of the accessibility gate ends before the navigation behind so many stops). Starting value,
+ * assumption: 400 characters, so about one line in ten is clamped.
+ */
+const LONG = 400;
 
 /**
  * One line of the changelog; a long one is clamped to three lines until the keeper asks for all of it. While clamped,
@@ -76,7 +78,7 @@ export function WhatsNewList(props: {
   const navigate = useNavigate();
   const pageSize = useIsLg() ? PAGE_LG : PAGE_PHONE;
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
       <p className="m-0 text-sm text-muted-foreground">
         {t("version", { version: props.version ?? t("version.unknown") })}
       </p>
@@ -90,6 +92,7 @@ export function WhatsNewList(props: {
         <Pager
           items={props.entries}
           pageSize={pageSize}
+          fit
           label={t("list.label")}
           getKey={(_entry, index) => index}
           renderItem={(entry) => (

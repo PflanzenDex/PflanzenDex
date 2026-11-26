@@ -3,6 +3,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { Pager } from "../../pager";
 
 afterEach(() => {
@@ -37,11 +38,16 @@ describe("US-QS-15 · SG-LIST-01 · SG-NAV-02 an old address loses its position 
 
   it("US-QS-15 · SG-LIST-01 every part of a list is stripped, the new and the old name, and the other parts stay", () => {
     setViewportWidth(360);
-    open(
-      "/x?lfrom=2&vfrom=3&blfrom=4&verlauf=2&offen=1&erledigt=1&rpage=2&part=wohnzimmer&sheet=a",
-    );
+    open("/x?lfrom=2&vfrom=3&blfrom=4&verlauf=2&offen=1&erledigt=1&rpage=2&part=wohnzimmer");
     render(<BrowserRouter>{list()}</BrowserRouter>);
-    expect(window.location.search).toBe("?part=wohnzimmer&sheet=a");
+    expect(window.location.search).toBe("?part=wohnzimmer");
+  });
+
+  it("US-QS-15 · SG-LIST-01 with a layer open every position part goes too: a list in a layer holds no position either (issue 2418)", () => {
+    setViewportWidth(1024);
+    open("/x?sheet=plant-e1&tab=pflege&ofrom=2&lfrom=4&from=9&page=2");
+    render(<BrowserRouter>{list()}</BrowserRouter>);
+    expect(window.location.search).toBe("?sheet=plant-e1&tab=pflege");
   });
 
   it("US-QS-15 · SG-LIST-01 the history state stays, so a layer still closes by going back", () => {
@@ -81,10 +87,23 @@ describe("US-QS-15 · SG-LIST-01 · SG-NAV-02 an old address loses its position 
     expect(screen.getByTestId("search").textContent).toBe("?from=5");
   });
 
-  it("US-QS-15 · SG-LIST-01 the paged list from 768 px keeps its address as it is", () => {
+  it("US-QS-15 · SG-LIST-01 a list on a page strips the position at a tablet width as on a phone", () => {
     setViewportWidth(768);
-    open("/x?from=4");
+    open("/x?from=4&y=2");
     render(<BrowserRouter>{list()}</BrowserRouter>);
-    expect(window.location.search).toBe("?from=4");
+    expect(window.location.search).toBe("?y=2");
+    expect(screen.getAllByRole("listitem")).toHaveLength(12);
+  });
+
+  it("US-QS-15 · SG-LIST-01 the list of a layer is one scroll list that strips the position as well (issue 2418)", () => {
+    setViewportWidth(768);
+    open("/x?lfrom=4&y=1");
+    render(
+      <BrowserRouter>
+        <LayerScope.Provider value>{list()}</LayerScope.Provider>
+      </BrowserRouter>,
+    );
+    expect(window.location.search).toBe("?y=1");
+    expect(screen.getAllByRole("listitem")).toHaveLength(12);
   });
 });

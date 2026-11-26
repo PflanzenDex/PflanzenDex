@@ -3,7 +3,6 @@ import type { CollectorCard } from "@pflanzendex/core";
 import type { ReactElement } from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { CollectorCards } from "./collector-cards";
@@ -72,14 +71,14 @@ describe("US-POK-01 collector cards section", () => {
     vi.stubGlobal("fetch", fetchFn);
     view(<CollectorCards api="http://api" token={token} />);
     const list = await screen.findByRole("list", { name: "Sammlerkarten" });
-    // US-QS-22: two cards per page, the rest on the next page (the paged view, from 768 px).
+    // US-QS-22, US-QS-15: every card is on the one scrolling list, with no pages, also from 768 px.
     const items = [...list.querySelectorAll<HTMLElement>("li[data-state]")];
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(3);
     expect(within(items[0] as HTMLElement).getByText("gefangen 05.03.2026")).toBeTruthy();
     expect(within(items[1] as HTMLElement).getByText("noch nicht gefangen")).toBeTruthy();
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByText("Datum unbekannt")).toBeTruthy();
+    expect(within(items[2] as HTMLElement).getByText("Datum unbekannt")).toBeTruthy();
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
     expect(String(fetchFn.mock.calls[0]?.[0])).toMatch(/^http:\/\/api\/pokedex\/cards\?timeZone=/);
   });
 

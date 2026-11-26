@@ -64,9 +64,10 @@ export function CollectionPage(props: Props) {
   const requestFailed = request.status === "error" ? request.error : plants.error;
   const status = pageStatus(request.status, plants.status);
   return (
-    // No min-h-0: the card is never shorter than what it holds, so at a larger text size it grows with its content
-    // and the one-screen frame scrolls (issue 1113); at normal text the list inside takes the free height.
-    <Frame className="flex flex-1 flex-col">
+    // min-h-0 down to the list (US-QS-15, SG-LIST-01): the list takes the free height of the frame and scrolls in its own box,
+    // so the last row ends above the bar. The list keeps `min-h-24` (rem): at a larger text size what does not fit
+    // overflows the frame, which scrolls (issue 1113).
+    <Frame className="flex min-h-0 flex-1 flex-col">
       <RequestState
         status={status}
         {...(requestFailed ? { errorText: requestFailed.text } : {})}

@@ -443,8 +443,8 @@ describe("US-QS-22 the species fit one screen", () => {
     (species) => ({ ...lemon, species, genus: species.split(" ")[0] }),
   );
 
-  it("US-QS-22 the caught species are compact entries in pages", async () => {
-    // Paging is the tablet and desktop view: ten compact entries a page from 1024 px (on a phone one scrolling list).
+  it("US-QS-22 · US-QS-15 the caught species are compact entries on one scrolling list, at a tablet width too, with no pages", async () => {
+    // The list of a page scrolls at every width (SG-LIST-01).
     setViewportWidth(1024);
     const twelve = [
       ...five,
@@ -457,13 +457,9 @@ describe("US-QS-22 the species fit one screen", () => {
     fakeServer(() => response(200, { ownership: { caught: twelve, unidentified: [] } }));
     view(<PokedexPage api="http://api" token={token} />);
     const list = await screen.findByRole("list", { name: "Gefangene Arten" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(10);
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByText("Seite 2 von 2")).toBeTruthy();
-    expect(
-      within(screen.getByRole("list", { name: "Gefangene Arten" })).getAllByRole("listitem"),
-    ).toHaveLength(2);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(12);
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
   });
 
   it("US-QS-22 the progress layer holds the rank, the orders and the way to the collector cards", async () => {

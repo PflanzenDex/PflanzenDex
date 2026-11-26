@@ -1,5 +1,5 @@
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Navigate, useLocation, useSearchParams } from "react-router";
 import { useFeature } from "@/shared/data";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
@@ -17,10 +17,10 @@ import {
   LEGACY_ACCOUNT_ANCHORS,
   SECTIONS,
   isOff,
-  rowId,
   sectionOf,
 } from "./account-model/account-model";
 import { SectionContent, type Locks } from "./account-sections/account-sections";
+import { useReturnFocus } from "./account-model/use-return-focus";
 
 type Token = () => Promise<string | undefined>;
 
@@ -60,7 +60,7 @@ function SectionView(props: Props & { section: AccountSection; byDefault?: boole
   }, [id, info, announcer, byDefault]);
   if (!info) return null;
   return (
-    <div className="flex min-w-0 flex-col gap-2">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       <AreaSection
         anchor={ACCOUNT_SECTIONS[rest.section]}
         title={info.title}
@@ -106,19 +106,6 @@ function indexClass(
   if (layered) return "hidden w-[300px] flex-none";
   if (byDefault) return "w-[300px] flex-none";
   return "hidden w-[300px] flex-none xl:block";
-}
-
-/** Back to the index puts the focus on the row the keeper came from (US-QS-17). */
-function useReturnFocus(chosen: AccountSection | undefined) {
-  const came = useRef<AccountSection | null>(null);
-  useEffect(() => {
-    if (chosen) {
-      came.current = chosen;
-      return;
-    }
-    if (came.current) document.getElementById(rowId(came.current))?.focus();
-    came.current = null;
-  }, [chosen]);
 }
 
 /** The page title: "Konto" is the h1 of the index; beside a section it is a paragraph, shown from 1280 px or 1024 px. */
@@ -172,9 +159,13 @@ export function AccountArea(props: Props) {
   // The section's frame widens from 1024 px: a settings layer inside it needs the room beside its list (US-QS-15, #1027).
   // Konto is a one-screen destination (US-QS-17, DS-61): the frame fits the viewport and `main` scrolls inside itself.
   return (
-    <div data-fit-screen="" className="flex min-w-0 flex-col gap-3 lg:gap-6">
+    <div
+      data-fit-screen=""
+      data-fit-fill=""
+      className="flex min-h-0 min-w-0 flex-col gap-3 lg:gap-6"
+    >
       <KontoTitle open={open} byDefault={byDefault} />
-      <div className="flex min-w-0 gap-8">
+      <div className="flex min-h-0 min-w-0 flex-1 gap-8">
         <div className={indexClass(open, layered, byDefault)}>
           <AccountIndex
             api={props.api}
@@ -190,7 +181,7 @@ export function AccountArea(props: Props) {
           />
         </div>
         {open !== undefined ? (
-          <LayerHost className="min-w-0 flex-1" contentClassName="lg:max-w-none">
+          <LayerHost className="min-h-0 min-w-0 flex-1" contentClassName="lg:max-w-none">
             <SectionView {...props} section={open} byDefault={byDefault} />
           </LayerHost>
         ) : null}

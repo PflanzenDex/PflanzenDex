@@ -179,9 +179,9 @@ export function PlantsScreen(props: Props) {
       <Tiles {...props} items={props.cards} resetKey="all" />
     );
   return (
-    <section aria-labelledby="collection-title" className="flex flex-1 flex-col">
-      {/* No min-h-0: at a larger text size the section grows with its content and scrolls in the frame (issue 1113). */}
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
+    <section aria-labelledby="collection-title" className="flex min-h-0 flex-1 flex-col">
+      {/* min-h-0: the list below the title takes the free height and scrolls in its box; at a larger text size the list keeps its minimum and the frame scrolls (issue 1113). */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
         {props.embedded ? (
           <h2 id="collection-title" className="sr-only">
             Pflanzen

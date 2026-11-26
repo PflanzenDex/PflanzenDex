@@ -217,7 +217,7 @@ describe("US-QS-32 · SG-SHEET-02 a sheet has a visible close control beside its
     expect(grabber?.classList.contains("bg-muted")).toBe(false);
   });
 
-  it("US-QS-32 · SG-LIST-01 what a sheet holds is in a layer, so its lists keep their pages on a phone", async () => {
+  it("US-QS-32 · SG-LIST-01 what a sheet holds is in a layer, so its lists scroll with the layer and never page", async () => {
     function Probe() {
       return <p>{useInLayer() ? "in a layer" : "on a page"}</p>;
     }

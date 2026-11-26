@@ -19,7 +19,7 @@ export function AreaSection(props: {
     <section
       id={props.anchor}
       aria-labelledby={headingId(props.anchor)}
-      className="flex min-w-0 scroll-mt-4 flex-col gap-3"
+      className="flex min-h-0 min-w-0 flex-1 scroll-mt-4 flex-col gap-3"
     >
       {props.heading ?? <SectionLabel id={headingId(props.anchor)}>{props.title}</SectionLabel>}
       <Suspense fallback={props.skeleton}>{props.children}</Suspense>

@@ -115,15 +115,15 @@ describe("US-SOZ-07 a friend's shared collection", () => {
     expect(screen.getByText("Vergleich unbekannt").className).toContain("bg-card");
   });
 
-  it("US-SOZ-07 · US-QS-20 the heading names the friend in the genitive, the cards are paged", async () => {
-    // Paging is the tablet and desktop view: sixteen cards a page from 1024 px (on a phone the cards are one list).
+  it("US-SOZ-07 · US-QS-20 the heading names the friend in the genitive, the cards are one scrolling list", async () => {
+    // The list of a page scrolls at every width (US-QS-15, SG-LIST-01): every card, no pages, also from 1024 px.
     setViewportWidth(1024);
     const many = Array.from({ length: 20 }, (_, n) => card({ speciesLatin: `Art ${n}` }));
     show({ friend: { name: "Clara" }, cards: many });
     expect(await screen.findByRole("heading", { level: 1, name: "Claras Sammlung" })).toBeTruthy();
     const list = await screen.findByRole("list", { name: "Sammlung von Clara" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(16);
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    expect(within(list).getAllByRole("listitem")).toHaveLength(20);
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
     expect(collectionTitle("Lars")).toBe("Lars' Sammlung");
     expect(collectionTitle(null)).toBe("Sammlung eines Freundes");
   });
