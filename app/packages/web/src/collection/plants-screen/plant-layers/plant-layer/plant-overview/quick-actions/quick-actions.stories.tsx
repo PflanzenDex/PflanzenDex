@@ -22,11 +22,9 @@ import { Button } from "@/shared/ui/button/button";
 import { PlantLayer } from "../../plant-layer";
 import { ResultHost } from "../../plant-layer.slot";
 
-// The result of "Gießen" in the plant layer at half height (US-QS-15, owner decision d-130, issue 2536): the line directly
-// below the quick actions says "Gegossen heute · Rückgängig", the focus stays on "Gießen" and the content does not scroll.
-// The slot below is the contract of `monitoring`'s `WaterAction` without its write (that module is wired by the app, not
-// known to `collection`): the same `useUndo`, `UndoRow` with `keepFocus` and `useReturnFocus`. A play measures only where
-// there is layout (the browser run, 360 x 640 px); the jsdom run checks the order of the page and the focus.
+// The result of "Gießen" at half height (US-QS-15, owner decision d-130, issue 2536): the line under the quick actions says
+// "Gegossen heute · Rückgängig", the focus stays on "Gießen", the content does not scroll. The slot is `monitoring`'s `WaterAction`
+// without its write (`collection` does not know that module): the same `useUndo`, `UndoRow` with `keepFocus`, `useReturnFocus`.
 const meta = {
   title: "collection/PlantLayer/QuickActions",
   component: Layer,
@@ -92,6 +90,13 @@ function Water(props: { card: SpecimenCard }) {
   );
 }
 
+let calls = 0; // the handlers of the layer only count a call: it opens no form here, and the token is never asked
+
+async function onlyCount(): Promise<undefined> {
+  calls += 1;
+  return undefined;
+}
+
 /** The plant layer with its opener, inside the frame: the overview of a plant, longer than half the window. */
 function Layer() {
   return (
@@ -100,9 +105,9 @@ function Layer() {
         <LayerOpener id={plantLayerId(CARD.id)}>Aloe ansehen</LayerOpener>
         <PlantLayer
           card={CARD}
-          photoAccess={{ api: "", token: async () => undefined }}
-          onMeasure={() => undefined}
-          onManage={() => undefined}
+          photoAccess={{ api: "", token: onlyCount }}
+          onMeasure={onlyCount}
+          onManage={onlyCount}
           slots={{ water: (card) => <Water card={card} /> }}
         />
       </LayerHost>
@@ -123,9 +128,8 @@ async function still(element: Element): Promise<void> {
   let last = Number.NaN;
   let same = 0;
   await waitUntil(() => {
-    const top = element.getBoundingClientRect().top;
-    same = top === last ? same + 1 : 0;
-    last = top;
+    same = element.getBoundingClientRect().top === last ? same + 1 : 0;
+    last = element.getBoundingClientRect().top;
     return same >= 6;
   }, "the sheet stands still");
 }
@@ -135,6 +139,7 @@ async function still(element: Element): Promise<void> {
 export const ResultBelowRow: Story = {
   render: () => <Layer />,
   play: async ({ canvasElement }) => {
+    calls = 0;
     const layer = await openLayer(canvasElement);
     const sheet = sheetOf();
     const region = must(
@@ -147,8 +152,7 @@ export const ResultBelowRow: Story = {
     );
     const water = button(row, "Gießen: Aloe");
     const measured = sheet !== null && hasLayout(sheet);
-    // At 200 % text the sheet has full height only (title and actions fill half): the play then keeps that height.
-    let height = 0;
+    let height = 0; // at 200 % text the sheet has full height only: the play keeps the height it opens at
     if (sheet && measured) {
       await waitUntil(
         () => ["two", "full"].includes(sheet.getAttribute("data-sheet-height") ?? ""),
@@ -164,7 +168,6 @@ export const ResultBelowRow: Story = {
     const before = measured ? water.getBoundingClientRect().top : 0;
     water.focus();
     water.click();
-    // Under the row, in the part that stays in place, outside the content that scrolls.
     const line = must(row.nextElementSibling, "the line under the row");
     await waitUntil(
       () => line.textContent === "Gegossen heute · Rückgängig",
@@ -187,10 +190,11 @@ export const ResultBelowRow: Story = {
       );
       await waitForHeight(sheet, height, "the sheet keeps its height");
     }
-    // The undo takes the entry back; the focus is still on Gießen, and the line is empty again.
     button(line, "Rückgängig: Aloe").click();
     await waitUntil(() => line.childNodes.length === 0, "the undo takes the result away");
     check(document.activeElement === water, "the focus is on Gießen after the undo");
+    button(row, "Messen: Aloe").click();
+    check(calls === 1, "Messen calls its handler");
     await closeLayer();
   },
 };
