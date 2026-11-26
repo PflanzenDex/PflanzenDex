@@ -182,16 +182,17 @@ describe("US-ONB-07 · US-QS-32 the plant layer places its calm hint", () => {
     expect(asked.at(-1)).toEqual([]);
   });
 
-  it("US-ONB-07 · US-QS-32 the note of first_plant_saved stands directly after Messen, in the primary place of the layer", async () => {
+  it("US-ONB-07 · US-QS-32 the note of first_plant_saved stands directly under the quick actions, which hold Messen", async () => {
     setViewportWidth(360);
     show([card()], {
       onMeasure: vi.fn(),
       slots: { ...SLOTS, hint: hintHost("first_plant_saved") },
     });
     const layer = await open();
-    const measure = within(layer).getByRole("button", { name: "Messen: Aloe" });
+    const row = within(layer).getByRole("group", { name: "Schnellaktionen" });
+    expect(row.contains(within(layer).getByRole("button", { name: "Messen: Aloe" }))).toBe(true);
     const note = within(layer).getByText("NOTE first_plant_saved");
-    expect(measure.nextElementSibling).toBe(note);
+    expect(row.nextElementSibling).toBe(note);
     expect(within(layer).queryByText("NOTE first_measurement")).toBeNull();
   });
 
@@ -220,7 +221,7 @@ describe("US-ONB-07 · US-QS-32 the plant layer places its calm hint", () => {
     const history = within(layer).getByText("Verlauf der Messungen");
     expect(note.compareDocumentPosition(history) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(layer).queryByText("NOTE first_plant_saved")).toBeNull();
-    // Back on the overview the note is gone again, and the filled "Messen" stands there as before.
+    // Back on the overview the note is gone again, and the quick actions with the filled "Messen" stand there as before.
     await userEvent.click(within(layer).getByRole("tab", { name: "Überblick" }));
     expect(within(layer).queryByText("NOTE first_measurement")).toBeNull();
     expect(within(layer).getByRole("button", { name: "Messen: Aloe" })).toBeTruthy();
@@ -250,12 +251,12 @@ describe("US-ONB-07 · US-QS-32 the plant layer places its calm hint", () => {
     expect(within(layer).queryByText("NOTE first_plant_saved")).toBeNull();
   });
 
-  it("US-ONB-07 · US-QS-23 the layer without a hint host shows no note anywhere: Messen stands alone and Verlauf is its history only", async () => {
+  it("US-ONB-07 · US-QS-23 the layer without a hint host shows no note anywhere: nothing follows the quick actions and Verlauf is its history only", async () => {
     setViewportWidth(360);
     show([card()], { onMeasure: vi.fn(), slots: SLOTS });
     const layer = await open();
-    const measure = within(layer).getByRole("button", { name: "Messen: Aloe" });
-    expect(measure.nextElementSibling).toBeNull();
+    const row = within(layer).getByRole("group", { name: "Schnellaktionen" });
+    expect(row.nextElementSibling).toBeNull();
     await userEvent.click(within(layer).getByRole("tab", { name: "Verlauf" }));
     expect(within(layer).getByText("Verlauf der Messungen")).toBeTruthy();
     expect(within(layer).queryByRole("status", { name: "Hinweis" })).toBeNull();

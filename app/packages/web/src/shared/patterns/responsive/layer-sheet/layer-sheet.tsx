@@ -2,15 +2,18 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { useNavigationType } from "react-router";
 import { Button } from "@/shared/ui/button/button";
-import {
-  ResponsiveModal,
-  focusModalTitle,
-} from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
+import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { UnsavedQuestion } from "@/shared/ui/overlays/unsaved-input-dialog/unsaved-question/unsaved-question";
-import { LayerGuardContext, keptOpener, layerOpenerId, restoreFocus, useLayer } from "./use-layer";
+import { LayerGuardContext, layerOpenerId, useLayer } from "./use-layer";
 import { useLayerGuard, type LayerGuard } from "./layer-sheet.guard";
 import { LayerHostContext } from "./layer-host/layer-host";
+import {
+  focusLayerStart,
+  useFocusOnLeave,
+  useFrameWarning,
+  useLeavingBody,
+} from "./layer-sheet.leave";
 import { LayerBody, LayerPane } from "./layer-host/layer-pane/layer-pane";
 
 export { useExitValue, useLayer } from "./use-layer";
@@ -66,61 +69,22 @@ export type LayerSheetProps = {
   title: string;
   /** The one filled primary action of the layer (US-QS-15); everything else is a tinted or plain button, a row or a tile. */
   primaryAction?: React.ReactNode;
+  /**
+   * Actions that stay under the title, above the content, which scrolls under them (US-QS-15, owner decision 2026-11-22,
+   * issue 2424: the quick actions of a plant). The one filled action among them is the layer's primary action; the sheet
+   * counts them with its header for the heights.
+   */
+  topAction?: React.ReactNode;
   /** Accessible name of the close button (German). */
   closeLabel?: string;
+  /**
+   * The layer opens at half height at least below 768 px, also while its content is short (US-QS-15, owner decision 2026-11-22, issue 2424): for
+   * a layer with a list of unknown length, such as the news, so it does not grow from a small sheet to half height while the
+   * list loads. A dialog and a pane are not affected.
+   */
+  halfHeight?: boolean;
   children: React.ReactNode;
 };
-
-/**
- * Focus on open for a sheet or dialog (US-QS-15, issue 1363): on Back the control the layer was opened from takes the
- * focus when it is in the layer; otherwise the title does (`focusModalTitle`).
- */
-function focusLayerStart(event: Event, returning: boolean): void {
-  const back = returning ? keptOpener(event.currentTarget as HTMLElement | null) : null;
-  if (!back) return focusModalTitle(event);
-  event.preventDefault();
-  back.focus();
-}
-
-/**
- * The body of a layer stays while a sheet that closes slides out, so it leaves as it came (US-QS-15, F7). A layer that
- * another one replaces, and a pane at a desktop width, have no exit to keep content for: they leave at once.
- */
-function useLeavingBody(open: boolean, replaced: boolean, isLg: boolean) {
-  const [leaving, setLeaving] = React.useState(false);
-  const [shownOpen, setShownOpen] = React.useState(open);
-  if (open !== shownOpen) {
-    setShownOpen(open);
-    if (!open && !isLg && !replaced) setLeaving(true);
-  }
-  const onExited = React.useCallback(() => setLeaving(false), []);
-  return { showBody: open || (leaving && !replaced), onExited };
-}
-
-/**
- * The focus leaves a layer with its address (US-QS-15, issue 1363, issue 1661): a close restores it, and so does an unmount
- * while the layer is open, because a layer mounted only while its address names it has no close of its own. StrictMode
- * unmounts and mounts each effect back to back, so the unmount restore waits a microtask and only a real unmount restores.
- */
-function useFocusOnLeave(open: boolean): void {
-  const wasOpen = React.useRef(false);
-  const mounted = React.useRef(false);
-  React.useEffect(() => {
-    if (wasOpen.current && !open) restoreFocus();
-    wasOpen.current = open;
-  }, [open]);
-  React.useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-      if (wasOpen.current) {
-        queueMicrotask(() => {
-          if (!mounted.current) restoreFocus();
-        });
-      }
-    };
-  }, []);
-}
 
 /**
  * Layer above an overview (US-QS-15, DS-58): open while the address holds `?sheet=<id>`, so Back closes it and a
@@ -132,7 +96,9 @@ export function LayerSheet({
   id,
   title,
   primaryAction,
+  topAction,
   closeLabel = "Schließen",
+  halfHeight = false,
   children,
 }: LayerSheetProps) {
   const { open, replaced, closeLayer } = useLayer(id);
@@ -148,14 +114,9 @@ export function LayerSheet({
   const returning = useNavigationType() === "POP";
   const { showBody, onExited } = useLeavingBody(shown, replaced, isLg);
   useFocusOnLeave(shown);
-
-  React.useEffect(() => {
-    if (import.meta.env.DEV && open && isLg && !host) {
-      console.warn(
-        `LayerSheet "${id}" renders outside a LayerHost: its pane would stack below the list (US-QS-15).`,
-      );
-    }
-  }, [host, id, isLg, open]);
+  useFrameWarning(id, open && isLg);
+  // What stays in place around the content: the quick actions above it and the primary action below it.
+  const actions = { primaryAction, topAction };
 
   if (isLg) {
     if (!shown) return null;
@@ -163,7 +124,7 @@ export function LayerSheet({
       <LayerPane
         id={id}
         title={title}
-        primaryAction={primaryAction}
+        {...actions}
         closeLabel={closeLabel}
         onClose={guard.requestClose}
         returning={returning}
@@ -187,10 +148,11 @@ export function LayerSheet({
         onOpenAutoFocus={(event) => focusLayerStart(event, returning)}
         onExited={onExited}
         closeRefusals={guard.refusals}
+        halfHeight={halfHeight}
       >
         {/* The modal keeps its children mounted when closed; a closed layer must not load data or hold a pager (US-QS-22),
             so the body renders only while the layer is open or still leaving (US-QS-15, F7). */}
-        {showBody ? <LayerBody primaryAction={primaryAction}>{children}</LayerBody> : null}
+        {showBody ? <LayerBody {...actions}>{children}</LayerBody> : null}
       </ResponsiveModal>
     </LayerGuarded>
   );

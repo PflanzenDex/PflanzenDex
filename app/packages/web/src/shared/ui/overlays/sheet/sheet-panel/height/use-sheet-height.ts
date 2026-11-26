@@ -86,6 +86,8 @@ type Options = {
   closeRefusals: number;
   /** The sheet asks to close: a drag on the handle that ends far below half height. */
   onOpenChange: (open: boolean) => void;
+  /** The sheet opens at half height at least, also with a short content (`SheetKind`, owner decision 2026-11-22, issue 2424). */
+  halfHeight?: boolean | undefined;
 };
 
 /**
@@ -102,7 +104,7 @@ export function useSheetHeight(o: Options) {
   const heights = React.useMemo(() => sheetHeights(visible, safeTop()), [visible]);
   const [header, headerRef] = React.useState<HTMLElement | null>(null);
   const [body, bodyRef] = React.useState<HTMLElement | null>(null);
-  const kind = useSheetKind({ sheet: o.sheet, header, body }, heights, o.open);
+  const kind = useSheetKind({ sheet: o.sheet, header, body }, heights, o.open, o.halfHeight);
   useScrollAccess(body);
   const [mode, setMode] = React.useState<Detent>("half");
   const [dragged, setDragged] = React.useState<number | null>(null);

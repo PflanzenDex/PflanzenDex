@@ -146,7 +146,7 @@ export function FriendsNewsLayer(props: { api: string; token: Token }) {
   const mark = useMarkRead({ api: props.api, token: props.token, reload });
   useMarkReadOnClose(mark, open, banner, offline);
   return (
-    <LayerSheet id={LAYER} title={t("news.title")}>
+    <LayerSheet id={LAYER} title={t("news.title")} halfHeight>
       {hasNews(banner) ? (
         // Every friend is a section of the layer's one scrolling list, "Gelesen" last (SG-LIST-06, US-QS-32).
         <div className="flex min-w-0 flex-col gap-3">

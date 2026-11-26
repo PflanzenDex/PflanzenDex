@@ -129,6 +129,32 @@ describe("US-WAC-01 collection wired with measuring", () => {
     await userEvent.click(screen.getByRole("button", { name: "Zurück zu Bogenhanf" }));
     expect(await screen.findByRole("dialog", { name: "Bogenhanf" })).toBeTruthy();
   });
+
+  it("US-QS-15 · issue 2424 Foto in the plant layer opens the measure view with the photo field open and its picker started; Messen opens it as before", async () => {
+    stubCollection();
+    const click = vi.spyOn(HTMLInputElement.prototype, "click");
+    renderArea();
+    await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ }, { timeout: 5_000 });
+    await userEvent.click(await findCardButton("Foto: Bogenhanf"));
+    expect(await screen.findByRole("heading", { name: "Messen" })).toBeTruthy();
+    const choose = await screen.findByLabelText("Foto wählen");
+    expect((screen.getByText("Mehr Angaben").closest("details") as HTMLDetailsElement).open).toBe(
+      true,
+    );
+    expect(click.mock.contexts.filter((input) => input === choose)).toHaveLength(1);
+    await userEvent.click(screen.getByRole("button", { name: "Zurück zu Bogenhanf" }));
+    expect(await screen.findByRole("dialog", { name: "Bogenhanf" })).toBeTruthy();
+    // Messen asks for no picker: the form opens with its optional fields closed.
+    click.mockClear();
+    await userEvent.click(await findCardButton("Messen: Bogenhanf"));
+    await screen.findByRole("heading", { name: "Messen" });
+    await screen.findByLabelText("Foto wählen");
+    expect((screen.getByText("Mehr Angaben").closest("details") as HTMLDetailsElement).open).toBe(
+      false,
+    );
+    expect(click).not.toHaveBeenCalled();
+    click.mockRestore();
+  });
 }, 15_000);
 
 /** The address of the test render and the navigator of its router, so a test can press Back (US-QS-15). */

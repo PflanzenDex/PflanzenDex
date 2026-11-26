@@ -1,7 +1,7 @@
 import type { Species, Specimen } from "@pflanzendex/core";
 import type { Host } from "../specimens/hooks/use-collection";
 import type { Token } from "../specimens/hooks/use-collection";
-import type { PlantSlots } from "../plants-screen/plant-layers/layer-ids";
+import type { MeasureStart, PlantSlots } from "../plants-screen/plant-layers/layer-ids";
 import type {
   FormAddress,
   FormPlant,
@@ -15,7 +15,7 @@ export type Props = {
   onSpeciesChoose: () => void;
   onAdd?: () => void; // quick flow for a further plant instead of the catalog (US-ONB-01)
   onCompleted: (specimen: Specimen) => void;
-  onMeasure?: (e: { id: string; name: string }) => void;
+  onMeasure?: (e: { id: string; name: string }, start?: MeasureStart) => void;
   /** Set when the destination "Sammlung" shows the page below its title: demoted heading, count line (US-QS-14). */
   host?: Host;
   /** Opens the management of locations and light zones from the layers of the plants (US-QS-19). */

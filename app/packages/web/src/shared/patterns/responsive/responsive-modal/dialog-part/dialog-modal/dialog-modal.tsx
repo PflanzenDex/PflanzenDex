@@ -10,6 +10,8 @@ export type DialogModalProps = {
   onOpenAutoFocus?: (event: Event) => void;
   /** Where the focus goes when the dialog closes; `DialogPart` gives the handler (Radix would focus a trigger that is not rendered here, issue 1247). */
   onCloseAutoFocus?: (event: Event) => void;
+  /** Receives the bar of the dialog, where the form bar of a layer draws its pair (US-QS-32, owner decision d-115). */
+  onBarSlot?: (element: HTMLElement | null) => void;
   children: React.ReactNode;
 };
 
@@ -25,6 +27,7 @@ export function DialogModal({
   closeLabel,
   onOpenAutoFocus,
   onCloseAutoFocus,
+  onBarSlot,
   children,
 }: DialogModalProps) {
   return (
@@ -35,6 +38,7 @@ export function DialogModal({
         {...(closeLabel ? { closeLabel } : {})}
         {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
         {...(onCloseAutoFocus ? { onCloseAutoFocus } : {})}
+        {...(onBarSlot ? { onBarSlot } : {})}
       >
         {children}
       </DialogContent>

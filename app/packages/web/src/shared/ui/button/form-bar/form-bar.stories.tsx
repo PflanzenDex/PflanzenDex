@@ -3,7 +3,8 @@ import { FormBar } from "./form-bar";
 
 // Catalog of the form bar (US-QS-32, SG-SHEET-04): "Abbrechen" at the leading edge, the confirming action at the trailing
 // edge. Without a container it is a plain row after the fields; a page form's `FormBarRegion` sticks it at the top below md, and
-// inside a sheet, dialog or pane the container draws it (see `ResponsiveModal`).
+// inside a sheet, a dialog or a pane the container draws it into its own bar outside the scroll region (see `ResponsiveModal`,
+// `PinnedBar`; owner decision d-115).
 const meta = {
   title: "ui/FormBar",
   component: FormBar,

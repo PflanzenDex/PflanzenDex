@@ -38,7 +38,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
     await form.getByLabel("Name").fill("Balkon");
     await form.getByLabel("Lichtzone").selectOption({ label: "Zone 3" });
     await form.getByLabel("Innen oder außen").selectOption("outdoor");
-    await form.getByRole("button", { name: "Standort anlegen" }).click();
+    await page.locator("[data-form-bar]").getByText("Standort anlegen").click();
 
     await expect(listRow(page, "Balkon")).toBeVisible();
     await expect(page.getByText("Zone 3 · außen")).toBeVisible();
@@ -59,7 +59,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
     await addLocation(page);
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await form.getByLabel("Name").fill("Regal");
-    await form.getByRole("button", { name: "Standort anlegen" }).click();
+    await page.locator("[data-form-bar]").getByText("Standort anlegen").click();
     // The result is only announced, no toast lies over "Hinweise (1)" (SG-FEED-01, issue 1836).
     await expectAnnounced(page, "Standort angelegt");
     await page.getByRole("button", { name: "Hinweise (1)" }).click();
@@ -73,7 +73,7 @@ test.describe("US-LIC-05 locations and light zones", () => {
     const form = page.getByRole("form", { name: "Lichtzone anlegen" });
     await form.getByLabel("Name").fill("Fensterbank");
     await form.getByLabel("Lux-Obergrenze").fill("8000");
-    await form.getByRole("button", { name: "Lichtzone anlegen" }).click();
+    await page.locator("[data-form-bar]").getByText("Lichtzone anlegen").click();
     await expect(listRow(page, "Fensterbank")).toBeVisible();
     await expect(page.getByText("bis 8.000 Lux")).toBeVisible();
   });

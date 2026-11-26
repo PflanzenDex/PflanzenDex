@@ -719,6 +719,19 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(await screen.findByRole("dialog", { name: "Anfragen" })).toBeTruthy();
   });
 
+  it("US-QS-15 · US-QS-20 · issue 2418 the layer 'Neu bei Freunden' opens at half height below 768 px, as a sheet with two heights, and the other layers keep the height of their content", async () => {
+    setViewportWidth(360);
+    fakeServer({ friends: [friend(1)] });
+    show("news");
+    const news = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    expect(news.getAttribute("data-sheet-height")).toBe("two");
+    expect(await within(news).findByRole("button", { name: "Vollbild" })).toBeTruthy();
+    cleanup();
+    show("help");
+    const help = await screen.findByRole("dialog", { name: "Freunde und Freigaben" });
+    expect(help.getAttribute("data-sheet-height")).toBe("fit");
+  });
+
   it("US-QS-20 the layer 'Freund hinzufügen' has the two tabs 'Einladen' and 'Code eingeben'", async () => {
     fakeServer();
     show("add");

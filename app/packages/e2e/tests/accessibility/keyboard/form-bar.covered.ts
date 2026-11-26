@@ -3,7 +3,8 @@ import { expect } from "../../../support/fixtures";
 import { barOf, expectBarUsable } from "./form-bar.checks";
 
 // "No fixed or sticky part lies on a control of the form" (US-QS-32, SG-SHEET-04, issue 1941), for form-bar.spec.ts: below 768 px
-// the sticky bar of a page form, from 768 px (owner decision d-060) the plain row after the last field, which floats over nothing.
+// the sticky bar of a page form, from 768 px the bar pinned under the scroll region of a dialog and a pane (owner decision d-115)
+// and the plain row after the last field of a page form (owner decision d-060), none of which floats over a control.
 
 /**
  * Every control of the form, one after the other: scrolled into the middle of its scroll area, the browser must hit the
@@ -72,7 +73,7 @@ export async function expectNoControlCovered(page: Page, what: string): Promise<
 }
 
 /**
- * From md the pair is the form's one plain row after its last field (owner decision d-060, US-QS-32): there is one pair in the
+ * From md the pair of a page form is the form's one plain row after its last field (owner decision d-060, US-QS-32): there is one pair in the
  * page, it is reached by scrolling to it and then usable (`expectBarUsable`), it follows the last visible field in the DOM and
  * lies below it in the picture, and nothing from the bar up to the form is sticky or fixed.
  */
@@ -103,4 +104,50 @@ export async function expectBarAfterFields(page: Page, what: string): Promise<vo
   expect(placed.afterInDom, `${what}: the pair follows the last field in the DOM`).toBe(true);
   expect(placed.below, `${what}: the pair lies below the last field`).toBe(true);
   expect(placed.floating, `${what}: the pair is neither sticky nor fixed`).toBe(false);
+}
+
+/**
+ * From md the pair of a dialog and of a pane is the bar of the layer, pinned under its scroll region (owner decision d-115,
+ * US-QS-32): one pair is in the page, in `[data-layer-bar]` and outside the scroll region, below it in the picture, inside the
+ * window (in a window of 30 rem of height and more, without scrolling) and usable; and it holds its place when the region
+ * scrolls to its end, so the confirming action is always in view.
+ */
+export async function expectBarPinned(page: Page, what: string): Promise<void> {
+  await expect(page.locator("[data-form-bar]"), `${what}: one pair is in the page`).toHaveCount(1);
+  // The frame holds the layer in a window of 30 rem of height and more; below that (200 % text at 768 px) the page scrolls as
+  // WCAG 1.4.10 allows, and the pair is reached by scrolling the page, not the layer.
+  const tall = await page.evaluate(
+    () => innerHeight >= 30 * parseFloat(getComputedStyle(document.documentElement).fontSize),
+  );
+  if (!tall) await barOf(page).bar.scrollIntoViewIfNeeded();
+  await expectBarUsable(page, what);
+  const box = () =>
+    barOf(page).bar.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return { top: Math.round(r.top), bottom: Math.round(r.bottom) };
+    });
+  const before = await box();
+  const placed = await barOf(page).bar.evaluate((el) => {
+    const layer = el.closest("[role='dialog'], [data-layer-pane]");
+    const region = layer?.querySelector("[data-scroll-region]") ?? null;
+    return {
+      inSlot: el.closest("[data-layer-bar]") !== null,
+      outsideRegion: region !== null && !region.contains(el),
+      belowRegion:
+        region !== null &&
+        el.getBoundingClientRect().top >= region.getBoundingClientRect().bottom - 1,
+    };
+  });
+  expect(placed.inSlot, `${what}: the pair is in the bar of the layer`).toBe(true);
+  expect(placed.outsideRegion, `${what}: the pair is no part of the scroll region`).toBe(true);
+  expect(placed.belowRegion, `${what}: the pair lies below the scroll region`).toBe(true);
+  // The region scrolls to its end: the bar stays where it is and stays usable.
+  await page
+    .locator("[role='dialog'] [data-scroll-region], [data-layer-pane] [data-scroll-region]")
+    .first()
+    .evaluate((region) => {
+      region.scrollTop = region.scrollHeight;
+    });
+  expect(await box(), `${what}: the bar holds its place while the content scrolls`).toEqual(before);
+  await expectBarUsable(page, `${what}, scrolled`);
 }

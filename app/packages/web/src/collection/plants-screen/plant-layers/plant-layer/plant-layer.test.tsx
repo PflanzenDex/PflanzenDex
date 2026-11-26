@@ -236,13 +236,16 @@ describe("US-QS-23 Überblick", () => {
     expect(within(layer).getByText(/kein Erfolgssignal/)).toBeTruthy();
   });
 
-  it("US-QS-23 only Messen is filled, Gießen and Behandeln are outline buttons", async () => {
+  it("US-QS-23 · issue 2424 only Messen is filled, Foto is tinted and Gießen and Behandeln are not filled", async () => {
     setViewportWidth(360);
     const onMeasure = vi.fn();
     show([card()], { onMeasure });
     const layer = await open();
     const measure = within(layer).getByRole("button", { name: "Messen: Aloe" });
     expect(measure.className).toContain("bg-primary");
+    expect(within(layer).getByRole("button", { name: "Foto: Aloe" }).className).toContain(
+      "bg-accent",
+    );
     for (const name of ["Gießen", "Behandeln: Aloe"]) {
       expect(within(layer).getByRole("button", { name }).className).not.toContain("bg-primary");
     }
@@ -253,6 +256,80 @@ describe("US-QS-23 Überblick", () => {
     ).toHaveLength(1);
     await userEvent.click(measure);
     expect(onMeasure).toHaveBeenCalledOnce();
+    expect(onMeasure.mock.calls[0]?.[1]).toBeUndefined();
+  });
+
+  it("US-QS-23 · US-QS-15 · issue 2424 the quick actions stand under the title, before the chips and the tabs, and the layer has no primary action of its own", async () => {
+    setViewportWidth(360);
+    show([card()], { onMeasure: vi.fn() });
+    const layer = await open();
+    const row = within(layer).getByRole("group", { name: "Schnellaktionen" });
+    const chips = within(layer).getByRole("list", { name: "Auf einen Blick" });
+    const tabs = within(layer).getByRole("tablist");
+    const follows = (a: Element, b: Element) =>
+      (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    expect(follows(within(layer).getByRole("heading", { name: "Aloe" }), row)).toBe(true);
+    expect(follows(row, chips)).toBe(true);
+    expect(follows(row, tabs)).toBe(true);
+    expect(
+      within(row)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["Messen", "Gießen", "Foto"]);
+    // The primary slot "Messen" and the body button "Gießen" are replaced by the row (owner decision 2026-11-22, issue 2424): it
+    // stays above the content, which scrolls under it, so the filled action never scrolls away (US-QS-15), and nothing is pinned below.
+    expect(row.closest("[data-sheet-pinned]")).not.toBeNull();
+    const region = layer.querySelector("[data-layer-body] > [data-scroll-region]") as HTMLElement;
+    expect(region.contains(row)).toBe(false);
+    expect(region.contains(chips)).toBe(true);
+    expect(follows(row, region)).toBe(true);
+    expect(layer.querySelectorAll("[data-sheet-pinned]")).toHaveLength(1);
+    expect(within(layer).getAllByRole("button", { name: "Gießen" })).toHaveLength(1);
+  });
+
+  it("US-QS-23 · issue 2424 the quick actions show on the overview only, on every width", async () => {
+    for (const width of [360, 768, 1280]) {
+      setViewportWidth(width);
+      const view = show([card()], { onMeasure: vi.fn() });
+      await userEvent.click(await screen.findByRole("button", { name: /^Aloe(\s|$)/ }));
+      // A sheet and a dialog are dialogs; from 1024 px the layer is the pane beside the list.
+      const layer = await screen.findByRole(width >= 1024 ? "complementary" : "dialog", {
+        name: "Aloe",
+      });
+      expect(within(layer).getByRole("group", { name: "Schnellaktionen" })).toBeTruthy();
+      for (const tab of ["Verlauf", "Pflege", "Standort"]) {
+        await userEvent.click(within(layer).getByRole("tab", { name: tab }));
+        expect(within(layer).queryByRole("group", { name: "Schnellaktionen" }), tab).toBeNull();
+        expect(within(layer).queryByRole("button", { name: "Foto: Aloe" }), tab).toBeNull();
+      }
+      await userEvent.click(within(layer).getByRole("tab", { name: "Überblick" }));
+      expect(within(layer).getByRole("group", { name: "Schnellaktionen" })).toBeTruthy();
+      view.unmount();
+    }
+  });
+
+  it("US-QS-15 · issue 2424 Foto asks for the measure form with the photo picker started; Messen asks for the plain form", async () => {
+    setViewportWidth(360);
+    const onMeasure = vi.fn();
+    show([card()], { onMeasure });
+    const layer = await open();
+    await userEvent.click(within(layer).getByRole("button", { name: "Foto: Aloe" }));
+    expect(onMeasure).toHaveBeenCalledOnce();
+    expect(onMeasure).toHaveBeenCalledWith(expect.objectContaining({ id: "e1" }), {
+      photo: true,
+    });
+  });
+
+  it("US-QS-23 · issue 2424 a layer that cannot measure has Gießen alone in the quick actions: no Messen, no Foto", async () => {
+    setViewportWidth(360);
+    show([card()]);
+    const layer = await open();
+    const row = within(layer).getByRole("group", { name: "Schnellaktionen" });
+    expect(
+      within(row)
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["Gießen"]);
   });
 
   it("US-QS-23 Behandeln leads to the tab Pflege", async () => {
@@ -505,20 +582,24 @@ describe("US-QS-14 issue 1784 · the plant layer slot shows the shape of its par
 });
 
 describe("US-QS-32 the action row of a plant has all its buttons from the first frame (SG-STATE-02, F-0082, issue 1889)", () => {
-  it("US-QS-32 · SG-STATE-02 while 'Gießen' loads, its disabled button stands in its place before 'Behandeln'", async () => {
+  it("US-QS-32 · SG-STATE-02 · issue 2424 while 'Gießen' loads, its disabled button stands in its place between 'Messen' and 'Foto'", async () => {
     setViewportWidth(360);
     const never = new Promise<never>(() => undefined);
     function Pending(): ReactNode {
       // A part that suspends for good, as a chunk on its way.
       throw never;
     }
-    show([card()], { slots: { ...SLOTS, water: () => <Pending /> } });
+    show([card()], { onMeasure: vi.fn(), slots: { ...SLOTS, water: () => <Pending /> } });
     const layer = await open();
     const water = within(layer).getByRole("button", { name: "Gießen" });
     expect((water as HTMLButtonElement).disabled).toBe(true);
     expect(water.getAttribute("aria-busy")).toBe("true");
-    const treat = within(layer).getByRole("button", { name: /Behandeln/ });
-    expect(water.nextElementSibling).toBe(treat);
+    expect(water.previousElementSibling).toBe(
+      within(layer).getByRole("button", { name: "Messen: Aloe" }),
+    );
+    expect(water.nextElementSibling).toBe(
+      within(layer).getByRole("button", { name: "Foto: Aloe" }),
+    );
   });
 });
 

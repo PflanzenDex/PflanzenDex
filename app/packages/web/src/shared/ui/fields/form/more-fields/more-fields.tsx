@@ -12,6 +12,8 @@ import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summ
 type MoreFieldsProps = {
   /** Open while true: a field inside holds a value or a refusal (P-10). */
   forced?: boolean;
+  /** Open at the start, closed again by a click: a form that opens on a field of the group, e.g. the photo (US-QS-15). */
+  defaultOpen?: boolean;
   /** The summary; "Mehr Angaben" for every optional group of a form (US-QS-24). */
   label?: string;
   className?: string | undefined;
@@ -25,11 +27,12 @@ type MoreFieldsProps = {
  */
 export function MoreFields({
   forced = false,
+  defaultOpen = false,
   label = "Mehr Angaben",
   className,
   children,
 }: MoreFieldsProps) {
-  const [manual, setManual] = React.useState(false);
+  const [manual, setManual] = React.useState(defaultOpen);
   const box = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     if (forced) box.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();

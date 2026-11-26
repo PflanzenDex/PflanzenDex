@@ -3,21 +3,30 @@ import { Button } from "@/shared/ui/button/button";
 import { leadingTextField } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { useScrollAccess } from "@/shared/ui/overlays/dialog/scroll-access";
-import { FormBarHostContext, rowHost } from "@/shared/ui/button/form-bar/form-bar.host";
+import { FormBarHostContext, usePinnedBarHost } from "@/shared/ui/button/form-bar/form-bar.host";
+import { PinnedBar } from "@/shared/ui/button/form-bar/form-bar.slot";
 import { keptOpener } from "../../use-layer";
 
 /** The body of a layer, shared by the pane and by the sheet or dialog around it (US-QS-15). */
 export function LayerBody({
   children,
   primaryAction,
+  topAction,
 }: {
   children: React.ReactNode;
   primaryAction?: React.ReactNode;
+  topAction?: React.ReactNode;
 }) {
   const [region, setRegion] = React.useState<HTMLElement | null>(null);
   useScrollAccess(region);
   return (
     <div data-layer-body="" className="flex min-h-0 flex-1 flex-col gap-4">
+      {/* The quick actions of a layer stay under its title, above the scroll region, so the filled one never scrolls away (US-QS-15). The sheet counts them with its header for the heights, as the primary action below. */}
+      {topAction ? (
+        <div data-sheet-pinned="" className="flex flex-col gap-2">
+          {topAction}
+        </div>
+      ) : null}
       {/* The content of the layer is the scroll region of the sheet, the dialog and the pane: the title and the primary action stay (US-QS-15). */}
       {/* A word wider than the layer breaks at a syllable with a hyphen, as in the rows of a list (DS-63): a long name of a plant no longer widens the layer at 200 % text. */}
       {/* The margin and the padding are the 1 rem that the sheet, the dialog and the pane keep around the content: the region reaches to their edge, so the focus ring of a control at its edge is not clipped and a content that is a little too wide spills into the padding, as it did before the region scrolled. */}
@@ -43,6 +52,7 @@ type LayerPaneProps = {
   id: string;
   title: string;
   primaryAction?: React.ReactNode | undefined;
+  topAction?: React.ReactNode | undefined;
   closeLabel?: string;
   onClose: () => void;
   /** Whether the pane mounts on Back (a POP); read once, when it mounts. */
@@ -59,6 +69,7 @@ export function LayerPane({
   id,
   title,
   primaryAction,
+  topAction,
   closeLabel = "Schließen",
   onClose,
   returning,
@@ -66,8 +77,8 @@ export function LayerPane({
 }: LayerPaneProps) {
   const heading = React.useRef<HTMLHeadingElement>(null);
   const pane = React.useRef<HTMLElement>(null);
-  // The actions of a form in the pane are a plain row after its last field; "Abbrechen" closes through the guard (US-QS-32, d-060).
-  const barHost = React.useMemo(() => rowHost(onClose), [onClose]);
+  // The actions of a form in the pane stand in its bar, pinned under the body; "Abbrechen" closes through the guard (US-QS-32, d-115).
+  const { host: barHost, setSlot } = usePinnedBarHost(onClose);
   const onBack = React.useRef(returning);
   React.useEffect(() => {
     // The pane's own close button comes first, so the text field is looked for in the layer's body.
@@ -83,24 +94,34 @@ export function LayerPane({
       onKeyDown={(event) => {
         if (event.key === "Escape") onClose();
       }}
-      className="flex max-h-[calc(100dvh-3rem)] w-96 shrink-0 flex-col gap-4 rounded-lg border border-border bg-card p-4 text-card-foreground"
+      // The pane takes the height that is left in its column (`min-h-0` and `shrink`: a column that a frame of a given height
+      // stretches holds it), so a pane that starts below a title never pushes the frame past the window; the cap of the window
+      // height only bounds a pane in a frame whose height is not given (US-QS-15, DS-61).
+      className="flex max-h-[calc(100dvh-3rem)] min-h-0 w-96 shrink flex-col gap-4 rounded-lg border border-border bg-card p-4 text-card-foreground"
     >
-      <div className="flex items-start justify-between gap-2">
-        <h2
-          id={`layer-${id}`}
-          ref={heading}
-          tabIndex={-1}
-          className="text-lg font-semibold focus-visible:outline-none"
-        >
-          {title}
-        </h2>
-        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-          {closeLabel}
-        </Button>
-      </div>
-      <FormBarHostContext.Provider value={barHost}>
-        <LayerBody primaryAction={primaryAction}>{children}</LayerBody>
-      </FormBarHostContext.Provider>
+      {/* One scope for the whole pane, as the sheet and the dialog give it: the title row and the primary action are in it too (SG-LIST-01). */}
+      <LayerScope.Provider value>
+        <div className="flex items-start justify-between gap-2">
+          <h2
+            id={`layer-${id}`}
+            ref={heading}
+            tabIndex={-1}
+            className="text-lg font-semibold focus-visible:outline-none"
+          >
+            {title}
+          </h2>
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+            {closeLabel}
+          </Button>
+        </div>
+        <FormBarHostContext.Provider value={barHost}>
+          <LayerBody primaryAction={primaryAction} topAction={topAction}>
+            {children}
+          </LayerBody>
+        </FormBarHostContext.Provider>
+        {/* The bar of a form: pinned under the body, outside its scroll region (US-QS-32, owner decision d-115). */}
+        <PinnedBar slotRef={setSlot} />
+      </LayerScope.Provider>
     </aside>
   );
 }

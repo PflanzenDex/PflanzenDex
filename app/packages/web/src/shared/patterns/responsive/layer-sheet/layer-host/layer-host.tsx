@@ -1,8 +1,14 @@
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
 
-/** The pane column of a `LayerHost`: hidden while empty, so it adds no gap (US-QS-15, US-QS-18). */
-const PANE_SLOT = "hidden lg:flex lg:shrink-0 lg:flex-col lg:self-start lg:empty:hidden";
+/**
+ * The pane column of a `LayerHost`: hidden while empty, so it adds no gap (US-QS-15, US-QS-18). It stretches with the frame
+ * and may be lower than its pane (`min-h-0`): in a frame of a given height the pane takes the height that is left and scrolls
+ * inside, wherever the frame starts (a title above it, the top bar), and in a frame that grows with its content the pane is as
+ * tall as itself, up to its cap.
+ */
+const PANE_SLOT =
+  "hidden lg:flex lg:min-h-0 lg:shrink-0 lg:flex-col lg:self-stretch lg:empty:hidden";
 
 /**
  * The content column: at most 720 px and centred, so the pane beside it takes the rest (US-QS-18, issue 1027). It takes

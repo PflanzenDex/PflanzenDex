@@ -18,6 +18,7 @@ import { DifficultyPage } from "../../../collection/other-pages/difficulty-page/
 import { HintCard } from "../../../collection/other-pages/hints-page/hint-card/hint-card";
 import { PlantLocation } from "../../../collection/plants-screen/plant-layers/plant-layer/plant-location/plant-location";
 import { PlantOverview } from "../../../collection/plants-screen/plant-layers/plant-layer/plant-overview/plant-overview";
+import { QuickActions } from "../../../collection/plants-screen/plant-layers/plant-layer/plant-overview/quick-actions/quick-actions";
 import { PlantsScreen } from "../../../collection/plants-screen/plants-screen";
 import { ViewLayer } from "../../../collection/plants-screen/plant-layers/view-layer/view-layer";
 import { pagesOf, summaryOf } from "../../../collection/specimens/tests/plants-test-helpers";
@@ -161,25 +162,39 @@ describe("US-QS-32 · SG-BTN-01 the hint card: the way to the fix is a tinted ac
 });
 
 describe("US-QS-32 · SG-BTN-01 the plant layer: one tinted action, plain openers, one filled action", () => {
-  it("US-QS-32 on the overview 'Behandeln' and 'Notizen' are plain and nothing but the layer's 'Messen' is filled", () => {
+  it("US-QS-32 on the overview 'Behandeln' and 'Notizen' are plain and no button of the overview is filled", () => {
     inRouter(
       <LayerHost>
         <PlantOverview
           card={card}
           access={{ api: "http://api", token: async () => "tok" }}
-          water={
-            <Button type="button" variant="tinted">
-              Gießen
-            </Button>
-          }
           onTreat={vi.fn()}
         />
       </LayerHost>,
     );
-    expect(isTinted(button("Gießen"))).toBe(true);
     expect(isPlain(button("Behandeln: Aloe"))).toBe(true);
     expect(isPlain(button(/Notizen/))).toBe(true);
     expect(filledIn(document.body)).toHaveLength(0);
+  });
+
+  it("US-QS-32 · issue 2424 in the quick actions 'Messen' is the one filled button, 'Gießen' and 'Foto' are tinted", () => {
+    inRouter(
+      <QuickActions
+        card={card}
+        onMeasure={vi.fn()}
+        onPhoto={vi.fn()}
+        water={
+          <Button type="button" variant="tinted">
+            Gießen
+          </Button>
+        }
+      />,
+    );
+    expect(isTinted(button("Gießen"))).toBe(true);
+    expect(isTinted(button("Foto: Aloe"))).toBe(true);
+    expect(filledIn(document.body).map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Messen: Aloe",
+    ]);
   });
 
   it("US-QS-32 on 'Standort' 'Lichtzone ändern' is tinted and the write 'Standort setzen' is the one filled button", () => {

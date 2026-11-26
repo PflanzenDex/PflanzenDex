@@ -5,7 +5,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sh
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { returnFocusOnClose } from "@/shared/platform/routing/route-focus/view-start";
 import { FormBarHostContext, useModalBarHost } from "@/shared/ui/button/form-bar/form-bar.host";
-import { DialogPart, preloadDialog } from "./dialog-part/dialog-part";
+import { DialogPart } from "./dialog-part/dialog-part";
+import { useOpenState, usePreloadDialog } from "./responsive-modal.state";
 
 const TEXT_FIELD =
   "input:not([type='hidden']):not([disabled]), select:not([disabled]), textarea:not([disabled])";
@@ -54,6 +55,8 @@ export type ResponsiveModalProps = {
   onExited?: () => void;
   /** How often the parent refused a close (US-QS-32): a sheet snaps back to its place at each one; a dialog does not move. */
   closeRefusals?: number;
+  /** A sheet opens at half height at least, also with a short content (US-QS-15, owner decision 2026-11-22, issue 2424); a dialog is not affected. */
+  halfHeight?: boolean;
   /**
    * The element the focus returns to when the modal closes, for a controlled modal without a trigger (US-QS-08). When it
    * has left the page, the focus goes to the start of the view (`returnFocus`). Omit it to keep the default of each container.
@@ -93,31 +96,6 @@ function useHost(open: boolean, onExited: (() => void) | undefined) {
   return { host, body: <div ref={slot} className="contents" /> };
 }
 
-/** Loads the dialog code while the browser is idle, from `md` up (DS-08, NFR-12). */
-function usePreloadDialog(isMd: boolean) {
-  React.useEffect(() => {
-    if (!isMd) return;
-    const id = window.setTimeout(preloadDialog, 1500);
-    return () => window.clearTimeout(id);
-  }, [isMd]);
-}
-
-/** The open state: given by `open`, or kept here; `opened` stays true once the modal has been open (its code stays mounted). */
-function useOpenState(
-  openProp: boolean | undefined,
-  onOpenChange: ((open: boolean) => void) | undefined,
-) {
-  const [inner, setInner] = React.useState(false);
-  const open = openProp ?? inner;
-  const setOpen = (next: boolean) => {
-    setInner(next);
-    onOpenChange?.(next);
-  };
-  const [opened, setOpened] = React.useState(open);
-  if (open && !opened) setOpened(true);
-  return { open, setOpen, opened };
-}
-
 type Hosted = { host: HTMLElement; barHost: React.ContextType<typeof FormBarHostContext> };
 
 /** The children go through a portal, so the sheet and the dialog provide nothing to them: the form bar host (US-QS-32) and the layer scope (SG-LIST-01) come from here. */
@@ -145,6 +123,7 @@ export function ResponsiveModal({
   onOpenAutoFocus,
   onExited,
   closeRefusals,
+  halfHeight,
   returnFocusTo,
   children,
 }: ResponsiveModalProps) {
@@ -152,12 +131,10 @@ export function ResponsiveModal({
   const { open, setOpen, opened } = useOpenState(openProp, onOpenChange);
   usePreloadDialog(isMd);
   const { host, body } = useHost(open, onExited);
-  // What the forms inside learn about the bar: the sheet's slot below `md`, a plain row of the dialog from `md` (US-QS-32).
+  // What the forms inside learn about the bar: the sheet's slot below `md`, the bar pinned at the bottom of the dialog from `md` (US-QS-32, d-115).
   const { barHost, sheetBar } = useModalBarHost(isMd, () => setOpen(false));
-  const copy = description ? { description } : {};
   // A sheet returns the focus to the element given, as the dialog does (US-QS-08); Vaul would use what had the focus at open.
   const sheetCloseFocus = returnFocusOnClose(returnFocusTo);
-
   return (
     <>
       {isMd ? (
@@ -171,6 +148,7 @@ export function ResponsiveModal({
           onOpenChange={setOpen}
           onOpenAutoFocus={onOpenAutoFocus}
           returnFocusTo={returnFocusTo}
+          onBarSlot={sheetBar.setSlot}
           body={body}
         />
       ) : (
@@ -178,11 +156,12 @@ export function ResponsiveModal({
           {trigger ? <SheetTrigger asChild>{trigger}</SheetTrigger> : null}
           <SheetContent
             title={title}
-            {...copy}
+            {...(description ? { description } : {})}
             {...(closeLabel !== undefined ? { closeLabel } : {})}
             {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
             {...(sheetCloseFocus ? { onCloseAutoFocus: sheetCloseFocus } : {})}
             {...(closeRefusals !== undefined ? { closeRefusals } : {})}
+            {...(halfHeight ? { halfHeight } : {})}
             onBarSlot={sheetBar.setSlot}
             barActive={sheetBar.active}
           >

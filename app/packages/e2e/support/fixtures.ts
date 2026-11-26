@@ -98,7 +98,7 @@ export async function createLocation(page: Page, name: string): Promise<void> {
   await addLocation(page);
   const form = page.getByRole("form", { name: "Standort anlegen" });
   await form.getByLabel("Name").fill(name);
-  await form.getByRole("button", { name: "Standort anlegen" }).click();
+  await page.locator("[data-form-bar]").getByText("Standort anlegen").click();
   await expect(listRow(page, name)).toBeVisible();
 }
 

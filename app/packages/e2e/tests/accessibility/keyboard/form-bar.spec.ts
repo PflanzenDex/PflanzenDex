@@ -21,14 +21,15 @@ import {
   setLook,
   textSizeBeforeLoad,
 } from "./form-bar.checks";
-import { expectBarAfterFields, expectNoControlCovered } from "./form-bar.covered";
+import { expectBarAfterFields, expectBarPinned, expectNoControlCovered } from "./form-bar.covered";
 
 // US-QS-32 (issue 1861, FX-36 step 2): the actions of a form or a sheet sit in its bar (SG-SHEET-04): "Abbrechen" at the
 // leading edge, the confirming action at the trailing edge, and no sticky footer covers a control of the form (issues 1941,
 // 1895). On the phones of the design review (393, 424 and 430 px), at 100 % and 200 % text, in light and dark, the forms
 // "Messen", "Neues Gerät", "Pflegeprofil" and the settings sheet "Profil" show the bar's action, nothing fixed or sticky lies
-// on a control, and with the keyboard's height taken from the window the action and the focused field stay apart. From 768 px
-// (owner decision d-060) the pair is a plain row after the last field, in the dialog, the pane and the page "Messen".
+// on a control, and with the keyboard's height taken from the window the action and the focused field stay apart. From 768 px the
+// pair is the bar pinned under the scroll region of the dialog and the pane (owner decision d-115), and a plain row after the last
+// field of the page "Messen" (owner decision d-060).
 
 type Form = { name: string; open: (page: Page) => Promise<void> };
 
@@ -120,19 +121,20 @@ function skipUnlessPhone(project: string): void {
   );
 }
 
-/** A rule from md (owner decision d-060): the pair is a plain row after the last field. */
+/** A rule from md (owner decisions d-060 and d-115): the pair of a dialog and a pane is pinned, that of a page form a plain row. */
 function skipUnlessDesktop(project: string): void {
   test.skip(project !== "desktop", "a rule from md: the phone project has the bar of the sheet");
 }
 
-/** Every window from md and text size: opens the form, and checks that the pair is a plain row after its last field. */
-async function checkRowAfterFields(page: Page, form: Form): Promise<void> {
+/** Every window from md and text size: opens the form, and checks the pair: pinned (a layer) or a plain row after the last field (a page form). */
+async function checkBarFromMd(page: Page, form: Form, where: "layer" | "page"): Promise<void> {
   for (const window of WIDE_WINDOWS) {
     for (const text of TEXT_SIZES) {
       const what = `${form.name}, ${window.width} px, ${text} % text`;
       await setLook(page, { ...window, text, scheme: "light" });
       await form.open(page);
-      await expectBarAfterFields(page, what);
+      if (where === "layer") await expectBarPinned(page, what);
+      else await expectBarAfterFields(page, what);
       await expectNoSidewaysScroll(page, what);
       await expectNoControlCovered(page, what);
     }
@@ -169,8 +171,8 @@ test.describe("US-QS-32 the bar of a form on a phone (SG-SHEET-04, SG-FORM-02)",
   });
 });
 
-test.describe("US-QS-32 from 768 px the form actions sit at the end of the form (owner decision d-060, SG-SHEET-04)", () => {
-  test("US-QS-32 · d-060 the dialog or pane 'Neues Gerät' and 'Profil' end with the pair as a plain row, nothing sticky", async ({
+test.describe("US-QS-32 from 768 px the form actions sit in the bar pinned under a dialog or a pane, and at the end of a page form (owner decisions d-115 and d-060, SG-SHEET-04)", () => {
+  test("US-QS-32 · d-115 the dialog or pane 'Neues Gerät' and 'Profil' pin the pair under their scroll region, and it holds its place", async ({
     page,
     account,
   }, info) => {
@@ -178,7 +180,7 @@ test.describe("US-QS-32 from 768 px the form actions sit at the end of the form 
     test.setTimeout(300_000);
     await textSizeBeforeLoad(page);
     await signIn(page, account);
-    for (const form of layerForms()) await checkRowAfterFields(page, form);
+    for (const form of layerForms()) await checkBarFromMd(page, form, "layer");
   });
 
   test("US-QS-32 · d-060 the page 'Messen' ends with the pair as a plain row, one pair at a time, nothing sticky", async ({
@@ -192,6 +194,6 @@ test.describe("US-QS-32 from 768 px the form actions sit at the end of the form 
     await startWithPlant(page);
     await openFirstPlant(page);
     const [measure] = plantForms(page.url());
-    if (measure) await checkRowAfterFields(page, measure);
+    if (measure) await checkBarFromMd(page, measure, "page");
   });
 });
