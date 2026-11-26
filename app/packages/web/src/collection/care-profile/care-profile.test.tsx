@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import type { CareProfileEntry, Layered } from "@pflanzendex/core";
 import { CareProfileSection } from "../care-profile-page/care-profile-page";
 import { loadCareProfiles, saveCareProfile } from "./care-profile-api";
@@ -80,8 +81,16 @@ const puts = (fetchFn: ReturnType<typeof fakeServer>) =>
 const sent = (fetchFn: ReturnType<typeof fakeServer>) =>
   puts(fetchFn).map(([, init]) => JSON.parse(String(init?.body)) as unknown);
 const withRouter = (ui: ReactNode) => <MemoryRouter>{ui}</MemoryRouter>;
+/** The fields are pages only in a sheet or a dialog (`LayerScope`, US-QS-15, SG-LIST-01); on a page they stand in one list at every width. */
+let inLayer = false;
 const open = () =>
-  render(withRouter(<CareProfileSection api="http://api" token={token} speciesId="s1" />));
+  render(
+    withRouter(
+      <LayerScope.Provider value={inLayer}>
+        <CareProfileSection api="http://api" token={token} speciesId="s1" />
+      </LayerScope.Provider>,
+    ),
+  );
 /** What a save or a reset says; the pager has a status of its own ("Seite n von m"). */
 const SAVED = /Pflegeprofil für|gilt wieder nach Katalog/;
 /** The fields sit on three pages (Standort, Ruhephase, Gießen und Hinweise); "Weiter" shows the next one (US-BES-09). */
@@ -136,9 +145,15 @@ describe("US-BES-09 client of the care profile API", () => {
 });
 
 describe("US-BES-09 the care profile page shows the catalog value and my deviation side by side", () => {
-  // The fields are pages of the card from 768 px ("Weiter"); on a phone they stand in one list (US-QS-32).
-  beforeEach(() => setViewportWidth(1024));
-  afterEach(() => setViewportWidth(360));
+  // The fields are pages of the card in a layer ("Weiter"); on a page they stand in one list (US-QS-32, US-QS-15).
+  beforeEach(() => {
+    setViewportWidth(1024);
+    inLayer = true;
+  });
+  afterEach(() => {
+    setViewportWidth(360);
+    inLayer = false;
+  });
 
   it("US-LIC-01 · P-09 an unknown lux need names Lichtbedarf eintragen, which moves the focus to the zone choice", async () => {
     fakeServer({ entries: [{ ...entry({ lightZone: none() }), lightNeedUnknown: true }] });
@@ -249,9 +264,15 @@ describe("US-BES-09 the care profile page shows the catalog value and my deviati
 });
 
 describe("US-BES-09 change my deviation", () => {
-  // The fields are pages of the card from 768 px ("Weiter"); on a phone they stand in one list (US-QS-32).
-  beforeEach(() => setViewportWidth(1024));
-  afterEach(() => setViewportWidth(360));
+  // The fields are pages of the card in a layer ("Weiter"); on a page they stand in one list (US-QS-32, US-QS-15).
+  beforeEach(() => {
+    setViewportWidth(1024);
+    inLayer = true;
+  });
+  afterEach(() => {
+    setViewportWidth(360);
+    inLayer = false;
+  });
 
   it("US-BES-09 choosing a location and saving sends only the changed field and says what changed", async () => {
     const state = {

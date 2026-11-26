@@ -4,39 +4,76 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SKELETON_DELAY_MS } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 import { hasOwnBorder, isNeutral } from "@/shared/ui/button/button-roles";
-import { LayerRow, LayerTile, LinkTile } from "./friend-tiles";
+import {
+  LayerCountRow,
+  LayerRow,
+  LinkTile,
+  countMeta,
+  newsMeta,
+  requestsMeta,
+  type TileCount,
+} from "./friend-tiles";
 
 afterEach(cleanup);
 
-function show(count: number | "loading") {
+/** The counted row of the requests, as the page draws it (issue 2419). */
+function show(count: TileCount) {
   return render(
     <MemoryRouter>
-      <LayerTile id="requests" name="Anfragen" count={count} />
+      <ul>
+        <LayerCountRow id="requests" name="Anfragen" meta={countMeta(count, requestsMeta)} />
+      </ul>
     </MemoryRouter>,
   );
 }
 
-describe("US-QS-20 the tiles of Freunde at zero (issue 1045)", () => {
-  it("US-QS-20 a tile at zero reads as none, not as a number of work", () => {
+/** The text of a row as it reads: the no-break space of a count is a plain space. */
+const read = (el: HTMLElement) => (el.textContent ?? "").replace(/\s+/g, " ").trim();
+
+describe("US-QS-20 the counted rows of Freunde say what the count counts (issue 2419, SG-LIST-05)", () => {
+  it("US-QS-20 a row at zero reads as a quiet line, not as a number of work", () => {
     show(0);
-    const tile = screen.getByRole("button", { name: /Anfragen/ });
-    expect(tile.textContent).toBe("Anfragenkeine");
+    expect(read(screen.getByRole("button", { name: /Anfragen/ }))).toBe(
+      "Anfragen Nichts zu beantworten",
+    );
   });
 
-  it("US-QS-20 · P-10 a count above zero still shows the number", () => {
+  it("US-QS-20 · P-10 a count above zero names its thing, in the singular for one", () => {
     show(2);
-    expect(screen.getByRole("button", { name: /Anfragen/ }).textContent).toBe("Anfragen2");
+    expect(read(screen.getByRole("button", { name: /Anfragen/ }))).toBe(
+      "Anfragen 2 warten auf deine Antwort",
+    );
+    cleanup();
+    show(1);
+    expect(read(screen.getByRole("button", { name: /Anfragen/ }))).toBe(
+      "Anfragen 1 wartet auf deine Antwort",
+    );
+  });
+
+  it("US-QS-20 the lines of the news: none, one plant, several plants; the number stays with its word", () => {
+    expect(newsMeta(0)).toBe("Nichts Neues");
+    expect(newsMeta(1)).toBe("1\u00a0neue Pflanze");
+    expect(newsMeta(3)).toBe("3\u00a0neue Pflanzen");
+    expect(requestsMeta(2)).toBe("2\u00a0warten auf deine Antwort");
+  });
+
+  it("US-QS-20 · P-10 calm mode shows no line, a count that failed says so", () => {
+    expect(countMeta("hidden", requestsMeta)).toBeUndefined();
+    show("hidden");
+    expect(read(screen.getByRole("button", { name: /Anfragen/ }))).toBe("Anfragen");
+    cleanup();
+    show("error");
+    expect(read(screen.getByRole("button", { name: /Anfragen/ }))).toBe("Anfragen nicht geladen");
   });
 });
 
 describe("US-QS-32 the tiles of Freunde are neutral (SG-COLOR-02, SG-LIST-05)", () => {
-  it("US-QS-32 · SG-COLOR-02 a count tile is on the card colour with foreground text, no green fill and no border", () => {
+  it("US-QS-32 · SG-COLOR-02 a counted row is neutral: no green fill, no border of its own", () => {
     show(2);
-    const tile = screen.getByRole("button", { name: /Anfragen/ });
-    expect(tile.className).toContain("bg-card");
-    expect(tile.className).not.toMatch(/border-primary|text-primary/);
-    expect(isNeutral(tile)).toBe(true);
-    expect(hasOwnBorder(tile)).toBe(false);
+    const row = screen.getByRole("button", { name: /Anfragen/ });
+    expect(row.className).not.toMatch(/border-primary|text-primary|bg-primary/);
+    expect(isNeutral(row)).toBe(true);
+    expect(hasOwnBorder(row)).toBe(false);
   });
 
   it("US-QS-32 · SG-COLOR-02 a tile that leads to a view and the row of a layer are neutral, without a border", () => {
@@ -102,15 +139,32 @@ describe("US-QS-32 · issue 2355 a full-width row that opens a layer shows the c
     expect(screen.getByText("3 Freunde").className).toContain("[overflow-wrap:anywhere]");
   });
 
-  it("US-QS-32 · issue 2355 a tile is a tile, not a row: it shows no chevron", () => {
-    show(2);
+  it("US-QS-32 · issue 2355 a tile is a tile, not a row: it shows no chevron, a counted row does", () => {
+    render(
+      <MemoryRouter>
+        <LinkTile to="/swap" name="Tauschbörse" count={2} />
+        <ul>
+          <LayerCountRow id="requests" name="Anfragen" meta={countMeta(2, requestsMeta)} />
+        </ul>
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByRole("link", { name: /Tauschbörse/ }).querySelector("svg.lucide-chevron-right"),
+    ).toBeNull();
     expect(
       screen.getByRole("button", { name: /Anfragen/ }).querySelector("svg.lucide-chevron-right"),
-    ).toBeNull();
+    ).not.toBeNull();
+  });
+
+  it("US-QS-20 a counted row opens its layer: it says so and whether the layer is open", () => {
+    show(2);
+    const row = screen.getByRole("button", { name: /Anfragen/ });
+    expect(row.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(row.getAttribute("aria-expanded")).toBe("false");
   });
 });
 
-describe("US-QS-32 a tile keeps its size while its count loads (SG-STATE-02, F-0247, issue 1995)", () => {
+describe("US-QS-32 a row keeps its size while its count loads (SG-STATE-02, F-0247, issue 1995)", () => {
   it("US-QS-32 · SG-STATE-02 a loading count is a bar of the count line's height from the first frame", () => {
     vi.useFakeTimers();
     try {
@@ -119,11 +173,11 @@ describe("US-QS-32 a tile keeps its size while its count loads (SG-STATE-02, F-0
       const reserve = tile.querySelector("[data-count-skeleton]");
       expect(reserve?.className).toContain("h-5");
       // The box stands at once; its bar and loading text come after the delay (DS-57).
-      expect(tile.textContent).toBe("Anfragen");
+      expect(read(tile)).toBe("Anfragen");
       act(() => {
         vi.advanceTimersByTime(SKELETON_DELAY_MS);
       });
-      expect(tile.textContent).toBe("Anfragenlädt …");
+      expect(read(tile)).toBe("Anfragen lädt …");
     } finally {
       vi.useRealTimers();
     }

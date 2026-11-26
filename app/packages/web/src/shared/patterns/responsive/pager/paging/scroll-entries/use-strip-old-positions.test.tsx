@@ -3,6 +3,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { Pager } from "../../pager";
 
 afterEach(() => {
@@ -81,10 +82,22 @@ describe("US-QS-15 · SG-LIST-01 · SG-NAV-02 an old address loses its position 
     expect(screen.getByTestId("search").textContent).toBe("?from=5");
   });
 
-  it("US-QS-15 · SG-LIST-01 the paged list from 768 px keeps its address as it is", () => {
+  it("US-QS-15 · SG-LIST-01 a list on a page strips the position at a tablet width as on a phone", () => {
+    setViewportWidth(768);
+    open("/x?from=4&y=2");
+    render(<BrowserRouter>{list()}</BrowserRouter>);
+    expect(window.location.search).toBe("?y=2");
+    expect(screen.getAllByRole("listitem")).toHaveLength(12);
+  });
+
+  it("US-QS-15 · SG-LIST-01 the paged list of a layer keeps its address as it is", () => {
     setViewportWidth(768);
     open("/x?from=4");
-    render(<BrowserRouter>{list()}</BrowserRouter>);
+    render(
+      <BrowserRouter>
+        <LayerScope.Provider value>{list()}</LayerScope.Provider>
+      </BrowserRouter>,
+    );
     expect(window.location.search).toBe("?from=4");
   });
 });

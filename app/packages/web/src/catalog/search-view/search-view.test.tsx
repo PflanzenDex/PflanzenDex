@@ -5,7 +5,6 @@ import { MemoryRouter, useLocation } from "react-router";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { HITS_PER_PAGE } from "./hit-list/hit-list";
 import { SpeciesSearch } from "./search-view";
 import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 
@@ -133,16 +132,15 @@ describe("US-QS-21 the search row at a larger text size (issue 1019)", () => {
   });
 });
 
-describe("US-QS-21 the catalog list is paged", () => {
-  it("US-QS-21 shows one page of compact results with name, scientific name and one fact", () => {
+describe("US-QS-21 the catalog list scrolls", () => {
+  it("US-QS-21 · US-QS-15 shows every result as a compact row with name, scientific name and one fact, on one list with no pages, at a tablet width too", () => {
     setViewportWidth(1024);
     search(many(45));
     const list = screen.getByRole("list", { name: "Treffer" });
-    expect(within(list).getAllByRole("button")).toHaveLength(HITS_PER_PAGE);
-    expect(screen.getByText(`Seite 1 von ${Math.ceil(45 / HITS_PER_PAGE)}`)).toBeTruthy();
-    expect(within(list).getAllByText("Bogenhanf · Schwierigkeit: Leicht")).toHaveLength(
-      HITS_PER_PAGE,
-    );
+    expect(within(list).getAllByRole("button")).toHaveLength(45);
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
+    expect(within(list).getAllByText("Bogenhanf · Schwierigkeit: Leicht")).toHaveLength(45);
     expect(screen.queryByText("Mehr laden")).toBeNull();
   });
 
@@ -171,26 +169,21 @@ describe("US-QS-21 the catalog list is paged", () => {
     expect(screen.queryByText(/Seite 1 von/)).toBeNull();
   });
 
-  it("US-QS-21 · FR-BES-23 the first entry is in the address, a reload at ?from=3 shows the same entries", async () => {
+  it("US-QS-21 · SG-NAV-02 the address holds no position: an old ?from=3 is dropped and the list shows the first result", async () => {
     setViewportWidth(1024);
-    search(many(10));
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(address()).toBe("/discover?view=catalog&from=3");
-    cleanup();
     search(many(10), "/discover?view=catalog&from=3");
-    expect(screen.getByText("Species 4")).toBeTruthy();
-    expect(screen.queryByText("Species 1")).toBeNull();
+    expect(screen.getByText("Species 1")).toBeTruthy();
+    await vi.waitFor(() => expect(address()).toBe("/discover?view=catalog"));
   });
 
-  it("US-QS-21 a new search starts at the first entry", async () => {
+  it("US-QS-21 · US-QS-15 a new search shows the list from its first result", async () => {
     setViewportWidth(1024);
-    const { rerender } = search(many(10), "/discover?view=catalog&from=6", "a");
-    expect(address()).toContain("from=6");
+    const { rerender } = search(many(10), "/discover?view=catalog", "a");
     rerender(
-      <MemoryRouter initialEntries={["/discover?view=catalog&from=6"]}>
+      <MemoryRouter initialEntries={["/discover?view=catalog"]}>
         <SpeciesSearch
           searchText="ab"
-          hit={many(10)}
+          hit={many(4)}
           onSearch={onSearch}
           onOpen={onOpen}
           onPropose={onPropose}
@@ -199,8 +192,9 @@ describe("US-QS-21 the catalog list is paged", () => {
         <Address />
       </MemoryRouter>,
     );
-    // The router instance is kept by React, so the effect of the changed search text rewrites the address.
-    await vi.waitFor(() => expect(address()).not.toContain("from=6"));
+    const list = screen.getByRole("list", { name: "Treffer" });
+    expect(within(list).getAllByRole("button")).toHaveLength(4);
+    expect(address()).toBe("/discover?view=catalog");
   });
 
   it("US-QS-21 choosing a result opens its profile", async () => {

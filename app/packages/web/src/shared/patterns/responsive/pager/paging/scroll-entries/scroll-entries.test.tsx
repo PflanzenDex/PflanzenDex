@@ -112,11 +112,14 @@ describe("US-QS-32 · SG-LIST-01 a list on a phone scrolls instead of paging", (
     expect(screen.getByRole("list", { name: "Pflanzen" }).hasAttribute("tabindex")).toBe(false);
   });
 
-  it("US-QS-32 · SG-LIST-01 from 768 px the list still pages by its size", () => {
-    setViewportWidth(768);
-    render(list(plants));
-    expect(screen.getAllByRole("listitem")).toHaveLength(4);
-    expect(screen.getByRole("button", { name: "Weiter" })).toBeTruthy();
+  it("US-QS-15 · SG-LIST-01 from 768 px the list of a page scrolls too: every entry, no pages", () => {
+    for (const width of [768, 1024, 1920]) {
+      setViewportWidth(width);
+      const view = render(list(plants));
+      expect(screen.getAllByRole("listitem")).toHaveLength(plants.length);
+      expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
+      view.unmount();
+    }
   });
 
   it("US-QS-32 · SG-LIST-01 on a phone a server list asks for the next page when its end shows", () => {

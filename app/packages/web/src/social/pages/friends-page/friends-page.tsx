@@ -2,109 +2,44 @@ import { useCallback } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LayerHost, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { SCREEN_STALE_TIME, useInvalidate, useRequest } from "../../../shared/data";
+import { GroupedList } from "@/shared/lists/grouped-list/grouped-list";
+import { useInvalidate } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadFriends, type FriendsData } from "../../api/friends-api";
-import { loadBanner } from "../../api/feed-api";
-import { loadMatchingCount, loadOpenOffersCount } from "../../api/offer-counts-api";
 import { sharingChoice } from "../../parts/sharing-panel/sharing-panel";
 import { AddFriendLayer } from "./friend-layers/add-friend-layer/add-friend-layer";
 import { HelpLayer, ListLayers } from "./friend-layers/friend-layers";
 import {
+  ExchangeTiles,
   HelpOpener,
+  LayerCountRow,
   LayerRow,
-  LayerTile,
-  LinkTile,
+  countMeta,
+  newsMeta,
+  requestsMeta,
   type TileCount,
 } from "./friend-tiles/friend-tiles";
+import { useTileCounts, type Options, type Token } from "./tile-counts/use-tile-counts";
 import { FriendsPageSkeleton } from "./friends-page-body/friends-page-body";
-import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
+import { FriendList } from "../../parts/friend-list/friend-list";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../social.de.json";
 
 /** The cached read of the friends page; a friend's page that ends a friendship reloads it (US-QS-32). */
 export const FRIENDS_KEY = ["social", "friends"] as const;
 const tx = texts(table);
-type Token = () => Promise<string | undefined>;
 
-/** Calm mode shows no counts (US-ACH-08, US-TAU-07); otherwise the count of the news banner while it loads or fails (P-10). */
-function useNewsCount(api: string, token: Token, calm: boolean): TileCount {
-  const load = useCallback((t: string) => loadBanner(api, t), [api]);
-  const r = useRequest({
-    queryKey: ["social", "banner"],
-    token,
-    load,
-    staleTime: SCREEN_STALE_TIME,
-  });
-  if (calm) return "hidden";
-  if (r.status === "error") return "error";
-  return r.value === undefined ? "loading" : r.value.firstVisit ? 0 : r.value.count;
-}
-
-/** The count of the exchange tiles: not asked in calm mode or while the function is locked (US-ACH-08, US-ONB-05); loading and failing show (P-10). */
-function useOfferCount(
-  props: { api: string; token: Token; key: string; enabled: boolean },
-  fetchCount: (api: string, token: string) => ReturnType<typeof loadOpenOffersCount>,
-): TileCount | undefined {
-  const { api, enabled } = props;
-  const load = useCallback((t: string) => fetchCount(api, t), [api, fetchCount]);
-  const r = useRequest({
-    queryKey: ["social", "tile-count", props.key],
-    token: props.token,
-    load,
-    enabled,
-  });
-  if (!enabled) return undefined;
-  if (r.status === "error") return "error";
-  return r.value === undefined ? "loading" : r.value;
-}
-
-type Options = {
-  /** Calm mode is on or not known yet: the tiles show their names without counts (US-ACH-08). */
-  calm: boolean;
-  /** The text mark of the exchange while "Tauschbörse" is not open yet (US-ONB-05); the tiles still lead to the lock page. */
-  swapMark?: string | undefined;
-};
-
-const friendsText = (n: number) => (n === 0 ? "Noch keine" : n === 1 ? "1 Freund" : `${n} Freunde`);
-
-/** The counts of the tiles that load by themselves (US-QS-20); `undefined` means no count is shown. */
-function useTileCounts(api: string, token: Token, options: Options) {
-  const counted = !options.calm && !options.swapMark;
-  return {
-    news: useNewsCount(api, token, options.calm),
-    offers: useOfferCount({ api, token, key: "offers", enabled: counted }, loadOpenOffersCount),
-    matching: useOfferCount({ api, token, key: "matching", enabled: counted }, loadMatchingCount),
-  };
-}
-
-/** The four tiles of the overview (US-QS-20): requests, news, exchange and matching offers. */
-function Tiles(props: {
-  open: number;
-  counts: { news: TileCount; offers: TileCount | undefined; matching: TileCount | undefined };
-  options: Options;
-}) {
-  const { counts, options } = props;
-  const note = options.swapMark ? { note: options.swapMark } : {};
+/** The two counted rows on top (issue 2419): the requests that wait for my answer and the new plants of friends; each opens its layer. */
+function CountedRows(props: { requests: TileCount; news: TileCount }) {
   return (
-    // Two tiles per row while a label fits (9 rem, starting value at normal text); at a larger text size one per row, so
-    // no label runs into its neighbour (issue 1019).
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-2">
-      <LayerTile id="requests" name="Anfragen" count={options.calm ? "hidden" : props.open} />
-      <LayerTile id="news" name="Neu bei Freunden" count={counts.news} />
-      <LinkTile
-        to="/friends/exchange"
-        name="Tauschbörse"
-        {...(counts.offers !== undefined ? { count: counts.offers } : {})}
-        {...note}
+    <GroupedList>
+      <LayerCountRow
+        id="requests"
+        name={tx("layers.requests")}
+        meta={countMeta(props.requests, requestsMeta)}
       />
-      <LinkTile
-        to="/friends/match"
-        name="Passende Angebote"
-        {...(counts.matching !== undefined ? { count: counts.matching } : {})}
-        {...note}
-      />
-    </div>
+      <LayerCountRow id="news" name={tx("layers.news")} meta={countMeta(props.news, newsMeta)} />
+    </GroupedList>
   );
 }
 
@@ -118,33 +53,43 @@ function Body(props: {
   const { api, token, data, options } = props;
   const { news, offers, matching } = useTileCounts(api, token, options);
   const add = useLayer("add");
-  const open = data.requests.incoming.length;
+  const requests: TileCount = options.calm ? "hidden" : data.requests.incoming.length;
+  const none = data.friends.length === 0;
   return (
-    <div className="flex min-w-0 flex-col gap-4">
-      {/* The filled "Freund hinzufügen" stands right below: the line has no second action (SG-STATE-01). */}
-      {data.friends.length === 0 && <EmptySection text={tx("friendsPage.none")} />}
-      <Button
-        type="button"
-        size="touch"
-        className="sm:self-start"
-        aria-haspopup="dialog"
-        aria-expanded={add.open}
-        onClick={(event) => add.openLayer(event.currentTarget)}
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+      {/* Without a friend the empty state below carries "Freund hinzufügen": the action shows once (SG-STATE-01). */}
+      {none ? null : (
+        <Button
+          type="button"
+          size="touch"
+          className="sm:self-start"
+          aria-haspopup="dialog"
+          aria-expanded={add.open}
+          onClick={(event) => add.openLayer(event.currentTarget)}
+        >
+          {tx("friendsPage.add")}
+        </Button>
+      )}
+      {/* The page under the title and the action scrolls as one region: the list of friends is its main part, and the rows before and after it scroll with it (US-QS-15, SG-LIST-01). */}
+      <div
+        role="region"
+        aria-label={tx("friendsPage.region")}
+        data-scroll-region=""
+        tabIndex={0}
+        className="flex min-h-24 min-w-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
-        Freund hinzufügen
-      </Button>
-      <Tiles open={open} counts={{ news, offers, matching }} options={options} />
-      <div className="flex flex-col gap-2">
-        <LayerRow id="friends" name="Meine Freunde" state={friendsText(data.friends.length)} />
+        <CountedRows requests={requests} news={news} />
+        <FriendList friends={data.friends} />
+        <ExchangeTiles counts={{ offers, matching }} swapMark={options.swapMark} />
         <LayerRow
           id="sharing"
-          name="Was Freunde sehen"
+          name={tx("layers.sharing")}
           state={sharingChoice(data.specimens, data.shared)}
         />
+        <p className="text-sm text-muted-foreground">
+          Ohne deine Freigabe sieht niemand etwas. <HelpOpener />
+        </p>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Ohne deine Freigabe sieht niemand etwas. <HelpOpener />
-      </p>
       <AddFriendLayer api={api} token={token} onWritten={props.onWritten} />
       <ListLayers api={api} token={token} data={data} onWritten={props.onWritten} />
       <HelpLayer />
@@ -153,11 +98,12 @@ function Body(props: {
 }
 
 /**
- * The page "Freunde" as one screen (US-QS-20, US-SOZ-01, US-SOZ-02): the one filled action "Freund hinzufügen", tiles for the
- * requests, the news, the exchange and the matching offers, rows for the friends and for what friends see, and one line of
- * help. Every part opens as a layer (`?sheet=add|requests|news|friends|sharing|help`) and lists are paged. Nothing here
- * shows a friend's collection: private by default (P-05), and there are no rankings between friends. A write reloads
- * everything (P-10). Calm mode shows the tiles without counts.
+ * The page "Freunde" as one screen (US-QS-20, US-SOZ-01, US-SOZ-02, US-QS-15, issue 2419): the one filled action "Freund
+ * hinzufügen", two counted rows for the requests and the news, the section "Meine Freunde · n" with the friends as one
+ * scrolling list (the empty state when there is none), tiles for the exchange and the matching offers, a row for what
+ * friends see and one line of help. The requests, the news, the adding, the sharing and the help open as layers
+ * (`?sheet=add|requests|news|sharing|help`). Nothing here shows a friend's collection: private by default (P-05), and there
+ * are no rankings between friends. A write reloads everything (P-10). Calm mode shows the rows without counts.
  */
 export function FriendsPage(props: {
   api: string;
@@ -171,8 +117,11 @@ export function FriendsPage(props: {
   const reload = useInvalidate(FRIENDS_KEY);
   const load = useCallback((t: string) => loadFriends(api, t), [api]);
   return (
-    <LayerHost data-fit-screen="">
-      <section aria-labelledby="friends-title" className="flex min-w-0 flex-col gap-3">
+    <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
+      <section
+        aria-labelledby="friends-title"
+        className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
+      >
         {/* The title is the page's header: in the top bar below md (US-QS-32, SG-HEAD-01). */}
         <PageHeader headingId="friends-title" title={tx("friendsPage.title")} />
         <LoadFrame

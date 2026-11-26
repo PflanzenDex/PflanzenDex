@@ -4,12 +4,13 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Pager } from "../pager";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { dropPageParts, namedEntry, parseFrom, parsePage, position } from "./address";
 import { knownCount, type PagerPaging } from "./paging";
 
 afterEach(cleanup);
-// The paged view is the one from 768 px (US-QS-32): these tests pin the paging, so they run at a tablet width.
+// Only a list in a sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01): these tests pin the paging, so they render in a layer.
 beforeEach(() => setViewportWidth(1024));
 
 const plants = Array.from({ length: 6 }, (_, i) => `Pflanze ${i + 1}`);
@@ -17,21 +18,23 @@ const plants = Array.from({ length: 6 }, (_, i) => `Pflanze ${i + 1}`);
 function Paged(props: { loaded: number; failure?: string; plain?: boolean }) {
   return (
     <MemoryRouter initialEntries={["/?from=3"]}>
-      <Pager
-        items={plants.slice(0, props.loaded)}
-        pageSize={3}
-        label="Pflanzen"
-        renderItem={(name) => (props.plain ? name : <button type="button">{name}</button>)}
-        paging={{
-          total: 6,
-          loading: false,
-          failure: props.failure,
-          onMore: vi.fn(),
-          onRetry: vi.fn(),
-          loadingText: "Pflanzen werden geladen …",
-          retryText: "Erneut versuchen",
-        }}
-      />
+      <LayerScope.Provider value>
+        <Pager
+          items={plants.slice(0, props.loaded)}
+          pageSize={3}
+          label="Pflanzen"
+          renderItem={(name) => (props.plain ? name : <button type="button">{name}</button>)}
+          paging={{
+            total: 6,
+            loading: false,
+            failure: props.failure,
+            onMore: vi.fn(),
+            onRetry: vi.fn(),
+            loadingText: "Pflanzen werden geladen …",
+            retryText: "Erneut versuchen",
+          }}
+        />
+      </LayerScope.Provider>
     </MemoryRouter>
   );
 }

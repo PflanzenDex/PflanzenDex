@@ -6,6 +6,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { PlantCare } from "./plant-care/plant-care";
 import { PlantGrowth } from "./plant-growth/plant-growth";
 import { PlantHistory } from "./plant-history/plant-history";
@@ -111,23 +112,37 @@ describe("US-QS-23 the growth trend of the overview", () => {
 
 describe("US-QS-23 Verlauf", () => {
   const measurements = [7, 6, 5, 4, 3, 2, 1].map((n) => row(n));
-  const show = (onMeasure?: () => void) =>
+  // `inLayer`: the history in a sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01); on a page it is one scrolling list.
+  const show = (onMeasure?: () => void, inLayer = false) =>
     render(
       <MemoryRouter>
-        <PlantHistory
-          api={API}
-          token={TOKEN}
-          specimenId="e1"
-          {...(onMeasure ? { onMeasure } : {})}
-        />
+        <LayerScope.Provider value={inLayer}>
+          <PlantHistory
+            api={API}
+            token={TOKEN}
+            specimenId="e1"
+            {...(onMeasure ? { onMeasure } : {})}
+          />
+        </LayerScope.Provider>
         <Where />
       </MemoryRouter>,
     );
 
-  it("US-QS-23 pages the measurements newest first, with the position, and the page is in the address", async () => {
+  it("US-QS-15 · SG-LIST-01 on a page the measurements are one scrolling list, newest first, with no pages and no position in the address", async () => {
     setViewportWidth(1024);
     server({ "GET /specimens/e1/measurements": () => json(200, view({ measurements })) });
     show();
+    const list = await screen.findByRole("list", { name: "Messungen und Fotos" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(7);
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
+    expect(screen.getByTestId("address").textContent).toBe("");
+  });
+
+  it("US-QS-23 in a layer the measurements page newest first, with the position, and the page is in the address", async () => {
+    setViewportWidth(1024);
+    server({ "GET /specimens/e1/measurements": () => json(200, view({ measurements })) });
+    show(undefined, true);
     const list = await screen.findByRole("list", { name: "Messungen und Fotos" });
     expect(within(list).getAllByRole("listitem")).toHaveLength(3);
     expect(

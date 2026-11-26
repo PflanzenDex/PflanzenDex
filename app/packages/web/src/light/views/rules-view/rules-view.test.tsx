@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { RulesView } from "./rules-view";
 import type { LightZone } from "../../shared/light-api/light-api";
 
@@ -22,8 +23,10 @@ describe("US-LIC-04 look up the classification rules (view)", () => {
         <RulesView zones={zones} />
       </MemoryRouter>,
     );
-    // The pager wraps each part in its own item; the zone rows are the items without a nested item.
-    const rows = screen.getAllByRole("listitem").filter((li) => !li.querySelector("li"));
+    // The zone rows are the items of the group "Deine Lichtzonen".
+    const rows = within(screen.getByRole("region", { name: "Deine Lichtzonen" })).getAllByRole(
+      "listitem",
+    );
     expect(rows).toHaveLength(2);
     expect(rows[0]?.textContent).toMatch(/^Zone 1 · Stecklingslicht/);
     expect(rows[0]?.textContent).toMatch(/bis 1\.500\s+Lux/);
@@ -34,10 +37,24 @@ describe("US-LIC-04 look up the classification rules (view)", () => {
     expect(screen.queryByRole("row")).toBeNull();
   });
 
-  it("US-QS-19 the parts come one per page: the indicators on page 2, the warning signs on page 3", async () => {
+  it("US-QS-15 · SG-LIST-01 on a page the parts stand on one scrolling list, from the zone table to the warning signs, with no pages", () => {
     render(
       <MemoryRouter>
         <RulesView zones={zones} />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.getByRole("heading", { name: "Indikatoren für höhere Zonen" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
+  });
+
+  it("US-QS-19 in a layer the parts come one per page: the indicators on page 2, the warning signs on page 3", async () => {
+    render(
+      <MemoryRouter>
+        <LayerScope.Provider value>
+          <RulesView zones={zones} />
+        </LayerScope.Provider>
       </MemoryRouter>,
     );
     expect(screen.getByRole("status").textContent).toContain("Seite 1 von 3");
@@ -55,7 +72,9 @@ describe("US-LIC-04 look up the classification rules (view)", () => {
   it("without zones it still shows the reference and says what to do next (P-09)", async () => {
     render(
       <MemoryRouter>
-        <RulesView zones={[]} />
+        <LayerScope.Provider value>
+          <RulesView zones={[]} />
+        </LayerScope.Provider>
       </MemoryRouter>,
     );
     expect(screen.getByText(/Zonentabelle erscheint/)).toBeTruthy();

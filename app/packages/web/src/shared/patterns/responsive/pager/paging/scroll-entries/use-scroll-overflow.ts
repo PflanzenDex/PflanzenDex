@@ -30,19 +30,21 @@ function overflows(list: HTMLElement, fit: boolean): boolean {
 /**
  * Whether the entries of the list are taller than the box that scrolls them (SG-LIST-01: the end marker stays away on a
  * short list that fits). It measures after a settle and again when the box changes size or the loaded entries change. A
- * browser without a ResizeObserver, a test without layout and a list that is not `enabled` (no server paging) measure
- * nothing: the answer is "no", so no marker shows.
+ * browser without a ResizeObserver and a test without layout measure nothing: the answer is "no", so no marker shows. A
+ * list without server paging (`paged` false) is measured only when its box is a marked scroll region: the end marker adds a
+ * row, and a page that scrolls (the frame gate lists it) must not grow by it.
  */
 export function useScrollOverflow(
   list: React.RefObject<HTMLElement | null>,
   fit: boolean,
   loaded: number,
-  enabled: boolean,
+  paged: boolean,
 ): boolean {
   const [over, setOver] = React.useState(false);
   React.useEffect(() => {
     const box = list.current;
-    if (!enabled || !box || typeof ResizeObserver !== "function") return;
+    if (!box || typeof ResizeObserver !== "function") return;
+    if (!paged && !scrollerOf(box, fit).hasAttribute("data-scroll-region")) return;
     let timer = 0;
     const measure = () => {
       window.clearTimeout(timer);
@@ -55,6 +57,6 @@ export function useScrollOverflow(
       window.clearTimeout(timer);
       observer.disconnect();
     };
-  }, [list, fit, loaded, enabled]);
+  }, [list, fit, loaded, paged]);
   return over;
 }

@@ -17,6 +17,7 @@ import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { PAGER_PARTS, type PagerPart } from "@/shared/patterns/responsive/pager/paging/address";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { RouteFocus } from "./route-focus";
 import { createFocusMover } from "./focus-moves";
 import { quietFrom } from "./quiet-steps";
@@ -314,20 +315,22 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
   });
 });
 
-/** A view with a pager on `param` (seven entries, three per page): its heading is the view's own. */
+/** A view with a pager on `param` (seven entries, three per page) in a layer, where lists keep their pages: its heading is the view's own. */
 function PagedView({ param }: { param: PagerPart }) {
   const entries = Array.from({ length: 7 }, (_, i) => `Eintrag ${i + 1}`);
   return (
     <main id="inhalt" tabIndex={-1}>
       <RouteFocus titleOf={titleOf} />
       <h1>Zweite Seite</h1>
-      <Pager items={entries} pageSize={3} label="Liste" param={param} renderItem={(t) => t} />
+      <LayerScope.Provider value>
+        <Pager items={entries} pageSize={3} label="Liste" param={param} renderItem={(t) => t} />
+      </LayerScope.Provider>
     </main>
   );
 }
 
 describe("US-QS-15 · turning a page of a list is no view change (issue 1550)", () => {
-  // Paging is the tablet and desktop view (768 px and up); the pager of this view turns pages there.
+  // Only a list in a sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01); the pager of this view turns pages there.
   beforeEach(() => setViewportWidth(1024));
   afterEach(() => setViewportWidth(360));
 
