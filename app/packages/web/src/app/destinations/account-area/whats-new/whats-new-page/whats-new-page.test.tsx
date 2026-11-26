@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -69,6 +69,41 @@ describe("US-DEV-06 the page Neu in PflanzenDéx", () => {
       expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
       cleanup();
     }
+  });
+
+  it("US-DEV-06 · US-QS-15 · SG-LIST-01 a long changelog shows its first 40 lines and loads 40 more when the end of the list comes near", () => {
+    const callbacks: IntersectionObserverCallback[] = [];
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(callback: IntersectionObserverCallback) {
+          callbacks.push(callback);
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    const lines = Array.from({ length: 100 }, (_, i) => `Zeile ${i + 1}`);
+    render(
+      <MemoryRouter>
+        <WhatsNewList entries={entriesOf(lines)} version="1.0.0" />
+      </MemoryRouter>,
+    );
+    expect(lineTexts()).toHaveLength(40);
+    expect(screen.queryByText("Das waren alle 100")).toBeNull();
+    const reach = () =>
+      act(() => {
+        for (const callback of callbacks)
+          callback(
+            [{ isIntersecting: true } as IntersectionObserverEntry],
+            {} as IntersectionObserver,
+          );
+      });
+    reach();
+    expect(lineTexts()).toHaveLength(80);
+    reach();
+    expect(lineTexts()).toEqual(lines);
   });
 
   it("US-DEV-06 · SG-NAV-02 an old position in the address (?from=) is dropped: the list starts with the newest line", async () => {

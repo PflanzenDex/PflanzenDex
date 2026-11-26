@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { germanDate, type NewsEntry } from "../news-lines.mjs";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -19,6 +19,11 @@ const t = texts(table);
  */
 const PAGE_PHONE = 2;
 const PAGE_LG = 3;
+/**
+ * Lines on the list at first, and added each time its end comes near (starting value, assumption): the changelog holds
+ * hundreds of lines, so the list loads more at its end (SG-LIST-01) instead of putting every line, and its control, on the page.
+ */
+const PART = 40;
 /** A line longer than this shows its start in three lines and the button "Mehr anzeigen" for the rest (P-10). */
 const LONG = 80;
 
@@ -75,6 +80,20 @@ export function WhatsNewList(props: {
 }) {
   const navigate = useNavigate();
   const pageSize = useIsLg() ? PAGE_LG : PAGE_PHONE;
+  const [shown, setShown] = useState(PART);
+  const more = useCallback(() => setShown((n) => n + PART), []);
+  // The lines are all here; the list shows them in parts, so its end marker and its loader work as for a server list.
+  const paging = useMemo(
+    () => ({
+      total: props.entries.length,
+      loading: false,
+      onMore: more,
+      onRetry: more,
+      loadingText: "",
+      retryText: "",
+    }),
+    [props.entries.length, more],
+  );
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
       <p className="m-0 text-sm text-muted-foreground">
@@ -88,8 +107,9 @@ export function WhatsNewList(props: {
         />
       ) : (
         <Pager
-          items={props.entries}
+          items={props.entries.slice(0, shown)}
           pageSize={pageSize}
+          paging={paging}
           fit
           label={t("list.label")}
           getKey={(_entry, index) => index}
