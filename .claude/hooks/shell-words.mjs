@@ -40,7 +40,8 @@ function operatorAt(text, i) {
 
 // The words and operators of a command with the quotes removed. A word a shell would expand (a variable, a glob, a
 // leading `~`) or that holds a substitution is `dynamic`; a substitution is kept as text, to be judged in a subshell.
-// A redirection is one `{ redir: true }` token; its target is the word after it.
+// A redirection is one `{ redir: true, dir }` token, dir is "<" or ">" (issue 2554: a write needs the direction); its target is
+// the word after it. A `>>` is two such tokens.
 export function tokenize(text) {
   const out = [];
   let word = null;
@@ -111,7 +112,7 @@ export function tokenize(text) {
       // `2>` and `&>`: the digit or the ampersand in front belongs to the redirection.
       if (word && (/^\d+$/.test(word.value) || word.value === "&")) word = null;
       else end();
-      out.push({ redir: true });
+      out.push({ redir: true, dir: c });
       i++;
     } else {
       const op = operatorAt(text, i);

@@ -35,7 +35,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: device-check device-check-filters help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-prune db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan docker-check audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers gate-browser-image conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook sb-docs sb-test ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
+.PHONY: device-check device-check-filters help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-prune db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan docker-check audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers gate-browser-image conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook sb-docs sb-test ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan gate-log gate-allow project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -465,6 +465,16 @@ gates: secrets workflows ## Fast gates: secrets, workflows, lint, types, boundar
 # one question that lists the whole plan. The paths are relative to the top of the worktree. It confirms nothing.
 gate-plan: ## Declares the gate files this branch will change (FILES="a b", paths from the top of the worktree; US-QG-07): one question then covers the list, and nothing is confirmed
 	node .claude/hooks/gate-plan.mjs
+
+# Shows the gate decisions of the hook (decision, file, branch, source, actor, mode), newest last, the last 50. Read only; the owner
+# reads every question, refusal and applied edit of a gate file here (US-QG-07, issue 2554).
+gate-log: ## Shows the gate decisions of the hook (decision, file, branch, source), newest last, the last 50 (US-QG-07, issue 2554)
+	node .claude/hooks/gate-log.mjs
+
+# Owner only (US-QG-07, issue 2554): allows the gate files named in FILES for the rest of this branch, so that later edits of them
+# pass without a question. The owner runs it in an own shell; the Bash guard refuses this target for agents.
+gate-allow: ## Owner only: allows the gate files named in FILES for the rest of this branch, no question after it (US-QG-07, issue 2554)
+	node .claude/hooks/gate-allow.mjs
 
 # The local run of every part, one at a time, and every part also after a failure (US-QG-02, issue 1636). The parts, their
 # order and their dependencies are CI_PARTS in app/tools/check/quality/gates/gate-steps.mjs; the runner is app/tools/dev/agent/ci-parts.mjs.

@@ -16,8 +16,14 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { CONFIRMATIONS_FILE, PLAN_FILE } from "./gate-confirmations.mjs";
+import { LOG_FILE } from "./gate-log.mjs";
 
 const HOOK = fileURLToPath(new URL("./run.mjs", import.meta.url));
+const PLAN_CLI = fileURLToPath(new URL("./gate-plan.mjs", import.meta.url));
+const ALLOW_CLI = fileURLToPath(new URL("./gate-allow.mjs", import.meta.url));
+const CONFIRMATIONS_MODULE = fileURLToPath(new URL("./gate-confirmations.mjs", import.meta.url));
+const LOG_CLI = fileURLToPath(new URL("./gate-log.mjs", import.meta.url));
 // Git variables of an outer git process (a hook of this repo runs `make gates`) must not point the temporary
 // repositories at this one.
 const ENV = Object.fromEntries(
@@ -53,25 +59,34 @@ function makeRepo(t, name) {
   return dir;
 }
 
-/** The main checkout and one worktree under .worktrees/x, as agents work (AGENTS.md, rule 5). */
+/** The main checkout and one worktree under .worktrees/x, as agents work (AGENTS.md, rule 5). origin/dev is the base of the
+ * branch, so a gate file that differs from it is a change of the branch (issue 2554). */
 function checkout(t) {
   const main = makeRepo(t, "hook-main");
+  git(main, ["update-ref", "refs/remotes/origin/dev", "HEAD"]);
   const wt = join(main, ".worktrees", "x");
   git(main, ["worktree", "add", "-q", "-b", "fix/x", wt]);
+  // The stored state of the gate files starts here (round 3): the first Bash call refuses once, and the next one is judged.
+  runHook("guard-bash", main, { command: "true" });
+  runHook("guard-bash", main, { command: "true" });
   return { main, wt };
 }
 
 /**
  * The hook's output for one tool call of a session whose project is `session` and whose shell is in `cwd` (the
- * session folder by default): hookSpecificOutput, or null when the hook is silent. The hook swallows its own errors
- * (exit 0, message on stderr), so a line on stderr fails the test.
+ * session folder by default): hookSpecificOutput, or null when the hook is silent. `extra` adds the request fields of
+ * the hook input (permission_mode, agent_id, transcript_path). The hook swallows its own errors (exit 0, message on
+ * stderr), so a line on stderr fails the test.
  */
-function runHook(event, session, toolInput, cwd = session) {
+function runHook(event, session, toolInput, cwd = session, extra = {}) {
   const result = spawnSync("node", [HOOK, event], {
     input: JSON.stringify({
       tool_name: event === "guard-bash" ? "Bash" : "Edit",
       cwd,
       tool_input: toolInput,
+      // A main session names its transcript; without one the caller is unknown, and an edit is asked (round 3).
+      transcript_path: "/x/projects/p/main.jsonl",
+      ...extra,
     }),
     env: { ...ENV, CLAUDE_PROJECT_DIR: session },
     encoding: "utf8",
@@ -80,7 +95,8 @@ function runHook(event, session, toolInput, cwd = session) {
   assert.equal(result.status, 0);
   return result.stdout === "" ? null : JSON.parse(result.stdout).hookSpecificOutput;
 }
-const guard = (session, toolInput) => runHook("guard-edit", session, toolInput);
+const guard = (session, toolInput, extra) =>
+  runHook("guard-edit", session, toolInput, session, extra);
 const bash = (session, command, cwd = session) => runHook("guard-bash", session, { command }, cwd);
 
 /** The hook asks a human, and its reason matches. */
@@ -271,55 +287,151 @@ test("US-QG-07: a repository other than the hook's is judged by its own folder, 
   const { main } = checkout(t);
   const other = makeRepo(t, "hook-other");
   // The project is `main`; the shell is in `other`. A reset there is an ordinary question, as before this guard.
+  // The other repository has no stored state yet: two calls store it (round 3), then the reset is a plain question.
+  bash(main, "true", other);
+  bash(main, "true", other);
   assert.equal(bash(main, "git reset --hard", other)?.permissionDecision, "ask");
 });
 
-// The gate file confirmations of one worktree (US-QG-07): the record lives in the worktree's git directory, keyed by branch.
+// The gate file records of one worktree (US-QG-07): the record lives in the worktree's git directory, keyed by branch.
 const gitDirOf = (dir) =>
   execFileSync("git", ["rev-parse", "--absolute-git-dir"], {
     cwd: dir,
     env: ENV,
     encoding: "utf8",
   }).trim();
-const recordOf = (dir) => join(gitDirOf(dir), "claude-gate-confirmations.json");
-/** The PostToolUse event of an edit that went through: after-edit records a confirmed gate file. */
+const recordOf = (dir) => join(gitDirOf(dir), CONFIRMATIONS_FILE);
+const planOf = (dir) => join(gitDirOf(dir), PLAN_FILE);
+/** The text of a name as a regular expression, so a record name is matched as written. */
+const literal = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** The PostToolUse event of an edit that went through: after-edit logs it, and the one-time answer covers that edit only. */
 const applied = (session, toolInput) => runHook("after-edit", session, toolInput);
+const BRANCH = "refs/heads/fix/x";
 
-test("US-QG-07: a gate file asks once per branch: after its edit went through, later edits pass, another gate file and another branch ask", (t) => {
-  const { main, wt } = checkout(t);
+// The owner's branch-wide answer. The command line refuses to run outside the owner's terminal (issue 2554, round 2), so the tests
+// call allowGate in a child process, with the branch and the file checks of the command line.
+// A pseudo-terminal for the command line: python's pty.fork gives the command a terminal on stdin, stdout and stderr, and returns the
+// command's output and exit status. The tests have no terminal of their own, so this is the only way to reach the command's checks.
+const PTY_RUN = [
+  "import os, pty, sys",
+  "pid, fd = pty.fork()",
+  "if pid == 0:",
+  "    os.execvp(sys.argv[1], sys.argv[1:])",
+  "out = b''",
+  "while True:",
+  "    try:",
+  "        data = os.read(fd, 65536)",
+  "    except OSError:",
+  "        break",
+  "    if not data:",
+  "        break",
+  "    out += data",
+  "_, status = os.waitpid(pid, 0)",
+  "sys.stdout.buffer.write(out)",
+  "sys.exit(os.waitstatus_to_exitcode(status))",
+].join("\n");
+// The owner's branch-wide answer: the command line runs in a pseudo-terminal, as the owner's own shell gives it, with CLAUDECODE
+// removed (round 3, d-146). `script` gives any command a pseudo-terminal: that is a known limit of the terminal check, and the tests
+// use it to reach the command line's own checks. Its output (stdout and stderr) comes back on stdout.
+const allow = (dir, files) => {
+  const env = Object.fromEntries(Object.entries(ENV).filter(([name]) => name !== "CLAUDECODE"));
+  return spawnSync("python3", ["-c", PTY_RUN, "node", ALLOW_CLI], {
+    cwd: dir,
+    env: { ...env, GATE_PLAN_FILES: files },
+    encoding: "utf8",
+  });
+};
+/** `make gate-plan` runs gate-plan.mjs in the worktree with the files in GATE_PLAN_FILES, as the Makefile passes them. */
+const plan = (dir, files) =>
+  spawnSync("node", [PLAN_CLI], {
+    cwd: dir,
+    env: { ...ENV, GATE_PLAN_FILES: files },
+    encoding: "utf8",
+  });
+const commonOf = (dir) =>
+  execFileSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], {
+    cwd: dir,
+    env: ENV,
+    encoding: "utf8",
+  }).trim();
+/** The decision log, shared by the worktrees of the repository (issue 2554): one parsed object per line. */
+const logLines = (dir) => {
+  const file = join(commonOf(dir), LOG_FILE);
+  return existsSync(file)
+    ? readFileSync(file, "utf8")
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line))
+    : [];
+};
+
+/** Two gate files of the worktree, committed on the branch and in origin/dev: a plan sees no change in them (issue 2554). */
+function gateFiles(wt) {
+  mkdirSync(join(wt, ".githooks"), { recursive: true });
+  mkdirSync(join(wt, ".github"), { recursive: true });
+  const files = {
+    makefile: join(wt, "Makefile"),
+    pre: join(wt, ".githooks/pre-commit"),
+    owners: join(wt, ".github/CODEOWNERS"),
+  };
+  for (const file of Object.values(files)) writeFileSync(file, "x\n");
+  git(wt, ["add", "--", "Makefile", ".githooks", ".github"]);
+  git(wt, ["commit", "-q", "-m", "gate files"]);
+  git(wt, ["update-ref", "refs/remotes/origin/dev", "HEAD"]);
+  // The files are committed after the stored state: store their state again (round 3).
+  runHook("guard-bash", wt, { command: "true" });
+  runHook("guard-bash", wt, { command: "true" });
+  return files;
+}
+
+test("US-QG-07, issue 2554: a gate file asks at every edit: an edit that went through confirms nothing for the next one", (t) => {
+  const { wt } = checkout(t);
   const makefile = join(wt, "Makefile");
   const pre = join(wt, ".githooks/pre-commit");
-  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  const first = guard(wt, { file_path: makefile });
+  assertAsks(first, /^Makefile defines a gate/);
+  assert.doesNotMatch(first.permissionDecisionReason, /later edits|plan/);
   writeFileSync(makefile, "all:\n");
   assert.equal(applied(wt, { file_path: makefile }), null);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
+  // Another branch asks too: no edit of this branch confirms a file for it.
+  git(wt, ["switch", "-q", "-c", "fix/y"]);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  git(wt, ["switch", "-q", "fix/x"]);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+});
+
+test("US-QG-07, issue 2554: the owner's allow confirms a gate file for its branch: later edits pass, another file and another branch ask", (t) => {
+  const { main, wt } = checkout(t);
+  const { makefile, pre } = gateFiles(wt);
+  assert.equal(allow(wt, "Makefile").status, 0);
   assert.equal(guard(wt, { file_path: makefile }), null);
   // The folder the session started in does not matter: the file's own worktree and branch decide.
   assert.equal(guard(main, { file_path: makefile }), null);
   assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
-  // A new branch asks again; the confirmation of fix/x stays for fix/x.
+  // A new branch asks again; the allow of fix/x stays for fix/x.
   git(wt, ["switch", "-q", "-c", "fix/y"]);
   assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
-  applied(wt, { file_path: makefile });
-  assert.equal(guard(wt, { file_path: makefile }), null);
   git(wt, ["switch", "-q", "fix/x"]);
   assert.equal(guard(wt, { file_path: makefile }), null);
 });
 
-test("US-QG-07: a gate file asks in another worktree and on a detached HEAD; an edit on a detached HEAD records nothing", (t) => {
+test("US-QG-07, issue 2554: a gate file asks in another worktree and on a detached HEAD; an edit there records nothing", (t) => {
   const { main, wt } = checkout(t);
   const makefile = join(wt, "Makefile");
   const pre = join(wt, ".githooks/pre-commit");
   writeFileSync(makefile, "all:\n");
-  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
-  applied(wt, { file_path: makefile });
+  assert.equal(allow(wt, "Makefile").status, 0);
   assert.equal(guard(wt, { file_path: makefile }), null);
-  // Another worktree has its own record, which holds nothing for this file.
+  // Another worktree has its own branch, which holds no allow for this file.
   const other = join(main, ".worktrees", "y");
   git(main, ["worktree", "add", "-q", "--detach", other]);
   assertAsks(guard(other, { file_path: join(other, "Makefile") }), /^Makefile defines a gate/);
-  // A detached HEAD has no branch to key a record by: it always asks, and an edit there records nothing.
+  // A detached HEAD has no branch to key an allow by: it always asks, and an allow there is refused.
   git(wt, ["checkout", "-q", "--detach"]);
   assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  assert.equal(allow(wt, "Makefile").status, 1);
   applied(wt, { file_path: pre });
   assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
   git(wt, ["switch", "-q", "fix/x"]);
@@ -327,7 +439,7 @@ test("US-QG-07: a gate file asks in another worktree and on a detached HEAD; an 
   assert.equal(guard(wt, { file_path: makefile }), null);
 });
 
-test("US-QG-07: a confirmation record that is missing, unreadable or malformed asks, and an edit of the record itself asks", (t) => {
+test("US-QG-07, issue 2554: a confirmation record that is missing, unreadable or malformed asks, and an edit of the record itself asks", (t) => {
   const { wt } = checkout(t);
   const makefile = join(wt, "Makefile");
   const record = recordOf(wt);
@@ -335,9 +447,7 @@ test("US-QG-07: a confirmation record that is missing, unreadable or malformed a
   writeFileSync(join(wt, "notes.txt"), "x\n");
   applied(wt, { file_path: join(wt, "notes.txt") });
   assert.equal(existsSync(record), false);
-  writeFileSync(makefile, "all:\n");
-  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
-  applied(wt, { file_path: makefile });
+  assert.equal(allow(wt, "Makefile").status, 0);
   assert.equal(guard(wt, { file_path: makefile }), null);
   // Missing: the record is gone.
   rmSync(record);
@@ -349,106 +459,40 @@ test("US-QG-07: a confirmation record that is missing, unreadable or malformed a
   rmSync(record);
   mkdirSync(record);
   assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
-  // The record is written by the hook only: an edit of it asks, whatever it holds.
+  // The record is written by make gate-allow only: an edit of it is refused, whatever it holds (issue 2554, round 2).
   rmSync(record, { recursive: true });
-  assertAsks(
-    guard(wt, { file_path: record }),
-    /^claude-gate-confirmations\.json records which gate files/,
+  const refusedEdit = guard(wt, { file_path: record });
+  assert.equal(refusedEdit?.permissionDecision, "deny");
+  assert.match(
+    refusedEdit.permissionDecisionReason,
+    new RegExp(`^${literal(CONFIRMATIONS_FILE)} records which gate files`),
   );
 });
 
-// The gate file plan and the question record (US-QG-07): `make gate-plan` runs gate-plan.mjs in the worktree with the files
-// in the environment variable GATE_PLAN_FILES, as the Makefile passes them. Nothing here confirms a file by hand.
-const PLAN_CLI = fileURLToPath(new URL("./gate-plan.mjs", import.meta.url));
-const planOf = (dir) => join(gitDirOf(dir), "claude-gate-plan.json");
-const askedOf = (dir) => join(gitDirOf(dir), "claude-gate-plan-asked.json");
-const plan = (dir, files) =>
-  spawnSync("node", [PLAN_CLI], {
-    cwd: dir,
-    env: { ...ENV, GATE_PLAN_FILES: files },
-    encoding: "utf8",
-  });
-const BRANCH = "refs/heads/fix/x";
-
-/** Two gate files of the worktree: the Makefile and a hook (both exist, so the test reads like a real edit). */
-function gateFiles(wt) {
-  mkdirSync(join(wt, ".githooks"), { recursive: true });
-  const files = {
-    makefile: join(wt, "Makefile"),
-    pre: join(wt, ".githooks/pre-commit"),
-    owners: join(wt, ".github/CODEOWNERS"),
-  };
-  mkdirSync(join(wt, ".github"), { recursive: true });
-  for (const file of Object.values(files)) writeFileSync(file, "x\n");
-  return files;
-}
-
-test("US-QG-07: a plan makes the first question name every planned file that is not confirmed yet, and one answer confirms them all", (t) => {
+test("US-QG-07, issue 2554: a plan names no other file in a question: each gate file asks alone, and an edit confirms nothing for the rest", (t) => {
   const { wt } = checkout(t);
   const { makefile, pre } = gateFiles(wt);
   assert.equal(plan(wt, ".githooks/pre-commit Makefile").status, 0);
   const asked = guard(wt, { file_path: makefile });
   assertAsks(asked, /^Makefile defines a gate/);
-  assert.match(
-    asked.permissionDecisionReason,
-    /not confirmed yet: \.githooks\/pre-commit, Makefile\. Confirming this edit also confirms them/,
-  );
+  assert.doesNotMatch(asked.permissionDecisionReason, /\.githooks|plan/);
   writeFileSync(makefile, "all:\nclean:\n");
   applied(wt, { file_path: makefile });
-  assert.equal(guard(wt, { file_path: makefile }), null);
-  assert.equal(guard(wt, { file_path: pre }), null);
-});
-
-test("US-QG-07: a gate file outside the plan asks alone, and its answer confirms that file only", (t) => {
-  const { wt } = checkout(t);
-  const { makefile, pre } = gateFiles(wt);
-  assert.equal(plan(wt, "Makefile").status, 0);
-  const asked = guard(wt, { file_path: pre });
-  assertAsks(asked, /^\.githooks\/pre-commit defines a gate/);
-  assert.doesNotMatch(asked.permissionDecisionReason, /not confirmed yet/);
-  applied(wt, { file_path: pre });
-  assert.equal(guard(wt, { file_path: pre }), null);
   assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
-});
-
-test("US-QG-07: a plan changed after a question confirms nothing new: the answer confirms the list the question showed", (t) => {
-  const { wt } = checkout(t);
-  const { makefile, pre, owners } = gateFiles(wt);
-  assert.equal(plan(wt, ".githooks/pre-commit Makefile").status, 0);
-  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
-  assert.equal(plan(wt, ".githooks/pre-commit .github/CODEOWNERS Makefile").status, 0);
-  applied(wt, { file_path: makefile });
-  assert.equal(guard(wt, { file_path: makefile }), null);
-  assert.equal(guard(wt, { file_path: pre }), null);
-  assertAsks(guard(wt, { file_path: owners }), /^\.github\/CODEOWNERS defines a gate/);
-});
-
-test("US-QG-07: a question that was denied confirms nothing, and an edit that no question of its own asked about uses no snapshot", (t) => {
-  const { wt } = checkout(t);
-  const { makefile, pre } = gateFiles(wt);
-  assert.equal(plan(wt, ".githooks/pre-commit Makefile").status, 0);
-  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
-  // The human denied it: no edit follows. An edit of the other planned file now confirms nothing, because its own question never came.
-  applied(wt, { file_path: pre });
   assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
-  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
 });
 
-test("US-QG-07: a plan or a question record that cannot be read asks each file alone; a plan naming a non-gate path is unusable", (t) => {
+test("US-QG-07, issue 2554: a plan that cannot be read asks each gate file alone, and a plan naming a non-gate path is unusable", (t) => {
   const { wt } = checkout(t);
   const { makefile, pre } = gateFiles(wt);
   writeFileSync(planOf(wt), "{ not json");
   assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
-  assert.doesNotMatch(
-    guard(wt, { file_path: makefile }).permissionDecisionReason,
-    /not confirmed yet/,
-  );
+  writeFileSync(makefile, "all:\nclean:\n");
   applied(wt, { file_path: makefile });
-  assert.equal(guard(wt, { file_path: makefile }), null);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
   assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
   writeFileSync(planOf(wt), JSON.stringify({ [BRANCH]: ["Makefile", "README.md"] }));
   assertAsks(guard(wt, { file_path: pre }), /^\.githooks\/pre-commit defines a gate/);
-  assert.doesNotMatch(guard(wt, { file_path: pre }).permissionDecisionReason, /not confirmed yet/);
 });
 
 test("US-QG-07: make gate-plan confirms nothing: every planned file still asks, and the record stays missing", (t) => {
@@ -478,16 +522,237 @@ test("US-QG-07: make gate-plan refuses a path that is not a gate file, an empty 
   assert.match(detached.stderr, /HEAD is detached/);
 });
 
-test("US-QG-07: an edit of the plan or of the question record asks the human, whatever it holds", (t) => {
+test("US-QG-07, issue 2554, round 2: make gate-plan warns about a listed gate file that already differs from origin/dev and no owner allowed; the plan is still written, and the warning is logged", (t) => {
   const { wt } = checkout(t);
-  assertAsks(guard(wt, { file_path: planOf(wt) }), /^claude-gate-plan\.json lists the gate files/);
-  assertAsks(
-    guard(wt, { file_path: askedOf(wt) }),
-    /^claude-gate-plan-asked\.json is the question/,
+  const { makefile } = gateFiles(wt);
+  writeFileSync(makefile, "all:\nclean:\n");
+  const warned = plan(wt, "Makefile .githooks/pre-commit");
+  assert.equal(warned.status, 0, warned.stderr);
+  assert.equal(
+    warned.stderr,
+    "gate-plan: warning: Makefile already differ from origin/dev, and no owner allowed them. The plan grants nothing; the edit guard still asks the owner at each edit (issue 2554).\n",
+  );
+  assert.deepEqual(JSON.parse(readFileSync(planOf(wt), "utf8")), {
+    [BRANCH]: [".githooks/pre-commit", "Makefile"],
+  });
+  assert.ok(
+    logLines(wt).some(
+      (line) =>
+        line.decision === "warned" &&
+        line.source === "gate-plan" &&
+        line.file === "Makefile" &&
+        line.branch === "fix/x",
+    ),
+  );
+  // Once the owner allows the file, the same plan is silent.
+  assert.equal(allow(wt, "Makefile").status, 0);
+  assert.equal(plan(wt, "Makefile .githooks/pre-commit").stderr, "");
+});
+
+test("US-QG-07, issue 2554, round 2: make gate-plan warns about a new untracked gate file and about a missing origin/dev, and stays silent for a changed gate test", (t) => {
+  const { wt } = checkout(t);
+  gateFiles(wt);
+  writeFileSync(join(wt, ".githooks/new-hook"), "x\n");
+  const untracked = plan(wt, ".githooks/new-hook");
+  assert.equal(untracked.status, 0);
+  assert.match(untracked.stderr, /warning: \.githooks\/new-hook already differ from origin\/dev/);
+  mkdirSync(join(wt, ".claude/hooks"), { recursive: true });
+  writeFileSync(join(wt, ".claude/hooks/rules.test.mjs"), "// changed\n");
+  const testOnly = plan(wt, ".claude/hooks/rules.test.mjs");
+  assert.equal(testOnly.status, 0);
+  assert.equal(testOnly.stderr, "");
+  // A repository whose origin/dev is missing cannot show that a file is unchanged: a warning, never a silent pass.
+  const bare = makeRepo(t, "hook-no-dev");
+  const bareWt = join(bare, ".worktrees", "z");
+  git(bare, ["worktree", "add", "-q", "-b", "fix/z", bareWt]);
+  writeFileSync(join(bareWt, "Makefile"), "x\n");
+  const unknown = plan(bareWt, "Makefile");
+  assert.equal(unknown.status, 0);
+  assert.match(unknown.stderr, /warning: Makefile already differ from origin\/dev/);
+});
+
+test("US-QG-07, issue 2554, round 2: make gate-allow refuses to run outside the owner's terminal: in an agent session or without a terminal", (t) => {
+  const { wt } = checkout(t);
+  gateFiles(wt);
+  const cli = spawnSync("node", [ALLOW_CLI], {
+    cwd: wt,
+    env: { ...ENV, GATE_PLAN_FILES: "Makefile" },
+    encoding: "utf8",
+  });
+  assert.equal(cli.status, 1);
+  assert.match(cli.stderr, /^gate-allow: runs only in the owner's own terminal/);
+  assert.equal(existsSync(recordOf(wt)), false);
+});
+
+test("US-QG-07, issue 2554: make gate-allow refuses a file that asks no question, a path outside the gate files, and a detached HEAD", (t) => {
+  const { wt } = checkout(t);
+  gateFiles(wt);
+  // The pseudo-terminal returns the command's stderr on stdout, so both are read.
+  const output = (r) => `${r.stdout}${r.stderr}`;
+  const testFile = allow(wt, ".claude/hooks/rules.test.mjs");
+  assert.equal(testFile.status, 1);
+  assert.match(
+    output(testFile),
+    /gate-allow: not a gate file that asks: \.claude\/hooks\/rules\.test\.mjs/,
+  );
+  assert.equal(allow(wt, "README.md Makefile").status, 1);
+  assert.equal(allow(wt, "").status, 1);
+  assert.equal(existsSync(recordOf(wt)), false);
+  git(wt, ["checkout", "-q", "--detach"]);
+  const detached = allow(wt, "Makefile");
+  assert.equal(detached.status, 1);
+  assert.match(output(detached), /HEAD is detached/);
+});
+
+test("US-QG-07, issue 2554: the owner's allow is logged, and an edit of a gate file by a subagent is denied even when the branch allows it", (t) => {
+  const { wt } = checkout(t);
+  const { makefile } = gateFiles(wt);
+  assert.equal(allow(wt, "Makefile").status, 0);
+  assert.ok(
+    logLines(wt).some((line) => line.decision === "allowed" && line.source === "gate-allow"),
+  );
+  const denied = guard(
+    wt,
+    { file_path: makefile },
+    { agent_id: "a1b2", agent_type: "implementer" },
+  );
+  assert.equal(denied?.permissionDecision, "deny");
+  assert.match(denied.permissionDecisionReason, /^Subagents do not edit gate files\./);
+  const byTranscript = guard(
+    wt,
+    { file_path: makefile },
+    { transcript_path: join(wt, "projects/p/subagents/agent-1.jsonl") },
+  );
+  assert.equal(byTranscript?.permissionDecision, "deny");
+  assert.equal(guard(wt, { file_path: makefile })?.permissionDecision ?? null, null);
+});
+
+test("US-QG-07, issue 2554: a subagent is denied an unconfirmed gate file too, while a gate test passes for it", (t) => {
+  const { wt } = checkout(t);
+  const { makefile } = gateFiles(wt);
+  assert.equal(guard(wt, { file_path: makefile }, { agent_id: "a1" })?.permissionDecision, "deny");
+  mkdirSync(join(wt, ".claude/hooks"), { recursive: true });
+  assert.equal(
+    guard(wt, { file_path: join(wt, ".claude/hooks/rules.test.mjs") }, { agent_id: "a1" }),
+    null,
   );
 });
 
-test("US-QG-07: an edit of a gate test passes without a question, the code it tests still asks, and a planned test is named by no question", (t) => {
+test("US-QG-07, issue 2554: in an automatic permission mode a gate file edit asks, also an allowed file, and the default mode passes an allowed file", (t) => {
+  const { wt } = checkout(t);
+  const { makefile } = gateFiles(wt);
+  for (const mode of ["auto", "bypassPermissions", "dontAsk"]) {
+    const output = guard(wt, { file_path: makefile }, { permission_mode: mode });
+    assertAsks(output, /^Makefile defines a gate/);
+  }
+  assertAsks(
+    guard(wt, { file_path: makefile }, { permission_mode: "default" }),
+    /^Makefile defines a gate/,
+  );
+  // An allowed file asks in an automatic mode too (d-145).
+  assert.equal(allow(wt, "Makefile").status, 0);
+  assertAsks(
+    guard(wt, { file_path: makefile }, { permission_mode: "auto" }),
+    /^Makefile defines a gate/,
+  );
+  assert.equal(guard(wt, { file_path: makefile }, { permission_mode: "default" }), null);
+});
+
+test("US-QG-07, issue 2554: a Bash write to a gate file is denied in the main checkout and in a worktree, and the decision is logged", (t) => {
+  const { main, wt } = checkout(t);
+  gateFiles(wt);
+  const written = bash(wt, "sed -i 's/a/b/' Makefile");
+  assert.equal(written?.permissionDecision, "deny");
+  assert.match(written.permissionDecisionReason, /^This command writes a gate file \(Makefile\)\./);
+  assert.equal(bash(main, `cp /tmp/x ${join(wt, "Makefile")}`)?.permissionDecision, "deny");
+  assert.equal(bash(wt, "cat Makefile"), null);
+  assert.equal(bash(wt, 'echo x > "$F"')?.permissionDecision, "ask");
+  assert.ok(
+    logLines(wt).some(
+      (line) =>
+        line.decision === "deny" &&
+        line.source === "guard-bash" &&
+        line.file === "Makefile" &&
+        line.branch === "fix/x" &&
+        line.actor === "main",
+    ),
+  );
+});
+
+test("US-QG-07, issue 2554: an agent cannot run make gate-allow, and the refusal says that only the owner runs it", (t) => {
+  const { wt } = checkout(t);
+  const refused = bash(wt, "make gate-allow FILES=Makefile");
+  assert.equal(refused?.permissionDecision, "deny");
+  assert.match(refused.permissionDecisionReason, /^Only the owner runs `gate-allow`/);
+});
+
+test("US-QG-07, issue 2554: the decision log shows the asks, the applied edits and the refusals of every worktree, and says when it is empty", (t) => {
+  const { main, wt } = checkout(t);
+  // The fixture's first Bash calls log the refusal of the missing stored state (round 3); no edit is logged yet.
+  const start = spawnSync("node", [LOG_CLI], { cwd: main, env: ENV, encoding: "utf8" }).stdout;
+  assert.doesNotMatch(start, /guard-edit|after-edit/);
+  const makefile = join(wt, "Makefile");
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+  writeFileSync(makefile, "all:\n");
+  applied(wt, { file_path: makefile });
+  const shown = spawnSync("node", [LOG_CLI, "10"], { cwd: main, env: ENV, encoding: "utf8" });
+  assert.equal(shown.status, 0, shown.stderr);
+  // The requests below carry no permission_mode, so the table shows a dash in the mode column.
+  assert.match(shown.stdout, /ask\s+guard-edit\s+main\s+-\s+-\s+fix\/x\s+Makefile/);
+  assert.match(shown.stdout, /applied\s+after-edit\s+main\s+-\s+-\s+fix\/x\s+Makefile/);
+});
+
+test("US-QG-07, issue 2554: an edit of a gate test asks nothing, is no decision of the log, and records nothing", (t) => {
+  const { wt } = checkout(t);
+  mkdirSync(join(wt, ".claude/hooks"), { recursive: true });
+  const hookTest = join(wt, ".claude/hooks/rules.test.mjs");
+  writeFileSync(hookTest, "// test\n");
+  // The test is a gate file for make merge: the other test file of the list and the merge tool's test pass the same way.
+  assert.equal(guard(wt, { file_path: hookTest }), null);
+  assert.equal(guard(wt, { file_path: join(wt, "app/tools/workflow/merge-pr.test.mjs") }), null);
+  assertAsks(
+    guard(wt, { file_path: join(wt, "app/tools/workflow/merge-pr.mjs") }),
+    /^app\/tools\/workflow\/merge-pr\.mjs defines a gate/,
+  );
+  assert.equal(applied(wt, { file_path: hookTest }), null);
+  assert.equal(existsSync(recordOf(wt)), false);
+});
+
+test("US-QG-07, issue 2554: a plan that names only a gate test is recorded, prints that no file asks, and every edit of the test passes", (t) => {
+  const { wt } = checkout(t);
+  mkdirSync(join(wt, ".claude/hooks"), { recursive: true });
+  const hookTest = join(wt, ".claude/hooks/gate-plan.test.mjs");
+  writeFileSync(hookTest, "// test\n");
+  const planned = plan(wt, ".claude/hooks/gate-plan.test.mjs");
+  assert.equal(planned.status, 0, planned.stderr);
+  assert.doesNotMatch(planned.stdout, /Nothing is confirmed/);
+  assert.deepEqual(JSON.parse(readFileSync(planOf(wt), "utf8")), {
+    [BRANCH]: [".claude/hooks/gate-plan.test.mjs"],
+  });
+  assert.equal(guard(wt, { file_path: hookTest }), null);
+});
+
+test("US-QG-07: an edit of the plan record is denied, whatever it holds (issue 2554, round 2)", (t) => {
+  const { wt } = checkout(t);
+  const output = guard(wt, { file_path: planOf(wt) });
+  assert.equal(output?.permissionDecision, "deny");
+  assert.match(
+    output.permissionDecisionReason,
+    new RegExp(`^${literal(PLAN_FILE)} lists the gate files`),
+  );
+});
+
+test("US-QG-07: a gate file outside the plan asks alone, with no list of the plan in its question", (t) => {
+  const { wt } = checkout(t);
+  const { makefile, pre } = gateFiles(wt);
+  assert.equal(plan(wt, "Makefile").status, 0);
+  const asked = guard(wt, { file_path: pre });
+  assertAsks(asked, /^\.githooks\/pre-commit defines a gate/);
+  assert.doesNotMatch(asked.permissionDecisionReason, /Makefile/);
+  assertAsks(guard(wt, { file_path: makefile }), /^Makefile defines a gate/);
+});
+
+test("US-QG-07: a planned gate test is named by no question, make gate-plan says that it asks none, and its edits record nothing", (t) => {
   const { wt } = checkout(t);
   const { makefile } = gateFiles(wt);
   const hookTest = join(wt, ".claude/hooks/rules.test.mjs");
@@ -511,37 +776,19 @@ test("US-QG-07: an edit of a gate test passes without a question, the code it te
   const asked = guard(wt, { file_path: makefile });
   assertAsks(asked, /^Makefile defines a gate/);
   assert.doesNotMatch(asked.permissionDecisionReason, /rules\.test\.mjs/);
-  // An answer confirms the Makefile only; the test was never part of the question, so an edit of it records nothing.
+  // A gate test records nothing: an edit of it is applied and no record appears.
   writeFileSync(hookTest, "// changed\n");
   assert.equal(applied(wt, { file_path: hookTest }), null);
   assert.equal(existsSync(recordOf(wt)), false);
 });
 
-test("US-QG-07: a plan that names only a gate test is recorded, prints that no file asks, and every edit of the test passes", (t) => {
-  const { wt } = checkout(t);
-  mkdirSync(join(wt, ".claude/hooks"), { recursive: true });
-  const hookTest = join(wt, ".claude/hooks/gate-plan.test.mjs");
-  writeFileSync(hookTest, "// test\n");
-  const planned = plan(wt, ".claude/hooks/gate-plan.test.mjs");
-  assert.equal(planned.status, 0, planned.stderr);
-  assert.doesNotMatch(planned.stdout, /Nothing is confirmed/);
-  assert.deepEqual(JSON.parse(readFileSync(planOf(wt), "utf8")), {
-    [BRANCH]: [".claude/hooks/gate-plan.test.mjs"],
-  });
-  assert.equal(guard(wt, { file_path: hookTest }), null);
-});
-
 test("US-QG-07: the Bash guard refuses a command that names a gate record, and passes make gate-plan and ordinary commands", (t) => {
   const { wt } = checkout(t);
-  const written = bash(
-    wt,
-    `echo '{}' > "$(git rev-parse --git-dir)/claude-gate-confirmations.json"`,
-  );
+  const written = bash(wt, `echo '{}' > "$(git rev-parse --git-dir)/${CONFIRMATIONS_FILE}"`);
   assert.equal(written?.permissionDecision, "deny");
   assert.match(written.permissionDecisionReason, /claude-gate\* files/);
   assert.equal(
-    bash(wt, `cp /tmp/x.json "$(git rev-parse --git-dir)/claude-gate-plan.json"`)
-      ?.permissionDecision,
+    bash(wt, `cp /tmp/x.json "$(git rev-parse --git-dir)/${PLAN_FILE}"`)?.permissionDecision,
     "deny",
   );
   assert.equal(bash(wt, "make gate-plan FILES=Makefile"), null);
@@ -550,7 +797,7 @@ test("US-QG-07: the Bash guard refuses a command that names a gate record, and p
 
 test("US-QG-07: a Write, Edit, MultiEdit or NotebookEdit that names a record is denied outside .claude/hooks, and the same text passes inside it", (t) => {
   const { wt } = checkout(t);
-  const named = `echo '{}' > "$(git rev-parse --git-dir)/claude-gate-plan.json"\n`;
+  const named = `echo '{}' > "$(git rev-parse --git-dir)/${PLAN_FILE}"\n`;
   const denied = (output) => {
     assert.equal(output?.permissionDecision, "deny", JSON.stringify(output));
     assert.match(output.permissionDecisionReason, /^This text names a claude-gate\* file/);
