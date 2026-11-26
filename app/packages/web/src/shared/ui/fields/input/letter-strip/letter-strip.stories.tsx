@@ -15,7 +15,7 @@ const meta = {
   component: LetterStrip,
   decorators: [inFrame],
   args: {
-    label: "Springen zu Buchstabe",
+    label: "Zum Buchstaben springen",
     present: new Set(["A", "B", "D", "M", "#"]),
     onJump: () => undefined,
   },
@@ -38,7 +38,7 @@ const place = (strip: HTMLElement, letter: string) =>
 export const Default: Story = {
   play: ({ canvasElement }) => {
     const strip = stripOf(canvasElement);
-    check(strip.getAttribute("aria-label") === "Springen zu Buchstabe", "the strip has no name");
+    check(strip.getAttribute("aria-label") === "Zum Buchstaben springen", "the strip has no name");
     check(strip.children.length === 27, "the strip has not 27 places");
     check(place(strip, "A").className.includes("text-primary"), "a letter with entries is dimmed");
     check(

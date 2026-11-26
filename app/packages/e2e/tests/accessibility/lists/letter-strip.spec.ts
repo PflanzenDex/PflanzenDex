@@ -88,7 +88,7 @@ async function openPokedex(page: Page, account: TestAccount, info: TestInfo) {
   await signInToApp(page, account);
   await openView(page, "/collection?view=species");
   const list = page.getByRole("list", { name: "Gefangene Arten" });
-  const strip = page.getByRole("slider", { name: "Springen zu Buchstabe" });
+  const strip = page.getByRole("slider", { name: "Zum Buchstaben springen" });
   await expect(strip).toBeVisible();
   await expect(list.locator("li").first()).toContainText("A-Pflanze 01");
   return { list, strip };

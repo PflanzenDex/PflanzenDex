@@ -28,6 +28,8 @@ export type SheetPanelProps = Omit<
   onBarSlot?: (element: HTMLElement | null) => void;
   /** A form has drawn actions into the bar: "Abbrechen" is the close control and the X is gone. */
   barActive?: boolean;
+  /** Opens at half height at least, also with a short content (US-QS-15, owner decision 2026-11-22, issue 2424). */
+  halfHeight?: boolean;
 };
 
 /**
@@ -129,6 +131,7 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
       closeRefusals = 0,
       onBarSlot,
       barActive,
+      halfHeight,
       ...props
     },
     ref,
@@ -137,7 +140,15 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
     const [sheet, setSheet] = React.useState<HTMLDivElement | null>(null);
     const { content, overlay } = useSnapBack(closeRefusals, ref, setSheet);
     const cramped = useCrampedWindow(barActive === true);
-    const height = useSheetHeight({ title, open, sheet, cramped, closeRefusals, onOpenChange });
+    const height = useSheetHeight({
+      title,
+      open,
+      sheet,
+      cramped,
+      closeRefusals,
+      onOpenChange,
+      halfHeight,
+    });
     return (
       <Drawer.Root open={open} onOpenChange={onOpenChange} autoFocus handleOnly>
         <Drawer.Portal>
@@ -151,15 +162,11 @@ const SheetPanel = React.forwardRef<HTMLDivElement, SheetPanelProps>(
             onCloseAutoFocus={focus.onCloseAutoFocus}
           >
             <SheetHeader
+              {...{ title, description, closeLabel, onBarSlot, barActive }}
               height={height}
               cramped={cramped}
-              title={title}
-              description={description}
-              closeLabel={closeLabel}
               close={focus.close}
               onClose={() => onOpenChange(false)}
-              onBarSlot={onBarSlot}
-              barActive={barActive}
             />
             <SheetBody ref={height.bodyRef}>{children}</SheetBody>
           </Drawer.Content>

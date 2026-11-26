@@ -745,7 +745,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(await screen.findByText(/Termin.* geplant/)).toBeTruthy();
   });
 
-  it("US-QS-15 · SG-SHEET-04 the save of the plan stands in the bar of a phone sheet, and below the list in a dialog", async () => {
+  it("US-QS-15 · SG-SHEET-04 · d-115 the save of the plan stands in the bar of a layer at every width: the sheet's bar, then the bar pinned under the list of a dialog and a pane", async () => {
     fakeServer({ cards: FIVE });
     const user = userEvent.setup();
     setViewportWidth(360);
@@ -760,13 +760,25 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(inBar.closest("[data-sheet-pinned]")).toBeNull();
     expect(within(sheet).getByRole("button", { name: "Abbrechen" })).toBeTruthy();
     cleanup();
-    setViewportWidth(768);
-    show("/today?sheet=treatments");
-    await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
-    const form = await dialog("Behandlung planen");
-    const pinned = within(form).getByRole("button", { name: "Behandlung sichern" });
-    expect(pinned.closest("[data-sheet-pinned]")).not.toBeNull();
-    expect(pinned.closest("[data-form-bar]")).toBeNull();
+    // From 768 px the plan keeps no primary action of its own: the same pair stands in the bar under the scroll region.
+    for (const [width, container] of [
+      [768, "dialog"],
+      [1280, "complementary"],
+    ] as const) {
+      setViewportWidth(width);
+      show("/today?sheet=treatments");
+      await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
+      const layer = await screen.findByRole(container, { name: "Behandlung planen" });
+      const pinned = await within(layer).findByRole("button", { name: "Behandlung sichern" });
+      expect(pinned.closest("[data-sheet-pinned]")).toBeNull();
+      expect(pinned.closest("[data-form-bar]")).not.toBeNull();
+      expect(pinned.closest("[data-layer-bar]")).not.toBeNull();
+      expect(
+        within(layer).getByRole("list", { name: "Pflanzen" }).closest("[data-layer-bar]"),
+      ).toBeNull();
+      expect(within(layer).getAllByRole("button", { name: "Abbrechen" })).toHaveLength(1);
+      cleanup();
+    }
   });
 
   it("US-BEH-01 · A-04 · US-QS-32 an invalid plan opens the view of the first missing entry: no plant, then no reason", async () => {

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { MEDIA_LIMITS } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
@@ -22,14 +23,31 @@ export function EtiolationSigns({ signs }: { signs: string | null }) {
   );
 }
 
-/** The optional photo of the measurement (US-WAC-05, US-WAC-06): a file input; it is sent after the measurement is saved. */
+/**
+ * The optional photo of the measurement (US-WAC-05, US-WAC-06): a file input; it is sent after the measurement is saved. With
+ * `start` (the keeper chose "Foto" in the plant layer, US-QS-15, issue 2424) the field takes the focus and its picker is started once
+ * when the form shows, and `onStarted` says so. A browser may refuse a picker that no tap has asked for (a reload, a phone
+ * that wants the tap in the same call); then the field is open and focused, one tap from the picker.
+ */
 export function PhotoInput(props: {
   onPick: (file: File | null) => void;
   problem: string | null;
   inputKey: number;
+  start?: boolean;
+  onStarted?: () => void;
 }) {
   const id = "measure-photo";
   const labelId = `${id}-label`;
+  const input = useRef<HTMLInputElement>(null);
+  const started = useRef(false);
+  const { start, onStarted } = props;
+  useEffect(() => {
+    if (!start || started.current) return;
+    started.current = true;
+    input.current?.focus();
+    input.current?.click();
+    onStarted?.();
+  }, [start, onStarted]);
   return (
     <div className="flex flex-col gap-1.5">
       <Label id={labelId} htmlFor={id}>
@@ -37,6 +55,7 @@ export function PhotoInput(props: {
       </Label>
       <FileField
         key={props.inputKey}
+        ref={input}
         id={id}
         groupLabelledBy={labelId}
         accept={MEDIA_LIMITS.uploadTypes.join(",")}

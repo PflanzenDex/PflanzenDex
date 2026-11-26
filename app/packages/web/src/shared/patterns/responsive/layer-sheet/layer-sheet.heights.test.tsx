@@ -136,6 +136,99 @@ describe("US-QS-15 · a layer as a sheet has half height and full height", () =>
   });
 });
 
+describe("US-QS-15 · issue 2424 a layer that asks for half height opens at half height below 768 px, whatever the length of its content", () => {
+  function Half(props: { halfHeight?: boolean }) {
+    return (
+      <MemoryRouter initialEntries={["/start"]}>
+        <LayerHost>
+          <LayerOpener id="notiz">Notiz</LayerOpener>
+          <LayerSheet id="notiz" title="Notiz" {...(props.halfHeight ? { halfHeight: true } : {})}>
+            <p>Ein kurzer Inhalt</p>
+          </LayerSheet>
+        </LayerHost>
+      </MemoryRouter>
+    );
+  }
+
+  it("US-QS-15 · issue 2424 a short content opens at half height with the toggle", async () => {
+    layout.content = 60;
+    render(<Half halfHeight />);
+    const sheet = await open();
+    await waitFor(() => expect(heightOf(sheet)).toBe("400px"));
+    expect(sheet.getAttribute("data-sheet-height")).toBe("two");
+    expect(within(sheet).getByRole("button", { name: "Vollbild" })).toBeTruthy();
+  });
+
+  it("US-QS-15 a short content of a layer without the request keeps the height of its content", async () => {
+    layout.content = 60;
+    render(<Half />);
+    const sheet = await open();
+    await waitFor(() => expect(sheet.getAttribute("data-sheet-height")).toBe("fit"));
+    expect(heightOf(sheet)).toBe("auto");
+  });
+
+  it("US-QS-15 · issue 2424 from 768 px the request changes nothing: a dialog has no sheet height", async () => {
+    setViewportWidth(800);
+    layout.content = 60;
+    render(<Half halfHeight />);
+    await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
+    const dialog = await screen.findByRole("dialog", { name: "Notiz" });
+    expect(dialog.getAttribute("data-sheet-height")).toBeNull();
+  });
+});
+
+describe("US-QS-15 · issue 2424 the actions of a layer under its title stay in place while the content scrolls", () => {
+  function Top() {
+    return (
+      <MemoryRouter initialEntries={["/start"]}>
+        <LayerHost>
+          <LayerOpener id="notiz">Notiz</LayerOpener>
+          <LayerSheet
+            id="notiz"
+            title="Notiz"
+            topAction={<button>Messen</button>}
+            primaryAction={<button>Sichern</button>}
+          >
+            <p>Inhalt</p>
+          </LayerSheet>
+        </LayerHost>
+      </MemoryRouter>
+    );
+  }
+
+  it.each([
+    ["a phone sheet", 360, "dialog"],
+    ["a dialog", 800, "dialog"],
+    ["a pane", 1280, "complementary"],
+  ] as const)(
+    "US-QS-15 · issue 2424 in %s the top action stands before the scroll region and outside it, the primary action after it",
+    async (_name, width, role) => {
+      setViewportWidth(width);
+      render(<Top />);
+      await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
+      const layer = await screen.findByRole(role, { name: "Notiz" });
+      const top = within(layer).getByRole("button", { name: "Messen" });
+      const region = layer.querySelector("[data-layer-body] > [data-scroll-region]") as HTMLElement;
+      const primary = within(layer).getByRole("button", { name: "Sichern" });
+      expect(region.contains(top)).toBe(false);
+      expect(region.contains(primary)).toBe(false);
+      expect(top.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+      expect(region.compareDocumentPosition(primary) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(
+        0,
+      );
+    },
+  );
+
+  it("US-QS-15 · issue 2424 at 200 % text the sheet counts the top action with its header: when they fill half height it opens at full height", async () => {
+    document.documentElement.style.fontSize = "32px";
+    layout.header = 150;
+    layout.pinned = 70;
+    render(<Top />);
+    const sheet = await open();
+    await waitFor(() => expect(sheet.getAttribute("data-sheet-height")).toBe("full"));
+  });
+});
+
 describe("US-QS-15 · Escape, Schließen and Back close a layer at half height", () => {
   it("US-QS-15 Escape closes the layer at half height and its address is gone", async () => {
     render(<Example />);

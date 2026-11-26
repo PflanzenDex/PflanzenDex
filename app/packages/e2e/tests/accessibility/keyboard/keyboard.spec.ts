@@ -93,7 +93,7 @@ test.describe("US-QS-08 keyboard-only everyday flows: light and measuring", () =
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await typeInto(page, form.getByLabel("Name"), "Fensterbank");
     await chooseOption(page, form.getByLabel("Lichtzone"), 2);
-    await press(page, form.getByRole("button", { name: "Standort anlegen" }));
+    await press(page, page.locator("[data-form-bar]").getByText("Standort anlegen"));
     await expect(listRow(page, "Fensterbank")).toBeVisible();
   });
 
@@ -173,7 +173,7 @@ test.describe("US-QS-08 keyboard-only everyday flows: treatment and location", (
     await press(page, page.getByRole("button", { name: "Neuer Standort" }));
     const form = page.getByRole("form", { name: "Standort anlegen" });
     await typeInto(page, form.getByLabel("Name"), "Regal");
-    await press(page, form.getByRole("button", { name: "Standort anlegen" }));
+    await press(page, page.locator("[data-form-bar]").getByText("Standort anlegen"));
     await expect(listRow(page, "Regal")).toBeVisible();
     await specimenByKeyboard(page, "Haworthia cooperi");
     // The hint "Standort fehlt" carries the action that sets the location (US-PHA-03).

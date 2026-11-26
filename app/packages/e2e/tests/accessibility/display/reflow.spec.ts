@@ -25,7 +25,7 @@ async function withSomeData(page: Page): Promise<void> {
   const form = page.getByRole("form", { name: "Standort anlegen" });
   await form.getByLabel("Name").fill("Fensterbank im Schlafzimmer nach Südsüdwest");
   await form.getByLabel("Lichtzone").selectOption({ label: "Zone 3" });
-  await form.getByRole("button", { name: "Standort anlegen" }).click();
+  await page.locator("[data-form-bar]").getByText("Standort anlegen").click();
   await expect(listRow(page, "Fensterbank im Schlafzimmer")).toBeVisible();
 }
 

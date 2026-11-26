@@ -89,7 +89,7 @@ describe("US-QS-32 · SG-FORM-06 Abbrechen of the bar leaves the layer the way i
     expect(search).toBe("");
   });
 
-  it("US-QS-32 from 1024 px the pane draws the pair as a row and Abbrechen asks as well", async () => {
+  it("US-QS-32 · d-115 from 1024 px the pane pins the pair at its bottom, under the scroll region, and Abbrechen asks as well", async () => {
     setViewportWidth(1280);
     renderLayer();
     await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
@@ -97,14 +97,37 @@ describe("US-QS-32 · SG-FORM-06 Abbrechen of the bar leaves the layer the way i
     const cancel = within(pane).getByRole("button", { name: "Abbrechen" });
     const save = within(pane).getByRole("button", { name: "Sichern" });
     expect(cancel.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
-    expect((cancel.parentElement as HTMLElement).className).not.toMatch(/\b(sticky|fixed)\b/);
-    // From md the pair stands after the last field (US-QS-32, SG-SHEET-04).
-    expect(
-      within(pane).getByLabelText("Text").compareDocumentPosition(cancel) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).not.toBe(0);
-    await userEvent.type(within(pane).getByLabelText("Text"), "Basilikum");
+    // The pair is the pane's own bar, a sibling of the layer body: it never scrolls away with the fields (owner decision d-115).
+    const bar = (cancel.parentElement as HTMLElement).parentElement as HTMLElement;
+    expect(bar.hasAttribute("data-layer-bar")).toBe(true);
+    expect(bar.parentElement).toBe(pane);
+    const field = within(pane).getByLabelText("Text");
+    const region = field.closest("[data-scroll-region]") as HTMLElement;
+    expect(region.contains(bar)).toBe(false);
+    expect(field.compareDocumentPosition(cancel) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(within(pane).getAllByRole("button", { name: "Abbrechen" })).toHaveLength(1);
+    await userEvent.type(field, "Basilikum");
     await userEvent.click(cancel);
     expect(await screen.findByRole("dialog", QUESTION)).toBeTruthy();
+  });
+
+  it("US-QS-32 · d-115 a pane without a form draws no bar and the empty slot takes no room", async () => {
+    setViewportWidth(1280);
+    render(
+      <MemoryRouter initialEntries={["/start"]}>
+        <LayerHost>
+          <LayerOpener id="text">Text</LayerOpener>
+          <LayerSheet id="text" title="Text">
+            <p>Nur Text</p>
+          </LayerSheet>
+        </LayerHost>
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Text" }));
+    const pane = await screen.findByRole("complementary", { name: "Text" });
+    expect(pane.querySelector("[data-form-bar]")).toBeNull();
+    const slot = pane.querySelector("[data-layer-bar]");
+    expect(slot?.childElementCount).toBe(0);
+    expect(slot?.className.split(/\s+/)).toContain("empty:hidden");
   });
 });

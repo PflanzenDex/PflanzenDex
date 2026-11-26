@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { createQueryClient, setProfileTimeZone, SCREEN_STALE_TIME } from "../../../shared/data";
 import { FriendsBanner } from "../friends-banner/friends-banner";
 import { FriendsNewsLayer, FriendsNewsTile } from "./friends-news";
@@ -152,6 +153,16 @@ describe("US-QS-18 · US-SOZ-06 the new plants of friends are a tile on Heute (i
     expect(within(layer).queryByRole("button", { name: "Als gelesen markieren" })).toBeNull();
     // Opening marks nothing: the news are marked read when the layer closes (US-SOZ-06, P4-C3).
     expect(posts).toEqual([]);
+  });
+
+  it("US-QS-15 · issue 2424 the layer opens at half height below 768 px, as a sheet with two heights, whatever the length of its list", async () => {
+    setViewportWidth(360);
+    server(banner(1));
+    render(<Today />);
+    await userEvent.click(await screen.findByRole("button", { name: "1 Neu bei Freunden" }));
+    const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
+    expect(layer.getAttribute("data-sheet-height")).toBe("two");
+    expect(await within(layer).findByRole("button", { name: "Vollbild" })).toBeTruthy();
   });
 
   it("US-SOZ-06 closing the layer marks what it showed as read, with the asOf of that copy", async () => {
@@ -389,7 +400,7 @@ describe("US-QS-32 the layer on Heute is flat grouped rows: one section per frie
     await userEvent.click(await screen.findByRole("button", { name: "4 Neu bei Freunden" }));
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
     // The chips jump to a section, in the same order (SG-LIST-06).
-    const chips = within(layer).getByRole("group", { name: "Zu Gruppe springen" });
+    const chips = within(layer).getByRole("group", { name: "Zur Gruppe springen" });
     expect(
       within(chips)
         .getAllByRole("button")

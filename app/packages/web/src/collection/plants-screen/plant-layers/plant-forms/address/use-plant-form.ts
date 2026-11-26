@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
+import type { MeasureStart } from "../../layer-ids";
 import { formText, useFormPlant, type FormPlant } from "./form-address";
 import { useFormAddress } from "./use-form-address";
 
@@ -36,10 +37,14 @@ export function usePlantForm(api: string, token: Token, enabled: boolean) {
   useEffect(() => {
     if (missing) leave(formText("notFound"), true);
   }, [missing, leave]);
-  const openMeasure = (m: Plant) => {
+  // "Foto" of the quick actions opens the same form with the photo picker started (US-QS-15, issue 2424): the form takes it once.
+  const [photo, setPhoto] = useState(false);
+  const openMeasure = (m: Plant, start?: MeasureStart) => {
     setPicked(m);
+    setPhoto(start?.photo === true);
     form.open("measure", m.id);
   };
+  const photoStarted = useCallback(() => setPhoto(false), []);
   const formPlant: FormPlant = { card: plant.card, failed: plant.failed };
   return {
     form,
@@ -47,6 +52,7 @@ export function usePlantForm(api: string, token: Token, enabled: boolean) {
     measure,
     measureOpen,
     openMeasure,
+    measureStart: { photo, started: photoStarted },
     leaveMeasure: form.requestLeave,
     measureSaved: form.settle,
   };

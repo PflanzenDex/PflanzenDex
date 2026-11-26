@@ -51,11 +51,14 @@ export type Measure = {
 /**
  * Which heights the sheet has. The content is as long as the sheet and what scrolls inside it; without overflow it is at
  * most as long as the sheet, so a sheet at half height with no overflow is a fitting sheet, and a sheet at full height
- * stays a sheet with two heights: its content cannot be told from the empty room below it.
+ * stays a sheet with two heights: its content cannot be told from the empty room below it. A sheet that asks for half
+ * height at least (`atLeastHalf`, owner decision 2026-11-22, issue 2424: a list of unknown length such as the news) has two heights also while
+ * its content is short, so it does not grow from a small sheet to half height while its list loads; at 200 % text, when title
+ * and actions fill half, it opens at full height as any other.
  */
-export function sheetKind(m: Measure, heights: Heights): SheetKind {
+export function sheetKind(m: Measure, heights: Heights, atLeastHalf = false): SheetKind {
   const natural = m.overflow > TOLERANCE ? m.height + m.overflow : m.height;
-  if (natural <= heights.half + TOLERANCE) return "fit";
+  if (natural <= heights.half + TOLERANCE && !atLeastHalf) return "fit";
   return m.chrome + MIN_BODY_REM * m.rem > heights.half ? "full" : "two";
 }
 
