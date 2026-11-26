@@ -79,25 +79,25 @@ const short: Decorator = (Story) => (
 // short for 27 labels every other label thinned out (the places stay, only their label is invisible).
 export const AllVariants: Story = {
   decorators: [short],
-  play: ({ canvasElement }) => {
+  play: async ({ canvasElement }) => {
     const strip = stripOf(canvasElement);
     const [present, absent] = LOOKS.entries;
     const [, thinned] = LOOKS.label;
-    const looks = Array.from(strip.children).map((el) => el.className);
+    const looks = () => Array.from(strip.children).map((el) => el.className);
     check(
-      looks.some((c) => c.includes("text-primary")),
+      looks().some((c) => c.includes("text-primary")),
       `no place is ${present}`,
     );
     check(
-      looks.some((c) => c.includes("text-muted-foreground")),
+      looks().some((c) => c.includes("text-muted-foreground")),
       `no place is ${absent}`,
     );
     check(strip.children.length === 27, "a thinned strip lost places");
-    check(
-      !hasLayout(strip) || looks.some((c) => c.includes("invisible")),
-      `no label is ${thinned} in a short strip`,
+    // The labels thin out in a ResizeObserver callback after the first layout: wait for it.
+    await waitUntil(
+      () => !hasLayout(strip) || looks().some((c) => c.includes("invisible")),
+      `a label is ${thinned} in a short strip`,
     );
-    return Promise.resolve();
   },
 };
 

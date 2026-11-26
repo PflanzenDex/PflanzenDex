@@ -8,21 +8,24 @@ import {
 import { LETTERS, letterAt } from "./letters";
 
 /**
- * How many letters apart the labels stand so that they fit the height of the strip: 1 while every letter fits, 2 when every
- * other one does. The strip keeps its 27 places for the finger; only the labels thin out (a phone at 200 % text).
+ * How many letters apart the labels stand so that they do not touch: 1 while every letter fits, 2 when every other one does.
+ * The 27 places share the strip equally and keep their count for the finger; only the labels thin out (a phone at 200 % text,
+ * where a label is taller than its place). It is measured again when the strip or a label changes its size.
  */
 export function useLabelStep(strip: RefObject<HTMLElement | null>): number {
   const [step, setStep] = useState(1);
   useLayoutEffect(() => {
     const box = strip.current;
     if (!box || typeof ResizeObserver !== "function") return;
+    const label = box.firstElementChild?.firstElementChild ?? null;
     const measure = () => {
-      const unit = box.firstElementChild?.getBoundingClientRect().height ?? 0;
+      const unit = label?.getBoundingClientRect().height ?? 0;
       const room = box.clientHeight;
       setStep(unit > 0 && room > 0 ? Math.max(1, Math.ceil((LETTERS.length * unit) / room)) : 1);
     };
     const observer = new ResizeObserver(measure);
     observer.observe(box);
+    if (label) observer.observe(label);
     measure();
     return () => observer.disconnect();
   }, [strip]);

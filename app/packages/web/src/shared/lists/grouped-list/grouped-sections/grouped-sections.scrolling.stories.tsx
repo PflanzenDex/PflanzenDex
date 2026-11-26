@@ -106,14 +106,20 @@ export const LongHeadingAt200: Story = {
       canvasElement.querySelector<HTMLElement>("[data-group-heading]"),
       "a heading",
     );
-    await waitUntil(() => box.dataset["sticky"] !== undefined, "the switch is set");
-    const covers = heading.offsetHeight * 3 > region.clientHeight;
+    const covers = () => heading.offsetHeight * 3 > region.clientHeight;
+    const off = () => box.dataset["sticky"] === "off";
+    // The switch is measured by a ResizeObserver after the text size applies, so it can lag the layout by a frame or more on a busy
+    // machine: the play waits until the switch agrees with what the layout shows, and fails, naming it, when it never does.
+    await waitUntil(
+      () => !measured || covers() === off(),
+      "the switch turns off exactly where a heading covers over a third of the region",
+    );
     const sticky = getComputedStyle(heading).position === "sticky";
     check(
-      !measured || !(covers && sticky),
+      !measured || !(covers() && sticky),
       "a heading that covers over a third of the region sticks",
     );
-    check(!measured || covers || sticky, "a heading that leaves room does not stick");
+    check(!measured || covers() || sticky, "a heading that leaves room does not stick");
     check(heading.scrollWidth <= heading.clientWidth + 1, "the heading is cut at 200 % text");
   },
 };

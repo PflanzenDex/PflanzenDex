@@ -10,8 +10,12 @@ import { useLabelStep, useStripControl } from "./use-strip-control";
  */
 export const STRIP_WIDTH = "w-11";
 
-/** One place of the strip: the letter of a group with entries is in the primary colour, one without is dimmed, not removed. */
-const place = cva("flex h-3 shrink-0 items-center justify-center", {
+/**
+ * One place of the strip: the letter of a group with entries is in the primary colour, one without is dimmed, not removed. The
+ * 27 places share the height of the strip equally (`flex-1`), so the whole strip stays reachable at every text size; only the
+ * labels keep their size and thin out where they would touch (`useLabelStep`).
+ */
+const place = cva("flex min-h-0 flex-1 items-center justify-center", {
   variants: {
     entries: { present: "text-primary", absent: "text-muted-foreground" },
     label: { shown: "", thinned: "invisible" },
@@ -57,7 +61,7 @@ export function LetterStrip(props: {
         // The touch is the strip's own: it neither scrolls the list nor the page while a finger moves on it.
         className={cn(
           STRIP_WIDTH,
-          "flex shrink-0 touch-none select-none flex-col items-center justify-between self-stretch overflow-hidden rounded-control py-1 text-xs font-semibold leading-none",
+          "flex shrink-0 touch-none select-none flex-col items-center self-stretch rounded-control text-xs font-semibold leading-none",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
         {...handlers}
@@ -71,7 +75,7 @@ export function LetterStrip(props: {
               label: i % step === 0 ? "shown" : "thinned",
             })}
           >
-            {letter}
+            <span>{letter}</span>
           </span>
         ))}
       </div>

@@ -89,12 +89,14 @@ export const Keyboard: Story = {
     const measured = hasLayout(list);
     await waitUntil(() => !measured || list.scrollTop > 0, "the list scrolls to D");
     // The first entry of D stands at the top of the list, or the list is at its end: D has only six entries, fewer than fill the box.
-    const first = list.children.item(110)?.getBoundingClientRect();
-    const top = list.getBoundingClientRect().top;
-    const atEnd = list.scrollTop + list.clientHeight >= list.scrollHeight - 2;
-    check(
-      !measured || atEnd || (first !== undefined && Math.abs(first.top - top) <= 2),
-      "the first entry of D does not stand at the top of the list",
+    const first = () => list.children.item(110)?.getBoundingClientRect();
+    const atEnd = () => list.scrollTop + list.clientHeight >= list.scrollHeight - 2;
+    await waitUntil(
+      () =>
+        !measured ||
+        atEnd() ||
+        Math.abs((first()?.top ?? Infinity) - list.getBoundingClientRect().top) <= 2,
+      "the first entry of D stands at the top of the list",
     );
   },
 };
@@ -115,15 +117,27 @@ export const At200: Story = {
   play: async ({ canvasElement }) => {
     const strip = must(stripOf(canvasElement), "the letter index");
     const measured = hasLayout(strip);
-    await waitUntil(() => !measured || strip.scrollHeight > 0, "the strip is laid out");
-    check(
-      strip.scrollHeight <= strip.clientHeight + 1,
-      "the letters do not fit the strip at 200 % text",
+    const size = () => parseFloat(getComputedStyle(document.documentElement).fontSize);
+    await waitUntil(() => !measured || size() >= 31, "the text is 200 %");
+    // The labels, not the places, must not touch: a label is taller than its place at 200 % text, so every other one thins out.
+    const overlap = () => {
+      const shown = Array.from(strip.children)
+        .filter((el) => !el.className.includes("invisible"))
+        .map((el) => (el.firstElementChild ?? el).getBoundingClientRect());
+      return shown.some((box, i) => i > 0 && box.top < (shown[i - 1]?.bottom ?? 0) - 1);
+    };
+    const inside = () => {
+      const box = strip.getBoundingClientRect();
+      return Array.from(strip.children).every((el) => {
+        const at = el.getBoundingClientRect();
+        return at.top >= box.top - 1 && at.bottom <= box.bottom + 1;
+      });
+    };
+    // The labels thin out in a ResizeObserver callback after the text size applies: wait for the final state, never for a
+    // value that is true at once.
+    await waitUntil(
+      () => !measured || (inside() && !overlap()),
+      "every place stands inside the strip and no two labels touch at 200 % text",
     );
-    const shown = Array.from(strip.children)
-      .filter((el) => !el.className.includes("invisible"))
-      .map((el) => el.getBoundingClientRect());
-    const overlap = shown.some((box, i) => i > 0 && box.top < (shown[i - 1]?.bottom ?? 0) - 1);
-    check(!measured || !overlap, "two letters overlap at 200 % text");
   },
 };

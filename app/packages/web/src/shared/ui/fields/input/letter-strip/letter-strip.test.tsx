@@ -182,6 +182,15 @@ describe("US-QS-15 · WCAG 1.4.4 the labels thin out where the strip is too shor
     expect(strip.children).toHaveLength(27);
   });
 
+  it("US-QS-15 the 27 places share the height of the strip, so the whole strip stays reachable at 200 % text", () => {
+    const { strip } = show();
+    for (const place of strip.children) {
+      expect(place.className).toContain("flex-1");
+      expect(place.className).not.toMatch(/(^|\s)h-\d/);
+    }
+    expect(strip.className).not.toContain("py-1");
+  });
+
   it("US-QS-15 without a ResizeObserver or a height every letter shows", () => {
     const { strip } = show();
     expect(visible(strip)).toHaveLength(27);
