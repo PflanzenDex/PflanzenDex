@@ -20,8 +20,8 @@ const t = texts(table);
  */
 export function FriendsRouteSkeleton() {
   return (
-    <LayerHost data-fit-screen="">
-      <section className="flex min-w-0 flex-col gap-3">
+    <LayerHost className="min-h-0" data-fit-screen="" data-fit-fill="">
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
         {/* The title is the page's header: in the top bar below md, where the page puts it (issue 2230). */}
         <PageHeader fallback title={t("friends.title")} />
         <FriendsPageBody />
