@@ -76,3 +76,11 @@ test("US-QG-10: only <name>/<name>.tsx is a component, named in PascalCase", () 
   assert.equal(componentName("app/stories/shell/shell.fixtures.tsx"), undefined);
   assert.equal(componentName("ui/button/button-base.tsx"), undefined);
 });
+
+test("US-QG-10: in the flat layout of shared/ui (issue 2509) <name>.tsx is a component, a part with a dot is not", () => {
+  assert.equal(componentName("src/shared/ui/button.tsx"), "Button");
+  assert.equal(componentName("src/shared/ui/form-bar.tsx"), "FormBar");
+  assert.equal(componentName("src/shared/ui/form-bar.slot.tsx"), undefined);
+  assert.equal(componentName("src/shared/ui/button.stories.tsx"), undefined);
+  assert.equal(componentName("src/shared/patterns/button.tsx"), undefined);
+});

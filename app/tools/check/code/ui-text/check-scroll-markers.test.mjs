@@ -8,7 +8,7 @@ import {
   scrollXValues,
 } from "./check-scroll-markers.mjs";
 
-const SHARED_TABLE = "packages/web/src/shared/ui/display/table/table.tsx";
+const SHARED_TABLE = "packages/web/src/shared/ui/table.tsx";
 const PLAIN = "packages/web/src/catalog/example/example.tsx";
 
 const baseline = (entries) => ({ maxTotal: entries.reduce((s, e) => s + e.count, 0), entries });
@@ -37,9 +37,10 @@ describe("FR-QG-17 scan: which lines and files count", () => {
     assert.equal(isScanned("packages/web/src/a/a.css"), false);
   });
 
-  it("FR-QG-17 a shared component is its whole folder, and a folder with a longer name is not", () => {
+  it("FR-QG-17 a shared component is its file and its parts, and a file with a longer name is not (flat shared/ui, issue 2509)", () => {
     assert.equal(isShared(SHARED_TABLE), true);
-    assert.equal(isShared("packages/web/src/shared/ui/display/table-extra/x.tsx"), false);
+    assert.equal(isShared("packages/web/src/shared/ui/sheet.handle.tsx"), true);
+    assert.equal(isShared("packages/web/src/shared/ui/table-extra.tsx"), false);
   });
 });
 
@@ -60,12 +61,9 @@ describe("FR-QG-17 SM-4 and SM-5: shared components carry the marker and overscr
       '  <div className="overflow-y-auto overscroll-contain" />',
       ");",
     ].join("\n");
-    const errors = errorsOf("packages/web/src/shared/ui/overlays/dialog/dialog.tsx", source);
+    const errors = errorsOf("packages/web/src/shared/ui/dialog.tsx", source);
     assert.equal(errors.length, 1);
-    assert.match(
-      errors[0],
-      /^SM-4 packages\/web\/src\/shared\/ui\/overlays\/dialog\/dialog\.tsx:2:/,
-    );
+    assert.match(errors[0], /^SM-4 packages\/web\/src\/shared\/ui\/dialog\.tsx:2:/);
   });
 
   it("FR-QG-17 SM-5: a shared region without overscroll-contain fails, the marker alone is not enough", () => {
@@ -74,12 +72,9 @@ describe("FR-QG-17 SM-4 and SM-5: shared components carry the marker and overscr
       '  <div data-scroll-region="" className="overflow-y-auto" />',
       ");",
     ].join("\n");
-    const errors = errorsOf(
-      "packages/web/src/shared/ui/overlays/sheet/sheet-panel/sheet-panel.tsx",
-      source,
-    );
+    const errors = errorsOf("packages/web/src/shared/ui/sheet.panel.tsx", source);
     assert.equal(errors.length, 1);
-    assert.match(errors[0], /^SM-5 .*sheet-panel\.tsx:2:/);
+    assert.match(errors[0], /^SM-5 .*sheet\.panel\.tsx:2:/);
   });
 
   it("FR-QG-17 SM-4: a marker in another statement does not satisfy the region (the statement is the context)", () => {
@@ -87,7 +82,7 @@ describe("FR-QG-17 SM-4 and SM-5: shared components carry the marker and overscr
       'export const Marked = () => <div data-scroll-region="" />;',
       'export const Scroller = () => <div className="overflow-y-auto overscroll-contain" />;',
     ].join("\n");
-    const errors = errorsOf("packages/web/src/shared/ui/overlays/dialog/dialog.tsx", source);
+    const errors = errorsOf("packages/web/src/shared/ui/dialog.tsx", source);
     assert.equal(errors.length, 1);
     assert.match(errors[0], /^SM-4 .*dialog\.tsx:2:/);
   });
