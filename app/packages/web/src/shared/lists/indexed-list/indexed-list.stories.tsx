@@ -20,7 +20,7 @@ const inFrame: Decorator = (Story) => (
 
 function List({ rows, byName }: { rows: readonly string[]; byName: boolean }) {
   return (
-    <IndexedList items={rows} nameOf={(n) => n} byName={byName} label="Springen zu Buchstabe">
+    <IndexedList items={rows} nameOf={(n) => n} byName={byName} label="Zum Buchstaben springen">
       <ul
         aria-label="Arten"
         data-scroll-region=""
@@ -56,7 +56,7 @@ const listOf = (canvas: HTMLElement) =>
 export const Default: Story = {
   play: ({ canvasElement }) => {
     const strip = must(stripOf(canvasElement), "the letter index");
-    check(strip.getAttribute("aria-label") === "Springen zu Buchstabe", "the strip has no name");
+    check(strip.getAttribute("aria-label") === "Zum Buchstaben springen", "the strip has no name");
     check(strip.children.length === 27, "the strip has not 27 places");
     const letter = (l: string) =>
       must(

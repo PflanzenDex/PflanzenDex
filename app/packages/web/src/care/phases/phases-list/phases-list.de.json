@@ -21,7 +21,7 @@
   "groupSubject": "{count} Pflanzen nach {place}",
   "phaseCount.one": "{count} Pflanze",
   "phaseCount.other": "{count} Pflanzen",
-  "phaseNone": "Keine Pflanze in dieser Phase.",
-  "jump": "Zu Pflegephase springen",
+  "phaseNone": "Zurzeit keine Pflanze.",
+  "jump": "Zur Pflegephase springen",
   "list": "Pflanzen mit Pflegephase"
 }

@@ -389,7 +389,7 @@ describe("US-QS-32 the layer on Heute is flat grouped rows: one section per frie
     await userEvent.click(await screen.findByRole("button", { name: "4 Neu bei Freunden" }));
     const layer = await screen.findByRole("dialog", { name: "Neu bei Freunden" });
     // The chips jump to a section, in the same order (SG-LIST-06).
-    const chips = within(layer).getByRole("group", { name: "Zu Gruppe springen" });
+    const chips = within(layer).getByRole("group", { name: "Zur Gruppe springen" });
     expect(
       within(chips)
         .getAllByRole("button")

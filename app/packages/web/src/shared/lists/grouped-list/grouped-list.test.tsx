@@ -441,10 +441,38 @@ describe("US-QS-15 · SG-LIST-06 a section of a long grouped list: sticky label,
     const action = screen.getByRole("button", { name: "Standort setzen" });
     const heading = screen.getByRole("heading", { name: "Standort unbekannt" });
     expect(heading.contains(action)).toBe(false);
-    expect(heading.parentElement).toBe(action.parentElement);
+    expect(heading.parentElement).toBe(action.parentElement?.parentElement);
     expect(heading.parentElement?.hasAttribute("data-group-heading")).toBe(true);
     // Without `sticky` the label with an action stays in the flow.
     expect(heading.parentElement?.className).not.toContain("sticky");
+  });
+
+  it("US-QS-15 the row of a heading with an action wraps: the heading keeps 8 rem, the action moves below it at the trailing edge (issue 2524)", () => {
+    render(
+      wrap(
+        <GroupedList
+          label="Standort unbekannt · 3 Pflanzen"
+          action={<button type="button">Standort setzen</button>}
+        >
+          {null}
+        </GroupedList>,
+      ),
+    );
+    const classesOf = (el: Element | null | undefined) =>
+      (el?.getAttribute("class") ?? "").split(" ");
+    const heading = screen.getByRole("heading", { name: /^Standort unbekannt/ });
+    const box = screen.getByRole("button", { name: "Standort setzen" }).parentElement;
+    expect(classesOf(heading.parentElement)).toContain("flex-wrap");
+    // The heading basis is in rem, so it grows with the text size; the action box is the one of an object row (issue 2322).
+    expect(classesOf(heading)).toEqual(expect.arrayContaining(["min-w-0", "grow", "basis-32"]));
+    expect(classesOf(box)).toEqual(expect.arrayContaining(["ml-auto", "max-w-full", "shrink-0"]));
+  });
+
+  it("US-QS-15 a heading without an action is the plain heading: no wrapping row, no basis", () => {
+    render(wrap(<GroupedList label="Flur · 3 Pflanzen">{null}</GroupedList>));
+    const heading = screen.getByRole("heading", { name: /^Flur/ });
+    expect(heading.parentElement?.hasAttribute("data-group-heading")).toBe(false);
+    expect(heading.className).not.toContain("basis-");
   });
 
   it("US-QS-15 a free section brings its own list: the children are not wrapped in a group", () => {

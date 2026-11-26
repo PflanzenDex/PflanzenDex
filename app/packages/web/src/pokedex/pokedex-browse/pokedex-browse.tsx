@@ -138,7 +138,7 @@ function Families(props: { result: ReturnType<typeof browsePokedex>; level: 2 | 
   return (
     <GroupSections
       label="Gefangene Arten"
-      jumpLabel="Zu Familie springen"
+      jumpLabel={ui("familyJump")}
       level={props.level}
       groups={groups}
       list={{

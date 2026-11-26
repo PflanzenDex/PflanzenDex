@@ -51,7 +51,7 @@ export function GroupSections<T>(props: {
   /** Accessible name of the scroll region of a page (German). */
   label: string;
   /**
-   * Accessible name of the row that jumps (German), e.g. "Zu Standort springen". Without it there is no row: a short list of
+   * Accessible name of the row that jumps (German), e.g. "Zum Standort springen". Without it there is no row: a short list of
    * two or three sections, such as the due items, needs none.
    */
   jumpLabel?: string;

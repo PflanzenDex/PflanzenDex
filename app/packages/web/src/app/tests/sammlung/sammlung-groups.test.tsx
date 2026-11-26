@@ -184,7 +184,7 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
 
   it("US-QS-15 · US-QS-19 · SG-LIST-06 · SG-LIST-08 grouped by location every place is a section with its count; the unknown place stands last with its one action; the chips only jump", async () => {
     renderAt("/collection?view=plants&group=location");
-    const row = await screen.findByRole("group", { name: "Zu Standort springen" });
+    const row = await screen.findByRole("group", { name: "Zum Standort springen" });
     expect(
       within(row)
         .getAllByRole("button")
@@ -245,7 +245,7 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
       (u) => seen.push(u),
     );
     renderAt("/collection?view=plants&group=location");
-    const row = await screen.findByRole("group", { name: "Zu Standort springen" });
+    const row = await screen.findByRole("group", { name: "Zum Standort springen" });
     expect(within(row).getByRole("button", { name: /^Wohnzimmer \(120\)$/ })).toBeTruthy();
     expect(await screen.findAllByRole("list", { name: "Pflanzen" })).toHaveLength(2);
     expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
@@ -264,7 +264,7 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
       "Wachstumsphase · 0\u00a0Pflanzen",
     ]);
     const growth = screen.getByRole("region", { name: /^Wachstumsphase/ });
-    expect(within(growth).getByText("Keine Pflanze in dieser Phase.")).toBeTruthy();
+    expect(within(growth).getByText("Zurzeit keine Pflanze.")).toBeTruthy();
     expect(within(growth).queryByRole("button")).toBeNull();
     expect(within(growth).queryByRole("link")).toBeNull();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);

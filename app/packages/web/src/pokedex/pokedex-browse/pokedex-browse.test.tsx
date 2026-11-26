@@ -192,7 +192,7 @@ describe("US-POK-08 sort", () => {
   it("US-POK-08 · US-QS-15 · SG-LIST-06 · SG-LIST-08 by family: every family is a section with its count, the chips only jump, 'n / unbekannt' is named", async () => {
     await open();
     await sortBy("Familie");
-    const jump = screen.getByRole("group", { name: "Zu Familie springen" });
+    const jump = screen.getByRole("group", { name: "Zur Familie springen" });
     // The chips are no filter: none is pressed and none carries a check icon (SG-LIST-06).
     expect(
       within(jump)
@@ -220,7 +220,7 @@ describe("US-POK-08 sort", () => {
   it("US-POK-08 · SG-LIST-06 a species without a known family is grouped under 'Ohne bekannte Familie', last", async () => {
     await open([species("Citrus limon"), ...caught]);
     await sortBy("Familie");
-    const jump = screen.getByRole("group", { name: "Zu Familie springen" });
+    const jump = screen.getByRole("group", { name: "Zur Familie springen" });
     const labels = within(jump)
       .getAllByRole("button")
       .map((b) => b.textContent);
@@ -248,7 +248,7 @@ const many = [
   ),
   species("Cupressus sempervirens", { germanName: "Zypresse" }),
 ];
-const strip = () => screen.queryByRole("slider", { name: "Springen zu Buchstabe" });
+const strip = () => screen.queryByRole("slider", { name: "Zum Buchstaben springen" });
 
 describe("US-QS-15 · SG-LIST-06 the letter index of the Pokédex: over 100 species, sorted by name", () => {
   it("US-QS-15 the strip shows beside a list of more than 100 species sorted by name, and its name is German", async () => {
