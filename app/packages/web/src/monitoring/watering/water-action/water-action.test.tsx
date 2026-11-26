@@ -313,7 +313,7 @@ describe("US-QS-32 Gießen stays in place with its undo (SG-FEED-03)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
     const undo = await screen.findByRole("button", { name: "Rückgängig: Aloe" });
     expect(announce).toHaveBeenCalledOnce();
-    expect(announce).toHaveBeenCalledWith("Gegossen heute");
+    expect(announce).toHaveBeenCalledWith("Gegossen heute. Rückgängig möglich.");
     // The row has no `aria-live`, no `role="status"` and no `role="alert"` above it: the announcer is the one channel.
     expect(undo.closest("[aria-live], [role=status], [role=alert]")).toBeNull();
     expect(host.closest("[aria-live], [role=status], [role=alert]")).toBeNull();
@@ -432,11 +432,11 @@ describe("US-QS-32 Gießen stays in place with its undo (SG-FEED-03)", () => {
       show();
       await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
       await screen.findByRole("button", { name: "Rückgängig: Aloe" });
-      expect(said()).toBe("Gegossen heute");
+      expect(said()).toBe("Gegossen heute. Rückgängig möglich.");
       act(() => vi.advanceTimersByTime(8000));
       expect(screen.getByRole("button", { name: "Gießen: Aloe" })).toBeTruthy();
       expect(screen.queryByText("Zuletzt gegossen: heute", { selector: "p" })).toBeNull();
-      expect(said()).toBe("Gegossen heute");
+      expect(said()).toBe("Gegossen heute. Rückgängig möglich.");
     } finally {
       vi.useRealTimers();
     }
