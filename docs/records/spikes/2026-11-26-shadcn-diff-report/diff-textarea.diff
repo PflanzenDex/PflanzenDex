@@ -1,0 +1,32 @@
+--- a/src/shared/ui/textarea.tsx
++++ b/src/shared/ui/textarea.tsx
+@@ -1,20 +1,17 @@
+ import * as React from "react"
+-import { cn } from "@/shared/lib/utils"
++import { cn } from "cn"
+-import { fieldClasses, type FieldInvalidProps } from "./input"
+ 
+-export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & FieldInvalidProps
++function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+-
++  return (
+-/** Multi-line field (US-QS-07, DS-15, DS-18, DS-19); same look and states as `Input`. */
+-const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+-  ({ className, invalid, ...props }, ref) => (
+     <textarea
+-      ref={ref}
++      data-slot="textarea"
+-      aria-invalid={invalid || props["aria-invalid"] || undefined}
++      className={cn(
+-      className={cn(fieldClasses,        "min-h-[88px] resize-none py-2 ", className)}
++        "flex field-sizing-content min-h-16 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
++        className
++      )}
+       {...props}
+     />
+   )
+-)
++}
+-Textarea.displayName = "Textarea"
+ 
+ export { Textarea }

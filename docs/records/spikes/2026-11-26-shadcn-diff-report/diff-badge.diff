@@ -1,0 +1,71 @@
+--- a/src/shared/ui/badge.tsx
++++ b/src/shared/ui/badge.tsx
+@@ -1,37 +1,48 @@
+-import { cva, type VariantProps } from "class-variance-authority"
+ import * as React from "react"
+-import { cn } from "@/shared/lib/utils"
++import { cva, type VariantProps } from "class-variance-authority"
++import { cn } from "cn"
++import { Slot } from "radix-ui"
+ 
+-/**
+- * Badge looks (US-QS-07, DS-34, DS-35). Not interactive; the text carries the meaning, colour only supports it (DS-38).
+- * States are neutral (SG-COLOR-01): `default` is the group fill with text in `foreground`, and an ended state is `outline`.
+- * `warning` only for the SG-COLOR-04 cases: an overdue or due treatment, "Abweichung", "Vergeilt", "Defekt". `destructive`
+- * is for errors only. No variant uses the primary fill.
+- */
+ const badgeVariants = cva(
+-  "inline-flex items-center gap-1 rounded-pill border px-2.5 py-0.5 text-label font-semibold whitespace-nowrap ",
++  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
+   {
+     variants: {
+       variant: {
+-        default: "border-transparent bg-secondary text-foreground ",
++        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+-        outline: "border-border bg-card text-foreground",
++        secondary:
+-        destructive:          "border-transparent bg-destructive text-destructive-foreground ",
++          "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
+-        warning: "border-warning-border bg-warning text-warning-foreground",
++        destructive:
++          "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
++        outline:
++          "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
++        ghost:
++          "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
++        link: "text-primary underline-offset-4 hover:underline",
+       },
+     },
+     defaultVariants: {
+       variant: "default",
+     },
+   }
+ )
+ 
+-export type BadgeProps = React.HTMLAttributes<HTMLSpanElement> & VariantProps<typeof badgeVariants>
++function Badge({
++  className,
++  variant = "default",
++  asChild = false,
++  ...props
++}: React.ComponentProps<"span"> &
++  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
++  const Comp = asChild ? Slot.Root : "span"
+ 
+-const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
++  return (
+-  ({ className, variant, ...props }, ref) => (
++    <Comp
+-    <span ref={ref} className={cn(badgeVariants({ variant }), className)} {...props} />
++      data-slot="badge"
+-  ),
++      data-variant={variant}
+-)
++      className={cn(badgeVariants({ variant }), className)}
+-Badge.displayName = "Badge"
++      {...props}
++    />
++  )
++}
+ 
+ export { Badge, badgeVariants }
