@@ -2,9 +2,13 @@
 // match yet is listed in layout-baseline.json and only shrinks (FR-QG-22).
 const story = "[a-z0-9][a-z0-9-]*";
 export default {
-  // The unit limit of a module directory (FR-QG-21; 5 before owner decision d-133 of 2026-11-26, issue 2543). The per-path
-  // rules below keep their own limits.
+  // The size hint of a module directory (FR-QG-21, d-136 of 2026-11-26, issue 2546): above it `make layout` prints a hint
+  // and does not fail (8 since owner decision d-133, issue 2543; 5 before). A per-path rule below is a hard limit (d-133);
+  // the fixed limits of the app root, the gate folder, the runbooks and the module folders are README manifests (d-139).
   maxUnits: 8,
+  // A folder without a manifest fails above this many units: twice the size hint (d-138). A manifest (README.md
+  // frontmatter, LY-1a) sets its own limit, expect.
+  failUnits: 16,
   // A directory without a per-path rule that holds this many files of one extension family is an automatic collection:
   // no unit limit, LY-3 still applies (FR-QG-21, d-133).
   autoCollectionMin: 8,
@@ -38,9 +42,7 @@ export default {
   // First match wins; "*" is one path segment. A collection has no entry limit but a name pattern (LY-2).
   dirs: [
     // Module roots (FR-QG-21): the `src/` folder holds the modules, and there are more modules than the unit limit, so it
-    // has none; a module holds up to 10 feature directories (starting value, assumption), inside a feature 5 applies.
-    // The app root: package.json, package-lock.json, eslint.config.js (ESLint finds it only here), packages, tools, config.
-    { path: "app", maxUnits: 6 },
+    // has none. A module folder holds its limit in its README manifest (10 feature directories, d-139, issue 2546).
     // A package root (d-133): its tool configuration files (package and lock files, tsconfig, components.json and the
     // *.config.* files of Vite, Vitest, Playwright and ESLint) are no units; LY-3 still checks their names.
     {
@@ -49,17 +51,11 @@ export default {
         /^(package(-lock)?\.json|tsconfig[a-z0-9.-]*\.json|components\.json|[a-z0-9.-]+\.config\.(m?js|ts|cjs))$/,
     },
     { path: "app/packages/*/src", maxUnits: Infinity },
-    { path: "app/packages/*/src/*", maxUnits: 10 },
     // The changelog fragments (US-DEV-06, issue 1486): one JSON file per PR, named by its issue number and a slug. Each
     // file is a unit of its own, so a unit cap would stop the folder after nine PRs; the name pattern (LY-2) is the rule.
     { path: "app/packages/web/src/news/unreleased", collection: /^\d+-[a-z0-9-]+\.json$/ },
-    // The gate scripts: one folder per gate (US-QG-07 added db-indexes as the sixth, FR-QG-26 the UI text rule as the
-    // seventh: a language rule fits none of the other folders, FR-QG-12 the constants gate as the eighth (issue 1138):
-    // literal repetition of domain values is its own gate); a ninth needs a new reason.
-    { path: "app/tools/check/code", maxUnits: 8 },
-    // One runbook per operational task, looked up by name in an incident; folding them into one file hides them
-    // (#985, US-QG-07). 10 is a starting value (assumption); an eleventh needs a new reason or subfolders.
-    { path: "docs/guides/operations", maxUnits: 10 },
+    // The gate folder app/tools/check/code (its reason is in its manifest), the runbooks in docs/guides/operations (one per
+    // task, looked up by name in an incident, #985) and the module folders hold their limits in README manifests (d-139).
     // One ratchet file per gate (FR-QG-17); every new gate brings its own (issue 1137 added the sixth), so the folder is
     // a collection with a strict name instead of a unit limit.
     { path: "app/config/gates/baselines", collection: /^[a-z0-9-]+-baseline\.json$/ },

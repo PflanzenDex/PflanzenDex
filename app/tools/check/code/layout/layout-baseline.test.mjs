@@ -57,6 +57,8 @@ describe("US-QG-09 every violation says what to do next", () => {
     "LY-3": /kebab-case/,
     "LY-4": /into a folder/,
     "LY-5": /app\/, docs\/ or tools\//,
+    "LY-7":
+      /fix the README\.md frontmatter: topic and why as text, expect as a whole number above 0/,
   };
   for (const [rule, hint] of Object.entries(next)) {
     it(`${rule}: new violation and worse directory both carry a hint`, () => {

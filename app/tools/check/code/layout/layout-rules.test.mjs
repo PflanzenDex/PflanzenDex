@@ -1,11 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { findLayout } from "./layout-rules.mjs";
-import { unitCount, isIgnored, globMatch, familyOf } from "./layout-tree.mjs";
+import { findLayout, hintLines, judgeLayout } from "./layout-rules.mjs";
+import { unitCount, isIgnored, globMatch, familyOf, prefixProposal } from "./layout-tree.mjs";
 import layoutConfig from "../../../../config/lint/layout.config.mjs";
 
 const config = {
   maxUnits: 8,
+  failUnits: 16,
   autoCollectionMin: 8,
   rootFiles: ["README.md", "Makefile"],
   rootDirs: ["app", "docs"],
@@ -21,14 +22,36 @@ const files = (dir, n) => Array.from({ length: n }, (_, i) => `${dir}/f${i}.md`)
 const EXTS = ["md", "json", "css"];
 const mixed = (dir, n) => Array.from({ length: n }, (_, i) => `${dir}/f${i}.${EXTS[i % 3]}`);
 const ts = (dir, names) => names.map((n) => `${dir}/${n}`);
+// Units with six extensions in turn: no family reaches 8 files below 48 units, so no automatic collection applies.
+const EXTS6 = ["md", "json", "css", "txt", "yml", "html"];
+const spread = (dir, n) => Array.from({ length: n }, (_, i) => `${dir}/f${i}.${EXTS6[i % 6]}`);
+// A reader of the README.md texts of a fixture (LY-1a, LY-7): the layout rules read no file themselves.
+const readme = (texts) => (p) => texts[p];
+const manifest = (expect) =>
+  `---\ntopic: Test folder\nwhy: the files belong together\nexpect: ${expect}\n---\n# Test folder\n`;
 
-describe("US-QG-09 LY-1 fan-out", () => {
-  it("fails a directory with more than 8 units and names path and count", () => {
-    const f = run(mixed("app/x", 9));
+describe("US-QG-09 LY-1 fan-out (size hint 8, hard limit 16 without a manifest, d-136, d-138)", () => {
+  it("fails a directory above 16 units without a manifest, and names path and count", () => {
+    const f = run(mixed("app/x", 17));
     assert.deepEqual(rules(f), ["LY-1 app/x"]);
-    assert.equal(f[0].value, 9);
+    assert.equal(f[0].value, 17);
   });
-  it("accepts exactly 8 units", () => assert.deepEqual(run(mixed("app/x", 8)), []));
+  it("prints a hint, and does not fail, for 9 to 16 units without a manifest", () => {
+    for (const n of [9, 16]) {
+      const r = judgeLayout(mixed("app/x", n), config);
+      assert.deepEqual(r.findings, [], `${n} units`);
+      assert.deepEqual(
+        r.hints.map((h) => [h.dir, h.units, h.size]),
+        [["app/x", n, 8]],
+        `${n} units`,
+      );
+    }
+  });
+  it("accepts exactly 8 units without a hint", () => {
+    const r = judgeLayout(mixed("app/x", 8), config);
+    assert.deepEqual(r.findings, []);
+    assert.deepEqual(r.hints, []);
+  });
   it("counts files with the same stem once", () => {
     const paths = [
       "card.tsx",
@@ -46,8 +69,13 @@ describe("US-QG-09 LY-1 fan-out", () => {
     assert.deepEqual(run([...files("app/x", 4), "app/x/f0/a.ts"]), []);
   });
   it("counts a directory as one unit", () => {
-    assert.deepEqual(run([...mixed("app/x", 7), "app/x/sub/a.ts"]), []);
-    assert.deepEqual(rules(run([...mixed("app/x", 8), "app/x/sub/a.ts"])), ["LY-1 app/x"]);
+    assert.deepEqual(judgeLayout([...mixed("app/x", 7), "app/x/sub/a.ts"], config).hints, []);
+    const hinted = judgeLayout([...mixed("app/x", 8), "app/x/sub/a.ts"], config).hints;
+    assert.deepEqual(
+      hinted.map((h) => h.units),
+      [9],
+      "8 files and a directory are 9 units",
+    );
   });
   it("ignores entries starting with a dot", () => {
     assert.equal(isIgnored(".claude/rules/a.md"), true);
@@ -69,18 +97,31 @@ describe("US-QG-09 LY-1 automatic collection (d-133)", () => {
   });
   const ts8 = Array.from({ length: 8 }, (_, i) => `app/x/f${i}.ts`);
   const subfolders = (n) => Array.from({ length: n }, (_, i) => `app/x/s${i + 1}/a.md`);
-  it("US-QG-09 (d-135): 8 files of one family and 9 subfolders fail LY-1, the subfolders count", () => {
-    const f = run([...ts8, ...subfolders(9)]);
+  it("US-QG-09 (d-135): 8 files of one family and 9 subfolders print the hint, the subfolders count", () => {
+    const r = judgeLayout([...ts8, ...subfolders(9)], config);
+    assert.deepEqual(r.findings, []);
+    assert.deepEqual(
+      r.hints.map((h) => h.units),
+      [9],
+    );
+  });
+  it("US-QG-09 (d-135): 8 files of one family and 17 subfolders fail LY-1, the subfolders count", () => {
+    const f = run([...ts8, ...subfolders(17)]);
     assert.deepEqual(rules(f), ["LY-1 app/x"]);
-    assert.equal(f[0].value, 9);
+    assert.equal(f[0].value, 17);
   });
-  it("US-QG-09 (d-135): 8 files of one family and 3 subfolders pass", () => {
-    assert.deepEqual(run([...ts8, ...subfolders(3)]), []);
+  it("US-QG-09 (d-135): 8 files of one family and 3 subfolders pass without a hint", () => {
+    const r = judgeLayout([...ts8, ...subfolders(3)], config);
+    assert.deepEqual(r.findings, []);
+    assert.deepEqual(r.hints, []);
   });
-  it("fails a mixed directory with 7 files of one family and 2 other units at 9 units", () => {
-    assert.deepEqual(rules(run([...files("app/x", 7), "app/x/notes.json", "app/x/sub/a.ts"])), [
-      "LY-1 app/x",
-    ]);
+  it("US-QG-09 (d-133): 7 files of one family and 2 other units print the hint at 9 units", () => {
+    const r = judgeLayout([...files("app/x", 7), "app/x/notes.json", "app/x/sub/a.ts"], config);
+    assert.deepEqual(r.findings, []);
+    assert.deepEqual(
+      r.hints.map((h) => h.units),
+      [9],
+    );
   });
   it("counts .ts and .tsx as one family, and .js, .jsx and .mjs as one family", () => {
     const tsx = ts("app/x", ["a.ts", "b.tsx", "c.ts", "d.tsx", "e.ts", "f.tsx", "g.ts", "h.tsx"]);
@@ -88,22 +129,33 @@ describe("US-QG-09 LY-1 automatic collection (d-133)", () => {
     assert.deepEqual(run(tsx), []);
     assert.deepEqual(run(js), []);
   });
-  it("does not merge two families: 4 .ts, 4 .js and one .md are 9 units", () => {
+  it("does not merge two families: 4 .ts, 4 .js and one .md print the hint at 9 units", () => {
     const paths = [
       ...ts("app/x", ["a.ts", "b.ts", "c.ts", "d.ts"]),
       ...ts("app/x", ["e.js", "f.js", "g.js", "h.js"]),
       "app/x/z.md",
     ];
-    assert.deepEqual(rules(run(paths)), ["LY-1 app/x"]);
+    const r = judgeLayout(paths, config);
+    assert.deepEqual(r.findings, []);
+    assert.deepEqual(
+      r.hints.map((h) => h.units),
+      [9],
+      "merged, the 8 files would be a collection and no hint would fire",
+    );
   });
-  it("gives no collection to 3 .ts, 3 .md and 3 subdirectories (9 units)", () => {
+  it("gives no collection to 3 .ts, 3 .md and 3 subdirectories: the hint names 9 units", () => {
     const paths = [
       ...ts("app/x", ["a.ts", "b.ts", "c.ts", "d.md", "e.md", "f.md"]),
       "app/x/s1/a.md",
       "app/x/s2/a.md",
       "app/x/s3/a.md",
     ];
-    assert.deepEqual(rules(run(paths)), ["LY-1 app/x"]);
+    const r = judgeLayout(paths, config);
+    assert.deepEqual(r.findings, []);
+    assert.deepEqual(
+      r.hints.map((h) => h.units),
+      [9],
+    );
   });
   it("still enforces kebab-case names (LY-3) in an automatic collection", () => {
     const paths = [...files("app/x", 11), "app/x/Bad_Name.md"];
@@ -139,19 +191,28 @@ describe("US-QG-09 LY-1 package roots (d-133)", () => {
     const paths = [...toolFiles, `${web}/src/a.ts`, `${web}/public/x.txt`];
     assert.deepEqual(findLayout(paths, layoutConfig), []);
   });
-  it("counts the other entries of a package root: 8 pass, 9 fail", () => {
+  it("counts the other entries of a package root: 8 pass without a hint, 9 print one, 17 fail", () => {
     const src = [`${web}/src/a.ts`, `${web}/public/x.txt`];
-    assert.deepEqual(findLayout([...toolFiles, ...src, ...mixed(web, 6)], layoutConfig), []);
-    const f = findLayout([...toolFiles, ...src, ...mixed(web, 7)], layoutConfig);
+    assert.deepEqual(judgeLayout([...toolFiles, ...src, ...mixed(web, 6)], layoutConfig).hints, []);
+    const hinted = judgeLayout([...toolFiles, ...src, ...mixed(web, 7)], layoutConfig);
+    assert.deepEqual(
+      hinted.hints.map((h) => h.units),
+      [9],
+    );
+    const f = findLayout([...toolFiles, ...src, ...mixed(web, 15)], layoutConfig);
     assert.deepEqual(rules(f), [`LY-1 ${web}`]);
-    assert.equal(f[0].value, 9);
+    assert.equal(f[0].value, 17);
   });
   it("still checks the name of a tool configuration file (LY-3)", () => {
     assert.deepEqual(rules(findLayout([`${web}/Vite.config.ts`], layoutConfig)), [`LY-3 ${web}`]);
   });
-  it("counts the same tool files outside a package root", () => {
-    const f = findLayout([...mixed("app/x", 8), "app/x/vite.config.ts"], layoutConfig);
-    assert.deepEqual(rules(f), ["LY-1 app/x"]);
+  it("counts the same tool files outside a package root: 9 units print the hint", () => {
+    const r = judgeLayout([...mixed("app/x", 8), "app/x/vite.config.ts"], layoutConfig);
+    assert.deepEqual(r.findings, []);
+    assert.deepEqual(
+      r.hints.map((h) => h.units),
+      [9],
+    );
   });
 });
 
@@ -196,9 +257,13 @@ describe("US-QG-09 LY-2 dated spike folders (d-133)", () => {
     assert.deepEqual(rules(f), [`LY-2 ${folder}`]);
     assert.deepEqual(f[0].items, ["Notes_Draft.md"]);
   });
-  it("gives a folder inside a spike the default unit limit", () => {
-    const f = findLayout(mixed(`${spikes}/2026-11-26-lint-rules/data`, 9), layoutConfig);
-    assert.deepEqual(rules(f), [`LY-1 ${spikes}/2026-11-26-lint-rules/data`]);
+  it("gives a folder inside a spike the default unit rule: 9 units print a hint, 17 fail", () => {
+    const folder = `${spikes}/2026-11-26-lint-rules/data`;
+    assert.deepEqual(
+      judgeLayout(mixed(folder, 9), layoutConfig).hints.map((h) => h.dir),
+      [folder],
+    );
+    assert.deepEqual(rules(findLayout(mixed(folder, 17), layoutConfig)), [`LY-1 ${folder}`]);
   });
 });
 
@@ -276,5 +341,162 @@ describe("US-QG-09 LY-3 exemption pattern", () => {
     assert.equal(globMatch("a/**/m/x_*.p", "a/b/m/y_de.p"), false);
     assert.equal(globMatch("a/*/m", "a/b/c/m"), false);
     assert.equal(globMatch("a/*/m", "a/b/m"), true);
+  });
+});
+
+describe("US-QG-09 LY-1a manifest raises or lowers the unit limit (d-136)", () => {
+  const dir = "app/x";
+  const readmePath = `${dir}/README.md`;
+  it("a directory with 25 units and a manifest of expect 25 passes and prints no hint", () => {
+    const r = judgeLayout(
+      [...spread(dir, 24), readmePath],
+      config,
+      readme({ [readmePath]: manifest(25) }),
+    );
+    assert.deepEqual(r.findings, []);
+    assert.deepEqual(r.hints, []);
+  });
+  it("a 26th unit fails LY-1 with the path, the number of units and the expect", () => {
+    const f = findLayout(
+      [...spread(dir, 25), readmePath],
+      config,
+      readme({ [readmePath]: manifest(25) }),
+    );
+    assert.deepEqual(rules(f), [`LY-1 ${dir}`]);
+    assert.equal(f[0].value, 26);
+    assert.match(f[0].items[0], /26 units, expect 25 \(manifest\)/);
+  });
+  it("an expect below the size hint is allowed: 5 units pass, 6 units fail LY-1", () => {
+    const texts = readme({ [readmePath]: manifest(5) });
+    assert.deepEqual(findLayout([...spread(dir, 4), readmePath], config, texts), []);
+    assert.deepEqual(rules(findLayout([...spread(dir, 5), readmePath], config, texts)), [
+      `LY-1 ${dir}`,
+    ]);
+  });
+  it("a manifest with no more units than its expect prints no hint, also above the size hint", () => {
+    const r = judgeLayout(
+      [...spread(dir, 8), readmePath],
+      config,
+      readme({ [readmePath]: manifest(10) }),
+    );
+    assert.deepEqual(r.findings, []);
+    assert.deepEqual(r.hints, []);
+  });
+  it("the per-path rule of a directory wins over its manifest: 10 units pass, 11 fail", () => {
+    const cfg = { ...config, dirs: [{ path: "app/*", maxUnits: 10 }] };
+    const texts = readme({ [readmePath]: manifest(25) });
+    assert.deepEqual(findLayout([...spread(dir, 9), readmePath], cfg, texts), []);
+    const f = findLayout([...spread(dir, 10), readmePath], cfg, texts);
+    assert.deepEqual(rules(f), [`LY-1 ${dir}`]);
+    assert.match(f[0].items[0], /limit 10 \(per-path rule\)/);
+  });
+  it("a README without frontmatter is no manifest: the size hint applies", () => {
+    const r = judgeLayout(
+      [...spread(dir, 8), readmePath],
+      config,
+      readme({ [readmePath]: "# Test folder\n" }),
+    );
+    assert.deepEqual(r.findings, []);
+    assert.deepEqual(
+      r.hints.map((h) => h.units),
+      [9],
+    );
+  });
+  it("a README in a folder with a dot is no manifest and reads no text", () => {
+    const hidden = ".claude/x/README.md";
+    const r = judgeLayout(
+      [hidden, ...spread(dir, 2)],
+      config,
+      readme({ [hidden]: "---\ntopic: a\n---\n" }),
+    );
+    assert.deepEqual(r.findings, []);
+  });
+});
+
+describe("US-QG-09 LY-7 malformed manifest fails with the path and the key (d-136)", () => {
+  const dir = "app/x";
+  const readmePath = `${dir}/README.md`;
+  const cases = [
+    ["has no topic", "---\nwhy: a\nexpect: 25\n---\n", "topic missing"],
+    ["has an empty why", "---\ntopic: a\nwhy:\nexpect: 25\n---\n", "why empty"],
+    ["has no expect", "---\ntopic: a\nwhy: b\n---\n", "expect missing"],
+    [
+      "has expect many",
+      "---\ntopic: a\nwhy: b\nexpect: many\n---\n",
+      'expect "many" is not a whole number above 0',
+    ],
+    [
+      "has expect 0",
+      "---\ntopic: a\nwhy: b\nexpect: 0\n---\n",
+      'expect "0" is not a whole number above 0',
+    ],
+  ];
+  for (const [label, text, problem] of cases) {
+    it(`US-QG-09 LY-7: a manifest that ${label} fails with LY-7, the path and the key`, () => {
+      const f = findLayout([readmePath, ...spread(dir, 2)], config, readme({ [readmePath]: text }));
+      assert.deepEqual(rules(f), [`LY-7 ${dir}`]);
+      assert.deepEqual(f[0].items, [`${readmePath}: ${problem}`]);
+    });
+  }
+});
+
+describe("US-QG-09 LY-1b subfolder hint (d-136)", () => {
+  const dir = "app/x";
+  const plant = [
+    "plant-layer-sheet.tsx",
+    "plant-layer-tabs.tsx",
+    "plant-layer-photos.tsx",
+    "plant-layer-care.tsx",
+  ];
+  it("names the prefix and its file count, before the manifest hint, when the size hint fires", () => {
+    const paths = [...plant.map((n) => `${dir}/${n}`), ...spread(dir, 6)];
+    const hint = judgeLayout(paths, config).hints[0];
+    assert.deepEqual(hint.prefix, { name: "plant-layer-", files: 4 });
+    const lines = hintLines(hint);
+    const proposal = lines.findIndex((l) => l.includes("plant-layer-"));
+    const manifestLine = lines.findIndex((l) => /manifest/.test(l));
+    assert.ok(proposal >= 0 && proposal < manifestLine, lines.join("\n"));
+  });
+  it("names no prefix when no prefix is shared by 3 files", () => {
+    const paths = [
+      `${dir}/alpha-one.md`,
+      `${dir}/alpha-two.md`,
+      `${dir}/beta-one.md`,
+      `${dir}/beta-two.md`,
+      ...spread(dir, 5),
+    ];
+    const hint = judgeLayout(paths, config).hints[0];
+    assert.equal(hint.units, 9);
+    assert.equal(hint.prefix, undefined);
+    assert.ok(!hintLines(hint).join("\n").includes("start with"));
+  });
+  it("names the longest prefix that 3 files share", () => {
+    const paths = [
+      `${dir}/plant-layer-sheet-a.tsx`,
+      `${dir}/plant-layer-sheet-b.tsx`,
+      `${dir}/plant-layer-sheet-c.tsx`,
+      `${dir}/plant-layer-tabs.tsx`,
+      ...spread(dir, 6),
+    ];
+    assert.deepEqual(judgeLayout(paths, config).hints[0].prefix, {
+      name: "plant-layer-sheet-",
+      files: 3,
+    });
+  });
+  it("needs 3 files for a prefix, and counts files, not units", () => {
+    assert.equal(prefixProposal(["a-b-1.ts", "a-b-2.ts"]), undefined);
+    assert.deepEqual(prefixProposal(["a-b-1.ts", "a-b-2.ts", "a-b-3.md"]), {
+      name: "a-b-",
+      files: 3,
+    });
+    assert.deepEqual(
+      prefixProposal([
+        "plant-layer-sheet.tsx",
+        "plant-layer-sheet.test.tsx",
+        "plant-layer-sheet.stories.tsx",
+      ]),
+      { name: "plant-layer-", files: 3 },
+    );
+    assert.equal(prefixProposal(["plant.tsx", "plant.md", "plant.css"]), undefined);
   });
 });

@@ -11,7 +11,7 @@ A directory with few entries and a predictable name can be read at a glance, and
 
 ## How it is measured
 
-`make layout` counts units per directory (files with the same stem count once) and reports violations of LY-1 to LY-5; the target is an empty `app/config/gates/baselines/layout-baseline.json`. Limits: 5 units per directory, 10 feature directories per module (starting values, assumption).
+`make layout` counts units per directory (files with the same stem count once) and reports violations of LY-1 to LY-7; the target is an empty `app/config/gates/baselines/layout-baseline.json`. A directory above 8 units gets a size hint and passes; without a manifest it fails above 16 units, and a manifest (README.md frontmatter) sets its own limit. Limits: 10 feature directories per module (starting values, assumption). How to group files by topic: `docs/guides/reference/file-layout.md`.
 
 ## Checked by
 

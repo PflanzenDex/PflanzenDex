@@ -6,7 +6,14 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { baselineGrows, isBaselineFile, textAfter } from "./baseline-growth.mjs";
+import {
+  baselineGrows,
+  isBaselineFile,
+  LAYOUT_CONFIG,
+  manifestEditGrowth,
+  textAfter,
+} from "./baseline-growth.mjs";
+import { isManifestPath } from "../../app/tools/check/code/layout/layout-manifest.mjs";
 import { bashGateWrite } from "./bash-writes.mjs";
 import {
   changedPaths,
@@ -589,6 +596,33 @@ function newTexts(toolInput) {
   );
 }
 
+// The text of a file of the working tree, null when it does not exist (US-QG-09).
+function textOf(folder, file) {
+  const abs = path.join(folder, file);
+  return fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
+}
+
+// What the merge base with origin/dev holds of the layout config and of one README (US-QG-09, d-139): the texts that a limit
+// carried over from a per-path rule is judged on. A text git cannot give is null, so a new manifest asks (fail closed).
+function manifestBaseOf(folder, file) {
+  const shown = (rev, name) => {
+    try {
+      return run("git", ["show", `${rev}:${name}`], { cwd: folder, timeout: 3000 });
+    } catch {
+      return null;
+    }
+  };
+  try {
+    const base = run("git", ["merge-base", "HEAD", "origin/dev"], {
+      cwd: folder,
+      timeout: 3000,
+    }).trim();
+    return { config: shown(base, LAYOUT_CONFIG), readme: shown(base, file) };
+  } catch {
+    return { config: null, readme: null };
+  }
+}
+
 const handlers = {
   "guard-edit"() {
     const target = input.tool_input?.file_path ?? input.tool_input?.notebook_path;
@@ -650,6 +684,26 @@ const handlers = {
         preToolUse(
           "ask",
           `${file} is a baseline and this change grows it: ${reason}. A baseline may only shrink; growth needs a human (US-QG-07, FR-QG-17).`,
+        );
+    } else if (isManifestPath(file)) {
+      // A layout manifest that adds or raises its expect is growth too (US-QG-09, d-138). The limit the merge base gave the
+      // folder carries over (d-139), so the merge base is read as well.
+      let reason;
+      try {
+        reason = manifestEditGrowth(
+          file,
+          textOf(fileRoot, file),
+          input.tool_input ?? {},
+          manifestBaseOf(fileRoot, file),
+        );
+      } catch (e) {
+        // Fail closed: a manifest that cannot be judged goes to a human.
+        reason = `it could not be judged (${e.message.split("\n")[0]})`;
+      }
+      if (reason)
+        preToolUse(
+          "ask",
+          `${file} is a layout manifest and this change grows it: ${reason}. A folder holds more units only with a human's approval (US-QG-09, FR-QG-21).`,
         );
     }
   },
