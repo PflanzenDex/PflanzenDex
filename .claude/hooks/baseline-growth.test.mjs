@@ -2,7 +2,17 @@
 // it needs one. The hook and `make merge` both call these pure functions.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { BASELINE_FORMATS, baselineGrows, isBaselineFile, textAfter } from "./baseline-growth.mjs";
+import {
+  BASELINE_FORMATS,
+  baselineChanges,
+  baselineGrows,
+  baselineProblems,
+  carriedLimit,
+  isBaselineFile,
+  manifestEditGrowth,
+  manifestGrowth,
+  textAfter,
+} from "./baseline-growth.mjs";
 
 const at = (name) => `app/config/gates/baselines/${name}`;
 const text = (value) => JSON.stringify(value, null, 2);
@@ -775,4 +785,212 @@ test("US-QG-07: one-screen rules per entry may only shrink; issue and reason are
   );
   assert.match(grows(name, one({}), one({ bogus: 1 })).reasons.join(), /field bogus/);
   assert.equal(grows(name, one({}), one({ rules: [1] })).grows, true, "rules must be texts");
+});
+
+// US-QG-09 (d-136, LY-1c): a layout manifest (the frontmatter of a README.md) is judged like baseline growth, by make merge.
+const manifestText = (expect, topic = "Plant layer") =>
+  `---\ntopic: ${topic}\nwhy: one feature\nexpect: ${expect}\n---\n# Plant layer\n`;
+const READ_ME = "app/x/README.md";
+// The files of a pull request: `files` are the changed paths; `texts` maps "<base|head>:<path>" to the text on that side.
+function manifestChanges(files, texts) {
+  return baselineChanges(
+    { headRefOid: "head", files: files.map((path) => ({ path })) },
+    {
+      mergeBase: () => "base",
+      readAt: (sha, path) => {
+        const key = `${sha === "head" ? "head" : "base"}:${path}`;
+        if (texts[key] === "THROW") throw new Error("HTTP 500");
+        return texts[key] ?? null;
+      },
+      namedAtHead: () => true,
+    },
+  );
+}
+const problemsOf = (files, texts) => baselineProblems(manifestChanges(files, texts));
+
+test("US-QG-09 (d-136): a new manifest is growth, and its expect is named", () => {
+  const result = manifestGrowth(null, manifestText(25));
+  assert.equal(result.grows, true);
+  assert.deepEqual(result.reasons, ["a new manifest, expect 25"]);
+});
+
+test("US-QG-09 (d-136): a raised expect is growth, a lowered or an equal one is not", () => {
+  assert.deepEqual(manifestGrowth(manifestText(25), manifestText(26)), {
+    grows: true,
+    reasons: ["expect rose from 25 to 26"],
+  });
+  assert.deepEqual(manifestGrowth(manifestText(25), manifestText(24)), {
+    grows: false,
+    reasons: [],
+  });
+  assert.deepEqual(manifestGrowth(manifestText(25), manifestText(25, "Plants")), {
+    grows: false,
+    reasons: [],
+  });
+});
+
+test("US-QG-09 (d-136): a removed manifest passes, and a README without frontmatter is no manifest", () => {
+  assert.deepEqual(manifestGrowth(manifestText(25), null), { grows: false, reasons: [] });
+  assert.deepEqual(manifestGrowth(manifestText(25), "# Plant layer\n"), {
+    grows: false,
+    reasons: [],
+  });
+  assert.deepEqual(manifestGrowth(null, "# Plant layer\n"), { grows: false, reasons: [] });
+});
+
+test("US-QG-09 (d-136): a manifest that does not parse is growth (fail closed)", () => {
+  const result = manifestGrowth(manifestText(25), manifestText("many"));
+  assert.equal(result.grows, true);
+  assert.match(result.reasons[0], /^the layout manifest does not parse: expect "many"/);
+});
+
+test("US-QG-09 (d-136): a pull request that adds a manifest is reported as baseline growth", () => {
+  const problems = problemsOf([READ_ME], { [`head:${READ_ME}`]: manifestText(25) });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /^baseline grows: app\/x\/README\.md \(.*a new manifest, expect 25/);
+});
+
+test("US-QG-09 (d-136): a pull request that raises an expect is reported; one that lowers it or removes the manifest is not", () => {
+  const base = { [`base:${READ_ME}`]: manifestText(25) };
+  assert.equal(problemsOf([READ_ME], { ...base, [`head:${READ_ME}`]: manifestText(26) }).length, 1);
+  assert.deepEqual(problemsOf([READ_ME], { ...base, [`head:${READ_ME}`]: manifestText(24) }), []);
+  assert.deepEqual(problemsOf([READ_ME], base), [], "removed: no head text");
+});
+
+test("US-QG-09 (d-136): a README without a manifest, and a README in a folder with a dot, are not judged", () => {
+  assert.deepEqual(problemsOf([READ_ME], { [`head:${READ_ME}`]: "# Plant layer\n" }), []);
+  assert.deepEqual(
+    problemsOf([".claude/x/README.md"], { "head:.claude/x/README.md": manifestText(25) }),
+    [],
+  );
+});
+
+test("US-QG-09 (d-136): a manifest version that cannot be read refuses the pull request (fail closed)", () => {
+  const changes = manifestChanges([READ_ME], { [`head:${READ_ME}`]: "THROW" });
+  assert.equal(changes.length, 1);
+  assert.match(changes[0].error, /HTTP 500/);
+  assert.match(baselineProblems(changes)[0], /a version cannot be read/);
+});
+
+// US-QG-09 (d-139): the fixed per-path limits of the merge base move into manifests. The limit a folder had there carries
+// over, and the README unit that a new manifest adds counts on top of it: such a manifest is no growth.
+const LAYOUT = "app/config/lint/layout.config.mjs";
+const CONFIG = `// the layout config
+export default {
+  maxUnits: 8,
+  dirs: [
+    { path: "app/x", maxUnits: 6 },
+    { path: "app/packages/*/src/*", maxUnits: 10 },
+    { path: "app/p/src", maxUnits: Infinity },
+  ],
+};
+`;
+
+test("US-QG-09 (d-139): carriedLimit is the per-path limit of the merge base, plus the README unit when the README is new", () => {
+  assert.equal(carriedLimit(CONFIG, "app/x", null), 7);
+  assert.equal(carriedLimit(CONFIG, "app/x", "# x\n"), 6);
+  assert.equal(carriedLimit(CONFIG, "app/packages/web/src/wishlist", null), 11);
+});
+
+test("US-QG-09 (d-139): carriedLimit carries nothing for a folder without a finite per-path rule, or without a config that runs", () => {
+  assert.equal(carriedLimit(CONFIG, "app/y", null), undefined, "no rule");
+  assert.equal(carriedLimit(CONFIG, "app/p/src", null), undefined, "no limit (Infinity)");
+  assert.equal(carriedLimit(null, "app/x", null), undefined, "no config at the merge base");
+  assert.equal(carriedLimit("export default {", "app/x", null), undefined, "does not run");
+  assert.equal(carriedLimit("const x = 1;", "app/x", null), undefined, "no default export");
+});
+
+test("US-QG-09 (d-139): a new manifest within the carried limit is no growth, one above it is", () => {
+  assert.deepEqual(manifestGrowth(null, manifestText(7), 7), { grows: false, reasons: [] });
+  assert.deepEqual(manifestGrowth(null, manifestText(8), 7), {
+    grows: true,
+    reasons: ["a new manifest, expect 8"],
+  });
+  assert.deepEqual(
+    manifestGrowth(null, manifestText(25)),
+    {
+      grows: true,
+      reasons: ["a new manifest, expect 25"],
+    },
+    "no carried limit: growth, as before",
+  );
+});
+
+test("US-QG-09 (d-139): a pull request that moves a per-path limit into a manifest is no growth, one above it is", () => {
+  const base = { [`base:${LAYOUT}`]: CONFIG };
+  assert.deepEqual(problemsOf([READ_ME], { ...base, [`head:${READ_ME}`]: manifestText(7) }), []);
+  const over = problemsOf([READ_ME], { ...base, [`head:${READ_ME}`]: manifestText(8) });
+  assert.equal(over.length, 1);
+  assert.match(over[0], /^baseline grows: app\/x\/README\.md \(a new manifest, expect 8\)/);
+});
+
+test("US-QG-09 (d-139): a new manifest in a folder without a per-path rule, or with no config at the merge base, is growth", () => {
+  const base = { [`base:${LAYOUT}`]: CONFIG };
+  assert.equal(
+    problemsOf(["app/y/README.md"], { ...base, "head:app/y/README.md": manifestText(7) }).length,
+    1,
+  );
+  assert.equal(problemsOf([READ_ME], { [`head:${READ_ME}`]: manifestText(7) }).length, 1);
+});
+
+test("US-QG-09 (d-139): a config at the merge base that cannot be read refuses the manifest (fail closed)", () => {
+  const changes = manifestChanges([READ_ME], {
+    [`head:${READ_ME}`]: manifestText(7),
+    [`base:${LAYOUT}`]: "THROW",
+  });
+  assert.equal(changes.length, 1);
+  assert.match(changes[0].error, /HTTP 500/);
+});
+
+test("US-QG-09 (d-139): a manifest edit is judged against the merge base, a README made on this branch counts its unit as new", () => {
+  const base = { config: CONFIG, readme: null };
+  assert.equal(manifestEditGrowth(READ_ME, null, { content: manifestText(7) }, base), null);
+  assert.equal(
+    manifestEditGrowth(READ_ME, null, { content: manifestText(8) }, base),
+    "a new manifest, expect 8",
+  );
+  // On disk the README exists without frontmatter, but it is new at the merge base: its unit is still the new one.
+  assert.equal(manifestEditGrowth(READ_ME, "# x\n", { content: manifestText(7) }, base), null);
+  // A README that already exists at the merge base has its unit counted: 7 is above the carried 6.
+  assert.equal(
+    manifestEditGrowth(
+      READ_ME,
+      "# x\n",
+      { content: manifestText(7) },
+      { config: CONFIG, readme: "# x\n" },
+    ),
+    "a new manifest, expect 7",
+  );
+});
+
+test("US-QG-09 (d-139): a raised expect of a manifest on disk is growth, a lowered one and an edit of the body are not", () => {
+  const on = manifestText(11);
+  const base = { config: CONFIG, readme: null };
+  assert.equal(
+    manifestEditGrowth(READ_ME, on, { old_string: "expect: 11", new_string: "expect: 12" }, base),
+    "expect rose from 11 to 12",
+  );
+  assert.equal(
+    manifestEditGrowth(READ_ME, on, { old_string: "expect: 11", new_string: "expect: 10" }, base),
+    null,
+  );
+  assert.equal(
+    manifestEditGrowth(READ_ME, on, { old_string: "# Plant layer", new_string: "# Plants" }, base),
+    null,
+  );
+});
+
+test("US-QG-09 (d-139): a manifest edit that cannot be placed exactly on the file is growth (fail closed)", () => {
+  assert.equal(
+    manifestEditGrowth(
+      READ_ME,
+      manifestText(11),
+      { old_string: "nowhere", new_string: "x" },
+      {
+        config: CONFIG,
+        readme: null,
+      },
+    ),
+    "the edit cannot be placed exactly on the file",
+  );
 });

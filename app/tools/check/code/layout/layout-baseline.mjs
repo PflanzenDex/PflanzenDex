@@ -16,6 +16,7 @@ const NEXT = {
   "LY-3": "rename it to kebab-case",
   "LY-4": "move the component x.tsx into a folder x/",
   "LY-5": "move it under app/, docs/ or tools/ (or add it to the root whitelist in the config)",
+  "LY-7": "fix the README.md frontmatter: topic and why as text, expect as a whole number above 0",
 };
 
 const hint = (f) => `${f.items.slice(0, 3).join(", ")}${f.items.length > 3 ? ", ..." : ""}`;

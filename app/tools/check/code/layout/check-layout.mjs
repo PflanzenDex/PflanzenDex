@@ -1,4 +1,5 @@
-// QG-C4 file layout gate (US-QG-09, FR-QG-21, FR-QG-22). Rules LY-1 to LY-6; config: app/config/lint/layout.config.mjs.
+// QG-C4 file layout gate (US-QG-09, FR-QG-21, FR-QG-22). Rules LY-1 to LY-7; config: app/config/lint/layout.config.mjs.
+// A folder above the size hint prints a hint and passes (d-136); the failing rules are LY-1 (hard limits), LY-7 (manifests).
 //   node tools/check/code/layout/check-layout.mjs                  check against app/config/gates/baselines/layout-baseline.json
 //   node tools/check/code/layout/check-layout.mjs --write-baseline create the baseline (an empty {} counts as none), or lower it; never enlarge it
 import { execFileSync } from "node:child_process";
@@ -7,13 +8,22 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import config from "../../../../config/lint/layout.config.mjs";
 import { compareBaseline, toBaseline } from "./layout-baseline.mjs";
-import { findLayout } from "./layout-rules.mjs";
+import { hintLines, judgeLayout } from "./layout-rules.mjs";
 import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const app = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 const root = path.resolve(app, "..");
 export const BASELINE_FILE = path.join(app, "config/gates/baselines/layout-baseline.json");
 const devRef = process.env.LAYOUT_BASE ?? "origin/dev";
+
+// The text of a file of the working tree, undefined when it cannot be read: the manifests (LY-1a, LY-7) are read here.
+export const readWorkingText = (file, base = root) => {
+  try {
+    return fs.readFileSync(path.join(base, file), "utf8");
+  } catch {
+    return undefined;
+  }
+};
 
 const git = (cwd, ...args) =>
   execFileSync("git", args, {
@@ -71,7 +81,7 @@ function devBaseline() {
 }
 
 function main() {
-  const findings = findLayout(listPaths(), config);
+  const { findings, hints } = judgeLayout(listPaths(), config, readWorkingText);
   const baseline = readBaseline();
   if (process.argv.includes("--write-baseline")) {
     // An empty baseline counts as "none yet", so the file can exist before the first write.
@@ -94,6 +104,9 @@ function main() {
     );
     process.exit(1);
   }
+  // The size hints print and never fail (d-136): the subfolder proposal first, then the manifest hint.
+  for (const hint of hints)
+    for (const line of hintLines(hint)) console.log(`check-layout: ${line}`);
   console.log(`check-layout: OK (${findings.length} baselined directories)`);
 }
 

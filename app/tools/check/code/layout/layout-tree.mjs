@@ -47,6 +47,31 @@ export function unitCount(children) {
   return new Set([...children].map(([name, kind]) => (kind === "dir" ? name : stemOf(name)))).size;
 }
 
+// The subfolder hint (LY-1b, d-136): a name prefix that this many files share is proposed as a subfolder.
+export const SUBFOLDER_MIN_FILES = 3;
+
+// The prefixes of one file name: its leading kebab-case segments, each with a dash, shorter than the stem.
+// plant-layer-sheet.tsx gives plant- and plant-layer-.
+const prefixesOf = (name) => {
+  const stem = stemOf(name);
+  if (!isKebab(stem)) return [];
+  const segments = stem.split("-");
+  return segments.slice(0, -1).map((_, i) => `${segments.slice(0, i + 1).join("-")}-`);
+};
+
+// The longest prefix that SUBFOLDER_MIN_FILES or more files of one directory share (LY-1b), with its file count; ties go
+// to the more shared prefix, then to the name. Undefined when no prefix is shared by enough files. Files count, not units.
+export function prefixProposal(fileNames) {
+  const counts = new Map();
+  for (const name of fileNames)
+    for (const prefix of prefixesOf(name)) counts.set(prefix, (counts.get(prefix) ?? 0) + 1);
+  const shared = [...counts].filter(([, files]) => files >= SUBFOLDER_MIN_FILES);
+  if (shared.length === 0) return undefined;
+  shared.sort(([a, fa], [b, fb]) => b.length - a.length || fb - fa || a.localeCompare(b));
+  const [name, files] = shared[0];
+  return { name, files };
+}
+
 // "*" matches exactly one path segment.
 export function matchDir(pattern, dir) {
   const a = pattern.split("/");

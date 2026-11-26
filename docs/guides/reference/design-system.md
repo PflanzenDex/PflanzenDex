@@ -48,10 +48,10 @@ src/
 │   ├── ui/                      # atomic primitives, NO domain logic (button/, fields/, overlays/, display/)
 │   ├── patterns/                # composites: responsive/, states/, elements/, navigation/, display/
 │   ├── data/                    # the former kernel: write actions, features, sign-out clearing, time zone (`data/index.ts` re-exports the request hooks)
-│   ├── request/                 # the request layer, neutral (DS-02): useRequest, the query client, ApiError and Response; imports no module; a folder of its own, because shared/lib and shared/platform hold 5 units each (limit 8, FR-QG-21)
+│   ├── request/                 # the request layer, neutral (DS-02): useRequest, the query client, ApiError and Response; imports no module; a folder of its own, because shared/lib and shared/platform hold 5 units each (size hint 8, FR-QG-21)
 │   ├── platform/                # adapters for device/browser APIs (section 1.3)
 │   ├── lib/                     # cn() and other pure helpers (utils.ts)
-│   ├── species-name/            # SpeciesName, the name of a species in rows, sheets and cards (US-QS-32); a folder of its own, because shared/ui and shared/patterns hold 5 units each (limit 8, FR-QG-21)
+│   ├── species-name/            # SpeciesName, the name of a species in rows, sheets and cards (US-QS-32); a folder of its own, because shared/ui and shared/patterns hold 5 units each (size hint 8, FR-QG-21)
 │   └── testing/                 # shared test setup and the router decorator of stories (story-frame/)
 ├── styles/
 │   └── tokens.css               # design tokens (section 3)
