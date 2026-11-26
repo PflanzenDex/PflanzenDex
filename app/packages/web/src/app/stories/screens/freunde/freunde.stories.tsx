@@ -5,7 +5,11 @@ import { API, token } from "../../harness/fake-api.fixtures";
 import { pageParameters, screenStory, variants } from "../../harness/screen-story/screen-story";
 
 // Page stories of "Freunde" (US-QS-14, US-QS-20): the one-screen overview (its layers open from the buttons), at 360 and 1280 px, light and dark.
-const meta = { title: "Seiten/Freunde", parameters: pageParameters } satisfies Meta;
+const meta = {
+  title: "Seiten/Freunde",
+  component: FriendsPage,
+  parameters: pageParameters,
+} satisfies Meta;
 export default meta;
 
 const screen = <FriendsPage api={API} token={token} />;

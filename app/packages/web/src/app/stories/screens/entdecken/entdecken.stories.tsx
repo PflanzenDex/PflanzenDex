@@ -5,7 +5,11 @@ import { API, token } from "../../harness/fake-api.fixtures";
 import { pageParameters, screenStory, variants } from "../../harness/screen-story/screen-story";
 
 // Page stories of "Entdecken" (US-QS-14): one set per mode (Vorschläge, Katalog), at 360 and 1280 px, light and dark.
-const meta = { title: "Seiten/Entdecken", parameters: pageParameters } satisfies Meta;
+const meta = {
+  title: "Seiten/Entdecken",
+  component: DiscoverArea,
+  parameters: pageParameters,
+} satisfies Meta;
 export default meta;
 
 const screen = (

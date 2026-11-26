@@ -5,7 +5,11 @@ import { API, token } from "../../harness/fake-api.fixtures";
 import { pageParameters, screenStory, variants } from "../../harness/screen-story/screen-story";
 
 // Page stories of "Heute" (US-QS-14): "Jetzt dran", treatments and hints in the page frame, at 360 and 1280 px, light and dark.
-const meta = { title: "Seiten/Heute", parameters: pageParameters } satisfies Meta;
+const meta = {
+  title: "Seiten/Heute",
+  component: TodayArea,
+  parameters: pageParameters,
+} satisfies Meta;
 export default meta;
 
 const screen = <TodayArea api={API} token={token} onOpen={() => undefined} />;

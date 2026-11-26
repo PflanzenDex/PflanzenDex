@@ -1,0 +1,92 @@
+{
+  "packages/web/src/account/settings-page/groups/profile-saver.ts": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/account/settings-page/keeper-style/keeper-style.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/app/flows/add-plant/wish-to-specimen.ts": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/app/frame/app/app.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/care/treatments/planning/plan-layer/plan-layer.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/care/treatments/planning/planning.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/collection/markers/catch-date/catch-date-field/catch-date-field.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/collection/markers/locate/light-zone-form/light-zone-form.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/collection/markers/marker/use-marker.ts": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/collection/plants-screen/plant-layers/plant-forms/mirror/use-addressed-form.ts": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/collection/specimens/create/create-form/create-form.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/collection/specimens/hooks/use-archive.ts": {
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    }
+  },
+  "packages/web/src/collection/specimens/hooks/use-notes.ts": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/collection/specimens/hooks/use-repot.ts": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/shared/patterns/display/panels/pagination/load-more/load-more.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/shared/patterns/responsive/layer-sheet/layer-sheet.guard.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/shared/platform/routing/route-focus/route-focus.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "packages/web/src/swap/pages/match/match.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 3
+    }
+  }
+}
