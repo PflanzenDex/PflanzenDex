@@ -291,6 +291,7 @@ test("US-QG-07: the display tolerances (one-screen baseline and judge, a11y find
   for (const f of [
     "app/packages/e2e/support/display/one-screen/baseline.ts",
     "app/packages/e2e/support/display/one-screen/judge.ts",
+    "app/packages/e2e/support/display/one-screen/judge.size.ts",
     "app/packages/e2e/support/display/a11y/findings.ts",
     "app/packages/e2e/support/display/a11y/axe-findings.ts",
   ]) {

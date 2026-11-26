@@ -4,6 +4,7 @@ import type { FullConfig, FullResult, Reporter, Suite } from "@playwright/test/r
 import { SIZES, type Baseline, type Result } from "./one-screen/judge";
 import { buildBaseline, entryOf, judgeBaseline } from "./one-screen/baseline";
 import { SCREENS } from "./one-screen/register";
+import { measurementsOf } from "./one-screen/register.check";
 import {
   SHIFT_SIZES,
   buildShiftBaseline,
@@ -164,7 +165,7 @@ export default class OneScreenReporter implements Reporter {
     const shift = shiftVerdict(result.status);
     const results = readResults();
     if (results.length === 0) return shift; // only the self-test ran, or the layout-shift tests alone
-    const complete = results.length === SCREENS.length * SIZES.length;
+    const complete = results.length === measurementsOf(SCREENS);
     if (process.env["ONE_SCREEN_WRITE"] === "1") {
       if (!complete) {
         console.error(

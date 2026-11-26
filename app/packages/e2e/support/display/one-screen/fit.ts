@@ -1,6 +1,7 @@
 import type { JSHandle, Page } from "@playwright/test";
 import { lostScreen } from "./baseline";
 import { boxesOf } from "./fit.boxes";
+import { sizesOf } from "./fit.sizes";
 import type { Raw } from "./judge";
 import type { Screen, Step } from "./register";
 import { settle } from "./fit.settle";
@@ -128,7 +129,7 @@ async function paintOf(page: Page): Promise<Raw["paint"]> {
   return { ...numbers, leftEl: await label(leftEl), rightEl: await label(rightEl) };
 }
 
-/** Measures the open page at its current window size (issue 1137, US-QS-15): page height and width, scroll boxes, markers, Pagers, painted width. */
+/** Measures the open page at its current window size (issue 1137, US-QS-15): page height and width, scroll boxes, markers, Pagers, sized boxes, painted width. */
 export async function measure(page: Page, withPaint: boolean): Promise<Raw> {
   const dims = await page.evaluate(() => {
     const root = document.scrollingElement ?? document.documentElement;
@@ -141,9 +142,11 @@ export async function measure(page: Page, withPaint: boolean): Promise<Raw> {
     };
   });
   const boxes = await boxesOf(page);
+  const sized = await sizesOf(page);
   return {
     ...dims,
     ...boxes,
+    sized,
     pageEl:
       dims.scrollHeight > dims.innerHeight + 1
         ? await label(await farthestHandle(page, "bottom"))

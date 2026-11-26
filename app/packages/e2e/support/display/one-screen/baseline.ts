@@ -40,6 +40,8 @@ export function judgeScreen(
 ): string[] {
   return results.flatMap((r) => {
     const label = `${r.screen} at ${r.size}`;
+    // A screen that was not measured passed nothing, so no entry covers it (issue 2427).
+    if (r.rules.includes("measured")) return [`${label}: ${r.failures.join("; ")}`];
     const entry = entryOf(baseline, r);
     if (r.failures.length === 0)
       return entry && !unstable && (binaryListed(entry).length > 0 || clearlyOver(entry))
@@ -76,6 +78,14 @@ export function judgeBaseline(
   for (const e of baseline.entries) {
     if (!screens.has(e.screen)) problems.push(`baseline names the unknown screen ${e.screen}`);
     if (!sizes.has(e.size)) problems.push(`baseline names the unknown size ${e.size}`);
+    if (e.issue !== undefined && !(Number.isInteger(e.issue) && e.issue > 0))
+      problems.push(
+        `baseline entry ${e.screen} at ${e.size} names no valid issue (${String(e.issue)})`,
+      );
+    if ((e.rules ?? []).includes("measured"))
+      problems.push(
+        `baseline lists ${e.screen} at ${e.size} as not measured, which is never baselined`,
+      );
   }
   return problems;
 }
@@ -83,7 +93,7 @@ export function judgeBaseline(
 /** The baseline a full run would write: every failing screen and size with its measured values and the rules that fail there. */
 export function buildBaseline(results: readonly Result[]): Baseline {
   const entries = results
-    .filter((r) => r.failures.length > 0)
+    .filter((r) => r.failures.length > 0 && !r.rules.includes("measured"))
     .map((r): BaselineEntry => {
       const e: BaselineEntry = { screen: r.screen, size: r.size, page: r.page, inner: r.inner };
       if (r.pageX > 1) e.pageX = r.pageX;

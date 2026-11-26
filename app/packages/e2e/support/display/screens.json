@@ -3,12 +3,17 @@
     "id": "today",
     "account": "test2",
     "path": "/today",
+    "kind": "overview",
+    "state": "many",
+    "family": "today",
     "title": "Heute"
   },
   {
     "id": "today-sheet-treatments",
     "account": "test2",
     "path": "/today?sheet=treatments",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "app/destinations/today-area/today-area.tsx",
     "title": "Behandlungen"
   },
@@ -16,18 +21,24 @@
     "id": "collection-view-plants-group-phase",
     "account": "test2",
     "path": "/collection?view=plants&group=phase",
+    "kind": "list",
+    "state": "many",
     "title": "Sammlung"
   },
   {
     "id": "collection-view-species",
     "account": "test2",
     "path": "/collection?view=species",
+    "kind": "list",
+    "state": "many",
     "title": "Sammlung"
   },
   {
     "id": "collection-view-species-sheet-view",
     "account": "test2",
     "path": "/collection?view=species&sheet=view",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "collection/plants-screen/plant-layers/view-layer/view-layer.tsx",
     "title": "Ansicht"
   },
@@ -35,36 +46,73 @@
     "id": "collection-view-plants",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "list",
+    "state": "many",
     "title": "Sammlung"
   },
   {
     "id": "collection-labels",
     "account": "test2",
     "path": "/collection/labels",
+    "kind": "overview",
+    "state": "many",
     "title": "Etiketten drucken"
   },
   {
     "id": "collection-import",
     "account": "test2",
     "path": "/collection/import",
+    "kind": "overview",
+    "state": "many",
     "title": "Pflanzen importieren"
   },
   {
     "id": "collection-view-wishlist",
     "account": "test2",
     "path": "/collection?view=wishlist",
+    "kind": "list",
+    "state": "many",
     "title": "Sammlung"
+  },
+  {
+    "id": "wishlist-empty",
+    "account": "test5",
+    "path": "/collection?view=wishlist",
+    "kind": "list",
+    "state": "empty",
+    "title": "Sammlung",
+    "expect": {
+      "text": "Keine offenen Kandidaten"
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
+  },
+  {
+    "id": "wishlist-error",
+    "account": "test2",
+    "path": "/collection?view=wishlist",
+    "kind": "list",
+    "state": "error",
+    "title": "Sammlung",
+    "fail": "/wishes/candidates",
+    "expect": {
+      "text": "Erneut versuchen"
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
   },
   {
     "id": "collection-view-equipment",
     "account": "test2",
     "path": "/collection?view=equipment",
+    "kind": "list",
+    "state": "many",
     "title": "Sammlung"
   },
   {
     "id": "collection-view-species-sheet-progress",
     "account": "test2",
     "path": "/collection?view=species&sheet=progress",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "pokedex/pokedex-page/pokedex-page.tsx",
     "title": "Fortschritt"
   },
@@ -72,6 +120,8 @@
     "id": "collection-view-species-sheet-milestones",
     "account": "test2",
     "path": "/collection?view=species&sheet=milestones",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "pokedex/pokedex-page/pokedex-page.tsx",
     "title": "Meilensteine"
   },
@@ -79,6 +129,8 @@
     "id": "collection-view-species-sheet-filters",
     "account": "test2",
     "path": "/collection?view=species&sheet=filters",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "pokedex/pokedex-browse/pokedex-browse.tsx",
     "title": "Filter"
   },
@@ -86,6 +138,8 @@
     "id": "collection-species-layer",
     "account": "test2",
     "path": "/collection?view=species&sheet=species-Adiantum+raddianum",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "pokedex/pokedex-browse/pokedex-browse.tsx",
     "title": "Frauenhaarfarn"
   },
@@ -93,24 +147,32 @@
     "id": "discover",
     "account": "test2",
     "path": "/discover",
+    "kind": "overview",
+    "state": "many",
     "title": "Entdecken"
   },
   {
     "id": "discover-view-catalog",
     "account": "test2",
     "path": "/discover?view=catalog",
+    "kind": "list",
+    "state": "many",
     "title": "Entdecken"
   },
   {
     "id": "friends",
     "account": "test2",
     "path": "/friends",
+    "kind": "overview",
+    "state": "many",
     "title": "Freunde"
   },
   {
     "id": "friends-sheet-add",
     "account": "test2",
     "path": "/friends?sheet=add",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
     "title": "Freund hinzufügen"
   },
@@ -118,6 +180,8 @@
     "id": "friends-sheet-help",
     "account": "test2",
     "path": "/friends?sheet=help",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
     "title": "Freunde und Freigaben"
   },
@@ -125,12 +189,16 @@
     "id": "friends-exchange",
     "account": "test2",
     "path": "/friends/exchange",
+    "kind": "overview",
+    "state": "many",
     "title": "Tauschbörse"
   },
   {
     "id": "friends-exchange-sheet-offer",
     "account": "test2",
     "path": "/friends/exchange?sheet=offer",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "swap/pages/exchange/exchange.tsx",
     "title": "Zum Tausch anbieten"
   },
@@ -138,60 +206,98 @@
     "id": "friends-match",
     "account": "test2",
     "path": "/friends/match",
-    "title": "Passende Angebote"
+    "kind": "deck",
+    "state": "empty",
+    "title": "Passende Angebote",
+    "expect": {
+      "css": "article[aria-labelledby='match-title']",
+      "absent": true
+    },
+    "family": "friends-match"
+  },
+  {
+    "id": "friends-match-card",
+    "account": "test3",
+    "path": "/friends/match",
+    "kind": "deck",
+    "state": "card",
+    "family": "friends-match",
+    "title": "Passende Angebote",
+    "expect": {
+      "css": "article[aria-labelledby='match-title']"
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
   },
   {
     "id": "friends-exchange-part-friends",
     "account": "test2",
     "path": "/friends/exchange?part=friends",
+    "kind": "overview",
+    "state": "many",
     "title": "Tauschbörse"
   },
   {
     "id": "friends-exchange-part-requests",
     "account": "test2",
     "path": "/friends/exchange?part=requests",
+    "kind": "overview",
+    "state": "many",
     "title": "Tauschbörse"
   },
   {
     "id": "friends-exchange-part-history",
     "account": "test2",
     "path": "/friends/exchange?part=history",
+    "kind": "overview",
+    "state": "many",
     "title": "Tauschbörse"
   },
   {
     "id": "account",
     "account": "test2",
     "path": "/account",
+    "kind": "overview",
+    "state": "many",
     "title": "Konto"
   },
   {
     "id": "account-measured",
     "account": "test2",
     "path": "/account/measured",
+    "kind": "overview",
+    "state": "many",
     "title": "Nutzungsdaten"
   },
   {
     "id": "account-functions",
     "account": "test2",
     "path": "/account/functions",
+    "kind": "overview",
+    "state": "many",
     "title": "Was die App kann"
   },
   {
     "id": "account-news",
     "account": "test2",
     "path": "/account/news",
+    "kind": "overview",
+    "state": "many",
     "title": "Neu in PflanzenDéx"
   },
   {
     "id": "account-data",
     "account": "test2",
     "path": "/account/data",
+    "kind": "overview",
+    "state": "many",
     "title": "Meine Daten"
   },
   {
     "id": "account-dialog-sign-out",
     "account": "test2",
     "path": "/account",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "role": "button",
@@ -205,18 +311,24 @@
     "id": "account-settings",
     "account": "test2",
     "path": "/account/settings",
+    "kind": "overview",
+    "state": "many",
     "title": "Einstellungen"
   },
   {
     "id": "collection-view-plants-manage-locations",
     "account": "test2",
     "path": "/collection?view=plants&manage=locations",
+    "kind": "overview",
+    "state": "many",
     "title": "Standorte und Lichtzonen"
   },
   {
     "id": "unlock-friends",
     "account": "test2",
     "path": "/unlock/friends",
+    "kind": "overview",
+    "state": "many",
     "route": "/unlock/:id",
     "title": "Freunde"
   },
@@ -224,6 +336,8 @@
     "id": "today-sheet-plan",
     "account": "test2",
     "path": "/today?sheet=plan",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "care/treatments/planning/plan-layer/plan-layer.tsx",
     "title": "Behandlung planen"
   },
@@ -231,12 +345,16 @@
     "id": "collection-view-species-sort-difficulty",
     "account": "test2",
     "path": "/collection?view=species&sort=difficulty",
+    "kind": "list",
+    "state": "many",
     "title": "Sammlung"
   },
   {
     "id": "collection-view-species-sort-family",
     "account": "test2",
     "path": "/collection?view=species",
+    "kind": "list",
+    "state": "many",
     "steps": [
       {
         "role": "button",
@@ -257,6 +375,8 @@
     "id": "collection-view-plants-sheet-view",
     "account": "test2",
     "path": "/collection?view=plants&sheet=view",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "collection/plants-screen/plant-layers/view-layer/view-layer.tsx",
     "title": "Ansicht"
   },
@@ -264,6 +384,8 @@
     "id": "collection-view-plants-sheet-zones",
     "account": "test2",
     "path": "/collection?view=plants&sheet=zones",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "collection/plants-screen/plant-layers/plant-layers.tsx",
     "title": "Lichtzonen"
   },
@@ -271,6 +393,8 @@
     "id": "collection-view-plants-sheet-archive",
     "account": "test2",
     "path": "/collection?view=plants&sheet=archive",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "collection/plants-screen/plant-layers/plant-layers.tsx",
     "title": "Archiv"
   },
@@ -278,12 +402,16 @@
     "id": "collection-new",
     "account": "test2",
     "path": "/collection/new",
+    "kind": "overview",
+    "state": "many",
     "title": "Pflanze anlegen"
   },
   {
     "id": "collection-plant-layer",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -297,6 +425,8 @@
     "id": "collection-view-wishlist-sheet-new-wish",
     "account": "test2",
     "path": "/collection?view=wishlist&sheet=new-wish",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
     "title": "Neuer Wunsch"
   },
@@ -304,6 +434,8 @@
     "id": "collection-view-wishlist-sheet-hints",
     "account": "test2",
     "path": "/collection?view=wishlist&sheet=hints",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx",
     "title": "Hinweise"
   },
@@ -311,6 +443,8 @@
     "id": "wishlist-wish-layer",
     "account": "test2",
     "path": "/collection?view=wishlist",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Offene Kandidaten\"] button",
@@ -324,6 +458,8 @@
     "id": "collection-view-equipment-sheet-new",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=new",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
     "title": "Neues Gerät"
   },
@@ -331,6 +467,8 @@
     "id": "collection-view-species-sheet-cards",
     "account": "test2",
     "path": "/collection?view=species&sheet=cards",
+    "kind": "card-row",
+    "state": "many",
     "layerFile": "pokedex/pokedex-page/pokedex-page.tsx",
     "title": "Sammlerkarten"
   },
@@ -338,6 +476,8 @@
     "id": "species-profile",
     "account": "test2",
     "path": "/collection?view=species&sheet=species-Adiantum+raddianum",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "role": "button",
@@ -351,12 +491,16 @@
     "id": "discover-view-suggestions",
     "account": "test2",
     "path": "/discover?view=suggestions",
+    "kind": "deck",
+    "state": "many",
     "title": "Entdecken"
   },
   {
     "id": "discover-view-catalog-sheet-propose",
     "account": "test2",
     "path": "/discover?view=catalog&sheet=propose",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "catalog/species-page/species-page.tsx",
     "title": "Art vorschlagen"
   },
@@ -364,6 +508,8 @@
     "id": "discover-view-catalog-sheet-filters",
     "account": "test2",
     "path": "/discover?view=catalog&sheet=filters",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "catalog/search-view/search-filters/search-filters.tsx",
     "title": "Filter"
   },
@@ -371,12 +517,16 @@
     "id": "collection-view-plants-manage-locations-list-locations",
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&list=locations",
+    "kind": "list",
+    "state": "many",
     "title": "Standorte und Lichtzonen"
   },
   {
     "id": "collection-view-plants-manage-locations-sheet-new-zone",
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&sheet=new-zone",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
     "title": "Neue Lichtzone"
   },
@@ -384,6 +534,8 @@
     "id": "light-zone-edit",
     "account": "test2",
     "path": "/collection?view=plants&manage=locations",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "role": "button",
@@ -397,6 +549,8 @@
     "id": "collection-view-plants-manage-locations-sheet-hints",
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&sheet=hints",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
     "title": "Hinweise"
   },
@@ -404,6 +558,8 @@
     "id": "collection-view-plants-manage-locations-sheet-reference",
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&sheet=reference",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
     "title": "Lichtbedarf und Einstufung"
   },
@@ -411,12 +567,16 @@
     "id": "collection-view-plants-group-location",
     "account": "test2",
     "path": "/collection?view=plants&group=location",
+    "kind": "list",
+    "state": "many",
     "title": "Sammlung"
   },
   {
     "id": "species-compare",
     "account": "test2",
     "path": "/collection?view=species&sort=difficulty",
+    "kind": "table",
+    "state": "many",
     "steps": [
       {
         "css": "button[aria-label^=\"Vergleichswerte\"]",
@@ -430,6 +590,8 @@
     "id": "collection-plant-overview",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -447,6 +609,8 @@
     "id": "collection-plant-course",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -464,6 +628,8 @@
     "id": "collection-plant-leaves",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -485,6 +651,8 @@
     "id": "collection-plant-care",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -502,6 +670,8 @@
     "id": "collection-plant-repot",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -523,6 +693,8 @@
     "id": "collection-plant-repot-signs",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -548,6 +720,8 @@
     "id": "collection-plant-location",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -565,6 +739,8 @@
     "id": "discover-view-suggestions-zone-2",
     "account": "test2",
     "path": "/discover?view=suggestions&zone=2",
+    "kind": "deck",
+    "state": "many",
     "title": "Entdecken",
     "unstable": "The deck is seeded by account id and date (FR-ENT-05); a fresh database has new account ids, so the cards and their height change between runs."
   },
@@ -572,6 +748,8 @@
     "id": "collection-view-plants-manage-locations-list-locations-sheet-new-location",
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&list=locations&sheet=new-location",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "equipment/equipment-page/equipment-screen/item-layer/item-layer.tsx",
     "title": "Neuer Standort"
   },
@@ -579,6 +757,8 @@
     "id": "light-location-edit",
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&list=locations",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "role": "button",
@@ -592,6 +772,8 @@
     "id": "collection-view-plants-manage-locations-list-locations-sheet-hints",
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&list=locations&sheet=hints",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
     "title": "Hinweise"
   },
@@ -599,6 +781,8 @@
     "id": "collection-view-plants-manage-locations-list-locations-sheet-reference",
     "account": "test2",
     "path": "/collection?view=plants&manage=locations&list=locations&sheet=reference",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "light/views/light-view/light-layers/light-layers.tsx",
     "title": "Lichtbedarf und Einstufung"
   },
@@ -606,6 +790,8 @@
     "id": "today-sheet-hints",
     "account": "test3",
     "path": "/today?sheet=hints",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "app/destinations/today-area/today-area.tsx",
     "title": "Fehlt noch"
   },
@@ -613,24 +799,32 @@
     "id": "review",
     "account": "test3",
     "path": "/review",
+    "kind": "overview",
+    "state": "many",
     "title": "Prüfliste"
   },
   {
     "id": "review-show-approved",
     "account": "test3",
     "path": "/review?show=approved",
+    "kind": "overview",
+    "state": "many",
     "title": "Prüfliste"
   },
   {
     "id": "operator",
     "account": "test3",
     "path": "/operator",
+    "kind": "overview",
+    "state": "many",
     "title": "Betreiber"
   },
   {
     "id": "collection-view-wishlist-sheet-bought",
     "account": "test3",
     "path": "/collection?view=wishlist&sheet=bought",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx",
     "title": "Gekauft"
   },
@@ -638,6 +832,8 @@
     "id": "collection-view-wishlist-sheet-discarded",
     "account": "test3",
     "path": "/collection?view=wishlist&sheet=discarded",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "wishlist/wishlist-page/layers/wishlist-layers/wishlist-layers.tsx",
     "title": "Verworfen"
   },
@@ -645,6 +841,8 @@
     "id": "today-sheet-locked",
     "account": "test",
     "path": "/today?sheet=locked",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "app/flows/unlock/locked-rows/collapsed-rows/collapsed-rows.tsx",
     "title": "Weitere Funktionen"
   },
@@ -652,6 +850,8 @@
     "id": "today-sheet-news",
     "account": "test",
     "path": "/today?sheet=news",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "social/feed/friends-news/friends-news.tsx",
     "title": "Neu bei Freunden"
   },
@@ -659,6 +859,8 @@
     "id": "today-sheet-anniversaries",
     "account": "test2",
     "path": "/today?sheet=anniversaries",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "achievements/anniversaries/anniversary-tile/anniversary-tile.tsx",
     "title": "Jubiläen"
   },
@@ -666,6 +868,8 @@
     "id": "friends-sheet-requests",
     "account": "test",
     "path": "/friends?sheet=requests",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
     "title": "Anfragen"
   },
@@ -673,6 +877,8 @@
     "id": "friends-sheet-news",
     "account": "test",
     "path": "/friends?sheet=news",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
     "title": "Neu bei Freunden"
   },
@@ -680,6 +886,8 @@
     "id": "today-sheet-watering",
     "account": "test2",
     "path": "/today?sheet=watering",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "app/destinations/today-area/today-area.tsx",
     "title": "Gießen"
   },
@@ -687,6 +895,8 @@
     "id": "collection-view-species-sheet-uncounted",
     "account": "test2",
     "path": "/collection?view=species&sheet=uncounted",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "pokedex/pokedex-page/pokedex-page.tsx",
     "title": "Noch nicht gezählt"
   },
@@ -694,6 +904,8 @@
     "id": "collection-view-equipment-sheet-items",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
     "title": "Geräte"
   },
@@ -701,6 +913,8 @@
     "id": "collection-view-equipment-sheet-costs",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=costs",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
     "title": "Kosten"
   },
@@ -708,6 +922,8 @@
     "id": "collection-view-equipment-sheet-needs",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=needs",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
     "title": "Bedarf"
   },
@@ -715,6 +931,8 @@
     "id": "collection-view-equipment-sheet-lamps",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=lamps",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
     "title": "Lampen und Zonen"
   },
@@ -722,6 +940,8 @@
     "id": "collection-view-equipment-sheet-sensors",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=sensors",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
     "title": "Sensoren"
   },
@@ -729,6 +949,8 @@
     "id": "collection-view-equipment-sheet-wishes",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=wishes",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "equipment/equipment-page/equipment-screen/layers/equipment-layers/equipment-layers.tsx",
     "title": "Geräte-Wünsche"
   },
@@ -736,13 +958,31 @@
     "id": "friends-sheet-friends",
     "account": "test2",
     "path": "/friends?sheet=friends",
+    "kind": "list",
+    "state": "one",
     "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
     "title": "Meine Freunde"
+  },
+  {
+    "id": "friends-error",
+    "account": "test2",
+    "path": "/friends?sheet=friends",
+    "kind": "list",
+    "state": "error",
+    "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
+    "title": "Freunde",
+    "fail": "/friends",
+    "expect": {
+      "text": "Erneut versuchen"
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
   },
   {
     "id": "friends-sheet-sharing",
     "account": "test2",
     "path": "/friends?sheet=sharing",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
     "title": "Was Freunde sehen"
   },
@@ -750,6 +990,8 @@
     "id": "friend-collection",
     "account": "test2",
     "path": "/friends?sheet=friends",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
@@ -763,30 +1005,40 @@
     "id": "account-profile",
     "account": "test2",
     "path": "/account/profile",
+    "kind": "overview",
+    "state": "many",
     "title": "Profil"
   },
   {
     "id": "account-achievements",
     "account": "test2",
     "path": "/account/achievements",
+    "kind": "overview",
+    "state": "many",
     "title": "Erfolge und Rückblick"
   },
   {
     "id": "account-reminders",
     "account": "test2",
     "path": "/account/reminders",
+    "kind": "overview",
+    "state": "many",
     "title": "Erinnerungen"
   },
   {
     "id": "account-ai-clients",
     "account": "test2",
     "path": "/account/ai-clients",
+    "kind": "overview",
+    "state": "many",
     "title": "KI-Clients"
   },
   {
     "id": "account-settings-sheet-profile",
     "account": "test2",
     "path": "/account/settings?sheet=profile",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/settings-page/settings-page.tsx",
     "title": "Einstellungen: Profil"
   },
@@ -794,6 +1046,8 @@
     "id": "account-settings-sheet-notifications",
     "account": "test2",
     "path": "/account/settings?sheet=notifications",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/settings-page/settings-page.tsx",
     "title": "Einstellungen: Benachrichtigungen"
   },
@@ -801,6 +1055,8 @@
     "id": "account-settings-sheet-privacy",
     "account": "test2",
     "path": "/account/settings?sheet=privacy",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/settings-page/settings-page.tsx",
     "title": "Einstellungen: Datenschutz und Empfehlungen"
   },
@@ -808,6 +1064,8 @@
     "id": "account-settings-sheet-style",
     "account": "test2",
     "path": "/account/settings?sheet=style",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/settings-page/settings-page.tsx",
     "title": "Einstellungen: Wie nutzt du die App?"
   },
@@ -815,6 +1073,8 @@
     "id": "account-settings-sheet-wishlist",
     "account": "test2",
     "path": "/account/settings?sheet=wishlist",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/settings-page/settings-page.tsx",
     "title": "Einstellungen: Wunschliste"
   },
@@ -822,6 +1082,8 @@
     "id": "account-settings-sheet-light",
     "account": "test2",
     "path": "/account/settings?sheet=light",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/settings-page/settings-page.tsx",
     "title": "Einstellungen: Licht"
   },
@@ -829,6 +1091,8 @@
     "id": "account-dialog-delete-account",
     "account": "test2",
     "path": "/account/data",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "role": "button",
@@ -841,6 +1105,8 @@
     "id": "plant-menu-more",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "overview",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -857,6 +1123,8 @@
     "id": "plant-dialog-marker",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -877,6 +1145,8 @@
     "id": "plant-dialog-caught-date",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -897,6 +1167,8 @@
     "id": "plant-dialog-archive",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -917,6 +1189,8 @@
     "id": "plant-measure",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -934,6 +1208,8 @@
     "id": "unlock-unbekannt",
     "account": "test2",
     "path": "/unlock/unbekannt",
+    "kind": "overview",
+    "state": "many",
     "route": "/unlock/:id",
     "title": "Freischalten: unbekannt"
   },
@@ -941,6 +1217,8 @@
     "id": "label-unbekannt",
     "account": "test2",
     "path": "/label/unbekannt",
+    "kind": "overview",
+    "state": "many",
     "route": "/label/:id",
     "title": "Etikett ohne Pflanze"
   },
@@ -948,6 +1226,8 @@
     "id": "operator-sheet-zahlen",
     "account": "test3",
     "path": "/operator?sheet=zahlen",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/operator/operator-page/operator-page.tsx",
     "title": "Betreiber: Zahlen"
   },
@@ -955,6 +1235,8 @@
     "id": "operator-sheet-einstieg",
     "account": "test3",
     "path": "/operator?sheet=einstieg",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/operator/operator-page/operator-page.tsx",
     "title": "Betreiber: Einstieg"
   },
@@ -962,6 +1244,8 @@
     "id": "operator-sheet-kosten",
     "account": "test3",
     "path": "/operator?sheet=kosten",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/operator/operator-page/operator-page.tsx",
     "title": "Betreiber: Monatliche Kosten"
   },
@@ -969,6 +1253,8 @@
     "id": "operator-sheet-fristen",
     "account": "test3",
     "path": "/operator?sheet=fristen",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/operator/operator-page/operator-page.tsx",
     "title": "Betreiber: Löschfristen"
   },
@@ -976,6 +1262,8 @@
     "id": "operator-sheet-registrierung",
     "account": "test3",
     "path": "/operator?sheet=registrierung",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/operator/operator-page/operator-page.tsx",
     "title": "Betreiber: Registrierung"
   },
@@ -983,6 +1271,8 @@
     "id": "operator-sheet-einladungscodes",
     "account": "test3",
     "path": "/operator?sheet=einladungscodes",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "account/operator/operator-page/operator-page.tsx",
     "title": "Betreiber: Einladungscodes"
   },
@@ -990,12 +1280,16 @@
     "id": "welcome",
     "account": "anon",
     "path": "/",
+    "kind": "overview",
+    "state": "many",
     "title": "Willkommen (abgemeldet)"
   },
   {
     "id": "welcome-keycloak-anmelden",
     "account": "anon",
     "path": "/",
+    "kind": "overview",
+    "state": "many",
     "steps": [
       {
         "role": "button",
@@ -1009,6 +1303,8 @@
     "id": "welcome-keycloak-registrieren",
     "account": "anon",
     "path": "/",
+    "kind": "overview",
+    "state": "many",
     "steps": [
       {
         "role": "button",
@@ -1025,6 +1321,8 @@
     "id": "welcome-keycloak-passwort-vergessen",
     "account": "anon",
     "path": "/",
+    "kind": "overview",
+    "state": "many",
     "steps": [
       {
         "role": "button",
@@ -1041,6 +1339,8 @@
     "id": "account-achievements-earned",
     "account": "test2",
     "path": "/account/achievements?sheet=earned",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx",
     "title": "Erfolge"
   },
@@ -1048,6 +1348,8 @@
     "id": "account-achievements-rhythm",
     "account": "test2",
     "path": "/account/achievements?sheet=rhythm",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx",
     "title": "Pflegerhythmus"
   },
@@ -1055,6 +1357,8 @@
     "id": "account-achievements-year",
     "account": "test2",
     "path": "/account/achievements?sheet=year",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx",
     "title": "Jahresrückblick"
   },
@@ -1062,6 +1366,8 @@
     "id": "account-achievements-pause",
     "account": "test2",
     "path": "/account/achievements?sheet=pause",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "shared/patterns/responsive/layer-sheet/layer-part/layer-part.tsx",
     "title": "Urlaub eintragen"
   },
@@ -1069,6 +1375,8 @@
     "id": "today-tasks",
     "account": "test2",
     "path": "/today?sheet=tasks",
+    "kind": "sheet",
+    "state": "many",
     "layerFile": "today/today-page/today-page.tsx",
     "title": "Weitere Aufgaben"
   },
@@ -1076,6 +1384,8 @@
     "id": "account-functions-fn-today",
     "account": "test2",
     "path": "/account/functions",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "role": "button",
@@ -1089,6 +1399,8 @@
     "id": "species-profile-care",
     "account": "test2",
     "path": "/collection?view=species&sheet=species-Adiantum+raddianum",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "role": "button",
@@ -1099,14 +1411,16 @@
         "re": "pflegeprofil"
       }
     ],
+    "route": "/discover/species/:id",
     "layerFile": "catalog/species-page/species-page.tsx",
-    "title": "Mein Pflegeprofil",
-    "route": "/discover/species/:id"
+    "title": "Mein Pflegeprofil"
   },
   {
     "id": "collection-plants-care-profile",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -1132,6 +1446,8 @@
     "id": "collection-plant-notes",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -1153,6 +1469,8 @@
     "id": "collection-plant-notes-form",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -1178,6 +1496,8 @@
     "id": "collection-plants-course",
     "account": "test2",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -1199,6 +1519,8 @@
     "id": "collection-equipment-item",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button"
@@ -1211,6 +1533,8 @@
     "id": "collection-equipment-item-substrate-aroid-mix",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
@@ -1224,6 +1548,8 @@
     "id": "collection-equipment-item-sensor-bodenfeuchte",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
@@ -1237,6 +1563,8 @@
     "id": "collection-equipment-item-fertilizer-fluessigduenger",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
@@ -1250,6 +1578,8 @@
     "id": "collection-equipment-item-lamp-growbox",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
@@ -1263,6 +1593,8 @@
     "id": "collection-equipment-item-substrate-kakteenerde",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
@@ -1276,6 +1608,8 @@
     "id": "collection-equipment-item-plant-agent-neemoel",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items&lpage=2",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
@@ -1289,6 +1623,8 @@
     "id": "collection-equipment-item-lamp-pflanzenlampe-led",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items&lpage=2",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
@@ -1302,6 +1638,8 @@
     "id": "collection-equipment-item-lamp-regallampe",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items&lpage=2",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
@@ -1315,6 +1653,8 @@
     "id": "collection-equipment-item-lamp-stecklingslampe",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items&lpage=2",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
@@ -1328,6 +1668,8 @@
     "id": "collection-equipment-item-timer-zeitschaltuhr",
     "account": "test2",
     "path": "/collection?view=equipment&sheet=items&lpage=2",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] ul button, [data-layer-pane] ul button",
@@ -1341,6 +1683,8 @@
     "id": "review-case",
     "account": "test3",
     "path": "/review",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "main ul button"
@@ -1353,6 +1697,8 @@
     "id": "review-case-texts",
     "account": "test3",
     "path": "/review",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "main ul button"
@@ -1369,6 +1715,8 @@
     "id": "review-case-decide",
     "account": "test3",
     "path": "/review",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "main ul button"
@@ -1385,6 +1733,8 @@
     "id": "friend-equipment",
     "account": "test2",
     "path": "/friends?sheet=friends",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
@@ -1394,14 +1744,16 @@
         "re": "^Geräte"
       }
     ],
+    "route": "/friends/:friendId",
     "layerFile": "social/pages/friend-collection/friend-collection.tsx",
-    "title": "Geräte von Clara",
-    "route": "/friends/:friendId"
+    "title": "Geräte von Clara"
   },
   {
     "id": "friend-end",
     "account": "test2",
     "path": "/friends?sheet=friends",
+    "kind": "sheet",
+    "state": "many",
     "steps": [
       {
         "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
@@ -1415,32 +1767,40 @@
         "name": "Freundschaft beenden"
       }
     ],
+    "route": "/friends/:friendId",
     "layerFile": "social/pages/friend-collection/parts/friend-end/friend-end.tsx",
-    "title": "Freundschaft beenden",
-    "route": "/friends/:friendId"
+    "title": "Freundschaft beenden"
   },
   {
     "id": "collection",
     "account": "test2",
     "path": "/collection",
+    "kind": "overview",
+    "state": "many",
     "title": "Sammlung"
   },
   {
     "id": "collection-view-plants-page-2",
     "account": "test4",
     "path": "/collection?view=plants&from=6",
+    "kind": "list",
+    "state": "many",
     "title": "Sammlung"
   },
   {
     "id": "collection-view-plants-last-page",
     "account": "test4",
     "path": "/collection?view=plants&from=99999",
+    "kind": "list",
+    "state": "many",
     "title": "Sammlung"
   },
   {
     "id": "collection-plant-layer-hint",
     "account": "test5",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "due-hints",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -1448,12 +1808,17 @@
       }
     ],
     "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
-    "title": "Fensterblatt"
+    "title": "Fensterblatt",
+    "expect": {
+      "text": "Miss sie, um ihr Wachstum zu sehen."
+    }
   },
   {
     "id": "collection-plant-course-hint",
     "account": "test6",
     "path": "/collection?view=plants",
+    "kind": "sheet",
+    "state": "due-hints",
     "steps": [
       {
         "css": "ul[aria-label=\"Pflanzen\"] button",
@@ -1465,12 +1830,21 @@
       }
     ],
     "layerFile": "collection/plants-screen/plant-layers/plant-layer/plant-layer.tsx",
-    "title": "Fensterblatt"
+    "title": "Fensterblatt",
+    "expect": {
+      "text": "Foto und Größe zeigen ihr Wachstum."
+    }
   },
   {
     "id": "today-hint",
     "account": "test5",
     "path": "/today",
-    "title": "Heute"
+    "kind": "overview",
+    "state": "due-hints",
+    "family": "today",
+    "title": "Heute",
+    "expect": {
+      "text": "Was die App kann"
+    }
   }
 ]

@@ -1,5 +1,5 @@
 {
-  "maxEntries": 556,
+  "maxEntries": 563,
   "entries": [
     {
       "screen": "account-achievements-earned",
@@ -1903,7 +1903,8 @@
       "size": "360x640",
       "page": 1,
       "inner": 10.09,
-      "rules": ["frame", "pager"]
+      "rules": ["pager", "size"],
+      "issue": 2421
     },
     {
       "screen": "collection-view-species-sheet-cards",
@@ -1938,7 +1939,8 @@
       "size": "360x640@200%",
       "page": 1,
       "inner": 38.07,
-      "rules": ["pager"]
+      "rules": ["pager", "size"],
+      "issue": 2421
     },
     {
       "screen": "collection-view-species-sheet-filters",
@@ -3892,6 +3894,62 @@
       "page": 1,
       "inner": 3.49,
       "rules": ["pager"]
+    },
+    {
+      "screen": "discover",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["size"],
+      "issue": 2421
+    },
+    {
+      "screen": "discover",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 1,
+      "rules": ["size"],
+      "issue": 2421
+    },
+    {
+      "screen": "discover-view-suggestions",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1,
+      "rules": ["size"],
+      "issue": 2421
+    },
+    {
+      "screen": "discover-view-suggestions",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 1,
+      "rules": ["size"],
+      "issue": 2421
+    },
+    {
+      "screen": "friends-match-card",
+      "size": "360x640",
+      "page": 1,
+      "inner": 1.36,
+      "rules": ["frame", "size"],
+      "issue": 2402
+    },
+    {
+      "screen": "friends-match-card",
+      "size": "390x844",
+      "page": 1,
+      "inner": 1.24,
+      "rules": ["frame"],
+      "issue": 2402
+    },
+    {
+      "screen": "friends-match-card",
+      "size": "360x640@200%",
+      "page": 1,
+      "inner": 1,
+      "rules": ["size"],
+      "issue": 2421
     }
   ]
 }
