@@ -28,23 +28,12 @@ const ACCESS = { api: "http://api", token: async () => "tok" };
 afterEach(cleanup);
 
 describe("PlantOverview (NFR-13, US-QS-23)", () => {
-  /** The overview, and the cell it gives to the result of "Gießen" (`resultRef`, the layer hands it to the quick actions). */
-  const overview = () => {
-    const cell: { host: HTMLElement | null } = { host: null };
+  const overview = () =>
     render(
       <MemoryRouter>
-        <PlantOverview
-          card={CARD}
-          access={ACCESS}
-          onTreat={vi.fn()}
-          resultRef={(host) => {
-            cell.host = host;
-          }}
-        />
+        <PlantOverview card={CARD} access={ACCESS} onTreat={vi.fn()} />
       </MemoryRouter>,
     );
-    return cell;
-  };
 
   it("NFR-13 the row of Behandeln and Notizen may wrap, so at 200 % text the buttons stay inside their column", () => {
     overview();
@@ -77,35 +66,15 @@ describe("PlantOverview (NFR-13, US-QS-23)", () => {
     expect((measurement.parentElement as HTMLElement).className.split(" ")).toContain("flex-wrap");
   });
 
-  it("US-QS-32 · SG-FEED-05 the cell for the result of Gießen is the cell of the 'Art · Status' line, not part of a row of buttons (issue 2462)", () => {
-    const cell = overview();
-    const facts = screen.getByText(/^Art: Ficus benjamina · Status: /);
-    const host = cell.host as HTMLElement;
-    expect(host).toBeTruthy();
-    // Both stand in one grid cell: the cell is as high as the taller of the two, so the line coming and going moves nothing.
-    expect(host.parentElement).toBe(facts.parentElement);
-    expect(facts.className.split(" ")).toEqual(
-      expect.arrayContaining(["col-start-1", "row-start-1"]),
-    );
-    expect(host.className.split(" ")).toEqual(
-      expect.arrayContaining(["col-start-1", "row-start-1"]),
-    );
-    // The facts line is hidden, not removed, while the cell holds a result: `invisible` keeps its height and leaves the
-    // reading order.
-    expect(facts.className.split(" ")).toContain("group-has-[>div:not(:empty)]:invisible");
-    expect((facts.parentElement as HTMLElement).className.split(" ")).toContain("group");
-    const row = screen.getByRole("button", { name: "Behandeln: Birkenfeige" })
-      .parentElement as HTMLElement;
-    expect(row.contains(host)).toBe(false);
-    expect(row.querySelector("p")).toBeNull();
-  });
-
-  it("US-QS-32 · SG-FEED-05 without a result the cell holds only the facts line: its host is an empty box, so nothing is hidden", () => {
+  it("US-QS-15 · SG-FEED-05 · issue 2536 the 'Art · Status' line is a plain line: the result of Gießen has no cell here and nothing hides the line", () => {
     overview();
     const facts = screen.getByText(/^Art: Ficus benjamina · Status: /);
-    expect(facts.nextElementSibling?.tagName).toBe("DIV");
-    expect(facts.nextElementSibling?.childElementCount).toBe(0);
-    expect(facts.nextElementSibling?.textContent).toBe("");
+    expect(facts.className.split(" ")).not.toContain("invisible");
+    expect(facts.className).not.toContain("group-has");
+    expect(facts.parentElement?.className.split(" ")).not.toContain("group");
+    // Nothing is in the line next to its state and its facts: no empty box that a result is drawn into.
+    expect(facts.nextElementSibling).toBeNull();
+    expect(facts.parentElement?.querySelector("div")).toBeNull();
   });
 
   it("US-QS-23 shows the texts of the table, with unknown values as unbekannt", () => {

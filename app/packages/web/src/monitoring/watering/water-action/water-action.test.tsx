@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LINE_HIT } from "@/shared/feedback/line-hit";
 import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import { Context as AnnouncerContext } from "@/shared/platform/announcer/context";
 import { WaterAction } from "./water-action";
 
 afterEach(() => {
@@ -17,8 +18,8 @@ afterEach(() => {
 const host = document.createElement("div");
 beforeEach(() => document.body.append(host));
 
-const show = (resultHost: HTMLElement | null = host) =>
-  render(
+const show = (resultHost: HTMLElement | null = host) => {
+  const view = render(
     <AnnouncerProvider>
       <WaterAction
         api="http://api"
@@ -28,6 +29,10 @@ const show = (resultHost: HTMLElement | null = host) =>
       />
     </AnnouncerProvider>,
   );
+  // The line of the result stands after the button in the page, as under the row of the quick actions (the order of Tab).
+  document.body.append(host);
+  return view;
+};
 
 /** What the shared live region says (DS-69); the toast regions of the test wrapper are no part of it. */
 const said = () => document.querySelector(".sr-only[aria-live=polite]")?.textContent?.trim() ?? "";
@@ -183,7 +188,7 @@ describe("US-QS-32 Gießen stays in place with its undo (SG-FEED-03)", () => {
     expect(undo.className.split(" ")).toContain(LINE_HIT);
   });
 
-  it("US-QS-32 the undo takes the focus the button had, so the focus is not lost", async () => {
+  it("US-QS-15 · issue 2536 · SG-FEED-05 the focus stays on Gießen while the undo shows: no other element is focused, so nothing scrolls", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async (url) => newEntry(new URL(String(url)).pathname)),
@@ -191,12 +196,61 @@ describe("US-QS-32 Gießen stays in place with its undo (SG-FEED-03)", () => {
     show();
     const button = screen.getByRole("button", { name: "Gießen: Aloe" });
     button.focus();
+    const focus = vi.spyOn(HTMLElement.prototype, "focus");
     await userEvent.click(button);
     const undo = await screen.findByRole("button", { name: "Rückgängig: Aloe" });
+    expect(document.activeElement).toBe(button);
+    expect(document.activeElement).not.toBe(undo);
+    // A `focus()` call is what scrolls a view to its target: nothing but the button of the keeper's own tap gets one.
+    expect(focus.mock.contexts.every((target) => target === button)).toBe(true);
+    focus.mockRestore();
+  });
+
+  it("US-QS-15 · issue 2536 a tap that focuses nothing (Safari and iOS give a button no focus on tap) still leaves the undo unfocused: the view does not scroll to it", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => newEntry(new URL(String(url)).pathname)),
+    );
+    show();
+    const focus = vi.spyOn(HTMLElement.prototype, "focus");
+    expect(document.activeElement).toBe(document.body);
+    fireEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
+    const undo = await screen.findByRole("button", { name: "Rückgängig: Aloe" });
+    expect(document.activeElement).not.toBe(undo);
+    expect(focus).not.toHaveBeenCalled();
+    focus.mockRestore();
+  });
+
+  it("US-QS-32 · SG-FEED-05 without a result host the result stands next to the button and its undo takes the focus from the button, as before", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => newEntry(new URL(String(url)).pathname)),
+    );
+    const { container } = show(null);
+    const button = screen.getByRole("button", { name: "Gießen: Aloe" });
+    button.focus();
+    await userEvent.click(button);
+    const undo = await screen.findByRole("button", { name: "Rückgängig: Aloe" });
+    expect(container.contains(undo)).toBe(true);
+    expect(host.contains(undo)).toBe(false);
     expect(document.activeElement).toBe(undo);
   });
 
-  it("US-QS-32 · SG-BASE-01 the button takes the focus back when the undo window ends, and when the undo ran", async () => {
+  it("US-QS-15 · issue 2536 · SG-FEED-05 the result row stands in the host, and the undo of the keyboard follows Gießen by Tab", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => newEntry(new URL(String(url)).pathname)),
+    );
+    show();
+    const button = screen.getByRole("button", { name: "Gießen: Aloe" });
+    await userEvent.click(button);
+    const undo = await screen.findByRole("button", { name: "Rückgängig: Aloe" });
+    expect(host.contains(undo)).toBe(true);
+    await userEvent.tab();
+    expect(document.activeElement).toBe(undo);
+  });
+
+  it("US-QS-32 · SG-BASE-01 the button keeps the focus when the undo window ends, and when the undo ran by a tap", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       vi.stubGlobal(
@@ -208,16 +262,61 @@ describe("US-QS-32 Gießen stays in place with its undo (SG-FEED-03)", () => {
       await userEvent.click(button);
       await screen.findByRole("button", { name: "Rückgängig: Aloe" });
       act(() => vi.advanceTimersByTime(8000));
+      expect(screen.queryByRole("button", { name: "Rückgängig: Aloe" })).toBeNull();
       expect(document.activeElement).toBe(button);
       await userEvent.click(button);
+      expect(document.activeElement).toBe(button);
       await userEvent.click(await screen.findByRole("button", { name: "Rückgängig: Aloe" }));
       await waitFor(() =>
         expect(screen.queryByRole("button", { name: "Rückgängig: Aloe" })).toBeNull(),
       );
+      // A tap focuses the undo (the keeper's own act); when the row goes the focus returns to the button, not to the body.
       expect(document.activeElement).toBe(button);
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("US-QS-32 · issue 2536 the keyboard path: Tab to Rückgängig and Enter takes the entry back, and the focus returns to Gießen", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => newEntry(new URL(String(url)).pathname)),
+    );
+    show();
+    const button = screen.getByRole("button", { name: "Gießen: Aloe" });
+    await userEvent.click(button);
+    await screen.findByRole("button", { name: "Rückgängig: Aloe" });
+    await userEvent.tab();
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Rückgängig: Aloe" })).toBeNull(),
+    );
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("US-QS-15 · issue 2536 · SG-FEED-02 · SG-FEED-04 the result is announced once through the shared live region, and the row adds no live region", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => newEntry(new URL(String(url)).pathname)),
+    );
+    const announce = vi.fn();
+    render(
+      <AnnouncerContext.Provider value={{ announce, buffer: vi.fn(), note: null }}>
+        <WaterAction
+          api="http://api"
+          token={async () => "tok"}
+          specimen={{ id: "e1", name: "Aloe" }}
+          resultHost={host}
+        />
+      </AnnouncerContext.Provider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Gießen: Aloe" }));
+    const undo = await screen.findByRole("button", { name: "Rückgängig: Aloe" });
+    expect(announce).toHaveBeenCalledOnce();
+    expect(announce).toHaveBeenCalledWith("Gegossen heute");
+    // The row has no `aria-live`, no `role="status"` and no `role="alert"` above it: the announcer is the one channel.
+    expect(undo.closest("[aria-live], [role=status], [role=alert]")).toBeNull();
+    expect(host.closest("[aria-live], [role=status], [role=alert]")).toBeNull();
   });
 
   it("US-QS-32 'Rückgängig' takes the entry back with one request to the undo route, and the result row goes", async () => {

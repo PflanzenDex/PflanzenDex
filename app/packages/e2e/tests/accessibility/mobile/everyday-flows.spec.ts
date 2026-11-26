@@ -109,14 +109,13 @@ async function measureWithPhoto(page: Page): Promise<void> {
   await settleMeasurementSave(page);
 }
 
-/** Where the buttons and tabs of the plant layer stand: the result of "Gießen" moves none (SG-FEED-05, issue 2462). */
+/** What the result of "Gießen" moves nothing of: the scroll position and the quick-action buttons (SG-FEED-05, issue 2536). */
 const placesOf = (page: Page) =>
-  page
-    .getByRole("button", { name: /^(Gießen|Behandeln|Notizen|Messen): / })
-    .or(page.getByRole("tab"))
-    .evaluateAll((all) =>
-      all.map((e) => `${e.textContent}@${JSON.stringify(e.getBoundingClientRect())}`),
-    );
+  page.getByRole("group", { name: "Schnellaktionen" }).evaluate((row) => {
+    const region = row.closest("[data-layer-body]")?.querySelector("[data-scroll-region]");
+    const box = (e: Element) => `${e.textContent}@${JSON.stringify(e.getBoundingClientRect())}`;
+    return [region?.scrollTop, ...[...row.querySelectorAll("button")].map(box)];
+  });
 
 /** 2. Water the plant: the button "Gießen" of its layer "Überblick" writes today's entry (US-MON-05, US-QS-23). */
 async function waterPlant(page: Page): Promise<void> {
@@ -127,14 +126,15 @@ async function waterPlant(page: Page): Promise<void> {
   await expectLowerHalf(page, water, "water: Gießen");
   const places = await placesOf(page);
   await water.click();
-  // The result takes a line's place and moves nothing (SG-FEED-05, issue 2462); it stays 8 s, no toast opens (SG-FEED-03).
+  // The result stands in a line under the row (issue 2536); it stays 8 s, no toast opens (SG-FEED-03). The focus stays on "Gießen".
   await expect(page.getByRole("button", { name: /^Rückgängig: / })).toBeVisible();
-  expect(await placesOf(page), "the undo row moved the layer").toEqual(places);
+  await expect(water, "the undo took the focus").toBeFocused();
+  expect(await placesOf(page), "the undo row scrolled or moved the quick actions").toEqual(places);
   await expectUndoInPlace(page, "Gegossen heute", /^Rückgängig: /);
-  // The same day again makes no entry: "Zuletzt gegossen: heute" takes the same place.
+  // The same day again makes no entry: "Zuletzt gegossen: heute" takes the same line.
   await water.click();
   await expect(page.locator("p").filter({ hasText: "Zuletzt gegossen: heute" })).toBeVisible();
-  expect(await placesOf(page), "the line 'Zuletzt gegossen' moved the layer").toEqual(places);
+  expect(await placesOf(page), "the line 'Zuletzt gegossen' scrolled or moved").toEqual(places);
   // Escape closes a layer only while the focus is inside it: the focus goes to the layer's tab first.
   await page.getByRole("tab", { name: "Überblick" }).focus();
   await page.keyboard.press("Escape");
