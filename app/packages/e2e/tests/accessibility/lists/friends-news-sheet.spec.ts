@@ -92,7 +92,8 @@ async function boxOf(locator: Locator): Promise<Box> {
  * Returns the number of rows.
  */
 async function expectRowsApart(page: Page, size: string): Promise<number> {
-  const rows = page.getByRole("list", { name: LIST }).getByRole("listitem");
+  // The rows are the entries; the end marker "Das waren alle n" is the last item of the last list but no row.
+  const rows = page.getByRole("list", { name: LIST }).locator("li:not([data-list-end])");
   const count = await rows.count();
   expect(count, `${size}: the layer shows every row, ${ROWS} of them`).toBe(ROWS);
   let previousBottom = Number.NEGATIVE_INFINITY;
@@ -115,7 +116,7 @@ async function expectRowsApart(page: Page, size: string): Promise<number> {
   for (let i = 0; i < (await sections.count()); i++) {
     const section = sections.nth(i);
     const heading = await boxOf(section.getByRole("heading", { level: 3 }));
-    const first = await boxOf(section.getByRole("listitem").first());
+    const first = await boxOf(section.locator("li:not([data-list-end])").first());
     expect(
       first.top,
       `${size}: the first row of section ${i + 1} starts above the bottom of its heading`,
