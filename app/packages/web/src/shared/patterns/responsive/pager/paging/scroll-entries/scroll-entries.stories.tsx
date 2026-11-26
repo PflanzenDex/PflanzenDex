@@ -1,6 +1,6 @@
-import { useLayoutEffect } from "react";
 import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
 import { MemoryRouter } from "react-router";
+import { withText200 } from "@/shared/testing/story-frame/story-frame";
 import { hasLayout, waitUntil } from "@/shared/testing/story-frame/story-play";
 import { ScrollEntries } from "./scroll-entries";
 import type { PagerPaging } from "../paging";
@@ -29,18 +29,6 @@ const inFrame: Decorator = (Story) => (
     </div>
   </MemoryRouter>
 );
-
-/** The text size of a phone set to 200 %: the same rule as the one-screen gate (`html { font-size: 200% }`). */
-const text200: Decorator = (Story) => {
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty("font-size", "200%", "important");
-    return () => {
-      root.style.removeProperty("font-size");
-    };
-  }, []);
-  return <Story />;
-};
 
 const meta = {
   title: "shared/ScrollEntries",
@@ -181,7 +169,7 @@ export const RetryRow: Story = {
 // The same row at 200 % text on a phone: the sentence stands above the button, nothing is cut, nothing runs sideways.
 export const RetryRowAt200: Story = {
   ...RetryRow,
-  decorators: [text200],
+  decorators: [withText200],
   play: async ({ canvasElement }) => {
     const { sentence, row, button } = await retryRow(canvasElement);
     if (!hasLayout(row)) return;

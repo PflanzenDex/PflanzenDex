@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LetterIndex } from "./letter-index";
+import { LetterStrip } from "./letter-strip";
 import { LETTERS } from "./letters";
 
 afterEach(() => {
@@ -17,7 +17,7 @@ function show(onJump = vi.fn(), present: ReadonlySet<string> = PRESENT) {
   render(
     <>
       <button type="button">davor</button>
-      <LetterIndex label="Springen zu Buchstabe" present={present} onJump={onJump} />
+      <LetterStrip label="Springen zu Buchstabe" present={present} onJump={onJump} />
       <button type="button">danach</button>
     </>,
   );

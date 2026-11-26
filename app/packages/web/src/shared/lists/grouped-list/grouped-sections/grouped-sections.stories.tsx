@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Button } from "@/shared/ui/button/button";
 import { ARGS, GROUPS, group, inFrame, plants, sectionsOf } from "./grouped-sections.parts";
 import { GroupSections, type SectionGroup } from "./grouped-sections";
 
@@ -56,9 +57,9 @@ export const UnknownLast: Story = {
       GROUPS[0] as SectionGroup<string>,
       group("unplaced", "Standort unbekannt", plants("Ficus", 2), {
         action: (
-          <button type="button" className="min-h-11 px-3 text-primary">
+          <Button type="button" variant="plain" size="sm">
             Standort setzen
-          </button>
+          </Button>
         ),
       }),
     ],

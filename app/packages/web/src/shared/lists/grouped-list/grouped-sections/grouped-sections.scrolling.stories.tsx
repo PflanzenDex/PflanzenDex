@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { withText200 } from "@/shared/testing/story-frame/story-frame";
 import { hasLayout, waitUntil } from "@/shared/testing/story-frame/story-play";
 import {
   ARGS,
@@ -8,7 +9,6 @@ import {
   plants,
   regionOf,
   sectionsOf,
-  text200,
 } from "./grouped-sections.parts";
 import { GroupSections } from "./grouped-sections";
 
@@ -45,7 +45,9 @@ export const StickyHeading: Story = {
     );
     const style = getComputedStyle(heading);
     if (style.position !== "sticky") throw new Error(`play: the heading is ${style.position}`);
-    if (style.backgroundColor === "rgba(0, 0, 0, 0)" || style.backgroundColor === "transparent")
+    // A computed colour reads "rgb(r, g, b)" or with a fourth number for the alpha: 0 means the rows show through.
+    const [, , , alpha] = style.backgroundColor.match(/[\d.]+/g) ?? [];
+    if (style.backgroundColor === "transparent" || alpha === "0")
       throw new Error("play: the sticky heading is transparent, rows show through");
   },
 };
@@ -76,7 +78,7 @@ const LONG = "Wohnzimmer am Nordfenster neben der Heizung und dem Bücherregal";
 // At 200 % text a long heading wraps. It covers at most a third of the region; where it would cover more it is no longer sticky
 // (WCAG 1.4.4, 2.4.11), and the play checks that the switch and the position agree.
 export const LongHeadingAt200: Story = {
-  decorators: [text200],
+  decorators: [withText200],
   args: {
     groups: [group("a", LONG, plants("Efeu", 6)), group("b", "Küche", plants("Basilikum", 6))],
   },

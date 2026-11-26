@@ -1,7 +1,7 @@
-import { useLayoutEffect } from "react";
 import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
+import { withText200 } from "@/shared/testing/story-frame/story-frame";
 import { hasLayout, waitUntil } from "@/shared/testing/story-frame/story-play";
-import { IndexedList } from "./indexed-list/indexed-list";
+import { IndexedList } from "./indexed-list";
 
 // Catalog of the letter index of a long list sorted by name (US-QS-15, SG-LIST-06, issue 2419). Each story has a play function
 // that the QG-U5 conformance run waits for (P-B, issue 2432); a story fails when its play throws.
@@ -17,18 +17,6 @@ const inFrame: Decorator = (Story) => (
     <Story />
   </div>
 );
-
-/** The text size of a phone set to 200 %: the same rule as the one-screen gate (`html { font-size: 200% }`). */
-const text200: Decorator = (Story) => {
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty("font-size", "200%", "important");
-    return () => {
-      root.style.removeProperty("font-size");
-    };
-  }, []);
-  return <Story />;
-};
 
 function List({ rows, byName }: { rows: readonly string[]; byName: boolean }) {
   return (
@@ -50,7 +38,7 @@ function List({ rows, byName }: { rows: readonly string[]; byName: boolean }) {
 }
 
 const meta = {
-  title: "lists/LetterIndex",
+  title: "lists/IndexedList",
   component: List,
   decorators: [inFrame],
   args: { rows: names, byName: true },
@@ -125,7 +113,7 @@ export const Hidden: Story = {
 // At 200 % text the strip keeps its 27 places and thins its labels so that none overlap: the labels that show do not run into
 // each other, and the strip does not grow past the list.
 export const At200: Story = {
-  decorators: [text200],
+  decorators: [withText200],
   play: async ({ canvasElement }) => {
     const strip = stripOf(canvasElement);
     if (!strip) throw new Error("play: the letter index is missing");

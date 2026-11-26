@@ -1,7 +1,7 @@
 import { useMemo, useRef, type ReactNode } from "react";
 import { scrollToTop } from "@/shared/platform/device/motion/scroll-top";
-import { LetterIndex } from "../letter-index";
-import { firstIndexes, MIN_ROWS } from "../letters";
+import { LetterStrip } from "@/shared/ui/fields/input/letter-strip/letter-strip";
+import { firstIndexes, MIN_ROWS } from "@/shared/ui/fields/input/letter-strip/letters";
 
 /**
  * A long list sorted by name with the letter index at its trailing edge (SG-LIST-06, issue 2419). The index shows only when
@@ -35,7 +35,7 @@ export function IndexedList<T>(props: {
   return (
     <div ref={box} className="relative flex min-h-0 min-w-0 flex-1 gap-1">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">{props.children}</div>
-      <LetterIndex label={props.label} present={present} onJump={jump} />
+      <LetterStrip label={props.label} present={present} onJump={jump} />
     </div>
   );
 }

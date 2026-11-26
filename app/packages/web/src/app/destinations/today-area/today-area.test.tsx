@@ -619,8 +619,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(posts).toEqual(["/treatments/a/complete"]);
   });
 
-  it("US-QS-18 · US-BEH-02 the open treatments stand by urgency with a short chip and are paged", async () => {
-    // Paging starts at 768 px; the layer stays a sheet below 1024 px (a pane there has no dialog role).
+  it("US-QS-15 · US-QS-18 · US-BEH-02 · SG-LIST-10 the open treatments stand under Überfällig, Heute and Später with a short chip, and no page", async () => {
     setViewportWidth(768);
     fakeServer({
       treatments: [
@@ -632,50 +631,41 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     });
     show("/today?sheet=treatments");
     const layer = await dialog("Behandlungen");
-    const list = await within(layer).findByRole("list", { name: "Offene Behandlungen" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
-    expect(within(list).getByText("10 Tage überfällig").textContent).toBe(
+    await within(layer).findAllByRole("list", { name: "Offene Behandlungen" });
+    // One list of due items: the sections in the order of SG-LIST-10, each with its count, and every row on it at once.
+    expect(
+      within(layer)
+        .getAllByRole("heading", { level: 4 })
+        .map((h) => h.textContent),
+    ).toEqual(["Überfällig · 2\u00a0Termine", "Heute · 1\u00a0Termin", "Später · 1\u00a0Termin"]);
+    expect(
+      within(layer)
+        .getAllByRole("heading", { level: 5 })
+        .map((h) => h.textContent),
+    ).toEqual(["Aloe", "Efeu", "Farn", "Gummibaum"]);
+    expect(within(layer).getByText("10 Tage überfällig").textContent).toBe(
       "10\u00a0Tage überfällig",
     );
-    expect(within(layer).getByText("Seite 1 von 2")).toBeTruthy();
+    expect(within(layer).queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(within(layer).queryByRole("button", { name: "Weiter" })).toBeNull();
   });
 
-  it("US-QS-18 · F-0351 ten open treatments, two per page, beside the scrolling further tasks of Heute: Weiter moves one page each time to page 5 of 5", async () => {
-    // Paging starts at 768 px; the layer stays a sheet below 1024 px (a pane there has no dialog role).
+  it("US-QS-15 · US-QS-18 · F-0351 ten open treatments are all on the list of the layer, beside the scrolling further tasks of Heute: no page and no Weiter", async () => {
     setViewportWidth(768);
     const ten = Array.from({ length: 10 }, (_, i) =>
       treatment(`t${i}`, `Pflanze ${i + 1}`, "overdue", `überfällig seit ${i + 1} Tagen`),
     );
-    // Four further tasks under the tiles: a fitted list of one row per page on the same screen (US-QS-19).
+    // Four further tasks under the tiles: a scrolling list on the same screen (US-QS-19).
     fakeServer({ treatments: ten, items: [todayItem, ...FURTHER_TASKS] });
     const restore = stubFittedRegion(100);
     try {
-      const user = userEvent.setup();
       show("/today?sheet=treatments");
       const layer = await dialog("Behandlungen");
-      const list = await within(layer).findByRole("list", { name: "Offene Behandlungen" });
-      const names = () =>
-        within(list)
-          .getAllByRole("heading", { level: 4 })
-          .map((h) => h.textContent);
-      const position = () => within(layer).getByText(/^Seite \d+ von \d+$/).textContent;
-      const pages: string[][] = [];
-      for (let page = 1; page <= 5; page++) {
-        expect(position()).toBe(`Seite ${page} von 5`);
-        pages.push(names());
-        if (page < 5) await user.click(within(layer).getByRole("button", { name: "Weiter" }));
-      }
-      expect(pages).toEqual([
-        ["Pflanze 1", "Pflanze 2"],
-        ["Pflanze 3", "Pflanze 4"],
-        ["Pflanze 5", "Pflanze 6"],
-        ["Pflanze 7", "Pflanze 8"],
-        ["Pflanze 9", "Pflanze 10"],
-      ]);
-      expect(within(layer).getByRole("button", { name: "Weiter" }).hasAttribute("disabled")).toBe(
-        true,
-      );
-      // The further tasks behind the layer scroll and hold no page: the layer's pages leave them alone (issue 2070, US-QS-15).
+      const [list] = await within(layer).findAllByRole("list", { name: "Offene Behandlungen" });
+      expect(within(list as HTMLElement).getAllByRole("heading", { level: 5 })).toHaveLength(10);
+      expect(within(layer).queryByRole("button", { name: "Weiter" })).toBeNull();
+      expect(within(layer).queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+      // The further tasks behind the layer scroll and hold no page (issue 2070, US-QS-15).
       expect(positionsBehind(layer)).toEqual([]);
     } finally {
       restore();
@@ -995,9 +985,10 @@ describe("US-QS-18 SG-FEED-01 a write in a sheet of Heute changes the first card
       expect(screen.queryByRole("dialog", { name: "Behandlung planen" })).toBeNull(),
     );
     const open = within(await dialog("Behandlungen"));
-    const list = await open.findByRole("list", { name: "Offene Behandlungen" });
+    await open.findAllByRole("list", { name: "Offene Behandlungen" });
+    const list = open.getByRole("region", { name: "Offene Behandlungen" });
     expect(open.queryByText(/^Keine offenen Behandlungen\.$/)).toBeNull();
-    expect(within(list).getByRole("heading", { level: 4, name: "Aloe" })).toBeTruthy();
+    expect(within(list).getByRole("heading", { level: 5, name: "Aloe" })).toBeTruthy();
     expect(within(list).getByText(/Läuse/)).toBeTruthy();
   });
 

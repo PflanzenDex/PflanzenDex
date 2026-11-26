@@ -8,7 +8,7 @@ import { useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LayerSheet, useExitValue } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { IndexedList } from "@/shared/lists/letter-index/indexed-list/indexed-list";
+import { IndexedList } from "@/shared/lists/indexed-list/indexed-list";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { GroupSections } from "@/shared/lists/grouped-list/grouped-sections/grouped-sections";
 import type { SectionGroup } from "@/shared/lists/grouped-list/grouped-sections/group-section/group-section";

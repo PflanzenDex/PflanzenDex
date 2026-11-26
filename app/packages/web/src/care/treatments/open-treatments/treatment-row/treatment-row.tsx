@@ -7,9 +7,6 @@ import { ROW_ACTION, TREATMENT_TEXT } from "@/shared/lists/grouped-list/group-cl
 import { ATTENTION_CLASSES } from "../../../shared/notices";
 import { dateText } from "../../../shared/text";
 
-/** Rows per page of the layer (starting value, assumption; US-QS-18). */
-export const PAGE_SIZE = 2;
-
 /** The status chip of an overdue or due-today row: the status text says it first, the tint only underlines it (never by colour alone). */
 const CHIP = new Set(["overdue", "today"]);
 
@@ -30,12 +27,12 @@ export function Row(props: {
   row: TreatmentListRow;
   running: boolean;
   onDone: () => void;
-  /** Shown as a section of another page: the specimen name is one heading level lower (US-QS-14). */
+  /** Shown as a section of another page: the specimen name is one heading level lower (US-QS-14); it stands under its section's heading (SG-LIST-10). */
   host: boolean;
   held?: HeldRowState | undefined;
 }) {
   const { row } = props;
-  const Name = props.host ? "h4" : "h3";
+  const Name = props.host ? "h5" : "h4";
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-card bg-card p-2 text-card-foreground shadow-elevation-1 [overflow-wrap:anywhere]">
       <div className={cn("flex min-w-0 flex-col gap-0.5", TREATMENT_TEXT)}>

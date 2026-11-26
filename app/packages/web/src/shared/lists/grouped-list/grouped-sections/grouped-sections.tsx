@@ -12,7 +12,7 @@ import { GroupJump, type GroupChoice } from "./group-jump/group-jump";
 import { useStickyFit } from "./use-sticky-fit";
 
 export type { SectionGroup, SectionList } from "./group-section/group-section";
-export { countOf, GroupSection } from "./group-section/group-section";
+export { GroupSection } from "./group-section/group-section";
 
 /** The chip of a group (the name and the count) for the row that jumps. */
 const choiceOf = (g: SectionGroup<unknown>): GroupChoice => ({
@@ -51,8 +51,11 @@ function jump(box: HTMLElement | null, key: string): void {
 export function GroupSections<T>(props: {
   /** Accessible name of the scroll region of a page (German). */
   label: string;
-  /** Accessible name of the row that jumps (German), e.g. "Zu Standort springen". */
-  jumpLabel: string;
+  /**
+   * Accessible name of the row that jumps (German), e.g. "Zu Standort springen". Without it there is no row: a short list of
+   * two or three sections, such as the due items, needs none.
+   */
+  jumpLabel?: string;
   groups: readonly SectionGroup<T>[];
   list: SectionList<T>;
   /** The heading level of the groups: 2 below the page's h1, 3 or 4 inside a layer (SG-HEAD-03). */
@@ -87,7 +90,7 @@ export function GroupSections<T>(props: {
     </SectionsContext>
   );
   const chips =
-    groups.length > 1 ? (
+    groups.length > 1 && props.jumpLabel !== undefined ? (
       <GroupJump
         label={props.jumpLabel}
         choices={groups.map(choiceOf)}

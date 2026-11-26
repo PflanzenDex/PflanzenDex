@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { cva } from "class-variance-authority";
 import { cn } from "@/shared/lib/utils";
 import { LETTERS } from "./letters";
 import { useLabelStep, useStripControl } from "./use-strip-control";
@@ -9,8 +10,17 @@ import { useLabelStep, useStripControl } from "./use-strip-control";
  */
 export const STRIP_WIDTH = "w-11";
 
+/** One place of the strip: the letter of a group with entries is in the primary colour, one without is dimmed, not removed. */
+const place = cva("flex h-3 shrink-0 items-center justify-center", {
+  variants: {
+    entries: { present: "text-primary", absent: "text-muted-foreground" },
+    label: { shown: "", thinned: "invisible" },
+  },
+  defaultVariants: { entries: "absent", label: "shown" },
+});
+
 /**
- * The letter index of a long list sorted by name (SG-LIST-06, owner decision 2026-11-22, issue 2419): the letters A to Z and
+ * The letter strip of a long list sorted by name (SG-LIST-06, owner decision 2026-11-22, issue 2419): the letters A to Z and
  * "#" in a narrow vertical strip at the trailing edge of the list. A tap or a drag on the strip jumps to the first entry of
  * the letter under the finger (`onJump`, at once, no glide) and shows that letter large beside the strip while the finger is
  * down; a letter without an entry is dimmed (muted, not removed) and the jump goes on to the next one that has an entry.
@@ -20,7 +30,7 @@ export const STRIP_WIDTH = "w-11";
  * keyboard walk gains one stop, not 27. The letters themselves are no separate stops and are hidden from assistive technology
  * (the value text says the letter); the bubble is hidden too.
  */
-export function LetterIndex(props: {
+export function LetterStrip(props: {
   /** Accessible name of the strip (German), e.g. "Springen zu Buchstabe". */
   label: string;
   /** The letters that have an entry, in the order of the strip. */
@@ -56,11 +66,10 @@ export function LetterIndex(props: {
           <span
             key={letter}
             aria-hidden="true"
-            className={cn(
-              "flex h-3 shrink-0 items-center justify-center",
-              present.has(letter) ? "text-primary" : "text-muted-foreground",
-              i % step !== 0 && "invisible",
-            )}
+            className={place({
+              entries: present.has(letter) ? "present" : "absent",
+              label: i % step === 0 ? "shown" : "thinned",
+            })}
           >
             {letter}
           </span>
