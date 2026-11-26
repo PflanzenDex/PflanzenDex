@@ -17,6 +17,7 @@ app/packages/e2e/test-results/
 app/packages/e2e/playwright-report/
 app/packages/e2e/one-screen-report/
 app/packages/e2e/a11y-routes-report/
+app/packages/e2e/device-check-report/
 app/packages/e2e/one-screen-shards/
 app/packages/e2e/a11y-routes-shards/
 *.tsbuildinfo

@@ -7,7 +7,7 @@ import {
   test,
   uniqueLatin,
 } from "../../../support/fixtures";
-import { tabTo } from "../../../support/keyboard";
+import { tabTo } from "./keyboard";
 
 // US-QS-15 (SG-LIST-01, SG-LIST-02, SG-NAV-02, issue 2419): the end of a long list on a phone, against the real API. The
 // Sammlung of five plants is read in parts of two (the test rewrites `limit`; the server default is 100 plants), and the

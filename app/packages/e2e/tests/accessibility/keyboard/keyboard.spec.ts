@@ -8,7 +8,7 @@ import {
   specimenByKeyboard,
   tabTo,
   typeInto,
-} from "../../../support/keyboard";
+} from "./keyboard";
 import type { Page } from "@playwright/test";
 import { VIEWS, openView } from "../../../support/display/display";
 

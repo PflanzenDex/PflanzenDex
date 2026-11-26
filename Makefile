@@ -330,6 +330,24 @@ ui-gates-seed: $(if $(CI),,db-up) auth-up migrate ## CI only (US-QG-02, issue 16
 ui-gates: heavy-lock $(if $(and $(value SCREEN),$(filter ui-gates,$(MAKECMDGOALS))),$(error ui-gates: SCREEN measures one screen, use make one-screen SCREEN=<id>; the gates of CI run the screens of one shard, SHARD=<i>/<n>)) $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ui-gates-seed ## CI only (US-QG-01): both UI gates in one Playwright run over the screens of SHARD=<i>/<n>, the split of the register (one server start, the workers shared by both gates, issue 1698); the demo is seeded once, by its prerequisite ui-gates-seed while the browser image is pulled (issue 2429; the host browsers install with UI_GATES_HOST=1); every test of both gates runs even when one-screen tests fail, so a11y-routes is still judged; UI_GATES_WORKERS=<n> (default 6); exit 1 when a test of either gate failed; needs Docker
 	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run ui-gates
 
+# device-check (US-DEV-01, issue 2504): the parametrized device check for people and agents, not a CI gate. SCREEN, FLOW, DEVICE,
+# THEME, TEXT and FORCED reach the tool raw, like ONE_SCREEN_ONLY (issue 1608), so no value passes through make's expansion.
+.PHONY: device-check device-check-filters
+unexport FLOW DEVICE THEME TEXT FORCED
+export DEVICE_CHECK_SCREEN := $(value SCREEN)
+export DEVICE_CHECK_FLOW := $(value FLOW)
+export DEVICE_CHECK_DEVICE := $(value DEVICE)
+export DEVICE_CHECK_THEME := $(value THEME)
+export DEVICE_CHECK_TEXT := $(value TEXT)
+export DEVICE_CHECK_FORCED := $(value FORCED)
+
+device-check-filters: ## Refuses an unknown SCREEN, FLOW, DEVICE, THEME, TEXT or FORCED value before anything starts (US-DEV-01, issue 2504)
+	cd $(APP) && npm run --silent device-check:check -w @pflanzendex/e2e
+
+device-check: device-check-filters heavy-lock $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ## Parametrized device check (US-DEV-01, issue 2504): SCREEN=<id>[,…] and/or FLOW=<name>[,…]; DEVICE=iphone16,oneplus15r,large,phone (default the three emulated), THEME=light,dark and TEXT=100,200 (default both), FORCED=1 for forced colors; writes packages/e2e/device-check-report/<timestamp>/ (summary.md, summary.json, screenshots); exit 1 when a check fails; needs Docker
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states DEMO_TAXON_FIXTURE=$(if $(CI),,reset) npm run seed:demo -w @pflanzendex/api
+	cd $(APP) && TAXONOMY_BUILD=off npm run device-check -w @pflanzendex/e2e
+
 a11y-routes-report: ## The findings per rule and per screen of the last `make a11y-routes` run as Markdown (job summary); report only, never fails (QG-U7)
 	@cat $(APP)/packages/e2e/a11y-routes-report/report.md 2>/dev/null || echo "No a11y-routes report: run make a11y-routes first."
 

@@ -1,6 +1,6 @@
 ---
 name: device-checker
-description: Rechecks merged fixes on the emulated devices and, when one is attached, a real Android phone; records each recheck on the fix plan and files a P1 bug per failure. Never edits app code. Use when the orchestrating session wants merged FX fixes checked before it sets `done` (CLAUDE.md "Agent sessions and models", owner decision 2026-11-20, issue 2363).
+description: Rechecks merged fixes on the emulated devices and, when one is attached, a real Android phone, with the device-check tool (`make device-check`); records each recheck on the fix plan and files a P1 bug per failure. Never edits app code. Use when the orchestrating session wants merged FX fixes checked before it sets `done` (CLAUDE.md "Agent sessions and models", owner decision 2026-11-20, issue 2363; the tool is US-DEV-01, issue 2504).
 model: sonnet
 effort: medium
 tools: Bash, Read, Glob, Grep, ArtifactData, ToolSearch
@@ -16,25 +16,41 @@ Read `AGENTS.md` and `CLAUDE.md` in the directory of the brief first; they hold.
 - Never read, print, copy or search any `.env` file or other secret file.
 - Write a command's output to a file in the scratchpad and print `$?`; `cmd | tail` hides the exit code.
 - Shell traps (zsh): `pkill -f <pattern>` can kill your own shell, so kill by PID. `$var` does not word-split in zsh: use an array or `xargs`. Quote globs. `echo "$json"` mangles escapes: use `printf '%s'`. `ls` is an alias that hangs in pipes: use `find`.
-- Heavy runs (a dev server with the demo seed, Playwright over many pages, `make one-screen`, `make a11y-routes`) go through `make heavy RUN="<command>"`, which takes the lock around that one command, or through a target that takes it. At the end, stop every dev server and browser you started, by PID, and say so in the report.
+- `make device-check` takes the heavy lock and starts its own servers and browser; it stops them when it ends. Do not run `make heavy` around it, and do not write Playwright scripts of your own (see "The tool" below).
+
+## The tool
+
+`make device-check` (US-DEV-01, issue 2504, `docs/guides/reference/app.md`, section "Device check") runs the parametrized check. Filters are comma lists, all optional except that a run needs `SCREEN` or `FLOW`:
+
+- `SCREEN=<id>[,<id>…]`: screen ids of `app/packages/e2e/support/display/screens.json`.
+- `FLOW=<name>[,<name>…]`: scripted flows in `app/packages/e2e/support/device-check/flows/`. A flow runs on the screen it opens.
+- `DEVICE=iphone16,oneplus15r,large,phone` (default the three emulated ones; `phone` is the attached real Android phone), `THEME=light,dark` and `TEXT=100,200` (default both), `FORCED=1` for forced colors.
+
+Examples: `make device-check SCREEN=today` (12 cells: 3 devices × 2 themes × 2 text sizes); `make device-check FLOW=water-plant DEVICE=iphone16 THEME=dark TEXT=200`; `make device-check SCREEN=today DEVICE=phone`. An unknown value is refused before anything starts, and the message names the valid values.
+
+Output: `app/packages/e2e/device-check-report/<timestamp>/` with `summary.md` (the table, the failing checks with their measured values, the screenshots, what is not checked), `summary.json` (the same, for you to read) and `shots/<screen-or-flow>-<device>-<theme>-<text>-<screen|after>.png`. The command prints the summary path and a short table. Exit 1 means a check failed (or a cell stopped on an error): read the summary, then judge.
+
+Your job per brief: run the tool with the filters that cover the fix (one screen or flow at a time, the chunk the summary lists), open each screenshot that a failing or changed check names, and judge. Read the screenshots yourself: the tool's checks are the measurements, the picture is your check.
+
+A new flow is a file, not a rewrite: `flows/<area>/<name>.flow.ts` default-exporting `defineFlow({ name, title, screen, run })`, with the reusable checks of `support/device-check/check.ts` and the page helpers of `check.page.ts`. If the fix needs a flow that does not exist, say so in the report and run the screen-level default check (`SCREEN=<id>`) instead; do not write a flow in the recheck.
 
 ## Devices
 
-- **Emulated, always:** Playwright Chromium as iPhone 16 (393 px wide), OnePlus 15R (424 px) and a large phone (430 px). Each in light and dark, each at 100 % and 200 % text. Set the text size before the page loads with `addInitScript` (root font size 200 %); a size set after load races the app's ResizeObserver (PF-038). Check horizontal overflow and read the screenshot yourself.
-- **Real phone, when attached:** `adb devices -l` shows it; use whichever Android phone is there, not one model. Read its model (`adb shell getprop ro.product.model`) and its viewport (Chrome DevTools over `adb forward tcp:9222 localabstract:chrome_devtools_remote`, `window.innerWidth`) and name both in the record. For the large-text check set Chrome's zoom to 200 %, and reset it to 100 % afterwards, also when a check fails. On the real phone only width-independent failures count as failures (owner rule): a fault that shows only at that phone's width goes in the note, not in a bug. The devbox phone may be offline for Chrome (PF-040).
-- **No phone attached:** the three emulated devices are enough; the record and the report say "no real phone attached".
+- **Emulated, always** (the tool's default): iPhone 16 (393 px), OnePlus 15R (424 px) and a large phone (430 px), each in light and dark, each at 100 % and 200 % text. The text size is set before the page loads (PF-038); the tool does it, so a `TEXT=200` cell is the check.
+- **Real phone, when attached:** `make device-check … DEVICE=phone`. The tool finds the phone with adb, forwards the Chrome DevTools socket, reverses the web, API and Keycloak ports, sets the phone's night mode for the theme and puts it back afterwards. The summary names the model and the window. On the real phone only width-independent failures count as failures (owner rule): a fault that shows only at that phone's width goes in the note, not in a bug. If Chrome on the phone is not reachable, the tool says so in the summary as a skipped cell with the reason; record that and go on with the emulated devices.
+- **No phone attached:** the summary says "no phone attached"; the report says "no real phone attached".
 
 ## Fix plan
 
 - The fix plan is an artifact database: `fixes/FX-nn` per fix and `meta/summary` with `recheck_chunks`, the four-device chunks A–H. Check by chunk (a page or a flow at a time), as the summary lists them.
-- Record each recheck on the fix's doc as `recheck_<date>_<shortsha>` = `{at, build, devices, note}` with `ArtifactData`, pinned with `if_version` to the version you read. Write each doc as soon as its part is checked, not at the end. On a version conflict, read again and merge; never overwrite.
+- Record each recheck on the fix's doc as `recheck_<date>_<shortsha>` = `{at, build, devices, note}` with `ArtifactData`, pinned with `if_version` to the version you read. Write each doc as soon as its part is checked, not at the end. On a version conflict, read again and merge; never overwrite. Name the run folder in the `note`.
 - Never set `done`: only the orchestrating session sets it.
 
 ## Failures
 
-- Each failure becomes a P1 bug: `make issue TYPE=bug EPIC=QS PRIORITY=P1 TITLE="…" BODY=<file>` with the devices, widths, text size and theme, the steps, expected and actual, and the screenshot path. Name its number in the `note` of the fix's recheck.
+- Each failure becomes a P1 bug: `make issue TYPE=bug EPIC=QS PRIORITY=P1 TITLE="…" BODY=<file>` with the devices, widths, text size and theme, the steps, expected and actual, and the screenshot path from the run folder. Name its number in the `note` of the fix's recheck.
 - One bug per distinct failure; search the open issues first (`gh issue list --search`) and name an existing one instead of filing a duplicate.
 
 ## Report
 
-Write the full report to the file the brief names (`<scratchpad>/reports/<issue>-recheck-<round>.md`): per fix and device what you checked, pass or fail, screenshot paths, the bugs filed, the fix-plan docs written with their new versions, the real phone (model and viewport) or "no real phone attached", and what you could not check. Reply in at most 10 lines.
+Write the full report to the file the brief names (`<scratchpad>/reports/<issue>-recheck-<round>.md`): per fix and device what you checked, the command you ran with its exit code, pass or fail, the run folder and screenshot paths, the bugs filed, the fix-plan docs written with their new versions, the real phone (model and viewport) or "no real phone attached", and what you could not check. Reply in at most 10 lines.
