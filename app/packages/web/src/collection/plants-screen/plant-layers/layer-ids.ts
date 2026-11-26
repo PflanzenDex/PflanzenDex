@@ -55,9 +55,10 @@ export type Handlers = {
 
 /**
  * What a slot may ask the plant layer for: leave the layer and measure (the layer closes first, P-10), and the place where
- * a result of its own may stand. `resultHost` is the line of the overview whose place a result takes (the "Art · Status"
- * line); a slot draws its result into it (a portal) instead of adding a line, so nothing on the screen moves (SG-FEED-05,
- * issue 2462). It is `null` until the overview has mounted it and for every part outside the overview.
+ * a result of its own may stand. `resultHost` is the line directly below the quick actions of the layer (owner decision d-130,
+ * issue 2536); a slot draws its result into it (a portal) instead of adding a line to the row, so no button moves (SG-FEED-05,
+ * issues 2462, 2536). The line is in the part of the layer that stays in place, so the result is in view without a scroll, and
+ * the slot's button keeps the focus. It is `null` until the quick actions have mounted it and for every part outside them.
  */
 export type SlotContext = { measure: () => void; resultHost?: HTMLElement | null };
 export type SlotRender = (card: SpecimenCard, context: SlotContext) => ReactNode;

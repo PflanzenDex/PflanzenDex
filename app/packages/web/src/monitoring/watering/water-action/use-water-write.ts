@@ -66,7 +66,7 @@ export function useWaterWrite(
     }
     if (answer.current.made) {
       const hold = { key: specimen.id, group: specimen.id, item: specimen.id };
-      undo.hold([{ ...hold, index: 0, undoable: true }], t("resultToday"));
+      undo.hold([{ ...hold, index: 0, undoable: true }], t("resultToday"), t("resultSaid"));
       return;
     }
     // The day the server used (its answer, the keeper's zone), so the line reads against the keeper's today (NFR-08).

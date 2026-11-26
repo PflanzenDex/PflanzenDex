@@ -182,7 +182,7 @@ describe("US-ONB-07 · US-QS-32 the plant layer places its calm hint", () => {
     expect(asked.at(-1)).toEqual([]);
   });
 
-  it("US-ONB-07 · US-QS-32 the note of first_plant_saved stands directly under the quick actions, which hold Messen", async () => {
+  it("US-ONB-07 · US-QS-32 the note of first_plant_saved stands under the quick actions (and their empty result line), which hold Messen", async () => {
     setViewportWidth(360);
     show([card()], {
       onMeasure: vi.fn(),
@@ -192,7 +192,9 @@ describe("US-ONB-07 · US-QS-32 the plant layer places its calm hint", () => {
     const row = within(layer).getByRole("group", { name: "Schnellaktionen" });
     expect(row.contains(within(layer).getByRole("button", { name: "Messen: Aloe" }))).toBe(true);
     const note = within(layer).getByText("NOTE first_plant_saved");
-    expect(row.nextElementSibling).toBe(note);
+    // The line for the result of "Gießen" (issue 2536) is empty here and hidden: the note follows it.
+    expect(row.nextElementSibling?.childNodes).toHaveLength(0);
+    expect(row.nextElementSibling?.nextElementSibling).toBe(note);
     expect(within(layer).queryByText("NOTE first_measurement")).toBeNull();
   });
 
@@ -256,7 +258,9 @@ describe("US-ONB-07 · US-QS-32 the plant layer places its calm hint", () => {
     show([card()], { onMeasure: vi.fn(), slots: SLOTS });
     const layer = await open();
     const row = within(layer).getByRole("group", { name: "Schnellaktionen" });
-    expect(row.nextElementSibling).toBeNull();
+    // Only the empty line for the result of "Gießen" follows the row (issue 2536).
+    expect(row.nextElementSibling?.childNodes).toHaveLength(0);
+    expect(row.nextElementSibling?.nextElementSibling).toBeNull();
     await userEvent.click(within(layer).getByRole("tab", { name: "Verlauf" }));
     expect(within(layer).getByText("Verlauf der Messungen")).toBeTruthy();
     expect(within(layer).queryByRole("status", { name: "Hinweis" })).toBeNull();
