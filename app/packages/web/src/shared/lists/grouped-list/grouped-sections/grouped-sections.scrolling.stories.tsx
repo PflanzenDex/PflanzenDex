@@ -52,18 +52,32 @@ export const StickyHeading: Story = {
   },
 };
 
-// A tap on a chip scrolls that section to the top of the region; the other groups stay on the page.
+/**
+ * Chooses the group `key` as a keeper does: a tap on its chip, or its option in the selection field where the chips do not fit the
+ * row (a phone shows the field from three groups on). The hidden measuring row of the chips is no chip.
+ */
+function choose(canvas: HTMLElement, label: string, key: string): void {
+  const select = canvas.querySelector<HTMLSelectElement>("select");
+  if (select === null) {
+    const row = must(canvas.querySelector<HTMLElement>('[role="group"]'), "the chips");
+    must(
+      Array.from(row.querySelectorAll("button")).find((b) => b.textContent?.startsWith(label)),
+      `the chip ${label}`,
+    ).click();
+    return;
+  }
+  select.value = key;
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+// A tap on a chip (or a choice in the selection field) scrolls that section to the top of the region; the other groups stay on
+// the page.
 export const Jump: Story = {
   play: async ({ canvasElement }) => {
     const region = regionOf(canvasElement);
     const measured = hasLayout(region);
-    const buttons = Array.from(canvasElement.querySelectorAll("button"));
-    const chip = must(
-      buttons.find((b) => b.textContent?.startsWith("Wohnzimmer")),
-      "the chip",
-    );
     const third = must(sectionsOf(canvasElement)[2], "its group");
-    chip.click();
+    choose(canvasElement, "Wohnzimmer", "c");
     await waitUntil(
       () => !measured || Math.abs(offsetOf(third, region)) < 2,
       "the section stands at the top",
@@ -85,8 +99,8 @@ export const LongHeadingAt200: Story = {
   play: async ({ canvasElement }) => {
     const region = regionOf(canvasElement);
     const measured = hasLayout(region);
-    const size = parseFloat(getComputedStyle(document.documentElement).fontSize);
-    check(!measured || size >= 31, `the text is ${size} px, not 200 %`);
+    const size = () => parseFloat(getComputedStyle(document.documentElement).fontSize);
+    await waitUntil(() => !measured || size() >= 31, "the text is 200 %");
     const box = must(canvasElement.querySelector<HTMLElement>("[data-sticky]"), "the sections");
     const heading = must(
       canvasElement.querySelector<HTMLElement>("[data-group-heading]"),

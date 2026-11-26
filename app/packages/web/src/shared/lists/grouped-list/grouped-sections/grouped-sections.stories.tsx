@@ -23,12 +23,15 @@ export const Default: Story = {
     check(sections.length === GROUPS.length, "a group is missing");
     const first = sections[0]?.querySelector("h2")?.textContent;
     check(first === "Flur · 3 Pflanzen", `the heading says "${first}"`);
-    check(
-      canvasElement.querySelector("select, [aria-pressed]") === null,
-      "a chooser or a pressed chip hides groups",
-    );
+    // The chips only jump: none is pressed. Where they do not fit the row the same names stand in a selection field, which
+    // rests on its own name and hides nothing either.
+    check(canvasElement.querySelector("[aria-pressed]") === null, "a pressed chip hides groups");
+    const select = canvasElement.querySelector("select");
     const chips = canvasElement.querySelectorAll('[role="group"] button');
-    check(chips.length === GROUPS.length, "a chip is missing");
+    check(
+      select !== null ? select.value === "" : chips.length === GROUPS.length,
+      "a chip is missing",
+    );
     return Promise.resolve();
   },
 };

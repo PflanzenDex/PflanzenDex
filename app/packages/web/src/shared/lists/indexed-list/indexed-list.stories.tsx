@@ -88,10 +88,12 @@ export const Keyboard: Story = {
     const list = listOf(canvasElement);
     const measured = hasLayout(list);
     await waitUntil(() => !measured || list.scrollTop > 0, "the list scrolls to D");
+    // The first entry of D stands at the top of the list, or the list is at its end: D has only six entries, fewer than fill the box.
     const first = list.children.item(110)?.getBoundingClientRect();
     const top = list.getBoundingClientRect().top;
+    const atEnd = list.scrollTop + list.clientHeight >= list.scrollHeight - 2;
     check(
-      !measured || (first !== undefined && Math.abs(first.top - top) <= 2),
+      !measured || atEnd || (first !== undefined && Math.abs(first.top - top) <= 2),
       "the first entry of D does not stand at the top of the list",
     );
   },
