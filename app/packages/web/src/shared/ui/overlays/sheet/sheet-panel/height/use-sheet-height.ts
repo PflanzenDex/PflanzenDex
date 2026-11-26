@@ -3,7 +3,15 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { useScrollAccess } from "@/shared/ui/overlays/dialog/scroll-access";
 import { useReducedMotion } from "@/shared/platform/device/motion/use-reduced-motion";
-import { announcement, sheetHeights, type Detent, type Heights, type SheetKind } from "./detents";
+import {
+  announcement,
+  sheetHeights,
+  type Detent,
+  type Heights,
+  type Release,
+  type SheetKind,
+} from "./detents";
+import { useContentSwipe } from "./sheet-handle/use-content-swipe";
 import { useHandleDrag } from "./sheet-handle/use-handle-drag";
 import { windowHeight } from "./use-cramped";
 import { useSheetKind } from "./use-sheet-measure";
@@ -43,8 +51,7 @@ function useWindowHeight(): number {
  * The height of the sheet as the two CSS variables its classes read (`h-(--sheet-height)`, `max-h-[var(--sheet-max,90dvh)]`,
  * DS-32; US-QS-15): a fitting sheet is as high as its content (`auto`) and at most half; a sheet with two heights has the
  * one it is at, or the height the finger drags it to; a sheet with full height only has that. The highest height stays the
- * limit while the height changes, so a sheet that gets lower is not cut off at once and slides. A list that pages by free
- * height keeps the classes that set its 90 % (`legacy`): without the variables the fallback of the class holds.
+ * limit while the height changes, so a sheet that gets lower is not cut off at once and slides.
  */
 function sheetVars(
   kind: SheetKind,
@@ -52,7 +59,6 @@ function sheetVars(
   heights: Heights,
   dragged: number | null,
 ): React.CSSProperties {
-  if (kind === "legacy") return {};
   const vars = (height: string, max: number) =>
     ({ "--sheet-height": height, "--sheet-max": `${max}px` }) as React.CSSProperties;
   if (kind === "fit") return vars("auto", heights.half);
@@ -96,45 +102,40 @@ export function useSheetHeight(o: Options) {
   const heights = React.useMemo(() => sheetHeights(visible, safeTop()), [visible]);
   const [header, headerRef] = React.useState<HTMLElement | null>(null);
   const [body, bodyRef] = React.useState<HTMLElement | null>(null);
-  const { kind, cut } = useSheetKind({ sheet: o.sheet, header, body }, heights, o.open);
+  const kind = useSheetKind({ sheet: o.sheet, header, body }, heights, o.open);
   useScrollAccess(body);
   const [mode, setMode] = React.useState<Detent>("half");
   const [dragged, setDragged] = React.useState<number | null>(null);
-  // The keeper chose a height: the sheet does not change it by itself any more.
-  const chosen = React.useRef(false);
   const announce = useAnnounce();
   const reduced = useReducedMotion();
   // A sheet that opens again starts at its own height, and one whose close the parent refused takes its height back.
   React.useLayoutEffect(() => {
     if (o.open) {
-      chosen.current = false;
       setMode("half");
       setDragged(null);
     }
   }, [o.open]);
-  // A primary action in the content that half height cuts off: the sheet opens at full height and keeps its toggle (US-QS-15).
-  React.useLayoutEffect(() => {
-    if (cut && !chosen.current) setMode("full");
-  }, [cut]);
   React.useLayoutEffect(() => setDragged(null), [o.closeRefusals]);
   const select = (next: Detent) => {
     if (next === mode) return;
-    chosen.current = true;
     setMode(next);
     // On the handle the value text says it (`keys`): one announcement, not two. Toggle and drag have no value to read.
     if (!document.activeElement?.hasAttribute("data-sheet-handle"))
       announce?.announce(announcement(o.title, next));
   };
-  const drag = useHandleDrag({
+  const options = {
     sheet: o.sheet,
     kind,
     heights,
     onHeight: setDragged,
-    onRelease: (release) => {
+    onRelease: (release: Release) => {
       if (release.close) o.onOpenChange(false);
       else if (release.detent) select(release.detent);
     },
-  });
+  };
+  const drag = useHandleDrag(options);
+  // A swipe down on the content at its top drags the sheet as the handle does (US-QS-15).
+  useContentSwipe(options, body);
   const adjustable = kind === "two" && !o.cramped;
   return {
     headerRef,

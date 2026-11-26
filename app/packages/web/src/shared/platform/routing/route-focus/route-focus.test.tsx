@@ -13,11 +13,8 @@ import {
   useSearchParams,
 } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { PAGER_PARTS, type PagerPart } from "@/shared/patterns/responsive/pager/paging/address";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { RouteFocus } from "./route-focus";
 import { createFocusMover } from "./focus-moves";
 import { quietFrom } from "./quiet-steps";
@@ -315,70 +312,47 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
   });
 });
 
-/** A view with a pager on `param` (seven entries, three per page) in a layer, where lists keep their pages: its heading is the view's own. */
-function PagedView({ param }: { param: PagerPart }) {
-  const entries = Array.from({ length: 7 }, (_, i) => `Eintrag ${i + 1}`);
+/** A view with a button that moves the address part `param` on, as the old paged list did: its heading is the view's own. */
+function PartView({ param }: { param: PagerPart }) {
+  const [, setParams] = useSearchParams();
   return (
     <main id="inhalt" tabIndex={-1}>
       <RouteFocus titleOf={titleOf} />
       <h1>Zweite Seite</h1>
-      <LayerScope.Provider value>
-        <Pager items={entries} pageSize={3} label="Liste" param={param} renderItem={(t) => t} />
-      </LayerScope.Provider>
+      <button type="button" onClick={() => setParams({ [param]: "3" })}>
+        Weiter
+      </button>
     </main>
   );
 }
 
-describe("US-QS-15 · turning a page of a list is no view change (issue 1550)", () => {
-  // Only a list in a sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01); the pager of this view turns pages there.
-  beforeEach(() => setViewportWidth(1024));
-  afterEach(() => setViewportWidth(360));
-
-  it("US-QS-15 turning a page of the measurements (?vfrom) keeps the focus on the pager", async () => {
-    render(
+describe("US-QS-15 · a change of the address part of a list is no view change (issue 1550)", () => {
+  // The lists scroll and hold no position now (SG-LIST-01, issue 2418); an old address with a part must not move the focus.
+  const change = async (param: PagerPart) => {
+    const { unmount } = render(
       <MemoryRouter initialEntries={["/b"]}>
         <AnnouncerProvider>
-          <PagedView param="vfrom" />
+          <PartView param={param} />
         </AnnouncerProvider>
       </MemoryRouter>,
     );
-    const next = screen.getByRole("button", { name: "Weiter" });
-    await userEvent.click(next);
+    const button = screen.getByRole("button", { name: "Weiter" });
+    await userEvent.click(button);
     await new Promise((r) => setTimeout(r, 400));
-    expect(screen.getByText("Seite 2 von 3")).toBeTruthy();
-    expect(document.activeElement).toBe(next);
+    expect(document.activeElement, `?${param}`).toBe(button);
+    unmount();
+  };
+
+  it("US-QS-15 a change of the measurements part (?vfrom) keeps the focus where it is", async () => {
+    await change("vfrom");
   });
 
-  it("US-QS-15 turning a page of the classification rules (?rfrom) keeps the focus on the pager", async () => {
-    render(
-      <MemoryRouter initialEntries={["/b"]}>
-        <AnnouncerProvider>
-          <PagedView param="rfrom" />
-        </AnnouncerProvider>
-      </MemoryRouter>,
-    );
-    const next = screen.getByRole("button", { name: "Weiter" });
-    await userEvent.click(next);
-    await new Promise((r) => setTimeout(r, 400));
-    expect(screen.getByText("Seite 2 von 3")).toBeTruthy();
-    expect(document.activeElement).toBe(next);
+  it("US-QS-15 a change of the classification rules part (?rfrom) keeps the focus where it is", async () => {
+    await change("rfrom");
   });
 
-  it("US-QS-15 turning a page of any list (every address part of PAGER_PARTS) keeps the focus on the pager", async () => {
-    for (const part of PAGER_PARTS) {
-      const { unmount } = render(
-        <MemoryRouter initialEntries={["/b"]}>
-          <AnnouncerProvider>
-            <PagedView param={part} />
-          </AnnouncerProvider>
-        </MemoryRouter>,
-      );
-      const next = screen.getByRole("button", { name: "Weiter" });
-      await userEvent.click(next);
-      await new Promise((r) => setTimeout(r, 400));
-      expect(document.activeElement, `?${part}`).toBe(next);
-      unmount();
-    }
+  it("US-QS-15 a change of any list part (every address part of PAGER_PARTS) keeps the focus where it is", async () => {
+    for (const part of PAGER_PARTS) await change(part);
   }, 20000);
 });
 

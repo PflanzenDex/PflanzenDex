@@ -51,7 +51,7 @@ export function RowContent(props: RowContentProps) {
       {props.leading !== undefined && (
         <span className="flex shrink-0 items-center">{props.leading}</span>
       )}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <span className={cn("flex min-w-0 flex-1 flex-col gap-0.5", props.object && "basis-[96px]")}>
         <span
           data-row-name={props.object ? "" : undefined}
           className={cn(
@@ -81,7 +81,7 @@ export function RowContent(props: RowContentProps) {
       {props.trailing !== undefined && (
         <>
           {" "}
-          <span className="max-w-[60%] shrink-0 text-right text-base tabular-nums text-foreground [overflow-wrap:anywhere]">
+          <span className="ml-auto max-w-[60%] shrink-0 text-right text-base tabular-nums text-foreground [overflow-wrap:anywhere]">
             {props.trailing}
           </span>
         </>

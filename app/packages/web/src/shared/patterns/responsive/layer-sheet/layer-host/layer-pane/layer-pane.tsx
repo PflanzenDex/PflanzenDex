@@ -1,18 +1,10 @@
 import * as React from "react";
 import { Button } from "@/shared/ui/button/button";
 import { leadingTextField } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
-import { cn } from "@/shared/lib/utils";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { useScrollAccess } from "@/shared/ui/overlays/dialog/scroll-access";
 import { FormBarHostContext, rowHost } from "@/shared/ui/button/form-bar/form-bar.host";
 import { keptOpener } from "../../use-layer";
-
-/**
- * A layer whose list pages by its free height (`Pager` with `fit`, marked `data-page-fit`) takes the full height of its
- * sheet, dialog or pane: a layer sized by its content has no free height, so the list would hold every entry and the
- * layer would scroll (US-QS-15, issue 1156). The regions between the layer and its list pass the height down as a flex
- * column; other layers keep the height and flow of their content.
- */
-const FIT_FLEX = "has-[[data-page-fit]]:flex has-[[data-page-fit]]:flex-col";
 
 /** The body of a layer, shared by the pane and by the sheet or dialog around it (US-QS-15). */
 export function LayerBody({
@@ -27,17 +19,14 @@ export function LayerBody({
   return (
     <div data-layer-body="" className="flex min-h-0 flex-1 flex-col gap-4">
       {/* The content of the layer is the scroll region of the sheet, the dialog and the pane: the title and the primary action stay (US-QS-15). */}
-      {/* A list that pages by free height (`data-page-fit`) needs this region to pass the height down (issue 1156). */}
+      {/* A word wider than the layer breaks at a syllable with a hyphen, as in the rows of a list (DS-63): a long name of a plant no longer widens the layer at 200 % text. */}
       {/* The margin and the padding are the 1 rem that the sheet, the dialog and the pane keep around the content: the region reaches to their edge, so the focus ring of a control at its edge is not clipped and a content that is a little too wide spills into the padding, as it did before the region scrolled. */}
       <div
         ref={setRegion}
         data-scroll-region=""
-        className={cn(
-          "-m-4 min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-          FIT_FLEX,
-        )}
+        className="-m-4 min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 [overflow-wrap:anywhere] hyphens-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
-        {children}
+        <LayerScope.Provider value>{children}</LayerScope.Provider>
       </div>
       {/* The sheet adds the height of what stays in place to its header, to see whether half height holds title and actions (US-QS-15). */}
       {primaryAction ? (
@@ -94,7 +83,7 @@ export function LayerPane({
       onKeyDown={(event) => {
         if (event.key === "Escape") onClose();
       }}
-      className="flex max-h-[calc(100dvh-3rem)] w-96 shrink-0 flex-col gap-4 rounded-lg border border-border bg-card p-4 text-card-foreground has-[[data-page-fit]]:h-[calc(100dvh-3rem)]"
+      className="flex max-h-[calc(100dvh-3rem)] w-96 shrink-0 flex-col gap-4 rounded-lg border border-border bg-card p-4 text-card-foreground"
     >
       <div className="flex items-start justify-between gap-2">
         <h2

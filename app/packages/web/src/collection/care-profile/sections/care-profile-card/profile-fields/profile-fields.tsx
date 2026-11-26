@@ -1,6 +1,6 @@
 import type { Control } from "react-hook-form";
 import type { CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import type { CareProfileFields } from "../../../../specimens/model/schemas";
 import {
   Days,
@@ -18,10 +18,10 @@ export type ProfileShared = {
   busy: boolean;
 };
 
-/** Five pages of at most two fields: a row takes about a seventh of a phone's height (US-QS-23). */
+/** Five groups of at most two fields each, one list entry per group (US-QS-23). */
 const PAGES = [0, 1, 2, 3, 4] as const;
 
-/** The fields of one page, in the order of the form: the locations, the zone, the dormancy period, the watering, the hints. */
+/** The fields of one group, in the order of the form: the locations, the zone, the dormancy period, the watering, the hints. */
 function pageFields(page: number, shared: ProfileShared, lists: Lists) {
   if (page === 0) return <Places {...shared} lists={lists} fields={["growth", "dormancy"]} />;
   if (page === 1) return <Places {...shared} lists={lists} fields={["zone"]} />;
@@ -31,8 +31,8 @@ function pageFields(page: number, shared: ProfileShared, lists: Lists) {
 }
 
 /**
- * The fields of the care profile in three pages (US-BES-09, US-QS-23): each page fits a layer on a phone, the page is in
- * the address (`lfrom`, the pager's own part) and the values of all pages stay in the form.
+ * The fields of the care profile as one scrolling list of five groups (US-BES-09, US-QS-23): on a page and in a layer
+ * alike, with no pages and no position in the address (US-QS-15, issue 2418); the values of all groups stay in the form.
  */
 export function ProfileFields(props: { shared: ProfileShared; lists: Lists; name: string }) {
   const { shared, lists, name } = props;
@@ -41,8 +41,6 @@ export function ProfileFields(props: { shared: ProfileShared; lists: Lists; name
       items={PAGES}
       pageSize={1}
       label={`Felder des Pflegeprofils für „${name}“`}
-      param={LAYER_PARAM}
-      replace
       renderItem={(page) => <div className="grid gap-1">{pageFields(page, shared, lists)}</div>}
     />
   );

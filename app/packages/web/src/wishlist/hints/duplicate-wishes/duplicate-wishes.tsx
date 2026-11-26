@@ -113,10 +113,10 @@ function Confirm(props: { w: DuplicateWish; repair: Repair; onCancel: () => void
           variant="destructive"
           size="touch"
           disabled={repair.running}
-          aria-label={`Ja, löschen: ${w.title}`}
+          aria-label={`Löschen: ${w.title}`}
           onClick={() => repair.remove(w)}
         >
-          Ja, löschen
+          Löschen
         </Button>
         <Button type="button" variant="plain" size="touch" onClick={props.onCancel}>
           Abbrechen

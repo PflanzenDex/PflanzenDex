@@ -12,5 +12,7 @@
   "times.loading": "Erinnerungseinstellungen werden geladen …",
   "pauses.loading": "Pausen werden geladen …",
   "reminders.inboxOnly": "Erinnerungen erscheinen im Posteingang, noch nicht als Mitteilung.",
-  "subscriptions.loading": "Push-Geräte werden geladen …"
+  "subscriptions.loading": "Push-Geräte werden geladen …",
+  "times.save": "Erinnerungen sichern",
+  "pauses.save": "Pausen sichern"
 }

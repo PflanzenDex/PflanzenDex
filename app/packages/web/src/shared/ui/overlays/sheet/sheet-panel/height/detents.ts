@@ -11,9 +11,8 @@ const t = texts(table);
  * - `fit`: the content, with its header, fits within half the visible window: the sheet is as high as its content.
  * - `two`: the content is longer: the sheet has half height and full height; it opens at half.
  * - `full`: the content is longer and title and actions do not fit within half (200 % text, an open keyboard): full height only.
- * - `legacy`: a list that pages by the free height (`data-page-fit`, issue 1156) keeps its 90 % until `Pager` is replaced.
  */
-export type SheetKind = "fit" | "two" | "full" | "legacy";
+export type SheetKind = "fit" | "two" | "full";
 export type Detent = "half" | "full";
 export type Heights = { half: number; full: number };
 
@@ -47,8 +46,6 @@ export type Measure = {
   chrome: number;
   /** The root font size, so a larger text size grows the minimum of the body with it. */
   rem: number;
-  /** A list that pages by free height is in the sheet. */
-  legacy: boolean;
 };
 
 /**
@@ -57,7 +54,6 @@ export type Measure = {
  * stays a sheet with two heights: its content cannot be told from the empty room below it.
  */
 export function sheetKind(m: Measure, heights: Heights): SheetKind {
-  if (m.legacy) return "legacy";
   const natural = m.overflow > TOLERANCE ? m.height + m.overflow : m.height;
   if (natural <= heights.half + TOLERANCE) return "fit";
   return m.chrome + MIN_BODY_REM * m.rem > heights.half ? "full" : "two";

@@ -11,6 +11,7 @@ import * as plantLoader from "../../../../shared/patterns/states/plant-loader/pl
 import * as requestState from "../../../../shared/patterns/states/request-state/request-state.stories";
 import * as layerSheet from "../../../../shared/patterns/responsive/layer-sheet/layer-sheet.stories";
 import * as layerSheetHeights from "../../../../shared/patterns/responsive/layer-sheet/layer-sheet.heights.stories";
+import * as layerSheetLists from "../../../../shared/patterns/responsive/layer-sheet/layer-sheet.lists.stories";
 import * as layerSheetStates from "../../../../shared/patterns/responsive/layer-sheet/layer-sheet.states.stories";
 import * as pager from "../../../../shared/patterns/responsive/pager/pager.stories";
 import * as scrollEntries from "../../../../shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries.stories";
@@ -25,6 +26,7 @@ const catalog = {
   EmptyState: composeStories(emptyState),
   LayerSheet: composeStories(layerSheet),
   LayerSheetHeights: composeStories(layerSheetHeights),
+  LayerSheetLists: composeStories(layerSheetLists),
   LayerSheetStates: composeStories(layerSheetStates),
   Pager: composeStories(pager),
   ScrollEntries: composeStories(scrollEntries),

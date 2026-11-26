@@ -8,6 +8,7 @@ import {
   liveText,
   openLayer,
   openTwoHeights,
+  swipeFinger,
   press,
   sheetOf,
   visibleHeight,
@@ -19,7 +20,6 @@ import { hasLayout, waitUntil } from "@/shared/testing/story-frame/story-play";
 import type { ReactNode } from "react";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { Button } from "@/shared/ui/button/button";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
 
 // Plays of the sheet and layer heights (US-QS-15, owner decision 4 of 2026-11-21, issue 2412; owner answers 2026-11-21,
@@ -128,6 +128,33 @@ export const DragSnaps: Story = {
   },
 };
 
+// A swipe down on the content drags the sheet only when the content is at its top; otherwise the content scrolls (US-QS-15).
+export const SwipeDownAtTop: Story = {
+  render: () => <Layer long />,
+  play: async ({ canvasElement }) => {
+    const sheet = await openTwoHeights(canvasElement);
+    if (!sheet) return;
+    const region = sheet.querySelector<HTMLElement>("[data-layer-body] > [data-scroll-region]");
+    const first = region?.firstElementChild;
+    if (!region || !first) throw new Error("play: the content of the layer is missing");
+    const half = visibleHeight() / 2;
+    // Not at the top: the swipe scrolls the content and the sheet keeps its height.
+    region.scrollTop = 80;
+    swipeFinger(first, half + 100, half + 200, half + 300);
+    await waitForHeight(sheet, half, "the sheet keeps half height while the content scrolls");
+    // At the top: a swipe up scrolls, a swipe down drags the sheet, and far enough past half it closes.
+    region.scrollTop = 0;
+    swipeFinger(first, half + 200, half + 100);
+    await waitForHeight(sheet, half, "a swipe up does not change the height");
+    swipeFinger(first, half + 100, half + 200, half + 320);
+    await waitUntil(
+      () => layerOf() === null,
+      "a long swipe down at the top closes the sheet",
+      3000,
+    );
+  },
+};
+
 // The toggle and the arrow keys change the height and announce it; arrow down at half height never closes the sheet.
 export const ToggleAndKeys: Story = {
   render: () => <Layer long />,
@@ -155,41 +182,6 @@ export const ToggleAndKeys: Story = {
     await new Promise((resolve) => setTimeout(resolve, 100));
     if (layerOf() === null || liveText() !== said)
       throw new Error("play: arrow down at half height must keep the sheet open and say nothing");
-    await closeLayer();
-  },
-};
-
-const PLANTS = Array.from({ length: 14 }, (_, index) => `Monstera ${index + 1}`);
-
-// A list that pages by its free height (`data-page-fit`) keeps the 90 % of the sheet until `Pager` is removed; title and the
-// primary action stay in the window (US-QS-15, issue 1156).
-export const PagedListKeepsItsHeight: Story = {
-  render: () => (
-    <Layer>
-      <Pager
-        fit
-        items={PLANTS}
-        pageSize={4}
-        label="Pflanzen"
-        renderItem={(name) => <p className="rounded-lg border border-border p-3">{name}</p>}
-      />
-    </Layer>
-  ),
-  play: async ({ canvasElement }) => {
-    await openLayer(canvasElement);
-    const sheet = sheetOf();
-    if (sheet && hasLayout(sheet)) {
-      await waitForKind(sheet, "legacy");
-      await waitForHeight(sheet, visibleHeight() * 0.9, "the sheet keeps 90 % of the window");
-      const action = Array.from(sheet.querySelectorAll("button")).find(
-        (b) => b.textContent === "Sichern",
-      );
-      if (!action) throw new Error("play: the primary action is missing");
-      await waitUntil(
-        () => action.getBoundingClientRect().bottom <= visibleHeight(),
-        "the primary action stays in the window",
-      );
-    }
     await closeLayer();
   },
 };

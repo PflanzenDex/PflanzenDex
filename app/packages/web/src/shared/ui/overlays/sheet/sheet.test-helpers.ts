@@ -4,10 +4,10 @@ import { vi } from "vitest";
  * jsdom has no layout, so the tests of the sheet heights (US-QS-15) give it one. `header` is the height of the sheet's
  * header (handle, title row, description) and `content` the height of what the body holds. A sheet is as high as the
  * `--sheet-height` of its style says; with `auto` it is as high as header, content and the actions that stay below it (`pinned`), up
- * to its `--sheet-max`. A primary action (`bg-primary`) in the content ends at `actionBottom`; a scroll region ends at 400 px. The body shows what
+ * to its `--sheet-max`. The body shows what
  * the sheet leaves it and overflows by the rest, as a scroll region does.
  */
-export const layout = { header: 90, content: 200, pinned: 0, actionBottom: 0 };
+export const layout = { header: 90, content: 200, pinned: 0 };
 
 const sheetOf = (el: Element): HTMLElement | null => el.closest<HTMLElement>("[data-sheet-height]");
 
@@ -16,11 +16,10 @@ export const heightOf = (sheet: HTMLElement): string =>
   sheet.style.getPropertyValue("--sheet-height");
 export const maxOf = (sheet: HTMLElement): string => sheet.style.getPropertyValue("--sheet-max");
 
-/** The height of a sheet in px, from its variables and the fake layout; a sheet with a paging list keeps its 90 % (its class). */
+/** The height of a sheet in px, from its variables and the fake layout;. */
 function sheetPx(sheet: HTMLElement): number {
   const set = parseFloat(heightOf(sheet));
   if (!Number.isNaN(set)) return set;
-  if (sheet.querySelector("[data-page-fit]")) return window.innerHeight * 0.9;
   const max = parseFloat(maxOf(sheet));
   const natural = layout.header + layout.content + layout.pinned;
   return Number.isNaN(max) ? natural : Math.min(natural, max);
@@ -51,15 +50,13 @@ function scrolls(el: Element): boolean {
 }
 
 /**
- * Boxes: a primary action and the scroll region around it, so that the sheet can tell whether the region cuts the action off;
- * the sheet (its height) and its handle (44 px), which the plays of the stories measure. Every element has a client rect, so
+ * Boxes: the sheet (its height) and its handle (44 px), which the plays of the stories measure; a scroll region ends at 400 px. Every element has a client rect, so
  * `hasLayout` of the plays is true.
  */
 export function stubBoxes(): void {
   const rect = (bottom: number, height = 0) =>
     ({ top: 0, left: 0, right: 0, width: 0, height, x: 0, y: 0, bottom }) as DOMRect;
   vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
-    if (this.classList.contains("bg-primary")) return rect(layout.actionBottom);
     if (this.hasAttribute("data-sheet-height")) return rect(0, sheetPx(this as HTMLElement));
     if (this.hasAttribute("data-sheet-handle")) return rect(0, 44);
     return rect(this.hasAttribute("data-scroll-region") ? 400 : 0);

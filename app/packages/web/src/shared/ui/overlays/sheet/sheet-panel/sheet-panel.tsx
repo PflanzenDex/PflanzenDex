@@ -32,12 +32,10 @@ export type SheetPanelProps = Omit<
 
 /**
  * The look of the sheet. Its height comes from two CSS variables that `useSheetHeight` sets (`--sheet-height`, `--sheet-max`;
- * without them the sheet is as high as its content, at most 90 %). The class `has-[[data-page-fit]]:h-[90dvh]` gives a list that pages by free height (`data-page-fit`)
- * the full height to fill (issue 1156); the sheet's own height (US-QS-15) leaves a sheet with such a list as it is until
- * `Pager` is replaced.
+ * without them the sheet is as high as its content, at most 90 %).
  */
 const SHEET =
-  "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-(--sheet-height) max-h-[var(--sheet-max,90dvh)] flex-col rounded-t-card bg-card shadow-elevation-2 pb-[env(safe-area-inset-bottom)] text-foreground has-[[data-page-fit]]:h-[90dvh]";
+  "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-(--sheet-height) max-h-[var(--sheet-max,90dvh)] flex-col rounded-t-card bg-card shadow-elevation-2 pb-[env(safe-area-inset-bottom)] text-foreground";
 
 /** The backdrop; it dims the status bar as long as it is on screen. */
 function Scrim(props: { overlay: React.Ref<HTMLDivElement> }) {
@@ -101,7 +99,7 @@ function SheetBody(props: { children: React.ReactNode; ref: React.Ref<HTMLDivEle
       ref={props.ref}
       data-sheet-body=""
       data-scroll-region=""
-      className="overflow-y-auto overscroll-contain p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring has-[[data-layer-body]]:flex has-[[data-layer-body]]:min-h-0 has-[[data-layer-body]]:flex-1 has-[[data-layer-body]]:flex-col has-[[data-page-fit]]:flex has-[[data-page-fit]]:min-h-0 has-[[data-page-fit]]:flex-1 has-[[data-page-fit]]:flex-col"
+      className="overflow-y-auto overscroll-contain p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring has-[[data-layer-body]]:flex has-[[data-layer-body]]:min-h-0 has-[[data-layer-body]]:flex-1 has-[[data-layer-body]]:flex-col"
     >
       <LayerScope.Provider value>{props.children}</LayerScope.Provider>
     </div>

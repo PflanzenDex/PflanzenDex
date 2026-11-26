@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -130,8 +130,8 @@ describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
     expect(screen.getByText(noZone.text).closest("div")?.className).toContain("bg-warning");
   });
 
-  it("US-QS-18 · issue 1156 in the layer of Heute the hints page by its free height and leave the page of Heute alone", async () => {
-    // The layer keeps its pages (US-QS-15, SG-LIST-01; issue 1861 owns the layers): a sheet or a dialog provides the scope.
+  it("US-QS-18 · US-QS-15 in the layer of Heute the hints are one scrolling list, with no pages and no position in the address (issue 2418)", async () => {
+    // A sheet, a dialog or a pane never pages: the layer scrolls (SG-LIST-01).
     setViewportWidth(768);
     fakeServer(() => response(200, { hints: [noZone, noSpecies, noLocation, noZone] }));
     render(
@@ -142,9 +142,10 @@ describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
       </MemoryRouter>,
     );
     const list = await screen.findByRole("list", { name: "Fehlende Angaben" });
-    expect(list.hasAttribute("data-page-fit")).toBe(true);
-    // The first entry of the layer is `lfrom`, so the list of "Heute" behind it keeps its own `from`.
-    expect(screen.getByRole("status").textContent).toBe("Seite 2 von 2");
+    expect(list.hasAttribute("data-page-fit")).toBe(false);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
   });
 
   it("US-QS-14 · US-BES-08 without hints the empty state is a level 3 heading with the way to the collection", async () => {

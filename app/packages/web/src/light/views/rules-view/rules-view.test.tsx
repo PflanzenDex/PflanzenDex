@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
@@ -49,7 +48,7 @@ describe("US-LIC-04 look up the classification rules (view)", () => {
     expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
   });
 
-  it("US-QS-19 in a layer the parts come one per page: the indicators on page 2, the warning signs on page 3", async () => {
+  it("US-QS-19 · US-QS-15 in a layer the parts stand on one scrolling list: the indicators and the warning signs need no Weiter (issue 2418)", () => {
     render(
       <MemoryRouter>
         <LayerScope.Provider value>
@@ -57,19 +56,17 @@ describe("US-LIC-04 look up the classification rules (view)", () => {
         </LayerScope.Provider>
       </MemoryRouter>,
     );
-    expect(screen.getByRole("status").textContent).toContain("Seite 1 von 3");
-    expect(screen.queryByRole("heading", { name: "Indikatoren für höhere Zonen" })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
     expect(screen.getByRole("heading", { name: "Indikatoren für höhere Zonen" })).toBeTruthy();
     expect(screen.getByText(/CAM-Stoffwechsel/)).toBeTruthy();
     expect(screen.getByText(/Dornen/)).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
     expect(screen.getByText(/Vergeilung/)).toBeTruthy();
     expect(screen.getAllByText(/Prüfe/).length).toBeGreaterThan(0);
   });
 
-  it("without zones it still shows the reference and says what to do next (P-09)", async () => {
+  it("without zones it still shows the reference and says what to do next (P-09)", () => {
     render(
       <MemoryRouter>
         <LayerScope.Provider value>
@@ -78,8 +75,6 @@ describe("US-LIC-04 look up the classification rules (view)", () => {
       </MemoryRouter>,
     );
     expect(screen.getByText(/Zonentabelle erscheint/)).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByText(/Warnzeichen/)).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
   });
 });

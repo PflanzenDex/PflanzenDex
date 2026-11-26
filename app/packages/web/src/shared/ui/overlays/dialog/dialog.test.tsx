@@ -75,7 +75,7 @@ describe("Dialog (US-QS-07, DS-23, DS-40)", () => {
     expect(backdrop?.className).not.toContain("bg-foreground");
   });
 
-  it("US-QS-32 · SG-LIST-01 what a dialog holds is in a layer, so its lists keep their pages on a phone", async () => {
+  it("US-QS-32 · SG-LIST-01 what a dialog holds is in a layer, so its lists scroll with the layer and never page", async () => {
     function Probe() {
       return <p>{useInLayer() ? "in a layer" : "on a page"}</p>;
     }

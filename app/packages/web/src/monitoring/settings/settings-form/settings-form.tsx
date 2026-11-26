@@ -1,6 +1,7 @@
 import { REMINDER_LIMITS, type ReminderOccasion, type ReminderSettings } from "@pflanzendex/core";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { useCallback, useState, type FormEvent, type ReactNode } from "react";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { FormRoot } from "@/shared/ui/fields/form/form";
 import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
 import { accountKey, useInvalidate, useWriteAction } from "../../../shared/data";
@@ -19,10 +20,10 @@ type Token = () => Promise<string | undefined>;
 const KEY = ["monitoring", "settings"] as const;
 const { min, max } = REMINDER_LIMITS.measurementDays;
 
-/** The id of the form of "Wann erinnern?": its footer button submits it from outside the scroll region (US-QS-15). */
-export const TIMES_FORM = "reminder-times-form";
+/** The id of the form of "Wann erinnern?": the confirming action in the bar of its layer submits it (SG-SHEET-04, US-QS-15). */
+const TIMES_FORM = "reminder-times-form";
 /** The id of the form of "Erinnerungen aussetzen". */
-export const PAUSES_FORM = "reminder-pauses-form";
+const PAUSES_FORM = "reminder-pauses-form";
 
 /** A complaint about the input that the server would refuse too, in words that name the fix (P-09); `null` when fine. */
 function complaint(quietFrom: string, quietTo: string, days: string): string | null {
@@ -98,6 +99,9 @@ function TimesForm(props: { api: string; token: Token; saved: ReminderSettings }
           {write.message}
         </p>
       )}
+      <FormBar formId={TIMES_FORM} pending={write.running} needsNetwork>
+        {ui("times.save")}
+      </FormBar>
     </FormRoot>
   );
 }
@@ -135,6 +139,9 @@ function PausesForm(props: { api: string; token: Token; saved: ReminderSettings 
           {write.message}
         </p>
       )}
+      <FormBar formId={PAUSES_FORM} pending={write.running} needsNetwork>
+        {ui("pauses.save")}
+      </FormBar>
     </FormRoot>
   );
 }

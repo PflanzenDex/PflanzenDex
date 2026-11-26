@@ -220,7 +220,7 @@ describe("US-WUN-03 · US-WUN-05 the actions of the row still work", () => {
     show(wish, { onDiscard });
     await userEvent.click(screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" }));
     expect(onDiscard).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole("button", { name: "Ja, verwerfen: Aloe (Aloe vera)" }));
+    await userEvent.click(screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" }));
     expect(onDiscard).toHaveBeenCalledWith(wish);
   });
 });
@@ -232,8 +232,11 @@ describe("US-WUN-05 · US-QS-32 the question of 'Verwerfen' has the row's width"
     const question = screen.getByText(/Wirklich verwerfen\?/);
     expect(question.closest(".shrink-0")).toBeNull();
     expect(question.closest("[data-priority]")).toBe(container.querySelector("[data-priority]"));
-    // While it asks, the row keeps "Gekauft" and no second "Verwerfen" beside it.
-    expect(screen.queryByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" })).toBeNull();
+    // While it asks, the confirming "Verwerfen" is the only one (the opener leaves): one verb, no "Ja" (SG-SHEET-05).
+    expect(screen.getAllByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" }).textContent).toBe(
+      "Verwerfen",
+    );
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" })).toBeTruthy();
   });
@@ -254,10 +257,10 @@ describe("US-QS-32 the name keeps its width at 200 % text (FX-35 step 5, issue 2
 });
 
 describe("US-WUN-05 · US-QS-32 the focus follows the question of 'Verwerfen' (WCAG 2.4.3)", () => {
-  it("US-WUN-05 · US-QS-32 Verwerfen moves the focus to 'Ja, verwerfen' when the question opens, not to the body", async () => {
+  it("US-WUN-05 · US-QS-32 Verwerfen moves the focus to 'Verwerfen' when the question opens, not to the body", async () => {
     show();
     await userEvent.click(screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" }));
-    const yes = screen.getByRole("button", { name: "Ja, verwerfen: Aloe (Aloe vera)" });
+    const yes = screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" });
     await waitFor(() => expect(document.activeElement).toBe(yes));
   });
 
@@ -269,11 +272,11 @@ describe("US-WUN-05 · US-QS-32 the focus follows the question of 'Verwerfen' (W
     await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
 
-  it("US-WUN-05 · US-QS-32 from the keyboard: Enter on 'Verwerfen' opens the question with the focus on 'Ja, verwerfen'", async () => {
+  it("US-WUN-05 · US-QS-32 from the keyboard: Enter on 'Verwerfen' opens the question with the focus on 'Verwerfen'", async () => {
     show();
     screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" }).focus();
     await userEvent.keyboard("{Enter}");
-    const yes = screen.getByRole("button", { name: "Ja, verwerfen: Aloe (Aloe vera)" });
+    const yes = screen.getByRole("button", { name: "Verwerfen: Aloe (Aloe vera)" });
     await waitFor(() => expect(document.activeElement).toBe(yes));
   });
 });

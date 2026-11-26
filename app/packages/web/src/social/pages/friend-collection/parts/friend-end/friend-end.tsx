@@ -54,7 +54,7 @@ export function FriendEndMenu(props: { disabled: boolean }) {
 }
 
 /**
- * The question before a friendship ends (US-SOZ-03): what it does and what stays, then "Ja, beenden" or "Abbrechen". A
+ * The question before a friendship ends (US-SOZ-03): what it does and what stays, then "Beenden" or "Abbrechen". A
  * refusal stays on screen beside the question (P-10).
  */
 function EndConfirm(props: {

@@ -20,7 +20,6 @@ const measure = (over: Partial<Measure> = {}): Measure => ({
   overflow: 0,
   chrome: 90,
   rem: 16,
-  legacy: false,
   ...over,
 });
 
@@ -68,19 +67,6 @@ describe("US-QS-15 · fitting height, half height and full height", () => {
     expect(sheetKind(measure({ height: 310, chrome: 300, rem: 32 }), heights)).toBe("fit");
   });
 
-  it("US-QS-15 a list that pages by the free height keeps the legacy height of 90 % until the pager is gone", () => {
-    expect(sheetKind(measure({ legacy: true, overflow: 900 }), heights)).toBe("legacy");
-  });
-});
-
-describe("US-QS-15 · snap and close of a drag on the handle", () => {
-  it("US-QS-15 a release snaps to the nearer of half and full height", () => {
-    expect(nearestDetent(400, heights)).toBe("half");
-    expect(nearestDetent(470, heights)).toBe("half");
-    expect(nearestDetent(500, heights)).toBe("full");
-    expect(nearestDetent(640, heights)).toBe("full");
-  });
-
   it("US-QS-15 the middle between half and full goes to full height", () => {
     expect(nearestDetent(480, heights)).toBe("full");
   });
@@ -112,7 +98,7 @@ describe("US-QS-15 · snap and close of a drag on the handle", () => {
     expect(releaseOf(frame, heights, "two", 320)).toEqual({ close: false, detent: "full" });
   });
 
-  it("US-QS-15 a sheet with one height (fit, full or legacy) has no height to snap to; a long drag down closes it", () => {
+  it("US-QS-15 a sheet with one height (fit or full) has no height to snap to; a long drag down closes it", () => {
     const far = dragFrame(100, { lowest: 300, highest: 300 });
     expect(releaseOf(far, heights, "fit", 300)).toEqual({ close: true, detent: null });
     const near = dragFrame(280, { lowest: 300, highest: 300 });

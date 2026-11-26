@@ -478,11 +478,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(calls).toEqual([]);
     await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     expect(await screen.findByText(/Alle Pflanzen sind für Freunde freigegeben/)).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/sharing/species/sp1", body: { share: "friends" } });
     await userEvent.click(screen.getByRole("button", { name: "Alle zurückziehen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, alle zurückziehen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle zurückziehen" }));
     expect(await screen.findByText(/Alle Pflanzen sind zurückgezogen/)).toBeTruthy();
   });
 
@@ -496,7 +496,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     const { calls } = fakeServer({ specimens, failSpecies: "sp2" });
     show("sharing");
     await userEvent.click(await screen.findByRole("button", { name: "Alle teilen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     expect(await screen.findByText("1 von 3 Arten geändert, 2 nicht.")).toBeTruthy();
     expect(screen.getByRole("alert").textContent).toBe(errorText("internal"));
     expect(calls.map((c) => c.path)).toEqual(["/sharing/species/sp1", "/sharing/species/sp2"]);
@@ -764,14 +764,14 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("US-QS-20 requests keep their pages in a sheet, and an entry past the end shows the last page", async () => {
-    // A sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01; issue 1861 owns the layers): below 1024 px the layer is one.
-    setViewportWidth(360);
+  it("US-QS-15 · US-QS-20 the requests are one scroll list too, and an old address with a position shows the list from its start", async () => {
+    setViewportWidth(1024);
     fakeServer({
       incoming: [1, 2, 3, 4, 5].map((n) => req({ id: `r${n}`, otherName: `Person${n}` })),
     });
     show("requests", {}, "9");
-    expect(await screen.findByText("Seite 2 von 2")).toBeTruthy();
+    expect(await screen.findByText(/Person1 möchte/)).toBeTruthy();
     expect(screen.getByText(/Person5 möchte/)).toBeTruthy();
+    expect(screen.queryByText(/Seite \d+ von \d+/)).toBeNull();
   });
 });

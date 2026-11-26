@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import type { ReactElement } from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import type { CaughtSpecies, MilestoneTree } from "@pflanzendex/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
@@ -127,21 +126,19 @@ describe("US-POK-11 milestones with an instruction for action", () => {
     }
   });
 
-  it("US-POK-11 in a layer the open milestones come two per page, so the layer fits one screen (DS-58, starting value)", async () => {
-    // A sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01); on a page the milestones are one scrolling list (US-QS-32).
+  it("US-POK-11 in a layer the open milestones are one scrolling list, with no pages (US-QS-15, issue 2418)", () => {
+    // A sheet, a dialog or a pane never pages; the layer scrolls (SG-LIST-01).
     setViewportWidth(1024);
     view(
       <LayerScope.Provider value>
         <Milestones caught={[]} tree={tree} />
       </LayerScope.Provider>,
     );
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     expect(screen.getByText("Kakteen: Entdeckt")).toBeTruthy();
     expect(screen.getByText("Kakteen: Kenner")).toBeTruthy();
-    expect(screen.queryByText("Kakteen: Vollständig")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByText("Kakteen: Vollständig")).toBeTruthy();
-    expect(screen.queryByText("Kakteen: Entdeckt")).toBeNull();
+    expect(screen.getByText("Kakteen: Vollständig")).toBeTruthy();
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
   });
 
   it("US-POK-11 without open milestones the section says so instead of an empty list (P-09)", () => {

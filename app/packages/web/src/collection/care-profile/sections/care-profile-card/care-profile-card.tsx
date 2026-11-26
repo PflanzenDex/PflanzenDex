@@ -1,11 +1,9 @@
 import { useId } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useWatch } from "react-hook-form";
-import { useLocation, useSearchParams } from "react-router";
 import type { CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
 import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
-import { dropPageParts, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { changesOf, draftOf } from "../../care-profile-draft";
 import type { Lists } from "../care-profile-sections/care-profile-sections";
 import { Quiet } from "../../../specimens/cards/parts/parts";
@@ -16,16 +14,6 @@ export type Save = (changes: CareProfileChanges, success: string) => void;
 
 /** The dormancy fields in the order of the form: an incomplete pair is pointed out at the first empty one. */
 const DORMANCY_FIELDS = ["fromMonth", "fromDay", "untilMonth", "untilDay"] as const;
-/** The zero-based page of the dormancy period (see `ProfileFields`). */
-const DORMANCY_PAGE = 2;
-
-/** The address with the page of the fields: the page is its index, since each page is one entry; page 0 has no part. */
-function withPage(params: URLSearchParams, index: number): URLSearchParams {
-  const next = new URLSearchParams(params);
-  dropPageParts(next, LAYER_PARAM);
-  if (index > 0) next.set(LAYER_PARAM, String(index));
-  return next;
-}
 
 /** The care profile of one species: catalog value and my deviation per field (US-BES-09). */
 export function CareProfileCard(props: {
@@ -35,8 +23,6 @@ export function CareProfileCard(props: {
   onSave: Save;
 }) {
   const { entry, busy } = props;
-  const [params, setParams] = useSearchParams();
-  const location = useLocation();
   const formId = useId();
   const initial = draftOf(entry);
   const form = useFieldForm<CareProfileFields>({
@@ -52,8 +38,7 @@ export function CareProfileCard(props: {
     const result = changesOf(initial, values);
     if (result.problem) {
       const first = DORMANCY_FIELDS.find((k) => values[k] === "") ?? "fromMonth";
-      // The dormancy fields are on their own page: show that page, so the message is seen (P-10).
-      setParams(withPage(params, DORMANCY_PAGE), { replace: true, state: location.state });
+      // `shouldFocus` scrolls the first empty dormancy field into view, so the message is seen (P-10).
       form.setError(first, { type: "problem", message: result.problem }, { shouldFocus: true });
     } else if (result.changes) {
       props.onSave(result.changes, `Pflegeprofil für „${name}“ gesichert.`);

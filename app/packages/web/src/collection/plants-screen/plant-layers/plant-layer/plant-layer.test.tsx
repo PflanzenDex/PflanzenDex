@@ -536,8 +536,7 @@ function PagedCare() {
 }
 
 describe("US-QS-15 issue 2147 · a plant opened by a reload closes to its list without the layer's tab and page", () => {
-  it("US-QS-15 issue 2147 · a reload on Pflege at a later page, closed, leaves no tab or page in the list: the next plant opens on Überblick and its first page", async () => {
-    // Paging starts at 768 px; the layer stays a sheet (a dialog) below 1024 px.
+  it("US-QS-15 issue 2147 · a reload on Pflege with an old position, closed, leaves no tab or position in the list: the next plant opens on Überblick and shows its list from the start", async () => {
     setViewportWidth(768);
     show(
       [card(), card({ id: "e2", name: "Basilikum", speciesName: "Ocimum basilicum" })],
@@ -545,9 +544,9 @@ describe("US-QS-15 issue 2147 · a plant opened by a reload closes to its list w
       "/?sheet=plant-e1&tab=pflege&ofrom=2",
     );
     const aloe = await screen.findByRole("dialog", { name: "Aloe" });
-    // The reload shows the stored tab and page: the setup of the report.
+    // The reload shows the stored tab; the list is one scroll list, an old position is not a page (US-QS-15).
     expect(within(aloe).getByRole("tab", { name: "Pflege", selected: true })).toBeTruthy();
-    expect(within(aloe).getByText("Seite 3 von 3")).toBeTruthy();
+    expect(within(aloe).queryByText(/Seite \d+ von \d+/)).toBeNull();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Aloe" })).toBeNull());
     // The list the layer closes to carries no part of the layer.
@@ -557,6 +556,6 @@ describe("US-QS-15 issue 2147 · a plant opened by a reload closes to its list w
     expect(screen.getByTestId("address").textContent).toBe("?sheet=plant-e2");
     expect(within(basilikum).getByRole("tab", { name: "Überblick", selected: true })).toBeTruthy();
     await userEvent.click(within(basilikum).getByRole("tab", { name: "Pflege" }));
-    expect(within(basilikum).getByText("Seite 1 von 3")).toBeTruthy();
+    expect(within(basilikum).queryByText(/Seite \d+ von \d+/)).toBeNull();
   });
 });

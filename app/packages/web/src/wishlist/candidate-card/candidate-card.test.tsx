@@ -360,11 +360,11 @@ describe("US-QS-32 the candidate card names a species the SG-TYPE-08 way (F-0067
 describe("US-WUN-05 the card's own 'Verwerfen' asks in its place and gives the focus back (WCAG 2.4.3)", () => {
   afterEach(cleanup);
 
-  it("US-WUN-05 Verwerfen opens the question in the card, the focus moves to 'Ja, verwerfen', Abbrechen returns it and writes nothing", async () => {
+  it("US-WUN-05 Verwerfen opens the question in the card, the focus moves to 'Verwerfen', Abbrechen returns it and writes nothing", async () => {
     const onDiscard = vi.fn();
     render(<CandidateCard c={mockCandidate()} rank={1} onDiscard={onDiscard} />);
     await userEvent.click(screen.getByRole("button", { name: /^Verwerfen: / }));
-    const yes = screen.getByRole("button", { name: /^Ja, verwerfen: / });
+    const yes = screen.getByRole("button", { name: /^Verwerfen: / });
     await waitFor(() => expect(document.activeElement).toBe(yes));
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     const trigger = screen.getByRole("button", { name: /^Verwerfen: / });
@@ -397,10 +397,10 @@ describe("US-QS-32 · SG-BTN-01 the buttons of a wish card are tinted or plain, 
     expect(filledIn(container)).toEqual([]);
   });
 
-  it("US-QS-32 · SG-BTN-03 the question 'Wirklich verwerfen?' has a red filled 'Ja, verwerfen' and a plain 'Abbrechen'", async () => {
+  it("US-QS-32 · SG-BTN-03 the question 'Wirklich verwerfen?' has a red filled 'Verwerfen' and a plain 'Abbrechen'", async () => {
     render(<CandidateCard c={mockCandidate()} rank={1} onDiscard={vi.fn()} />);
     await userEvent.click(screen.getByRole("button", { name: /^Verwerfen: / }));
-    expect(classesOf(screen.getByRole("button", { name: /^Ja, verwerfen: / }))).toContain(
+    expect(classesOf(screen.getByRole("button", { name: /^Verwerfen: / }))).toContain(
       "bg-destructive",
     );
     const cancel = screen.getByRole("button", { name: "Abbrechen" });
