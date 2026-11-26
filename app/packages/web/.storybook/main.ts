@@ -12,7 +12,9 @@ const fixtures = process.env["CONFORMANCE_FIXTURES"]
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.stories.@(ts|tsx)", "./*.stories.@(ts|tsx)", ...fixtures],
-  addons: ["@storybook/addon-a11y", "@storybook/addon-docs"],
+  // addon-vitest registers the `test` toolset of `storybook tools test run` (issue 2523); no MCP addon is needed for the
+  // command form (`storybook tools docs list|show`, `test run`), the docs toolset comes with the core.
+  addons: ["@storybook/addon-a11y", "@storybook/addon-docs", "@storybook/addon-vitest"],
   framework: "@storybook/react-vite",
   core: { disableTelemetry: true },
   // The catalog has no service worker (US-QS-27): the app's worker plugin in vite.config.ts is dropped here, because

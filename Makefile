@@ -6,7 +6,7 @@ APP := app
 # is unexported here, before the first $(shell) below: SCREEN (`make one-screen`), FILES (`make gate-plan`) and the values
 # of the recipes. A recipe reads the raw copy of a value from the environment ("$$REST_TITLE", "$$RAW_TYPE", set below with
 # $(value)), never the $(TITLE) text; a guard tests $(value X). FRESH keeps its name for the tools, see below.
-unexport SCREEN FILES PR ISSUE TITLE BODY SHARD RUN RUNS NAME BRANCH TYPE EPIC PRIORITY RELEASE EVENT JOBS MSG VERSION DIR ARGS JOB REASON
+unexport SCREEN FILES PR ISSUE TITLE BODY SHARD RUN RUNS NAME BRANCH TYPE EPIC PRIORITY RELEASE EVENT JOBS MSG VERSION DIR ARGS JOB REASON STORY
 unexport WRITE APPLY DRY_RUN DEMO_SEED_PROFILE PERF_RUNS ONE_SCREEN_WRITE
 ifneq ($(origin FRESH),undefined)
 FRESH_GIVEN := yes
@@ -35,7 +35,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-prune db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan docker-check audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers gate-browser-image conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-prune db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan docker-check audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers gate-browser-image conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook sb-docs sb-test ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -66,6 +66,8 @@ export RAW_PRIORITY := $(value PRIORITY)
 export RAW_RELEASE := $(value RELEASE)
 export RAW_REASON := $(value REASON)
 export RAW_SHARD := $(value SHARD)
+# STORY of `make sb-test` reaches its recipe raw, as RAW_STORY (issue 2523); the recipe checks it before anything starts.
+export RAW_STORY := $(value STORY)
 export RAW_RUNS := $(value RUNS)
 export RAW_TYPE := $(value TYPE)
 export RAW_VERSION := $(value VERSION)
@@ -357,6 +359,15 @@ storybook: ## Component catalog (Storybook) on http://localhost:6006, light/dark
 
 build-storybook: ## Build the component catalog to app/packages/web/node_modules/.cache/storybook (TE-18)
 	cd $(APP) && npm run build-storybook
+
+# Component docs and one story test for agents (US-DEV-05, issue 2523, owner decision d-123): Storybook's command form, with
+# no MCP server and no dev server. sb-docs only reads the catalog; sb-test runs one story in a browser under the heavy lock.
+# A quick check, not a gate: `make gates` and `make ci` stay the definition of done.
+sb-docs: ## Component docs of the catalog without a dev server (US-DEV-05, issue 2523): the list of components, or NAME=<component id> for one component with its props and stories (storybook tools docs)
+	cd $(APP)/packages/web && if [ -z "$$RAW_NAME" ]; then npx --no-install storybook tools docs list; else case "$$RAW_NAME" in -*|*[!a-z0-9-]*) echo "sb-docs: NAME is a component id such as lists-objectrow (lowercase letters, digits and -)" >&2; exit 2;; esac; npx --no-install storybook tools docs show --id "$$RAW_NAME"; fi
+
+sb-test: heavy-lock $(if $(filter sb-test,$(MAKECMDGOALS)),$(if $(strip $(value STORY)),,$(error sb-test: STORY is empty, use make sb-test STORY=<story id>, for example make sb-test STORY=lists-objectrow--one-line-name))) ## One story test in a browser (addon-vitest, storybook tools test run): STORY=<story id>, for example lists-objectrow--one-line-name; a quick check, not a gate; takes the heavy lock (US-DEV-05, issue 2523)
+	cd $(APP)/packages/web && case "$$RAW_STORY" in ""|-*|*[!a-z0-9-]*) echo "sb-test: STORY is a story id such as lists-objectrow--one-line-name (lowercase letters, digits and -, then -- and the export name)" >&2; exit 2;; esac; out=$$(mktemp) && npx --no-install storybook tools test run --input "{\"stories\":[{\"storyId\":\"$$RAW_STORY\"}]}" > "$$out" 2>&1; rc=$$?; cat "$$out"; if [ $$rc -eq 0 ] && grep -q "No stor[a-z]* found" "$$out"; then echo "sb-test: no story matches $$RAW_STORY" >&2; rc=1; fi; rm -f "$$out"; exit $$rc
 
 lighthouse: heavy-lock ## Lighthouse on the built web app, mobile, median of 3 runs against the limits in app/config/gates/quality-limits.json; fails past a limit (QG-U1, FR-QG-09), plus the initial JS budget as report (QG-U6); report in app/packages/web/.lighthouseci; the build's sign-in authority is port 9, where nothing listens, as in CI (issue 1733)
 	cd $(APP) && VITE_OIDC_AUTHORITY=http://127.0.0.1:9/realms/pflanzendex npm run build -w @pflanzendex/web
