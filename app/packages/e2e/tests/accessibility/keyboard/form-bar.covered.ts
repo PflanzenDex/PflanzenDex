@@ -151,3 +151,12 @@ export async function expectBarPinned(page: Page, what: string): Promise<void> {
   expect(await box(), `${what}: the bar holds its place while the content scrolls`).toEqual(before);
   await expectBarUsable(page, `${what}, scrolled`);
 }
+
+/** The page does not scroll sideways (WCAG 1.4.10): the bar at 200 % text wraps instead of pushing the row out. */
+export async function expectNoSidewaysScroll(page: Page, what: string): Promise<void> {
+  const widths = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollWidth,
+    width: document.documentElement.clientWidth,
+  }));
+  expect(widths.scroll, `${what}: the page scrolls sideways`).toBeLessThanOrEqual(widths.width);
+}

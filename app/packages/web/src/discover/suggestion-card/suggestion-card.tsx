@@ -1,5 +1,5 @@
 import type { Suggestion } from "@pflanzendex/core";
-import { useId, useState, type Ref } from "react";
+import { useId, useState, type ReactNode, type Ref } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import {
@@ -42,19 +42,29 @@ function Picture({ s, fill }: { s: Suggestion; fill: boolean }) {
 /**
  * The Wikipedia text keeps the language it was stored in. Where that is known, `lang` tells a screen reader to switch the
  * voice (WCAG 3.1.2) and a visible hint names a foreign language; where it is unknown no language is claimed (P-08).
+ * While collapsed the text is clamped to three lines on purpose: it carries `data-clamped` and the button that opens the rest
+ * (`toggle`) stands beside it, so the display check reads the clamp as deliberate (US-QS-12, issue 2535).
  */
-function Summary({ s, more }: { s: Suggestion; more: boolean }) {
-  if (s.summary === null) return <p className="m-0 text-sm">{t("card.noSummary")}</p>;
+function Summary({ s, more, toggle }: { s: Suggestion; more: boolean; toggle: ReactNode }) {
+  if (s.summary === null)
+    return (
+      <div className="grid gap-1">
+        <p className="m-0 text-sm">{t("card.noSummary")}</p>
+        {toggle}
+      </div>
+    );
   const foreign = s.summaryLanguage === "en";
   return (
     <div className="grid gap-1">
       {foreign && <p className="m-0 text-xs text-muted-foreground">{t("card.foreignLanguage")}</p>}
       <p
         {...(s.summaryLanguage === null ? {} : { lang: s.summaryLanguage })}
+        {...(more ? {} : { "data-clamped": "" })}
         className={cn("m-0 text-sm", !more && "line-clamp-3")}
       >
         {s.summary}
       </p>
+      {toggle}
     </div>
   );
 }
@@ -150,16 +160,21 @@ export function SuggestionCard(props: {
         </h2>
         <p className="m-0 text-base">{s.germanName ?? t("card.germanNameUnknown")}</p>
       </div>
-      <Summary s={s} more={more} />
-      <Button
-        type="button"
-        variant="link"
-        aria-expanded={more}
-        className="min-h-11 w-fit px-0"
-        onClick={() => setMore((m) => !m)}
-      >
-        {more ? t("card.less") : t("card.more")}
-      </Button>
+      <Summary
+        s={s}
+        more={more}
+        toggle={
+          <Button
+            type="button"
+            variant="link"
+            aria-expanded={more}
+            className="mt-1 min-h-11 w-fit px-0"
+            onClick={() => setMore((m) => !m)}
+          >
+            {more ? t("card.less") : t("card.more")}
+          </Button>
+        }
+      />
       <Details s={s} more={more} />
     </article>
   );

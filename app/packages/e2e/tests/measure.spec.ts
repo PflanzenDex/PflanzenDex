@@ -78,6 +78,12 @@ async function openMeasurements(page: Page): Promise<void> {
     .click();
 }
 
+/** "Messung sichern", then the announced result: the course opens once the entry is saved, not while the save runs (issue 2535). */
+async function saveMeasurement(page: Page, result: RegExp): Promise<void> {
+  await page.getByRole("button", { name: "Messung sichern" }).click();
+  await expectAnnounced(page, result);
+}
+
 test.describe("US-WAC-01 Messung erfassen", () => {
   test("US-WAC-01 record a measurement, see it in the course and find it again after reloading", async ({
     page,
@@ -105,10 +111,9 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     // The note is optional and sits behind "Mehr Angaben" (US-QS-24).
     await form.getByText("Mehr Angaben", { exact: true }).click();
     await form.getByLabel("Notiz (optional)").fill("nach dem Umtopfen");
-    await page.getByRole("button", { name: "Messung sichern" }).click();
 
     // Value and unit are joined by a non-breaking space (US-QS-24); `\s` matches it.
-    await expectAnnounced(page, /Gesichert: 12,5\scm am \d\d\.\d\d\.\d{4}\./);
+    await saveMeasurement(page, /Gesichert: 12,5\scm am \d\d\.\d\d\.\d{4}\./);
     await openMeasurements(page);
     await expect(page.getByRole("heading", { level: 3, name: /^12,5\scm · / })).toBeVisible();
     await expect(page.getByText("nach dem Umtopfen", { exact: true })).toBeVisible();
@@ -119,7 +124,7 @@ test.describe("US-WAC-01 Messung erfassen", () => {
     await form.getByLabel(/^Messwert/).fill("10");
     await form.getByLabel("Datum").fill("2026-01-02");
     await form.getByLabel("Qualität").selectOption("etiolated");
-    await page.getByRole("button", { name: "Messung sichern" }).click();
+    await saveMeasurement(page, /Gesichert: 10\scm am 02\.01\.2026\./);
     await openMeasurements(page);
     await expect(page.getByRole("heading", { level: 3, name: "10 cm · 02.01.2026" })).toBeVisible();
     await closeCourse(page);

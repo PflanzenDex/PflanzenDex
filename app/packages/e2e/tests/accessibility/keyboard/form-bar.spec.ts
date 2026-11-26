@@ -17,19 +17,21 @@ import {
   WIDE_WINDOWS,
   expectBarUsable,
   expectKeyboardCase,
-  expectNoSidewaysScroll,
   setLook,
   textSizeBeforeLoad,
 } from "./form-bar.checks";
-import { expectBarAfterFields, expectBarPinned, expectNoControlCovered } from "./form-bar.covered";
+import {
+  expectBarAfterFields,
+  expectBarPinned,
+  expectNoControlCovered,
+  expectNoSidewaysScroll,
+} from "./form-bar.covered";
 
-// US-QS-32 (issue 1861, FX-36 step 2): the actions of a form or a sheet sit in its bar (SG-SHEET-04): "Abbrechen" at the
-// leading edge, the confirming action at the trailing edge, and no sticky footer covers a control of the form (issues 1941,
-// 1895). On the phones of the design review (393, 424 and 430 px), at 100 % and 200 % text, in light and dark, the forms
-// "Messen", "Neues Gerät", "Pflegeprofil" and the settings sheet "Profil" show the bar's action, nothing fixed or sticky lies
-// on a control, and with the keyboard's height taken from the window the action and the focused field stay apart. From 768 px the
-// pair is the bar pinned under the scroll region of the dialog and the pane (owner decision d-115), and a plain row after the last
-// field of the page "Messen" (owner decision d-060).
+// US-QS-32 (issue 1861, FX-36 step 2): the actions of a form or a sheet sit in its bar (SG-SHEET-04), and no sticky footer
+// covers a control (issues 1941, 1895). On the phones of the design review (393, 424 and 430 px), at 100 % and 200 % text, in
+// light and dark, the forms "Messen", "Neues Gerät", "Pflegeprofil" and the sheet "Profil" show the bar's action, nothing lies
+// on a control, and with the keyboard open the action and the focused field stay apart. From 768 px the pair is pinned under
+// the scroll region of a dialog and a pane (d-115), and a plain row after the last field of "Messen" (d-060).
 
 type Form = { name: string; open: (page: Page) => Promise<void> };
 
@@ -54,7 +56,6 @@ async function checkForm(page: Page, form: Form): Promise<void> {
         await form.open(page);
         await expectBarUsable(page, what);
         await expectNoSidewaysScroll(page, what);
-        // Controls are scrolled to the middle one by one: the bar must hold its place and stay usable afterwards.
         await expectNoControlCovered(page, what);
         await expectBarUsable(page, `${what}, scrolled`);
         await expectKeyboardCase(page, phone, what);
