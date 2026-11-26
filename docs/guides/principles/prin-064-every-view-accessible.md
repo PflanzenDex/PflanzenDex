@@ -15,7 +15,7 @@ Per registered screen at 390x844 and 1920x1080: axe violations of WCAG 2.2 A and
 
 ## Checked by
 
-`app/packages/e2e/tests/accessibility/routes/a11y-routes.spec.ts`, `app/packages/e2e/support/display/screens.json` (the register), `app/packages/e2e/support/axe.ts`, `app/packages/e2e/support/keyboard.ts`, `app/config/gates/baselines/a11y-routes-baseline.json`.
+`app/packages/e2e/tests/accessibility/routes/a11y-routes.spec.ts`, `app/packages/e2e/support/display/screens.json` (the register), `app/packages/e2e/support/axe.ts`, `app/packages/e2e/tests/accessibility/keyboard/keyboard.ts`, `app/config/gates/baselines/a11y-routes-baseline.json`.
 
 ## Gate
 

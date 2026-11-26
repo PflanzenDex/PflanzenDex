@@ -28,6 +28,7 @@
       "ignore": [".storybook/conformance-fixtures/**"]
     },
     "packages/e2e": {
+      "entry": ["support/device-check/flows/**/*.flow.ts"],
       "project": ["**/*.ts"]
     }
   }

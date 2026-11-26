@@ -36,12 +36,21 @@ const API_PORT = String(ports.api);
 const WEB = `http://localhost:${WEB_PORT}`;
 const API = `http://localhost:${API_PORT}`;
 const inCi = Boolean(process.env["CI"]);
+// US-DEV-01 (issue 2504): one run folder per `make device-check` run, set before the workers start (they inherit it).
+if (!process.env["DEVICE_CHECK_RUN_DIR"]) {
+  const started = new Date().toISOString().replace(/[:.]/g, "-");
+  process.env["DEVICE_CHECK_RUN_DIR"] = fileURLToPath(
+    new URL(`./device-check-report/${started}/`, import.meta.url),
+  );
+  process.env["DEVICE_CHECK_RUN_DIR"] = process.env["DEVICE_CHECK_RUN_DIR"].replace(/\/$/, "");
+}
 // US-QG-01 (issue 1680): the UI gates (E2E_WEB_BUILD=1, set by their npm scripts) run against the production build under
 // `vite preview`, as users get it: the dev server serves every module on its own and shares the CPU of a CI runner with
 // the tests. The build takes about a second. `make e2e` keeps the dev server.
 const webBuild = process.env["E2E_WEB_BUILD"] === "1";
-/** The specs of the read-only gates have their own projects and are not part of `make e2e` (anchored on the file name). */
-const GATE_SPECS = /(one-screen|merge-shards|a11y-routes(-self-test)?)\.spec\.ts$/;
+/** The specs of the read-only gates and of the device check have their own projects and are not part of `make e2e` (anchored on the file name). */
+const GATE_SPECS =
+  /(one-screen|merge-shards|a11y-routes(-self-test)?|display-checks\.device(\.self|\.self-checks|\.self-summary)?)\.spec\.ts$/;
 // US-QG-01 (issue 2429): the browser of the two UI gates runs in the pinned Playwright container. dev-servers.gate-browser.mjs
 // starts it and sets PW_GATE_WS to its WebSocket address; `exposeNetwork` lets that browser reach the web and API ports of this
 // machine on the loopback (localhost:<port>). Without PW_GATE_WS (UI_GATES_HOST=1, the host Chromium: informational) the
@@ -72,6 +81,7 @@ export default defineConfig({
   workers: 1, // both projects share one database; every test creates its own account
   reporter: [
     ["list"],
+    ["./support/device-check/report.ts"], // US-DEV-01 (issue 2504): the summary of a device-check run; idle for the other gates
     ...(inCi ? [["html", { open: "never", outputFolder: "playwright-report" }] as const] : []),
     ["./support/display/reporter.ts"], // one-screen gate (issue 1137): merges the results of the workers; idle otherwise
     ["./support/display/a11y/reporter.ts"], // a11y-routes gate (issue 467): same, for its own project
@@ -95,6 +105,14 @@ export default defineConfig({
       name: "a11y-routes",
       testMatch: /a11y-routes(-self-test)?\.spec\.ts$/,
       outputDir: "test-results/a11y-routes",
+      use: { ...devices["Desktop Chrome"], ...GATE_CONNECT },
+    },
+    // US-DEV-01 (issue 2504): `make device-check` (the parametrized device check, not a CI gate). Its run folder is named once here,
+    // before the workers start, so every cell writes into the same device-check-report/<timestamp>/ folder.
+    {
+      name: "device-check",
+      testMatch: /display-checks\.device(\.self|\.self-checks|\.self-summary)?\.spec\.ts$/,
+      outputDir: "test-results/device-check",
       use: { ...devices["Desktop Chrome"], ...GATE_CONNECT },
     },
   ],

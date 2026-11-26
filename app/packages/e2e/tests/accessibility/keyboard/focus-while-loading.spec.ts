@@ -1,5 +1,5 @@
 import { expect, test } from "../../../support/fixtures";
-import { signInByKeyboard, tabTo } from "../../../support/keyboard";
+import { signInByKeyboard, tabTo } from "./keyboard";
 
 // US-QS-08: what loads after the person has started with the keyboard must not take the focus away.
 

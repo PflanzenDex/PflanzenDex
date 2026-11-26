@@ -35,7 +35,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-prune db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan docker-check audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers gate-browser-image conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook sb-docs sb-test ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
+.PHONY: device-check device-check-filters help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-prune db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan docker-check audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers gate-browser-image conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook sb-docs sb-test ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -329,6 +329,23 @@ ui-gates-seed: $(if $(CI),,db-up) auth-up migrate ## CI only (US-QG-02, issue 16
 
 ui-gates: heavy-lock $(if $(and $(value SCREEN),$(filter ui-gates,$(MAKECMDGOALS))),$(error ui-gates: SCREEN measures one screen, use make one-screen SCREEN=<id>; the gates of CI run the screens of one shard, SHARD=<i>/<n>)) $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ui-gates-seed ## CI only (US-QG-01): both UI gates in one Playwright run over the screens of SHARD=<i>/<n>, the split of the register (one server start, the workers shared by both gates, issue 1698); the demo is seeded once, by its prerequisite ui-gates-seed while the browser image is pulled (issue 2429; the host browsers install with UI_GATES_HOST=1); every test of both gates runs even when one-screen tests fail, so a11y-routes is still judged; UI_GATES_WORKERS=<n> (default 6); exit 1 when a test of either gate failed; needs Docker
 	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run ui-gates
+
+# device-check (US-DEV-01, issue 2504): the parametrized device check for people and agents, not a CI gate. SCREEN, FLOW, DEVICE,
+# THEME, TEXT and FORCED reach the tool raw, like ONE_SCREEN_ONLY (issue 1608), so no value passes through make's expansion.
+unexport FLOW DEVICE THEME TEXT FORCED
+export DEVICE_CHECK_SCREEN := $(value SCREEN)
+export DEVICE_CHECK_FLOW := $(value FLOW)
+export DEVICE_CHECK_DEVICE := $(value DEVICE)
+export DEVICE_CHECK_THEME := $(value THEME)
+export DEVICE_CHECK_TEXT := $(value TEXT)
+export DEVICE_CHECK_FORCED := $(value FORCED)
+
+device-check-filters: ## Refuses an unknown SCREEN, FLOW, DEVICE, THEME, TEXT or FORCED value before anything starts (US-DEV-01, issue 2504)
+	cd $(APP) && npm run --silent device-check:check -w @pflanzendex/e2e
+
+device-check: device-check-filters heavy-lock $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ## Parametrized device check (US-DEV-01, issue 2504): SCREEN=<id>[,…] and/or FLOW=<name>[,…]; DEVICE=iphone16,oneplus15r,large,phone (default the three emulated), THEME=light,dark and TEXT=100,200 (default both), FORCED=1 for forced colors; writes packages/e2e/device-check-report/<timestamp>/ (summary.md, summary.json, screenshots); exit 1 when a check fails; needs Docker
+	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states DEMO_TAXON_FIXTURE=$(if $(CI),,reset) npm run seed:demo -w @pflanzendex/api
+	cd $(APP) && TAXONOMY_BUILD=off npm run device-check -w @pflanzendex/e2e
 
 a11y-routes-report: ## The findings per rule and per screen of the last `make a11y-routes` run as Markdown (job summary); report only, never fails (QG-U7)
 	@cat $(APP)/packages/e2e/a11y-routes-report/report.md 2>/dev/null || echo "No a11y-routes report: run make a11y-routes first."

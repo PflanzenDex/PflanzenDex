@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
-import type { TestAccount } from "./account";
-import { layerOf } from "./fixtures";
+import type { TestAccount } from "../../../support/account";
+import { layerOf } from "../../../support/fixtures";
 
 // US-QS-08: keyboard-only helpers. Nothing here clicks; every step is Tab, Shift+Tab, Enter, Space, Esc or an arrow key.
 

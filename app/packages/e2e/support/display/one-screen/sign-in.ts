@@ -6,7 +6,7 @@ import { settle } from "./fit";
 // sign-in page, each with its own user name and the one demo password.
 
 export const WEB = `http://localhost:${process.env["E2E_WEB_PORT"] ?? "5173"}`;
-const PASSWORD = "testtest12";
+export const PASSWORD = "testtest12";
 
 export type SignedInState = Awaited<ReturnType<BrowserContext["storageState"]>>;
 type States = (account: string) => Promise<SignedInState | undefined>;

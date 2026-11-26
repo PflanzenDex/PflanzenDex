@@ -1,5 +1,5 @@
 import { expect, signIn, test } from "../../../support/fixtures";
-import { press } from "../../../support/keyboard";
+import { press } from "./keyboard";
 import { openView } from "../../../support/display/display";
 
 // US-QS-08 (issue 1573): in a real browser, Escape in the shortcut overview returns the focus to what opened it. The

@@ -12,7 +12,9 @@
     "a11y-routes:write": "A11Y_ROUTES_WRITE=1 npm run a11y-routes",
     "a11y-routes:baseline": "tsx support/display/a11y/baseline-cli.ts",
     "ui-gates": "E2E_WEB_BUILD=1 node ../../tools/workflow/worktree/dev-servers.gate-browser.mjs -- playwright test --project=one-screen --project=a11y-routes --workers=${UI_GATES_WORKERS:-6}",
-    "merge-shards": "node --import tsx tests/accessibility/routes/merge-shards.ts"
+    "device-check": "E2E_WEB_BUILD=1 node ../../tools/workflow/worktree/dev-servers.gate-browser.mjs -- playwright test --project=device-check --workers=${DEVICE_CHECK_WORKERS:-4}",
+    "merge-shards": "node --import tsx tests/accessibility/routes/merge-shards.ts",
+    "device-check:check": "node --import tsx support/device-check/device.filters.cli.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

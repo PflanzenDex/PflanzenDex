@@ -362,7 +362,7 @@ IDs are never renumbered.
 
 - **Symptom:** A keyboard-only e2e test that picks an option with Home and ArrowDown passes on the Linux CI runner and fails on the devbox: the select keeps "Bitte wählen".
 - **Cause:** On macOS, headless Chromium opens the select popup on ArrowDown and does not move the value; on Linux the arrows change the value directly.
-- **Fix:** Pick an option by keyboard through type-ahead: focus the select and type the option's label (`chooseOption` in `app/packages/e2e/support/keyboard.ts`), which works on both, and assert the value afterwards.
+- **Fix:** Pick an option by keyboard through type-ahead: focus the select and type the option's label (`chooseOption` in `app/packages/e2e/tests/accessibility/keyboard/keyboard.ts`), which works on both, and assert the value afterwards.
 - **Can it become a gate?** No: it is a platform difference of the browser, and the helper already covers it.
 - **Source:** Issue #1720, PR #2319.
 
