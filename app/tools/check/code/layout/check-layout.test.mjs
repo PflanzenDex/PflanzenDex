@@ -7,8 +7,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import config from "../../../../config/lint/layout.config.mjs";
 import { compareBaseline } from "./layout-baseline.mjs";
-import { findLayout } from "./layout-rules.mjs";
-import { BASELINE_FILE, listPaths } from "./check-layout.mjs";
+import { judgeLayout } from "./layout-rules.mjs";
+import { BASELINE_FILE, listPaths, readWorkingText } from "./check-layout.mjs";
 
 const git = (cwd, ...args) => execFileSync("git", args, { cwd, stdio: "ignore" });
 
@@ -32,14 +32,18 @@ describe("US-QG-09 listPaths", () => {
 describe("US-QG-09 the repo", () => {
   it("passes the layout check with its own baseline", () => {
     const baseline = JSON.parse(fs.readFileSync(BASELINE_FILE, "utf8"));
-    assert.deepEqual(compareBaseline(findLayout(listPaths(), config), baseline), []);
+    const { findings } = judgeLayout(listPaths(), config, readWorkingText);
+    assert.deepEqual(compareBaseline(findings, baseline), []);
   });
 });
 
 describe("US-QG-09 routine additions", () => {
   const baseline = () => JSON.parse(fs.readFileSync(BASELINE_FILE, "utf8"));
   const problems = (extra) =>
-    compareBaseline(findLayout([...listPaths(), ...extra], config), baseline());
+    compareBaseline(
+      judgeLayout([...listPaths(), ...extra], config, readWorkingText).findings,
+      baseline(),
+    );
   const shots = (dir) => Array.from({ length: 7 }, (_, i) => `${dir}/0${i + 1}-shot.png`);
   it("accepts a new ADR without touching the baseline", () => {
     assert.deepEqual(problems(["docs/adr/0099-new-decision.md"]), []);
@@ -65,10 +69,9 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
     ["../../../../config/lint/layout.config.mjs", "app/config/lint/layout.config.mjs"],
     // The entry-point helper the scripts import from the shared folder (US-QG-02).
     ["../../shared/entry-point.mjs", "app/tools/check/shared/entry-point.mjs"],
-    ...["check-layout", "layout-rules", "layout-tree", "layout-baseline"].map((n) => [
-      `${n}.mjs`,
-      `app/tools/check/code/layout/${n}.mjs`,
-    ]),
+    ...["check-layout", "layout-rules", "layout-tree", "layout-baseline", "layout-manifest"].map(
+      (n) => [`${n}.mjs`, `app/tools/check/code/layout/${n}.mjs`],
+    ),
   ];
   const gitIn = (dir, ...args) =>
     execFileSync("git", ["-c", "user.email=t@t", "-c", "user.name=t", ...args], {
@@ -77,13 +80,15 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
     });
 
   // Units with three extensions in turn, so no automatic collection applies (d-133) and each unit counts (FR-QG-21).
+  // FAILING units are above the failing limit of a folder without a manifest (16, twice the size hint, d-138).
+  const FAILING = 17;
   const EXTS = ["md", "json", "css"];
   const writeUnits = (root, dir, n) => {
     fs.mkdirSync(path.join(root, dir), { recursive: true });
     for (let i = 0; i < n; i++) fs.writeFileSync(path.join(root, dir, `f${i}.${EXTS[i % 3]}`), "");
   };
 
-  // A repo whose directory app/x has `units` units, so it violates LY-1 when units > 8.
+  // A repo whose directory app/x has `units` units, so it violates LY-1 when units > 16 (no manifest, d-138).
   function repo(units) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "layout-cli-"));
     for (const [from, to] of copies) {
@@ -113,8 +118,31 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
     };
   }
 
-  it("a damaged baseline gives a readable error, not a stack trace", () => {
+  it("a folder of 9 units passes with a hint on stdout, and no failure (US-QG-09, d-136)", () => {
     const r = repo(9);
+    try {
+      const out = r.run();
+      assert.equal(out.status, 0, out.stderr);
+      assert.match(out.stdout, /check-layout: hint app\/x: 9 units, size hint 8/);
+      assert.doesNotMatch(out.stderr, /LY-1/);
+    } finally {
+      r.remove();
+    }
+  });
+
+  it("a folder of 17 units without a manifest fails with LY-1 on the CLI", () => {
+    const r = repo(FAILING);
+    try {
+      const out = r.run();
+      assert.equal(out.status, 1);
+      assert.match(out.stderr, /LY-1 app\/x: 17/);
+    } finally {
+      r.remove();
+    }
+  });
+
+  it("a damaged baseline gives a readable error, not a stack trace", () => {
+    const r = repo(FAILING);
     try {
       fs.writeFileSync(r.baselineFile, "{not json");
       const out = r.run();
@@ -127,12 +155,12 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
   });
 
   it("an empty {} baseline can be written once, then the check passes", () => {
-    const r = repo(9);
+    const r = repo(FAILING);
     try {
       fs.writeFileSync(r.baselineFile, "{}\n");
       assert.equal(r.run(["--write-baseline"]).status, 0);
       assert.deepEqual(JSON.parse(fs.readFileSync(r.baselineFile, "utf8")), {
-        "LY-1": { "app/x": 9 },
+        "LY-1": { "app/x": FAILING },
       });
       assert.equal(r.run().status, 0);
     } finally {
@@ -141,12 +169,12 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
   });
 
   it("--write-baseline refuses to enlarge the baseline and leaves the file alone", () => {
-    const r = repo(9);
+    const r = repo(FAILING);
     try {
       fs.writeFileSync(r.baselineFile, "{}\n");
       r.run(["--write-baseline"]);
       const before = fs.readFileSync(r.baselineFile, "utf8");
-      fs.writeFileSync(path.join(r.dir, "app/x/f9.md"), "");
+      fs.writeFileSync(path.join(r.dir, `app/x/f${FAILING}.md`), "");
       const out = r.run(["--write-baseline"]);
       assert.equal(out.status, 1);
       assert.match(out.stderr, /refusing to enlarge/);
@@ -157,7 +185,7 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
   });
 
   it("in CI a missing base ref fails instead of skipping the comparison", () => {
-    const r = repo(9);
+    const r = repo(FAILING);
     try {
       fs.writeFileSync(r.baselineFile, "{}\n");
       r.run(["--write-baseline"]);
@@ -170,16 +198,16 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
   });
 
   it("an entry that the base ref does not have fails the check", () => {
-    const r = repo(9);
+    const r = repo(FAILING);
     try {
-      fs.writeFileSync(r.baselineFile, `${JSON.stringify({ "LY-1": { "app/x": 9 } })}\n`);
+      fs.writeFileSync(r.baselineFile, `${JSON.stringify({ "LY-1": { "app/x": FAILING } })}\n`);
       gitIn(r.dir, "add", "-A");
       gitIn(r.dir, "commit", "-qm", "baseline");
       gitIn(r.dir, "branch", "base");
-      writeUnits(r.dir, "app/y", 9);
+      writeUnits(r.dir, "app/y", FAILING);
       fs.writeFileSync(
         r.baselineFile,
-        `${JSON.stringify({ "LY-1": { "app/x": 9, "app/y": 9 } })}\n`,
+        `${JSON.stringify({ "LY-1": { "app/x": FAILING, "app/y": FAILING } })}\n`,
       );
       const out = r.run([], { LAYOUT_BASE: "base" });
       assert.equal(out.status, 1);
@@ -193,7 +221,10 @@ describe("US-QG-09 CLI protections of the ratchet", () => {
 describe("US-QG-09 module roots (FR-QG-21)", () => {
   const baseline = () => JSON.parse(fs.readFileSync(BASELINE_FILE, "utf8"));
   const problems = (extra) =>
-    compareBaseline(findLayout([...listPaths(), ...extra], config), baseline());
+    compareBaseline(
+      judgeLayout([...listPaths(), ...extra], config, readWorkingText).findings,
+      baseline(),
+    );
   const units = (dir, n) => Array.from({ length: n }, (_, i) => `${dir}/new-unit-${i}.ts`);
   it("a module may hold up to 10 units, the 11th is a new violation", () => {
     // The module already holds some units; find how many new ones it takes to cross the limit instead of

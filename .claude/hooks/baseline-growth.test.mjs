@@ -2,7 +2,15 @@
 // it needs one. The hook and `make merge` both call these pure functions.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { BASELINE_FORMATS, baselineGrows, isBaselineFile, textAfter } from "./baseline-growth.mjs";
+import {
+  BASELINE_FORMATS,
+  baselineChanges,
+  baselineGrows,
+  baselineProblems,
+  isBaselineFile,
+  manifestGrowth,
+  textAfter,
+} from "./baseline-growth.mjs";
 
 const at = (name) => `app/config/gates/baselines/${name}`;
 const text = (value) => JSON.stringify(value, null, 2);
@@ -775,4 +783,89 @@ test("US-QG-07: one-screen rules per entry may only shrink; issue and reason are
   );
   assert.match(grows(name, one({}), one({ bogus: 1 })).reasons.join(), /field bogus/);
   assert.equal(grows(name, one({}), one({ rules: [1] })).grows, true, "rules must be texts");
+});
+
+// US-QG-09 (d-136, LY-1c): a layout manifest (the frontmatter of a README.md) is judged like baseline growth, by make merge.
+const manifestText = (expect, topic = "Plant layer") =>
+  `---\ntopic: ${topic}\nwhy: one feature\nexpect: ${expect}\n---\n# Plant layer\n`;
+const READ_ME = "app/x/README.md";
+// The files of a pull request: `files` are the changed paths; `texts` maps "<base|head>:<path>" to the text on that side.
+function manifestChanges(files, texts) {
+  return baselineChanges(
+    { headRefOid: "head", files: files.map((path) => ({ path })) },
+    {
+      mergeBase: () => "base",
+      readAt: (sha, path) => {
+        const key = `${sha === "head" ? "head" : "base"}:${path}`;
+        if (texts[key] === "THROW") throw new Error("HTTP 500");
+        return texts[key] ?? null;
+      },
+      namedAtHead: () => true,
+    },
+  );
+}
+const problemsOf = (files, texts) => baselineProblems(manifestChanges(files, texts));
+
+test("US-QG-09 (d-136): a new manifest is growth, and its expect is named", () => {
+  const result = manifestGrowth(null, manifestText(25));
+  assert.equal(result.grows, true);
+  assert.deepEqual(result.reasons, ["a new manifest, expect 25"]);
+});
+
+test("US-QG-09 (d-136): a raised expect is growth, a lowered or an equal one is not", () => {
+  assert.deepEqual(manifestGrowth(manifestText(25), manifestText(26)), {
+    grows: true,
+    reasons: ["expect rose from 25 to 26"],
+  });
+  assert.deepEqual(manifestGrowth(manifestText(25), manifestText(24)), {
+    grows: false,
+    reasons: [],
+  });
+  assert.deepEqual(manifestGrowth(manifestText(25), manifestText(25, "Plants")), {
+    grows: false,
+    reasons: [],
+  });
+});
+
+test("US-QG-09 (d-136): a removed manifest passes, and a README without frontmatter is no manifest", () => {
+  assert.deepEqual(manifestGrowth(manifestText(25), null), { grows: false, reasons: [] });
+  assert.deepEqual(manifestGrowth(manifestText(25), "# Plant layer\n"), {
+    grows: false,
+    reasons: [],
+  });
+  assert.deepEqual(manifestGrowth(null, "# Plant layer\n"), { grows: false, reasons: [] });
+});
+
+test("US-QG-09 (d-136): a manifest that does not parse is growth (fail closed)", () => {
+  const result = manifestGrowth(manifestText(25), manifestText("many"));
+  assert.equal(result.grows, true);
+  assert.match(result.reasons[0], /^the layout manifest does not parse: expect "many"/);
+});
+
+test("US-QG-09 (d-136): a pull request that adds a manifest is reported as baseline growth", () => {
+  const problems = problemsOf([READ_ME], { [`head:${READ_ME}`]: manifestText(25) });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /^baseline grows: app\/x\/README\.md \(.*a new manifest, expect 25/);
+});
+
+test("US-QG-09 (d-136): a pull request that raises an expect is reported; one that lowers it or removes the manifest is not", () => {
+  const base = { [`base:${READ_ME}`]: manifestText(25) };
+  assert.equal(problemsOf([READ_ME], { ...base, [`head:${READ_ME}`]: manifestText(26) }).length, 1);
+  assert.deepEqual(problemsOf([READ_ME], { ...base, [`head:${READ_ME}`]: manifestText(24) }), []);
+  assert.deepEqual(problemsOf([READ_ME], base), [], "removed: no head text");
+});
+
+test("US-QG-09 (d-136): a README without a manifest, and a README in a folder with a dot, are not judged", () => {
+  assert.deepEqual(problemsOf([READ_ME], { [`head:${READ_ME}`]: "# Plant layer\n" }), []);
+  assert.deepEqual(
+    problemsOf([".claude/x/README.md"], { "head:.claude/x/README.md": manifestText(25) }),
+    [],
+  );
+});
+
+test("US-QG-09 (d-136): a manifest version that cannot be read refuses the pull request (fail closed)", () => {
+  const changes = manifestChanges([READ_ME], { [`head:${READ_ME}`]: "THROW" });
+  assert.equal(changes.length, 1);
+  assert.match(changes[0].error, /HTTP 500/);
+  assert.match(baselineProblems(changes)[0], /a version cannot be read/);
 });

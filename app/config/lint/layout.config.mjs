@@ -2,9 +2,12 @@
 // match yet is listed in layout-baseline.json and only shrinks (FR-QG-22).
 const story = "[a-z0-9][a-z0-9-]*";
 export default {
-  // The unit limit of a module directory (FR-QG-21; 5 before owner decision d-133 of 2026-11-26, issue 2543). The per-path
-  // rules below keep their own limits.
+  // The size hint of a module directory (FR-QG-21, d-136 of 2026-11-26, issue 2546): above it `make layout` prints a hint
+  // and does not fail (8 since owner decision d-133, issue 2543; 5 before). The per-path rules below keep their own limits.
   maxUnits: 8,
+  // A folder without a manifest fails above this many units: twice the size hint (d-138). A manifest (README.md
+  // frontmatter, LY-1a) sets its own limit, expect.
+  failUnits: 16,
   // A directory without a per-path rule that holds this many files of one extension family is an automatic collection:
   // no unit limit, LY-3 still applies (FR-QG-21, d-133).
   autoCollectionMin: 8,

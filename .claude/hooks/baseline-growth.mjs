@@ -7,6 +7,14 @@
 // Shrinking is the opposite. Text that does not parse, a format this module does not know, a duplicate entry, an
 // unknown field and a deletion whose gate still names the file all count as growth (fail closed). A changed `date`
 // is metadata and does not count.
+//
+// A layout manifest (the frontmatter of a README.md, FR-QG-21, owner decision d-136, LY-1c) is judged the same way by
+// manifestGrowth: a new manifest or a raised `expect` is growth; a lowered `expect` and a removed manifest are not.
+
+import {
+  isManifestPath,
+  parseManifest,
+} from "../../app/tools/check/code/layout/layout-manifest.mjs";
 
 export const BASELINE_DIR = "app/config/gates/baselines/";
 
@@ -341,13 +349,38 @@ export function textAfter(toolInput, before) {
   return text;
 }
 
+// The layout manifest of a README.md text; null text means the file is absent (US-QG-09, d-136).
+const manifestOf = (text) => (text === null ? { state: "none" } : parseManifest(text));
+
 /**
- * The baseline files a PR changes, each with its text at the merge base (`before`) and at the head (`after`); null
- * means the file is absent on that side. The reads are injected: `make merge` reads GitHub and the local repository,
- * the tests read fixtures. A read that fails becomes an `error`, which refuses the PR (US-QG-07).
+ * Whether a layout manifest grows from `before` to `after` (texts; null when the file is absent): a new manifest and a
+ * raised `expect` grow it, a lowered one, a removed manifest and a README without frontmatter do not. A manifest that
+ * does not parse counts as growth (fail closed), as a baseline text that does not parse does (US-QG-09, LY-1c, LY-7).
+ */
+export function manifestGrowth(before, after) {
+  const was = manifestOf(before);
+  const now = manifestOf(after);
+  if (now.state === "none") return { grows: false, reasons: [] };
+  if (now.state === "bad")
+    return {
+      grows: true,
+      reasons: [`the layout manifest does not parse: ${now.problems.join(", ")}`],
+    };
+  if (was.state !== "ok") return { grows: true, reasons: [`a new manifest, expect ${now.expect}`] };
+  if (now.expect > was.expect)
+    return { grows: true, reasons: [`expect rose from ${was.expect} to ${now.expect}`] };
+  return { grows: false, reasons: [] };
+}
+
+/**
+ * The baseline files and the layout manifests (README.md frontmatter) a PR changes, each with its text at the merge base
+ * (`before`) and at the head (`after`); null means the file is absent on that side. The reads are injected: `make merge`
+ * reads GitHub and the local repository, the tests read fixtures. A read that fails becomes an `error`, which refuses the
+ * PR (US-QG-07, US-QG-09).
  */
 export function baselineChanges(pr, { mergeBase, readAt, namedAtHead }) {
-  const files = (pr.files ?? []).map((f) => f.path).filter(isBaselineFile);
+  const guarded = (path) => isBaselineFile(path) || isManifestPath(path);
+  const files = (pr.files ?? []).map((f) => f.path).filter(guarded);
   if (files.length === 0) return [];
   let base;
   try {
@@ -367,7 +400,7 @@ export function baselineChanges(pr, { mergeBase, readAt, namedAtHead }) {
         path,
         before,
         after,
-        gateNamesFile: after === null ? namedAtHead(path) : true,
+        gateNamesFile: after === null && isBaselineFile(path) ? namedAtHead(path) : true,
       };
     } catch (error) {
       return { path, error: error.message.split("\n")[0] };
@@ -375,16 +408,21 @@ export function baselineChanges(pr, { mergeBase, readAt, namedAtHead }) {
   });
 }
 
-/** Problems of the baseline files a PR changes: a file that grows, and a version that cannot be read (fail closed). */
+/**
+ * Problems of the baseline files and the layout manifests a PR changes: a file that grows, and a version that cannot be
+ * read (fail closed). A new manifest or a raised expect is reported as baseline growth, so make merge needs the owner.
+ */
 export function baselineProblems(changes) {
   return changes.flatMap((change) => {
     if (change.error)
       return [
         `baseline ${change.path}: a version cannot be read (${change.error}), so growth cannot be ruled out`,
       ];
-    const { grows, reasons } = baselineGrows(change.path, change.before, change.after, {
-      gateNamesFile: change.gateNamesFile,
-    });
+    const { grows, reasons } = isManifestPath(change.path)
+      ? manifestGrowth(change.before, change.after)
+      : baselineGrows(change.path, change.before, change.after, {
+          gateNamesFile: change.gateNamesFile,
+        });
     return grows ? [`baseline grows: ${change.path} (${reasons.join("; ")})`] : [];
   });
 }
