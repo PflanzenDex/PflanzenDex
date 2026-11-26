@@ -177,7 +177,7 @@ export default defineConfig([
     files: ["packages/web/src/**/*.{ts,tsx}"],
   })),
   // Storybook (issue 2512, US-QG-01): the recommended rules of the stories and csf-component for them. The main rule of
-  // .storybook/main.ts is set here (the recommended glob is relative to app/); rules-of-hooks is off for stories and .storybook.
+  // .storybook/main.ts is set here (the recommended glob is relative to app/); rules-of-hooks is off for stories, .storybook and the story frame.
   ...storybook.configs["flat/recommended"],
   {
     files: ["**/*.stories.@(ts|tsx|js|jsx|mjs|cjs)"],
@@ -193,7 +193,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["**/*.stories.tsx", "packages/web/.storybook/**/*.tsx"],
+    files: ["**/*.stories.tsx", "packages/web/{.storybook,src/shared/testing/story-frame}/*.tsx"],
     rules: { "react-hooks/rules-of-hooks": "off" },
   },
 ]);
