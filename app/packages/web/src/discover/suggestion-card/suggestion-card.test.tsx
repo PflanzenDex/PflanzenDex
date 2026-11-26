@@ -205,6 +205,33 @@ describe("US-QS-32 · SG-COPY-05 · SG-TOUCH-01 the card's toggle is a row of 44
   });
 });
 
+describe("US-QS-12 · issue 2535 the clamp of the summary is deliberate: the button that opens the rest stands beside it", () => {
+  it("US-QS-12 · issue 2535 collapsed, the summary is clamped to three lines, carries data-clamped and shares its parent with the button; open, the clamp is gone", async () => {
+    show(suggestion());
+    const toggle = screen.getByRole("button", { name: "Mehr erfahren" });
+    const text = screen.getByText(/is a species of flowering plant/);
+    expect(text.className).toContain("line-clamp-3");
+    expect(text.hasAttribute("data-clamped")).toBe(true);
+    expect(text.parentElement?.contains(toggle)).toBe(true);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    await userEvent.click(toggle);
+    expect(text.className).not.toContain("line-clamp-3");
+    expect(text.hasAttribute("data-clamped")).toBe(false);
+    expect(
+      text.parentElement?.contains(screen.getByRole("button", { name: "Weniger anzeigen" })),
+    ).toBe(true);
+  });
+
+  it("US-QS-12 · issue 2535 without a summary the button stands beside the line that says so, and nothing is clamped", () => {
+    show(suggestion({ summary: null, summaryLanguage: null }));
+    const line = screen.getByText("Keine Beschreibung vorhanden.");
+    expect(line.hasAttribute("data-clamped")).toBe(false);
+    expect(
+      line.parentElement?.contains(screen.getByRole("button", { name: "Mehr erfahren" })),
+    ).toBe(true);
+  });
+});
+
 describe("NFR-12 the suggestion picture loads when it is near the viewport", () => {
   it("NFR-12 the picture of a suggestion is loaded lazily (loading=lazy)", () => {
     show(suggestion({ imageUrl: "https://upload.wikimedia.org/a.jpg" }));
