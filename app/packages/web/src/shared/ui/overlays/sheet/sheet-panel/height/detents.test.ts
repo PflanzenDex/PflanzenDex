@@ -21,7 +21,6 @@ const measure = (over: Partial<Measure> = {}): Measure => ({
   chrome: 90,
   rem: 16,
   legacy: false,
-  actionCut: false,
   ...over,
 });
 
@@ -67,16 +66,6 @@ describe("US-QS-15 · fitting height, half height and full height", () => {
 
   it("US-QS-15 at 200 % text a sheet whose whole content still fits within half stays at its fitting height", () => {
     expect(sheetKind(measure({ height: 310, chrome: 300, rem: 32 }), heights)).toBe("fit");
-  });
-
-  it("US-QS-15 a sheet whose primary action lies in its content and would be cut off at half height opens at full height", () => {
-    expect(sheetKind(measure({ height: 320, overflow: 400, actionCut: true }), heights)).toBe(
-      "full",
-    );
-  });
-
-  it("US-QS-15 a content that fits within half stays at its fitting height, whatever its actions", () => {
-    expect(sheetKind(measure({ height: 250, actionCut: true }), heights)).toBe("fit");
   });
 
   it("US-QS-15 a list that pages by the free height keeps the legacy height of 90 % until the pager is gone", () => {

@@ -144,6 +144,10 @@ export const ToggleAndKeys: Story = {
     handle.focus();
     press(handle, "ArrowUp");
     await waitForHeight(sheet, visibleHeight(), "arrow up grows the sheet to full height");
+    await waitUntil(
+      () => handle.getAttribute("aria-valuetext") === "Details, Vollbild",
+      "the value text of the handle says the new height",
+    );
     press(handle, "ArrowDown");
     await waitForHeight(sheet, visibleHeight() / 2, "arrow down returns it to half height");
     const said = liveText();

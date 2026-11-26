@@ -6,7 +6,12 @@ import table from "../../../sheet.de.json";
 const t = texts(table);
 
 /** What the handle of a sheet with two heights does with the keyboard (US-QS-15). */
-export type HandleKeys = { mode: Detent; select: (detent: Detent) => void };
+export type HandleKeys = {
+  mode: Detent;
+  /** What a screen reader reads as the value of the handle: the title and the height ("Details, Vollbild"). */
+  valueText: string;
+  select: (detent: Detent) => void;
+};
 
 type SheetHandleProps = {
   /** The pointer handlers of the drag (`useHandleDrag`). */
@@ -43,7 +48,8 @@ const HANDLE =
 /**
  * The handle of a bottom sheet (US-QS-15, SG-SHEET-02): a bar in a target of 44 px. A drag on it changes the height of the
  * sheet (`useHandleDrag`). A sheet with two heights makes it a separator that takes the focus: arrow up and arrow down
- * change the height, and its value says which one it is, so the heights work without a finger (WCAG 2.5.1, 2.5.7). A sheet
+ * change the height, and its value text is the announcement ("Details, Vollbild"): a screen reader reads it as the value changes,
+ * so the sheet does not announce a second time while the handle has the focus (WCAG 2.5.1, 2.5.7, 4.1.3). A sheet
  * with one height leaves it to the pointer; it has no role and no tab stop. Neither takes the focus on open (`data-sheet-chrome`).
  */
 export function SheetHandle({ drag, keys }: SheetHandleProps) {
@@ -56,7 +62,7 @@ export function SheetHandle({ drag, keys }: SheetHandleProps) {
         "aria-valuemin": 50,
         "aria-valuemax": 100,
         "aria-valuenow": keys.mode === "full" ? 100 : 50,
-        "aria-valuetext": t(keys.mode === "full" ? "sheet.full" : "sheet.half"),
+        "aria-valuetext": keys.valueText,
         onKeyDown: onKeyDown(keys),
       } as const)
     : {};

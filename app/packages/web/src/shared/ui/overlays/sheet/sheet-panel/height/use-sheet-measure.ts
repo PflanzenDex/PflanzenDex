@@ -53,19 +53,19 @@ type Parts = { sheet: HTMLElement | null; header: HTMLElement | null; body: HTML
  * the window changes (a rotation, the keyboard, a larger text size) and whenever the sheet, its header or what its body
  * holds changes size or content, one frame later so a burst of changes is one measurement.
  */
-export function useSheetKind(parts: Parts, heights: Heights, open: boolean): SheetKind {
+export function useSheetKind(parts: Parts, heights: Heights, open: boolean) {
   const [kind, setKind] = React.useState<SheetKind>("fit");
-  // Once a primary action was cut at half height the sheet stays at full height, where nothing is cut: no flicker between both.
-  const cut = React.useRef(false);
+  // Whether a primary action in the content was cut off at half height since the sheet opened: the sheet then opens at full height.
+  const [cut, setCut] = React.useState(false);
   const { sheet, header, body } = parts;
   React.useEffect(() => {
-    if (!open) cut.current = false;
+    if (!open) setCut(false);
   }, [open]);
   React.useLayoutEffect(() => {
     if (!open || !sheet || !header || !body) return;
     const measure = () => {
       const rem = rootRem();
-      cut.current = cut.current || actionCutOf(sheet);
+      if (actionCutOf(sheet)) setCut(true);
       setKind(
         sheetKind(
           {
@@ -74,7 +74,6 @@ export function useSheetKind(parts: Parts, heights: Heights, open: boolean): She
             chrome: header.offsetHeight + pinnedOf(sheet, rem),
             rem,
             legacy: body.querySelector("[data-page-fit]") !== null,
-            actionCut: cut.current,
           },
           heights,
         ),
@@ -104,5 +103,5 @@ export function useSheetKind(parts: Parts, heights: Heights, open: boolean): She
       body.removeEventListener("load", later, true);
     };
   }, [open, sheet, header, body, heights]);
-  return kind;
+  return { kind, cut };
 }

@@ -10,8 +10,7 @@ const t = texts(table);
  *
  * - `fit`: the content, with its header, fits within half the visible window: the sheet is as high as its content.
  * - `two`: the content is longer: the sheet has half height and full height; it opens at half.
- * - `full`: the content is longer and title and actions do not fit within half (200 % text, an open keyboard, or a primary
- *   action in the scrolling content that half height would cut off): full height only.
+ * - `full`: the content is longer and title and actions do not fit within half (200 % text, an open keyboard): full height only.
  * - `legacy`: a list that pages by the free height (`data-page-fit`, issue 1156) keeps its 90 % until `Pager` is replaced.
  */
 export type SheetKind = "fit" | "two" | "full" | "legacy";
@@ -50,11 +49,6 @@ export type Measure = {
   rem: number;
   /** A list that pages by free height is in the sheet. */
   legacy: boolean;
-  /**
-   * A primary action lies in the scrolling content and the bottom of its region cuts it off. Until the forms put their
-   * confirming action in the bar of the sheet (SG-SHEET-04), such a sheet cannot keep its action in place at half height.
-   */
-  actionCut: boolean;
 };
 
 /**
@@ -66,7 +60,6 @@ export function sheetKind(m: Measure, heights: Heights): SheetKind {
   if (m.legacy) return "legacy";
   const natural = m.overflow > TOLERANCE ? m.height + m.overflow : m.height;
   if (natural <= heights.half + TOLERANCE) return "fit";
-  if (m.actionCut) return "full";
   return m.chrome + MIN_BODY_REM * m.rem > heights.half ? "full" : "two";
 }
 

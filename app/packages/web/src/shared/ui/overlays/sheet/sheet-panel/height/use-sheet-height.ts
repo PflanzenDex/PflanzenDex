@@ -60,6 +60,16 @@ function sheetVars(
   return vars(`${kind === "two" ? (dragged ?? at) : at}px`, heights.full);
 }
 
+/** The toggle button between the heights: its name is the height it switches to ("Vollbild", "Halbe Höhe"). */
+function toggleOf(mode: Detent, select: (detent: Detent) => void) {
+  const other = mode === "full" ? "half" : "full";
+  return {
+    full: mode === "full",
+    label: t(other === "full" ? "sheet.full" : "sheet.half"),
+    onToggle: () => select(other),
+  };
+}
+
 type Options = {
   title: string;
   open: boolean;
@@ -86,24 +96,34 @@ export function useSheetHeight(o: Options) {
   const heights = React.useMemo(() => sheetHeights(visible, safeTop()), [visible]);
   const [header, headerRef] = React.useState<HTMLElement | null>(null);
   const [body, bodyRef] = React.useState<HTMLElement | null>(null);
-  const kind = useSheetKind({ sheet: o.sheet, header, body }, heights, o.open);
+  const { kind, cut } = useSheetKind({ sheet: o.sheet, header, body }, heights, o.open);
   useScrollAccess(body);
   const [mode, setMode] = React.useState<Detent>("half");
   const [dragged, setDragged] = React.useState<number | null>(null);
+  // The keeper chose a height: the sheet does not change it by itself any more.
+  const chosen = React.useRef(false);
   const announce = useAnnounce();
   const reduced = useReducedMotion();
   // A sheet that opens again starts at its own height, and one whose close the parent refused takes its height back.
   React.useLayoutEffect(() => {
     if (o.open) {
+      chosen.current = false;
       setMode("half");
       setDragged(null);
     }
   }, [o.open]);
+  // A primary action in the content that half height cuts off: the sheet opens at full height and keeps its toggle (US-QS-15).
+  React.useLayoutEffect(() => {
+    if (cut && !chosen.current) setMode("full");
+  }, [cut]);
   React.useLayoutEffect(() => setDragged(null), [o.closeRefusals]);
   const select = (next: Detent) => {
     if (next === mode) return;
+    chosen.current = true;
     setMode(next);
-    announce?.announce(announcement(o.title, next));
+    // On the handle the value text says it (`keys`): one announcement, not two. Toggle and drag have no value to read.
+    if (!document.activeElement?.hasAttribute("data-sheet-handle"))
+      announce?.announce(announcement(o.title, next));
   };
   const drag = useHandleDrag({
     sheet: o.sheet,
@@ -116,7 +136,6 @@ export function useSheetHeight(o: Options) {
     },
   });
   const adjustable = kind === "two" && !o.cramped;
-  const other = mode === "full" ? "half" : "full";
   return {
     headerRef,
     bodyRef,
@@ -126,13 +145,7 @@ export function useSheetHeight(o: Options) {
       "data-sheet-motion": reduced ? "snap" : "slide",
       style: sheetVars(kind, mode, heights, dragged),
     },
-    keys: adjustable ? { mode, select } : undefined,
-    toggle: adjustable
-      ? {
-          full: mode === "full",
-          label: t(other === "full" ? "sheet.full" : "sheet.half"),
-          onToggle: () => select(other),
-        }
-      : undefined,
+    keys: adjustable ? { mode, valueText: announcement(o.title, mode), select } : undefined,
+    toggle: adjustable ? toggleOf(mode, select) : undefined,
   };
 }

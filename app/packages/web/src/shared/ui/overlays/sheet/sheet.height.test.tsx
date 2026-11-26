@@ -89,7 +89,7 @@ describe("US-QS-15 · a sheet opens at its fitting height or at half height", ()
     const sheet = await sheetOf();
     await waitFor(() => expect(sheet.getAttribute("data-sheet-height")).toBe("two"));
     expect(heightOf(sheet)).toBe("400px");
-    expect(handleOf().getAttribute("aria-valuetext")).toBe("Halbe Höhe");
+    expect(handleOf().getAttribute("aria-valuetext")).toBe("Filter, Halbe Höhe");
   });
 
   it("US-QS-15 half is 50 % of the visible window: a shorter window gives a lower half", async () => {
@@ -143,14 +143,17 @@ describe("US-QS-15 · a primary action in the content that half height would cut
     );
   }
 
-  it("US-QS-15 a sheet whose primary action lies below the end of its scroll region opens at full height, with one height", async () => {
+  it("US-QS-15 a sheet whose primary action lies below the end of its scroll region opens at full height and keeps its toggle", async () => {
     layout.content = 1200;
     layout.actionBottom = 1300;
     render(<WithAction />);
     const sheet = await sheetOf();
-    await waitFor(() => expect(sheet.getAttribute("data-sheet-height")).toBe("full"));
-    expect(heightOf(sheet)).toBe("800px");
-    expect(screen.queryByRole("button", { name: "Halbe Höhe" })).toBeNull();
+    await waitFor(() => expect(heightOf(sheet)).toBe("800px"));
+    expect(sheet.getAttribute("data-sheet-height")).toBe("two");
+    // The keeper can still go to half height, and the sheet leaves it there.
+    await userEvent.click(screen.getByRole("button", { name: "Halbe Höhe" }));
+    expect(heightOf(sheet)).toBe("400px");
+    expect(sheet.getAttribute("data-sheet-height")).toBe("two");
   });
 
   it("US-QS-15 a sheet whose primary action is in sight at half height keeps its two heights", async () => {
@@ -174,7 +177,7 @@ describe("US-QS-15 · the toggle and the arrow keys change the height and say so
     await userEvent.click(toggle);
     expect(heightOf(sheet)).toBe("800px");
     expect(live()).toBe("Filter, Vollbild");
-    expect(handleOf().getAttribute("aria-valuetext")).toBe("Vollbild");
+    expect(handleOf().getAttribute("aria-valuetext")).toBe("Filter, Vollbild");
     await userEvent.click(screen.getByRole("button", { name: "Halbe Höhe" }));
     expect(heightOf(sheet)).toBe("400px");
     expect(live()).toBe("Filter, Halbe Höhe");
@@ -188,10 +191,13 @@ describe("US-QS-15 · the toggle and the arrow keys change the height and say so
     handleOf().focus();
     await userEvent.keyboard("{ArrowUp}");
     expect(heightOf(sheet)).toBe("800px");
-    expect(live()).toBe("Filter, Vollbild");
+    // The value text of the handle says it, the live region does not say it a second time.
+    expect(handleOf().getAttribute("aria-valuetext")).toBe("Filter, Vollbild");
+    expect(live()).toBe("");
     await userEvent.keyboard("{ArrowDown}");
     expect(heightOf(sheet)).toBe("400px");
-    expect(live()).toBe("Filter, Halbe Höhe");
+    expect(handleOf().getAttribute("aria-valuetext")).toBe("Filter, Halbe Höhe");
+    expect(live()).toBe("");
   });
 
   it("US-QS-15 arrow down at half height never closes the sheet and says nothing", async () => {
