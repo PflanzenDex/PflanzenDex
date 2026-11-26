@@ -10,10 +10,13 @@ const GATE_FILES = [
   /^\.github\/workflows\//,
   /^\.github\/rulesets\//,
   /^\.github\/CODEOWNERS$/,
-  /^\.github\/renovate\.json5?$/,
+  /^\.github\/dependabot\.ya?ml$/,
   // Everything under .claude/ (hooks, settings, rules, agents, skills, mods) as AGENTS.md says (owner decision d-128,
   // 2026-11-26, issue 2528).
   /^\.claude\//,
+  // .claude/skills/* are symlinks into .agents/skills/: an edit of a SKILL.md there changes a project skill (issue 2540,
+  // owner decision d-131).
+  /^\.agents\/skills\//,
   /^\.gitleaksignore$/,
   /^Makefile$/,
   // The agent rules hold the gates, blocked commands and definition of done (owner decision 2026-11-20, issue 2381).
