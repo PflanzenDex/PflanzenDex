@@ -1,7 +1,6 @@
 import { answerFriendRequest, type FriendsData } from "../../../api/friends-api";
 import { FeedBlock } from "../../../feed/feed-block/feed-block";
 import { FriendsBanner } from "../../../feed/friends-banner/friends-banner";
-import { FriendList } from "../../../parts/friend-list/friend-list";
 import { nameOf, RequestList } from "../../../parts/request-list/request-list";
 import { entityKey, useWriteAction } from "../../../../shared/data";
 import { Layer } from "./layer/layer";
@@ -13,7 +12,7 @@ import table from "../../../social.de.json";
 // `t` names the token in the write callbacks of this file.
 const tx = texts(table);
 
-/** The four layers with lists: requests, news, friends and sharing (US-QS-20), each with the outcome of its own writes. */
+/** The three layers with lists: requests, news and sharing (US-QS-20), each with the outcome of its own writes. The friends are the page itself (issue 2419). */
 export function ListLayers(props: {
   api: string;
   token: () => Promise<string | undefined>;
@@ -54,9 +53,6 @@ export function ListLayers(props: {
             friends={data.friends.map((f) => ({ id: f.id, name: f.name }))}
           />
         </div>
-      </Layer>
-      <Layer id="friends" title={tx("layers.friends")}>
-        <FriendList friends={data.friends} />
       </Layer>
       <Layer id="sharing" title={tx("layers.sharing")}>
         <SharingSection data={data} api={api} token={token} onWritten={props.onWritten} />

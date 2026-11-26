@@ -77,19 +77,20 @@ function EndMarker({ count }: { count: number }) {
 /**
  * What stands after the last entry of a scrolling list (SG-LIST-01): the loader row while a part is on its way, the retry
  * row when it failed, the end marker once every entry is there and the count is known (`marker`, undefined otherwise).
- * `missing` is true while entries are asked for and not there. It renders list items, so it belongs inside the list.
+ * `missing` is true while entries are asked for and not there; a list without `paging` has no part on its way, so it shows
+ * the marker only. It renders list items, so it belongs inside the list.
  */
 export function ListEnd({
   paging,
   missing,
   marker,
 }: {
-  paging: PagerPaging;
+  paging: PagerPaging | undefined;
   missing: boolean;
   marker: number | undefined;
 }) {
-  const loading = useHeldLoader(missing && paging.failure === undefined);
-  if (loading) return <LoaderRow quiet={paging.placeholder !== undefined} />;
-  if (missing) return <RetryRow paging={paging} />;
+  const loading = useHeldLoader(paging !== undefined && missing && paging.failure === undefined);
+  if (paging && loading) return <LoaderRow quiet={paging.placeholder !== undefined} />;
+  if (paging && missing) return <RetryRow paging={paging} />;
   return marker === undefined ? null : <EndMarker count={marker} />;
 }

@@ -13,6 +13,7 @@ import {
   isPlain,
   isTinted,
 } from "@/shared/ui/button/button-roles";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { PlantLeaves } from "./plant-leaves";
 import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
 import table from "./plant-leaves.de.json";
@@ -63,12 +64,15 @@ function server(routes: Record<string, () => Response>): Posts {
   return posts;
 }
 
-const show = (on = true) =>
+// `inLayer`: the log in a sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01); on a page it is one scrolling list.
+const show = (on = true, inLayer = false) =>
   render(
     <MemoryRouter>
-      <FeaturesProvider features={{ leaf_log: on }}>
-        <PlantLeaves api={API} token={TOKEN} specimenId="e1" />
-      </FeaturesProvider>
+      <LayerScope.Provider value={inLayer}>
+        <FeaturesProvider features={{ leaf_log: on }}>
+          <PlantLeaves api={API} token={TOKEN} specimenId="e1" />
+        </FeaturesProvider>
+      </LayerScope.Provider>
     </MemoryRouter>,
   );
 
@@ -109,8 +113,8 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     expect(await screen.findByText("Neues Blatt festhalten")).toBeTruthy();
   });
 
-  it("US-WAC-07 the count and the leaves are listed newest first, one leaf per page, with unknown sizes shown as unbekannt (P-08)", async () => {
-    // Paging is the tablet and desktop view (768 px and up); on a phone the leaves are one scrolling list (US-QS-32).
+  it("US-WAC-07 the count and the leaves are listed newest first, one leaf per page in a layer, with unknown sizes shown as unbekannt (P-08)", async () => {
+    // A layer keeps its pages (US-QS-15, SG-LIST-01); on a page the leaves are one scrolling list (US-QS-32).
     setViewportWidth(1024);
     server({
       "GET /specimens/e1/leaves": () =>
@@ -123,7 +127,7 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
         ),
     });
     const user = userEvent.setup();
-    show();
+    show(true, true);
     expect(await screen.findByText("2 Blätter")).toBeTruthy();
     const list = screen.getByRole("list", { name: "Neue Blätter" });
     const first = within(list).getAllByRole("listitem");
@@ -137,6 +141,16 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     const second = within(list).getAllByRole("listitem");
     expect(second).toHaveLength(1);
     expect(second[0]?.textContent).toContain("Länge unbekannt · Breite unbekannt");
+  });
+
+  it("US-QS-15 · SG-LIST-01 on a page the leaves are one scrolling list at a tablet width too: every leaf, no pages", async () => {
+    setViewportWidth(1024);
+    server({ "GET /specimens/e1/leaves": () => json(200, view([leaf(9), leaf(2)])) });
+    show();
+    expect(await screen.findByText("2 Blätter")).toBeTruthy();
+    const list = screen.getByRole("list", { name: "Neue Blätter" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
   });
 
   it("US-WAC-07 the two buttons of the log share one row of two equal columns, so they do not wrap on a phone", async () => {

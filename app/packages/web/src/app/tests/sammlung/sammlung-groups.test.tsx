@@ -209,7 +209,7 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
   });
 
   it("US-BES-06 · FR-BES-23 grouped by location a group shows its full count, and opening it loads only its own plants", async () => {
-    // Paging is the tablet and desktop view: 16 plants a page from 1024 px (on a phone one scrolling list).
+    // The list of the chosen group scrolls at every width (US-QS-15, SG-LIST-01), here at a tablet width.
     setViewportWidth(1024);
     const seen: URL[] = [];
     stubServer(
@@ -222,7 +222,8 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
     renderAt("/collection?view=plants&group=location&part=Wohnzimmer");
     const row = await screen.findByRole("group", { name: "Standort wählen" });
     expect(within(row).getByRole("button", { name: /^Wohnzimmer \(120\)$/ })).toBeTruthy();
-    expect(await screen.findByText("Seite 1 von 8")).toBeTruthy();
+    expect(await screen.findByRole("list", { name: "Pflanzen" })).toBeTruthy();
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
     const groupCalls = seen.filter((u) => u.pathname === "/specimens/cards");
     expect(groupCalls.some((u) => u.searchParams.get("location") === "Wohnzimmer")).toBe(true);
     expect(groupCalls.some((u) => u.searchParams.get("location") === "Flur")).toBe(false);

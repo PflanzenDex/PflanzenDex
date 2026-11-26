@@ -1,5 +1,5 @@
 {
-  "maxEntries": 563,
+  "maxEntries": 557,
   "entries": [
     {
       "screen": "account-achievements-earned",
@@ -272,14 +272,14 @@
       "size": "360x640",
       "page": 1,
       "inner": 15.94,
-      "rules": ["frame", "pager", "action"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "collection-view-plants-page-2",
       "size": "390x844",
       "page": 1,
       "inner": 11.5,
-      "rules": ["frame", "pager", "action"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "collection-view-plants-page-2",
@@ -398,14 +398,14 @@
       "size": "360x640",
       "page": 1,
       "inner": 7.92,
-      "rules": ["frame", "pager", "action"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "collection",
       "size": "390x844",
       "page": 1,
       "inner": 5.71,
-      "rules": ["frame", "pager", "action"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "collection",
@@ -2111,48 +2111,6 @@
       "rules": ["pager"]
     },
     {
-      "screen": "friends-sheet-friends",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "friends-sheet-friends",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "friends-sheet-friends",
-      "size": "768x1024",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "friends-sheet-friends",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "friends-sheet-friends",
-      "size": "1920x1080",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "friends-sheet-friends",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 2.42,
-      "rules": ["pager"]
-    },
-    {
       "screen": "friends-sheet-sharing",
       "size": "360x640",
       "page": 1,
@@ -2374,14 +2332,14 @@
       "size": "360x640",
       "page": 1,
       "inner": 98.83,
-      "rules": ["frame", "pager", "title"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "account-news",
       "size": "390x844",
       "page": 1,
       "inner": 73.36,
-      "rules": ["frame", "pager", "title"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "account-news",
@@ -2409,7 +2367,7 @@
       "size": "360x640@200%",
       "page": 1,
       "inner": 173.21,
-      "rules": ["pager", "title"]
+      "rules": ["pager"]
     },
     {
       "screen": "collection-labels",
@@ -2626,14 +2584,14 @@
       "size": "360x640",
       "page": 1,
       "inner": 7.92,
-      "rules": ["frame", "pager", "action"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "collection-view-plants-sheet-archive",
       "size": "390x844",
       "page": 1,
       "inner": 5.71,
-      "rules": ["frame", "pager", "action"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "collection-view-plants-sheet-archive",
@@ -2668,14 +2626,14 @@
       "size": "360x640",
       "page": 1,
       "inner": 7.92,
-      "rules": ["frame", "pager", "action"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "collection-view-plants",
       "size": "390x844",
       "page": 1,
       "inner": 5.71,
-      "rules": ["frame", "pager", "action"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "collection-view-plants",
@@ -3060,14 +3018,14 @@
       "size": "360x640",
       "page": 1,
       "inner": 3.01,
-      "rules": ["frame", "pager", "title"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "account-functions",
       "size": "390x844",
       "page": 1,
       "inner": 2.21,
-      "rules": ["frame", "pager", "title"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "account-functions",
@@ -3095,7 +3053,7 @@
       "size": "360x640@200%",
       "page": 1,
       "inner": 6.92,
-      "rules": ["pager", "title"]
+      "rules": ["pager"]
     },
     {
       "screen": "collection-plant-course",
@@ -3354,14 +3312,14 @@
       "size": "360x640",
       "page": 1,
       "inner": 15.94,
-      "rules": ["frame", "pager", "action"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "collection-view-plants-last-page",
       "size": "390x844",
       "page": 1,
       "inner": 11.5,
-      "rules": ["frame", "pager", "action"]
+      "rules": ["frame", "pager"]
     },
     {
       "screen": "collection-view-plants-last-page",

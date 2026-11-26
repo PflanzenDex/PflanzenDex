@@ -6,6 +6,7 @@ import type { CaughtSpecies, MilestoneTree } from "@pflanzendex/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { MemoryRouter } from "react-router";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { Milestones } from "./milestones";
 
 afterEach(() => {
@@ -115,10 +116,25 @@ describe("US-POK-11 milestones with an instruction for action", () => {
     expect(summary.textContent).toBe("2 Meilensteine erreicht");
   });
 
-  it("US-POK-11 the open milestones come two per page, so the layer fits one screen (DS-58, starting value)", async () => {
-    // Paging is the tablet and desktop view (768 px and up); on a phone the milestones are one scrolling list (US-QS-32).
+  it("US-QS-15 · SG-LIST-01 on a page the open milestones are one scrolling list at every width, with no pages", () => {
+    for (const width of [360, 1024]) {
+      setViewportWidth(width);
+      view(<Milestones caught={[]} tree={tree} />);
+      expect(screen.getByText("Kakteen: Entdeckt")).toBeTruthy();
+      expect(screen.getByText("Kakteen: Vollständig")).toBeTruthy();
+      expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+      cleanup();
+    }
+  });
+
+  it("US-POK-11 in a layer the open milestones come two per page, so the layer fits one screen (DS-58, starting value)", async () => {
+    // A sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01); on a page the milestones are one scrolling list (US-QS-32).
     setViewportWidth(1024);
-    view(<Milestones caught={[]} tree={tree} />);
+    view(
+      <LayerScope.Provider value>
+        <Milestones caught={[]} tree={tree} />
+      </LayerScope.Provider>,
+    );
     expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
     expect(screen.getByText("Kakteen: Entdeckt")).toBeTruthy();
     expect(screen.getByText("Kakteen: Kenner")).toBeTruthy();

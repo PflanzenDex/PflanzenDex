@@ -183,6 +183,9 @@ function show(sheet?: string, options: Options = {}, from = "") {
   );
 }
 
+/** The text of a row as it reads: the no-break space of a count and the gap between title and meta line are plain spaces. */
+const read = (el: HTMLElement) => (el.textContent ?? "").replace(/\s+/g, " ").trim();
+
 /** What the shared live region says (DS-69). */
 const said = () => document.querySelector(".sr-only[aria-live=polite]")?.textContent?.trim() ?? "";
 
@@ -214,7 +217,9 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(await screen.findByText(/Du bist jetzt mit Ben befreundet/)).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/friends/requests/r1/answer", body: { decision: "accept" } });
     expect(screen.queryByRole("button", { name: /annehmen/ })).toBeNull();
-    expect(await screen.findByText("1 Freund")).toBeTruthy();
+    // The requests layer is still open over the page: its content is found by text, not by role.
+    expect(await screen.findByText("Meine Freunde · 1")).toBeTruthy();
+    expect(await screen.findByText("Ben")).toBeTruthy();
   });
 
   it("US-SOZ-02 declining sends the answer and tells the receiver what the other side learns", async () => {
@@ -423,14 +428,16 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(calls).toEqual([]);
   });
 
-  it("US-SOZ-01 · P-09 US-QS-20 the next action comes first: 'Freund hinzufügen' stands before the tiles, rows and the help line", async () => {
-    fakeServer();
+  it("US-SOZ-01 · P-09 US-QS-20 the next action comes first: 'Freund hinzufügen' stands before the rows, the friends and the help line", async () => {
+    fakeServer({ friends: [friend(1)] });
     show();
     const add = await screen.findByRole("button", { name: "Freund hinzufügen" });
     const order = [
       add,
       screen.getByRole("button", { name: /^Anfragen/ }),
-      screen.getByRole("button", { name: /^Meine Freunde/ }),
+      screen.getByRole("button", { name: /^Neu bei Freunden/ }),
+      await screen.findByRole("link", { name: /^Freund1 befreundet seit/ }),
+      screen.getByRole("link", { name: /^Tauschbörse/ }),
       screen.getByRole("button", { name: "Mehr erfahren" }),
     ];
     for (let i = 1; i < order.length; i += 1)
@@ -532,11 +539,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   it("US-QS-14 the title sits on the page background like the other destinations, not inside a card", async () => {
     fakeServer();
     const { container } = show();
-    await screen.findByText(/Noch keine Freunde\./);
+    await screen.findByText("Noch keine Freunde");
     expect((container.firstElementChild as HTMLElement).className).not.toContain("bg-card");
   });
 
-  it("US-QS-20 the first screen: heading, one filled action, the tiles with counts, the rows and one line of help", async () => {
+  it("US-QS-20 · US-QS-15 the first screen: heading, one filled action, two counted rows, the friends, the exchange tiles, what friends see and one line of help", async () => {
     fakeServer({
       incoming: [req(), req({ id: "r2", otherName: "Cleo" })],
       friends: [friend(1)],
@@ -549,13 +556,18 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect((await screen.findByRole("button", { name: "Freund hinzufügen" })).className).toContain(
       "bg-primary",
     );
-    expect(screen.getByRole("button", { name: /^Anfragen/ }).textContent).toBe("Anfragen2");
-    expect(await screen.findByRole("button", { name: /^Neu bei Freunden/ })).toBeTruthy();
+    // The counted rows say what the count counts (the no-break space keeps the number with its word, SG-TYPE-07).
+    expect(read(screen.getByRole("button", { name: /^Anfragen/ }))).toBe(
+      "Anfragen 2 warten auf deine Antwort",
+    );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /^Neu bei Freunden/ }).textContent).toBe(
-        "Neu bei Freunden3",
+      expect(read(screen.getByRole("button", { name: /^Neu bei Freunden/ }))).toBe(
+        "Neu bei Freunden 3 neue Pflanzen",
       ),
     );
+    expect(
+      await screen.findByRole("heading", { name: "Meine Freunde · 1", level: 2 }),
+    ).toBeTruthy();
     expect(screen.getByRole("link", { name: /^Tauschbörse/ }).getAttribute("href")).toBe(
       "/friends/exchange",
     );
@@ -568,25 +580,52 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
         "Passende Angebote2",
       );
     });
-    expect(screen.getByRole("button", { name: /^Meine Freunde/ }).textContent).toBe(
-      "Meine Freunde1 Freund",
-    );
+    // "Meine Freunde" is no row that opens a layer any more: the friends are the page.
+    expect(screen.queryByRole("button", { name: /^Meine Freunde/ })).toBeNull();
     expect(screen.getByRole("button", { name: /^Was Freunde sehen/ }).textContent).toBe(
       "Was Freunde sehen0 von 2 Pflanzen geteilt",
     );
     expect(screen.getByText(/Ohne deine Freigabe sieht niemand etwas\./)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Mehr erfahren" })).toBeTruthy();
     expect(screen.queryByRole("dialog")).toBeNull();
-    // Only the one action is filled: the tiles and rows are outline buttons (DS-58).
+    // Only the one action is filled: the rows and tiles are neutral (DS-58).
     const filled = screen.getAllByRole("button").filter((b) => b.className.includes("bg-primary "));
     expect(filled.map((b) => b.textContent)).toEqual(["Freund hinzufügen"]);
   });
 
-  it("US-QS-20 the four tiles stand two in a row while the labels fit and stack at a larger text size (issue 1019)", async () => {
+  it("US-QS-20 the two counted rows form one group of rows, and the exchange tiles stand two in a row while the labels fit (issue 1019)", async () => {
     fakeServer({ incoming: [], friends: [friend(1)], news: 0, offers: 0, matching: 0 });
     show();
-    const tile = await screen.findByRole("button", { name: /^Anfragen/ });
+    const requests = await screen.findByRole("button", { name: /^Anfragen/ });
+    const news = screen.getByRole("button", { name: /^Neu bei Freunden/ });
+    expect(requests.closest("ul")).toBe(news.closest("ul"));
+    expect(requests.closest("ul")?.children).toHaveLength(2);
+    const tile = screen.getByRole("link", { name: /^Tauschbörse/ });
     expect(tile.parentElement?.className).toContain("minmax(9rem,1fr)");
+  });
+
+  it("US-QS-20 · issue 2419 a count of 0 reads as a quiet line, 1 as the singular, and the rows open their layers", async () => {
+    fakeServer({ incoming: [], friends: [friend(1)], news: 0 });
+    show();
+    expect(read(await screen.findByRole("button", { name: /^Anfragen/ }))).toBe(
+      "Anfragen Nichts zu beantworten",
+    );
+    await waitFor(() =>
+      expect(read(screen.getByRole("button", { name: /^Neu bei Freunden/ }))).toBe(
+        "Neu bei Freunden Nichts Neues",
+      ),
+    );
+    cleanup();
+    fakeServer({ incoming: [req()], friends: [friend(1)], news: 1 });
+    show();
+    expect(read(await screen.findByRole("button", { name: /^Anfragen/ }))).toBe(
+      "Anfragen 1 wartet auf deine Antwort",
+    );
+    await waitFor(() =>
+      expect(read(screen.getByRole("button", { name: /^Neu bei Freunden/ }))).toBe(
+        "Neu bei Freunden 1 neue Pflanze",
+      ),
+    );
   });
 
   it("US-QS-20 calm mode shows the tiles with their names but no counts, and asks for no offers", async () => {
@@ -633,16 +672,31 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   it("US-QS-20 without a friend the screen says so and 'Freund hinzufügen' is the next step (P-09)", async () => {
     fakeServer();
     show();
-    expect(await screen.findByText(/^Noch keine Freunde\.$/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Freund hinzufügen" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Noch keine Freunde" })).toBeTruthy();
+    expect(screen.getByText("Lade jemanden ein oder gib einen Code ein.")).toBeTruthy();
+    // The action of an empty state shows once on the view (SG-STATE-01), and the request row stays reachable above it.
+    expect(screen.getAllByRole("button", { name: "Freund hinzufügen" })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: /^Anfragen/ })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /^Meine Freunde/ })).toBeNull();
+  });
+
+  it("US-QS-20 · issue 2419 the empty state's 'Freund hinzufügen' opens the layer, and with a friend the page shows the action once too", async () => {
+    fakeServer();
+    show();
+    await userEvent.click(await screen.findByRole("button", { name: "Freund hinzufügen" }));
+    expect(await screen.findByRole("dialog", { name: "Freund hinzufügen" })).toBeTruthy();
+    cleanup();
+    fakeServer({ friends: [friend(1)] });
+    show();
+    expect(await screen.findAllByRole("button", { name: "Freund hinzufügen" })).toHaveLength(1);
   });
 
   it("US-QS-20 a news count that cannot load says so instead of showing a number (P-10)", async () => {
     fakeServer({ news: "fail" });
     show();
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /^Neu bei Freunden/ }).textContent).toBe(
-        "Neu bei Freundennicht geladen",
+      expect(read(screen.getByRole("button", { name: /^Neu bei Freunden/ }))).toBe(
+        "Neu bei Freunden nicht geladen",
       ),
     );
   });
@@ -653,7 +707,6 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
       ["add", "Freund hinzufügen"],
       ["requests", "Anfragen"],
       ["news", "Neu bei Freunden"],
-      ["friends", "Meine Freunde"],
       ["sharing", "Was Freunde sehen"],
       ["help", "Freunde und Freigaben"],
     ] as const) {
@@ -686,24 +739,34 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(screen.getByText(/Ein Zurückziehen gilt ab dem nächsten Abruf/)).toBeTruthy();
   });
 
-  it("US-QS-20 a list longer than the layer is paged with 'Zurück' and 'Weiter'", async () => {
-    // Paging is the tablet and desktop view: the friends page in pages of three from 768 px (on a phone one list).
+  it("US-QS-20 · US-QS-15 the friends are one scrolling list: every friend, a counted heading, no pages at a tablet width either", async () => {
     setViewportWidth(1024);
     fakeServer({ friends: [1, 2, 3, 4, 5].map(friend) });
-    show("friends");
+    show();
     const list = await screen.findByRole("list", { name: "Freunde" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(await screen.findByText("Seite 2 von 2")).toBeTruthy();
-    expect(
-      within(screen.getByRole("list", { name: "Freunde" })).getAllByRole("listitem"),
-    ).toHaveLength(2);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(5);
+    expect(screen.getByRole("heading", { name: "Meine Freunde · 5" })).toBeTruthy();
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
     expect(screen.getByText("Freund5")).toBeTruthy();
   });
 
-  it("US-QS-20 requests are paged too, and an entry past the end shows the last page", async () => {
-    setViewportWidth(1024);
+  it("US-QS-20 · SG-NAV-02 an old position in the address (?from=9) is dropped: the friends start at the first one", async () => {
+    fakeServer({ friends: [1, 2, 3, 4, 5].map(friend) });
+    show(undefined, {}, "9");
+    expect(await screen.findByText("Freund1")).toBeTruthy();
+  });
+
+  it("US-QS-20 · issue 2419 the friends are the page: the old layer 'Meine Freunde' opens nothing", async () => {
+    fakeServer({ friends: [friend(1)] });
+    show("friends");
+    expect(await screen.findByRole("heading", { name: "Meine Freunde · 1" })).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("US-QS-20 requests keep their pages in a sheet, and an entry past the end shows the last page", async () => {
+    // A sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01; issue 1861 owns the layers): below 1024 px the layer is one.
+    setViewportWidth(360);
     fakeServer({
       incoming: [1, 2, 3, 4, 5].map((n) => req({ id: `r${n}`, otherName: `Person${n}` })),
     });

@@ -171,8 +171,27 @@ describe("US-QS-15 · SG-LIST-01 the end marker 'Das waren alle n'", () => {
     expect(marker()).toBeNull();
   });
 
-  it("US-QS-15 · SG-LIST-01 a list without paging renders no row of its own and measures nothing, so the screen stays as it was", async () => {
-    setViewportWidth(360);
+  it("US-QS-15 · SG-LIST-01 a list without paging in its own box ends with the marker when it is longer than the box: the count is the entries", async () => {
+    setViewportWidth(1024);
+    stubLayout();
+    render(list(plants.slice(0, 12)));
+    const text = await screen.findByText("Das waren alle 12");
+    const row = text.closest("li") as HTMLElement;
+    expect(row.parentElement?.lastElementChild).toBe(row);
+    expect(row.querySelector("a, button, [tabindex]")).toBeNull();
+  });
+
+  it("US-QS-15 · SG-LIST-01 a short list without paging that fits its box has no row of its own, so no height is added", async () => {
+    setViewportWidth(1024);
+    stubLayout();
+    render(list(plants.slice(0, 3)));
+    await settle();
+    expect(screen.getByRole("list", { name: "Pflanzen" }).children).toHaveLength(3);
+    expect(document.querySelector("[data-list-end]")).toBeNull();
+    expect(marker()).toBeNull();
+  });
+
+  it("US-QS-15 · SG-LIST-01 a list without paging in a region of a page ends with the marker too, and a list in the page itself measures nothing", async () => {
     stubLayout();
     const measured = vi.fn();
     const Observer = globalThis.ResizeObserver;
@@ -185,13 +204,21 @@ describe("US-QS-15 · SG-LIST-01 the end marker 'Das waren alle n'", () => {
         }
       },
     );
-    render(list(plants.slice(0, 12)));
+    const plain = (items: readonly string[]) => (
+      <MemoryRouter>
+        <Pager items={items} pageSize={10} label="Pflanzen" renderItem={(t) => t} />
+      </MemoryRouter>
+    );
+    // In the page (`main`) a page that scrolls must not grow by a row: nothing is measured, nothing is added.
+    const page = render(<main>{plain(plants.slice(0, 12))}</main>);
     await settle();
-    const rows = screen.getByRole("list", { name: "Pflanzen" }).children;
-    expect(rows).toHaveLength(12);
     expect(document.querySelector("[data-list-end]")).toBeNull();
-    expect(marker()).toBeNull();
     expect(measured).not.toHaveBeenCalled();
+    page.unmount();
+    // In a marked scroll region the end of the list is the end of what scrolls.
+    render(<div data-scroll-region="">{plain(plants.slice(0, 12))}</div>);
+    await screen.findByText("Das waren alle 12");
+    expect(measured).toHaveBeenCalled();
   });
 
   it("US-QS-15 · SG-LIST-01 without a ResizeObserver nothing is measured, so no marker shows", async () => {

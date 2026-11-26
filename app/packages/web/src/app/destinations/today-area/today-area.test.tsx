@@ -277,11 +277,11 @@ function stubFittedRegion(height: number, row = height): () => void {
 
 /**
  * The "Seite n von m" texts outside the layer: the lists of the screen behind it stay in the document while the layer is
- * open, so a page change in the layer must leave them where they are (issue 2070).
+ * open. They scroll and hold no page (US-QS-15, SG-LIST-01), so a page change in the layer finds none (issue 2070).
  */
 function positionsBehind(layer: HTMLElement): (string | null)[] {
   return screen
-    .getAllByText(/^Seite \d+ von \d+$/)
+    .queryAllByText(/^Seite \d+ von \d+$/)
     .filter((el) => !layer.contains(el))
     .map((el) => el.textContent);
 }
@@ -640,7 +640,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(within(layer).getByText("Seite 1 von 2")).toBeTruthy();
   });
 
-  it("US-QS-18 · F-0351 ten open treatments, two per page, beside the fitted further tasks of Heute: Weiter moves one page each time to page 5 of 5", async () => {
+  it("US-QS-18 · F-0351 ten open treatments, two per page, beside the scrolling further tasks of Heute: Weiter moves one page each time to page 5 of 5", async () => {
     // Paging starts at 768 px; the layer stays a sheet below 1024 px (a pane there has no dialog role).
     setViewportWidth(768);
     const ten = Array.from({ length: 10 }, (_, i) =>
@@ -675,14 +675,14 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
       expect(within(layer).getByRole("button", { name: "Weiter" }).hasAttribute("disabled")).toBe(
         true,
       );
-      // The further tasks behind the layer keep their page: the two lists do not share the address (issue 2070).
-      expect(positionsBehind(layer)).toEqual(["Seite 1 von 4"]);
+      // The further tasks behind the layer scroll and hold no page: the layer's pages leave them alone (issue 2070, US-QS-15).
+      expect(positionsBehind(layer)).toEqual([]);
     } finally {
       restore();
     }
   });
 
-  it("US-QS-18 · US-QS-19 · F-0351 ten due plants, three per page, in the layer Gießen beside the fitted further tasks of Heute: Weiter reaches page 4 of 4 and the further tasks keep their page", async () => {
+  it("US-QS-18 · US-QS-19 · F-0351 ten due plants, three per page, in the layer Gießen beside the scrolling further tasks of Heute: Weiter reaches page 4 of 4 and the further tasks hold no page", async () => {
     // Paging starts at 768 px; the layer stays a sheet below 1024 px (a pane there has no dialog role).
     setViewportWidth(768);
     fakeServer({ items: [todayItem, ...FURTHER_TASKS], due: TEN_DUE });
@@ -701,7 +701,7 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
       for (let page = 1; page <= 4; page++) {
         expect(position()).toBe(`Seite ${page} von 4`);
         pages.push(names());
-        expect(positionsBehind(layer)).toEqual(["Seite 1 von 4"]);
+        expect(positionsBehind(layer)).toEqual([]);
         if (page < 4) await user.click(within(layer).getByRole("button", { name: "Weiter" }));
       }
       expect(pages).toEqual([

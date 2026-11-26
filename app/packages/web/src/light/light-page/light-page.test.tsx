@@ -162,8 +162,8 @@ describe("US-LIC-05 page locations and light zones", () => {
     // US-QS-32: the zones are one grouped list, a labelled region with one row per zone.
     expect(screen.getByRole("region", { name: "Deine Lichtzonen" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Deine Lichtzonen", level: 3 })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    // In the pane (from 1024 px) the parts stand on one scrolling list: the warning signs need no "Weiter" (US-QS-15, SG-LIST-01).
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
     expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
   });
 

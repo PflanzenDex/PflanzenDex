@@ -1,15 +1,32 @@
 // @vitest-environment jsdom
 import { StrictMode, useEffect, type ReactElement } from "react";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render as plainRender,
+  screen,
+  type RenderOptions,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LAYER_PARAM, Pager } from "./pager";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 
 afterEach(cleanup);
-// The paged view is the one from 768 px (US-QS-32): these tests pin the paging, so they run at a tablet width.
+// Only a list in a sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01): the tests that pin the paging render in a layer,
+// at a tablet width; `plainRender` is the page, where the list scrolls at every width.
 beforeEach(() => setViewportWidth(1024));
+
+/** What a sheet or a dialog provides for what it holds (`LayerScope`). */
+function InLayer({ children }: { children: React.ReactNode }) {
+  return <LayerScope.Provider value>{children}</LayerScope.Provider>;
+}
+
+const render = (ui: ReactElement, options?: Omit<RenderOptions, "wrapper">) =>
+  plainRender(ui, { wrapper: InLayer, ...options });
 
 const items = Array.from({ length: 7 }, (_, i) => `Pflanze ${i + 1}`);
 
@@ -113,13 +130,16 @@ describe("Pager (US-QS-15)", () => {
     expect(screen.getByRole("list", { name: "Andere" }).hasAttribute("data-page-fit")).toBe(false);
   });
 
-  it("US-QS-15 · issue 2417 the Pager carries the data-pager marker at a tablet width, and on a phone too", () => {
-    const { unmount } = render(<Example />);
-    expect(document.querySelector("[data-pager]")).not.toBeNull();
-    unmount();
-    setViewportWidth(360);
-    render(<Example />);
-    expect(document.querySelector("[data-pager]")).not.toBeNull();
+  it("US-QS-15 · issue 2417 the Pager carries the data-pager marker in a layer and on the page, at every width", () => {
+    for (const width of [360, 1024, 1920]) {
+      setViewportWidth(width);
+      const inLayer = render(<Example />);
+      expect(document.querySelector("[data-pager]")).not.toBeNull();
+      inLayer.unmount();
+      const onPage = plainRender(<Example />);
+      expect(document.querySelector("[data-pager]")).not.toBeNull();
+      onPage.unmount();
+    }
   });
 
   it("US-QS-15 one page shows no controls", () => {
@@ -763,5 +783,46 @@ describe("US-QS-32 a row keeps its content height: the rows of a pager never shr
     );
     expect(placeholders).toHaveLength(2);
     for (const li of Array.from(ul.children)) expect(li.classList.contains("shrink-0")).toBe(true);
+  });
+});
+
+describe("US-QS-15 a page list scrolls at every width (SG-LIST-01), a list in a layer keeps its pages", () => {
+  /** The visible texts of the controls that page: none on a scrolling list. */
+  const pageControls = () => screen.queryAllByRole("button", { name: /^(Zurück|Weiter)$/ });
+
+  for (const width of [360, 768, 1024, 1920]) {
+    it(`US-QS-15 · SG-LIST-01 at ${width} px the list of a page holds every entry and no Zurück, Weiter or "Seite n von m"`, () => {
+      setViewportWidth(width);
+      plainRender(<Example />);
+      expect(entries()).toEqual(items);
+      expect(pageControls()).toHaveLength(0);
+      expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    });
+  }
+
+  it("US-QS-15 · SG-NAV-02 a scrolling list writes no position into the address, and an old `?from=` is stripped at a tablet width too", () => {
+    plainRender(<Example at="/?from=3&x=1" />);
+    expect(address()).toBe("?x=1");
+    expect(entries()).toEqual(items);
+  });
+
+  for (const width of [360, 1024]) {
+    it(`US-QS-15 · SG-LIST-01 in a sheet or dialog the list keeps its pages at ${width} px, with its address part`, async () => {
+      setViewportWidth(width);
+      render(<Example />);
+      expect(entries()).toEqual(["Pflanze 1", "Pflanze 2", "Pflanze 3"]);
+      await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+      expect(screen.getByRole("status").textContent).toBe("Seite 2 von 3");
+      expect(address()).toBe("?from=3");
+    });
+  }
+
+  it("US-QS-15 the view of a list follows the layer around it, not the width: the same list scrolls on the page and pages in a layer", () => {
+    setViewportWidth(1024);
+    const page = plainRender(<Example />);
+    expect(entries()).toHaveLength(items.length);
+    page.unmount();
+    render(<Example />);
+    expect(entries()).toHaveLength(3);
   });
 });

@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, Specimen, SpecimenCard } from "@pflanzendex/core";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { openPlant, openTab } from "../specimens/tests/plants-test-helpers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
@@ -328,26 +328,46 @@ describe("US-BES-06 cards on the collection page", () => {
 
 // US-BES-06 · FR-BES-23 · NFR-12: the list reads its plants in pages of 100 from the server; the total and every reader
 // that speaks about all plants use the server's answer, never the loaded page (P-10).
-describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
-  // Paging is the tablet and desktop view: 16 plants a page from 1024 px (on a phone the plants are one scrolling list).
+describe("US-BES-06 · FR-BES-23 the server list of the collection page scrolls and loads more by itself", () => {
+  // The list is one scrolling list at every width (US-QS-15, SG-LIST-01): no pages, no position in the address. Without an
+  // IntersectionObserver (jsdom) every part is asked for at once, one after the other.
   beforeEach(() => setViewportWidth(1024));
   afterEach(() => setViewportWidth(360));
 
-  it("NFR-12 · FR-BES-23 the pages count from the server total before any further page is loaded", async () => {
-    fakeServer({ specimens: many(150) });
-    render(page());
-    expect(await screen.findByText("Seite 1 von 10")).toBeTruthy();
-  });
+  const plants = () => screen.getByRole("list", { name: "Pflanzen" });
 
-  it("US-BES-06 · FR-BES-23 a plant beyond the first server page is reachable through the Pager; the next page loads by itself", async () => {
+  it("US-QS-15 · FR-BES-23 every plant of the server total ends up on the one list, with no Zurück, Weiter or page position", async () => {
     const { fetchFn } = fakeServer({ specimens: many(150) });
-    render(page({}, "/?from=144"));
+    render(page());
     expect(await screen.findByRole("button", { name: /^Pflanze 150(\s|$)/ })).toBeTruthy();
-    expect(screen.getByText("Seite 10 von 10")).toBeTruthy();
+    expect(plants().querySelectorAll(":scope > li:not([data-list-end])")).toHaveLength(150);
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
     expect(cardCalls(fetchFn).some((u) => u.searchParams.has("after"))).toBe(true);
   });
 
-  it("P-10 FR-BES-23 a further page that fails keeps the loaded plants; Erneut versuchen continues from the same cursor", async () => {
+  it("US-QS-15 · SG-NAV-02 an old position in the address (?from=144) is not used: the list starts at its first plant, and the address loses it", async () => {
+    fakeServer({ specimens: many(150) });
+    function Address() {
+      return <span data-testid="address">{useLocation().search}</span>;
+    }
+    render(
+      <MemoryRouter initialEntries={["/?from=144"]}>
+        <CollectionPage
+          api="http://api"
+          token={async () => "tok"}
+          newSpecies={null}
+          onSpeciesChoose={vi.fn()}
+          onCompleted={vi.fn()}
+        />
+        <Address />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole("button", { name: /^Pflanze 001(\s|$)/ })).toBeTruthy();
+    await vi.waitFor(() => expect(screen.getByTestId("address").textContent).toBe(""));
+  });
+
+  it("P-10 FR-BES-23 a further part that fails keeps the loaded plants; Erneut versuchen continues from the same cursor", async () => {
     let failed = false;
     const { fetchFn } = fakeServer({
       specimens: many(150),
@@ -360,11 +380,11 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
         });
       },
     });
-    render(page({}, "/?from=144"));
+    render(page());
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Die Pflanzen konnten nicht geladen werden.",
     );
-    expect(screen.getByText("Seite 10 von 10")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Pflanze 001(\s|$)/ })).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
     expect(await screen.findByRole("button", { name: /^Pflanze 150(\s|$)/ })).toBeTruthy();
     const cursors = cardCalls(fetchFn)
@@ -374,7 +394,7 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
     expect(new Set(cursors).size).toBe(1);
   });
 
-  it("P-10 FR-BES-23 a further page that fails without an error text still shows the failure and asks only once", async () => {
+  it("P-10 FR-BES-23 a further part that fails without an error text still shows the failure and asks only once", async () => {
     const { fetchFn } = fakeServer({
       specimens: many(150),
       answer: (u) =>
@@ -382,7 +402,7 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
           ? response(502, { error: { code: "proxy.bad_gateway" } })
           : null,
     });
-    render(page({}, "/?from=144"));
+    render(page());
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Die Pflanzen konnten nicht geladen werden.",
     );
@@ -425,13 +445,13 @@ describe("US-BES-06 · FR-BES-23 the paged list of the collection page", () => {
     await vi.waitFor(() => expect(host.onCaption).toHaveBeenLastCalledWith("150 Pflanzen"));
   });
 
-  it("FR-BES-23 after a write the total is refreshed: the pages follow the new total", async () => {
+  it("FR-BES-23 after a write the total is refreshed: the list follows the new total", async () => {
     const { posts } = fakeServer({ specimens: many(144) });
     const { rerender } = render(page({ newSpecies: { ...species, id: "a9" } as Species }));
     await userEvent.click(await screen.findByRole("button", { name: "Pflanze anlegen" }));
     await vi.waitFor(() => expect(posts).toHaveLength(1));
     rerender(page());
-    expect(await screen.findByText("Seite 1 von 10")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /^Pflanze 144(\s|$)/ })).toBeTruthy();
   });
 
   it("US-BES-06 · FR-BES-23 a direct link to a plant that is not loaded opens its layer", async () => {

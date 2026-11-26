@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/utils";
-import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { useInLayer } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { usePageFit } from "./use-page-fit";
 import { ScrollEntries } from "./paging/scroll-entries/scroll-entries";
@@ -114,14 +113,13 @@ export type PagerProps<T> = {
 };
 
 /**
- * A list of entries (US-QS-15, SG-LIST-01): from 768 px it pages, on a phone it is one scrolling list. A list in a sheet or a
- * dialog keeps its pages at every width: the layer is sized by the window, so its list pages by the free height (issue 1861
- * owns the layers). The view follows the breakpoint live, so a resize swaps it; the address parts belong to the paged view only.
+ * A list of entries (US-QS-15, SG-LIST-01): one scrolling list at every width (`ScrollEntries`), with the end rows of a long
+ * list. Only a list in a sheet or a dialog keeps its pages for now: the layer is sized by the window, so its list pages by the
+ * free height (issue 1861 owns the layers). The address parts and the page sizes belong to the paged view only.
  */
 export function Pager<T>(props: PagerProps<T>) {
-  const wide = useIsMd();
   const inLayer = useInLayer();
-  return wide || inLayer ? <PagedPager {...props} /> : <ScrollEntries {...props} />;
+  return inLayer ? <PagedPager {...props} /> : <ScrollEntries {...props} pagerMark />;
 }
 
 /**

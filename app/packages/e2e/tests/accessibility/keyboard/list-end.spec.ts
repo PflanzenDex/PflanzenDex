@@ -15,6 +15,7 @@ import { tabTo } from "../../../support/keyboard";
 // row stays above the bottom bar when the keyboard reaches it, and an old address with a position loses it.
 
 const PLANTS = 5;
+const MANY = 8;
 const PART = "2";
 const PHONE = { width: 360, height: 640 } as const;
 
@@ -25,9 +26,9 @@ const entries = (page: Page) =>
   plantList(page).locator("li:not([data-list-end]):not([aria-hidden])");
 
 /** Makes the plants one species at a time: the first proposes the species, the others choose it; each has its own marker. */
-async function makePlants(page: Page): Promise<void> {
+async function makePlants(page: Page, count = PLANTS): Promise<void> {
   const latin = uniqueLatin("Echeveria");
-  for (let n = 1; n <= PLANTS; n++) {
+  for (let n = 1; n <= count; n++) {
     if (n === 1) await proposeSpecies(page, latin);
     else await chooseSpecies(page, latin);
     const form = page.getByRole("form", { name: "Pflanze anlegen" });
@@ -116,5 +117,72 @@ test.describe("US-QS-15 the end of a list on a phone", () => {
     await expect.poll(() => new URL(page.url()).search).toBe("?x=1");
     await page.goBack();
     await expect(page).toHaveURL(before);
+  });
+});
+
+test.describe("US-QS-15 the list of a page scrolls in its own box", () => {
+  test("US-QS-15 · SG-LIST-01 · SG-LIST-02 · SG-NAV-02 only the list of the Sammlung scrolls, its end says how many there were above the bar, and Back keeps the place of the list without a position in the address (rows 10, 12, 28)", async ({
+    page,
+    account,
+  }, info) => {
+    test.skip(
+      info.project.name !== "mobil",
+      "one phone size; the tablet widths run in the one-screen gate",
+    );
+    test.setTimeout(240_000);
+    await page.setViewportSize(PHONE);
+    await signIn(page, account);
+    await makePlants(page, MANY);
+    await page.getByRole("link", { name: "Sammlung", exact: true }).click();
+    await expect(entries(page)).toHaveCount(MANY);
+
+    // The list is bounded by the frame: it scrolls in its own box, the frame around it and the page do not.
+    const box = plantList(page);
+    const heights = () =>
+      box.evaluate((list) => {
+        const fill = document.querySelector<HTMLElement>("main > div > [data-fit-fill]");
+        return {
+          list: list.scrollHeight - list.clientHeight,
+          fill: fill ? fill.scrollHeight - fill.clientHeight : 0,
+          page: document.documentElement.scrollHeight - window.innerHeight,
+        };
+      });
+    await expect
+      .poll(async () => (await heights()).list, { message: "the list does not scroll" })
+      .toBeGreaterThan(0);
+    expect((await heights()).fill, "the frame around the list scrolls").toBeLessThanOrEqual(1);
+    expect((await heights()).page, "the page scrolls").toBeLessThanOrEqual(1);
+
+    // At its end the list says how many plants there were, and the last row ends above the bottom bar. The marker comes after
+    // a settle and adds its row, so the list is scrolled to its end again until the marker stands above the bar.
+    const marker = page.getByText(`Das waren alle ${MANY}`);
+    const bar = page.getByRole("navigation", { name: "Navigation unten" });
+    const barTop = (await bar.boundingBox())?.y ?? Number.POSITIVE_INFINITY;
+    await expect
+      .poll(
+        async () => {
+          await box.evaluate((list) => void (list.scrollTop = list.scrollHeight));
+          return (await marker.isVisible()) ? await bottomOf(marker) : Number.POSITIVE_INFINITY;
+        },
+        { message: "the end marker is missing or behind the bottom bar" },
+      )
+      .toBeLessThanOrEqual(barTop + 0.5);
+
+    // Another destination and Back: the list stands where it was, and the address holds no position. The Sammlung stays
+    // mounted behind the other destination, so this does not tell the restore of `ScrollMemory` from the kept list; the
+    // restore of a list that mounts again is pinned by the unit test of `ScrollMemory` (US-QS-15, SG-NAV-02).
+    const place = await box.evaluate((list) => (list.scrollTop = Math.floor(list.scrollTop / 2)));
+    expect(place).toBeGreaterThan(0);
+    await page.waitForTimeout(300);
+    await page.getByRole("link", { name: "Heute", exact: true }).click();
+    await expect(page).toHaveURL(/\/today/);
+    await page.goBack();
+    await expect(plantList(page)).toBeVisible();
+    await expect
+      .poll(() => plantList(page).evaluate((list) => list.scrollTop), {
+        message: "Back does not bring the list back to its place",
+      })
+      .toBeGreaterThan(place - 2);
+    expect(new URL(page.url()).search, "the address holds a position").not.toMatch(/from|page/);
   });
 });

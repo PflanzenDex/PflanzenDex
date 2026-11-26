@@ -3,7 +3,7 @@
 // filling view inside it, not the document, so the browser's own restoration does not apply. jsdom has no layout: the
 // scroll offset of `main` is a plain value here, and the test moves it like a scroll would.
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { Link, MemoryRouter, Route, Routes, useNavigate } from "react-router";
+import { Link, MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { ScrollMemory } from "./scroll-memory";
 
@@ -77,5 +77,75 @@ describe("US-QS-14 Back restores the scroll position of a view (issue 1655)", ()
     await screen.findByRole("button", { name: "Zurück" });
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(main.scrollTop).toBe(0);
+  });
+
+  it("US-QS-15 · SG-NAV-02 a list scrolled in its own box is at its place again after Back, and the address holds no position", async () => {
+    function Where() {
+      return <span data-testid="address">{useLocation().search}</span>;
+    }
+    render(
+      <MemoryRouter initialEntries={["/collection"]}>
+        <main id="inhalt">
+          <ScrollMemory />
+          <Routes>
+            <Route
+              path="/collection"
+              element={
+                <>
+                  <ul aria-label="Pflanzen" data-scroll-region="">
+                    <li>Pflanze 1</li>
+                  </ul>
+                  <Link to="/account">Konto</Link>
+                </>
+              }
+            />
+            <Route path="/account" element={<Back />} />
+          </Routes>
+        </main>
+        <Where />
+      </MemoryRouter>,
+    );
+    const box = screen.getByRole("list", { name: "Pflanzen" });
+    const scrollTo = scrollable(box);
+    scrollTo(180);
+    act(() => screen.getByRole("link", { name: "Konto" }).click());
+    await screen.findByRole("button", { name: "Zurück" });
+    act(() => screen.getByRole("button", { name: "Zurück" }).click());
+    const again = await screen.findByRole("list", { name: "Pflanzen" });
+    // The list mounts again as a new element: its box starts at the top and is put back (no `?from=` for it).
+    scrollable(again);
+    await waitFor(() => expect(again.scrollTop).toBe(180));
+    expect(screen.getByTestId("address").textContent).toBe("");
+  });
+
+  it("US-QS-15 · SG-NAV-02 a list of a new visit (not Back) starts at the top", async () => {
+    render(
+      <MemoryRouter initialEntries={["/collection"]}>
+        <main id="inhalt">
+          <ScrollMemory />
+          <Routes>
+            <Route
+              path="/collection"
+              element={
+                <>
+                  <ul aria-label="Pflanzen" data-scroll-region="">
+                    <li>Pflanze 1</li>
+                  </ul>
+                  <Link to="/account">Konto</Link>
+                </>
+              }
+            />
+            <Route path="/account" element={<Link to="/collection">Sammlung</Link>} />
+          </Routes>
+        </main>
+      </MemoryRouter>,
+    );
+    scrollable(screen.getByRole("list", { name: "Pflanzen" }))(180);
+    act(() => screen.getByRole("link", { name: "Konto" }).click());
+    act(() => screen.getByRole("link", { name: "Sammlung" }).click());
+    const fresh = await screen.findByRole("list", { name: "Pflanzen" });
+    scrollable(fresh);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(fresh.scrollTop).toBe(0);
   });
 });

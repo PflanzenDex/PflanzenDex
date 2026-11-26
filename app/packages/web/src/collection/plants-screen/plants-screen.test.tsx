@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import userEvent from "@testing-library/user-event";
 import type { Distribution, SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation } from "react-router";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "../collection-page/collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
 import { openPlant, pagesOf, summaryOf } from "../specimens/tests/plants-test-helpers";
@@ -137,19 +137,23 @@ describe("US-QS-19 tiles of the plants", () => {
     ).toBeNull();
   });
 
-  it("US-QS-19 · FR-BES-23 the plants are paged, the first entry is in the address and an entry past the end shows the last page", async () => {
-    // Paging is the tablet and desktop view (768 px and up); 16 tiles a page from 1024 px (US-QS-32 on a phone: one list).
-    setViewportWidth(1024);
-    screenWith(many(20));
-    expect(plantItems()).toHaveLength(16);
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByTestId("address").textContent).toBe("?from=16");
-    expect(plantItems()).toHaveLength(4);
-    expect(screen.getByRole("button", { name: /^Pflanze 17(\s|$)/ })).toBeTruthy();
-    cleanup();
+  it("US-QS-15 · SG-LIST-01 the plants are one scrolling list at every width: every card, no pages, no position in the address", () => {
+    for (const width of [360, 768, 1024, 1920]) {
+      setViewportWidth(width);
+      screenWith(many(20));
+      expect(plantItems()).toHaveLength(20);
+      expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
+      expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+      expect(screen.getByTestId("address").textContent).toBe("");
+      cleanup();
+    }
+  });
+
+  it("US-QS-15 · SG-NAV-02 an old position in the address (?from=21) is dropped and the list starts at its first plant", async () => {
     screenWith(many(20), {}, "/?from=21");
-    expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
+    expect(plantItems()).toHaveLength(20);
+    await waitFor(() => expect(screen.getByTestId("address").textContent).toBe(""));
+    expect(screen.getByRole("button", { name: /^Pflanze 1(\s|$)/ })).toBeTruthy();
   });
 
   it("US-QS-32 the plant rows are one flat group in one column at every width: no grid, no gap, no box per row (SG-SHAPE-03, FX-35)", () => {
@@ -176,57 +180,40 @@ describe("US-QS-19 tiles of the plants", () => {
     expect(surface?.className).not.toMatch(/\bborder-border\b|\brounded-lg\b|\bbg-card\b/);
   });
 
-  it("US-QS-32 the light-zone row is a row of its own above the plants: a chevron, at least 44 px high, and the section grows with its content (F-0114)", () => {
+  it("US-QS-32 the light-zone row is a row of its own above the plants: a chevron, at least 44 px high, and the plants take the room that is left (F-0114, US-QS-15)", () => {
     screenWith(many(8));
     const insight = screen.getByRole("button", { name: /^Lichtzonen/ });
     expect(insight.querySelector("svg")).not.toBeNull();
     expect(insight.className).toContain("min-h-11");
     expect(insight.className).not.toContain("basis-0");
+    // The list below it takes the free height and scrolls in its own box (SG-LIST-01): so every box down to it may shrink
+    // (`min-h-0`); the list keeps one row and a bit (`min-h-24`), and the frame scrolls where even that does not fit.
     const section = screen.getByRole("region", { name: "Pflanzen" });
-    expect(section.className).not.toContain("min-h-0");
+    expect(section.className).toContain("min-h-0");
+    expect(section.firstElementChild?.className).toContain("min-h-0");
   });
 
-  it("US-QS-19 a swipe turns the page", () => {
+  it("US-QS-15 a swipe turns no page: the list scrolls and has no pages", () => {
     setViewportWidth(1024);
     screenWith(many(20));
     const list = screen.getByRole("list", { name: "Pflanzen" });
     fireEvent.pointerDown(list, { clientX: 200, clientY: 10 });
     fireEvent.pointerUp(list, { clientX: 100, clientY: 10 });
-    expect(screen.getByText("Seite 2 von 2")).toBeTruthy();
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(plantItems()).toHaveLength(20);
   });
 });
 
-describe("US-QS-19 page size fills the free height of the region (tiles)", () => {
-  // jsdom has no layout: the list region and its tiles get a height (a tile is 100 px, the list has no gap in jsdom).
-  let region = 0;
-  beforeEach(() => {
-    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
-      this: Element,
-    ) {
-      const height = this.tagName === "UL" ? region : this.tagName === "LI" ? 100 : 0;
-      return { height, width: 0, top: 0, left: 0, right: 0, bottom: height, x: 0, y: 0 } as DOMRect;
-    });
-    vi.stubGlobal(
-      "ResizeObserver",
-      class {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      },
-    );
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.unstubAllGlobals();
-  });
-
-  it("US-QS-19 the tiles fill the free height of the region: whole rows per page, the pager below", () => {
+describe("US-QS-15 the plants fill the free height of the region and scroll in it (tiles)", () => {
+  it("US-QS-15 · SG-LIST-01 the list is a marked scroll region that takes the free height, at 1024 px as on a phone", () => {
     setViewportWidth(1024);
-    region = 532;
     screenWith(many(8));
-    expect(plantItems()).toHaveLength(5);
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
+    const list = screen.getByRole("list", { name: "Pflanzen" });
+    expect(list.hasAttribute("data-scroll-region")).toBe(true);
+    expect(list.className).toContain("overflow-y-auto");
+    expect(list.className).toContain("flex-1");
+    expect(list.className).toContain("min-h-24");
+    expect(plantItems()).toHaveLength(8);
   });
 });
 

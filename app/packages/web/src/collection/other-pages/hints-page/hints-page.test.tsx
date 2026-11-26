@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { HintsPage } from "./hints-page";
 import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
@@ -130,12 +131,14 @@ describe("US-QS-14 · US-BES-08 the hints as a section of Heute (host)", () => {
   });
 
   it("US-QS-18 · issue 1156 in the layer of Heute the hints page by its free height and leave the page of Heute alone", async () => {
-    // Paging is the view from 768 px (US-QS-32); on a phone the list scrolls.
+    // The layer keeps its pages (US-QS-15, SG-LIST-01; issue 1861 owns the layers): a sheet or a dialog provides the scope.
     setViewportWidth(768);
     fakeServer(() => response(200, { hints: [noZone, noSpecies, noLocation, noZone] }));
     render(
       <MemoryRouter initialEntries={["/today?sheet=hints&lfrom=3"]}>
-        <HintsPage api="http://api" token={token} onOpen={noop} host />
+        <LayerScope.Provider value>
+          <HintsPage api="http://api" token={token} onOpen={noop} host />
+        </LayerScope.Provider>
       </MemoryRouter>,
     );
     const list = await screen.findByRole("list", { name: "Fehlende Angaben" });

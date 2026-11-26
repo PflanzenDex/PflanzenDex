@@ -99,7 +99,7 @@ function ReviewBody(props: {
   const shown = list.entries.filter((e) => isBatch(e) === (show === "approved"));
   const summary = show === "open" ? summaryText(list, now) : "";
   return (
-    <LayerHost contentClassName="gap-3">
+    <LayerHost className="min-h-0 flex-1" contentClassName="gap-3">
       <SegmentedControl
         label="Welche Vorschläge"
         options={SHOW_OPTIONS}
@@ -126,6 +126,7 @@ function ReviewBody(props: {
         <Pager
           items={shown}
           pageSize={size}
+          fit
           label={show === "open" ? "Offene Vorschläge" : "Freigegebene Chargen"}
           resetKey={show}
           getKey={(e) => e.reviewCase.id}
@@ -148,7 +149,7 @@ export function ReviewPage(props: { api: string; token: Token; now?: () => numbe
   const load = useCallback((t: string) => loadReviewList(api, t), [api]);
   const now = (props.now ?? Date.now)();
   return (
-    <div data-fit-screen="" className="flex min-w-0 flex-1 flex-col">
+    <div data-fit-screen="" data-fit-fill="" className="flex min-h-0 min-w-0 flex-1 flex-col">
       <FullView headingId="review-title" title="Prüfliste">
         {review.message && (
           <p role="status" className="rounded-lg border border-border p-3">
