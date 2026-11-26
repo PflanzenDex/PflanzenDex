@@ -70,7 +70,7 @@ const choicesOf = (n: number, counts?: number[]): GroupChoice[] =>
   }));
 
 const tree = (choices: GroupChoice[]) => (
-  <GroupJump label="Zu Standort springen" choices={choices} onJump={onJump} />
+  <GroupJump label="Zum Standort springen" choices={choices} onJump={onJump} />
 );
 
 function show(choices: GroupChoice[]) {
@@ -79,9 +79,9 @@ function show(choices: GroupChoice[]) {
 
 /** The form the row shows now: the chips, the selection field, or nothing. */
 const formOf = () =>
-  screen.queryByRole("combobox", { name: "Zu Standort springen" })
+  screen.queryByRole("combobox", { name: "Zum Standort springen" })
     ? "select"
-    : screen.queryByRole("group", { name: "Zu Standort springen" })
+    : screen.queryByRole("group", { name: "Zum Standort springen" })
       ? "chips"
       : "none";
 
@@ -89,7 +89,7 @@ describe("US-QS-15 · SG-LIST-06 group jump: chips on one or two lines, otherwis
   it("US-QS-15 below 768 px chips that fit one line show as a row, without a scroll", () => {
     layout = { row: 300, chips: [90, 90, 90] };
     show(choicesOf(3));
-    const row = screen.getByRole("group", { name: "Zu Standort springen" });
+    const row = screen.getByRole("group", { name: "Zum Standort springen" });
     expect(screen.getAllByRole("button")).toHaveLength(3);
     // The chip row is the marked `chips` region of the one-screen gate (DS-63, issue 2417); it wraps, so it does not scroll.
     expect(row.getAttribute("data-scroll-x")).toBe("chips");
@@ -161,7 +161,7 @@ describe("US-QS-15 · SG-LIST-06 group jump: chips on one or two lines, otherwis
     layout = { row: 300, chips: [200, 200, 200] };
     show(choicesOf(3));
     const select = screen.getByRole("combobox", {
-      name: "Zu Standort springen",
+      name: "Zum Standort springen",
     }) as HTMLSelectElement;
     expect(select.value).toBe("");
     await userEvent.selectOptions(select, "g2");
@@ -173,7 +173,7 @@ describe("US-QS-15 · SG-LIST-06 group jump: chips on one or two lines, otherwis
   it("US-QS-15 the keyboard focus stays on the selection field after choosing", async () => {
     layout = { row: 300, chips: [200, 200, 200] };
     show(choicesOf(3));
-    const select = screen.getByRole("combobox", { name: "Zu Standort springen" });
+    const select = screen.getByRole("combobox", { name: "Zum Standort springen" });
     select.focus();
     await userEvent.selectOptions(select, "g3");
     expect(document.activeElement).toBe(select);

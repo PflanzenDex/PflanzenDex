@@ -58,5 +58,7 @@ export const ROW_GROUP = `${PAGER_LIST} ${ROWS_OF_GROUP} ${ROW_HAIRLINE}`;
 export const OBJECT_TEXT = "grow basis-[calc(56px_+_8rem)]";
 /** The text part of a treatment row: about two lines of its name (starting value, tuned by measurement). */
 export const TREATMENT_TEXT = "grow basis-36";
+/** The heading of a group with an action beside it: it keeps at least 8 rem, in rem so it grows with the text size (issue 2524). */
+export const HEADING_TEXT = "grow basis-32";
 /** An action beside a row: it keeps its size and sits at the trailing edge of its own line when the row wraps. */
 export const ROW_ACTION = "ml-auto max-w-full shrink-0";
