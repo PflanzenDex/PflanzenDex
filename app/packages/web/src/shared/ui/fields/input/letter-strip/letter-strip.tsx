@@ -35,7 +35,7 @@ const place = cva("flex min-h-0 flex-1 items-center justify-center", {
  * (the value text says the letter); the bubble is hidden too.
  */
 export function LetterStrip(props: {
-  /** Accessible name of the strip (German), e.g. "Springen zu Buchstabe". */
+  /** Accessible name of the strip (German), e.g. "Zum Buchstaben springen". */
   label: string;
   /** The letters that have an entry, in the order of the strip. */
   present: ReadonlySet<string>;

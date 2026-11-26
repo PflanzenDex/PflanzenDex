@@ -16,7 +16,7 @@ export function IndexedList<T>(props: {
   nameOf: (item: T) => string;
   /** The list is sorted by name; otherwise the letters would say nothing about its order. */
   byName: boolean;
-  /** Accessible name of the strip (German), e.g. "Springen zu Buchstabe". */
+  /** Accessible name of the strip (German), e.g. "Zum Buchstaben springen". */
   label: string;
   children: ReactNode;
 }) {

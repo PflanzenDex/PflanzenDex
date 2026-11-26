@@ -17,11 +17,11 @@ function show(onJump = vi.fn(), present: ReadonlySet<string> = PRESENT) {
   render(
     <>
       <button type="button">davor</button>
-      <LetterStrip label="Springen zu Buchstabe" present={present} onJump={onJump} />
+      <LetterStrip label="Zum Buchstaben springen" present={present} onJump={onJump} />
       <button type="button">danach</button>
     </>,
   );
-  return { onJump, strip: screen.getByRole("slider", { name: "Springen zu Buchstabe" }) };
+  return { onJump, strip: screen.getByRole("slider", { name: "Zum Buchstaben springen" }) };
 }
 
 /** The strip is 270 px high from y = 100: ten pixels per letter. */

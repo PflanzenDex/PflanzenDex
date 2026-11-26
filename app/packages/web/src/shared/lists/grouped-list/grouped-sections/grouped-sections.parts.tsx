@@ -44,7 +44,7 @@ export const LIST = {
 /** The arguments every story starts from. */
 export const ARGS = {
   label: "Pflanzen",
-  jumpLabel: "Zu Standort springen",
+  jumpLabel: "Zum Standort springen",
   groups: GROUPS,
   list: LIST,
 };

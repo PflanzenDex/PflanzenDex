@@ -1,7 +1,7 @@
 import { useId, type MouseEventHandler, type ReactNode, type Ref } from "react";
 import { cn } from "@/shared/lib/utils";
 import { RowContent, RowElement } from "./row-parts/row-parts";
-import { GROUP, HAIRLINE } from "./group-classes";
+import { GROUP, HAIRLINE, HEADING_TEXT, ROW_ACTION } from "./group-classes";
 
 // The flat grouped list of the phone look (US-QS-32, SG-SHAPE-03): one rounded group on the page colour, rows separated
 // by a hairline that starts at the text, no shadow (SG-SHAPE-05) and no group inside a group (SG-SHAPE-06). The group
@@ -46,7 +46,10 @@ export type GroupedListProps = {
    * on the surface of a sheet, a dialog or a pane.
    */
   sticky?: keyof typeof SURFACE;
-  /** One plain action beside the label, for example "Standort setzen" of the group whose value is unknown (SG-LIST-06). */
+  /**
+   * One plain action beside the label, for example "Standort setzen" of the group whose value is unknown (SG-LIST-06). Where
+   * the label would keep less than 8 rem (200 % text), the action moves below it, as in an object row (issues 2524, 2322).
+   */
   action?: ReactNode;
   /** The caller brings the group's list (a `ScrollEntries`, an empty line): the children are not wrapped in a group `ul`. */
   free?: boolean;
@@ -72,15 +75,18 @@ export function GroupedList(props: GroupedListProps) {
       <div
         data-group-heading=""
         className={cn(
-          "flex min-w-0 items-center justify-between gap-2",
+          "flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1",
           props.sticky && STICKY,
           props.sticky && SURFACE[props.sticky],
         )}
       >
-        <Heading id={id} className={cn(LABEL, "min-w-0")}>
+        <Heading
+          id={id}
+          className={cn(LABEL, "min-w-0", props.action !== undefined && HEADING_TEXT)}
+        >
           {props.label}
         </Heading>
-        {props.action}
+        {props.action !== undefined && <div className={ROW_ACTION}>{props.action}</div>}
       </div>
     );
   return (

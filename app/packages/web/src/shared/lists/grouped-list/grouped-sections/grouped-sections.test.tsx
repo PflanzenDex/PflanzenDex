@@ -92,7 +92,7 @@ function show(
     <MemoryRouter initialEntries={["/sammlung"]}>
       <GroupSections
         label="Pflanzen"
-        jumpLabel="Zu Standort springen"
+        jumpLabel="Zum Standort springen"
         groups={groups}
         list={LIST}
         {...more}
@@ -151,11 +151,11 @@ describe("US-QS-15 · SG-LIST-06 · SG-LIST-08 every group is a section of one s
   it("US-QS-15 · SG-LIST-06 a fixed set shows an empty group as its heading and a quiet line, not styled as a control", () => {
     show([
       group("dormancy", "Ruhephase", ["Aloe"]),
-      group("growth", "Wachstumsphase", [], { empty: "Keine Pflanze in dieser Phase." }),
+      group("growth", "Wachstumsphase", [], { empty: "Zurzeit keine Pflanze." }),
     ]);
     expect(sections()).toHaveLength(2);
     const growth = screen.getByRole("region", { name: /^Wachstumsphase/ });
-    const line = within(growth).getByText("Keine Pflanze in dieser Phase.");
+    const line = within(growth).getByText("Zurzeit keine Pflanze.");
     expect(line.tagName).toBe("P");
     expect(within(growth).queryByRole("button")).toBeNull();
     expect(within(growth).queryByRole("link")).toBeNull();
@@ -220,7 +220,7 @@ describe("US-QS-15 · SG-LIST-06 the chips jump, they do not filter", () => {
     expect(region.getAttribute("tabindex")).toBe("0");
     // Focus scrolling keeps a focused row out from under the sticky heading (WCAG 2.4.11).
     expect(region.className).toContain("scroll-pt-12");
-    const chips = screen.getByRole("group", { name: "Zu Standort springen" });
+    const chips = screen.getByRole("group", { name: "Zum Standort springen" });
     expect(chips.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
@@ -258,7 +258,7 @@ describe("US-QS-15 · SG-LIST-06 the chips jump, they do not filter", () => {
         <div data-scroll-region="" data-testid="layer-body">
           <GroupSections
             label="Pflanzen"
-            jumpLabel="Zu Gruppe springen"
+            jumpLabel="Zur Gruppe springen"
             in="layer"
             level={3}
             groups={THREE}
@@ -278,7 +278,7 @@ describe("US-QS-15 · SG-LIST-06 the chips jump, they do not filter", () => {
 
   it("US-QS-15 one group has nothing to jump to: no chip row", () => {
     show([group("a", "Flur", ["Ficus"])]);
-    expect(screen.queryByRole("group", { name: "Zu Standort springen" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Zum Standort springen" })).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
     expect(sections()).toHaveLength(1);
   });

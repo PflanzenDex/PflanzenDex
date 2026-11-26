@@ -18,7 +18,7 @@ const names = [
 
 function show(items: readonly string[], byName = true) {
   return render(
-    <IndexedList items={items} nameOf={(n) => n} byName={byName} label="Springen zu Buchstabe">
+    <IndexedList items={items} nameOf={(n) => n} byName={byName} label="Zum Buchstaben springen">
       <ul data-scroll-region="" aria-label="Arten">
         {items.map((n) => (
           <li key={n}>{n}</li>
@@ -28,7 +28,7 @@ function show(items: readonly string[], byName = true) {
   );
 }
 
-const strip = () => screen.queryByRole("slider", { name: "Springen zu Buchstabe" });
+const strip = () => screen.queryByRole("slider", { name: "Zum Buchstaben springen" });
 
 describe("US-QS-15 · SG-LIST-11 the letter index of a long list sorted by name", () => {
   it("US-QS-15 shows beside a list of more than 100 rows that is sorted by name", () => {
@@ -105,7 +105,7 @@ describe("US-QS-15 · SG-LIST-11 the letter index of a long list sorted by name"
 
   it("US-QS-15 a list without a marked box of its own, or whose list has fewer rows than the names, jumps nowhere and breaks nothing", () => {
     render(
-      <IndexedList items={names} nameOf={(n) => n} byName label="Springen zu Buchstabe">
+      <IndexedList items={names} nameOf={(n) => n} byName label="Zum Buchstaben springen">
         <p>Keine Liste</p>
       </IndexedList>,
     );
@@ -115,7 +115,7 @@ describe("US-QS-15 · SG-LIST-11 the letter index of a long list sorted by name"
 
   it("US-QS-15 a box that holds a list (not the list itself) is scrolled to the entry of that list", () => {
     render(
-      <IndexedList items={names} nameOf={(n) => n} byName label="Springen zu Buchstabe">
+      <IndexedList items={names} nameOf={(n) => n} byName label="Zum Buchstaben springen">
         <div data-scroll-region="" data-testid="box">
           <ul>
             {names.map((n) => (
