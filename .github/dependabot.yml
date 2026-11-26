@@ -1,0 +1,24 @@
+# Dependabot version updates for the Docker ecosystem only (owner decision d-128, 2026-11-26, issue 2529).
+# npm and GitHub Actions stay out of scope; Renovate (renovate.json5) keeps its own routine (FR-QG-15, US-DEV-03).
+# Scope: the Dockerfiles in app/config/deploy/docker/ (base images and the BuildKit syntax pin by digest).
+# The compose images (app/config/dev/compose.yaml, app/config/deploy/*.yml) need the `docker-compose` ecosystem
+# and are not covered; adding them is an owner question.
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: /app/config/deploy/docker
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 1
+    # The squash commit takes the PR title: Conventional Commits type and scope (commitlint) plus a story ID,
+    # so that `make merge` finds a story in the title (US-DEV-03).
+    commit-message:
+      prefix: "chore(deps): US-DEV-03"
+    groups:
+      docker-images:
+        patterns:
+          - "*"
