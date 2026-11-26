@@ -15,7 +15,7 @@ import { GroupSections } from "./grouped-sections";
 // The scrolling of the grouped sections (US-QS-15, SG-LIST-06): the sticky heading, the jump of a chip and a long heading at
 // 200 % text. The plays measure the layout, so they return early without one (jsdom) and the browser run judges them.
 const meta = {
-  title: "lists/GroupedSections/Scrolling",
+  title: "lists/GroupedSectionsScrolling",
   component: GroupSections<string>,
   decorators: [inFrame],
   args: ARGS,

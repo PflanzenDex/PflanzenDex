@@ -234,6 +234,63 @@ describe("US-POK-08 sort", () => {
   });
 });
 
+/** 101 species: Ahorn 1 … 60, Birke 1 … 40 and one Zypresse, so the list is longer than 100 rows. */
+const many = [
+  ...Array.from({ length: 60 }, (_, i) =>
+    species(`Acer ${String(i).padStart(2, "0")}`, {
+      germanName: `Ahorn ${String(i).padStart(2, "0")}`,
+    }),
+  ),
+  ...Array.from({ length: 40 }, (_, i) =>
+    species(`Betula ${String(i).padStart(2, "0")}`, {
+      germanName: `Birke ${String(i).padStart(2, "0")}`,
+    }),
+  ),
+  species("Cupressus sempervirens", { germanName: "Zypresse" }),
+];
+const strip = () => screen.queryByRole("slider", { name: "Springen zu Buchstabe" });
+
+describe("US-QS-15 · SG-LIST-06 the letter index of the Pokédex: over 100 species, sorted by name", () => {
+  it("US-QS-15 the strip shows beside a list of more than 100 species sorted by name, and its name is German", async () => {
+    await open(many);
+    expect(strip()).not.toBeNull();
+    expect(document.querySelectorAll("[data-letter-index]")).toHaveLength(1);
+    // The species list keeps its box: the strip is its sibling, not a cover.
+    const list = screen.getByRole("list", { name: "Gefangene Arten" });
+    expect(strip()?.parentElement?.contains(list)).toBe(true);
+  });
+
+  it("US-QS-15 the strip files a species under the name its row shows: the German name where there is one", async () => {
+    await open(many);
+    const letters = [...(strip() as HTMLElement).children];
+    const present = letters
+      .filter((el) => el.className.includes("text-primary"))
+      .map((el) => el.textContent);
+    // Acer and Betula are filed under A and B (their German names Ahorn and Birke), Cupressus under Z (Zypresse).
+    expect(present).toEqual(["A", "B", "Z"]);
+  });
+
+  it("US-QS-15 the strip shows on no list of 100 species or fewer", async () => {
+    await open(many.slice(0, 100));
+    expect(strip()).toBeNull();
+  });
+
+  it("US-QS-15 the strip is hidden when the list is sorted otherwise, and comes back with the name order", async () => {
+    await open(many);
+    await sortBy("Fangdatum");
+    expect(strip()).toBeNull();
+    await sortBy("Alphabetisch");
+    expect(strip()).not.toBeNull();
+  });
+
+  it("US-QS-15 a filter that leaves 100 species or fewer takes the strip away", async () => {
+    await open(many);
+    await search("Ahorn");
+    expect(strip()).toBeNull();
+    expect(screen.getByRole("list", { name: "Gefangene Arten" })).toBeTruthy();
+  });
+});
+
 describe("US-POK-09 · US-QS-22 the details of a species are a layer", () => {
   it("US-POK-08 the group without a known family reads 'Ohne bekannte Familie' and does not say 'unbekannt' twice", async () => {
     await open([species("Citrus limon")]);

@@ -46,6 +46,15 @@ describe("US-QS-15 · US-QS-33 scrollToTop puts a section or an entry at the top
     expect(scrollTo).toHaveBeenCalledWith({ top: 240, behavior: "auto" });
   });
 
+  it("US-QS-15 a drag jumps at once: `instant` is never smooth", () => {
+    window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;
+    const { scroller, target } = boxes();
+    const scrollTo = vi.fn();
+    scroller.scrollTo = scrollTo as unknown as typeof scroller.scrollTo;
+    scrollToTop(scroller, target, true);
+    expect(scrollTo).toHaveBeenCalledWith({ top: 240, behavior: "auto" });
+  });
+
   it("US-QS-15 a box without `scrollTo` gets its scrollTop set", () => {
     window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;
     const { scroller, target } = boxes();

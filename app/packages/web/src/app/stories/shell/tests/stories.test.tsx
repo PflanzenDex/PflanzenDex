@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import preview from "../../../../../.storybook/preview";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { unmountStoryRuns } from "../../../../shared/testing/story-teardown/story-teardown";
+import * as letterIndex from "../../../../shared/lists/letter-index/letter-index.stories";
 import * as groupedSections from "../../../../shared/lists/grouped-list/grouped-sections/grouped-sections.stories";
 import * as groupedScrolling from "../../../../shared/lists/grouped-list/grouped-sections/grouped-sections.scrolling.stories";
 import * as banner from "../../../../shared/patterns/states/banner/banner.stories";
@@ -27,6 +28,7 @@ const catalog = {
   EmptyState: composeStories(emptyState),
   GroupedSections: composeStories(groupedSections),
   GroupedSectionsScrolling: composeStories(groupedScrolling),
+  LetterIndex: composeStories(letterIndex),
   LayerSheet: composeStories(layerSheet),
   LayerSheetHeights: composeStories(layerSheetHeights),
   LayerSheetStates: composeStories(layerSheetStates),

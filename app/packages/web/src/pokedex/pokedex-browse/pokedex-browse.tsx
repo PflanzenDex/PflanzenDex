@@ -8,6 +8,8 @@ import { useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LayerSheet, useExitValue } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { IndexedList } from "@/shared/lists/letter-index/indexed-list/indexed-list";
+import { texts } from "@/shared/lib/text-rules/texts";
 import { GroupSections } from "@/shared/lists/grouped-list/grouped-sections/grouped-sections";
 import type { SectionGroup } from "@/shared/lists/grouped-list/grouped-sections/group-section/group-section";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
@@ -15,8 +17,48 @@ import { SpeciesPager, SpeciesRow, speciesLayerId } from "../pokedex-cards/poked
 import { SpeciesDetail } from "../pokedex-detail/pokedex-detail";
 import { germanNameOf } from "@/shared/species-name/species-name";
 import { Controls, FILTER_LAYER, FilterPanel } from "../pokedex-controls/pokedex-controls";
+import table from "../pokedex-page/pokedex-page.de.json";
+
+const ui = texts(table);
+
+/** The name a species is sorted and filed by: the one its row shows, the German name where there is one (P-08). */
+const shownName = (c: CaughtSpecies): string => germanNameOf(c.species, c.germanName) ?? c.species;
 
 const plural = (n: number) => `${n} ${n === 1 ? "Art" : "Arten"}`;
+
+/** The layers of the browse: "Filter" with the sorting, and the details of the chosen species (US-POK-09, US-QS-22). */
+function BrowseLayers(props: {
+  filter: PokedexFilter;
+  sort: PokedexSort;
+  poorKnown: boolean;
+  onFilter: (filter: PokedexFilter) => void;
+  onSort: (sort: PokedexSort) => void;
+  chosen: CaughtSpecies | undefined;
+  onOpenSpecies?: (id: string) => void;
+}) {
+  const { chosen } = props;
+  return (
+    <>
+      <LayerSheet id={FILTER_LAYER} title="Filter">
+        <FilterPanel
+          filter={props.filter}
+          sort={props.sort}
+          poorKnown={props.poorKnown}
+          onFilter={props.onFilter}
+          onSort={props.onSort}
+        />
+      </LayerSheet>
+      {chosen ? (
+        <LayerSheet id={speciesLayerId(chosen.species)} title={shownName(chosen)}>
+          <SpeciesDetail
+            species={chosen}
+            {...(props.onOpenSpecies ? { onOpenSpecies: props.onOpenSpecies } : {})}
+          />
+        </LayerSheet>
+      ) : null}
+    </>
+  );
+}
 
 /**
  * Search, filter and sort of the caught species (US-POK-08) on one screen (US-QS-22): the row of search and "Filter",
@@ -60,29 +102,29 @@ export function Browse(props: {
       ) : sort === "family" ? (
         <Families result={result} level={props.level ?? 2} />
       ) : (
-        <SpeciesPager
-          label="Gefangene Arten"
-          species={result.flat}
-          resetKey={`${query}|${filter}|${sort}`}
-        />
-      )}
-      <LayerSheet id={FILTER_LAYER} title="Filter">
-        <FilterPanel
-          filter={filter}
-          sort={sort}
-          poorKnown={poorKnown}
-          onFilter={setFilter}
-          onSort={setSort}
-        />
-      </LayerSheet>
-      {shownChosen ? (
-        <LayerSheet
-          id={speciesLayerId(shownChosen.species)}
-          title={germanNameOf(shownChosen.species, shownChosen.germanName) ?? shownChosen.species}
+        // Over 100 species sorted by name: the letter index at the trailing edge (SG-LIST-06, issue 2419).
+        <IndexedList
+          items={result.flat}
+          nameOf={shownName}
+          byName={sort === "alphabetical"}
+          label={ui("letterIndex")}
         >
-          <SpeciesDetail species={shownChosen} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
-        </LayerSheet>
-      ) : null}
+          <SpeciesPager
+            label="Gefangene Arten"
+            species={result.flat}
+            resetKey={`${query}|${filter}|${sort}`}
+          />
+        </IndexedList>
+      )}
+      <BrowseLayers
+        filter={filter}
+        sort={sort}
+        poorKnown={poorKnown}
+        onFilter={setFilter}
+        onSort={setSort}
+        chosen={shownChosen}
+        {...(onOpenSpecies ? { onOpenSpecies } : {})}
+      />
     </div>
   );
 }
