@@ -19,11 +19,12 @@ export function LayerBody({
   return (
     <div data-layer-body="" className="flex min-h-0 flex-1 flex-col gap-4">
       {/* The content of the layer is the scroll region of the sheet, the dialog and the pane: the title and the primary action stay (US-QS-15). */}
+      {/* A word wider than the layer breaks at a syllable with a hyphen, as in the rows of a list (DS-63): a long name of a plant no longer widens the layer at 200 % text. */}
       {/* The margin and the padding are the 1 rem that the sheet, the dialog and the pane keep around the content: the region reaches to their edge, so the focus ring of a control at its edge is not clipped and a content that is a little too wide spills into the padding, as it did before the region scrolled. */}
       <div
         ref={setRegion}
         data-scroll-region=""
-        className="-m-4 min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        className="-m-4 min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 [overflow-wrap:anywhere] hyphens-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
         <LayerScope.Provider value>{children}</LayerScope.Provider>
       </div>

@@ -85,6 +85,7 @@ export function NewPlantsBody(props: {
         <Button
           type="button"
           size={compact ? "default" : "touch"}
+          {...(compact ? { variant: "tinted" as const } : {})}
           disabled={okay.running || offline}
           onClick={() => void seen()}
         >

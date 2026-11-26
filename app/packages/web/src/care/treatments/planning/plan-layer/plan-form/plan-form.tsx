@@ -92,6 +92,8 @@ function usePlanView(form: UseFormReturn<TreatmentFields>) {
 export function PlanForm(props: {
   specimens: readonly TreatableSpecimen[];
   running: boolean;
+  /** The sheet has a bar for the save; without it the layer pins the save below the list (a dialog, a pane). */
+  bar: boolean;
   onSend: (input: TreatmentInput) => Promise<boolean>;
 }) {
   const today = localToday(new Date(), currentTimeZone());
@@ -137,10 +139,12 @@ export function PlanForm(props: {
           <TermFields control={form.control} />
           <CourseFields control={form.control} />
         </div>
-        {/* "Abbrechen" and the save stand in the bar of the sheet, a row after the last field in a dialog or a pane (SG-SHEET-04). */}
-        <FormBar formId={PLAN_FORM_ID} pending={props.running} needsNetwork>
-          {ui("save")}
-        </FormBar>
+        {/* "Abbrechen" and the save stand in the bar of the phone sheet (SG-SHEET-04); the list of plants is long, so a dialog and a pane keep the save pinned below it (`primaryAction`), not at the end of the list. */}
+        {props.bar ? (
+          <FormBar formId={PLAN_FORM_ID} pending={props.running} needsNetwork>
+            {ui("save")}
+          </FormBar>
+        ) : null}
       </FormRoot>
     </Form>
   );

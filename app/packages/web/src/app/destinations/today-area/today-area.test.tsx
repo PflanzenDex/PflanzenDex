@@ -736,6 +736,30 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(await screen.findByText(/Termin.* geplant/)).toBeTruthy();
   });
 
+  it("US-QS-15 · SG-SHEET-04 the save of the plan stands in the bar of a phone sheet, and below the list in a dialog", async () => {
+    fakeServer({ cards: FIVE });
+    const user = userEvent.setup();
+    setViewportWidth(360);
+    show("/today?sheet=treatments");
+    await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
+    const sheet = await dialog("Behandlung planen");
+    const inBar = await waitFor(() => {
+      const found = within(sheet).getByRole("button", { name: "Behandlung sichern" });
+      expect(found.closest("[data-form-bar]")).not.toBeNull();
+      return found;
+    });
+    expect(inBar.closest("[data-sheet-pinned]")).toBeNull();
+    expect(within(sheet).getByRole("button", { name: "Abbrechen" })).toBeTruthy();
+    cleanup();
+    setViewportWidth(768);
+    show("/today?sheet=treatments");
+    await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
+    const form = await dialog("Behandlung planen");
+    const pinned = within(form).getByRole("button", { name: "Behandlung sichern" });
+    expect(pinned.closest("[data-sheet-pinned]")).not.toBeNull();
+    expect(pinned.closest("[data-form-bar]")).toBeNull();
+  });
+
   it("US-BEH-01 · A-04 · US-QS-32 an invalid plan opens the view of the first missing entry: no plant, then no reason", async () => {
     fakeServer({ cards: FIVE });
     const user = userEvent.setup();

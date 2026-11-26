@@ -716,6 +716,22 @@ const QUESTION = { name: "Eingabe verwerfen?" };
 const ZONE_NAME = "form[aria-label='Zone 2 ändern'] input";
 
 describe("US-QS-32 the light layers ask before they discard typed input", () => {
+  it("US-QS-15 · SG-SHEET-04 the save of Lichtzone ändern stands in the bar of the sheet beside Abbrechen, never at the end of the content", async () => {
+    setViewportWidth(360);
+    fakeServer({ zones: [zone] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
+    const sheet = await screen.findByRole("dialog", { name: "Lichtzone ändern" });
+    const bar = await waitFor(() => {
+      const found = sheet.querySelector<HTMLElement>("[data-form-bar]");
+      expect(found).not.toBeNull();
+      return found as HTMLElement;
+    });
+    expect(within(bar).getByRole("button", { name: "Sichern" })).toBeTruthy();
+    expect(within(bar).getByRole("button", { name: "Abbrechen" })).toBeTruthy();
+    expect(sheet.querySelector("form")?.contains(bar)).toBe(false);
+  });
+
   it("US-QS-32 Lichtzone ändern: typed name and Escape asks; Weiter bearbeiten keeps the value and the layer", async () => {
     fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);

@@ -131,7 +131,7 @@ export function MeasureForm(props: MeasureFormProps) {
           {problem}
         </p>
       ) : null}
-      <Button type="submit" size="touch" disabled={props.busy}>
+      <Button type="submit" variant="tinted" size="touch" disabled={props.busy}>
         Messung sichern
       </Button>
     </FormRoot>

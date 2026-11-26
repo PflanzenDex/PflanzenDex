@@ -1,4 +1,6 @@
 import { useCallback, useEffect } from "react";
+import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
+import { Button } from "@/shared/ui/button/button";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
@@ -11,7 +13,7 @@ import { RefusalAlert } from "../../../shared/notices/notices";
 import { loadTreatableSpecimens, type TreatmentInput } from "../../../shared/api/treatments-api";
 import { TreatmentFormSkeleton } from "../../treatments-page/treatments-page.skeleton";
 import { usePlanning } from "../planning";
-import { PlanForm } from "./plan-form/plan-form";
+import { PLAN_FORM_ID, PlanForm } from "./plan-form/plan-form";
 import table from "./plan-layer.de.json";
 
 type Token = () => Promise<string | undefined>;
@@ -27,6 +29,8 @@ function PlanBody(props: {
   running: boolean;
   error: ApiError | null;
   onSend: (input: TreatmentInput) => Promise<boolean>;
+  /** A phone sheet: "Abbrechen" and the save stand in its bar; a dialog and a pane pin the save below the list instead. */
+  bar: boolean;
 }) {
   const { api, token } = props;
   const load = useCallback((t: string) => loadTreatableSpecimens(api, t), [api]);
@@ -47,7 +51,12 @@ function PlanBody(props: {
       offline={request.offline}
     >
       {props.error && <RefusalAlert error={props.error} />}
-      <PlanForm specimens={specimens} running={props.running} onSend={props.onSend} />
+      <PlanForm
+        specimens={specimens}
+        running={props.running}
+        onSend={props.onSend}
+        bar={props.bar}
+      />
     </RequestState>
   );
 }
@@ -70,19 +79,37 @@ export function PlanLayer(props: { api: string; token: Token }) {
   useEffect(() => {
     if (!open) planning.reset();
   }, [open, planning.reset]);
+  const isMd = useIsMd();
   const send = async (input: TreatmentInput) => {
     const ok = await planning.send(input);
     if (ok) closeLayer();
     return ok;
   };
   return (
-    <LayerSheet id={PLAN_LAYER} title="Behandlung planen">
+    <LayerSheet
+      id={PLAN_LAYER}
+      title="Behandlung planen"
+      primaryAction={
+        isMd ? (
+          <Button
+            type="submit"
+            form={PLAN_FORM_ID}
+            size="touch"
+            disabled={planning.running}
+            needsNetwork
+          >
+            {ui("save")}
+          </Button>
+        ) : undefined
+      }
+    >
       <PlanBody
         api={api}
         token={token}
         running={planning.running}
         error={planning.error}
         onSend={send}
+        bar={!isMd}
       />
     </LayerSheet>
   );
