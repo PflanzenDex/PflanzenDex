@@ -1,6 +1,6 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
 import { withText200 } from "@/shared/testing/story-frame/story-frame";
-import { hasLayout, waitUntil } from "@/shared/testing/story-frame/story-play";
+import { check, hasLayout, must, waitUntil } from "@/shared/testing/story-frame/story-play";
 import { IndexedList } from "./indexed-list";
 
 // Catalog of the letter index of a long list sorted by name (US-QS-15, SG-LIST-11, issue 2419). Each story has a play function
@@ -47,38 +47,33 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-function stripOf(canvas: HTMLElement): HTMLElement | null {
-  return canvas.querySelector<HTMLElement>('[role="slider"]');
-}
-
-function listOf(canvas: HTMLElement): HTMLElement {
-  const list = canvas.querySelector<HTMLElement>("ul[aria-label]");
-  if (!list) throw new Error("play: the list is missing");
-  return list;
-}
+const stripOf = (canvas: HTMLElement) => canvas.querySelector<HTMLElement>('[role="slider"]');
+const listOf = (canvas: HTMLElement) =>
+  must(canvas.querySelector<HTMLElement>("ul[aria-label]"), "the list");
 
 // The strip stands beside the list: one slider with a name, 27 places, the letters without an entry dimmed and kept; it is as
 // wide as a touch target and as high as the list, and the list gives up its width.
 export const Default: Story = {
   play: ({ canvasElement }) => {
-    const strip = stripOf(canvasElement);
-    if (!strip) throw new Error("play: the letter index is missing");
-    if (strip.getAttribute("aria-label") !== "Springen zu Buchstabe")
-      throw new Error("play: the strip has no name");
-    if (strip.children.length !== 27) throw new Error("play: the strip has not 27 places");
+    const strip = must(stripOf(canvasElement), "the letter index");
+    check(strip.getAttribute("aria-label") === "Springen zu Buchstabe", "the strip has no name");
+    check(strip.children.length === 27, "the strip has not 27 places");
     const letter = (l: string) =>
-      Array.from(strip.children).find((el) => el.textContent === l) as HTMLElement;
-    if (!letter("B").className.includes("text-primary"))
-      throw new Error("play: a letter with entries is dimmed");
-    if (!letter("C").className.includes("text-muted-foreground"))
-      throw new Error("play: a letter without entries is not dimmed");
-    if (hasLayout(strip)) {
-      const box = strip.getBoundingClientRect();
-      const list = listOf(canvasElement).getBoundingClientRect();
-      if (box.width < 44) throw new Error(`play: the strip is ${box.width} px wide, below 44`);
-      if (box.height < list.height - 2) throw new Error("play: the strip is shorter than the list");
-      if (box.left < list.right - 1) throw new Error("play: the strip covers the list");
-    }
+      must(
+        Array.from(strip.children).find((el) => el.textContent === l),
+        `the place of ${l}`,
+      );
+    check(letter("B").className.includes("text-primary"), "a letter with entries is dimmed");
+    check(
+      letter("C").className.includes("text-muted-foreground"),
+      "a letter without entries is not dimmed",
+    );
+    const measured = hasLayout(strip);
+    const box = strip.getBoundingClientRect();
+    const list = listOf(canvasElement).getBoundingClientRect();
+    check(!measured || box.width >= 44, `the strip is ${box.width} px wide, below 44`);
+    check(!measured || box.height >= list.height - 2, "the strip is shorter than the list");
+    check(!measured || box.left >= list.right - 1, "the strip covers the list");
     return Promise.resolve();
   },
 };
@@ -86,18 +81,19 @@ export const Default: Story = {
 // The keyboard has the same: Home and End and the arrow keys jump the list, with one tab stop for the strip.
 export const Keyboard: Story = {
   play: async ({ canvasElement }) => {
-    const strip = stripOf(canvasElement);
-    if (!strip) throw new Error("play: the letter index is missing");
+    const strip = must(stripOf(canvasElement), "the letter index");
     strip.focus();
     strip.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
     await waitUntil(() => strip.getAttribute("aria-valuetext") === "D", "the strip says D");
     const list = listOf(canvasElement);
-    if (hasLayout(list)) {
-      await waitUntil(() => list.scrollTop > 0, "the list scrolls to D");
-      const first = list.children.item(110)?.getBoundingClientRect();
-      if (!first || Math.abs(first.top - list.getBoundingClientRect().top) > 2)
-        throw new Error("play: the first entry of D does not stand at the top of the list");
-    }
+    const measured = hasLayout(list);
+    await waitUntil(() => !measured || list.scrollTop > 0, "the list scrolls to D");
+    const first = list.children.item(110)?.getBoundingClientRect();
+    const top = list.getBoundingClientRect().top;
+    check(
+      !measured || (first !== undefined && Math.abs(first.top - top) <= 2),
+      "the first entry of D does not stand at the top of the list",
+    );
   },
 };
 
@@ -105,7 +101,7 @@ export const Keyboard: Story = {
 export const Hidden: Story = {
   args: { byName: false },
   play: ({ canvasElement }) => {
-    if (stripOf(canvasElement)) throw new Error("play: a list not sorted by name has a strip");
+    check(stripOf(canvasElement) === null, "a list not sorted by name has a strip");
     return Promise.resolve();
   },
 };
@@ -115,18 +111,17 @@ export const Hidden: Story = {
 export const At200: Story = {
   decorators: [withText200],
   play: async ({ canvasElement }) => {
-    const strip = stripOf(canvasElement);
-    if (!strip) throw new Error("play: the letter index is missing");
-    if (!hasLayout(strip)) return;
-    await waitUntil(() => strip.scrollHeight > 0, "the strip is laid out");
-    if (strip.scrollHeight > strip.clientHeight + 1)
-      throw new Error("play: the letters do not fit the strip at 200 % text");
+    const strip = must(stripOf(canvasElement), "the letter index");
+    const measured = hasLayout(strip);
+    await waitUntil(() => !measured || strip.scrollHeight > 0, "the strip is laid out");
+    check(
+      strip.scrollHeight <= strip.clientHeight + 1,
+      "the letters do not fit the strip at 200 % text",
+    );
     const shown = Array.from(strip.children)
       .filter((el) => !el.className.includes("invisible"))
       .map((el) => el.getBoundingClientRect());
-    for (let i = 1; i < shown.length; i += 1) {
-      const [a, b] = [shown[i - 1], shown[i]] as [DOMRect, DOMRect];
-      if (b.top < a.bottom - 1) throw new Error("play: two letters overlap at 200 % text");
-    }
+    const overlap = shown.some((box, i) => i > 0 && box.top < (shown[i - 1]?.bottom ?? 0) - 1);
+    check(!measured || !overlap, "two letters overlap at 200 % text");
   },
 };

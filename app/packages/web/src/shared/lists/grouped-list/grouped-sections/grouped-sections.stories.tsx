@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "@/shared/ui/button/button";
+import { check } from "@/shared/testing/story-frame/story-play";
 import { ARGS, GROUPS, group, inFrame, plants, sectionsOf } from "./grouped-sections.parts";
 import { GroupSections, type SectionGroup } from "./grouped-sections";
 
@@ -19,14 +20,15 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   play: ({ canvasElement }) => {
     const sections = sectionsOf(canvasElement);
-    if (sections.length !== GROUPS.length) throw new Error("play: a group is missing");
-    const headings = sections.map((s) => s.querySelector("h2")?.textContent);
-    if (headings[0] !== "Flur · 3 Pflanzen")
-      throw new Error(`play: the heading says "${headings[0]}"`);
-    if (canvasElement.querySelector("select, [aria-pressed]"))
-      throw new Error("play: a chooser or a pressed chip hides groups");
+    check(sections.length === GROUPS.length, "a group is missing");
+    const first = sections[0]?.querySelector("h2")?.textContent;
+    check(first === "Flur · 3 Pflanzen", `the heading says "${first}"`);
+    check(
+      canvasElement.querySelector("select, [aria-pressed]") === null,
+      "a chooser or a pressed chip hides groups",
+    );
     const chips = canvasElement.querySelectorAll('[role="group"] button');
-    if (chips.length !== GROUPS.length) throw new Error("play: a chip is missing");
+    check(chips.length === GROUPS.length, "a chip is missing");
     return Promise.resolve();
   },
 };
@@ -41,11 +43,10 @@ export const FixedSet: Story = {
   },
   play: ({ canvasElement }) => {
     const [, growth] = sectionsOf(canvasElement);
-    const line = growth?.querySelector("p");
-    if (line?.textContent !== "Keine Pflanze in dieser Phase.")
-      throw new Error("play: the empty phase has no quiet line");
-    if (growth?.querySelector("button, a, input, select"))
-      throw new Error("play: the quiet line looks like a control");
+    const line = growth?.querySelector("p")?.textContent;
+    check(line === "Keine Pflanze in dieser Phase.", "the empty phase has no quiet line");
+    const control = growth?.querySelector("button, a, input, select");
+    check(control === null, "the quiet line looks like a control");
     return Promise.resolve();
   },
 };
@@ -67,13 +68,11 @@ export const UnknownLast: Story = {
   play: ({ canvasElement }) => {
     const sections = sectionsOf(canvasElement);
     const last = sections.at(-1);
-    if (last?.dataset["groupKey"] !== "unplaced")
-      throw new Error("play: the unknown group is not last");
-    const heading = last.querySelector("[data-group-heading]");
-    if (heading?.querySelectorAll("button").length !== 1)
-      throw new Error("play: the label of the unknown group has not one action");
-    if (sections[0]?.querySelector("[data-group-heading] button"))
-      throw new Error("play: another group has an action");
+    check(last?.dataset["groupKey"] === "unplaced", "the unknown group is not last");
+    const actions = last?.querySelectorAll("[data-group-heading] button").length;
+    check(actions === 1, "the label of the unknown group has not one action");
+    const other = sections[0]?.querySelector("[data-group-heading] button");
+    check(other === null, "another group has an action");
     return Promise.resolve();
   },
 };

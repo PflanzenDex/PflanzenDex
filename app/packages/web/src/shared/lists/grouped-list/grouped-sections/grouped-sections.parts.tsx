@@ -1,5 +1,6 @@
 import type { Decorator } from "@storybook/react-vite";
 import { MemoryRouter } from "react-router";
+import { must } from "@/shared/testing/story-frame/story-play";
 import { OBJECT_GROUP } from "../group-classes";
 import { GroupedRow } from "../grouped-list";
 import type { SectionGroup } from "./group-section/group-section";
@@ -51,8 +52,5 @@ export const ARGS = {
 export const sectionsOf = (canvas: HTMLElement) =>
   Array.from(canvas.querySelectorAll<HTMLElement>("section[data-group-key]"));
 
-export function regionOf(canvas: HTMLElement): HTMLElement {
-  const region = canvas.querySelector<HTMLElement>("[data-scroll-region]");
-  if (!region) throw new Error("play: the scroll region is missing");
-  return region;
-}
+export const regionOf = (canvas: HTMLElement): HTMLElement =>
+  must(canvas.querySelector<HTMLElement>("[data-scroll-region]"), "the scroll region");

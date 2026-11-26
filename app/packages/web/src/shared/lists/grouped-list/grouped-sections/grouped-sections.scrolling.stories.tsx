@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { withText200 } from "@/shared/testing/story-frame/story-frame";
-import { hasLayout, waitUntil } from "@/shared/testing/story-frame/story-play";
+import { check, hasLayout, must, waitUntil } from "@/shared/testing/story-frame/story-play";
 import {
   ARGS,
   GROUPS,
@@ -13,7 +13,8 @@ import {
 import { GroupSections } from "./grouped-sections";
 
 // The scrolling of the grouped sections (US-QS-15, SG-LIST-06): the sticky heading, the jump of a chip and a long heading at
-// 200 % text. The plays measure the layout, so they return early without one (jsdom) and the browser run judges them.
+// 200 % text. The plays measure the layout in the browser; without one (jsdom) their measures pass, and the conformance run
+// judges them.
 const meta = {
   title: "lists/GroupedSectionsScrolling",
   component: GroupSections<string>,
@@ -33,22 +34,21 @@ const offsetOf = (section: Element, region: Element) =>
 export const StickyHeading: Story = {
   play: async ({ canvasElement }) => {
     const region = regionOf(canvasElement);
-    if (!hasLayout(region)) return;
-    const [, second] = sectionsOf(canvasElement);
-    const heading = second?.querySelector<HTMLElement>("[data-group-heading]");
-    if (!second || !heading) throw new Error("play: the second group is missing");
+    const measured = hasLayout(region);
+    const second = must(sectionsOf(canvasElement)[1], "the second group");
+    const heading = must(second.querySelector<HTMLElement>("[data-group-heading]"), "its heading");
     // The middle of the second section: its heading must stand at the top of the region while its rows pass.
     region.scrollTop += offsetOf(second, region) + 60;
     await waitUntil(
-      () => Math.abs(offsetOf(heading, region)) < 2,
+      () => !measured || Math.abs(offsetOf(heading, region)) < 2,
       "the heading sticks to the top of the region",
     );
     const style = getComputedStyle(heading);
-    if (style.position !== "sticky") throw new Error(`play: the heading is ${style.position}`);
+    check(!measured || style.position === "sticky", `the heading is ${style.position}`);
     // A computed colour reads "rgb(r, g, b)" or with a fourth number for the alpha: 0 means the rows show through.
     const [, , , alpha] = style.backgroundColor.match(/[\d.]+/g) ?? [];
-    if (style.backgroundColor === "transparent" || alpha === "0")
-      throw new Error("play: the sticky heading is transparent, rows show through");
+    const clear = style.backgroundColor === "transparent" || alpha === "0";
+    check(!measured || !clear, "the sticky heading is transparent, rows show through");
   },
 };
 
@@ -56,20 +56,20 @@ export const StickyHeading: Story = {
 export const Jump: Story = {
   play: async ({ canvasElement }) => {
     const region = regionOf(canvasElement);
-    if (!hasLayout(region)) return;
-    const chip = Array.from(canvasElement.querySelectorAll("button")).find((b) =>
-      b.textContent?.startsWith("Wohnzimmer"),
+    const measured = hasLayout(region);
+    const buttons = Array.from(canvasElement.querySelectorAll("button"));
+    const chip = must(
+      buttons.find((b) => b.textContent?.startsWith("Wohnzimmer")),
+      "the chip",
     );
-    const third = sectionsOf(canvasElement)[2];
-    if (!chip || !third) throw new Error("play: the chip or its group is missing");
+    const third = must(sectionsOf(canvasElement)[2], "its group");
     chip.click();
     await waitUntil(
-      () => Math.abs(offsetOf(third, region)) < 2,
+      () => !measured || Math.abs(offsetOf(third, region)) < 2,
       "the section stands at the top",
       3000,
     );
-    if (sectionsOf(canvasElement).length !== GROUPS.length)
-      throw new Error("play: a jump hid a group");
+    check(sectionsOf(canvasElement).length === GROUPS.length, "a jump hid a group");
   },
 };
 
@@ -84,19 +84,22 @@ export const LongHeadingAt200: Story = {
   },
   play: async ({ canvasElement }) => {
     const region = regionOf(canvasElement);
-    if (!hasLayout(region)) return;
+    const measured = hasLayout(region);
     const size = parseFloat(getComputedStyle(document.documentElement).fontSize);
-    if (size < 31) throw new Error(`play: the text is ${size} px, not 200 %`);
-    const box = canvasElement.querySelector<HTMLElement>("[data-sticky]");
-    const heading = canvasElement.querySelector<HTMLElement>("[data-group-heading]");
-    if (!box || !heading) throw new Error("play: the sections are missing");
+    check(!measured || size >= 31, `the text is ${size} px, not 200 %`);
+    const box = must(canvasElement.querySelector<HTMLElement>("[data-sticky]"), "the sections");
+    const heading = must(
+      canvasElement.querySelector<HTMLElement>("[data-group-heading]"),
+      "a heading",
+    );
     await waitUntil(() => box.dataset["sticky"] !== undefined, "the switch is set");
     const covers = heading.offsetHeight * 3 > region.clientHeight;
     const sticky = getComputedStyle(heading).position === "sticky";
-    if (covers && sticky)
-      throw new Error("play: a heading that covers over a third of the region sticks");
-    if (!covers && !sticky) throw new Error("play: a heading that leaves room does not stick");
-    if (heading.scrollWidth > heading.clientWidth + 1)
-      throw new Error("play: the heading is cut at 200 % text");
+    check(
+      !measured || !(covers && sticky),
+      "a heading that covers over a third of the region sticks",
+    );
+    check(!measured || covers || sticky, "a heading that leaves room does not stick");
+    check(heading.scrollWidth <= heading.clientWidth + 1, "the heading is cut at 200 % text");
   },
 };

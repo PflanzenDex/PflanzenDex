@@ -32,9 +32,8 @@ function jump(box: HTMLElement | null, key: string): void {
   scrollToTop(region, section);
   // The heading takes the focus, so the next Tab is the first entry of the group and a screen reader names the group.
   const heading = section.querySelector<HTMLElement>("h2, h3, h4");
-  if (!heading) return;
-  heading.tabIndex = -1;
-  heading.focus({ preventScroll: true });
+  heading?.setAttribute("tabindex", "-1");
+  heading?.focus({ preventScroll: true });
 }
 
 /**

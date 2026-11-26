@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
-import { hasLayout, waitUntil } from "@/shared/testing/story-frame/story-play";
+import { check, hasLayout, must, waitUntil } from "@/shared/testing/story-frame/story-play";
 import { LetterStrip } from "./letter-strip";
 
 // Catalog of the letter strip (US-QS-15, SG-LIST-11, issue 2419): one slider with 27 places, the letters without an entry
@@ -24,31 +24,31 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-function stripOf(canvas: HTMLElement): HTMLElement {
-  const strip = canvas.querySelector<HTMLElement>('[role="slider"]');
-  if (!strip) throw new Error("play: the letter strip is missing");
-  return strip;
-}
+const stripOf = (canvas: HTMLElement) =>
+  must(canvas.querySelector<HTMLElement>('[role="slider"]'), "the letter strip");
+
+const place = (strip: HTMLElement, letter: string) =>
+  must(
+    Array.from(strip.children).find((el) => el.textContent === letter),
+    `the place of ${letter}`,
+  );
 
 // The strip is one slider with a name and 27 places; the letters with an entry are in the primary colour, the others dimmed
 // but kept; it is as wide as a touch target and as high as its frame.
 export const Default: Story = {
   play: ({ canvasElement }) => {
     const strip = stripOf(canvasElement);
-    if (strip.getAttribute("aria-label") !== "Springen zu Buchstabe")
-      throw new Error("play: the strip has no name");
-    if (strip.children.length !== 27) throw new Error("play: the strip has not 27 places");
-    const letter = (l: string) =>
-      Array.from(strip.children).find((el) => el.textContent === l) as HTMLElement;
-    if (!letter("A").className.includes("text-primary"))
-      throw new Error("play: a letter with entries is dimmed");
-    if (!letter("C").className.includes("text-muted-foreground"))
-      throw new Error("play: a letter without entries is not dimmed");
-    if (hasLayout(strip)) {
-      const box = strip.getBoundingClientRect();
-      if (box.width < 44) throw new Error(`play: the strip is ${box.width} px wide, below 44`);
-      if (box.height < 350) throw new Error("play: the strip is not as high as its frame");
-    }
+    check(strip.getAttribute("aria-label") === "Springen zu Buchstabe", "the strip has no name");
+    check(strip.children.length === 27, "the strip has not 27 places");
+    check(place(strip, "A").className.includes("text-primary"), "a letter with entries is dimmed");
+    check(
+      place(strip, "C").className.includes("text-muted-foreground"),
+      "a letter without entries is not dimmed",
+    );
+    const box = strip.getBoundingClientRect();
+    const measured = hasLayout(strip);
+    check(!measured || box.width >= 44, `the strip is ${box.width} px wide, below 44`);
+    check(!measured || box.height >= 350, "the strip is not as high as its frame");
     return Promise.resolve();
   },
 };
@@ -82,17 +82,21 @@ export const AllVariants: Story = {
   play: ({ canvasElement }) => {
     const strip = stripOf(canvasElement);
     const [present, absent] = LOOKS.entries;
-    const colours = Array.from(strip.children).map((el) => el.className);
-    if (!colours.some((c) => c.includes("text-primary")))
-      throw new Error(`play: no place is ${present}`);
-    if (!colours.some((c) => c.includes("text-muted-foreground")))
-      throw new Error(`play: no place is ${absent}`);
-    if (strip.children.length !== 27) throw new Error("play: a thinned strip lost places");
-    if (hasLayout(strip)) {
-      const [, thinned] = LOOKS.label;
-      if (!colours.some((c) => c.includes("invisible")))
-        throw new Error(`play: no label is ${thinned} in a short strip`);
-    }
+    const [, thinned] = LOOKS.label;
+    const looks = Array.from(strip.children).map((el) => el.className);
+    check(
+      looks.some((c) => c.includes("text-primary")),
+      `no place is ${present}`,
+    );
+    check(
+      looks.some((c) => c.includes("text-muted-foreground")),
+      `no place is ${absent}`,
+    );
+    check(strip.children.length === 27, "a thinned strip lost places");
+    check(
+      !hasLayout(strip) || looks.some((c) => c.includes("invisible")),
+      `no label is ${thinned} in a short strip`,
+    );
     return Promise.resolve();
   },
 };
@@ -101,9 +105,7 @@ export const AllVariants: Story = {
 export const NoEntries: Story = {
   args: { present: new Set<string>() },
   play: ({ canvasElement }) => {
-    const strip = stripOf(canvasElement);
-    if (strip.getAttribute("aria-valuetext") !== "")
-      throw new Error("play: the strip says a letter");
+    check(stripOf(canvasElement).getAttribute("aria-valuetext") === "", "the strip says a letter");
     return Promise.resolve();
   },
 };
