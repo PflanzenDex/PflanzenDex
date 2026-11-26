@@ -199,13 +199,14 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
       ["Standort unbekannt (1)", false, false],
     ]);
     // Every place stands in the one list, in the order of the summary; no chooser hides one.
-    await screen.findByText("Flur · Zone unbekannt · 1 Pflanze");
+    // The default text matcher turns the no-break space into a plain one, so the first heading is awaited by its place (SG-TYPE-07).
+    await screen.findByRole("heading", { level: 3, name: /^Flur · Zone unbekannt/ });
     // The heading level follows the page: the area's title is the h1 and "Pflanzen" its h2 (SG-HEAD-03), so the places are h3.
     const headings = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
     expect(headings).toEqual([
-      "Flur · Zone unbekannt · 1 Pflanze",
-      "Wohnzimmer · Zone 2 · 2 Pflanzen",
-      "Standort unbekannt · Zone unbekannt · 1 Pflanze",
+      "Flur · Zone unbekannt · 1\u00a0Pflanze",
+      "Wohnzimmer · Zone 2 · 2\u00a0Pflanzen",
+      "Standort unbekannt · Zone unbekannt · 1\u00a0Pflanze",
     ]);
     const sections = screen
       .getAllByRole("region")
