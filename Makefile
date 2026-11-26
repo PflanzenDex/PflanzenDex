@@ -35,7 +35,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-prune db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers gate-browser-image conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
+.PHONY: help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-prune db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan docker-check audit release release-dry-run news-release skills-check reference-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers gate-browser-image conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes unused-report storybook build-storybook ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -394,6 +394,16 @@ workflows: ## Lint GitHub workflows (actionlint)
 
 image-scan: ## Vulnerability scan of every container image (Grype), report only (#761, NFR-10); report in app/.cache/image-scan.md
 	tools/lint/image-scan.sh
+
+# Issue 2520, report only: the CI step "Dockerfile check" runs this target (E-30). A warning never fails it; only a docker that does not run does.
+docker-check: ## Dockerfile lint of the api and web images (docker build --check, no image built), report only: a warning never fails it, a docker that does not run does (issue 2520, US-DEV-05); the output goes to the job summary when GITHUB_STEP_SUMMARY is set
+	docker info >/dev/null 2>&1 || { echo "docker-check: docker does not run (the daemon is down or the CLI is missing)" >&2; exit 1; }; \
+	for image in api web; do \
+	  out=$$(docker build --check -f "$(APP)/config/deploy/docker/$$image.Dockerfile" $(APP) 2>&1); status=$$?; \
+	  printf '%s\n' "$$out"; \
+	  echo "docker-check: $$image exit $$status (report only)"; \
+	  if [ -n "$$GITHUB_STEP_SUMMARY" ]; then { echo "### Dockerfile check: $$image (report only, exit $$status)"; echo '```text'; printf '%s\n' "$$out"; echo '```'; } >> "$$GITHUB_STEP_SUMMARY" || echo "docker-check: the job summary is not writable (report only)" >&2; fi; \
+	done
 
 audit: ## Known high-severity vulnerabilities in dependencies (npm audit, QG-S2)
 	cd $(APP) && npm run audit
