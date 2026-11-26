@@ -14,5 +14,6 @@
   "uncountedNone": "Jede deiner Pflanzen zählt schon als gefangene Art.",
   "uncountedExplain": "Diese Pflanzen haben noch keine bestimmte Art und zählen noch nicht.",
   "uncountedUnknown": "Art nicht lesbar",
-  "letterIndex": "Springen zu Buchstabe"
+  "letterIndex": "Springen zu Buchstabe",
+  "filterTitle": "Filter"
 }

@@ -115,3 +115,28 @@ export function typeInto(field: HTMLInputElement, value: string): void {
   set.call(field, value);
   field.dispatchEvent(new Event("input", { bubbles: true }));
 }
+
+/** One finger at (`x`, `y`) on `target`: a real touch event where the browser has `Touch`, else an event that carries `touches`. */
+function touch(target: Element, type: string, y: number, x = 180): Event {
+  const finger = { identifier: 1, clientX: x, clientY: y };
+  const fingers = type === "touchend" ? [] : [finger];
+  const init = { bubbles: true, cancelable: true };
+  if (typeof Touch === "function" && typeof TouchEvent === "function") {
+    const touches = fingers.map((f) => new Touch({ ...f, target }));
+    const event = new TouchEvent(type, { ...init, touches, changedTouches: touches });
+    target.dispatchEvent(event);
+    return event;
+  }
+  const event = new Event(type, init);
+  Object.defineProperty(event, "touches", { value: fingers });
+  target.dispatchEvent(event);
+  return event;
+}
+
+/** A swipe on `target` with one finger: down at `from`, through each `to`, up at the last. Returns the move events. */
+export function swipeFinger(target: Element, from: number, ...to: number[]): Event[] {
+  touch(target, "touchstart", from);
+  const moves = to.map((y) => touch(target, "touchmove", y));
+  touch(target, "touchend", to[to.length - 1] ?? from);
+  return moves;
+}

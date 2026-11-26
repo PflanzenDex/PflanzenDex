@@ -15,9 +15,10 @@ const ROW =
   "flex min-h-11 w-full min-w-0 items-center gap-3 px-4 py-3 text-left text-base text-foreground";
 /**
  * An object row (a plant, a species, a wish; SG-LIST-03): its sides and gaps are 8 px (rem steps, so they grow with the text),
- * which leaves the title the width it needs at 200 % text (US-QS-32).
+ * which leaves the title the width it needs at 200 % text (US-QS-32). The row wraps: when the name keeps less than 96 px beside the
+ * trailing element (a badge at 200 % text in a layer), the trailing element moves below the name (US-QS-15, QG-U8).
  */
-const OBJECT_ROW = "gap-2 px-2 py-2.5";
+const OBJECT_ROW = "flex-wrap gap-2 px-2 py-2.5";
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
 const INTERACTIVE = `hover:bg-muted hover:text-foreground ${FOCUS}`;

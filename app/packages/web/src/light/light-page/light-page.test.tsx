@@ -162,7 +162,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     // US-QS-32: the zones are one grouped list, a labelled region with one row per zone.
     expect(screen.getByRole("region", { name: "Deine Lichtzonen" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Deine Lichtzonen", level: 3 })).toBeTruthy();
-    // In the pane (from 1024 px) the parts stand on one scrolling list: the warning signs need no "Weiter" (US-QS-15, SG-LIST-01).
+    // US-QS-15: the parts of the layer are one scroll list, so the last one is there without a page turn.
     expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
     expect(screen.getByRole("heading", { name: "Warnzeichen" })).toBeTruthy();
   });
@@ -324,7 +324,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
     expect(calls.some((a) => a.method === "DELETE")).toBe(false);
-    await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
+    await userEvent.click(screen.getByRole("button", { name: "„Zone 2“ löschen" }));
     expect((await screen.findAllByText(/wird noch genutzt/)).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /^Zone 2\b/ })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Lichtzone löschen" })).toBeTruthy();
@@ -464,7 +464,7 @@ describe("US-QS-14 feedback on the light page", () => {
       render(<LightPage api="http://api" token={async () => "tok"} />);
       await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
       await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
-      await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
+      await userEvent.click(screen.getByRole("button", { name: "„Zone 2“ löschen" }));
       await waitFor(() => expect(said()).toBe("Lichtzone gelöscht."));
       await waitFor(() => expect(screen.queryByRole("button", { name: /^Zone 2\b/ })).toBeNull());
       expect(screen.queryByRole("dialog")).toBeNull();
@@ -492,7 +492,7 @@ describe("US-QS-14 feedback on the light page", () => {
       );
       await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
       await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
-      await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
+      await userEvent.click(screen.getByRole("button", { name: "„Zone 2“ löschen" }));
       await waitFor(() => expect(said()).toBe("Lichtzone gelöscht."));
       await waitFor(() => expect(screen.queryByRole("button", { name: /^Zone 2\b/ })).toBeNull());
       const heading = screen.getByRole("heading", { level: 1, name: "Standorte und Lichtzonen" });
@@ -511,7 +511,7 @@ describe("US-QS-14 feedback on the light page", () => {
     );
     await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
+    await userEvent.click(screen.getByRole("button", { name: "„Zone 2“ löschen" }));
     expect((await screen.findAllByText(/wird noch genutzt/)).length).toBeGreaterThan(0);
     const heading = screen.getByRole("heading", { level: 1, name: "Standorte und Lichtzonen" });
     expect(document.activeElement).not.toBe(heading);
@@ -679,7 +679,7 @@ describe("US-QS-19 management on one screen", () => {
     ).toBeTruthy();
   });
 
-  it("US-QS-19 the reference layer shows one part at a time; the overview pages by the free height (issue 1155)", async () => {
+  it("US-QS-15 · US-QS-19 the reference layer shows one part at a time; its lists are scroll content, never pages (issue 1155)", async () => {
     setViewportWidth(360);
     const { fetchFn } = fakeServer({ zones: [zone], locations: [] });
     const normal = fetchFn.getMockImplementation() as typeof fetch;
@@ -700,9 +700,10 @@ describe("US-QS-19 management on one screen", () => {
     expect(
       (await screen.findByRole("button", { name: "Lichtbedarf" })).getAttribute("aria-pressed"),
     ).toBe("true");
-    // The species page by the free height of the layer (issue 1155); jsdom has no layout, so the starting value holds all three.
+    // The species are the scroll content of the layer (US-QS-15): no page of its own, no marker of a paging list.
     const list = screen.getByRole("list", { name: "Lichtbedarf der Arten" });
-    expect(list.hasAttribute("data-page-fit")).toBe(true);
+    expect(list.hasAttribute("data-page-fit")).toBe(false);
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
     for (const name of ["Art a", "Art b", "Art c"])
       expect(within(list).getByText(name)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Regeln" }));
@@ -715,6 +716,22 @@ const QUESTION = { name: "Eingabe verwerfen?" };
 const ZONE_NAME = "form[aria-label='Zone 2 ändern'] input";
 
 describe("US-QS-32 the light layers ask before they discard typed input", () => {
+  it("US-QS-15 · SG-SHEET-04 the save of Lichtzone ändern stands in the bar of the sheet beside Abbrechen, never at the end of the content", async () => {
+    setViewportWidth(360);
+    fakeServer({ zones: [zone] });
+    render(<LightPage api="http://api" token={async () => "tok"} />);
+    await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
+    const sheet = await screen.findByRole("dialog", { name: "Lichtzone ändern" });
+    const bar = await waitFor(() => {
+      const found = sheet.querySelector<HTMLElement>("[data-form-bar]");
+      expect(found).not.toBeNull();
+      return found as HTMLElement;
+    });
+    expect(within(bar).getByRole("button", { name: "Sichern" })).toBeTruthy();
+    expect(within(bar).getByRole("button", { name: "Abbrechen" })).toBeTruthy();
+    expect(sheet.querySelector("form")?.contains(bar)).toBe(false);
+  });
+
   it("US-QS-32 Lichtzone ändern: typed name and Escape asks; Weiter bearbeiten keeps the value and the layer", async () => {
     fakeServer({ zones: [zone] });
     render(<LightPage api="http://api" token={async () => "tok"} />);

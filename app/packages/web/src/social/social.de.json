@@ -61,7 +61,7 @@
   "friendEnd.title": "Freundschaft beenden",
   "friendEnd.group": "Freundschaft beenden: {name}",
   "friendEnd.question": "Wenn ihr die Freundschaft beendet, sieht {name} sofort nichts mehr von dir und du nichts mehr von ihr oder ihm; alle Freigaben gelten dann nicht mehr. Deine eigenen Daten bleiben erhalten. Was schon übertragen wurde, lässt sich nicht zurückholen. Die Person wird nicht benachrichtigt.",
-  "friendEnd.yes": "Ja, beenden",
+  "friendEnd.yes": "Beenden",
   "friendEnd.no": "Abbrechen",
   "friendPage.more": "Mehr",
   "friendCollection.back": "Zurück zu Freunde",

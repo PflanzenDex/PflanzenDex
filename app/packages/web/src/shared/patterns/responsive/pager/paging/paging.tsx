@@ -1,11 +1,5 @@
 import * as React from "react";
-import { useLocation, useSearchParams } from "react-router";
-import { Button } from "@/shared/ui/button/button";
-import {
-  DelayedSkeleton,
-  useHeldLoader,
-} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { OLD_PARTS } from "./address";
+import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
 
 /**
  * Server paging of a list (FR-BES-23): `items` are the loaded entries, `total` all of them on the server. The pages count
@@ -65,39 +59,6 @@ export function EntryPlaceholders(props: {
 }
 
 /**
- * The note of the entries that are not loaded yet: the loading text, or the failure with its retry button (P-10). The
- * loading text holds once shown (US-QS-14, D5, issue 1772), so the note stays mounted while the page is missing. With a
- * placeholder the missing entries show their skeletons, so the loading text is read out only and takes no room (SG-STATE-02).
- */
-export function PagingNote({ paging, missing }: { paging: PagerPaging; missing: boolean }) {
-  const quiet = paging.placeholder !== undefined;
-  const loading = useHeldLoader(missing && paging.failure === undefined);
-  if (loading)
-    return (
-      <DelayedSkeleton>
-        <p
-          role="status"
-          aria-live="polite"
-          className={quiet ? "sr-only" : "text-sm text-muted-foreground"}
-        >
-          {paging.loadingText}
-        </p>
-      </DelayedSkeleton>
-    );
-  if (!missing) return null;
-  return (
-    <div className="flex flex-col items-start gap-2">
-      <p role="alert" className="text-sm">
-        {paging.failure}
-      </p>
-      <Button type="button" variant="tinted" onClick={paging.onRetry}>
-        {paging.retryText}
-      </Button>
-    </div>
-  );
-}
-
-/**
  * Whether the page on screen reaches beyond the loaded entries. Then the next server page is asked for once, unless one is
  * on its way or has failed (P-10: the failure waits for its retry, never a loop). Returns whether entries are missing.
  */
@@ -140,60 +101,4 @@ export function useRetryFocus(
     paging.onRetry();
   };
   return { ...paging, onRetry };
-}
-
-/** A changed `resetKey` (filter, search) starts again at the first entry. `paged`: the new or the old address part is there. */
-export function useResetPage(
-  resetKey: string | number | undefined,
-  paged: boolean,
-  go: (target: number, replace?: boolean) => void,
-) {
-  const lastKey = React.useRef(resetKey);
-  React.useEffect(() => {
-    if (lastKey.current === resetKey) return;
-    lastKey.current = resetKey;
-    if (paged) go(0, true);
-  }, [resetKey, paged, go]);
-}
-
-/**
- * Writes the first entry into the address when the address names another one, or still holds an old page number (issue
- * 1492). Passive, not a layout effect (see `Pager`).
- */
-export function useFirstEntryWrite(
-  go: (target: number, replace?: boolean) => void,
-  {
-    first,
-    named,
-    old,
-    fit,
-    measured,
-  }: { first: number; named: number; old: boolean; fit: boolean; measured: number | null },
-) {
-  React.useEffect(() => {
-    if (fit && measured === null) return; // no layout yet: the starting size must not rewrite the address
-    if (old || named !== first) go(first, true);
-  });
-}
-
-/**
- * The first entry in the address: the current one, and `go` to write another. `go(0)` takes the part away. Every write
- * takes the old page number of the list away too (issue 1492). Keeps the history state, so a layer closes by going back
- * (`useLayer`).
- */
-export function usePageAddress(param: string, replaceEntry: boolean) {
-  const [params, setParams] = useSearchParams();
-  const location = useLocation();
-  const go = React.useCallback(
-    (target: number, replace = false) => {
-      const next = new URLSearchParams(params);
-      const old = OLD_PARTS.get(param);
-      if (old !== undefined) next.delete(old);
-      if (target <= 0) next.delete(param);
-      else next.set(param, String(target));
-      setParams(next, { replace: replace || replaceEntry, state: location.state });
-    },
-    [params, setParams, param, replaceEntry, location.state],
-  );
-  return { params, go };
 }

@@ -1,6 +1,7 @@
+import { useId } from "react";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import type { ApiError, LightZone } from "../../shared/light-api/light-api";
-import { FORM_GRID, FormButtons, RefusalAlert, useSaveForm } from "../../shared/ui/form/form";
+import { FORM_GRID, RefusalAlert, SaveBar, useSaveForm } from "../../shared/ui/form/form";
 import { TextField } from "@/shared/ui/fields/input/input";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import {
@@ -48,11 +49,13 @@ export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: ()
     clear: !z,
   });
   const { control } = sent.form;
+  const formId = useId();
   // Typed input that is not saved asks before the layer of the zone closes (US-QS-32).
   useUnsavedInput(sent.form.formState.isDirty);
   return (
     <Form {...sent.form}>
       <FormRoot
+        id={formId}
         className={FORM_GRID}
         onSubmit={sent.send}
         aria-label={z ? `${z.name} ändern` : "Lichtzone anlegen"}
@@ -87,7 +90,8 @@ export function ZoneForm(props: { start?: LightZone; onSave: Save; onCancel?: ()
           {...numeric(ORDER_LIMITS)}
         />
         <RefusalAlert sent={sent} />
-        <FormButtons
+        <SaveBar
+          formId={formId}
           label={z ? "Sichern" : "Lichtzone anlegen"}
           running={sent.running}
           onCancel={props.onCancel}

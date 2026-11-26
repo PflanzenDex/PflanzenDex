@@ -632,3 +632,25 @@ test("US-QG-07: textAfter applies a Write, an Edit and a MultiEdit exactly like 
     "MultiEdit gives up when one edit does not apply",
   );
 });
+
+test("US-QG-07: one-screen rules per entry may only shrink; issue and reason are metadata; an unknown field refuses by name", () => {
+  const one = (extra) => text({ maxEntries: 2, entries: [{ ...ONE_P, ...extra }, ONE_Q] });
+  const name = "one-screen-baseline.json";
+  const two = one({ rules: ["pager", "title"] });
+  assert.equal(grows(name, two, one({ rules: ["pager"] })).grows, false, "a lost rule");
+  assert.equal(grows(name, two, one({})).grows, false, "all rules lost");
+  assert.equal(grows(name, two, two).grows, false, "unchanged");
+  assert.match(grows(name, one({ rules: ["pager"] }), two).reasons.join(), /new rules entry title/);
+  assert.equal(grows(name, one({}), one({ rules: ["pager"] })).grows, true, "a first rule");
+  assert.equal(
+    grows(
+      name,
+      one({ rules: ["pager"], issue: 1 }),
+      one({ rules: ["pager"], issue: 2, reason: "x" }),
+    ).grows,
+    false,
+    "issue and reason are metadata",
+  );
+  assert.match(grows(name, one({}), one({ bogus: 1 })).reasons.join(), /field bogus/);
+  assert.equal(grows(name, one({}), one({ rules: [1] })).grows, true, "rules must be texts");
+});

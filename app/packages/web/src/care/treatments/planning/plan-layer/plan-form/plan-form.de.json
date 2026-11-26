@@ -1,4 +1,5 @@
 {
   "missing.one": "{count} Angabe fehlt",
-  "missing.other": "{count} Angaben fehlen"
+  "missing.other": "{count} Angaben fehlen",
+  "save": "Behandlung sichern"
 }

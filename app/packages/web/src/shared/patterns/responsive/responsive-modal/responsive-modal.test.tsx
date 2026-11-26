@@ -41,16 +41,19 @@ describe("US-QS-32 · SG-LIST-01 what a ResponsiveModal holds is in a layer", ()
   it.each([
     ["a sheet below md", 360],
     ["a dialog from md", 1024],
-  ])("US-QS-32 · SG-LIST-01 %s: its lists keep their pages", async (_name, width) => {
-    setViewportWidth(width);
-    render(
-      <ResponsiveModal trigger={<button>Öffnen</button>} title="Pflanze bearbeiten">
-        <Scope />
-      </ResponsiveModal>,
-    );
-    await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
-    expect(await screen.findByText("in a layer")).toBeTruthy();
-  });
+  ])(
+    "US-QS-32 · SG-LIST-01 %s: its lists scroll with the layer and never page",
+    async (_name, width) => {
+      setViewportWidth(width);
+      render(
+        <ResponsiveModal trigger={<button>Öffnen</button>} title="Pflanze bearbeiten">
+          <Scope />
+        </ResponsiveModal>,
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Öffnen" }));
+      expect(await screen.findByText("in a layer")).toBeTruthy();
+    },
+  );
 
   it("US-QS-32 · SG-LIST-01 a component beside the modal is on a page", () => {
     setViewportWidth(360);

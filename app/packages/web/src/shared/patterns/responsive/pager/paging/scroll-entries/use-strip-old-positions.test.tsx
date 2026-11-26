@@ -43,11 +43,11 @@ describe("US-QS-15 · SG-LIST-01 · SG-NAV-02 an old address loses its position 
     expect(window.location.search).toBe("?part=wohnzimmer");
   });
 
-  it("US-QS-15 · SG-LIST-01 with a layer open only from and page go: the layer's own part is the position of its paged list", () => {
+  it("US-QS-15 · SG-LIST-01 with a layer open every position part goes too: a list in a layer holds no position either (issue 2418)", () => {
     setViewportWidth(1024);
     open("/x?sheet=plant-e1&tab=pflege&ofrom=2&lfrom=4&from=9&page=2");
     render(<BrowserRouter>{list()}</BrowserRouter>);
-    expect(window.location.search).toBe("?sheet=plant-e1&tab=pflege&ofrom=2&lfrom=4");
+    expect(window.location.search).toBe("?sheet=plant-e1&tab=pflege");
   });
 
   it("US-QS-15 · SG-LIST-01 the history state stays, so a layer still closes by going back", () => {
@@ -95,14 +95,15 @@ describe("US-QS-15 · SG-LIST-01 · SG-NAV-02 an old address loses its position 
     expect(screen.getAllByRole("listitem")).toHaveLength(12);
   });
 
-  it("US-QS-15 · SG-LIST-01 the paged list of a layer keeps its address as it is", () => {
+  it("US-QS-15 · SG-LIST-01 the list of a layer is one scroll list that strips the position as well (issue 2418)", () => {
     setViewportWidth(768);
-    open("/x?from=4");
+    open("/x?lfrom=4&y=1");
     render(
       <BrowserRouter>
         <LayerScope.Provider value>{list()}</LayerScope.Provider>
       </BrowserRouter>,
     );
-    expect(window.location.search).toBe("?from=4");
+    expect(window.location.search).toBe("?y=1");
+    expect(screen.getAllByRole("listitem")).toHaveLength(12);
   });
 });

@@ -104,12 +104,19 @@ describe("US-QS-32 · SG-LIST-01 a list on a phone scrolls instead of paging", (
     expect(list.className).not.toContain("min-h-0");
   });
 
-  it("US-QS-32 · SG-LIST-01 inside a sheet or a dialog a phone list keeps its pages, as on dev (issue 1861 owns the layers)", () => {
-    setViewportWidth(360);
-    render(<LayerScope.Provider value>{list(plants)}</LayerScope.Provider>);
-    expect(screen.getAllByRole("listitem")).toHaveLength(4);
-    expect(screen.getByRole("button", { name: "Weiter" })).toBeTruthy();
-    expect(screen.getByRole("list", { name: "Pflanzen" }).hasAttribute("tabindex")).toBe(false);
+  it("US-QS-15 · SG-LIST-01 inside a sheet, a dialog or a pane a list never pages, at any width: it is the content of the layer", () => {
+    for (const width of [360, 768, 1280]) {
+      setViewportWidth(width);
+      const { unmount } = render(<LayerScope.Provider value>{list(plants)}</LayerScope.Provider>);
+      expect(screen.getAllByRole("listitem")).toHaveLength(plants.length);
+      expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
+      const box = screen.getByRole("list", { name: "Pflanzen" });
+      // The layer scrolls its content: the list takes no marker of a scroll region, no tab stop and no Pager marker of the gate.
+      expect(box.hasAttribute("tabindex")).toBe(false);
+      expect(box.hasAttribute("data-page-fit")).toBe(false);
+      expect(box.parentElement?.hasAttribute("data-pager")).toBe(false);
+      unmount();
+    }
   });
 
   it("US-QS-15 · SG-LIST-01 from 768 px the list of a page scrolls too: every entry, no pages", () => {

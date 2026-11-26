@@ -21,7 +21,7 @@ describe("US-BEH-01 the plan form marks the segments of a refused send (US-QS-32
     const onSend = vi.fn(async () => true);
     render(
       <MemoryRouter>
-        <PlanForm specimens={SPECIMENS} running={false} onSend={onSend} />
+        <PlanForm specimens={SPECIMENS} running={false} onSend={onSend} bar={false} />
       </MemoryRouter>,
     );
     submitPlan();
@@ -43,7 +43,7 @@ describe("US-BEH-01 the plan form marks the segments of a refused send (US-QS-32
     const onSend = vi.fn(async () => true);
     render(
       <MemoryRouter>
-        <PlanForm specimens={SPECIMENS} running={false} onSend={onSend} />
+        <PlanForm specimens={SPECIMENS} running={false} onSend={onSend} bar={false} />
       </MemoryRouter>,
     );
     await userEvent.click(screen.getByRole("checkbox", { name: /^Aloe/ }));

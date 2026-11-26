@@ -285,7 +285,7 @@ describe("US-QS-18 locked functions on Heute", () => {
     })) as unknown as typeof window.matchMedia;
   });
 
-  it("US-QS-18 the locked functions are one tile 'n Ungeöffnet' that opens a layer with the rows (issue 1156)", async () => {
+  it("US-QS-15 · US-QS-18 the locked functions are one tile 'n Ungeöffnet' that opens a layer with the rows as one scroll list", async () => {
     server(() => [swapping(), swapping({ id: "wishlist" })]);
     page("/collapsed");
     const row = await screen.findByRole("button", { name: "2 Ungeöffnet" });
@@ -293,9 +293,10 @@ describe("US-QS-18 locked functions on Heute", () => {
     await userEvent.click(row);
     const layer = await screen.findByRole("dialog", { name: "Weitere Funktionen" });
     expect(within(layer).getAllByRole("link")).toHaveLength(2);
-    // The rows page by the free height of the layer instead of scrolling it (US-QS-15, issue 1156).
+    // The rows are the scroll content of the layer, no pages (US-QS-15).
     const rows = within(layer).getByRole("list", { name: "Noch nicht geöffnet" });
-    expect(rows.hasAttribute("data-page-fit")).toBe(true);
+    expect(rows.hasAttribute("data-page-fit")).toBe(false);
+    expect(within(layer).queryByRole("button", { name: "Weiter" })).toBeNull();
   });
 
   it("US-QS-32 · SG-LIST-01 the tile says 'Ungeöffnet' (one line at 360 px, issue 1854) while the heading of the locked rows stays 'Noch nicht geöffnet'", async () => {

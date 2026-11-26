@@ -112,7 +112,7 @@ describe("US-QS-23 the growth trend of the overview", () => {
 
 describe("US-QS-23 Verlauf", () => {
   const measurements = [7, 6, 5, 4, 3, 2, 1].map((n) => row(n));
-  // `inLayer`: the history in a sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01); on a page it is one scrolling list.
+  // `inLayer`: the history in a sheet or a dialog is one scrolling list as on a page (US-QS-15, SG-LIST-01, issue 2418).
   const show = (onMeasure?: () => void, inLayer = false) =>
     render(
       <MemoryRouter>
@@ -139,21 +139,26 @@ describe("US-QS-23 Verlauf", () => {
     expect(screen.getByTestId("address").textContent).toBe("");
   });
 
-  it("US-QS-23 in a layer the measurements page newest first, with the position, and the page is in the address", async () => {
+  it("US-QS-23 · US-QS-15 in a layer the measurements are one scrolling list too, newest first, with no pages and no position in the address (issue 2418)", async () => {
     setViewportWidth(1024);
     server({ "GET /specimens/e1/measurements": () => json(200, view({ measurements })) });
     show(undefined, true);
     const list = await screen.findByRole("list", { name: "Messungen und Fotos" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(7);
     expect(
       within(list)
         .getAllByText(/\d\d\.10\.2026/)
-        .map((e) => e.textContent),
-    ).toEqual(["17\u00a0cm · 07.10.2026", "16\u00a0cm · 06.10.2026", "15\u00a0cm · 05.10.2026"]);
-    expect(screen.getByText("Seite 1 von 3")).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(screen.getByTestId("address").textContent).toBe("?vfrom=3");
-    expect(screen.getByText("14 cm · 04.10.2026")).toBeTruthy();
+        .slice(0, 4)
+        .map((e) => e.textContent?.replaceAll("\u00a0", " ")),
+    ).toEqual([
+      "17 cm · 07.10.2026",
+      "16 cm · 06.10.2026",
+      "15 cm · 05.10.2026",
+      "14 cm · 04.10.2026",
+    ]);
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
+    expect(screen.getByTestId("address").textContent).toBe("");
   });
 
   it("US-QS-23 the photos of the measurements are fetched privately and shown in the page", async () => {

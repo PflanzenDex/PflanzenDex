@@ -34,7 +34,6 @@ beforeEach(() => {
   })) as unknown as typeof window.matchMedia;
   layout.header = 90;
   layout.content = 200;
-  layout.actionBottom = 0;
   stubSheetLayout();
   stubBoxes();
   setWindowHeight(800);
@@ -127,42 +126,6 @@ describe("US-QS-15 · a sheet opens at its fitting height or at half height", ()
     expect(region?.contains(within(sheet).getByRole("button", { name: "Schließen" }))).toBe(false);
     expect(region?.contains(within(sheet).getByRole("button", { name: "Vollbild" }))).toBe(false);
     expect(region?.contains(within(sheet).getByRole("button", { name: "Anwenden" }))).toBe(true);
-  });
-});
-
-describe("US-QS-15 · a primary action in the content that half height would cut off", () => {
-  function WithAction() {
-    return (
-      <AnnouncerProvider>
-        <Sheet open>
-          <SheetContent title="Filter">
-            <button className="bg-primary">Sichern</button>
-          </SheetContent>
-        </Sheet>
-      </AnnouncerProvider>
-    );
-  }
-
-  it("US-QS-15 a sheet whose primary action lies below the end of its scroll region opens at full height and keeps its toggle", async () => {
-    layout.content = 1200;
-    layout.actionBottom = 1300;
-    render(<WithAction />);
-    const sheet = await sheetOf();
-    await waitFor(() => expect(heightOf(sheet)).toBe("800px"));
-    expect(sheet.getAttribute("data-sheet-height")).toBe("two");
-    // The keeper can still go to half height, and the sheet leaves it there.
-    await userEvent.click(screen.getByRole("button", { name: "Halbe Höhe" }));
-    expect(heightOf(sheet)).toBe("400px");
-    expect(sheet.getAttribute("data-sheet-height")).toBe("two");
-  });
-
-  it("US-QS-15 a sheet whose primary action is in sight at half height keeps its two heights", async () => {
-    layout.content = 1200;
-    layout.actionBottom = 300;
-    render(<WithAction />);
-    const sheet = await sheetOf();
-    await waitFor(() => expect(sheet.getAttribute("data-sheet-height")).toBe("two"));
-    expect(heightOf(sheet)).toBe("400px");
   });
 });
 
@@ -323,6 +286,97 @@ describe("US-QS-15 · a drag on the handle changes the height, and only the hand
     fireEvent.pointerMove(handle, { ...base, clientY: 700 });
     fireEvent.pointerUp(handle, { ...base, clientY: 700 });
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
+
+/** One finger on `target`: a touch event with the finger at (`x`, `y`). Returns the event, to see whether it was claimed. */
+function touch(target: Element, type: "touchstart" | "touchmove" | "touchend", y: number, x = 180) {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperty(event, "touches", {
+    value: type === "touchend" ? [] : [{ clientX: x, clientY: y, identifier: 1 }],
+  });
+  target.dispatchEvent(event);
+  return event;
+}
+
+/** A swipe on the content: the finger goes down at `from`, moves through `to` and lets go. */
+function swipeOn(target: Element, from: number, ...to: number[]) {
+  touch(target, "touchstart", from);
+  const moves = to.map((y) => touch(target, "touchmove", y));
+  touch(target, "touchend", to[to.length - 1] ?? from);
+  return moves;
+}
+
+describe("US-QS-15 · a swipe down on the content at its top drags the sheet, as iOS and Maps do", () => {
+  const content = (sheet: HTMLElement) => within(sheet).getByRole("button", { name: "Anwenden" });
+  const region = (sheet: HTMLElement) =>
+    sheet.querySelector<HTMLElement>("[data-sheet-body]") as HTMLElement;
+
+  it("US-QS-15 a swipe down at the top of the content past half height closes the sheet, and the browser does not scroll under it", async () => {
+    layout.content = 1200;
+    const onOpenChange = vi.fn();
+    render(<Example onOpenChange={onOpenChange} />);
+    const sheet = await sheetOf();
+    await waitFor(() => expect(heightOf(sheet)).toBe("400px"));
+    const moves = swipeOn(content(sheet), 300, 400, 600);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(moves.every((event) => event.defaultPrevented)).toBe(true);
+  });
+
+  it("US-QS-15 a swipe down at the top of the content at full height snaps to the nearer height, half height here", async () => {
+    layout.content = 1200;
+    render(<Example />);
+    const sheet = await sheetOf();
+    await userEvent.click(await screen.findByRole("button", { name: "Vollbild" }));
+    expect(heightOf(sheet)).toBe("800px");
+    swipeOn(content(sheet), 100, 300, 500);
+    await waitFor(() => expect(heightOf(sheet)).toBe("400px"));
+    expect(live()).toBe("Filter, Halbe Höhe");
+  });
+
+  it("US-QS-15 a short swipe down at the top of the content keeps the sheet open at half height", async () => {
+    layout.content = 1200;
+    const onOpenChange = vi.fn();
+    render(<Example onOpenChange={onOpenChange} />);
+    const sheet = await sheetOf();
+    await waitFor(() => expect(heightOf(sheet)).toBe("400px"));
+    swipeOn(content(sheet), 300, 330);
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(heightOf(sheet)).toBe("400px");
+  });
+
+  it("US-QS-15 when the content is not at its top, a swipe down scrolls it and the sheet does not move", async () => {
+    layout.content = 1200;
+    const onOpenChange = vi.fn();
+    render(<Example onOpenChange={onOpenChange} />);
+    const sheet = await sheetOf();
+    await waitFor(() => expect(heightOf(sheet)).toBe("400px"));
+    region(sheet).scrollTop = 120;
+    const moves = swipeOn(content(sheet), 300, 400, 700);
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(heightOf(sheet)).toBe("400px");
+    expect(moves.some((event) => event.defaultPrevented)).toBe(false);
+  });
+
+  it("US-QS-15 a swipe up, a sideways swipe and a touch of two fingers at the top of the content scroll as they did", async () => {
+    layout.content = 1200;
+    const onOpenChange = vi.fn();
+    render(<Example onOpenChange={onOpenChange} />);
+    const sheet = await sheetOf();
+    await waitFor(() => expect(heightOf(sheet)).toBe("400px"));
+    const up = swipeOn(content(sheet), 500, 400, 200);
+    expect(up.some((event) => event.defaultPrevented)).toBe(false);
+    touch(content(sheet), "touchstart", 300, 100);
+    const side = touch(content(sheet), "touchmove", 340, 300);
+    touch(content(sheet), "touchend", 340, 300);
+    expect(side.defaultPrevented).toBe(false);
+    expect(heightOf(sheet)).toBe("400px");
+    expect(onOpenChange).not.toHaveBeenCalled();
+    const two = new Event("touchstart", { bubbles: true });
+    Object.defineProperty(two, "touches", { value: [{ clientY: 1 }, { clientY: 2 }] });
+    content(sheet).dispatchEvent(two);
+    const after = touch(content(sheet), "touchmove", 900);
+    expect(after.defaultPrevented).toBe(false);
   });
 });
 

@@ -638,8 +638,7 @@ describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
     expect(within(dialog).getByRole("heading", { name: "Einstieg" })).toBeTruthy();
   });
 
-  it("US-QS-15 a long list of invitations is paged: five per page, 'Seite n von m' and Weiter", async () => {
-    // Paging starts at 768 px; the layer stays a sheet (a dialog) below 1024 px.
+  it("US-QS-15 a long list of invitations is one scroll list in its layer: every entry, no 'Seite n von m', no Weiter", async () => {
     setViewportWidth(768);
     current = overview({
       invitations: Array.from({ length: 7 }, (_, i) => ({
@@ -654,11 +653,9 @@ describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
     await open();
     const dialog = await topic(/^Einladungscodes/);
     const list = within(dialog).getByRole("list", { name: "Einladungen" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(5);
-    expect(within(dialog).getByText("Seite 1 von 2")).toBeTruthy();
-    await userEvent.click(within(dialog).getByRole("button", { name: "Weiter" }));
-    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
-    expect(within(dialog).getByText("Seite 2 von 2")).toBeTruthy();
+    expect(within(list).getAllByRole("listitem")).toHaveLength(7);
+    expect(within(dialog).queryByText(/Seite \d+ von \d+/)).toBeNull();
+    expect(within(dialog).queryByRole("button", { name: "Weiter" })).toBeNull();
   });
 
   it("US-QS-15 the page is one screen (DS-61): its frame marks the fit, so at a large text size only the content region scrolls", async () => {

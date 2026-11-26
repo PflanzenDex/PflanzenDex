@@ -64,7 +64,7 @@ function server(routes: Record<string, () => Response>): Posts {
   return posts;
 }
 
-// `inLayer`: the log in a sheet or a dialog keeps its pages (US-QS-15, SG-LIST-01); on a page it is one scrolling list.
+// `inLayer`: the log in a sheet or a dialog is one scrolling list as on a page (US-QS-15, SG-LIST-01, issue 2418).
 const show = (on = true, inLayer = false) =>
   render(
     <MemoryRouter>
@@ -113,8 +113,8 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     expect(await screen.findByText("Neues Blatt festhalten")).toBeTruthy();
   });
 
-  it("US-WAC-07 the count and the leaves are listed newest first, one leaf per page in a layer, with unknown sizes shown as unbekannt (P-08)", async () => {
-    // A layer keeps its pages (US-QS-15, SG-LIST-01); on a page the leaves are one scrolling list (US-QS-32).
+  it("US-WAC-07 the count and the leaves are listed newest first in one scrolling list, with unknown sizes shown as unbekannt (P-08)", async () => {
+    // A layer never pages (US-QS-15, SG-LIST-01, issue 2418): both leaves are on the list.
     setViewportWidth(1024);
     server({
       "GET /specimens/e1/leaves": () =>
@@ -126,21 +126,17 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
           ]),
         ),
     });
-    const user = userEvent.setup();
     show(true, true);
     expect(await screen.findByText("2 Blätter")).toBeTruthy();
     const list = screen.getByRole("list", { name: "Neue Blätter" });
-    const first = within(list).getAllByRole("listitem");
-    expect(first).toHaveLength(1);
-    expect(first[0]?.textContent).toContain("09.10.2026");
-    expect(first[0]?.textContent).toContain("Länge 40 mm · Breite 12 mm");
-    expect(first[0]?.textContent).toContain("Fensterung");
-    // The second leaf is one press away on the pager of the list (US-WAC-07, P-09).
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Weiter" }));
-    const second = within(list).getAllByRole("listitem");
-    expect(second).toHaveLength(1);
-    expect(second[0]?.textContent).toContain("Länge unbekannt · Breite unbekannt");
+    const rows = within(list).getAllByRole("listitem");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.textContent).toContain("09.10.2026");
+    expect(rows[0]?.textContent).toContain("Länge 40 mm · Breite 12 mm");
+    expect(rows[0]?.textContent).toContain("Fensterung");
+    expect(rows[1]?.textContent).toContain("Länge unbekannt · Breite unbekannt");
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
   });
 
   it("US-QS-15 · SG-LIST-01 on a page the leaves are one scrolling list at a tablet width too: every leaf, no pages", async () => {
@@ -162,15 +158,15 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     expect(quick.parentElement?.className).toContain("grid-cols-2");
   });
 
-  it("US-QS-32 · SG-BTN-02 'Neues Blatt' is the one filled button, 'Mit Details' beside it is tinted without a border", async () => {
+  it("US-QS-15 · US-QS-32 · SG-BTN-02 'Neues Blatt' is tinted, 'Mit Details' beside it is plain: the plant layer keeps its one filled action elsewhere", async () => {
     server({ "GET /specimens/e1/leaves": () => json(200, view([])) });
     const { container } = show();
     const quick = await screen.findByRole("button", { name: "Neues Blatt" });
     const details = screen.getByRole("button", { name: "Mit Details" });
-    expect(isFilled(quick)).toBe(true);
-    expect(isTinted(details)).toBe(true);
+    expect(isTinted(quick)).toBe(true);
+    expect(isFilled(details)).toBe(false);
     expect(hasOwnBorder(details)).toBe(false);
-    expect(filledIn(container)).toEqual([quick]);
+    expect(filledIn(container)).toEqual([]);
   });
 
   it("US-QS-32 · SG-BTN-03 the removal of a leaf is a red plain button named 'Blatt entfernen'", async () => {
@@ -248,7 +244,7 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     await user.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(posts).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Blatt entfernen: 09.10.2026" }));
-    await user.click(screen.getByRole("button", { name: "Ja, entfernen: Blatt vom 09.10.2026" }));
+    await user.click(screen.getByRole("button", { name: "Entfernen: Blatt vom 09.10.2026" }));
     expect(await screen.findByText("Noch kein Blatt erfasst.")).toBeTruthy();
     expect(posts).toEqual([
       {
@@ -259,13 +255,13 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     ]);
   });
 
-  it("US-QS-32 · SG-BTN-03 the confirm 'Ja, entfernen' of a leaf has an accessible name that contains its visible label (WCAG 2.5.3)", async () => {
+  it("US-QS-32 · SG-BTN-03 the confirm 'Entfernen' of a leaf has an accessible name that contains its visible label (WCAG 2.5.3)", async () => {
     server({ "GET /specimens/e1/leaves": () => json(200, view([leaf(9, { lengthMm: 40 })])) });
     const user = userEvent.setup();
     show();
     await user.click(await screen.findByRole("button", { name: "Blatt entfernen: 09.10.2026" }));
-    const confirm = screen.getByRole("button", { name: "Ja, entfernen: Blatt vom 09.10.2026" });
-    expect(confirm.textContent).toBe("Ja, entfernen");
+    const confirm = screen.getByRole("button", { name: "Entfernen: Blatt vom 09.10.2026" });
+    expect(confirm.textContent).toBe("Entfernen");
     expect(confirm.getAttribute("aria-label")?.startsWith(confirm.textContent ?? "")).toBe(true);
     expect(isPlain(screen.getByRole("button", { name: "Abbrechen" }))).toBe(true);
   });

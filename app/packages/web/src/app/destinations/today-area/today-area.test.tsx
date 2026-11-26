@@ -672,37 +672,22 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     }
   });
 
-  it("US-QS-18 · US-QS-19 · F-0351 ten due plants, three per page, in the layer Gießen beside the scrolling further tasks of Heute: Weiter reaches page 4 of 4 and the further tasks hold no page", async () => {
-    // Paging starts at 768 px; the layer stays a sheet below 1024 px (a pane there has no dialog role).
+  it("US-QS-15 · US-QS-18 · US-QS-19 · F-0351 ten due plants are one scroll list in the layer Gießen; the further tasks of Heute scroll and hold no page", async () => {
+    // The layer stays a sheet below 1024 px (a pane there has no dialog role).
     setViewportWidth(768);
     fakeServer({ items: [todayItem, ...FURTHER_TASKS], due: TEN_DUE });
     const restore = stubFittedRegion(100);
     try {
-      const user = userEvent.setup();
       show("/today?sheet=watering");
       const layer = await dialog("Gießen");
       const list = await within(layer).findByRole("list", { name: "Zu gießen" });
-      const names = () =>
-        within(list)
-          .getAllByText(/^Gieß \d+$/)
-          .map((el) => el.textContent);
-      const position = () => within(layer).getByText(/^Seite \d+ von \d+$/).textContent;
-      const pages: string[][] = [];
-      for (let page = 1; page <= 4; page++) {
-        expect(position()).toBe(`Seite ${page} von 4`);
-        pages.push(names());
-        expect(positionsBehind(layer)).toEqual([]);
-        if (page < 4) await user.click(within(layer).getByRole("button", { name: "Weiter" }));
-      }
-      expect(pages).toEqual([
-        ["Gieß 1", "Gieß 2", "Gieß 3"],
-        ["Gieß 4", "Gieß 5", "Gieß 6"],
-        ["Gieß 7", "Gieß 8", "Gieß 9"],
-        ["Gieß 10"],
-      ]);
-      expect(within(layer).getByRole("button", { name: "Weiter" }).hasAttribute("disabled")).toBe(
-        true,
-      );
+      const names = within(list)
+        .getAllByText(/^Gieß \d+$/)
+        .map((el) => el.textContent);
+      expect(names).toEqual(Array.from({ length: 10 }, (_, i) => `Gieß ${i + 1}`));
+      expect(within(layer).queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+      expect(within(layer).queryByRole("button", { name: "Weiter" })).toBeNull();
+      expect(positionsBehind(layer)).toEqual([]);
     } finally {
       restore();
     }
@@ -727,16 +712,15 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     ).toContain("sr-only");
   });
 
-  it("US-BEH-01 · A-04 the planning is a layer with search, a location filter and pages of plants; saving returns to Behandlungen", async () => {
+  it("US-QS-15 · US-BEH-01 · A-04 the planning is a layer with search, a location filter and one scroll list of plants; saving returns to Behandlungen", async () => {
     const posts = fakeServer({ cards: FIVE });
     const user = userEvent.setup();
     show("/today?sheet=treatments");
     await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
     const form = await dialog("Behandlung planen");
-    // A list in a layer keeps its pages on a phone (SG-LIST-01: only the lists of pages scroll; issue 1861 owns the layers):
-    // three plants per page, the position in text, search and location filter above the list.
-    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(3);
-    expect(within(form).getByText("Seite 1 von 2")).toBeTruthy();
+    // A list in a layer is its scroll content (US-QS-15): every plant, no pages, search and location filter above the list.
+    expect(within(form).getByRole("list", { name: "Pflanzen" }).children).toHaveLength(5);
+    expect(within(form).queryByText(/Seite \d+ von \d+/)).toBeNull();
     await user.type(within(form).getByRole("searchbox", { name: "Pflanze suchen" }), "EFE");
     expect(within(form).queryByRole("checkbox", { name: /^Aloe/ })).toBeNull();
     expect(within(form).getByRole("checkbox", { name: /^Efeu/ })).toBeTruthy();
@@ -744,13 +728,12 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     await user.selectOptions(within(form).getByRole("combobox", { name: "Standort" }), "Balkon");
     const balcony = within(form).getByRole("list", { name: "Pflanzen" });
     expect(within(balcony).getAllByRole("listitem")).toHaveLength(2);
-    expect(within(form).queryByText("Seite 1 von 2")).toBeNull();
     await user.selectOptions(within(form).getByRole("combobox", { name: "Standort" }), "");
     await user.click(within(form).getByRole("checkbox", { name: /^Aloe/ }));
-    // The date and the reason are one view further; the save button stays in the layer's footer.
+    // The date and the reason are one view further; the save is in the bar of the layer (SG-SHEET-04), not in a footer.
     await user.click(within(form).getByRole("button", { name: "Termin" }));
     await user.type(within(form).getByLabelText(/Grund/), "Läuse");
-    // The save button sits in the footer outside the scrolling list and submits the form by its id (sticky footer).
+    // The save button stands in the bar and submits the form by its id.
     const save = within(form).getByRole("button", { name: "Behandlung sichern" });
     expect(document.getElementById(save.getAttribute("form") ?? "")?.tagName).toBe("FORM");
     await user.click(within(form).getByRole("button", { name: "Behandlung sichern" }));
@@ -760,6 +743,30 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     );
     expect(address()).toBe("/today?sheet=treatments");
     expect(await screen.findByText(/Termin.* geplant/)).toBeTruthy();
+  });
+
+  it("US-QS-15 · SG-SHEET-04 the save of the plan stands in the bar of a phone sheet, and below the list in a dialog", async () => {
+    fakeServer({ cards: FIVE });
+    const user = userEvent.setup();
+    setViewportWidth(360);
+    show("/today?sheet=treatments");
+    await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
+    const sheet = await dialog("Behandlung planen");
+    const inBar = await waitFor(() => {
+      const found = within(sheet).getByRole("button", { name: "Behandlung sichern" });
+      expect(found.closest("[data-form-bar]")).not.toBeNull();
+      return found;
+    });
+    expect(inBar.closest("[data-sheet-pinned]")).toBeNull();
+    expect(within(sheet).getByRole("button", { name: "Abbrechen" })).toBeTruthy();
+    cleanup();
+    setViewportWidth(768);
+    show("/today?sheet=treatments");
+    await user.click(await screen.findByRole("button", { name: "Behandlung planen" }));
+    const form = await dialog("Behandlung planen");
+    const pinned = within(form).getByRole("button", { name: "Behandlung sichern" });
+    expect(pinned.closest("[data-sheet-pinned]")).not.toBeNull();
+    expect(pinned.closest("[data-form-bar]")).toBeNull();
   });
 
   it("US-BEH-01 · A-04 · US-QS-32 an invalid plan opens the view of the first missing entry: no plant, then no reason", async () => {

@@ -125,7 +125,7 @@ describe("US-SOZ-04 · US-QS-03 a bulk share of three species", () => {
     const srv = server();
     const { onWritten } = renderSection();
     await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     await buffered();
     expect(srv.fetchFn).not.toHaveBeenCalled();
     online(true);
@@ -146,7 +146,7 @@ describe("US-SOZ-04 · US-QS-03 a bulk share of three species", () => {
     server("/sharing/species/sp2");
     renderSection();
     await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     await buffered();
     online(true);
     act(() => void window.dispatchEvent(new Event("online")));
@@ -164,7 +164,7 @@ describe("US-SOZ-04 · US-QS-03 a bulk share of three species", () => {
     server("/sharing/species/sp2");
     renderSection();
     await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     expect(await screen.findByRole("status")).toBeTruthy();
     await waitFor(() =>
       expect(screen.getByRole("status").textContent).toContain("1 von 3 Arten geändert, 2 nicht."),
@@ -177,10 +177,10 @@ describe("US-SOZ-04 · US-QS-03 a bulk share of three species", () => {
     const srv = strictSharing("/sharing/species/sp1");
     renderSection();
     await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     await waitFor(() => expect(srv.fetchFn).toHaveBeenCalledTimes(1));
     await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     await waitFor(() => expect(srv.fetchFn).toHaveBeenCalledTimes(4));
     expect(srv.keys[1]).toBe(srv.keys[0]);
     expect(srv.applied).toEqual([

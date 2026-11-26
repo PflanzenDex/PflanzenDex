@@ -587,8 +587,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(within(layer).getByRole("button", { name: /Zone 3/ })).toBeTruthy();
   });
 
-  it("US-QS-22 the list of what I own is paged inside its layer with its own address part", async () => {
-    // Paging starts at 768 px; the layer stays a sheet (a dialog) below 1024 px.
+  it("US-QS-15 · US-QS-22 the list of what I own is one scroll list inside its layer: every entry, no pages, no address part", async () => {
     setViewportWidth(768);
     fakeServer([
       item({ id: "e1", name: "Zone 1 · Stecklingslicht" }),
@@ -598,9 +597,9 @@ describe("US-QS-22 the equipment fits one screen", () => {
     ]);
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
     const layer = await screen.findByRole("dialog", { name: "Geräte" });
-    expect(within(layer).getByText("Seite 1 von 2")).toBeTruthy();
-    await userEvent.click(within(layer).getByRole("button", { name: "Weiter" }));
     expect(await within(layer).findByRole("button", { name: /Teil 7/ })).toBeTruthy();
+    expect(within(layer).queryByText(/Seite \d+ von \d+/)).toBeNull();
+    expect(within(layer).queryByRole("button", { name: "Weiter" })).toBeNull();
   });
 
   it("US-QS-22 a row of the list opens the record as its own layer", async () => {
