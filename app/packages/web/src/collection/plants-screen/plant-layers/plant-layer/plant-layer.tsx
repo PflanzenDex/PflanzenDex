@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { Menu, type MenuItem } from "@/shared/patterns/display/panels/menu/menu";
@@ -78,9 +78,8 @@ function tabContents(
   p: Props,
   tab: ReturnType<typeof usePlantTab>,
   close: () => void,
-  parts: { note: PlantNote; resultRef: (host: HTMLDivElement | null) => void },
+  note: PlantNote,
 ) {
-  const { note, resultRef } = parts;
   const { card } = p;
   const lightZone = p.onLightZone;
   const measure = () => p.onMeasure?.(card);
@@ -98,7 +97,6 @@ function tabContents(
         growth={
           p.slots?.growth ? slot(p.slots.growth, "growth", p.slots.growthFallback) : undefined
         }
-        resultRef={resultRef}
         onTreat={() => tab.choose("pflege")}
       />
     ),
@@ -146,8 +144,6 @@ function PlantLayerSheet(props: Props & { note: PlantNote }) {
   const { card, note } = props;
   const { closeLayer } = useLayer(plantLayerId(card.id));
   const tab = usePlantTab();
-  // The line of the overview that takes the result of "Gießen": the overview mounts it, the quick actions above it use it.
-  const [resultHost, setResultHost] = useState<HTMLElement | null>(null);
   const items = moreItems(card, props);
   const measure = props.onMeasure;
   const water = props.slots?.water;
@@ -166,7 +162,6 @@ function PlantLayerSheet(props: Props & { note: PlantNote }) {
                 <Slot render={water} part="water" card={card} measure={() => measure?.(card)} />
               ) : undefined
             }
-            resultHost={resultHost}
             note={note("first_plant_saved")}
           />
         ) : undefined
@@ -180,7 +175,7 @@ function PlantLayerSheet(props: Props & { note: PlantNote }) {
         <Tabs
           label={t("tabs.label")}
           wrap
-          tabs={tabContents(props, tab, closeLayer, { note, resultRef: setResultHost })}
+          tabs={tabContents(props, tab, closeLayer, note)}
           value={tab.tab}
           onValueChange={tab.choose}
         />

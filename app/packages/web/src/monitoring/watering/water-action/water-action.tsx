@@ -14,18 +14,20 @@ const t = texts(table);
 
 /**
  * "Gießen" for one plant (US-MON-05, US-QS-32): writes today's entry through the same operation as the list on "Heute".
- * The button stays where it is and unchanged, so nothing under the finger moves (SG-FEED-05, issue 2462). The result is
- * drawn into `resultHost`, a line of the overview that gives its place to it: when the write made the entry,
- * "Gegossen heute · Rückgängig" for 8 s (SG-FEED-03), otherwise "Zuletzt gegossen: heute" until the next write; it reads
- * against the keeper's today when it renders, so the word follows the day. Without a host the result stands next to the
- * button. Focus: while the write runs the button is `aria-disabled`, not `disabled` (F-0094); the undo takes the focus when
- * it appears, and the button takes it back when the undo window ends or the undo ran.
+ * The button stays where it is and unchanged, so nothing under the finger moves (SG-FEED-05, issues 2462, 2536). The result
+ * is drawn into `resultHost`, the line directly below the quick actions of the layer (owner decision d-130, issue 2536):
+ * when the write made the entry, "Gegossen heute · Rückgängig" for 8 s (SG-FEED-03), otherwise "Zuletzt gegossen: heute"
+ * until the next write; it reads against the keeper's today when it renders, so the word follows the day. Without a host
+ * the result stands next to the button. Focus: while the write runs the button is `aria-disabled`, not `disabled` (F-0094);
+ * the focus stays on the button when the result shows, because the undo row takes none (`keepFocus`: the view must not
+ * scroll away from the row, US-QS-15). The result is said once, by the shared live region (`useUndo`, `useSay`, SG-FEED-04).
+ * A keeper who tabbed to the undo and used it, or whose window ended under the focus, gets the focus back on the button.
  */
 export function WaterAction(props: {
   api: string;
   token: () => Promise<string | undefined>;
   specimen: { id: string; name: string };
-  /** The line whose place the result takes (`SlotContext.resultHost` of the plant layer). */
+  /** The line directly below the quick actions that holds the result (`SlotContext.resultHost` of the plant layer). */
   resultHost?: HTMLElement | null | undefined;
 }) {
   const { api, token, specimen, resultHost } = props;
@@ -39,7 +41,7 @@ export function WaterAction(props: {
         result={t("resultToday")}
         subject={specimen.name}
         busy={restore.running}
-        from={button}
+        keepFocus
         compact={resultHost != null}
         onUndo={undoWater}
       />

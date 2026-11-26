@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import { createRef } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -76,50 +75,51 @@ describe("US-QS-32 UndoRow shows the result in place with its undo", () => {
   });
 });
 
-describe("US-QS-32 · SG-FEED-05 the undo row of a control that stays (issue 2462)", () => {
-  it("US-QS-32 the undo takes the focus from the control that caused the change (`from`), which stays on the page", () => {
-    const from = createRef<HTMLButtonElement>();
+describe("US-QS-15 · US-QS-32 · SG-FEED-05 the undo row of a control that stays (issues 2462, 2536)", () => {
+  it("US-QS-15 · issue 2536 with `keepFocus` the undo row never takes the focus: the control that caused the change keeps it", () => {
     const { rerender } = render(
       <div>
-        <button ref={from} type="button">
-          Gießen
-        </button>
+        <button type="button">Gießen</button>
       </div>,
     );
-    from.current?.focus();
+    const control = screen.getByRole("button", { name: "Gießen" });
+    control.focus();
     rerender(
       <div>
-        <button ref={from} type="button">
-          Gießen
-        </button>
-        <UndoRow result="Gegossen heute" subject="Aloe" from={from} onUndo={() => undefined} />
+        <button type="button">Gießen</button>
+        <UndoRow result="Gegossen heute" subject="Aloe" keepFocus onUndo={() => undefined} />
       </div>,
     );
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: /^Rückgängig/ }));
+    expect(document.activeElement).toBe(control);
   });
 
-  it("US-QS-32 the undo does not take the focus from `from` when another control holds it", () => {
-    const from = createRef<HTMLButtonElement>();
-    const { rerender } = render(
+  it("US-QS-15 · issue 2536 with `keepFocus` it does not even take a focus that is lost to the body, and it moves no focus at all", () => {
+    const focus = vi.spyOn(HTMLElement.prototype, "focus");
+    render(<UndoRow result="Gegossen heute" subject="Aloe" keepFocus onUndo={() => undefined} />);
+    expect(document.activeElement).toBe(document.body);
+    expect(focus).not.toHaveBeenCalled();
+    focus.mockRestore();
+  });
+
+  it("US-QS-15 · issue 2536 the undo with `keepFocus` is still a real button the keyboard reaches by Tab and presses by Enter", async () => {
+    const onUndo = vi.fn();
+    render(
       <div>
-        <button ref={from} type="button">
-          Gießen
-        </button>
-        <input aria-label="Suche" />
+        <button type="button">Gießen</button>
+        <UndoRow result="Gegossen heute" subject="Aloe" keepFocus onUndo={onUndo} />
       </div>,
     );
-    const input = screen.getByRole("textbox", { name: "Suche" });
-    input.focus();
-    rerender(
-      <div>
-        <button ref={from} type="button">
-          Gießen
-        </button>
-        <input aria-label="Suche" />
-        <UndoRow result="Gegossen heute" subject="Aloe" from={from} onUndo={() => undefined} />
-      </div>,
-    );
-    expect(document.activeElement).toBe(input);
+    screen.getByRole("button", { name: "Gießen" }).focus();
+    await userEvent.tab();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Rückgängig: Aloe" }));
+    await userEvent.keyboard("{Enter}");
+    expect(onUndo).toHaveBeenCalledOnce();
+  });
+
+  it("US-QS-15 · SG-FEED-04 · DS-69 the row is no live region of its own: the shared live region says the result once", () => {
+    render(<UndoRow result="Gegossen heute" subject="Aloe" keepFocus onUndo={() => undefined} />);
+    const row = screen.getByText("Gegossen heute").closest("p") as HTMLElement;
+    expect(row.closest("[aria-live], [role=status], [role=alert]")).toBeNull();
   });
 
   it("SG-FEED-05 a compact row keeps one text line: the button reaches over it by negative margins; the default row does not", () => {

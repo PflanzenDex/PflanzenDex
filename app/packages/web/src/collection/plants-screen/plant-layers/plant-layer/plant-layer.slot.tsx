@@ -36,8 +36,8 @@ function slotFallback(
 }
 
 /**
- * The line of the overview whose place a result of "Gießen" takes (`SlotContext.resultHost`, SG-FEED-05, issue 2462): the
- * overview provides it around the part, the slot hands it on; `null` outside the overview and until it has mounted.
+ * The line directly below the quick actions that holds a result of "Gießen" (`SlotContext.resultHost`, SG-FEED-05, issues
+ * 2462, 2536): the quick actions provide it around the part, the slot hands it on; `null` outside them and until it has mounted.
  */
 export const ResultHost = createContext<HTMLElement | null>(null);
 

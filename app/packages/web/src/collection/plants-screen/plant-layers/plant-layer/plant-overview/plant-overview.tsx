@@ -1,4 +1,4 @@
-import type { ReactNode, Ref } from "react";
+import type { ReactNode } from "react";
 import { zoneLabel, type SpecimenCard } from "@pflanzendex/core";
 import { Badge } from "@/shared/ui/display/badge/badge";
 import { Button } from "@/shared/ui/button/button";
@@ -50,18 +50,14 @@ export function Chips({ card }: { card: SpecimenCard }) {
  * "Überblick" (US-QS-23): fits the layer without scroll on a phone. The latest photo as a thumbnail beside the last
  * measurement, the growth trend of the own history (a slot of `care`, P-08), the state and the open treatment; "Behandeln" and
  * "Notizen" are plain buttons. The quick actions "Messen", "Gießen" and "Foto" stand under the title of the layer, not here
- * (`QuickActions`, owner decision 2026-11-22, issue 2424). The result of "Gießen" takes the place of the "Art · Status" line while it shows and
- * the line is hidden, not removed, so the cell keeps the taller of the two and no button, tab or line moves (SG-FEED-05,
- * issue 2462): the overview has no spare height to reserve one more line (US-QS-23). The layer gets that cell through
- * `resultRef`.
+ * (`QuickActions`, owner decision 2026-11-22, issue 2424), and so does the result of "Gießen", in a line under the row (owner
+ * decision d-130, issue 2536): the "Art · Status" line below is a plain line again.
  */
 export function PlantOverview(props: {
   card: SpecimenCard;
   access: PhotoAccess;
   /** The growth trend; without it the overview says "unbekannt". */
   growth?: ReactNode;
-  /** Receives the cell that the result of "Gießen" is drawn into (`null` when the overview leaves). */
-  resultRef?: Ref<HTMLDivElement>;
   /** Opens the planning of a treatment (tab "Pflege"). */
   onTreat: () => void;
 }) {
@@ -85,16 +81,12 @@ export function PlantOverview(props: {
         <p>
           {t("overview.state")} <strong data-attention={state.attention}>{state.text}</strong>
         </p>
-        {/* The result of "Gießen" is drawn into the second box of this cell; the facts line goes while it has content. */}
-        <div className="group grid grid-cols-[minmax(0,1fr)]">
-          <Quiet className="col-start-1 row-start-1 group-has-[>div:not(:empty)]:invisible">
-            {t("overview.facts", {
-              species: card.speciesName ?? UNKNOWN,
-              status: STATUS_TEXT[card.status],
-            })}
-          </Quiet>
-          <div ref={props.resultRef} className="col-start-1 row-start-1" />
-        </div>
+        <Quiet>
+          {t("overview.facts", {
+            species: card.speciesName ?? UNKNOWN,
+            status: STATUS_TEXT[card.status],
+          })}
+        </Quiet>
       </div>
       <Provenance value={card.provenance} />
       {/* Two plain buttons side by side; when the labels do not fit (200 % text, NFR-13) a button moves to the next row.
