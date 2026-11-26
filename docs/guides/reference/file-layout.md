@@ -4,7 +4,7 @@
 
 ## Units
 
-A unit is a folder, or a group of files that share the name before the first dot. `card.tsx`, `card.test.tsx` and `card.stories.tsx` are one unit. The `README.md` of a folder counts as one unit. Entries that start with a dot do not count.
+A unit is a folder, or a group of files that share the name before the first dot. `card.tsx`, `card.test.tsx` and `card.stories.tsx` are one unit. The `README.md` of a folder counts as one unit, so the `expect` of its manifest includes that unit. Entries that start with a dot do not count.
 
 ## The size hint
 
@@ -42,9 +42,13 @@ expect: 25
 
 ## What stays hard
 
-- A per-path rule in `app/config/lint/layout.config.mjs` is a hard limit. A manifest does not raise it.
+- A per-path rule in `app/config/lint/layout.config.mjs` is a hard limit. A manifest does not raise it. Since d-139 (issue 2546) no per-path rule sets a number: the fixed limits are manifests (see below), and `app/packages/*/src` keeps no limit.
 - Kebab-case names, one folder per component and the collections (migrations, ADRs, test logs, dated spike folders) keep their rules. A manifest does not replace a name pattern.
 
 ## Approval
 
-A new manifest and a raised `expect` count as baseline growth. `make merge` refuses such a pull request, so the owner merges it. A lowered `expect` and a removed manifest pass.
+A new manifest and a raised `expect` count as baseline growth. `make merge` refuses such a pull request, so the owner merges it. A lowered `expect` and a removed manifest pass. A limit that a per-path rule of the merge base gave the folder carries over into its manifest and is no growth (d-139): the `expect` may be that limit plus one unit for a new `README.md`. The hook (`run.mjs`) and `make merge` judge it the same way.
+
+## The limits moved into manifests (d-139)
+
+Before issue 2546 four places had a fixed per-path limit: the app root (6 units), `app/tools/check/code` (8), `docs/guides/operations` (10) and the module folders `app/packages/*/src/*` (10, for the folders with more than 8 units). Each has a manifest now, and `expect` is the old limit plus the README unit: 7, 9, 11 and 11. The module root `app/packages/*/src` has no limit, and the collections keep their name patterns.

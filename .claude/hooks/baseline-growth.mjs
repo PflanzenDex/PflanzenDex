@@ -10,11 +10,15 @@
 //
 // A layout manifest (the frontmatter of a README.md, FR-QG-21, owner decision d-136, LY-1c) is judged the same way by
 // manifestGrowth: a new manifest or a raised `expect` is growth; a lowered `expect` and a removed manifest are not.
+// The fixed per-path limits that d-139 (issue 2546) moved into manifests carry over: a new manifest within the limit the
+// merge base gave its folder (the README unit it adds counted on top) is no growth (carriedLimit).
 
+import vm from "node:vm";
 import {
   isManifestPath,
   parseManifest,
 } from "../../app/tools/check/code/layout/layout-manifest.mjs";
+import { matchDir } from "../../app/tools/check/code/layout/layout-tree.mjs";
 
 export const BASELINE_DIR = "app/config/gates/baselines/";
 
@@ -356,8 +360,10 @@ const manifestOf = (text) => (text === null ? { state: "none" } : parseManifest(
  * Whether a layout manifest grows from `before` to `after` (texts; null when the file is absent): a new manifest and a
  * raised `expect` grow it, a lowered one, a removed manifest and a README without frontmatter do not. A manifest that
  * does not parse counts as growth (fail closed), as a baseline text that does not parse does (US-QG-09, LY-1c, LY-7).
+ * `carried` is the limit the merge base gave the folder (carriedLimit, d-139): a new manifest whose expect stays within it
+ * is no growth; without one (undefined) a new manifest is growth.
  */
-export function manifestGrowth(before, after) {
+export function manifestGrowth(before, after, carried) {
   const was = manifestOf(before);
   const now = manifestOf(after);
   if (now.state === "none") return { grows: false, reasons: [] };
@@ -366,10 +372,61 @@ export function manifestGrowth(before, after) {
       grows: true,
       reasons: [`the layout manifest does not parse: ${now.problems.join(", ")}`],
     };
-  if (was.state !== "ok") return { grows: true, reasons: [`a new manifest, expect ${now.expect}`] };
+  if (was.state !== "ok") {
+    if (carried !== undefined && now.expect <= carried) return { grows: false, reasons: [] };
+    return { grows: true, reasons: [`a new manifest, expect ${now.expect}`] };
+  }
   if (now.expect > was.expect)
     return { grows: true, reasons: [`expect rose from ${was.expect} to ${now.expect}`] };
   return { grows: false, reasons: [] };
+}
+
+// The layout config (FR-QG-21): its per-path rules are the limits a folder had at the merge base (d-139).
+export const LAYOUT_CONFIG = "app/config/lint/layout.config.mjs";
+
+// The config read as data: its default export runs in an empty context (no imports, no I/O); a text that does not run throws.
+function layoutConfigOf(text) {
+  const sandbox = { module: { exports: {} } };
+  vm.runInNewContext(text.replace(/^export default /m, "module.exports = "), sandbox, {
+    timeout: 1000,
+  });
+  return sandbox.module.exports;
+}
+
+/**
+ * The units a folder may carry over from the per-path rule of the merge base into its manifest (d-139): the rule's
+ * maxUnits, plus the README unit when the README is new at the merge base (`readmeAtBase` null), because the manifest adds
+ * that unit. Undefined when no finite per-path rule matches the folder, or the config text is missing or does not run (fail
+ * closed: a manifest then counts as growth).
+ */
+export function carriedLimit(configText, dir, readmeAtBase) {
+  if (typeof configText !== "string") return undefined;
+  let rule;
+  try {
+    rule = layoutConfigOf(configText).dirs?.find((r) => matchDir(r.path, dir));
+  } catch {
+    return undefined;
+  }
+  if (!Number.isFinite(rule?.maxUnits)) return undefined;
+  return rule.maxUnits + (readmeAtBase === null ? 1 : 0);
+}
+
+/**
+ * The reason a layout manifest edit grows the manifest, or null. `before` is the file on disk (null when absent); the edit
+ * is placed on it (textAfter) and judged by manifestGrowth. `base` holds the layout config and the README at the merge base,
+ * so the carried limit (d-139) is judged there: a README made on this branch still counts its unit as new. An edit that
+ * cannot be placed exactly grows the manifest (fail closed).
+ */
+export function manifestEditGrowth(file, before, toolInput, base) {
+  const after = textAfter(toolInput, before);
+  if (after === null) return "the edit cannot be placed exactly on the file";
+  const dir = file.split("/").slice(0, -1).join("/");
+  const { grows, reasons } = manifestGrowth(
+    before,
+    after,
+    carriedLimit(base.config, dir, base.readme),
+  );
+  return grows ? reasons.join("; ") : null;
 }
 
 /**
@@ -391,17 +448,30 @@ export function baselineChanges(pr, { mergeBase, readAt, namedAtHead }) {
       error: `the merge base is unknown: ${error.message}`,
     }));
   }
+  // The layout config of the merge base, read once and only when a manifest changes (d-139): its per-path limits carry over.
+  let layoutAtBase;
+  const layoutConfigAtBase = () => {
+    if (layoutAtBase === undefined) layoutAtBase = readAt(base, LAYOUT_CONFIG);
+    return layoutAtBase;
+  };
   return files.map((path) => {
     try {
       const before = readAt(base, path);
       const after = readAt(pr.headRefOid, path);
       if (before === null && after === null) throw new Error("the file exists on neither side");
-      return {
+      const change = {
         path,
         before,
         after,
         gateNamesFile: after === null && isBaselineFile(path) ? namedAtHead(path) : true,
       };
+      if (isManifestPath(path))
+        change.carried = carriedLimit(
+          layoutConfigAtBase(),
+          path.split("/").slice(0, -1).join("/"),
+          before,
+        );
+      return change;
     } catch (error) {
       return { path, error: error.message.split("\n")[0] };
     }
@@ -419,7 +489,7 @@ export function baselineProblems(changes) {
         `baseline ${change.path}: a version cannot be read (${change.error}), so growth cannot be ruled out`,
       ];
     const { grows, reasons } = isManifestPath(change.path)
-      ? manifestGrowth(change.before, change.after)
+      ? manifestGrowth(change.before, change.after, change.carried)
       : baselineGrows(change.path, change.before, change.after, {
           gateNamesFile: change.gateNamesFile,
         });
