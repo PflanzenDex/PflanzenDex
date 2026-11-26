@@ -69,6 +69,12 @@ export type LayerSheetProps = {
   title: string;
   /** The one filled primary action of the layer (US-QS-15); everything else is a tinted or plain button, a row or a tile. */
   primaryAction?: React.ReactNode;
+  /**
+   * Actions that stay under the title, above the content, which scrolls under them (US-QS-15, owner decision 2026-11-22,
+   * issue 2424: the quick actions of a plant). The one filled action among them is the layer's primary action; the sheet
+   * counts them with its header for the heights.
+   */
+  topAction?: React.ReactNode;
   /** Accessible name of the close button (German). */
   closeLabel?: string;
   /**
@@ -90,6 +96,7 @@ export function LayerSheet({
   id,
   title,
   primaryAction,
+  topAction,
   closeLabel = "Schließen",
   halfHeight = false,
   children,
@@ -107,8 +114,9 @@ export function LayerSheet({
   const returning = useNavigationType() === "POP";
   const { showBody, onExited } = useLeavingBody(shown, replaced, isLg);
   useFocusOnLeave(shown);
-
   useFrameWarning(id, open && isLg);
+  // What stays in place around the content: the quick actions above it and the primary action below it.
+  const actions = { primaryAction, topAction };
 
   if (isLg) {
     if (!shown) return null;
@@ -116,7 +124,7 @@ export function LayerSheet({
       <LayerPane
         id={id}
         title={title}
-        primaryAction={primaryAction}
+        {...actions}
         closeLabel={closeLabel}
         onClose={guard.requestClose}
         returning={returning}
@@ -144,7 +152,7 @@ export function LayerSheet({
       >
         {/* The modal keeps its children mounted when closed; a closed layer must not load data or hold a pager (US-QS-22),
             so the body renders only while the layer is open or still leaving (US-QS-15, F7). */}
-        {showBody ? <LayerBody primaryAction={primaryAction}>{children}</LayerBody> : null}
+        {showBody ? <LayerBody {...actions}>{children}</LayerBody> : null}
       </ResponsiveModal>
     </LayerGuarded>
   );

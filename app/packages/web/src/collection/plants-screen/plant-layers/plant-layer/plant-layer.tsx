@@ -138,10 +138,9 @@ function tabContents(
 const NO_NOTE: PlantNote = () => null;
 
 /**
- * One plant as a layer with tabs (US-QS-23, US-QS-15): the name, the quick actions "Messen", "Gießen" and "Foto" under it
- * (only on the overview, owner decision 2026-11-22, issue 2424), its chips, the menu "Mehr" with the rarer actions and the tabs "Überblick",
- * "Verlauf", "Pflege" and "Standort". The active tab is in the address. The calm notes (US-ONB-07) stand under the quick
- * actions and first in "Verlauf".
+ * One plant as a layer with tabs (US-QS-23, US-QS-15): the name, the quick actions under it (only on the overview, owner
+ * decision 2026-11-22, issue 2424), its chips, the menu "Mehr" with the rarer actions and the tabs "Überblick", "Verlauf", "Pflege"
+ * and "Standort". The active tab is in the address. The calm notes (US-ONB-07) stand under the quick actions and first in "Verlauf".
  */
 function PlantLayerSheet(props: Props & { note: PlantNote }) {
   const { card, note } = props;
@@ -153,9 +152,11 @@ function PlantLayerSheet(props: Props & { note: PlantNote }) {
   const measure = props.onMeasure;
   const water = props.slots?.water;
   return (
-    <LayerSheet id={plantLayerId(card.id)} title={card.name}>
-      <div className="flex flex-col gap-3">
-        {tab.tab === "ueberblick" ? (
+    <LayerSheet
+      id={plantLayerId(card.id)}
+      title={card.name}
+      topAction={
+        tab.tab === "ueberblick" ? (
           <QuickActions
             card={card}
             onMeasure={measure ? () => measure(card) : undefined}
@@ -168,7 +169,10 @@ function PlantLayerSheet(props: Props & { note: PlantNote }) {
             resultHost={resultHost}
             note={note("first_plant_saved")}
           />
-        ) : null}
+        ) : undefined
+      }
+    >
+      <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <Chips card={card} />
           {items.length > 0 ? <Menu label={t("menu.label")} items={items} /> : null}

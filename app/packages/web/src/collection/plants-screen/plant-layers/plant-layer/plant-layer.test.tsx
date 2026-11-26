@@ -276,8 +276,14 @@ describe("US-QS-23 Überblick", () => {
         .getAllByRole("button")
         .map((button) => button.textContent),
     ).toEqual(["Messen", "Gießen", "Foto"]);
-    // The primary slot "Messen" and the body button "Gießen" are replaced by the row (owner decision 2026-11-22, issue 2424): nothing is pinned below.
-    expect(layer.querySelector("[data-sheet-pinned]")).toBeNull();
+    // The primary slot "Messen" and the body button "Gießen" are replaced by the row (owner decision 2026-11-22, issue 2424): it
+    // stays above the content, which scrolls under it, so the filled action never scrolls away (US-QS-15), and nothing is pinned below.
+    expect(row.closest("[data-sheet-pinned]")).not.toBeNull();
+    const region = layer.querySelector("[data-layer-body] > [data-scroll-region]") as HTMLElement;
+    expect(region.contains(row)).toBe(false);
+    expect(region.contains(chips)).toBe(true);
+    expect(follows(row, region)).toBe(true);
+    expect(layer.querySelectorAll("[data-sheet-pinned]")).toHaveLength(1);
     expect(within(layer).getAllByRole("button", { name: "Gießen" })).toHaveLength(1);
   });
 
