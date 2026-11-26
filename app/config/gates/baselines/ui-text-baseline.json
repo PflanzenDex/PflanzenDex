@@ -531,11 +531,11 @@
     },
     {
       "file": "packages/web/src/social/pages/friends-page/friend-tiles/friend-tiles.tsx",
-      "count": 4
+      "count": 2
     },
     {
       "file": "packages/web/src/social/pages/friends-page/friends-page.tsx",
-      "count": 4
+      "count": 2
     },
     {
       "file": "packages/web/src/social/parts/code-form/code-form.tsx",

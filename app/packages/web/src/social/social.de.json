@@ -107,5 +107,8 @@
   "friendsPage.friends": "Meine Freunde · {count}",
   "friendsPage.emptyTitle": "Noch keine Freunde",
   "friendsPage.emptyText": "Lade jemanden ein oder gib einen Code ein.",
-  "friendsPage.add": "Freund hinzufügen"
+  "friendsPage.add": "Freund hinzufügen",
+  "friendsPage.exchange": "Tauschbörse",
+  "friendsPage.match": "Passende Angebote",
+  "friendsPage.help": "Ohne deine Freigabe sieht niemand etwas."
 }

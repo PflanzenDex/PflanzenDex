@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { Button } from "@/shared/ui/button/button";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LayerHost, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { ScrollRegion } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-region/scroll-region";
 import { GroupedList } from "@/shared/lists/grouped-list/grouped-list";
 import { useInvalidate } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
@@ -71,13 +72,7 @@ function Body(props: {
         </Button>
       )}
       {/* The page under the title and the action scrolls as one region: the list of friends is its main part, and the rows before and after it scroll with it (US-QS-15, SG-LIST-01). */}
-      <div
-        role="region"
-        aria-label={tx("friendsPage.region")}
-        data-scroll-region=""
-        tabIndex={0}
-        className="flex min-h-24 min-w-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-      >
+      <ScrollRegion label={tx("friendsPage.region")} className="gap-4">
         <CountedRows requests={requests} news={news} />
         <FriendList friends={data.friends} />
         <ExchangeTiles counts={{ offers, matching }} swapMark={options.swapMark} />
@@ -87,9 +82,9 @@ function Body(props: {
           state={sharingChoice(data.specimens, data.shared)}
         />
         <p className="text-sm text-muted-foreground">
-          Ohne deine Freigabe sieht niemand etwas. <HelpOpener />
+          {tx("friendsPage.help")} <HelpOpener />
         </p>
-      </div>
+      </ScrollRegion>
       <AddFriendLayer api={api} token={token} onWritten={props.onWritten} />
       <ListLayers api={api} token={token} data={data} onWritten={props.onWritten} />
       <HelpLayer />

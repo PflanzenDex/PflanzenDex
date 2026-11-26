@@ -168,13 +168,13 @@ export function ExchangeTiles(props: {
     <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-2">
       <LinkTile
         to="/friends/exchange"
-        name="Tauschbörse"
+        name={tx("friendsPage.exchange")}
         {...(counts.offers !== undefined ? { count: counts.offers } : {})}
         {...note}
       />
       <LinkTile
         to="/friends/match"
-        name="Passende Angebote"
+        name={tx("friendsPage.match")}
         {...(counts.matching !== undefined ? { count: counts.matching } : {})}
         {...note}
       />
