@@ -384,7 +384,8 @@ describe("US-QS-03 · P-10 a key conflict of a new zone or location can be dismi
     const form = screen.getByRole("form", { name: "Lichtzone anlegen" });
     await userEvent.type(within(form).getByLabelText("Name"), "Fensterbank");
     await userEvent.type(within(form).getByLabelText("Lux-Obergrenze"), "8000");
-    const submit = within(form).getByRole("button", { name: "Lichtzone anlegen" });
+    // The confirming action stands in the bar of the layer, outside the form, and submits it by its id (US-QS-32, d-115).
+    const submit = screen.getByRole("button", { name: "Lichtzone anlegen" });
     await userEvent.click(submit);
     const note = await screen.findByRole("alert");
     // The conflict keeps its key: the next press would send it again, so the note gives the keeper the way on.
@@ -408,7 +409,7 @@ describe("US-QS-03 · P-10 a key conflict of a new zone or location can be dismi
     await pressFirst("Neuer Standort");
     const form = screen.getByRole("form", { name: "Standort anlegen" });
     await userEvent.type(within(form).getByLabelText("Name"), "Fensterbank");
-    const submit = within(form).getByRole("button", { name: "Standort anlegen" });
+    const submit = screen.getByRole("button", { name: "Standort anlegen" });
     await userEvent.click(submit);
     const note = await screen.findByRole("alert");
     await userEvent.click(within(note).getByRole("button", DISMISS));
@@ -429,11 +430,11 @@ describe("US-QS-03 · P-10 a key conflict of a new zone or location can be dismi
     const form = await screen.findByRole("form", { name: "Zone 2 ändern" });
     await userEvent.clear(within(form).getByLabelText("Name"));
     await userEvent.type(within(form).getByLabelText("Name"), "Zone 3");
-    await userEvent.click(within(form).getByRole("button", { name: "Sichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     const note = await screen.findByRole("alert");
     expect(within(note).queryByRole("button", DISMISS)).toBeNull();
     // The next press is a fresh write under a key of its own.
-    await userEvent.click(within(form).getByRole("button", { name: "Sichern" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() =>
       expect(calls.filter((a) => a.method === "PUT" && a.url === "/light-zones/z1")).toHaveLength(
         2,

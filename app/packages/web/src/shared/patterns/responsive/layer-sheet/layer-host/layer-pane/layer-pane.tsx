@@ -3,7 +3,8 @@ import { Button } from "@/shared/ui/button/button";
 import { leadingTextField } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
 import { useScrollAccess } from "@/shared/ui/overlays/dialog/scroll-access";
-import { FormBarHostContext, rowHost } from "@/shared/ui/button/form-bar/form-bar.host";
+import { FormBarHostContext, usePinnedBarHost } from "@/shared/ui/button/form-bar/form-bar.host";
+import { PinnedBar } from "@/shared/ui/button/form-bar/form-bar.slot";
 import { keptOpener } from "../../use-layer";
 
 /** The body of a layer, shared by the pane and by the sheet or dialog around it (US-QS-15). */
@@ -66,8 +67,8 @@ export function LayerPane({
 }: LayerPaneProps) {
   const heading = React.useRef<HTMLHeadingElement>(null);
   const pane = React.useRef<HTMLElement>(null);
-  // The actions of a form in the pane are a plain row after its last field; "Abbrechen" closes through the guard (US-QS-32, d-060).
-  const barHost = React.useMemo(() => rowHost(onClose), [onClose]);
+  // The actions of a form in the pane stand in its bar, pinned under the body; "Abbrechen" closes through the guard (US-QS-32, d-115).
+  const { host: barHost, setSlot } = usePinnedBarHost(onClose);
   const onBack = React.useRef(returning);
   React.useEffect(() => {
     // The pane's own close button comes first, so the text field is looked for in the layer's body.
@@ -83,24 +84,32 @@ export function LayerPane({
       onKeyDown={(event) => {
         if (event.key === "Escape") onClose();
       }}
-      className="flex max-h-[calc(100dvh-3rem)] w-96 shrink-0 flex-col gap-4 rounded-lg border border-border bg-card p-4 text-card-foreground"
+      // The pane takes the height that is left in its column (`min-h-0` and `shrink`: a column that a frame of a given height
+      // stretches holds it), so a pane that starts below a title never pushes the frame past the window; the cap of the window
+      // height only bounds a pane in a frame whose height is not given (US-QS-15, DS-61).
+      className="flex max-h-[calc(100dvh-3rem)] min-h-0 w-96 shrink flex-col gap-4 rounded-lg border border-border bg-card p-4 text-card-foreground"
     >
-      <div className="flex items-start justify-between gap-2">
-        <h2
-          id={`layer-${id}`}
-          ref={heading}
-          tabIndex={-1}
-          className="text-lg font-semibold focus-visible:outline-none"
-        >
-          {title}
-        </h2>
-        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-          {closeLabel}
-        </Button>
-      </div>
-      <FormBarHostContext.Provider value={barHost}>
-        <LayerBody primaryAction={primaryAction}>{children}</LayerBody>
-      </FormBarHostContext.Provider>
+      {/* One scope for the whole pane, as the sheet and the dialog give it: the title row and the primary action are in it too (SG-LIST-01). */}
+      <LayerScope.Provider value>
+        <div className="flex items-start justify-between gap-2">
+          <h2
+            id={`layer-${id}`}
+            ref={heading}
+            tabIndex={-1}
+            className="text-lg font-semibold focus-visible:outline-none"
+          >
+            {title}
+          </h2>
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+            {closeLabel}
+          </Button>
+        </div>
+        <FormBarHostContext.Provider value={barHost}>
+          <LayerBody primaryAction={primaryAction}>{children}</LayerBody>
+        </FormBarHostContext.Provider>
+        {/* The bar of a form: pinned under the body, outside its scroll region (US-QS-32, owner decision d-115). */}
+        <PinnedBar slotRef={setSlot} />
+      </LayerScope.Provider>
     </aside>
   );
 }

@@ -35,7 +35,12 @@ type Parts = { sheet: HTMLElement | null; header: HTMLElement | null; body: HTML
  * the window changes (a rotation, the keyboard, a larger text size) and whenever the sheet, its header or what its body
  * holds changes size or content, one frame later so a burst of changes is one measurement.
  */
-export function useSheetKind(parts: Parts, heights: Heights, open: boolean): SheetKind {
+export function useSheetKind(
+  parts: Parts,
+  heights: Heights,
+  open: boolean,
+  atLeastHalf = false,
+): SheetKind {
   const [kind, setKind] = React.useState<SheetKind>("fit");
   const { sheet, header, body } = parts;
   React.useLayoutEffect(() => {
@@ -51,6 +56,7 @@ export function useSheetKind(parts: Parts, heights: Heights, open: boolean): She
             rem,
           },
           heights,
+          atLeastHalf,
         ),
       );
     };
@@ -77,6 +83,6 @@ export function useSheetKind(parts: Parts, heights: Heights, open: boolean): She
       mutation.disconnect();
       body.removeEventListener("load", later, true);
     };
-  }, [open, sheet, header, body, heights]);
+  }, [open, sheet, header, body, heights, atLeastHalf]);
   return kind;
 }

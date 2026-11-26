@@ -5,6 +5,7 @@ import {
   formText,
   type FormAddress,
   type FormPlant,
+  type MeasureStart,
 } from "@/collection";
 import { LightPage } from "@/light";
 import { CarePhasesPage, MeasurePage } from "@/care";
@@ -61,7 +62,9 @@ export type ModeProps = AreaProps & {
   measure: { id: string; name: string } | null;
   /** The address names the measure view. */
   measureOpen: boolean;
-  openMeasure: (m: { id: string; name: string }) => void;
+  openMeasure: (m: { id: string; name: string }, start?: MeasureStart) => void;
+  /** "Foto" of the plant layer asked for the photo picker; the measure view takes it once and calls `started`. */
+  measureStart: { photo: boolean; started: () => void };
   leaveMeasure: () => void;
   measureSaved: () => void;
   form: FormAddress;
@@ -120,6 +123,8 @@ export function ModeBody(p: ModeProps) {
         specimen={p.measure}
         onBack={p.leaveMeasure}
         onSaved={p.measureSaved}
+        startWithPhoto={p.measureStart.photo}
+        onPhotoStarted={p.measureStart.started}
       />
     );
   if (p.group === GROUP.phase && !p.newSpecies)

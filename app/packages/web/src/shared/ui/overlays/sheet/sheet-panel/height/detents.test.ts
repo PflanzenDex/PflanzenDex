@@ -67,6 +67,19 @@ describe("US-QS-15 · fitting height, half height and full height", () => {
     expect(sheetKind(measure({ height: 310, chrome: 300, rem: 32 }), heights)).toBe("fit");
   });
 
+  it("US-QS-15 · issue 2424 a sheet that asks for half height at least has two heights although its content fits within half", () => {
+    expect(sheetKind(measure({ height: 250 }), heights, true)).toBe("two");
+    expect(sheetKind(measure({ height: 320, overflow: 0 }), heights, true)).toBe("two");
+  });
+
+  it("US-QS-15 · issue 2424 a sheet that asks for half height at least still opens at full height at 200 % text, when title and actions do not fit within half", () => {
+    expect(sheetKind(measure({ height: 310, chrome: 300, rem: 32 }), heights, true)).toBe("full");
+  });
+
+  it("US-QS-15 · issue 2424 asking for half height at least changes nothing for a content that is longer than half", () => {
+    expect(sheetKind(measure({ height: 320, overflow: 400 }), heights, true)).toBe("two");
+  });
+
   it("US-QS-15 the middle between half and full goes to full height", () => {
     expect(nearestDetent(480, heights)).toBe("full");
   });

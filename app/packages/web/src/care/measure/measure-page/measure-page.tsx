@@ -36,6 +36,10 @@ type MeasurePageProps = {
   specimen: { id: string; name: string };
   onBack: () => void;
   onSaved?: () => void;
+  /** "Foto" of the plant layer (US-QS-15, issue 2424): the form opens on its photo field and starts the picker once. */
+  startWithPhoto?: boolean;
+  /** The picker was started: the caller drops the request. */
+  onPhotoStarted?: () => void;
 };
 
 type MeasuredProps = {
@@ -53,6 +57,8 @@ type MeasuredProps = {
   valueRef: NonNullable<ComponentProps<typeof MeasureForm>["focusRef"]>;
   invalidate: () => void;
   onBack: () => void;
+  startWithPhoto: boolean;
+  onPhotoStarted: (() => void) | undefined;
 };
 
 /** The loaded page: the fact line, the form under the growth note and the course layer (issue 1644, US-ACH-05). */
@@ -85,6 +91,8 @@ function MeasuredView(props: MeasuredProps) {
           photoStatus={photoStatus}
           onCancel={props.onBack}
           onDismissRefusal={props.dismissRefusal}
+          startWithPhoto={props.startWithPhoto}
+          {...(props.onPhotoStarted ? { onPhotoStarted: props.onPhotoStarted } : {})}
         />
       </GrowthNoteLayer>
       <CourseLayer
@@ -152,6 +160,8 @@ export function MeasurePage(props: MeasurePageProps) {
             valueRef={valueRef}
             invalidate={invalidate}
             onBack={props.onBack}
+            startWithPhoto={props.startWithPhoto === true}
+            onPhotoStarted={props.onPhotoStarted}
           />
         )}
       </LoadFrame>

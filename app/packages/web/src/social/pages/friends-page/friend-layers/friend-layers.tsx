@@ -43,7 +43,7 @@ export function ListLayers(props: {
           }
         />
       </Layer>
-      <Layer id="news" title={tx("layers.news")}>
+      <Layer id="news" title={tx("layers.news")} halfHeight>
         {/* One screen (issue 1157): the banner is one row and the feed pages by the free height of the layer. */}
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <FriendsBanner api={api} token={token} compact />

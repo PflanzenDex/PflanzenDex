@@ -67,6 +67,7 @@ export function CollectionArea(props: AreaProps) {
               measure={plantForm.measure}
               measureOpen={measureOpen}
               openMeasure={plantForm.openMeasure}
+              measureStart={plantForm.measureStart}
               leaveMeasure={plantForm.leaveMeasure}
               measureSaved={plantForm.measureSaved}
               form={form}

@@ -136,6 +136,47 @@ describe("US-QS-15 · a layer as a sheet has half height and full height", () =>
   });
 });
 
+describe("US-QS-15 · issue 2424 a layer that asks for half height opens at half height below 768 px, whatever the length of its content", () => {
+  function Half(props: { halfHeight?: boolean }) {
+    return (
+      <MemoryRouter initialEntries={["/start"]}>
+        <LayerHost>
+          <LayerOpener id="notiz">Notiz</LayerOpener>
+          <LayerSheet id="notiz" title="Notiz" {...(props.halfHeight ? { halfHeight: true } : {})}>
+            <p>Ein kurzer Inhalt</p>
+          </LayerSheet>
+        </LayerHost>
+      </MemoryRouter>
+    );
+  }
+
+  it("US-QS-15 · issue 2424 a short content opens at half height with the toggle", async () => {
+    layout.content = 60;
+    render(<Half halfHeight />);
+    const sheet = await open();
+    await waitFor(() => expect(heightOf(sheet)).toBe("400px"));
+    expect(sheet.getAttribute("data-sheet-height")).toBe("two");
+    expect(within(sheet).getByRole("button", { name: "Vollbild" })).toBeTruthy();
+  });
+
+  it("US-QS-15 a short content of a layer without the request keeps the height of its content", async () => {
+    layout.content = 60;
+    render(<Half />);
+    const sheet = await open();
+    await waitFor(() => expect(sheet.getAttribute("data-sheet-height")).toBe("fit"));
+    expect(heightOf(sheet)).toBe("auto");
+  });
+
+  it("US-QS-15 · issue 2424 from 768 px the request changes nothing: a dialog has no sheet height", async () => {
+    setViewportWidth(800);
+    layout.content = 60;
+    render(<Half halfHeight />);
+    await userEvent.click(screen.getByRole("button", { name: "Notiz" }));
+    const dialog = await screen.findByRole("dialog", { name: "Notiz" });
+    expect(dialog.getAttribute("data-sheet-height")).toBeNull();
+  });
+});
+
 describe("US-QS-15 · Escape, Schließen and Back close a layer at half height", () => {
   it("US-QS-15 Escape closes the layer at half height and its address is gone", async () => {
     render(<Example />);

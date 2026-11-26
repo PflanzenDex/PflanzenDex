@@ -82,8 +82,30 @@ export type DialogPartProps = {
   onOpenAutoFocus?: ((event: Event) => void) | undefined;
   /** The element the focus returns to when there is no trigger (US-QS-08); the view's start when it has left the page. */
   returnFocusTo?: React.RefObject<HTMLElement | null> | undefined;
+  /** Receives the bar of the dialog, where the form bar of a layer draws its pair (US-QS-32, owner decision d-115). */
+  onBarSlot?: ((element: HTMLElement | null) => void) | undefined;
   body: React.ReactNode;
 };
+
+/** The trigger of the dialog: it stays where it is and starts the chunk on pointer, focus or touch (DS-08). */
+const DialogOpener = React.forwardRef<
+  HTMLElement,
+  { open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactElement }
+>(({ open, onOpenChange, children }, ref) => (
+  <Slot
+    ref={ref}
+    aria-haspopup="dialog"
+    aria-expanded={open}
+    data-state={open ? "open" : "closed"}
+    onPointerEnter={preloadDialog}
+    onFocus={preloadDialog}
+    onTouchStart={preloadDialog}
+    onClick={() => onOpenChange(!open)}
+  >
+    {children}
+  </Slot>
+));
+DialogOpener.displayName = "DialogOpener";
 
 /**
  * The dialog of md and up. The trigger stays where it is, so it keeps its focus while the dialog code loads; the dialog
@@ -100,6 +122,7 @@ export function DialogPart(props: DialogPartProps) {
     onOpenChange,
     onOpenAutoFocus,
     returnFocusTo,
+    onBarSlot,
     body,
   } = props;
   const opener = React.useRef<HTMLElement>(null);
@@ -109,18 +132,9 @@ export function DialogPart(props: DialogPartProps) {
   return (
     <>
       {trigger ? (
-        <Slot
-          ref={opener}
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          data-state={open ? "open" : "closed"}
-          onPointerEnter={preloadDialog}
-          onFocus={preloadDialog}
-          onTouchStart={preloadDialog}
-          onClick={() => onOpenChange(!open)}
-        >
+        <DialogOpener ref={opener} open={open} onOpenChange={onOpenChange}>
           {trigger}
-        </Slot>
+        </DialogOpener>
       ) : null}
       {opened ? (
         <ChunkErrorBoundary
@@ -143,6 +157,7 @@ export function DialogPart(props: DialogPartProps) {
             {...(closeLabel ? { closeLabel } : {})}
             {...(onOpenAutoFocus ? { onOpenAutoFocus } : {})}
             {...(closeFocus ? { onCloseAutoFocus: closeFocus } : {})}
+            {...(onBarSlot ? { onBarSlot } : {})}
           >
             {body}
           </DialogWindow>

@@ -39,11 +39,11 @@ export type FormBarProps = {
    * layer's guard still asks for typed input ("Eingabe verwerfen?"). Without either, no "Abbrechen" is drawn.
    */
   onCancel?: () => void;
-  /** Extra classes of the bar drawn in place (a dialog, a pane or a page), e.g. to span the columns of a grid form. */
+  /** Extra classes of the bar drawn in place (a page form), e.g. to span the columns of a grid form. */
   className?: string;
   /**
    * The status line of the action ("Foto wird gespeichert …", US-WAC-06): it stands right under the pair, wherever the bar is
-   * drawn: inside the bar of a phone sheet, under the sticky bar at the top of a page form, under the row from `md`. Given
+   * drawn: inside the bar of a sheet, a dialog or a pane, under the sticky bar at the top of a page form, under the row from `md`. Given
    * (also as `null`), the line is always in the DOM, so a status that appears is announced, and empty it takes no room; left
    * out, there is none.
    */
@@ -101,8 +101,12 @@ function Status(props: { text: string | null | undefined }) {
   );
 }
 
-/** A phone sheet: the pair goes into the sheet's bar; the sheet drops its X while a form has one (one close control). */
-function SheetBar(props: FormBarProps & { slot: HTMLElement | null; close: () => void }) {
+/**
+ * The bar of a container: the pair goes through a portal into the container's `slot`, which is outside its scroll region. A
+ * phone sheet has it above the title and drops its X while a form has one (one close control); a dialog and a pane have it
+ * pinned at their bottom and keep their X (owner decisions d-060 and d-115). Nothing is drawn until the container has its slot.
+ */
+function HostBar(props: FormBarProps & { slot: HTMLElement | null; close: () => void }) {
   const host = useFormBarHost();
   const register = host?.register;
   const attached = props.slot !== null;
@@ -121,8 +125,8 @@ function SheetBar(props: FormBarProps & { slot: HTMLElement | null; close: () =>
 }
 
 /**
- * A plain row in the content, after the last field, nothing sticky (owner decision d-060): the bar of a dialog from `md`, of a
- * pane, and of a page form from `md`. The status line follows the row.
+ * A plain row in the content, after the last field, nothing sticky (owner decision d-060): the bar of a page form from `md`,
+ * and of a form that no container and no region draws. The status line follows the row.
  */
 function RowBar(props: FormBarProps & { cancel: (() => void) | undefined }) {
   return (
@@ -165,19 +169,19 @@ function PageBar(props: FormBarProps & { slot: HTMLElement }) {
 }
 
 /**
- * The actions of a form (US-QS-32, SG-SHEET-04, owner decision d-060): "Abbrechen" at the leading edge, the confirming action
- * at the trailing edge, the one filled button of the view (SG-BTN-02). There is no sticky footer. Render it last in the form
- * region, after the last field: that is where it stands from `md`, in a dialog, a pane and a page form, as a plain row. Below
- * `md` the container decides, and the DOM order still follows the picture: a phone sheet draws the pair into its bar above
- * the title, a page form (its content in a `FormBarRegion`) sticks it at the top of the form. The confirming button names its
- * form with `form`, so it submits it from wherever it is drawn. Only one pair is in the page at a time.
+ * The actions of a form (US-QS-32, SG-SHEET-04, owner decisions d-060 and d-115): "Abbrechen" at the leading edge, the
+ * confirming action at the trailing edge, the one filled button of the view (SG-BTN-02). There is no sticky footer inside the
+ * content. Render it last in the form region, after the last field: in a sheet, a dialog and a pane the container draws the pair
+ * into its own bar outside the scroll region (the sheet above its title, the dialog and the pane pinned at their bottom), so
+ * the confirming action is always in view; a page form (its content in a `FormBarRegion`) sticks it at the top of the form
+ * below `md` and keeps a plain row after the last field from `md`. The confirming button names its form with `form`, so it
+ * submits it from wherever it is drawn. Only one pair is in the page at a time.
  */
 export function FormBar(props: FormBarProps) {
   const host = useFormBarHost();
   const region = useFormBarRegion();
   const isMd = useIsMd();
-  if (host?.sheet) return <SheetBar {...props} slot={host.slot} close={host.close} />;
-  if (host) return <RowBar {...props} cancel={props.onCancel ?? host.close} />;
+  if (host) return <HostBar {...props} slot={host.slot} close={host.close} />;
   if (region && !isMd) return region.slot ? <PageBar {...props} slot={region.slot} /> : null;
   return <RowBar {...props} cancel={props.onCancel} />;
 }

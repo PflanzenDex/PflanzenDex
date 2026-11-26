@@ -190,19 +190,29 @@ describe("US-QS-32 · SG-SHEET-04 a phone sheet puts the actions of its form in 
   });
 });
 
-describe("US-QS-32 · SG-SHEET-04 from md the same pair is a plain row after the last field of the dialog, nothing sticky", () => {
-  it("US-QS-32 · SG-SHEET-04 in a dialog Abbrechen precedes the confirming action in a row that is not sticky", async () => {
+describe("US-QS-32 · SG-SHEET-04 · d-115 from md the same pair is pinned at the bottom of the dialog, under its scroll region", () => {
+  it("US-QS-32 · d-115 in a dialog Abbrechen precedes the confirming action in a pinned bar that is no part of the scroll region", async () => {
     setViewportWidth(800);
     render(<Example />);
     const dialog = await screen.findByRole("dialog", { name: "Notiz" });
     const cancel = await within(dialog).findByRole("button", { name: "Abbrechen" });
     const save = within(dialog).getByRole("button", { name: "Sichern" });
     expect(position(cancel, save) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
-    const bar = cancel.parentElement as HTMLElement;
-    expect(bar.className).not.toMatch(/\b(sticky|fixed)\b/);
+    const row = cancel.parentElement as HTMLElement;
+    expect(row.hasAttribute("data-form-bar")).toBe(true);
+    // The bar is the dialog's own, below the scroll region that holds the fields: it never scrolls away with them.
+    const bar = row.parentElement as HTMLElement;
+    expect(bar.hasAttribute("data-layer-bar")).toBe(true);
+    const scroll = within(dialog)
+      .getByLabelText("Text")
+      .closest("[data-scroll-region]") as HTMLElement;
+    expect(scroll).not.toBeNull();
+    expect(scroll.contains(bar)).toBe(false);
+    expect(position(scroll, bar) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(bar.parentElement).toBe(scroll.parentElement);
   });
 
-  it("US-QS-32 · SG-SHEET-04 in a dialog from 768 px the pair stands after the last field, in the content, and focus order follows the picture", async () => {
+  it("US-QS-32 · d-115 in a dialog from 768 px the pair stands after the title and the fields in the DOM, so the focus order follows the picture", async () => {
     setViewportWidth(768);
     render(<Example />);
     const dialog = await screen.findByRole("dialog", { name: "Notiz" });
@@ -211,11 +221,34 @@ describe("US-QS-32 · SG-SHEET-04 from md the same pair is a plain row after the
     expect(position(field, cancel) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
     expect(within(dialog).getAllByRole("button", { name: "Abbrechen" })).toHaveLength(1);
     expect(within(dialog).getAllByRole("button", { name: "Sichern" })).toHaveLength(1);
-    // The pair is in the content of the dialog, below the title, and Abbrechen is read before the confirming action.
     const title = within(dialog).getByRole("heading", { name: "Notiz" });
     expect(position(title, cancel) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
-    const save = within(dialog).getByRole("button", { name: "Sichern" });
-    expect(position(cancel, save) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+  });
+
+  it("US-QS-32 · d-115 the status line of the action stands right under the pair in the pinned bar of the dialog", async () => {
+    setViewportWidth(800);
+    render(
+      <ResponsiveModal title="Notiz" open onOpenChange={() => undefined}>
+        <BarForm status="Foto wird gespeichert …" />
+      </ResponsiveModal>,
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Notiz" });
+    const save = await within(dialog).findByRole("button", { name: "Sichern" });
+    const row = save.parentElement as HTMLElement;
+    const status = within(dialog).getByRole("status");
+    expect(row.nextElementSibling).toBe(status);
+    expect(row.parentElement?.hasAttribute("data-layer-bar")).toBe(true);
+    expect(within(dialog).getAllByRole("status")).toHaveLength(1);
+  });
+
+  it("US-QS-32 · d-115 a dialog without a form draws no bar and takes no room for one", async () => {
+    setViewportWidth(800);
+    render(<Example bar={false} />);
+    const dialog = await screen.findByRole("dialog", { name: "Notiz" });
+    expect(dialog.querySelector("[data-form-bar]")).toBeNull();
+    const slot = dialog.querySelector("[data-layer-bar]");
+    expect(slot === null || slot.childElementCount === 0).toBe(true);
+    if (slot) expect(slot.className.split(/\s+/)).toContain("empty:hidden");
   });
 
   it("US-QS-32 · SG-SHEET-04 Abbrechen of the dialog closes it", async () => {
@@ -225,6 +258,19 @@ describe("US-QS-32 · SG-SHEET-04 from md the same pair is a plain row after the
     const dialog = await screen.findByRole("dialog", { name: "Notiz" });
     await userEvent.click(await within(dialog).findByRole("button", { name: "Abbrechen" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("US-QS-32 · SG-SHEET-04 the confirming action of the pinned bar submits the form that stays in the scroll region", async () => {
+    setViewportWidth(800);
+    const onSubmit = vi.fn();
+    render(
+      <ResponsiveModal title="Notiz" open onOpenChange={() => undefined}>
+        <BarForm onSubmit={onSubmit} />
+      </ResponsiveModal>,
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Notiz" });
+    await userEvent.click(await within(dialog).findByRole("button", { name: "Sichern" }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
   it("US-QS-32 · SG-SHEET-04 the pair keeps working when the window crosses md: one pair at a time, the form keeps its input", async () => {
@@ -240,6 +286,11 @@ describe("US-QS-32 · SG-SHEET-04 from md the same pair is a plain row after the
     );
     expect(screen.getAllByRole("button", { name: "Sichern" })).toHaveLength(1);
     expect((screen.getByLabelText("Text") as HTMLInputElement).value).toBe("Basilikum");
+    expect(
+      (screen
+        .getByRole("button", { name: "Sichern" })
+        .closest("[data-layer-bar]") as Element | null) !== null,
+    ).toBe(true);
   });
 });
 

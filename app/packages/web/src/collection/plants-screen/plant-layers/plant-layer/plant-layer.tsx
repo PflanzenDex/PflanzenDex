@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { Menu, type MenuItem } from "@/shared/patterns/display/panels/menu/menu";
@@ -16,7 +16,8 @@ import type { Handlers, LayerProps, PlantNote, SlotFallback, SlotRender } from "
 import table from "../plant-layers.de.json";
 import { PlantCareTab } from "./plant-care-tab/plant-care-tab";
 import { PlantLocation } from "./plant-location/plant-location";
-import { Chips, MeasureButton, PlantOverview } from "./plant-overview/plant-overview";
+import { Chips, PlantOverview } from "./plant-overview/plant-overview";
+import { QuickActions } from "./plant-overview/quick-actions/quick-actions";
 import type { SlotPart } from "./plant-layer.skeleton";
 import { HistoryTab, Slot } from "./plant-layer.slot";
 
@@ -77,8 +78,9 @@ function tabContents(
   p: Props,
   tab: ReturnType<typeof usePlantTab>,
   close: () => void,
-  note: PlantNote,
+  parts: { note: PlantNote; resultRef: (host: HTMLDivElement | null) => void },
 ) {
+  const { note, resultRef } = parts;
   const { card } = p;
   const lightZone = p.onLightZone;
   const measure = () => p.onMeasure?.(card);
@@ -96,7 +98,7 @@ function tabContents(
         growth={
           p.slots?.growth ? slot(p.slots.growth, "growth", p.slots.growthFallback) : undefined
         }
-        water={p.slots?.water ? slot(p.slots.water, "water") : undefined}
+        resultRef={resultRef}
         onTreat={() => tab.choose("pflege")}
       />
     ),
@@ -136,32 +138,37 @@ function tabContents(
 const NO_NOTE: PlantNote = () => null;
 
 /**
- * One plant as a layer with tabs (US-QS-23, US-QS-15): the name, its chips, the menu "Mehr" with the rarer actions and
- * the tabs "Überblick", "Verlauf", "Pflege" and "Standort". The filled "Messen" sits in the primary slot of the layer
- * and only on the overview; the active tab is in the address. The calm notes (US-ONB-07) stand under "Messen" and first
- * in "Verlauf".
+ * One plant as a layer with tabs (US-QS-23, US-QS-15): the name, the quick actions "Messen", "Gießen" and "Foto" under it
+ * (only on the overview, owner decision 2026-11-22, issue 2424), its chips, the menu "Mehr" with the rarer actions and the tabs "Überblick",
+ * "Verlauf", "Pflege" and "Standort". The active tab is in the address. The calm notes (US-ONB-07) stand under the quick
+ * actions and first in "Verlauf".
  */
 function PlantLayerSheet(props: Props & { note: PlantNote }) {
   const { card, note } = props;
   const { closeLayer } = useLayer(plantLayerId(card.id));
   const tab = usePlantTab();
+  // The line of the overview that takes the result of "Gießen": the overview mounts it, the quick actions above it use it.
+  const [resultHost, setResultHost] = useState<HTMLElement | null>(null);
   const items = moreItems(card, props);
   const measure = props.onMeasure;
+  const water = props.slots?.water;
   return (
-    <LayerSheet
-      id={plantLayerId(card.id)}
-      title={card.name}
-      primaryAction={
-        tab.tab === "ueberblick" && measure ? (
-          <>
-            <MeasureButton card={card} onMeasure={() => measure(card)} />
-            {/* The note of the first plant stands directly under "Messen" (US-ONB-07). */}
-            {note("first_plant_saved")}
-          </>
-        ) : undefined
-      }
-    >
+    <LayerSheet id={plantLayerId(card.id)} title={card.name}>
       <div className="flex flex-col gap-3">
+        {tab.tab === "ueberblick" ? (
+          <QuickActions
+            card={card}
+            onMeasure={measure ? () => measure(card) : undefined}
+            onPhoto={measure ? () => measure(card, { photo: true }) : undefined}
+            water={
+              water ? (
+                <Slot render={water} part="water" card={card} measure={() => measure?.(card)} />
+              ) : undefined
+            }
+            resultHost={resultHost}
+            note={note("first_plant_saved")}
+          />
+        ) : null}
         <div className="flex items-start justify-between gap-2">
           <Chips card={card} />
           {items.length > 0 ? <Menu label={t("menu.label")} items={items} /> : null}
@@ -169,7 +176,7 @@ function PlantLayerSheet(props: Props & { note: PlantNote }) {
         <Tabs
           label={t("tabs.label")}
           wrap
-          tabs={tabContents(props, tab, closeLayer, note)}
+          tabs={tabContents(props, tab, closeLayer, { note, resultRef: setResultHost })}
           value={tab.tab}
           onValueChange={tab.choose}
         />

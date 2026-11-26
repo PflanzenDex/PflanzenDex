@@ -38,8 +38,14 @@ export function plantHintOccasionsOf(
   ];
 }
 
+/**
+ * How the measure form opens (US-QS-15, owner decision 2026-11-22, issue 2424): `photo` starts the photo picker of its optional photo field,
+ * which "Foto" of the quick actions asks for. The form is the same one, so the keeper still enters a value and saves.
+ */
+export type MeasureStart = { photo?: boolean };
+
 export type Handlers = {
-  onMeasure?: ((e: SpecimenCard) => void) | undefined;
+  onMeasure?: ((e: SpecimenCard, start?: MeasureStart) => void) | undefined;
   onArchive?: ((e: SpecimenCard) => void) | undefined;
   onRepot?: ((e: SpecimenCard) => void) | undefined;
   onMark?: ((e: SpecimenCard) => void) | undefined;
