@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "node tools/workflow/worktree/dev-servers.mjs",
-    "lint": "eslint . --cache --cache-strategy content --cache-location \"$(node tools/check/quality/gates/eslint-shared.mjs --cache-file lint)\"",
+    "lint": "eslint . --cache --cache-strategy content --cache-location \"$(node tools/check/quality/gates/eslint-shared.mjs --cache-file lint)\" --suppressions-location config/gates/baselines/hooks-baseline.json",
     "format": "prettier --write . \"../tools/**/*.{ts,tsx,js,mjs,json,css,html,yml,yaml}\" \"../.claude/**/*.{ts,tsx,js,mjs,json,css,html,yml,yaml}\" \"!../.claude/settings.local.json\" --config .prettierrc.json",
     "format:check": "prettier --check . \"../tools/**/*.{ts,tsx,js,mjs,json,css,html,yml,yaml}\" \"../.claude/**/*.{ts,tsx,js,mjs,json,css,html,yml,yaml}\" \"!../.claude/settings.local.json\" --config .prettierrc.json --cache --cache-strategy content --cache-location .cache/gates/prettier",
     "typecheck": "npm run typecheck --workspaces --if-present",
@@ -89,14 +89,17 @@
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.65.1",
     "@semantic-release/commit-analyzer": "13.0.1",
+    "@tanstack/eslint-plugin-query": "5.108.4",
     "@types/node": "26.6.6",
     "@typescript/native": "npm:typescript@7.0.2",
     "@vitest/coverage-v8": "5.1.0",
     "concurrently": "10.0.7",
     "conventional-changelog-conventionalcommits": "10.4.1",
     "eslint": "10.15.0",
+    "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-security": "4.2.1",
     "eslint-plugin-sonarjs": "4.2.2",
+    "eslint-plugin-storybook": "10.6.9",
     "fallow": "3.43.2",
     "globals": "17.14.0",
     "jscpd": "5.4.3",
@@ -118,7 +121,7 @@
   "lint-staged": {
     "*.{ts,tsx,js,mjs}": [
       "prettier --write",
-      "eslint --max-warnings=0 --no-warn-ignored"
+      "eslint --max-warnings=0 --no-warn-ignored --suppressions-location config/gates/baselines/hooks-baseline.json"
     ],
     "*.{json,md,css,html,yml,yaml}": "prettier --write",
     "../{tools,.claude}/**/*.{ts,tsx,js,mjs,json,css,html,yml,yaml}": "prettier --write --config .prettierrc.json"

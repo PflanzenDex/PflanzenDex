@@ -79,7 +79,9 @@ export function useRequest<T>(props: {
   });
   const failure = q.error instanceof RequestFailure ? q.error.error : undefined;
   const offline = q.data !== undefined && q.isError && failure?.code === NETWORK_DOWN;
-  const retry = useCallback(() => void q.refetch(), [q]);
+  // `refetch` is bound to the query observer, which lives as long as the view: the same function in every render.
+  const { refetch } = q;
+  const retry = useCallback(() => void refetch(), [refetch]);
   const status =
     q.data !== undefined && (!q.isError || offline) ? "ready" : q.isError ? "error" : "pending";
   return {

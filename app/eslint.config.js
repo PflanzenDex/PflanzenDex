@@ -9,6 +9,9 @@ import { minimatch } from "minimatch";
 import { walkCode, hasMarker } from "./tools/check/code/check-boundaries.mjs";
 import uiText from "./tools/check/code/ui-text/eslint-ui-text.mjs";
 import { constantsConfigs } from "./tools/check/code/constants/constants-config.mjs";
+import pluginQuery from "@tanstack/eslint-plugin-query";
+import reactHooks from "eslint-plugin-react-hooks";
+import storybook from "eslint-plugin-storybook";
 
 // Files with `MAX_LINES_IGNORE: <reason>` in their first 5 lines are exempt from max-lines (US-QG-03).
 // Thresholds live once in quality-limits.json (FR-QG-16); per-area overrides are merged over `default`.
@@ -161,4 +164,27 @@ export default defineConfig([
         },
       ]
     : []),
+  // Hooks (issue 2512, US-QG-01): the two classic rules only. The plugin's recommended config is not spread: it turns on the
+  // React Compiler rules, which stay off (owner decision 2026-11-19). The exhaustive-deps hits of the report are in
+  // config/gates/baselines/hooks-baseline.json (bulk suppressions, shrink-only).
+  {
+    files: ["packages/web/**/*.{ts,tsx}"],
+    plugins: { "react-hooks": reactHooks },
+    rules: {
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "error",
+    },
+  },
+  // TanStack Query (issue 2512, US-QG-01): the recommended rules of the web sources, with an empty baseline.
+  ...pluginQuery.configs["flat/recommended"].map((config) => ({
+    ...config,
+    files: ["packages/web/src/**/*.{ts,tsx}"],
+  })),
+  // Storybook (issue 2512, US-QG-01): the recommended rules of the stories. They turn on react-hooks/rules-of-hooks for
+  // stories, which is switched off below: a story's render function and the storybook decorators call hooks on purpose.
+  ...storybook.configs["flat/recommended"],
+  {
+    files: ["**/*.stories.tsx", "packages/web/.storybook/**/*.tsx"],
+    rules: { "react-hooks/rules-of-hooks": "off" },
+  },
 ]);
