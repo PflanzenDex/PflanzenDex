@@ -22,12 +22,15 @@ const need = (over: Partial<Need> & Pick<Need, "id">): Need => ({
 });
 
 describe("US-EQU-07 what is missing", () => {
-  it("US-EQU-07 · US-QS-15 · issue 1154 the needs page by the free height of the layer", () => {
+  it("US-EQU-07 · US-QS-15 · issue 2535 the needs are the plain content of the layer: every need is on the list, with no page fit and no page bar", () => {
     render(
       <NeedsView needs={[need({ id: "a" }), need({ id: "b" }), need({ id: "c" })]} fill={noop} />,
     );
     const list = screen.getByRole("list", { name: "Fehlt / Nachkaufen" });
-    expect(list.hasAttribute("data-page-fit")).toBe(true);
+    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
+    expect(list.hasAttribute("data-page-fit")).toBe(false);
+    expect(list.hasAttribute("data-scroll-region")).toBe(false);
+    expect(screen.queryByRole("button", { name: /^(Weiter|Zurück)$/ })).toBeNull();
   });
 
   it("US-EQU-07 says so when nothing is missing", () => {
@@ -118,12 +121,12 @@ describe("US-QS-32 needs are rows titled by their next action, opening where it 
     for (const row of rows) expect(row.className).not.toContain("rounded-lg");
   });
 
-  it("US-QS-32 the rows of the needs do not count towards the height of their section, and the section never shrinks below its content, so the pager never falls under the recommendations at 200 % text (issue 2272)", () => {
+  it("US-QS-32 · issue 2535 the list of the needs is as high as its rows (no size containment), and the section never shrinks below its content, so the rows never lie under the recommendations at 200 % text (issues 2272, 2535)", () => {
     render(<NeedsView needs={[need({ id: "a" }), need({ id: "b" })]} fill={noop} />);
     const list = screen.getByRole("list", { name: "Fehlt / Nachkaufen" });
-    // Size containment (issue 1113, as the today page): the page size follows the free height, not the rows on the page.
-    expect(list.className).toContain("[contain:size]");
-    // A row never shrinks below its content, so a squeezed list cannot collapse it to its borders (issue 2272). The pager
+    // Size containment would make the list 0 px high in the layer: its rows would run over what stands below the list.
+    expect(list.className).not.toContain("contain:size");
+    // A row never shrinks below its content, so a squeezed list cannot collapse it to its borders (issue 2272). The list
     // gives each of its rows that rule (issue 2315), so the list needs no rule of its own.
     for (const row of within(list).getAllByRole("listitem"))
       expect(row.classList.contains("shrink-0")).toBe(true);

@@ -9,8 +9,8 @@ import table from "../../equipment.de.json";
 
 const t = texts(table);
 
-/** Needs per page until the layout measures the free height of the layer (starting value, assumption; #1029, issue 1154). */
-const NEEDS_PER_PAGE = 2;
+/** `Pager` asks for a part size; the needs are all loaded and have no `paging`, so every need is on the list at once (US-QS-15). */
+const NEEDS_PER_PART = 2;
 
 /** The address of a device's record: the equipment page with its item layer open (US-QS-22). */
 const itemAddress = (id: string) =>
@@ -60,8 +60,8 @@ export function NeedsView(props: {
 }) {
   const { needs } = props;
   return (
-    // No min-h-0: a section that may shrink below its content lets the pager fall under the recommendations at 200 % text
-    // (issue 2272, as the further tasks of the today page, issue 1113).
+    // No min-h-0: a section that may shrink below its content lets the rows fall under the recommendations at 200 % text
+    // (issue 2272).
     <section aria-labelledby="equipment-needs-title" className="flex min-w-0 flex-1 flex-col gap-3">
       <h2 id="equipment-needs-title" className="text-base font-semibold">
         {t("needs.title")}
@@ -71,15 +71,14 @@ export function NeedsView(props: {
       ) : (
         <Pager
           items={needs}
-          pageSize={NEEDS_PER_PAGE}
-          fit
+          pageSize={NEEDS_PER_PART}
           label={t("needs.title")}
           param={LAYER_PARAM}
           replace
-          // The rows do not count towards the height of the section (size containment, issue 1113): the page size follows the
-          // free height only, not the rows on the page (issue 2272). The rows never shrink below their content: the pager gives
-          // every row `shrink-0` (issue 2315).
-          listClassName={`${ROW_GROUP} [contain:size]`}
+          // The list is the content of its layer, which scrolls (issue 2418): it is as high as its rows, so the recommendations
+          // start below the last row. No size containment: it would make the list 0 px high and the rows would run over the
+          // recommendations (issue 2535). The rows never shrink below their content: the list gives every row `shrink-0`.
+          listClassName={ROW_GROUP}
           getKey={(n) => n.id}
           renderItem={(n) => <NeedRow need={n} fill={props.fill} />}
         />
