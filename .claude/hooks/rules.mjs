@@ -85,7 +85,7 @@ export function isGateFile(relativePath) {
 // Whether an edit of this file asks a human in the hook (US-QG-07): a gate file that is not a gate test. A gate test asks no
 // question, because a test changes no threshold or exception list (owner decision 2026-11-07). make merge refuses a PR that
 // changes one, so a human sees it at the merge. isGateTest judges a test by its place and name, as isGateFile does, so a
-// test of a mod under .claude/ asks (issue 2528). guard-edit, after-edit and the list a question names use it.
+// test of a mod under .claude/ asks (issue 2528). guard-edit, after-edit, guard-bash and gate-plan use it (issue 2554).
 export function asksBeforeEdit(relativePath) {
   return isGateFile(relativePath) && !isGateTest(relativePath);
 }
@@ -115,6 +115,11 @@ const FORBIDDEN_COMMANDS = [
   [
     /\bgh\s+issue\s+create\b/,
     "Create issues with `make issue TYPE= EPIC= PRIORITY= TITLE= BODY=` (FR-DEV-10): it sets the type and epic labels and the board fields.",
+  ],
+  // The owner's branch-wide allow of a gate file (US-QG-07, issue 2554): only the owner runs it, in an own shell.
+  [
+    /\bgate-allow\b/,
+    "Only the owner runs `gate-allow`, in the owner's own shell, to allow gate files for the rest of the branch (US-QG-07, issue 2554).",
   ],
 ];
 
@@ -193,9 +198,9 @@ function discardsWork(tokens) {
   }
 }
 
-// The hook's record files in the git directory of a worktree: claude-gate-confirmations.json, claude-gate-plan.json,
-// claude-gate-plan-asked.json and claude-gates-fingerprint (gate-confirmations.mjs, run.mjs). Only the hook and `make gate-plan`
-// write them (US-QG-07). A command that names one is refused, reads included: a text check cannot tell a write from a read (cp
+// The hook's record files in the git directory of a worktree: the claude-gate* files of the allowed gate files, of the plan and
+// of the fingerprint (gate-confirmations.mjs, run.mjs). Only the hook, `make gate-plan` and `make gate-allow` write them
+// (US-QG-07, issue 2554). A command that names one is refused, reads included: a text check cannot tell a write from a read (cp
 // and mv take either direction, a script writes by its code), and no agent needs to read them. The pattern also covers the globs
 // that name them, such as `claude-gate-*`. Quotes and backslashes are dropped first, so `claude-"gate"-plan.json` is caught too.
 // What a text check cannot catch: a name assembled at run time (a variable, printf escapes, a brace expansion), and a name built
@@ -204,7 +209,7 @@ function discardsWork(tokens) {
 // rulesets, CI and the merge review (make merge refuses a gate change) stay the real gate (D-02).
 const RECORD_NAME = /claude-gates?-/;
 const RECORD_REASON =
-  "claude-gate* files are the hook's records of confirmed gate files and of the plan (US-QG-07). Only the hook and `make gate-plan FILES=...` write them, so no command names them.";
+  "claude-gate* files are the hook's records of allowed gate files and of the plan (US-QG-07). Only the hook, `make gate-plan FILES=...` and `make gate-allow FILES=...` write them, so no command names them.";
 
 // Whether a text names a record. Quotes and backslashes are dropped first, so `claude-"gate"-plan.json` is caught too. The shell
 // guard (judgeCommand) and the Write and Edit guard (recordWriteRefusal) share this one check (US-QG-07).
@@ -808,6 +813,14 @@ export function envReadRefusal(toolName, toolInput = {}) {
 // name, so it runs first.
 export function judgeCommand(rawCommand, where = {}) {
   if (namesRecord(rawCommand)) return { decision: "deny", reason: RECORD_REASON };
+  // The owner's allow runs only in the owner's terminal (issue 2554, round 2). The name is judged on the raw text with quotes and
+  // backslashes dropped, so that "gate-allow", gate-al''low, gate-al\low and a quoted script name are refused too.
+  if (/gate-?allow/.test(rawCommand.replace(/["'\\]/g, "")))
+    return {
+      decision: "deny",
+      reason:
+        "Only the owner runs `gate-allow`, in the owner's own shell, to allow gate files for the rest of the branch (US-QG-07, issue 2554).",
+    };
   // A command that reads a secret .env file is refused first, whatever else it does (US-QG-07, issue 2354).
   let envReason = null;
   try {

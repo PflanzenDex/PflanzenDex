@@ -55,7 +55,7 @@
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" guard-bash",
-            "timeout": 10
+            "timeout": 20
           }
         ]
       },
@@ -72,7 +72,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit|Write|MultiEdit",
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
         "hooks": [
           {
             "type": "command",
@@ -87,7 +87,7 @@
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run.mjs\" after-bash",
-            "timeout": 15
+            "timeout": 20
           }
         ]
       }

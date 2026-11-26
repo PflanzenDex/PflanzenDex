@@ -1,5 +1,5 @@
-// Tests for the records of gate files (US-QG-07): pure functions. The end-to-end tests through run.mjs and gate-plan.mjs are
-// in worktree.test.mjs.
+// Tests for the records of gate files (US-QG-07): pure functions. The end-to-end tests through run.mjs, gate-plan.mjs and
+// gate-allow.mjs are in worktree.test.mjs.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -8,9 +8,7 @@ import {
   parsePlan,
   planWith,
   plannedFiles,
-  questionFiles,
-  snapshotList,
-  snapshotText,
+  unconfirmedChanged,
   withConfirmation,
   withConfirmations,
 } from "./gate-confirmations.mjs";
@@ -18,7 +16,7 @@ import {
 const A = "refs/heads/chore/x";
 const B = "refs/heads/chore/y";
 
-test("US-QG-07: a gate file asks until an edit of it is recorded as confirmed on its branch", () => {
+test("US-QG-07, issue 2554: a gate file asks until it is confirmed on its branch by the owner's allow", () => {
   assert.equal(needsQuestion("Makefile", A, null), true);
   assert.equal(needsQuestion("Makefile", A, "{}"), true);
   const text = withConfirmation(null, A, "Makefile");
@@ -66,6 +64,19 @@ test("US-QG-07: recording over a malformed record starts a new record with the c
   assert.deepEqual(JSON.parse(withConfirmation("{", A, "Makefile")), { [A]: ["Makefile"] });
 });
 
+test("US-QG-07: gate-allow records every named file of its list on the branch, and keeps the rest", () => {
+  const text = withConfirmations(JSON.stringify({ [B]: ["Makefile"] }), A, [
+    ".githooks/pre-commit",
+    "Makefile",
+  ]);
+  assert.deepEqual(JSON.parse(text), {
+    [B]: ["Makefile"],
+    [A]: [".githooks/pre-commit", "Makefile"],
+  });
+  assert.equal(needsQuestion("Makefile", A, text), false);
+  assert.equal(needsQuestion("Makefile", B, text), false);
+});
+
 test("US-QG-07: a plan lists only gate files; a plan that is missing, malformed or names a non-gate path is unusable", () => {
   assert.deepEqual(parsePlan(JSON.stringify({ [A]: ["Makefile", ".githooks/pre-commit"] })), {
     [A]: ["Makefile", ".githooks/pre-commit"],
@@ -91,58 +102,40 @@ test("US-QG-07: the planned files of a branch are its list, none without an entr
   assert.equal(plannedFiles(null, A), null);
 });
 
-test("US-QG-07: a question about a planned file names every planned file that is not confirmed yet, the file included", () => {
-  const planned = [".githooks/pre-commit", "Makefile", "app/eslint.config.js"];
-  const confirmed = withConfirmation(null, A, "app/eslint.config.js");
-  assert.deepEqual(questionFiles("Makefile", planned, confirmed, A), [
-    ".githooks/pre-commit",
+test("US-QG-07, issue 2554: a listed gate file that already differs from origin/dev and has no confirmation is named; the others pass", () => {
+  const differs = new Set([
     "Makefile",
-  ]);
-  assert.deepEqual(questionFiles("Makefile", planned, null, A), planned);
-});
-
-test("US-QG-07: a question about a file outside the plan, with no plan or an unusable one, names the file alone", () => {
-  assert.deepEqual(questionFiles(".githooks/pre-commit", ["Makefile"], null, A), [
     ".githooks/pre-commit",
+    "AGENTS.md",
+    ".claude/hooks/rules.test.mjs",
   ]);
-  assert.deepEqual(questionFiles("Makefile", null, null, A), ["Makefile"]);
-  assert.deepEqual(questionFiles("Makefile", [], null, A), ["Makefile"]);
+  const confirmed = withConfirmation(null, A, "AGENTS.md");
+  const files = ["Makefile", ".githooks/pre-commit", "AGENTS.md", ".claude/hooks/rules.test.mjs"];
+  // AGENTS.md differs but is confirmed; the gate test asks nothing; the Makefile and the hook differ and are not confirmed.
+  assert.deepEqual(
+    unconfirmedChanged(files, (f) => differs.has(f), confirmed, A),
+    ["Makefile", ".githooks/pre-commit"],
+  );
+  assert.deepEqual(
+    unconfirmedChanged(files, () => false, null, A),
+    [],
+  );
+  assert.deepEqual(
+    unconfirmedChanged(["Makefile"], () => true, null, B),
+    ["Makefile"],
+  );
 });
 
-test("US-QG-07: an answer confirms the list of the snapshot of its own question, for its own file and branch", () => {
-  const list = [".githooks/pre-commit", "Makefile"];
-  const text = snapshotText(A, "Makefile", list);
-  assert.deepEqual(snapshotList(text, A, "Makefile"), list);
-  assert.equal(snapshotList(text, A, ".githooks/pre-commit"), null);
-  assert.equal(snapshotList(text, B, "Makefile"), null);
-  assert.deepEqual(JSON.parse(withConfirmations(null, A, snapshotList(text, A, "Makefile"))), {
-    [A]: list,
-  });
-});
-
-test("US-QG-07: a snapshot that is missing, unreadable, names another file, or lists a non-gate file confirms nothing", () => {
-  const unusable = [
-    null,
-    "",
-    "{",
-    "[]",
-    "42",
-    JSON.stringify({ branch: A, file: "Makefile", list: ["README.md", "Makefile"] }),
-    JSON.stringify({ branch: A, file: "Makefile", list: [".githooks/pre-commit"] }),
-    JSON.stringify({ branch: A, file: "Makefile" }),
-  ];
-  for (const text of unusable)
-    assert.equal(snapshotList(text, A, "Makefile"), null, JSON.stringify(text));
-});
-
-test("US-QG-07: the answer confirms the list the question showed, not the plan as it is later", () => {
-  const shown = snapshotText(A, "Makefile", [".githooks/pre-commit", "Makefile"]);
-  const later = [".githooks/pre-commit", "Makefile", ".github/CODEOWNERS"];
-  const confirmed = withConfirmations(null, A, snapshotList(shown, A, "Makefile"));
-  assert.equal(needsQuestion(".github/CODEOWNERS", A, confirmed), true);
-  assert.deepEqual(questionFiles(".github/CODEOWNERS", later, confirmed, A), [
-    ".github/CODEOWNERS",
-  ]);
+test("US-QG-07, issue 2554: a file that is confirmed or unchanged is never asked about, and the change is looked at only for a file that asks", () => {
+  const seen = [];
+  const differs = (f) => {
+    seen.push(f);
+    return true;
+  };
+  const confirmed = withConfirmation(null, A, "Makefile");
+  assert.deepEqual(unconfirmedChanged(["Makefile"], differs, confirmed, A), []);
+  assert.deepEqual(unconfirmedChanged([".claude/hooks/rules.test.mjs"], differs, null, A), []);
+  assert.deepEqual(seen, []);
 });
 
 test("US-QG-07: planWith records the gate files of a branch sorted and unique, keeps the other branches, and refuses what is not a gate file", () => {

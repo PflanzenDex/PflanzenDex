@@ -1,21 +1,17 @@
-// The gate files a human has confirmed, and the question last asked, per branch (US-QG-07). The Claude Code hook asks about
-// a gate file once per file per branch: after an edit of it went through, later edits of that file on that branch pass
-// without a question. The records live in the git directory of the worktree (not tracked, not shared with the other
-// worktrees), each keyed by the full ref of a branch:
-// - claude-gate-confirmations.json: { "refs/heads/<branch>": ["<file>", ...] }, the confirmed gate files of each branch.
-// - claude-gate-plan.json: the same shape, the gate files an agent declares for a branch with `make gate-plan`. A plan
-//   confirms nothing. It makes one question name every planned file that is not confirmed yet. An agent can propose a
-//   list, but it never confirms one: only the human's answer to a question does.
-// - claude-gate-plan-asked.json: { "branch", "file", "list" }, the question last asked. After an edit of that file on that
-//   branch went through, the list the question showed is confirmed and the snapshot is deleted. Every question rewrites
-//   it, so an edit confirms only what its own question showed.
-// Pure functions, tested in gate-confirmations.test.mjs. run.mjs and gate-plan.mjs read and write the records.
+// The gate files a branch allows, and the plan of the branch (US-QG-07, issue 2554). The Claude Code hook asks before every
+// edit of a gate file. An answer to one question covers that one edit and is recorded nowhere. Only the owner's
+// `make gate-allow` (gate-allow.mjs) records a file as allowed for the rest of the branch. The records live in the git
+// directory of the worktree (not tracked, not shared with the other worktrees), each keyed by the full ref of a branch:
+// - claude-gate* confirmations (CONFIRMATIONS_FILE): { "refs/heads/<branch>": ["<file>", ...] }, the allowed gate files.
+// - claude-gate* plan (PLAN_FILE): the same shape, the gate files an agent declares for a branch with `make gate-plan`.
+//   A plan allows nothing and asks nothing. make gate-plan refuses a listed file that already differs from origin/dev and
+//   that no owner allowed (unconfirmedChanged).
+// Pure functions, tested in gate-confirmations.test.mjs. run.mjs, gate-plan.mjs and gate-allow.mjs read and write the records.
 import path from "node:path";
 import { asksBeforeEdit, isGateFile } from "./rules.mjs";
 
 export const CONFIRMATIONS_FILE = "claude-gate-confirmations.json";
 export const PLAN_FILE = "claude-gate-plan.json";
-export const ASKED_FILE = "claude-gate-plan-asked.json";
 
 // The record as an object, or null when the text is missing or not in that shape. Null makes the caller ask (fail closed).
 export function parseConfirmations(text) {
@@ -49,7 +45,7 @@ export function withConfirmation(text, branch, file) {
   return `${JSON.stringify({ ...record, [branch]: [...files].sort() }, null, 2)}\n`;
 }
 
-// The record text after every file of a list is confirmed on a branch: the list that one question showed (US-QG-07).
+// The record text after every file of a list is allowed on a branch: the list that make gate-allow names (US-QG-07, issue 2554).
 export function withConfirmations(text, branch, files) {
   return files.reduce((next, file) => withConfirmation(next, branch, file), text);
 }
@@ -61,8 +57,7 @@ export function normalizePaths(files) {
 }
 
 // The plan record: { "<branch>": ["<gate file>", ...] }, or null when the text is missing, unreadable, not in that shape, or
-// lists a path that is not a gate file. A gate test may be planned: it counts as a gate file here, it asks no question
-// (questionFiles leaves it out) and make merge reviews it. Null makes the question name its own file alone (fail closed).
+// lists a path that is not a gate file. A gate test may be planned: it counts as a gate file here, and make merge reviews it.
 export function parsePlan(text) {
   if (typeof text !== "string") return null;
   let record;
@@ -85,14 +80,13 @@ export function plannedFiles(planText, branch) {
   return Object.hasOwn(plan, branch) ? plan[branch] : [];
 }
 
-// The files that one question names (US-QG-07). A file the plan lists shows every planned file of the branch that is not
-// confirmed yet, the file itself included; a planned gate test asks no question, so it is left out. Any other file, and a plan
-// that cannot be read, names the file alone.
-export function questionFiles(file, planned, confirmedText, branch) {
-  if (!planned?.includes(file)) return [file];
-  const record = parseConfirmations(confirmedText);
-  const confirmed = record !== null && Object.hasOwn(record, branch) ? record[branch] : [];
-  return planned.filter((f) => f === file || (asksBeforeEdit(f) && !confirmed.includes(f)));
+// The listed gate files that a change has already made and that no owner allowed (US-QG-07, issue 2554): a file that asks, is not
+// allowed on the branch, and differs from origin/dev. `differs(file)` tells whether a file differs. It is asked only for a file
+// that asks and is not allowed yet, so a gate test or an allowed file costs no check.
+export function unconfirmedChanged(files, differs, confirmedText, branch) {
+  return files.filter(
+    (file) => asksBeforeEdit(file) && needsQuestion(file, branch, confirmedText) && differs(file),
+  );
 }
 
 // The plan record after a branch declares its gate files (US-QG-07). Each path must be a gate file, so a refused list
@@ -103,30 +97,4 @@ export function planWith(text, branch, files) {
   if (refused.length > 0) throw new Error(`not a gate file: ${refused.join(", ")}`);
   const plan = parsePlan(text) ?? {};
   return `${JSON.stringify({ ...plan, [branch]: [...new Set(files)].sort() }, null, 2)}\n`;
-}
-
-// The snapshot text of a question (US-QG-07): the branch, the gate file asked about and the list the question showed.
-export function snapshotText(branch, file, list) {
-  return `${JSON.stringify({ branch, file, list }, null, 2)}\n`;
-}
-
-// The list that an edit of `file` on `branch` confirms, from the snapshot of the last question, or null when the snapshot
-// does not match: missing, unreadable, written for another file or branch, not naming the file, or listing a file that asks no
-// question (a gate test). Null confirms nothing.
-export function snapshotList(text, branch, file) {
-  if (typeof text !== "string") return null;
-  let snapshot;
-  try {
-    snapshot = JSON.parse(text);
-  } catch {
-    return null;
-  }
-  const list = snapshot?.list;
-  const matches =
-    snapshot?.branch === branch &&
-    snapshot?.file === file &&
-    Array.isArray(list) &&
-    list.includes(file) &&
-    list.every((f) => typeof f === "string" && asksBeforeEdit(f));
-  return matches ? list : null;
 }

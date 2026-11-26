@@ -414,6 +414,15 @@ test("US-QG-07: a gate test stays a gate file for make merge but asks no questio
   assert.equal(asksBeforeEdit("app/packages/core/src/index.test.ts"), false);
 });
 
+test("US-QG-07, issue 2554: an agent cannot run make gate-allow, and the refusal says that only the owner runs it; make gate-plan passes", () => {
+  assert.equal(decision("make gate-allow FILES=Makefile"), "deny");
+  assert.match(
+    judgeCommand("make gate-allow FILES=Makefile", WORKTREE).reason,
+    /^Only the owner runs `gate-allow`/,
+  );
+  assert.equal(decision("make gate-plan FILES=Makefile"), "none");
+});
+
 test("US-QG-07: a shell command that names a gate record is refused, writes and reads alike; make gate-plan and ordinary commands are not", () => {
   for (const cmd of [
     `echo '{}' > "$(git rev-parse --git-dir)/claude-gate-confirmations.json"`,
