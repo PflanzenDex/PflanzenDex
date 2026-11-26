@@ -109,10 +109,17 @@ export async function expectBarAfterFields(page: Page, what: string): Promise<vo
 /**
  * From md the pair of a dialog and of a pane is the bar of the layer, pinned under its scroll region (owner decision d-115,
  * US-QS-32): one pair is in the page, in `[data-layer-bar]` and outside the scroll region, below it in the picture, inside the
- * window and usable; and it holds its place when the region scrolls to its end, so the confirming action is always in view.
+ * window (in a window of 30 rem of height and more, without scrolling) and usable; and it holds its place when the region
+ * scrolls to its end, so the confirming action is always in view.
  */
 export async function expectBarPinned(page: Page, what: string): Promise<void> {
   await expect(page.locator("[data-form-bar]"), `${what}: one pair is in the page`).toHaveCount(1);
+  // The frame holds the layer in a window of 30 rem of height and more; below that (200 % text at 768 px) the page scrolls as
+  // WCAG 1.4.10 allows, and the pair is reached by scrolling the page, not the layer.
+  const tall = await page.evaluate(
+    () => innerHeight >= 30 * parseFloat(getComputedStyle(document.documentElement).fontSize),
+  );
+  if (!tall) await barOf(page).bar.scrollIntoViewIfNeeded();
   await expectBarUsable(page, what);
   const box = () =>
     barOf(page).bar.evaluate((el) => {
