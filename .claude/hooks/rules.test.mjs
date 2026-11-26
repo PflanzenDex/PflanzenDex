@@ -73,6 +73,30 @@ test("US-QG-07 (issue 2381): the root AGENTS.md is a gate file that asks a human
   assert.equal(isGateFile("AGENTS.md.bak"), false);
 });
 
+test("US-QG-07 (issue 2528): every file under .claude/ is a gate file that asks a human, a gate test under .claude/hooks asks nothing, and a path only next to .claude/ is no gate file", () => {
+  for (const f of [
+    ".claude/rules/api.md",
+    ".claude/agents/implementer.md",
+    // A symlink into .agents/skills: the link path under .claude/ is the gate file.
+    ".claude/skills/spec-to-tests",
+    ".claude/mods/status-panel/hooks/register.tsx",
+    ".claude/settings.json",
+    ".claude/hooks/rules.mjs",
+    // A test of a mod is no gate test (AGENTS.md names the places of gate tests), whatever its extension: it asks.
+    ".claude/mods/status-panel/tests/panel.test.tsx",
+    ".claude/mods/status-panel/tests/panel.test.ts",
+  ]) {
+    assert.equal(isGateFile(f), true, f);
+    assert.equal(asksBeforeEdit(f), true, f);
+  }
+  assert.equal(isGateFile(".claude/hooks/rules.test.mjs"), true);
+  assert.equal(asksBeforeEdit(".claude/hooks/rules.test.mjs"), false);
+  for (const f of ["claude/rules/api.md", "docs/.claude/rules/api.md"]) {
+    assert.equal(isGateFile(f), false, f);
+    assert.equal(asksBeforeEdit(f), false, f);
+  }
+});
+
 const GATE_LISTS = [
   "coverage-thresholds.json",
   "quality-limits.json",
