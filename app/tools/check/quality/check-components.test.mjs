@@ -66,9 +66,9 @@ describe("US-DEV-05 · components-check lists shared components without a story"
     assert.deepEqual(r.noStory, ["shared/ui/label.tsx"]);
   });
 
-  it("US-DEV-05 · the story must be in the same folder as the component", () => {
+  it("US-DEV-05 · a sibling's stories file in the same folder does not count, only <name>.stories.tsx does", () => {
     const r = run(
-      { "shared/ui/button/button.tsx": component, "shared/ui/button.stories.tsx": story },
+      { "shared/ui/button/button.tsx": component, "shared/ui/button/other.stories.tsx": story },
       "",
     );
     assert.deepEqual(r.noStory, ["shared/ui/button/button.tsx"]);
@@ -88,6 +88,83 @@ describe("US-DEV-05 · components-check lists shared components without a story"
       "shared/feedback/undo-row/undo-row.tsx",
       "shared/lists/a/b/c/c.tsx",
     ]);
+  });
+});
+
+describe("US-DEV-05 · a story in a parent folder counts for the components below it (d-143)", () => {
+  it("US-DEV-05 · a parent folder's stories file covers a component one folder below it", () => {
+    const r = run(
+      {
+        "shared/ui/overlays/sheet/sheet-panel/sheet-panel.tsx": component,
+        "shared/ui/overlays/sheet/sheet.stories.tsx": story,
+      },
+      "",
+    );
+    assert.deepEqual(r.noStory, []);
+  });
+
+  it("US-DEV-05 · a story two folders up covers a component (grandparent folder)", () => {
+    const r = run(
+      {
+        "shared/ui/card/part/picture/picture.tsx": component,
+        "shared/ui/card/card.stories.tsx": story,
+      },
+      "",
+    );
+    assert.deepEqual(r.noStory, []);
+  });
+
+  it("US-DEV-05 · the shared root's stories file covers a component folder below it (root inclusive)", () => {
+    const r = run(
+      { "shared/ui/button/button.tsx": component, "shared/ui/button.stories.tsx": story },
+      "",
+    );
+    assert.deepEqual(r.noStory, []);
+  });
+
+  it("US-DEV-05 · a component with no stories file in any folder above it is still listed", () => {
+    const r = run(
+      {
+        "shared/ui/overlays/unsaved-input-dialog/unsaved-question/unsaved-question.tsx": component,
+        "shared/ui/overlays/unsaved-input-dialog/unsaved-input-dialog.tsx": component,
+        "shared/ui/card/card.stories.tsx": story,
+        "shared/ui/other/other.tsx": component,
+      },
+      "",
+    );
+    assert.deepEqual(r.noStory, [
+      "shared/ui/other/other.tsx",
+      "shared/ui/overlays/unsaved-input-dialog/unsaved-input-dialog.tsx",
+      "shared/ui/overlays/unsaved-input-dialog/unsaved-question/unsaved-question.tsx",
+    ]);
+  });
+
+  it("US-DEV-05 · a story of another shared root does not cover a component", () => {
+    const r = run(
+      {
+        "shared/ui/button/button.tsx": component,
+        "shared/patterns/patterns.stories.tsx": story,
+      },
+      "",
+    );
+    assert.deepEqual(r.noStory, ["shared/ui/button/button.tsx"]);
+  });
+
+  it("US-DEV-05 · a story below a component does not cover it, a parent covers children only", () => {
+    const r = run(
+      {
+        "shared/ui/card/card.tsx": component,
+        "shared/ui/card/part/part.stories.tsx": story,
+      },
+      "",
+    );
+    assert.deepEqual(r.noStory, ["shared/ui/card/card.tsx"]);
+  });
+
+  it("US-DEV-05 · flat layout unchanged: a flat component needs its own <name>.stories.tsx, a sibling's does not cover it", () => {
+    // The root's badge.stories.tsx does not cover the flat label.tsx next to it: a flat component's own folder is its root.
+    const r = run({ "shared/ui/label.tsx": component, "shared/ui/badge.stories.tsx": story }, "");
+    assert.deepEqual(r.noStory, ["shared/ui/label.tsx"]);
   });
 });
 
@@ -185,7 +262,10 @@ describe("US-DEV-05 · components-check prints warnings only and exits 0", () =>
     assert.deepEqual(r.noInventory, ["shared/ui/a/a.tsx"]);
     const lines = warnings(r);
     assert.equal(lines.length, 2);
-    assert.match(lines[0], /^shared\/ui\/a\/a\.tsx has no a\.stories\.tsx next to it/);
+    assert.equal(
+      lines[0],
+      "shared/ui/a/a.tsx has no stories file in its folder or a parent folder",
+    );
     assert.match(
       lines[1],
       /^shared\/ui\/a\/a\.tsx has no line in docs\/guides\/reference\/design-system\.md/,

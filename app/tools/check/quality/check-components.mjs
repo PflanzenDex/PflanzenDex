@@ -3,7 +3,8 @@
 // no new gate; `make gates` and `make ci` stay the definition of done). Everything it reads comes from the code and the doc (P-07).
 //   component   <name>.tsx in shared/ui, shared/patterns, shared/lists or shared/feedback, at any depth. A name with a further
 //               dot (<name>.stories.tsx, <name>.test.tsx, <name>.slot.tsx, <name>.test-helpers.tsx ...) is no component.
-//   story       <name>.stories.tsx in the same folder as <name>.tsx, whatever the layout (folder per component or flat).
+//   story       <name>.stories.tsx in the same folder as <name>.tsx, or any *.stories.tsx in a parent folder up to its shared root
+//               (inclusive): a parent folder's story covers the components below it (owner decision d-143, US-DEV-05).
 //   inventory   a table row of the doc (a line that starts with |) that names the component in backticks: its folder
 //               (`shared/ui/button`, folder-per-component layout only), its file (`shared/ui/button/button.tsx`, or the flat
 //               `shared/ui/button.tsx`) or its PascalCase name (`Button`).
@@ -31,6 +32,28 @@ function filesUnder(dir, rel) {
 // The story next to a component file, relative to src.
 const storyOf = (rel) =>
   `${path.posix.dirname(rel)}/${path.posix.basename(rel, ".tsx")}.stories.tsx`;
+
+// Any stories file, relative to src (`x.stories.tsx`, `x.scrolling.stories.tsx` ...).
+const STORY_FILE = /\.stories\.tsx$/;
+
+// The folders above a component's own folder, nearest first, up to and including its shared root (shared/ui ...). A flat
+// component sits in its root, so it has none: only its own <name>.stories.tsx counts for it, as before.
+function parentFolders(rel) {
+  const root = COMPONENT_DIRS.find((dir) => rel.startsWith(`${dir}/`));
+  const folders = [];
+  let dir = path.posix.dirname(rel);
+  while (dir !== root && dir.startsWith(`${root}/`)) {
+    dir = path.posix.dirname(dir);
+    folders.push(dir);
+  }
+  return folders;
+}
+
+// A component has a story when its own <name>.stories.tsx is next to it, or when a folder above it (up to its shared root)
+// holds a stories file. `storyFolders` are the folders that hold a stories file.
+function hasStory(rel, files, storyFolders) {
+  return files.has(storyOf(rel)) || parentFolders(rel).some((dir) => storyFolders.has(dir));
+}
 
 // The name as the inventory writes it: `object-row` is `ObjectRow`.
 const pascalName = (stem) => stem.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase());
@@ -72,10 +95,13 @@ export function check({ webDir, inventoryFile }) {
   const components = [...files]
     .filter((rel) => COMPONENT_FILE.test(path.posix.basename(rel)))
     .sort();
+  const storyFolders = new Set(
+    [...files].filter((rel) => STORY_FILE.test(rel)).map((rel) => path.posix.dirname(rel)),
+  );
   const names = inventoryNames(readDoc(inventoryFile));
   return {
     components,
-    noStory: components.filter((rel) => !files.has(storyOf(rel))),
+    noStory: components.filter((rel) => !hasStory(rel, files, storyFolders)),
     noInventory: components.filter((rel) => !inventoryKeys(rel).some((key) => names.has(key))),
   };
 }
@@ -83,7 +109,7 @@ export function check({ webDir, inventoryFile }) {
 // One warning line per gap: the missing stories first, then the missing inventory lines.
 export function warnings({ noStory, noInventory }) {
   return [
-    ...noStory.map((rel) => `${rel} has no ${path.posix.basename(storyOf(rel))} next to it`),
+    ...noStory.map((rel) => `${rel} has no stories file in its folder or a parent folder`),
     ...noInventory.map(
       (rel) => `${rel} has no line in ${INVENTORY_DOC} (component inventory, section 4.4)`,
     ),
