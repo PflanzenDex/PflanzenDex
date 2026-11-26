@@ -11,6 +11,20 @@ const MAX_DEPTH = 8;
 const SHELLS = new Set(["sh", "bash", "zsh", "dash", "ksh"]);
 // Programs that run code given as text: their arguments and heredoc bodies are judged as script text.
 const SCRIPT_PROGRAM = /^(?:python[\d.]*|node|perl|ruby|php|deno|bun|awk|gawk)$/;
+// Interpreter options whose next word is their value, not the script file (issue 2554, review of #2555).
+const VALUE_OPTIONS = new Set([
+  "--import",
+  "--require",
+  "-r",
+  "--loader",
+  "--experimental-loader",
+  "--env-file",
+  "--conditions",
+  "-C",
+  "--input-type",
+  "-W",
+  "-X",
+]);
 // Words in front of a command that run the command after them. Their options and numbers go with them.
 const WRAPPERS = new Set([
   "sudo",
@@ -677,7 +691,12 @@ function judgeScriptFile(name, args, ctx, depth) {
     )
   )
     return false;
-  const file = args.find((a) => !a.value.startsWith("-") && !a.dynamic);
+  // A module run (`python -m pytest`) names no script file: its writes are left to the fingerprint layer. The value of an option
+  // that takes one (`node --import tsx x.ts`) is no script file either (review of #2555: such runs were denied in subagents).
+  if (args.some((a) => a.value === "-m")) return true;
+  const file = args.find(
+    (a, i) => !a.value.startsWith("-") && !a.dynamic && !VALUE_OPTIONS.has(args[i - 1]?.value),
+  );
   if (!file) return false;
   let text;
   for (const base of ctx.bases) {
