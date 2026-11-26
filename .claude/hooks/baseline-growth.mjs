@@ -27,6 +27,8 @@ const NUMBER = "number";
  *   never compared.
  * - `lists`: named lists of unique texts (reference): a new text is growth.
  * - `nested`: { rule: { directory: value } } (layout): the value per rule and directory is judged.
+ * - `suppressions`: the ESLint bulk suppressions of `eslint --suppressions-location` (issue 2512, US-QG-01),
+ *   { file: { rule: { count } } }: `count` is judged; a file or a rule that is gone is a shrink.
  */
 export const BASELINE_FORMATS = {
   "a11y-routes-baseline.json": {
@@ -127,6 +129,9 @@ export const BASELINE_FORMATS = {
       judged: [],
     },
   },
+  // US-QG-01 (issue 2512): the ESLint bulk suppressions of the hooks rules, written by `eslint --suppressions-location`
+  // (`npm run lint` and lint-staged read it). The format is in suppressionsOf.
+  "hooks-baseline.json": { suppressions: true },
 };
 
 const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -223,10 +228,31 @@ function nestedOf(root) {
   return { limits: new Map(), rows };
 }
 
+// ESLint bulk suppressions (issue 2512, US-QG-01): one row per file and rule, judged by its count. A new file or rule is a
+// new entry (growth); a raised count grows, a lowered one or a removed file or rule shrinks. Any other field, a count that
+// is no number, or a value that is no object is malformed (fail closed, like the formats above).
+function suppressionsOf(root) {
+  const rows = new Map();
+  for (const [file, rules] of Object.entries(root)) {
+    if (!isObject(rules)) throw new Error(`${file} is not an object of rules`);
+    for (const [rule, suppression] of Object.entries(rules)) {
+      if (!isObject(suppression)) throw new Error(`${file} ${rule} is not an object`);
+      onlyKeys(suppression, ["count"]);
+      if (!isCount(suppression.count)) throw new Error(`${file} ${rule} count is not a number`);
+      rows.set(JSON.stringify([file, rule]), {
+        label: `${file} ${rule}`,
+        values: { count: suppression.count },
+      });
+    }
+  }
+  return { limits: new Map(), rows };
+}
+
 /** The comparable model of one file text: its limits and its rows. Throws when the text does not fit the format. */
 function modelOf(format, text) {
   const root = parseObject(text);
   if (format.nested) return nestedOf(root);
+  if (format.suppressions) return suppressionsOf(root);
   if (format.lists) return listsOf(root, format.lists);
   onlyKeys(root, [...format.limits, "entries"]);
   const limits = new Map(

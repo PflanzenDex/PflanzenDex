@@ -96,6 +96,43 @@ const Q_B = {
 
 // One sample per format: the base file, variants that grow it and variants that only shrink it.
 const CASES = {
+  "hooks-baseline.json": {
+    base: {
+      "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 2 } },
+      "packages/web/src/b.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+    },
+    grow: {
+      "a new file": {
+        "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 2 } },
+        "packages/web/src/b.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+        "packages/web/src/c.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+      },
+      "a new rule": {
+        "packages/web/src/a.tsx": {
+          "react-hooks/exhaustive-deps": { count: 2 },
+          "react-hooks/rules-of-hooks": { count: 1 },
+        },
+        "packages/web/src/b.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+      },
+      "a higher count": {
+        "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 3 } },
+        "packages/web/src/b.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+      },
+    },
+    shrink: {
+      "a removed file": {
+        "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 2 } },
+      },
+      "a lower count": {
+        "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+        "packages/web/src/b.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+      },
+      "a removed rule": {
+        "packages/web/src/a.tsx": {},
+        "packages/web/src/b.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+      },
+    },
+  },
   "a11y-routes-baseline.json": {
     base: { maxEntries: 2, entries: [A11Y_A, A11Y_B] },
     grow: {
@@ -395,9 +432,9 @@ const CASES = {
   },
 };
 
-test("US-QG-07: the twelve baseline files each have a growth format, and the formats name exactly those files", () => {
+test("US-QG-07: every baseline file has a growth format, and the formats name exactly those files", () => {
   assert.deepEqual(Object.keys(BASELINE_FORMATS).sort(), Object.keys(CASES).sort());
-  assert.equal(Object.keys(BASELINE_FORMATS).length, 12);
+  assert.equal(Object.keys(BASELINE_FORMATS).length, 13);
 });
 
 test("US-QG-06: the quarantine list grows on a new entry or a raised maxEntries, and shrinks when an entry is removed", () => {
@@ -419,6 +456,91 @@ test("US-QG-06: the quarantine list grows on a new entry or a raised maxEntries,
     text({ maxEntries: 1, entries: [Q_A, Q_B] }),
   );
   assert.deepEqual(result.reasons, ["new entry e2e"], "the reason names the new job");
+});
+
+test("US-QG-07: hooks-baseline.json grows on a new file, a new rule or a raised count, and names the reason", () => {
+  const before = text({
+    "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 2 } },
+  });
+  assert.deepEqual(grows("hooks-baseline.json", null, before), {
+    grows: true,
+    reasons: ["a new baseline file"],
+  });
+  const newFile = text({
+    "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 2 } },
+    "packages/web/src/b.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+  });
+  assert.deepEqual(grows("hooks-baseline.json", before, newFile).reasons, [
+    "new entry packages/web/src/b.tsx react-hooks/exhaustive-deps",
+  ]);
+  const newRule = text({
+    "packages/web/src/a.tsx": {
+      "react-hooks/exhaustive-deps": { count: 2 },
+      "react-hooks/rules-of-hooks": { count: 1 },
+    },
+  });
+  assert.deepEqual(grows("hooks-baseline.json", before, newRule).reasons, [
+    "new entry packages/web/src/a.tsx react-hooks/rules-of-hooks",
+  ]);
+  const raised = text({
+    "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 3 } },
+  });
+  assert.deepEqual(grows("hooks-baseline.json", before, raised).reasons, [
+    "packages/web/src/a.tsx react-hooks/exhaustive-deps: count rose from 2 to 3",
+  ]);
+});
+
+test("US-QG-07: hooks-baseline.json shrinks on a lower count, a removed rule or a removed file", () => {
+  const before = text({
+    "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 2 } },
+    "packages/web/src/b.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+  });
+  const lowerCount = {
+    "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+    "packages/web/src/b.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+  };
+  const removedRule = {
+    "packages/web/src/a.tsx": {},
+    "packages/web/src/b.tsx": { "react-hooks/exhaustive-deps": { count: 1 } },
+  };
+  const removedFile = { "packages/web/src/b.tsx": { "react-hooks/exhaustive-deps": { count: 1 } } };
+  for (const after of [lowerCount, removedRule, removedFile])
+    assert.deepEqual(grows("hooks-baseline.json", before, text(after)), {
+      grows: false,
+      reasons: [],
+    });
+});
+
+test("US-QG-07: hooks-baseline.json: a new entry counts as growth even when another entry shrinks", () => {
+  const before = text({
+    "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 2 } },
+  });
+  const after = text({ "packages/web/src/c.tsx": { "react-hooks/exhaustive-deps": { count: 1 } } });
+  assert.deepEqual(grows("hooks-baseline.json", before, after).reasons, [
+    "new entry packages/web/src/c.tsx react-hooks/exhaustive-deps",
+  ]);
+});
+
+test("US-QG-07: hooks-baseline.json: malformed text counts as growth (a count that is no number, an unknown field, a rule or a file that is no object, a top-level array)", () => {
+  const before = text({
+    "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 2 } },
+  });
+  const malformed = {
+    "a count that is no number": {
+      "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: -1 } },
+    },
+    "an unknown field": {
+      "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": { count: 2, note: "x" } },
+    },
+    "a rule that is no object": { "packages/web/src/a.tsx": { "react-hooks/exhaustive-deps": 2 } },
+    "a file that is no object of rules": { "packages/web/src/a.tsx": 3 },
+    "a top-level array": [],
+  };
+  for (const [label, value] of Object.entries(malformed)) {
+    const result = grows("hooks-baseline.json", before, text(value));
+    assert.equal(result.grows, true, label);
+    assert.match(result.reasons[0], /^the new text does not parse: /, label);
+  }
 });
 
 test("US-QG-07: isBaselineFile covers the whole baseline folder and nothing else", () => {

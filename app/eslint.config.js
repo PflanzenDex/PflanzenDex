@@ -164,25 +164,34 @@ export default defineConfig([
         },
       ]
     : []),
-  // Hooks (issue 2512, US-QG-01): the two classic rules only. The plugin's recommended config is not spread: it turns on the
-  // React Compiler rules, which stay off (owner decision 2026-11-19). The exhaustive-deps hits of the report are in
-  // config/gates/baselines/hooks-baseline.json (bulk suppressions, shrink-only).
+  // Hooks (issue 2512, US-QG-01): the two classic rules for web sources. The React Compiler rules stay off (owner decision
+  // 2026-11-19); the exhaustive-deps hits are in config/gates/baselines/hooks-baseline.json.
   {
     files: ["packages/web/**/*.{ts,tsx}"],
     plugins: { "react-hooks": reactHooks },
-    rules: {
-      "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "error",
-    },
+    rules: { "react-hooks/rules-of-hooks": "error", "react-hooks/exhaustive-deps": "error" },
   },
   // TanStack Query (issue 2512, US-QG-01): the recommended rules of the web sources, with an empty baseline.
   ...pluginQuery.configs["flat/recommended"].map((config) => ({
     ...config,
     files: ["packages/web/src/**/*.{ts,tsx}"],
   })),
-  // Storybook (issue 2512, US-QG-01): the recommended rules of the stories. They turn on react-hooks/rules-of-hooks for
-  // stories, which is switched off below: a story's render function and the storybook decorators call hooks on purpose.
+  // Storybook (issue 2512, US-QG-01): the recommended rules of the stories and csf-component for them. The main rule of
+  // .storybook/main.ts is set here (the recommended glob is relative to app/); rules-of-hooks is off for stories and .storybook.
   ...storybook.configs["flat/recommended"],
+  {
+    files: ["**/*.stories.@(ts|tsx|js|jsx|mjs|cjs)"],
+    rules: { "storybook/csf-component": "error" },
+  },
+  {
+    files: ["packages/web/.storybook/main.ts"],
+    rules: {
+      "storybook/no-uninstalled-addons": [
+        "error",
+        { packageJsonLocation: "packages/web/package.json" },
+      ],
+    },
+  },
   {
     files: ["**/*.stories.tsx", "packages/web/.storybook/**/*.tsx"],
     rules: { "react-hooks/rules-of-hooks": "off" },

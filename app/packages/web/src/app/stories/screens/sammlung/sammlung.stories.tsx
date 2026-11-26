@@ -6,7 +6,11 @@ import { API, token } from "../../harness/fake-api.fixtures";
 import { pageParameters, screenStory, variants } from "../../harness/screen-story/screen-story";
 
 // Page stories of "Sammlung" (US-QS-14): one set per mode (Pflanzen, Arten, Wunschliste), at 360 and 1280 px, light and dark.
-const meta = { title: "Seiten/Sammlung", parameters: pageParameters } satisfies Meta;
+const meta = {
+  title: "Seiten/Sammlung",
+  component: CollectionArea,
+  parameters: pageParameters,
+} satisfies Meta;
 export default meta;
 
 const screen = (
