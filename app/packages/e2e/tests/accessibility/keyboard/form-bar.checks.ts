@@ -159,10 +159,11 @@ const insideItsRegion = (field: Locator): Promise<boolean> =>
   });
 
 /**
- * The keyboard case (SG-FORM-02, WCAG 2.4.11): a field has the focus, the keyboard takes the window down to 354 px (the
- * emulation shrinks the window to the visual viewport a real keyboard leaves), and the field takes the focus again, as the
- * browser scrolls it into view. A sheet slides to its new height first, so the focus comes back once the form holds its
- * place (issue 2535). Action and field are then inside the window, the field inside its scroll region, and apart.
+ * The keyboard case (SG-FORM-02, WCAG 2.4.11): a field has the focus and the keyboard takes the window down to 354 px (the
+ * emulation shrinks the window to the visual viewport a real keyboard leaves). The browser scrolls the focused field into view
+ * in the layout that is there, and a sheet needs a moment for its new one (its height slides, its grabber drops), so the field
+ * takes the focus again until the layout holds (issue 2535). Action and field are then inside the window, the field inside
+ * its scroll region, and apart.
  */
 export async function expectKeyboardCase(
   page: Page,
@@ -172,9 +173,6 @@ export async function expectKeyboardCase(
   const field = await firstField(page);
   await field.focus();
   await page.setViewportSize({ width: phone.width, height: 354 });
-  await holdsPlace(await formRoot(page));
-  await field.blur();
-  await field.focus();
   const { bar, confirm } = barOf(page);
   await holdsPlace(bar);
   await expect(confirm, `${what}: the confirming action is visible`).toBeVisible();
@@ -182,6 +180,8 @@ export async function expectKeyboardCase(
   await expect
     .poll(
       async () => {
+        await field.blur();
+        await field.focus();
         const a = await boxOf(confirm);
         const b = await boxOf(field);
         const inside = (box: Box) => box.top >= -0.5 && box.bottom <= 354.5;
