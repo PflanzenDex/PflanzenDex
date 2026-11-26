@@ -20,7 +20,7 @@ const place = cva("flex h-3 shrink-0 items-center justify-center", {
 });
 
 /**
- * The letter strip of a long list sorted by name (SG-LIST-06, owner decision 2026-11-22, issue 2419): the letters A to Z and
+ * The letter strip of a long list sorted by name (SG-LIST-11, owner decision 2026-11-22, issue 2419): the letters A to Z and
  * "#" in a narrow vertical strip at the trailing edge of the list. A tap or a drag on the strip jumps to the first entry of
  * the letter under the finger (`onJump`, at once, no glide) and shows that letter large beside the strip while the finger is
  * down; a letter without an entry is dimmed (muted, not removed) and the jump goes on to the next one that has an entry.

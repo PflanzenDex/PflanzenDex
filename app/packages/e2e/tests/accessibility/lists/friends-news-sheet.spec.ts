@@ -3,15 +3,17 @@ import { openView, signInToApp } from "../../../support/display/display";
 import { expect, test } from "../../../support/fixtures";
 
 // US-QS-32 (issue 2293): the layer "Neu bei Freunden" on "Heute" (/today?sheet=news) at 200 % text and on a phone at 200 % zoom
-// (SG-TOUCH-01, SG-LIST-03, QG-U8). Its plant rows keep the height of their content, they never overlap, and the pager stays
-// below the last row on every page. The news come from a fixture of the route `/feed/banner`: the layout depends on the plants
+// (SG-TOUCH-01, SG-LIST-03, QG-U8). Its plant rows keep the height of their content, they never overlap, and every friend is
+// a section of the one scrolling list (SG-LIST-06, issue 2419). The news come from a fixture of the route `/feed/banner`: the layout depends on the plants
 // and their names only, so it is the same on every run. Every other read and every write goes to the real API.
 
 const API = `http://localhost:${process.env["E2E_API_PORT"] ?? "3000"}`;
 const WEB = `http://localhost:${process.env["E2E_WEB_PORT"] ?? "5173"}`;
 const LAYER = "/today?sheet=news";
-/** The accessible name of the list of plants in the layer (`feed.list`). */
+/** The accessible name of the list of plants of one friend in the layer (`feed.list`). */
 const LIST = "Neuigkeiten";
+/** The rows of the fixture: six of Clara, two of Lars. */
+const ROWS = 8;
 
 const CLARA = { friendId: "f1", friendName: "Clara" };
 const LARS = { friendId: "f2", friendName: "Lars" };
@@ -26,7 +28,7 @@ const plant = (
 
 /**
  * Two friends with new plants (issue 2293): Clara's six rows (seven plants) have long names, so they wrap at 200 % text and
- * the layer pages. Lars has two rows. The first choice, Clara, is the one shown.
+ * the layer scrolls. Lars has two rows. Every friend is a section.
  */
 const BANNER = {
   firstVisit: false,
@@ -58,14 +60,6 @@ async function textAt200(page: Page): Promise<void> {
   });
 }
 
-/**
- * The pager of the list: the parent of the list holds the list and its "Zurück / Seite / Weiter" bar. The page can hold another
- * "Weiter" (on a desktop, a disabled one of the first-plant flow behind the pane), so the pager is found through its list.
- */
-function pagerOf(page: Page): Locator {
-  return page.getByRole("list", { name: LIST }).locator("xpath=..");
-}
-
 /** The banner of the API, answered by the fixture; the rest of the API is the real one. */
 async function fixtureBanner(page: Page): Promise<void> {
   await page.route(
@@ -92,14 +86,15 @@ async function boxOf(locator: Locator): Promise<Box> {
 }
 
 /**
- * The page of the layer at the current window and text size: every shown row is at least as high as its link and its content
- * (a row that shrinks cuts its text, issue 2293), no row overlaps the row before it, and the pager starts below the last row.
- * Returns the bottom of the last row.
+ * The rows of the layer at the current window and text size: every row is at least as high as its link and its content (a row
+ * that shrinks cuts its text, issue 2293), no row overlaps the row before it, every section heading stands above its first
+ * row, and nothing runs sideways. The layer is one scrolling list of sections (SG-LIST-06): every friend is on it, with no pages.
+ * Returns the number of rows.
  */
-async function expectRowsAndPagerApart(page: Page, size: string): Promise<number> {
+async function expectRowsApart(page: Page, size: string): Promise<number> {
   const rows = page.getByRole("list", { name: LIST }).getByRole("listitem");
   const count = await rows.count();
-  expect(count, `${size}: the page shows at least one row`).toBeGreaterThan(0);
+  expect(count, `${size}: the layer shows every row, ${ROWS} of them`).toBe(ROWS);
   let previousBottom = Number.NEGATIVE_INFINITY;
   for (let i = 0; i < count; i++) {
     const row = rows.nth(i);
@@ -116,35 +111,21 @@ async function expectRowsAndPagerApart(page: Page, size: string): Promise<number
     ).toBeGreaterThanOrEqual(previousBottom - 0.5);
     previousBottom = box.bottom;
   }
-  const status = await boxOf(
-    pagerOf(page)
-      .getByRole("status")
-      .filter({ hasText: /^Seite \d+ von \d+$/ }),
-  );
-  const next = await boxOf(pagerOf(page).getByRole("button", { name: "Weiter", exact: true }));
-  expect(
-    Math.min(status.top, next.top),
-    `${size}: the pager starts at ${Math.min(status.top, next.top)} px, above the last row's bottom ${previousBottom} px`,
-  ).toBeGreaterThanOrEqual(previousBottom - 0.5);
-  return previousBottom;
-}
-
-/**
- * Every page of the layer, one after the other with "Weiter" (the pager shows: the list pages). A page of the rows is
- * measured the same way, so a page that squeezes its rows is found too (issue 2293).
- */
-async function expectEveryPageApart(page: Page, size: string): Promise<number> {
-  const status = pagerOf(page).getByRole("status");
-  const next = pagerOf(page).getByRole("button", { name: "Weiter", exact: true });
-  await expect(status, `${size}: the list pages, so the pager shows`).toBeVisible();
-  const total = Number((await status.textContent())?.match(/von (\d+)/)?.[1] ?? "0");
-  expect(total, `${size}: more than one page`).toBeGreaterThan(1);
-  for (let number = 1; number <= total; number++) {
-    await expect(status).toHaveText(`Seite ${number} von ${total}`);
-    await expectRowsAndPagerApart(page, `${size}, page ${number} of ${total}`);
-    if (number < total) await next.click();
+  const sections = page.getByRole("region").filter({ has: page.getByRole("list", { name: LIST }) });
+  for (let i = 0; i < (await sections.count()); i++) {
+    const section = sections.nth(i);
+    const heading = await boxOf(section.getByRole("heading", { level: 3 }));
+    const first = await boxOf(section.getByRole("listitem").first());
+    expect(
+      first.top,
+      `${size}: the first row of section ${i + 1} starts above the bottom of its heading`,
+    ).toBeGreaterThanOrEqual(heading.bottom - 0.5);
   }
-  return total;
+  const sideways = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(sideways, `${size}: the page scrolls sideways`).toBeLessThanOrEqual(0);
+  return count;
 }
 
 /** The phone sizes of the layer (issue 2293): the 206 px layout width of a phone at 200 % zoom, and two sizes at 200 % text. */
@@ -154,9 +135,9 @@ const PHONE_SIZES = [
   { width: 360, height: 640, text200: true, label: "360x640 at 200 % text" },
 ] as const;
 
-test.describe("US-QS-32 the layer Neu bei Freunden on Heute: rows keep their height, the pager is below them (issue 2293)", () => {
+test.describe("US-QS-15 · US-QS-32 the layer Neu bei Freunden on Heute: every friend is a section, rows keep their height (issue 2293)", () => {
   for (const size of PHONE_SIZES) {
-    test(`US-QS-32 the layer on a phone at ${size.label}: every row keeps its height and the pager stays below the rows on every page (issue 2293)`, async ({
+    test(`US-QS-32 the layer on a phone at ${size.label}: every friend is a section and every row keeps its height (issue 2293)`, async ({
       page,
       account,
     }, info) => {
@@ -169,11 +150,11 @@ test.describe("US-QS-32 the layer Neu bei Freunden on Heute: rows keep their hei
       await signInToApp(page, account);
       if (size.text200) await textAt200(page);
       await openView(page, LAYER);
-      await expectEveryPageApart(page, size.label);
+      await expectRowsApart(page, size.label);
     });
   }
 
-  test("US-QS-32 the layer as a pane from 1024 px at 200 % text: every row keeps its height and the pager stays below the rows (issue 2293)", async ({
+  test("US-QS-32 the layer as a pane from 1024 px at 200 % text: every friend is a section and every row keeps its height (issue 2293)", async ({
     page,
     account,
   }, info) => {
@@ -186,6 +167,6 @@ test.describe("US-QS-32 the layer Neu bei Freunden on Heute: rows keep their hei
     await signInToApp(page, account);
     await textAt200(page);
     await openView(page, LAYER);
-    await expectEveryPageApart(page, "1280x800 pane at 200 %");
+    await expectRowsApart(page, "1280x800 pane at 200 %");
   });
 });

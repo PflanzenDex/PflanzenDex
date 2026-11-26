@@ -4,7 +4,7 @@ import { LetterStrip } from "@/shared/ui/fields/input/letter-strip/letter-strip"
 import { firstIndexes, MIN_ROWS } from "@/shared/ui/fields/input/letter-strip/letters";
 
 /**
- * A long list sorted by name with the letter index at its trailing edge (SG-LIST-06, issue 2419). The index shows only when
+ * A long list sorted by name with the letter index at its trailing edge (SG-LIST-11, issue 2419). The index shows only when
  * the list is sorted by name (`byName`) and has more than `MIN_ROWS` rows; otherwise this renders its list as it is. The rows
  * give up the width of the strip, so it covers no row action. A jump scrolls the list's own box (`data-scroll-region`) to the
  * first entry of the letter at once; the entries are all there (a list that loads from a server in parts cannot jump to a

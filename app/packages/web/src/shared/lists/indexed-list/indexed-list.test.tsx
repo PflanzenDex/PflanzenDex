@@ -30,7 +30,7 @@ function show(items: readonly string[], byName = true) {
 
 const strip = () => screen.queryByRole("slider", { name: "Springen zu Buchstabe" });
 
-describe("US-QS-15 · SG-LIST-06 the letter index of a long list sorted by name", () => {
+describe("US-QS-15 · SG-LIST-11 the letter index of a long list sorted by name", () => {
   it("US-QS-15 shows beside a list of more than 100 rows that is sorted by name", () => {
     show(names);
     expect(strip()).not.toBeNull();

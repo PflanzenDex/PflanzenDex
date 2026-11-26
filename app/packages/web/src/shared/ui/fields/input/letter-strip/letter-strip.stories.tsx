@@ -2,7 +2,7 @@ import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
 import { hasLayout, waitUntil } from "@/shared/testing/story-frame/story-play";
 import { LetterStrip } from "./letter-strip";
 
-// Catalog of the letter strip (US-QS-15, SG-LIST-06, issue 2419): one slider with 27 places, the letters without an entry
+// Catalog of the letter strip (US-QS-15, SG-LIST-11, issue 2419): one slider with 27 places, the letters without an entry
 // dimmed. Each story has a play function that the QG-U5 conformance run waits for (P-B, issue 2432).
 const inFrame: Decorator = (Story) => (
   <div className="flex h-[400px] w-[360px] justify-end bg-background p-4">

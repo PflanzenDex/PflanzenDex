@@ -29,7 +29,7 @@ function layoutOf(strip: HTMLElement) {
   vi.spyOn(strip, "getBoundingClientRect").mockReturnValue({ top: 100, height: 270 } as DOMRect);
 }
 
-describe("US-QS-15 · SG-LIST-06 the letter index: one control, 27 places", () => {
+describe("US-QS-15 · SG-LIST-11 the letter index: one control, 27 places", () => {
   it("US-QS-15 shows A to Z and '#' in a narrow strip; a letter without an entry is dimmed, not removed", () => {
     const { strip } = show();
     const labels = [...strip.children].map((el) => el.textContent);

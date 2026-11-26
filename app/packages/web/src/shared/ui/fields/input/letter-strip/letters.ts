@@ -1,4 +1,4 @@
-/** The letters of the strip, then "#" for every name that does not start with a letter (SG-LIST-06, issue 2419). */
+/** The letters of the strip, then "#" for every name that does not start with a letter (SG-LIST-11, issue 2419). */
 export const LETTERS: readonly string[] = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"];
 
 /** The strip shows from this many rows on: a shorter list is quicker to scroll than to jump through (starting value, assumption). */

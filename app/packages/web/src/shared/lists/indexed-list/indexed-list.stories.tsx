@@ -3,7 +3,7 @@ import { withText200 } from "@/shared/testing/story-frame/story-frame";
 import { hasLayout, waitUntil } from "@/shared/testing/story-frame/story-play";
 import { IndexedList } from "./indexed-list";
 
-// Catalog of the letter index of a long list sorted by name (US-QS-15, SG-LIST-06, issue 2419). Each story has a play function
+// Catalog of the letter index of a long list sorted by name (US-QS-15, SG-LIST-11, issue 2419). Each story has a play function
 // that the QG-U5 conformance run waits for (P-B, issue 2432); a story fails when its play throws.
 const names = [
   ...Array.from({ length: 60 }, (_, i) => `Aloe ${String(i).padStart(2, "0")}`),

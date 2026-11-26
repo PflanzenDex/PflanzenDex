@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { firstIndexes, LETTERS, letterAt, letterOf, MIN_ROWS } from "./letters";
 
-describe("US-QS-15 · SG-LIST-06 the letters of the index", () => {
+describe("US-QS-15 · SG-LIST-11 the letters of the index", () => {
   it("US-QS-15 the strip has A to Z and then '#', and it shows from more than 100 rows on", () => {
     expect(LETTERS).toHaveLength(27);
     expect(LETTERS[0]).toBe("A");
