@@ -733,13 +733,6 @@
     "title": "Geräte-Wünsche"
   },
   {
-    "id": "friends-sheet-friends",
-    "account": "test2",
-    "path": "/friends?sheet=friends",
-    "layerFile": "social/pages/friends-page/friend-layers/layer/layer.tsx",
-    "title": "Meine Freunde"
-  },
-  {
     "id": "friends-sheet-sharing",
     "account": "test2",
     "path": "/friends?sheet=sharing",
@@ -749,10 +742,10 @@
   {
     "id": "friend-collection",
     "account": "test2",
-    "path": "/friends?sheet=friends",
+    "path": "/friends",
     "steps": [
       {
-        "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
+        "css": "main a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
       }
     ],
     "route": "/friends/:friendId",
@@ -1384,10 +1377,10 @@
   {
     "id": "friend-equipment",
     "account": "test2",
-    "path": "/friends?sheet=friends",
+    "path": "/friends",
     "steps": [
       {
-        "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
+        "css": "main a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
       },
       {
         "role": "button",
@@ -1401,10 +1394,10 @@
   {
     "id": "friend-end",
     "account": "test2",
-    "path": "/friends?sheet=friends",
+    "path": "/friends",
     "steps": [
       {
-        "css": "[role=dialog] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match]), [data-layer-pane] a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
+        "css": "main a[href^=\"/friends/\"]:not([href*=exchange]):not([href*=match])"
       },
       {
         "role": "button",

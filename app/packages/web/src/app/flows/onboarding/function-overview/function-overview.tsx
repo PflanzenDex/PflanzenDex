@@ -89,7 +89,7 @@ function Overview(props: { api: string; token: Token }) {
   const entries = overviewEntries(unlocks.entries);
   const allOpen = entries.every((e) => e.state === "open");
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
       {allOpen && (
         <p className="m-0">
           {t("allOpen")}{" "}
@@ -98,11 +98,12 @@ function Overview(props: { api: string; token: Token }) {
           </Link>
         </p>
       )}
-      <div className="grid min-w-0 gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="min-w-0">
+      <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,1fr)] gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="flex min-h-0 min-w-0 flex-col">
           <Pager
             items={entries}
             pageSize={size}
+            fit
             label={t("list.label")}
             getKey={(e) => e.id}
             renderItem={(e) => (
@@ -134,7 +135,7 @@ const appVersion = () =>
 /** The overview and below it the version of the app, which no page footer shows any more (US-QS-17, P-08). */
 export default function FunctionOverview(props: { api: string; token: Token }) {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       <Overview {...props} />
       <p className="m-0 text-sm text-muted-foreground">
         {t("version", { version: appVersion() || t("unknown") })}

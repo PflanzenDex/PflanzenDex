@@ -209,8 +209,8 @@ describe("US-BES-17 printing QR pot labels", () => {
     expect(screen.getByText("Das Drucken öffnet das Druckfenster.")).toBeTruthy();
   });
 
-  it("US-QS-32 the print button counts the chosen plants across the pages: 2, then 3 Etiketten drucken, 1 Etikett drucken", async () => {
-    // Paging is the tablet and desktop view: ten plants a page from 1024 px (on a phone one scrolling list).
+  it("US-QS-32 · US-QS-15 the print button counts the chosen plants on the one scrolling list: 2, then 3 Etiketten drucken, 1 Etikett drucken", async () => {
+    // The list of a page scrolls at every width (SG-LIST-01): every plant is on it, so no page turn stands between the choices.
     setViewportWidth(1024);
     server(
       Array.from({ length: 12 }, (_, i) =>
@@ -221,16 +221,15 @@ describe("US-BES-17 printing QR pot labels", () => {
     const user = userEvent.setup();
     show();
     await screen.findByRole("checkbox", { name: /Pflanze 01/ });
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
     expect(printButton().textContent).toBe("Etiketten drucken");
     await pick(user, /Pflanze 01/);
     await pick(user, /Pflanze 02/);
     await chooseFormat(user, "A4-Bogen");
     expect(screen.getByRole("button", { name: "2\u00a0Etiketten drucken" })).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Weiter" }));
     await pick(user, /Pflanze 11/);
     expect(screen.getByRole("button", { name: "3\u00a0Etiketten drucken" })).toBeTruthy();
     await pick(user, /Pflanze 11/);
-    await user.click(screen.getByRole("button", { name: "Zurück" }));
     await pick(user, /Pflanze 02/);
     expect(screen.getByRole("button", { name: "1\u00a0Etikett drucken" })).toBeTruthy();
   });

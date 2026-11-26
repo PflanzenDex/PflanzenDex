@@ -76,7 +76,7 @@ export function WhatsNewList(props: {
   const navigate = useNavigate();
   const pageSize = useIsLg() ? PAGE_LG : PAGE_PHONE;
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
       <p className="m-0 text-sm text-muted-foreground">
         {t("version", { version: props.version ?? t("version.unknown") })}
       </p>
@@ -90,6 +90,7 @@ export function WhatsNewList(props: {
         <Pager
           items={props.entries}
           pageSize={pageSize}
+          fit
           label={t("list.label")}
           getKey={(_entry, index) => index}
           renderItem={(entry) => (

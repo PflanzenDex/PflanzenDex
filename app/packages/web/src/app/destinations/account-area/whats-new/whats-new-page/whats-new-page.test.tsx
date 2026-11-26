@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { newsEntries } from "../news-lines.mjs";
@@ -53,48 +53,37 @@ describe("US-DEV-06 the page Neu in PflanzenDéx", () => {
     expect(lineTexts()).toEqual(["Noch offen", "Schon draußen"]);
   });
 
-  it("US-DEV-06 shows only the newest page of the lines, not all of them at once (US-QS-15)", () => {
-    setViewportWidth(1024);
+  it("US-DEV-06 · US-QS-15 the lines stand on one scrolling list, newest first, at every width: no pages, no Weiter", () => {
     vi.stubEnv("VITE_APP_VERSION", "2.0.0");
-    render(
-      <MemoryRouter>
-        <WhatsNewPage />
-      </MemoryRouter>,
-    );
-    expect(screen.getByText("Version 2.0.0")).toBeTruthy();
-    const shown = lineTexts();
-    const all = NEWS_ENTRIES.map((entry) => entry.text);
-    expect(shown.length).toBeGreaterThan(0);
-    expect(shown.length).toBeLessThan(all.length);
-    expect(shown).toEqual(all.slice(0, shown.length));
-    expect(screen.getByText(`Seite 1 von ${Math.ceil(all.length / shown.length)}`)).toBeTruthy();
+    for (const width of [360, 1024]) {
+      setViewportWidth(width);
+      render(
+        <MemoryRouter>
+          <WhatsNewPage />
+        </MemoryRouter>,
+      );
+      expect(screen.getByText("Version 2.0.0")).toBeTruthy();
+      const all = NEWS_ENTRIES.map((entry) => entry.text);
+      expect(lineTexts()).toEqual(all);
+      expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+      expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
+      cleanup();
+    }
   });
 
-  it("US-DEV-06 the pager reaches the older lines, page by page and by address", async () => {
+  it("US-DEV-06 · SG-NAV-02 an old position in the address (?from=) is dropped: the list starts with the newest line", async () => {
     setViewportWidth(1024);
+    function Address() {
+      return <span data-testid="address">{useLocation().search}</span>;
+    }
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/account/news?from=24"]}>
         <WhatsNewPage />
+        <Address />
       </MemoryRouter>,
     );
-    const all = NEWS_ENTRIES.map((entry) => entry.text);
-    const first = lineTexts();
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(lineTexts()).toEqual(all.slice(first.length, first.length * 2));
-    await userEvent.click(screen.getByRole("button", { name: "Zurück" }));
-    expect(lineTexts()).toEqual(first);
-    cleanup();
-
-    // The last page holds the oldest line: its first entry is in the address, so the last page opens directly.
-    const pages = Math.ceil(all.length / first.length);
-    render(
-      <MemoryRouter initialEntries={[`/account/news?from=${(pages - 1) * first.length}`]}>
-        <WhatsNewPage />
-      </MemoryRouter>,
-    );
-    expect(screen.getByText(`Seite ${pages} von ${pages}`)).toBeTruthy();
-    expect(lineTexts().at(-1)).toBe(all.at(-1));
-    expect(screen.getByRole("button", { name: "Weiter" }).hasAttribute("disabled")).toBe(true);
+    expect(lineTexts()[0]).toBe(NEWS_ENTRIES[0]?.text);
+    await vi.waitFor(() => expect(screen.getByTestId("address").textContent).toBe(""));
   });
 
   it("US-DEV-06 a long line shows its start, and Mehr anzeigen shows all of it (P-10)", async () => {

@@ -38,11 +38,16 @@ describe("US-QS-15 · SG-LIST-01 · SG-NAV-02 an old address loses its position 
 
   it("US-QS-15 · SG-LIST-01 every part of a list is stripped, the new and the old name, and the other parts stay", () => {
     setViewportWidth(360);
-    open(
-      "/x?lfrom=2&vfrom=3&blfrom=4&verlauf=2&offen=1&erledigt=1&rpage=2&part=wohnzimmer&sheet=a",
-    );
+    open("/x?lfrom=2&vfrom=3&blfrom=4&verlauf=2&offen=1&erledigt=1&rpage=2&part=wohnzimmer");
     render(<BrowserRouter>{list()}</BrowserRouter>);
-    expect(window.location.search).toBe("?part=wohnzimmer&sheet=a");
+    expect(window.location.search).toBe("?part=wohnzimmer");
+  });
+
+  it("US-QS-15 · SG-LIST-01 with a layer open only from and page go: the layer's own part is the position of its paged list", () => {
+    setViewportWidth(1024);
+    open("/x?sheet=plant-e1&tab=pflege&ofrom=2&lfrom=4&from=9&page=2");
+    render(<BrowserRouter>{list()}</BrowserRouter>);
+    expect(window.location.search).toBe("?sheet=plant-e1&tab=pflege&ofrom=2&lfrom=4");
   });
 
   it("US-QS-15 · SG-LIST-01 the history state stays, so a layer still closes by going back", () => {

@@ -2109,48 +2109,6 @@
       "rules": ["pager"]
     },
     {
-      "screen": "friends-sheet-friends",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "friends-sheet-friends",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "friends-sheet-friends",
-      "size": "768x1024",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "friends-sheet-friends",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "friends-sheet-friends",
-      "size": "1920x1080",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "friends-sheet-friends",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 2.42,
-      "rules": ["pager"]
-    },
-    {
       "screen": "friends-sheet-sharing",
       "size": "360x640",
       "page": 1,

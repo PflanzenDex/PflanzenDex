@@ -397,22 +397,21 @@ describe("US-QS-15 review list on one screen", () => {
     expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
   });
 
-  it("US-QS-15 each case is a compact row; the list is paged in whole rows with the first entry in the address", async () => {
-    // Paging is the tablet and desktop view: eight compact rows a page from 768 px (on a phone one scrolling list).
+  it("US-QS-15 each case is a compact row; the list scrolls in its own box at every width, with no pages and no position in the address", async () => {
+    // The list of a page scrolls at every width (SG-LIST-01): every case is on it, the box is the list itself.
     setViewportWidth(1024);
     const many = Array.from({ length: 10 }, (_, i) =>
       entry({}, "proposal", `c${i + 1}`, { latinName: `Species ${i + 1}` }),
     );
     server(list(many, 10));
-    const user = userEvent.setup();
     show();
     const rows = await screen.findByRole("list", { name: "Offene Vorschläge" });
-    expect(within(rows).getAllByRole("button")).toHaveLength(8);
-    expect(screen.getByText("Seite 1 von 2")).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Weiter" }));
-    expect(address()).toContain("from=8");
-    expect(screen.getByRole("button", { name: /Species 9/ })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /Species 1$/ })).toBeNull();
+    expect(within(rows).getAllByRole("button")).toHaveLength(10);
+    expect(rows.hasAttribute("data-scroll-region")).toBe(true);
+    expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
+    expect(address()).not.toContain("from=");
+    expect(screen.getByRole("button", { name: /Species 10/ })).toBeTruthy();
   });
 
   it("US-QS-15 a changed choice starts the list at the first entry", async () => {
