@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import { cn } from "@/shared/lib/utils";
 
 /**
@@ -9,9 +9,15 @@ import { cn } from "@/shared/lib/utils";
  * 2.1.1, axe scrollable-region-focusable) and is named for the screen reader. A list inside it (`ScrollEntries` without `fit`)
  * ends with the marker "Das waren alle n" when it is longer than this region.
  */
-export function ScrollRegion(props: { label: string; children: ReactNode; className?: string }) {
+export function ScrollRegion(props: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+  ref?: Ref<HTMLDivElement>;
+}) {
   return (
     <div
+      ref={props.ref}
       role="region"
       aria-label={props.label}
       data-scroll-region=""

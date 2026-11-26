@@ -1,5 +1,5 @@
 {
-  "maxEntries": 497,
+  "maxEntries": 479,
   "entries": [
     {
       "screen": "account-achievements",
@@ -800,90 +800,6 @@
       "rules": ["pager"]
     },
     {
-      "screen": "collection-view-plants-group-location",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-plants-group-location",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-plants-group-location",
-      "size": "768x1024",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-plants-group-location",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-plants-group-location",
-      "size": "1920x1080",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-plants-group-location",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-plants-group-phase",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.22,
-      "rules": ["frame", "pager"]
-    },
-    {
-      "screen": "collection-view-plants-group-phase",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-plants-group-phase",
-      "size": "768x1024",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-plants-group-phase",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-plants-group-phase",
-      "size": "1920x1080",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-plants-group-phase",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
       "screen": "collection-view-plants-last-page",
       "size": "360x640",
       "page": 1,
@@ -1760,48 +1676,6 @@
     },
     {
       "screen": "collection-view-species-sort-difficulty",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-species-sort-family",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-species-sort-family",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-species-sort-family",
-      "size": "768x1024",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-species-sort-family",
-      "size": "1024x768",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-species-sort-family",
-      "size": "1920x1080",
-      "page": 1,
-      "inner": 1,
-      "rules": ["pager"]
-    },
-    {
-      "screen": "collection-view-species-sort-family",
       "size": "360x640@200%",
       "page": 1,
       "inner": 1,

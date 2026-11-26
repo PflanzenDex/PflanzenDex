@@ -43,7 +43,17 @@ function fakeServer(
   vi.stubGlobal("fetch", fetchFn);
   return { posts, fetchFn };
 }
-const show = () => render(<TreatmentsPage api="http://api" token={token} />);
+/** The section of the open treatments, once its lists are there: one list per section of due items (SG-LIST-10). */
+async function openList() {
+  await screen.findAllByRole("list", { name: "Offene Behandlungen" });
+  return screen.getByRole("region", { name: "Offene Behandlungen" });
+}
+const show = () =>
+  render(
+    <MemoryRouter>
+      <TreatmentsPage api="http://api" token={token} />
+    </MemoryRouter>,
+  );
 
 afterEach(async () => {
   cleanup();
@@ -231,7 +241,7 @@ describe("US-BEH-02 offene Behandlungen", () => {
       }),
     );
     show();
-    const list = await screen.findByRole("list", { name: "Offene Behandlungen" });
+    const list = await openList();
     const items = within(list).getAllByRole("listitem");
     expect(items).toHaveLength(3);
     expect(items[0]?.textContent).toContain("Aloe");
@@ -312,7 +322,7 @@ describe("US-BEH-02 offene Behandlungen", () => {
     await user.click(await screen.findByRole("checkbox", { name: "Bogenhanf" }));
     await user.type(screen.getByLabelText("Grund"), "Wollläuse");
     await user.click(screen.getByRole("button", { name: "Behandlung sichern" }));
-    expect(await screen.findByRole("list", { name: "Offene Behandlungen" })).toBeTruthy();
+    expect(await openList()).toBeTruthy();
     expect(screen.queryByText(/^Keine offenen Behandlungen\.$/)).toBeNull();
   });
 });
@@ -372,7 +382,7 @@ describe("US-BEH-03 Behandlung abhaken", () => {
   it('US-QS-32 · US-BEH-03 every open row has an "Abhaken" action that names the row for screen readers', async () => {
     doneServer();
     show();
-    const list = await screen.findByRole("list", { name: "Offene Behandlungen" });
+    const list = await openList();
     const buttons = within(list).getAllByRole("button");
     expect(buttons.map((b) => b.textContent)).toEqual(["Abhaken", "Abhaken"]);
     expect(buttons[0]?.getAttribute("aria-label")).toBe("Grund a bei Aloe als erledigt abhaken");
@@ -391,7 +401,7 @@ describe("US-BEH-03 Behandlung abhaken", () => {
     expect(ticks[0]?.path).toBe("/treatments/a/complete");
     expect(ticks[0]?.body).toEqual({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
     expect(ticks[0]?.key).toBeTruthy();
-    const list = screen.getByRole("list", { name: "Offene Behandlungen" });
+    const list = screen.getByRole("region", { name: "Offene Behandlungen" });
     expect(within(list).getAllByRole("listitem")).toHaveLength(2);
     expect(within(list).getByText("Aloe")).toBeTruthy();
   });
@@ -507,9 +517,11 @@ describe("US-QS-10 Behandlung abhaken wird angesagt", () => {
     screen.findByRole("button", { name: "Grund a bei Aloe als erledigt abhaken" });
   const withAnnouncer = () =>
     render(
-      <AnnouncerProvider>
-        <TreatmentsPage api="http://api" token={token} />
-      </AnnouncerProvider>,
+      <MemoryRouter>
+        <AnnouncerProvider>
+          <TreatmentsPage api="http://api" token={token} />
+        </AnnouncerProvider>
+      </MemoryRouter>,
     );
   const heard = () => document.querySelector("[aria-live=polite]")?.textContent?.trim();
 
@@ -573,15 +585,20 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
       </MemoryRouter>,
     );
 
-  it("US-QS-14 has no h1 and no title of its own; its headings are level 3", async () => {
+  it("US-QS-14 · SG-LIST-10 has no h1 and no title of its own; its title is level 3, its sections 4 and its plants 5", async () => {
     doneServer();
     const user = userEvent.setup();
     showHost();
-    await screen.findByRole("list", { name: "Offene Behandlungen" });
+    await openList();
     expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
     expect(screen.queryByRole("heading", { level: 2 })).toBeNull();
     expect(screen.getByRole("heading", { level: 3, name: "Offene Behandlungen" })).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 4, name: "Aloe" })).toBeTruthy();
+    // Due items are sections of one list (SG-LIST-10): the sections are one level below the title, the plants one below them.
+    expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent)).toEqual([
+      "Überfällig · 1\u00a0Termin",
+      "Heute · 1\u00a0Termin",
+    ]);
+    expect(screen.getByRole("heading", { level: 5, name: "Aloe" })).toBeTruthy();
     // The history is the other part of the segment "Offen | Erledigt" (US-QS-18, A-05).
     await user.click(screen.getByRole("button", { name: "Erledigt" }));
     expect(screen.getByRole("heading", { level: 3, name: "Erledigte Behandlungen" })).toBeTruthy();
@@ -590,7 +607,7 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
   it("US-QS-14 · US-BEH-02 an overdue row shows its status text from the data as a chip", async () => {
     doneServer();
     showHost();
-    const list = await screen.findByRole("list", { name: "Offene Behandlungen" });
+    const list = await openList();
     expect(within(list).getByText("2 Tage überfällig").className).toContain("rounded-control");
   });
 
@@ -613,7 +630,7 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
     doneServer();
     const onPlan = vi.fn();
     showHost(onPlan);
-    await screen.findByRole("list", { name: "Offene Behandlungen" });
+    await openList();
     expect(screen.queryByRole("button", { name: "Behandlung sichern" })).toBeNull();
     expect(screen.queryByRole("checkbox")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Behandlung planen" }));
@@ -623,7 +640,7 @@ describe("US-QS-14 · US-BEH-02 the treatments as a section of Heute (host)", ()
   it("US-QS-32 · SG-BTN-01 the host's Behandlung planen is a tinted button without a border, and the section has no filled button", async () => {
     doneServer();
     const { container } = showHost();
-    await screen.findByRole("list", { name: "Offene Behandlungen" });
+    await openList();
     const plan = screen.getByRole("button", { name: "Behandlung planen" });
     expect(isTinted(plan)).toBe(true);
     expect(hasOwnBorder(plan)).toBe(false);
