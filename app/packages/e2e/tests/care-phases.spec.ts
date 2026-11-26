@@ -51,8 +51,7 @@ async function closeCareProfile(page: Page, species: string): Promise<void> {
 
 /**
  * Sets the target location of the dormancy phase and, when given, the dormancy period in the editor of the care profile
- * (US-BES-09, FR-PHA-02). "Weiter" leads to the page of the dormancy period (the plant layer has "Pflanze anlegen"); the
- * save button stays below all pages.
+ * (US-BES-09, FR-PHA-02). The fields are one scrolling list in the layer, with no pages (US-QS-15, issue 2418); the save is in its bar.
  */
 async function setProfile(
   page: Page,
@@ -64,8 +63,6 @@ async function setProfile(
     .getByRole("combobox", { name: `Soll-Standort Ruhephase für „${species}“` })
     .selectOption({ label: profile.target });
   if (profile.dormancy) {
-    await page.getByRole("button", { name: "Weiter", exact: true }).click();
-    await page.getByRole("button", { name: "Weiter", exact: true }).click();
     const { from, until } = profile.dormancy;
     const parts: [label: string, value: string][] = [
       [`Ruhephase von (Monat) für „${species}“`, from.slice(0, 2)],
@@ -100,8 +97,8 @@ async function openPhaseGrouping(page: Page): Promise<void> {
 }
 
 /**
- * The grouping shows each plant with the phase of today, its target location and what the view says next. The dormancy
- * group holds two plants (not the cutting, not the archived one); the growth group holds one (US-PHA-01, P-08, P-09).
+ * The grouping shows each plant with the phase of today, its target location and what the view says next: the groups are
+ * sections of one list with a count each, and the chips only jump to them (US-QS-15, SG-LIST-06; US-PHA-01, P-08, P-09).
  */
 async function expectPhases(
   page: Page,
@@ -109,12 +106,21 @@ async function expectPhases(
   names: { ruhe: string; profil: string; wachs: string },
 ): Promise<void> {
   const { ruhe, profil, wachs } = names;
-  const list = page.getByRole("list", { name: "Pflanzen mit Pflegephase" });
   // The "Umstellen: <name>" button of a plant carries the same name: the row is the button without that label.
   const row = (name: string) =>
     page.getByRole("button", { name }).and(page.locator(":not([aria-label^='Umstellen'])"));
-  await expect(page.getByRole("button", { name: /^Ruhephase \(2\)$/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /^Wachstumsphase \(1\)$/ })).toBeVisible();
+  const [DORMANCY, GROWTH] = ["Ruhephase · 2 Pflanzen", "Wachstumsphase · 1 Pflanze"] as const;
+  const dormancy = page.getByRole("region", { name: DORMANCY, exact: true });
+  const growth = page.getByRole("region", { name: GROWTH, exact: true });
+  const chips = page.getByRole("group", { name: "Zur Pflegephase springen" }); // from 768 px, else a select
+  const select = page.getByRole("combobox", { name: "Zur Pflegephase springen" });
+  await expect(chips.or(select)).toBeVisible();
+  const onPhone = await select.isVisible();
+  const labels = ["Zur Pflegephase springen", DORMANCY, GROWTH];
+  if (onPhone) await expect(select.getByRole("option")).toHaveText(labels);
+  else
+    for (const group of labels.slice(1))
+      await expect(chips.getByRole("button", { name: group, exact: true })).toBeVisible();
   // Dormancy today: the plant at Fensterbank stands off its target Keller, so the row carries the one action that moves it
   // (US-QS-32, SG-LIST-03). The row is named by the plant's title and names the target it has to move to.
   await expect(row(ruhe)).toContainText("Soll-Standort: Keller");
@@ -123,15 +129,16 @@ async function expectPhases(
   // The plant at its target shows no place (owner answer Q-82).
   await expect(row(profil)).toContainText("Nächster Wechsel zur Wachstumsphase:");
   await expect(row(profil)).not.toContainText("Standort");
-  await expect(list.getByRole("listitem")).toHaveCount(2);
+  await expect(dormancy.getByRole("listitem")).toHaveCount(2);
   await axeReport(page, info, "carePhases-list", { blocking: true });
-
-  // Growth today: no target location in the profile, so it is unknown and the view says what to do (P-08, P-09).
-  await page.getByRole("button", { name: /^Wachstumsphase \(1\)$/ }).click();
-  await expect(list.getByRole("listitem")).toHaveCount(1);
+  // Growth today: no target location, so it is unknown and the view says what to do (P-08, P-09); the jump leads to its section.
+  if (onPhone) await select.selectOption({ label: GROWTH });
+  else await chips.getByRole("button", { name: GROWTH, exact: true }).click();
+  await expect(growth.getByRole("heading", { level: 3 })).toBeInViewport();
+  await expect(growth.getByRole("listitem")).toHaveCount(1);
   await expect(row(wachs)).toContainText("Nächster Wechsel zur Ruhephase:");
   await expect(
-    page.getByText("Wähle im Pflegeprofil der Art einen Soll-Standort für die Wachstumsphase."),
+    growth.getByText("Wähle im Pflegeprofil der Art einen Soll-Standort für die Wachstumsphase."),
   ).toBeVisible();
 }
 

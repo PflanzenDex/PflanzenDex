@@ -9,6 +9,7 @@ import {
   test,
   uniqueLatin,
 } from "../../../support/fixtures";
+import { placesOf, settledPlaces } from "./quick-action-places";
 
 // US-QS-07 (issue 144): the four everyday flows on a phone of 360 x 640 px (starting value, assumption): measure with a photo,
 // water, tick off a treatment and open "Heute". Every view fits the width; a main action lies in the lower half of the window.
@@ -109,14 +110,6 @@ async function measureWithPhoto(page: Page): Promise<void> {
   await settleMeasurementSave(page);
 }
 
-/** What the result of "Gießen" moves nothing of: the scroll position and the quick-action buttons (SG-FEED-05, issue 2536). */
-const placesOf = (page: Page) =>
-  page.getByRole("group", { name: "Schnellaktionen" }).evaluate((row) => {
-    const region = row.closest("[data-layer-body]")?.querySelector("[data-scroll-region]");
-    const box = (e: Element) => `${e.textContent}@${JSON.stringify(e.getBoundingClientRect())}`;
-    return [region?.scrollTop, ...[...row.querySelectorAll("button")].map(box)];
-  });
-
 /** 2. Water the plant: the button "Gießen" of its layer "Überblick" writes today's entry (US-MON-05, US-QS-23). */
 async function waterPlant(page: Page): Promise<void> {
   await page.getByRole("link", { name: "Sammlung", exact: true }).click();
@@ -124,7 +117,7 @@ async function waterPlant(page: Page): Promise<void> {
   await expectFitsWidth(page, "Pflanze, Überblick");
   const water = page.getByRole("button", { name: /^Gießen: / });
   await expectLowerHalf(page, water, "water: Gießen");
-  const places = await placesOf(page);
+  const places = await settledPlaces(page);
   await water.click();
   // The result stands in a line under the row (issue 2536); it stays 8 s, no toast opens (SG-FEED-03). The focus stays on "Gießen".
   await expect(page.getByRole("button", { name: /^Rückgängig: / })).toBeVisible();

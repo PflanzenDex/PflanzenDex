@@ -1,12 +1,10 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect } from "../../../support/fixtures";
 
-// The checks of the form bar on a phone (US-QS-32, SG-SHEET-04, SG-FORM-02, SG-TOUCH-01, SG-COLOR-06), shared by
-// form-bar.spec.ts. They measure what the browser lays out: the bar's confirming action is visible, nothing that is fixed or
-// sticky covers a control of the form, and with the keyboard's height taken from the window the action and the focused field
-// are both inside the window and do not overlap. From 768 px the pair of a dialog and a pane is pinned under the scroll region
-// (owner decision d-115, `expectBarPinned`) and that of a page form stands after the last field as a plain row (owner decision
-// d-060, `expectBarAfterFields`), both in form-bar.covered.ts.
+// The checks of the form bar on a phone (US-QS-32, SG-SHEET-04, SG-FORM-02, SG-TOUCH-01, SG-COLOR-06), shared by form-bar.spec.ts.
+// They measure what the browser lays out: the bar's confirming action is visible, nothing fixed or sticky covers a control, and
+// with the keyboard's height taken from the window the action and the focused field are inside it and do not overlap. From 768 px
+// the pinned pair (d-115) and the plain row after the last field (d-060) are checked in form-bar.covered.ts.
 
 /** The window sizes of the phones of the design review: iPhone 16, OnePlus 15R (assumed) and the large phone (emulated). */
 export const PHONES = [
@@ -22,10 +20,8 @@ export const WIDE_WINDOWS = [
   { width: 1280, height: 800 },
 ] as const;
 
-/** The text sizes of the check: the default and 200 %. */
+/** The text sizes (the default and 200 %) and the colour schemes of the check. */
 export const TEXT_SIZES = [100, 200] as const;
-
-/** The colour schemes of the check. */
 export const SCHEMES = ["light", "dark"] as const;
 
 /** A numeric box in window coordinates. */
@@ -141,7 +137,7 @@ export async function expectBarUsable(page: Page, what: string): Promise<void> {
   expect(overlap(cancelBox, confirmBox), `${what}: the two buttons overlap`).toBe(false);
 }
 
-/** The open layer (a sheet or a dialog) or, without one, the page's main region: where the form is. */
+/** The open layer or, without one, the page's main region: where the form is. */
 async function formRoot(page: Page): Promise<Locator> {
   const layer = page.locator("[role='dialog']").first();
   return (await layer.count()) > 0 ? layer : page.locator("main").first();
@@ -154,19 +150,19 @@ async function firstField(page: Page): Promise<Locator> {
     .first();
 }
 
-/** The page does not scroll sideways (WCAG 1.4.10): the bar at 200 % text wraps instead of pushing the row out. */
-export async function expectNoSidewaysScroll(page: Page, what: string): Promise<void> {
-  const widths = await page.evaluate(() => ({
-    scroll: document.documentElement.scrollWidth,
-    width: document.documentElement.clientWidth,
-  }));
-  expect(widths.scroll, `${what}: the page scrolls sideways`).toBeLessThanOrEqual(widths.width);
-}
+/** Whether the field is inside the visible part of the scroll region of its layer: below it, nobody sees it (a page form has none). */
+const insideItsRegion = (field: Locator): Promise<boolean> =>
+  field.evaluate((el) => {
+    const region = el.closest("[data-scroll-region]")?.getBoundingClientRect();
+    const box = el.getBoundingClientRect();
+    return !region || (box.top >= region.top - 0.5 && box.bottom <= region.bottom + 0.5);
+  });
 
 /**
- * The keyboard case (SG-FORM-02, WCAG 2.4.11): a field has the focus, the keyboard takes the window down to 354 px, and
- * the field takes the focus again, as the browser scrolls it into view. The bar's action and the field are then both inside
- * the window and do not overlap. A real keyboard shrinks the visual viewport; the emulation shrinks the window to that height.
+ * The keyboard case (SG-FORM-02, WCAG 2.4.11): a field has the focus, the keyboard takes the window down to 354 px (the
+ * emulation shrinks the window to the visual viewport a real keyboard leaves), and the field takes the focus again, as the
+ * browser scrolls it into view. A sheet slides to its new height first, so the focus comes back once the form holds its
+ * place (issue 2535). Action and field are then inside the window, the field inside its scroll region, and apart.
  */
 export async function expectKeyboardCase(
   page: Page,
@@ -176,6 +172,7 @@ export async function expectKeyboardCase(
   const field = await firstField(page);
   await field.focus();
   await page.setViewportSize({ width: phone.width, height: 354 });
+  await holdsPlace(await formRoot(page));
   await field.blur();
   await field.focus();
   const { bar, confirm } = barOf(page);
@@ -188,11 +185,16 @@ export async function expectKeyboardCase(
         const a = await boxOf(confirm);
         const b = await boxOf(field);
         const inside = (box: Box) => box.top >= -0.5 && box.bottom <= 354.5;
-        return { confirmInside: inside(a), fieldInside: inside(b), overlapping: overlap(a, b) };
+        return {
+          confirmInside: inside(a),
+          fieldInside: inside(b),
+          fieldInRegion: await insideItsRegion(field),
+          overlapping: overlap(a, b),
+        };
       },
       {
         message: `${what}: with the keyboard open the action and the field stay apart in the window`,
       },
     )
-    .toEqual({ confirmInside: true, fieldInside: true, overlapping: false });
+    .toEqual({ confirmInside: true, fieldInside: true, fieldInRegion: true, overlapping: false });
 }
