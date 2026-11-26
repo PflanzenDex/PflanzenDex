@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { createRef } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -76,6 +77,78 @@ describe("US-QS-32 UndoRow shows the result in place with its undo", () => {
 });
 
 describe("US-QS-15 · US-QS-32 · SG-FEED-05 the undo row of a control that stays (issues 2462, 2536)", () => {
+  it("US-QS-32 the undo takes the focus from the control that caused the change (`from`), which stays on the page", () => {
+    const from = createRef<HTMLButtonElement>();
+    const { rerender } = render(
+      <div>
+        <button ref={from} type="button">
+          Gießen
+        </button>
+      </div>,
+    );
+    from.current?.focus();
+    rerender(
+      <div>
+        <button ref={from} type="button">
+          Gießen
+        </button>
+        <UndoRow result="Gegossen heute" subject="Aloe" from={from} onUndo={() => undefined} />
+      </div>,
+    );
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: /^Rückgängig/ }));
+  });
+
+  it("US-QS-32 the undo does not take the focus from `from` when another control holds it", () => {
+    const from = createRef<HTMLButtonElement>();
+    const { rerender } = render(
+      <div>
+        <button ref={from} type="button">
+          Gießen
+        </button>
+        <input aria-label="Suche" />
+      </div>,
+    );
+    const input = screen.getByRole("textbox", { name: "Suche" });
+    input.focus();
+    rerender(
+      <div>
+        <button ref={from} type="button">
+          Gießen
+        </button>
+        <input aria-label="Suche" />
+        <UndoRow result="Gegossen heute" subject="Aloe" from={from} onUndo={() => undefined} />
+      </div>,
+    );
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("US-QS-15 · issue 2536 `keepFocus` wins over `from`: the control that caused the change keeps the focus", () => {
+    const from = createRef<HTMLButtonElement>();
+    const { rerender } = render(
+      <div>
+        <button ref={from} type="button">
+          Gießen
+        </button>
+      </div>,
+    );
+    from.current?.focus();
+    rerender(
+      <div>
+        <button ref={from} type="button">
+          Gießen
+        </button>
+        <UndoRow
+          result="Gegossen heute"
+          subject="Aloe"
+          from={from}
+          keepFocus
+          onUndo={() => undefined}
+        />
+      </div>,
+    );
+    expect(document.activeElement).toBe(from.current);
+  });
+
   it("US-QS-15 · issue 2536 with `keepFocus` the undo row never takes the focus: the control that caused the change keeps it", () => {
     const { rerender } = render(
       <div>

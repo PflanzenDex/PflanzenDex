@@ -221,6 +221,21 @@ describe("US-QS-32 Gießen stays in place with its undo (SG-FEED-03)", () => {
     focus.mockRestore();
   });
 
+  it("US-QS-32 · SG-FEED-05 without a result host the result stands next to the button and its undo takes the focus from the button, as before", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (url) => newEntry(new URL(String(url)).pathname)),
+    );
+    const { container } = show(null);
+    const button = screen.getByRole("button", { name: "Gießen: Aloe" });
+    button.focus();
+    await userEvent.click(button);
+    const undo = await screen.findByRole("button", { name: "Rückgängig: Aloe" });
+    expect(container.contains(undo)).toBe(true);
+    expect(host.contains(undo)).toBe(false);
+    expect(document.activeElement).toBe(undo);
+  });
+
   it("US-QS-15 · issue 2536 · SG-FEED-05 the result row stands in the host, and the undo of the keyboard follows Gießen by Tab", async () => {
     vi.stubGlobal(
       "fetch",

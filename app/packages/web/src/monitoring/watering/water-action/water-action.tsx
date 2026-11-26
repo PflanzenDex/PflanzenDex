@@ -19,9 +19,10 @@ const t = texts(table);
  * when the write made the entry, "Gegossen heute · Rückgängig" for 8 s (SG-FEED-03), otherwise "Zuletzt gegossen: heute"
  * until the next write; it reads against the keeper's today when it renders, so the word follows the day. Without a host
  * the result stands next to the button. Focus: while the write runs the button is `aria-disabled`, not `disabled` (F-0094);
- * the focus stays on the button when the result shows, because the undo row takes none (`keepFocus`: the view must not
- * scroll away from the row, US-QS-15). The result is said once, by the shared live region (`useUndo`, `useSay`, SG-FEED-04).
- * A keeper who tabbed to the undo and used it, or whose window ended under the focus, gets the focus back on the button.
+ * the focus stays on the button when the result shows in the host, because the undo row takes none there (`keepFocus`: the
+ * view must not scroll away from the row, US-QS-15); without a host the undo takes the focus from the button, as before
+ * (`from`). The result is said once, by the shared live region (`useUndo`, `useSay`, SG-FEED-04). A keeper who tabbed to the
+ * undo and used it, or whose window ended under the focus, gets the focus back on the button.
  */
 export function WaterAction(props: {
   api: string;
@@ -41,7 +42,8 @@ export function WaterAction(props: {
         result={t("resultToday")}
         subject={specimen.name}
         busy={restore.running}
-        keepFocus
+        from={button}
+        keepFocus={resultHost != null}
         compact={resultHost != null}
         onUndo={undoWater}
       />
