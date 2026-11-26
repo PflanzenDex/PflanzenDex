@@ -99,8 +99,8 @@ describe("US-QS-32 the growth slot shows the fallback of its loaded height while
   });
 });
 
-describe("US-QS-32 · SG-FEED-05 the water slot gets the place of its result (issue 2462)", () => {
-  it("US-QS-32 · SG-FEED-05 the slot's context holds the box of the 'Art · Status' line, and a result drawn into it adds no row to the buttons", async () => {
+describe("US-QS-15 · SG-FEED-05 the water slot gets the place of its result under the quick actions (issues 2462, 2536)", () => {
+  it("US-QS-15 · issue 2536 the slot's context holds the line under the row of the quick actions, in the part that stays in place, outside the scroll region", async () => {
     setViewportWidth(360);
     show({
       water: (_card, ctx) => (
@@ -111,9 +111,18 @@ describe("US-QS-32 · SG-FEED-05 the water slot gets the place of its result (is
       ),
     });
     const result = await screen.findByText("Zuletzt gegossen: heute");
-    const facts = screen.getByText(/^Art: Aloe vera · Status: /);
-    expect(result.parentElement?.parentElement).toBe(facts.parentElement);
-    const buttons = screen.getByRole("button", { name: "Gießen" }).parentElement as HTMLElement;
-    expect(buttons.querySelector("p")).toBeNull();
+    const row = screen.getByRole("group", { name: "Schnellaktionen" });
+    const host = result.parentElement as HTMLElement;
+    // Directly below the row, in the pinned part of the layer: the focus stays on the button, so nothing scrolls the content.
+    expect(row.nextElementSibling).toBe(host);
+    expect(host.closest("[data-sheet-pinned]")).not.toBeNull();
+    expect(host.closest("[data-layer-body] > [data-scroll-region]")).toBeNull();
+    expect(row.querySelector("p")).toBeNull();
+    // The 'Art · Status' line of the overview stays as it is.
+    expect(
+      screen
+        .getByText(/^Art: Aloe vera · Status: /)
+        .closest("[data-layer-body] > [data-scroll-region]"),
+    ).not.toBeNull();
   });
 });
