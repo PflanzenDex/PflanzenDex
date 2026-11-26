@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
 import { useCallback, useState } from "react";
 import {
   type Control,
@@ -8,17 +7,13 @@ import {
   type FieldValues,
 } from "react-hook-form";
 import type { z } from "zod";
-import { Button } from "@/shared/ui/button/button";
-import { texts } from "@/shared/lib/text-rules/texts";
-import table from "../../../light.de.json";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { Field } from "@/shared/ui/fields/form/field/field";
 import { Select } from "@/shared/ui/fields/select/select";
 import type { ApiError } from "../../light-api/light-api";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
 import { useFieldForm } from "@/shared/ui/fields/form/form";
-
-const t = texts(table);
 
 /**
  * A form that saves through an operation: validates with its zod schema (focus goes to the first invalid field),
@@ -76,25 +71,27 @@ export function RefusalAlert<F extends FieldValues>({ sent }: { sent: Sent<F> })
   );
 }
 
-/** Submit button and optional cancel of a form row. The submit needs the network (US-QS-30): the zone and location writes go at once. */
-export function FormButtons(props: {
+/**
+ * "Abbrechen" and the confirming action of a zone or location form (SG-SHEET-04): in the bar of the sheet on a phone, a row after
+ * the last field from `md`, never at the end of the scrolling content. The write needs the network (US-QS-30). `onCancel` is the
+ * way out of a form that is not in a layer.
+ */
+export function SaveBar(props: {
+  formId: string;
   label: string;
   running: boolean;
   onCancel?: (() => void) | undefined;
 }) {
   return (
-    <NetworkSlot className="md:col-span-2">
-      <div className="flex flex-col gap-3 md:col-span-2 md:flex-row">
-        <Button type="submit" disabled={props.running} needsNetwork>
-          {props.label}
-        </Button>
-        {props.onCancel && (
-          <Button type="button" variant="plain" onClick={props.onCancel}>
-            {t("form.cancel")}
-          </Button>
-        )}
-      </div>
-    </NetworkSlot>
+    <FormBar
+      formId={props.formId}
+      pending={props.running}
+      needsNetwork
+      className="md:col-span-2"
+      {...(props.onCancel ? { onCancel: props.onCancel } : {})}
+    >
+      {props.label}
+    </FormBar>
   );
 }
 

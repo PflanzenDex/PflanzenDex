@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Control } from "react-hook-form";
 import { SPECIMEN_LIMITS } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import {
   Form,
   FormControl,
@@ -25,8 +25,8 @@ import table from "../plant-notes.de.json";
 
 const t = texts(table);
 
-/** The form of the notes: the filled "Notiz sichern" in the footer of the layer submits it by this id (US-QS-15). */
-export const NOTES_FORM = "notes-form";
+/** The form of the notes: "Notiz sichern" in the bar of the layer submits it by this id (SG-SHEET-04, US-QS-15). */
+const NOTES_FORM = "notes-form";
 
 /** True when the server refused the text itself (field `notes`, for example over the limit). */
 const notesFields = (error: ApiError): "notes"[] =>
@@ -63,6 +63,8 @@ export function NotesForm(props: {
   send: (notes: string) => Promise<ApiError | null>;
   onSaved: () => void;
   onCancel: () => void;
+  /** The write runs: the confirming action shows its pending text. */
+  pending: boolean;
 }) {
   const { send, onSaved } = props;
   const [error, setError] = useState<ApiError | null>(null);
@@ -98,9 +100,15 @@ export function NotesForm(props: {
             <p>{alertText}</p>
           </ErrorNotice>
         )}
-        <Button type="button" variant="plain" onClick={() => leave(props.onCancel)}>
-          {t("form.cancel")}
-        </Button>
+        {/* "Abbrechen" goes back to the notes through the guard; both stand in the bar of the layer (SG-SHEET-04). */}
+        <FormBar
+          formId={NOTES_FORM}
+          pending={props.pending}
+          needsNetwork
+          onCancel={() => leave(props.onCancel)}
+        >
+          {t("form.submit")}
+        </FormBar>
       </FormRoot>
     </Form>
   );

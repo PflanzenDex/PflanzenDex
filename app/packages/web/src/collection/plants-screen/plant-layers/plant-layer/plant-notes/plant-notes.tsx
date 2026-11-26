@@ -14,7 +14,7 @@ import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { Quiet, ErrorNotice } from "../../../../specimens/cards/parts/parts";
 import { notesKey, useNotes } from "../../../../specimens/hooks/use-notes";
 import { loadSpecimenNotes, type SpecimenNotes } from "../../../../specimens/model/specimens-api";
-import { NOTES_FORM, NotesForm } from "./notes-form/notes-form";
+import { NotesForm } from "./notes-form/notes-form";
 import table from "./plant-notes.de.json";
 
 const t = texts(table);
@@ -115,18 +115,7 @@ export function NotesLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
   const ready = request.status === "ready" && !loading;
   const notes = ready ? (request.value?.notes ?? null) : null;
   const action =
-    mode === "edit" ? (
-      <Button
-        type="submit"
-        form={NOTES_FORM}
-        size="touch"
-        className="w-full"
-        pending={saving}
-        needsNetwork
-      >
-        {t("form.submit")}
-      </Button>
-    ) : ready ? (
+    mode !== "edit" && ready ? (
       <WriteAction
         written={notes !== null}
         returned={mode === "returned"}
@@ -147,6 +136,7 @@ export function NotesLayer(props: { card: SpecimenCard; access: PhotoAccess }) {
             send={send}
             onSaved={() => setMode("returned")}
             onCancel={() => setMode("returned")}
+            pending={saving}
           />
         ) : null}
         {ready && mode !== "edit" ? <NotesText notes={notes} /> : null}

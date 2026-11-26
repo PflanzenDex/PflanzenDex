@@ -1,9 +1,10 @@
+import { useId } from "react";
 import { Form, FormRoot } from "@/shared/ui/fields/form/form";
 import type { ApiError, LightLocation, LightZone } from "../../shared/light-api/light-api";
 import {
   FORM_GRID,
-  FormButtons,
   RefusalAlert,
+  SaveBar,
   SelectField,
   useSaveForm,
 } from "../../shared/ui/form/form";
@@ -46,11 +47,13 @@ export function LocationForm(props: {
     clear: !s,
   });
   const { control } = sent.form;
+  const formId = useId();
   // Typed input that is not saved asks before the layer of the location closes (US-QS-32).
   useUnsavedInput(sent.form.formState.isDirty);
   return (
     <Form {...sent.form}>
       <FormRoot
+        id={formId}
         className={FORM_GRID}
         onSubmit={sent.send}
         aria-label={s ? ui("location.editLabel", { name: s.name }) : ui("location.createLabel")}
@@ -80,7 +83,8 @@ export function LocationForm(props: {
           <option value="outdoor">{ui("location.outdoor")}</option>
         </SelectField>
         <RefusalAlert sent={sent} />
-        <FormButtons
+        <SaveBar
+          formId={formId}
           label={s ? ui("location.save") : ui("location.createLabel")}
           running={sent.running}
           onCancel={props.onCancel}

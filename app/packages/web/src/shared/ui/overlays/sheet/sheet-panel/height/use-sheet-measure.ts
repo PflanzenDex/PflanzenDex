@@ -27,24 +27,6 @@ function pinnedOf(sheet: HTMLElement, rem: number): number {
   return total;
 }
 
-/** What the shared Button paints as its `default` variant: the filled primary action (the one-screen gate looks for the same). */
-const PRIMARY = "button.bg-primary, a.bg-primary, [role='button'].bg-primary";
-
-/**
- * A primary action in the scrolling content that the bottom of its scroll region cuts off. An action in the bar or below the
- * region (`data-sheet-pinned`) stays in place and is never cut. A sheet at half height cannot show the end of a long form.
- */
-function actionCutOf(sheet: HTMLElement): boolean {
-  return Array.from(sheet.querySelectorAll<HTMLElement>(PRIMARY)).some((action) => {
-    if (action.matches(":disabled, [aria-disabled='true']")) return false;
-    const region = action.closest("[data-scroll-region]");
-    return (
-      region !== null &&
-      action.getBoundingClientRect().bottom > region.getBoundingClientRect().bottom + 1
-    );
-  });
-}
-
 /** The parts of an open sheet whose size says how high its content is. */
 type Parts = { sheet: HTMLElement | null; header: HTMLElement | null; body: HTMLElement | null };
 
@@ -53,19 +35,13 @@ type Parts = { sheet: HTMLElement | null; header: HTMLElement | null; body: HTML
  * the window changes (a rotation, the keyboard, a larger text size) and whenever the sheet, its header or what its body
  * holds changes size or content, one frame later so a burst of changes is one measurement.
  */
-export function useSheetKind(parts: Parts, heights: Heights, open: boolean) {
+export function useSheetKind(parts: Parts, heights: Heights, open: boolean): SheetKind {
   const [kind, setKind] = React.useState<SheetKind>("fit");
-  // Whether a primary action in the content was cut off at half height since the sheet opened: the sheet then opens at full height.
-  const [cut, setCut] = React.useState(false);
   const { sheet, header, body } = parts;
-  React.useEffect(() => {
-    if (!open) setCut(false);
-  }, [open]);
   React.useLayoutEffect(() => {
     if (!open || !sheet || !header || !body) return;
     const measure = () => {
       const rem = rootRem();
-      if (actionCutOf(sheet)) setCut(true);
       setKind(
         sheetKind(
           {
@@ -102,5 +78,5 @@ export function useSheetKind(parts: Parts, heights: Heights, open: boolean) {
       body.removeEventListener("load", later, true);
     };
   }, [open, sheet, header, body, heights]);
-  return { kind, cut };
+  return kind;
 }

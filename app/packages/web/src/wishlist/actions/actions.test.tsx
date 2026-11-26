@@ -216,9 +216,7 @@ describe("US-WUN-05 'Verwerfen' sets a wish to discarded", () => {
     const f = server();
     view(<WishlistPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Verwerfen: / }));
-    await userEvent.click(
-      screen.getByRole("button", { name: `Ja, verwerfen: ${candidate.title}` }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: `Verwerfen: ${candidate.title}` }));
     const done = await screen.findByText(DISCARD_HINT.text);
     expect(done.closest('[role="status"]')?.textContent).toContain(DISCARD_HINT.nextAction);
     const sent = posts(f);
@@ -242,7 +240,7 @@ describe("US-WUN-05 'Verwerfen' sets a wish to discarded", () => {
     server({ refusal: { status: 409, code: "wish.already_bought" } });
     view(<WishlistPage api="http://api" token={token} />);
     await userEvent.click(await screen.findByRole("button", { name: /^Verwerfen: / }));
-    await userEvent.click(screen.getByRole("button", { name: /^Ja, verwerfen: / }));
+    await userEvent.click(screen.getByRole("button", { name: /^Verwerfen: / }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("schon als gekauft vermerkt");
     expect(alert.textContent).not.toContain("roh vom Server");

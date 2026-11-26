@@ -77,7 +77,7 @@ export function ZoneLayer(props: {
                 })
               }
             >
-              Ja, „{zoneLabel(zone.name)}“ löschen
+              „{zoneLabel(zone.name)}“ löschen
             </Button>
             <Button type="button" variant="secondary" onClick={() => setAsking(false)}>
               Nicht löschen

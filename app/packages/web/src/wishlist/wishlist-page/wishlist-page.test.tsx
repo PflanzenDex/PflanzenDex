@@ -877,7 +877,7 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
     expect(within(section).getByRole("button", { name: "Löschen: Cafe" })).toBeTruthy();
   });
 
-  it("US-QS-32 · SG-BTN-03 'Umbenennen' is filled, 'Löschen' is red plain, and the question has a red filled 'Ja, löschen' and a plain 'Abbrechen'", async () => {
+  it("US-QS-32 · SG-BTN-03 'Umbenennen' is filled, 'Löschen' is red plain, and the question has a red filled 'Löschen' and a plain 'Abbrechen'", async () => {
     repairServer();
     view(<WishlistPage api="http://api" token={token} />);
     const rename = await screen.findByRole("button", { name: "Umbenennen: Cafe" });
@@ -887,7 +887,7 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
     expect(classesOf(remove).some((c) => /^bg-/.test(c))).toBe(false);
     expect(hasOwnBorder(remove)).toBe(false);
     await userEvent.click(remove);
-    expect(classesOf(screen.getByRole("button", { name: "Ja, löschen: Cafe" }))).toContain(
+    expect(classesOf(screen.getByRole("button", { name: "Löschen: Cafe" }))).toContain(
       "bg-destructive",
     );
     const cancel = screen.getByRole("button", { name: "Abbrechen" });
@@ -948,7 +948,7 @@ describe("FR-WUN-06 #303 repair of duplicate wish names on the page", () => {
     expect(screen.queryByText(/Wirklich löschen/)).toBeNull();
     expect(posts(f)).toHaveLength(0);
     await userEvent.click(screen.getByRole("button", { name: "Löschen: Cafe" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, löschen: Cafe" }));
+    await userEvent.click(screen.getByRole("button", { name: "Löschen: Cafe" }));
     await vi.waitFor(() => expect(posts(f)).toHaveLength(1));
     expect(String(posts(f)[0]?.[0])).toBe("http://api/wishes/w9/remove-duplicate");
     await vi.waitFor(() =>

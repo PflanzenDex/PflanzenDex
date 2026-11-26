@@ -71,7 +71,7 @@ function Row(props: {
   );
 }
 
-/** The one bulk action on top: both directions ask first, and nothing widens without the explicit "Ja" (P-05). */
+/** The one bulk action on top: both directions ask first, and nothing widens without the confirming verb ("Alle teilen", not "Ja", SG-SHEET-05; P-05). */
 function BulkBar(props: { count: number; busy: boolean; onSetAll: (share: boolean) => void }) {
   const [ask, setAsk] = useState<boolean | null>(null);
   if (ask !== null)
@@ -96,7 +96,7 @@ function BulkBar(props: { count: number; busy: boolean; onSetAll: (share: boolea
               setAsk(null);
             }}
           >
-            {ask ? "Ja, alle teilen" : "Ja, alle zurückziehen"}
+            {ask ? "Alle teilen" : "Alle zurückziehen"}
           </Button>
           <Button type="button" size="touch" variant="plain" onClick={() => setAsk(null)}>
             Abbrechen

@@ -148,15 +148,15 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     expect(quick.parentElement?.className).toContain("grid-cols-2");
   });
 
-  it("US-QS-32 · SG-BTN-02 'Neues Blatt' is the one filled button, 'Mit Details' beside it is tinted without a border", async () => {
+  it("US-QS-15 · US-QS-32 · SG-BTN-02 'Neues Blatt' is tinted, 'Mit Details' beside it is plain: the plant layer keeps its one filled action elsewhere", async () => {
     server({ "GET /specimens/e1/leaves": () => json(200, view([])) });
     const { container } = show();
     const quick = await screen.findByRole("button", { name: "Neues Blatt" });
     const details = screen.getByRole("button", { name: "Mit Details" });
-    expect(isFilled(quick)).toBe(true);
-    expect(isTinted(details)).toBe(true);
+    expect(isTinted(quick)).toBe(true);
+    expect(isFilled(details)).toBe(false);
     expect(hasOwnBorder(details)).toBe(false);
-    expect(filledIn(container)).toEqual([quick]);
+    expect(filledIn(container)).toEqual([]);
   });
 
   it("US-QS-32 · SG-BTN-03 the removal of a leaf is a red plain button named 'Blatt entfernen'", async () => {
@@ -234,7 +234,7 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     await user.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(posts).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Blatt entfernen: 09.10.2026" }));
-    await user.click(screen.getByRole("button", { name: "Ja, entfernen: Blatt vom 09.10.2026" }));
+    await user.click(screen.getByRole("button", { name: "Entfernen: Blatt vom 09.10.2026" }));
     expect(await screen.findByText("Noch kein Blatt erfasst.")).toBeTruthy();
     expect(posts).toEqual([
       {
@@ -245,13 +245,13 @@ describe("US-WAC-07 the new-leaf log of a plant", () => {
     ]);
   });
 
-  it("US-QS-32 · SG-BTN-03 the confirm 'Ja, entfernen' of a leaf has an accessible name that contains its visible label (WCAG 2.5.3)", async () => {
+  it("US-QS-32 · SG-BTN-03 the confirm 'Entfernen' of a leaf has an accessible name that contains its visible label (WCAG 2.5.3)", async () => {
     server({ "GET /specimens/e1/leaves": () => json(200, view([leaf(9, { lengthMm: 40 })])) });
     const user = userEvent.setup();
     show();
     await user.click(await screen.findByRole("button", { name: "Blatt entfernen: 09.10.2026" }));
-    const confirm = screen.getByRole("button", { name: "Ja, entfernen: Blatt vom 09.10.2026" });
-    expect(confirm.textContent).toBe("Ja, entfernen");
+    const confirm = screen.getByRole("button", { name: "Entfernen: Blatt vom 09.10.2026" });
+    expect(confirm.textContent).toBe("Entfernen");
     expect(confirm.getAttribute("aria-label")?.startsWith(confirm.textContent ?? "")).toBe(true);
     expect(isPlain(screen.getByRole("button", { name: "Abbrechen" }))).toBe(true);
   });

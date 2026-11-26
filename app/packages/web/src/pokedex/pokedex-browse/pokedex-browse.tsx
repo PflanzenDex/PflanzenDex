@@ -12,7 +12,7 @@ import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-gro
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { SpeciesPager, SpeciesRow, speciesLayerId } from "../pokedex-cards/pokedex-cards";
-import { SpeciesDetail } from "../pokedex-detail/pokedex-detail";
+import { SpeciesDetail, SpeciesProfileAction } from "../pokedex-detail/pokedex-detail";
 import { germanNameOf } from "@/shared/species-name/species-name";
 import { Controls, FILTER_LAYER, FilterPanel } from "../pokedex-controls/pokedex-controls";
 
@@ -73,14 +73,7 @@ export function Browse(props: {
           onSort={setSort}
         />
       </LayerSheet>
-      {shownChosen ? (
-        <LayerSheet
-          id={speciesLayerId(shownChosen.species)}
-          title={germanNameOf(shownChosen.species, shownChosen.germanName) ?? shownChosen.species}
-        >
-          <SpeciesDetail species={shownChosen} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
-        </LayerSheet>
-      ) : null}
+      {shownChosen ? <SpeciesLayer species={shownChosen} onOpenSpecies={onOpenSpecies} /> : null}
     </div>
   );
 }
@@ -139,5 +132,26 @@ function Families(props: { result: ReturnType<typeof browsePokedex> }) {
         </p>
       )}
     />
+  );
+}
+
+/** The layer of one species: its details scroll, "Zum Artprofil" stays below them when the profile is wired. */
+function SpeciesLayer(props: {
+  species: CaughtSpecies;
+  onOpenSpecies: ((id: string) => void) | undefined;
+}) {
+  const { species, onOpenSpecies } = props;
+  return (
+    <LayerSheet
+      id={speciesLayerId(species.species)}
+      title={germanNameOf(species.species, species.germanName) ?? species.species}
+      primaryAction={
+        onOpenSpecies ? (
+          <SpeciesProfileAction speciesId={species.speciesId} onOpen={onOpenSpecies} />
+        ) : undefined
+      }
+    >
+      <SpeciesDetail species={species} />
+    </LayerSheet>
   );
 }

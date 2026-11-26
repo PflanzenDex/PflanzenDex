@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from "react";
-import { Button } from "@/shared/ui/button/button";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
@@ -12,7 +11,7 @@ import { RefusalAlert } from "../../../shared/notices/notices";
 import { loadTreatableSpecimens, type TreatmentInput } from "../../../shared/api/treatments-api";
 import { TreatmentFormSkeleton } from "../../treatments-page/treatments-page.skeleton";
 import { usePlanning } from "../planning";
-import { PLAN_FORM_ID, PlanForm } from "./plan-form/plan-form";
+import { PlanForm } from "./plan-form/plan-form";
 import table from "./plan-layer.de.json";
 
 type Token = () => Promise<string | undefined>;
@@ -54,8 +53,8 @@ function PlanBody(props: {
 }
 
 /**
- * "Behandlung planen" as a layer above the treatments (US-QS-18, A-04): plants with search, location filter and pages,
- * the term in a second view, and the save button in the footer, so it stays in view. A successful save closes the layer
+ * "Behandlung planen" as a layer above the treatments (US-QS-18, A-04): plants with search, location filter and one scroll list,
+ * the term in a second view, and "Abbrechen" and the save in the bar of the sheet (SG-SHEET-04). A successful save closes the layer
  * (back to the layer Behandlungen), where the planned treatment shows, and says the result (US-QS-32); a refusal stays
  * in the layer with its German text (P-10).
  */
@@ -77,21 +76,7 @@ export function PlanLayer(props: { api: string; token: Token }) {
     return ok;
   };
   return (
-    <LayerSheet
-      id={PLAN_LAYER}
-      title="Behandlung planen"
-      primaryAction={
-        <Button
-          type="submit"
-          form={PLAN_FORM_ID}
-          size="touch"
-          disabled={planning.running}
-          needsNetwork
-        >
-          Behandlung sichern
-        </Button>
-      }
-    >
+    <LayerSheet id={PLAN_LAYER} title="Behandlung planen">
       <PlanBody
         api={api}
         token={token}

@@ -150,14 +150,15 @@ describe("US-POK-09 view details of a species", () => {
     const onOpenSpecies = vi.fn();
     await open(onOpenSpecies);
     await userEvent.click(card("Ficus lyrata"));
-    await userEvent.click(within(detail()).getByRole("button", { name: "Zum Artprofil" }));
+    // The action stays in the layer under the scrolling details (US-QS-15), so it is no longer inside the details.
+    await userEvent.click(screen.getByRole("button", { name: "Zum Artprofil" }));
     expect(onOpenSpecies).toHaveBeenCalledWith("id-Ficus-lyrata");
   });
 
   it("US-POK-09 without a wired profile there is no dead link", async () => {
     await open();
     await userEvent.click(card("Ficus lyrata"));
-    expect(within(detail()).queryByRole("button", { name: "Zum Artprofil" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Zum Artprofil" })).toBeNull();
   });
 
   it("US-POK-09 the actions for missing species (wishlist, friend has it) are not offered for a caught species", async () => {

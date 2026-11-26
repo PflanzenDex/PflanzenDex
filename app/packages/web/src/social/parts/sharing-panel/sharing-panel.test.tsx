@@ -99,10 +99,10 @@ describe("US-QS-32 · SG-BTN-01 the bulk actions of the sharing layer are plain,
     expect(filledIn(document.body)).toHaveLength(0);
   });
 
-  it("US-QS-32 · SG-BTN-02 the question holds the one filled 'Ja, alle teilen' and a plain 'Abbrechen'", async () => {
+  it("US-QS-32 · SG-BTN-02 the question holds the one filled 'Alle teilen' and a plain 'Abbrechen'", async () => {
     show();
     await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
-    expect(isFilled(screen.getByRole("button", { name: "Ja, alle teilen" }))).toBe(true);
+    expect(isFilled(screen.getByRole("button", { name: "Alle teilen" }))).toBe(true);
     expect(isPlain(screen.getByRole("button", { name: "Abbrechen" }))).toBe(true);
     expect(filledIn(document.body)).toHaveLength(1);
   });

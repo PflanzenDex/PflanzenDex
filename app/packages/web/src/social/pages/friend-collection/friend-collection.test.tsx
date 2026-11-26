@@ -431,13 +431,13 @@ describe("US-QS-32 ending a friendship is in the menu of the friend's collection
     expect(calls.some((c) => c.method === "POST")).toBe(false);
   });
 
-  it("US-QS-32 'Ja, beenden' ends the friendship and the friends page says so (US-SOZ-03, P-10)", async () => {
+  it("US-QS-32 'Beenden' ends the friendship and the friends page says so (US-SOZ-03, P-10)", async () => {
     const { calls } = endServer();
     showAt();
     await screen.findByRole("list", { name: "Sammlung von Anna" });
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
     await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Beenden" }));
     expect(
       await screen.findByText(/Freunde-Startseite Freundschaft mit Anna beendet/),
     ).toBeTruthy();
@@ -454,7 +454,7 @@ describe("US-QS-32 ending a friendship is in the menu of the friend's collection
     await screen.findByRole("list", { name: "Sammlung von Anna" });
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
     await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Beenden" }));
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(screen.getByText(/alle Freigaben gelten dann nicht mehr/)).toBeTruthy();
     expect(screen.queryByText(/Freunde-Startseite/)).toBeNull();
@@ -479,7 +479,7 @@ describe("US-QS-32 ending a friendship is in the menu of the friend's collection
     await screen.findByRole("list", { name: "Sammlung von Anna" });
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
     await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Beenden" }));
     // The question is gone with the page: the friends page is shown, and the buffered state is said as text.
     expect(await screen.findByText(/Freunde-Startseite/)).toBeTruthy();
     // The note on screen and the polite announcement say the same text (US-QS-10).
@@ -501,7 +501,7 @@ describe("US-QS-32 ending a friendship is in the menu of the friend's collection
     client.setQueryData(["social", "friend-equipment", "f1"], NO_DEVICES);
     await userEvent.click(screen.getByRole("button", { name: "Mehr" }));
     await userEvent.click(screen.getByRole("menuitem", { name: "Freundschaft beenden" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Ja, beenden" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Beenden" }));
     expect(
       await screen.findByText(/Freunde-Startseite Freundschaft mit Anna beendet/),
     ).toBeTruthy();
@@ -523,9 +523,9 @@ describe("US-QS-32 · SG-BTN-01 the buttons of a friend's collection are tinted 
     expect(filledIn(document.body)).toHaveLength(0);
   });
 
-  it("US-QS-32 · SG-BTN-03 the question to end a friendship has a red filled 'Ja, beenden' and a plain 'Abbrechen'", async () => {
+  it("US-QS-32 · SG-BTN-03 the question to end a friendship has a red filled 'Beenden' and a plain 'Abbrechen'", async () => {
     show({ friend: { name: "Anna" }, cards: CARDS }, 200, NO_DEVICES, "/?sheet=end-friendship");
-    const yes = await screen.findByRole("button", { name: "Ja, beenden" });
+    const yes = await screen.findByRole("button", { name: "Beenden" });
     expect(yes.className).toContain("bg-destructive");
     const no = screen.getByRole("button", { name: "Abbrechen" });
     expect(isPlain(no)).toBe(true);

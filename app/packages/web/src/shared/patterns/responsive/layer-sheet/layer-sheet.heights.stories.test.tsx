@@ -11,6 +11,7 @@ import {
   stubSheetLayout,
 } from "@/shared/ui/overlays/sheet/sheet.test-helpers";
 import * as heights from "./layer-sheet.heights.stories";
+import * as lists from "./layer-sheet.lists.stories";
 import * as states from "./layer-sheet.states.stories";
 
 // US-QS-15: the plays of the sheet heights measure only where there is layout, so a plain jsdom run skips them. Here jsdom
@@ -18,12 +19,15 @@ import * as states from "./layer-sheet.states.stories";
 // story with a short content, all others with a long one. The browser run of the conformance judges the real boxes.
 setProjectAnnotations([preview]);
 
-const catalog = { ...composeStories(heights), ...composeStories(states) };
+const catalog = {
+  ...composeStories(heights),
+  ...composeStories(lists),
+  ...composeStories(states),
+};
 
 beforeEach(() => {
   layout.header = 90;
   layout.pinned = 60;
-  layout.actionBottom = 0;
   stubSheetLayout();
   stubBoxes();
   setViewportWidth(360);

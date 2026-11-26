@@ -3,6 +3,7 @@ import { localToday } from "@pflanzendex/core";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useWatch, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
+import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
 import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
 import { currentTimeZone } from "@/shared/data";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -20,7 +21,7 @@ import table from "./plan-form.de.json";
 
 const ui = texts(table);
 
-/** The id of the form: the save button of the layer's footer submits it from outside, so it stays in view (US-QS-15). */
+/** The id of the form: the confirming action in the bar of the layer submits it from outside the content (SG-SHEET-04, US-QS-15). */
 export const PLAN_FORM_ID = "plan-treatment-form";
 
 type View = "pick" | "terms";
@@ -136,6 +137,10 @@ export function PlanForm(props: {
           <TermFields control={form.control} />
           <CourseFields control={form.control} />
         </div>
+        {/* "Abbrechen" and the save stand in the bar of the sheet, a row after the last field in a dialog or a pane (SG-SHEET-04). */}
+        <FormBar formId={PLAN_FORM_ID} pending={props.running} needsNetwork>
+          {ui("save")}
+        </FormBar>
       </FormRoot>
     </Form>
   );

@@ -49,11 +49,8 @@ const family = (c: CaughtSpecies) =>
  * the layer. Image and short text come with the taxonomy build (US-POK-03): until then they are shown as unknown,
  * nothing is invented (P-08).
  */
-export function SpeciesDetail(props: {
-  species: CaughtSpecies;
-  onOpenSpecies?: (id: string) => void;
-}) {
-  const { species: c, onOpenSpecies } = props;
+export function SpeciesDetail(props: { species: CaughtSpecies }) {
+  const { species: c } = props;
   return (
     <section
       className="grid min-w-0 gap-2 break-words [&_p]:m-0"
@@ -76,11 +73,15 @@ export function SpeciesDetail(props: {
       <p className="text-sm">{catchText(c.caughtDate)}</p>
       <Chips chips={c.chips} />
       <Source source={c.source} />
-      {onOpenSpecies && (
-        <Button type="button" onClick={() => onOpenSpecies(c.speciesId)}>
-          Zum Artprofil
-        </Button>
-      )}
     </section>
+  );
+}
+
+/** The one filled action of the species layer: it stays in place under the scrolling details (US-QS-15, `primaryAction`). */
+export function SpeciesProfileAction(props: { speciesId: string; onOpen: (id: string) => void }) {
+  return (
+    <Button type="button" onClick={() => props.onOpen(props.speciesId)}>
+      Zum Artprofil
+    </Button>
   );
 }

@@ -121,7 +121,6 @@ function LeafList(props: { view: LeafLogView; busy: boolean; onRemove: (row: Lea
         pageSize={PAGE_SIZE}
         label={t("list")}
         param="blfrom"
-        replace
         getKey={(leaf) => leaf.id}
         renderItem={(leaf) => <LeafRow row={leaf} busy={props.busy} onRemove={props.onRemove} />}
       />
@@ -160,11 +159,12 @@ function LeafLog({ api, token, specimenId }: Props) {
       <h3 id="leaf-heading" className="sr-only">
         {t("heading")}
       </h3>
-      {/* Two equal columns: both buttons keep their 48 px height and do not wrap on a 360 px phone (US-WAC-07). */}
+      {/* Two equal columns, both 48 px high, no wrap at 360 px (US-WAC-07); neither is filled: the layer has one filled action (US-QS-15). */}
       <NetworkSlot>
         <div className="grid grid-cols-2 gap-2">
           <Button
             type="button"
+            variant="tinted"
             size="touch"
             disabled={writes.busy}
             needsNetwork

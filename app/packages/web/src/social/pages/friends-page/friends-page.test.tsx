@@ -471,11 +471,11 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(calls).toEqual([]);
     await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     expect(await screen.findByText(/Alle Pflanzen sind für Freunde freigegeben/)).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/sharing/species/sp1", body: { share: "friends" } });
     await userEvent.click(screen.getByRole("button", { name: "Alle zurückziehen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, alle zurückziehen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle zurückziehen" }));
     expect(await screen.findByText(/Alle Pflanzen sind zurückgezogen/)).toBeTruthy();
   });
 
@@ -489,7 +489,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     const { calls } = fakeServer({ specimens, failSpecies: "sp2" });
     show("sharing");
     await userEvent.click(await screen.findByRole("button", { name: "Alle teilen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, alle teilen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     expect(await screen.findByText("1 von 3 Arten geändert, 2 nicht.")).toBeTruthy();
     expect(screen.getByRole("alert").textContent).toBe(errorText("internal"));
     expect(calls.map((c) => c.path)).toEqual(["/sharing/species/sp1", "/sharing/species/sp2"]);

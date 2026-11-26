@@ -324,7 +324,7 @@ describe("US-LIC-05 page locations and light zones", () => {
     await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
     expect(calls.some((a) => a.method === "DELETE")).toBe(false);
-    await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
+    await userEvent.click(screen.getByRole("button", { name: "„Zone 2“ löschen" }));
     expect((await screen.findAllByText(/wird noch genutzt/)).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /^Zone 2\b/ })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Lichtzone löschen" })).toBeTruthy();
@@ -464,7 +464,7 @@ describe("US-QS-14 feedback on the light page", () => {
       render(<LightPage api="http://api" token={async () => "tok"} />);
       await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
       await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
-      await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
+      await userEvent.click(screen.getByRole("button", { name: "„Zone 2“ löschen" }));
       await waitFor(() => expect(said()).toBe("Lichtzone gelöscht."));
       await waitFor(() => expect(screen.queryByRole("button", { name: /^Zone 2\b/ })).toBeNull());
       expect(screen.queryByRole("dialog")).toBeNull();
@@ -492,7 +492,7 @@ describe("US-QS-14 feedback on the light page", () => {
       );
       await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
       await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
-      await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
+      await userEvent.click(screen.getByRole("button", { name: "„Zone 2“ löschen" }));
       await waitFor(() => expect(said()).toBe("Lichtzone gelöscht."));
       await waitFor(() => expect(screen.queryByRole("button", { name: /^Zone 2\b/ })).toBeNull());
       const heading = screen.getByRole("heading", { level: 1, name: "Standorte und Lichtzonen" });
@@ -511,7 +511,7 @@ describe("US-QS-14 feedback on the light page", () => {
     );
     await userEvent.click(await screen.findByRole("button", { name: /^Zone 2\b/ }));
     await userEvent.click(screen.getByRole("button", { name: "Lichtzone löschen" }));
-    await userEvent.click(screen.getByRole("button", { name: "Ja, „Zone 2“ löschen" }));
+    await userEvent.click(screen.getByRole("button", { name: "„Zone 2“ löschen" }));
     expect((await screen.findAllByText(/wird noch genutzt/)).length).toBeGreaterThan(0);
     const heading = screen.getByRole("heading", { level: 1, name: "Standorte und Lichtzonen" });
     expect(document.activeElement).not.toBe(heading);

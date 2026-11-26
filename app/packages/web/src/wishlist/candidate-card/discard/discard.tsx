@@ -35,7 +35,7 @@ export function DiscardTrigger(props: {
   );
 }
 
-/** The question "Wirklich verwerfen?" with its two buttons; "Ja, verwerfen" takes the focus when the question opens. */
+/** The question "Wirklich verwerfen?" with its two buttons; "Verwerfen" takes the focus when the question opens. */
 export function DiscardQuestion(props: {
   c: Candidate;
   busy: boolean;
@@ -57,10 +57,10 @@ export function DiscardQuestion(props: {
           variant="destructive"
           size="touch"
           disabled={props.busy}
-          aria-label={`Ja, verwerfen: ${c.title}`}
+          aria-label={`Verwerfen: ${c.title}`}
           onClick={() => props.onDiscard(c)}
         >
-          Ja, verwerfen
+          Verwerfen
         </Button>
         <Button type="button" variant="plain" size="touch" onClick={() => props.onCancel()}>
           Abbrechen

@@ -721,10 +721,10 @@ describe("US-QS-18 the layers keep the actions of their items", () => {
     expect(within(balcony).getAllByRole("listitem")).toHaveLength(2);
     await user.selectOptions(within(form).getByRole("combobox", { name: "Standort" }), "");
     await user.click(within(form).getByRole("checkbox", { name: /^Aloe/ }));
-    // The date and the reason are one view further; the save button stays in the layer's footer.
+    // The date and the reason are one view further; the save is in the bar of the layer (SG-SHEET-04), not in a footer.
     await user.click(within(form).getByRole("button", { name: "Termin" }));
     await user.type(within(form).getByLabelText(/Grund/), "Läuse");
-    // The save button sits in the footer outside the scrolling list and submits the form by its id (sticky footer).
+    // The save button stands in the bar and submits the form by its id.
     const save = within(form).getByRole("button", { name: "Behandlung sichern" });
     expect(document.getElementById(save.getAttribute("form") ?? "")?.tagName).toBe("FORM");
     await user.click(within(form).getByRole("button", { name: "Behandlung sichern" }));
