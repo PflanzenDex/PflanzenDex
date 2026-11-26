@@ -2,26 +2,32 @@ import { describe, expect, it } from "vitest";
 import { groupTitle, locationChoices, UNKNOWN_PLACE, UNPLACED_KEY } from "./group-by-location";
 
 describe("US-QS-14 plants grouped by location", () => {
+  it("SG-TYPE-07 US-QS-15 the number and its unit are joined by a no-break space", () => {
+    expect(groupTitle("Flur", "Zone 3", 1)).toContain("1\u00a0Pflanze");
+    expect(groupTitle("Flur", "Zone 3", 12)).toContain("12\u00a0Pflanzen");
+    expect(groupTitle("Flur", "Zone 3", 12)).not.toMatch(/\d Pflanzen/);
+  });
+
   it("US-QS-14 the heading names the place, its zone and the full number of plants", () => {
-    expect(groupTitle("Flur", "Zone 3", 1)).toBe("Flur · Zone 3 · 1 Pflanze");
-    expect(groupTitle("Wohnzimmer", "Zone 2", 2)).toBe("Wohnzimmer · Zone 2 · 2 Pflanzen");
+    expect(groupTitle("Flur", "Zone 3", 1)).toBe("Flur · Zone 3 · 1\u00a0Pflanze");
+    expect(groupTitle("Wohnzimmer", "Zone 2", 2)).toBe("Wohnzimmer · Zone 2 · 2\u00a0Pflanzen");
   });
 
   it("US-QS-32 the cutting light in the heading reads with brackets, the other zones as they are", () => {
     expect(groupTitle("Flur", "Zone 1 · Stecklingslicht", 1)).toBe(
-      "Flur · Zone 1 (Stecklingslicht) · 1 Pflanze",
+      "Flur · Zone 1 (Stecklingslicht) · 1\u00a0Pflanze",
     );
-    expect(groupTitle("Flur", "Lampe 2", 1)).toBe("Flur · Zone 2 · 1 Pflanze");
-    expect(groupTitle("Flur", "Regal oben", 1)).toBe("Flur · Regal oben · 1 Pflanze");
+    expect(groupTitle("Flur", "Lampe 2", 1)).toBe("Flur · Zone 2 · 1\u00a0Pflanze");
+    expect(groupTitle("Flur", "Regal oben", 1)).toBe("Flur · Regal oben · 1\u00a0Pflanze");
   });
 
   it("US-QS-32 the zone 'unbekannt' of a plant group stays as it is (P-08)", () => {
-    expect(groupTitle("Flur", null, 1)).toBe("Flur · Zone unbekannt · 1 Pflanze");
+    expect(groupTitle("Flur", null, 1)).toBe("Flur · Zone unbekannt · 1\u00a0Pflanze");
   });
 
   it("US-QS-14 an unknown zone is named, a zone that is not loaded yet is left out (P-08)", () => {
-    expect(groupTitle("Flur", null, 1)).toBe("Flur · Zone unbekannt · 1 Pflanze");
-    expect(groupTitle("Flur", undefined, 1)).toBe("Flur · 1 Pflanze");
+    expect(groupTitle("Flur", null, 1)).toBe("Flur · Zone unbekannt · 1\u00a0Pflanze");
+    expect(groupTitle("Flur", undefined, 1)).toBe("Flur · 1\u00a0Pflanze");
   });
 
   it("US-QS-14 the choices list the known places alphabetically, then the unknown place, then the unplaced plants", () => {
