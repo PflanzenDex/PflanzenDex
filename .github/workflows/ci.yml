@@ -164,14 +164,7 @@ jobs:
       # the job log and to the job summary; a warning never fails the job (E-30: a gate needs a finding first).
       - name: Dockerfile check
         continue-on-error: true
-        run: |
-          for image in api web; do
-            log="$RUNNER_TEMP/dockerfile-$image.log"
-            status=0
-            docker build --check -f "app/config/deploy/docker/$image.Dockerfile" app > "$log" 2>&1 || status=$?
-            cat "$log"
-            { echo "### Dockerfile check: $image (report only, exit $status)"; echo '```text'; cat "$log"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-          done
+        run: make docker-check
 
   app-tests:
     needs: [changes, reuse]
