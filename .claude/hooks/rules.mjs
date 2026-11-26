@@ -11,8 +11,9 @@ const GATE_FILES = [
   /^\.github\/rulesets\//,
   /^\.github\/CODEOWNERS$/,
   /^\.github\/renovate\.json5?$/,
-  /^\.claude\/settings\.json$/,
-  /^\.claude\/hooks\//,
+  // Everything under .claude/ (hooks, settings, rules, agents, skills, mods) as AGENTS.md says (owner decision d-128,
+  // 2026-11-26, issue 2528).
+  /^\.claude\//,
   /^\.gitleaksignore$/,
   /^Makefile$/,
   // The agent rules hold the gates, blocked commands and definition of done (owner decision 2026-11-20, issue 2381).
@@ -78,11 +79,12 @@ export function isGateFile(relativePath) {
   return GATE_FILES.some((p) => p.test(relativePath)) || isGateTest(relativePath);
 }
 
-// Whether an edit of this file asks a human in the hook (US-QG-07): a gate file that is not a test. A gate test asks no
-// question, because a test changes no threshold or exception list (owner decision 2026-11-07); make merge refuses a PR that
-// changes one, so a human sees it at the merge. guard-edit, after-edit and the list a question names use it.
+// Whether an edit of this file asks a human in the hook (US-QG-07): a gate file that is not a gate test. A gate test asks no
+// question, because a test changes no threshold or exception list (owner decision 2026-11-07). make merge refuses a PR that
+// changes one, so a human sees it at the merge. isGateTest judges a test by its place and name, as isGateFile does, so a
+// test of a mod under .claude/ asks (issue 2528). guard-edit, after-edit and the list a question names use it.
 export function asksBeforeEdit(relativePath) {
-  return isGateFile(relativePath) && !GATE_TEST.test(relativePath);
+  return isGateFile(relativePath) && !isGateTest(relativePath);
 }
 
 // Shell commands an agent must never run. Each entry: pattern, reason shown to the agent.
