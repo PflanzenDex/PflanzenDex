@@ -15,6 +15,7 @@ This ADR contains six decisions. Each states status, reason, alternatives and co
 
 - **Status:** proposed, owner confirms in the ADR PR review. The choice between Radix and Base UI is made once, here (see alternatives).
 - **Decision:** components are owned code in `app/packages/web/src/shared/ui` (copied and adapted, not an npm dependency of shadcn). Behavior and accessibility come from Radix UI primitives (the unified `radix-ui` package or `@radix-ui/react-*`), the bottom Sheet from Vaul, variants from `class-variance-authority`, class merging from `cn()` (`clsx` + `tailwind-merge`) in `src/shared/lib/utils.ts`.
+- **Update (2026-11-26, issue 2509, owner decisions d-132 and d-133):** the folder `shared/ui` is flat (one file `<name>.tsx` for each primitive) and `app/packages/web/components.json` lets the shadcn commands (`info`, `view`, `docs`, `add --dry-run --diff`) work on it. An agent may add a new primitive with `shadcn add` and adapts it in the same pull request; it never overwrites an owned primitive. The rules are in `docs/guides/reference/design-system.md`, section 1.4. The owned code stays owned: it is still no npm dependency of shadcn.
 - **Reason:** one place for styling; focus handling, ARIA and keyboard behavior come from tested primitives instead of hand-written code; no runtime styling library (styles are Tailwind v4 classes); it fits the placement rules DS-01 and DS-06 and the token rules DS-28 to DS-36.
 - **Alternatives:**
 
