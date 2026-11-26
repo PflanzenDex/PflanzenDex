@@ -6,7 +6,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Script } from "node:vm";
 import type { Plugin } from "vite";
-import { defineConfig } from "vitest/config";
+import { defineConfig, defineProject } from "vitest/config";
 import { coverageFor } from "../../tools/check/quality/coverage/coverage-config.mjs";
 
 // The sign-in library (oidc-client-ts) decides the first screen of every visitor, so its chunk is preloaded with the page
@@ -138,6 +138,31 @@ export function serviceWorkerBuild(): Plugin {
   };
 }
 
+// The vitest project of the story tests (`make sb-test`, `storybook tools test run`; addon-vitest, issue 2523): one browser
+// project for the stories. It is loaded only when Storybook's test runner starts vitest (it sets STORYBOOK_CONFIG_DIR), so
+// `npm run test` never starts a browser. It does not extend the unit tests' root config: their setup mocks React Testing
+// Library for jsdom. addon-vitest applies the catalog's preview (.storybook/preview.tsx) to the stories by itself.
+async function storybookProjects() {
+  const { storybookTest } = await import("@storybook/addon-vitest/vitest-plugin");
+  const { playwright } = await import("@vitest/browser-playwright");
+  return [
+    defineProject({
+      plugins: [
+        storybookTest({ configDir: fileURLToPath(new URL("./.storybook", import.meta.url)) }),
+      ],
+      test: {
+        name: "storybook",
+        browser: {
+          enabled: true,
+          headless: true,
+          provider: playwright(),
+          instances: [{ browser: "chromium" }],
+        },
+      },
+    }),
+  ];
+}
+
 export default defineConfig({
   // The worker `sw.js` (US-QS-27) lists the build's hashed files; the plugin writes that list into it.
   plugins: [react(), tailwindcss(), preloadSignInLibrary(), serviceWorkerBuild()],
@@ -163,5 +188,8 @@ export default defineConfig({
   test: {
     setupFiles: ["./src/shared/testing/test-setup/test-setup.tsx"],
     coverage: coverageFor("web"),
+    // The story tests (`make sb-test`, issue 2523): Storybook's test runner starts vitest with STORYBOOK_CONFIG_DIR set, and
+    // only then is the storybook project added. `npm run test` has no such variable and runs the unit tests alone.
+    ...(process.env["STORYBOOK_CONFIG_DIR"] ? { projects: await storybookProjects() } : {}),
   },
 });
