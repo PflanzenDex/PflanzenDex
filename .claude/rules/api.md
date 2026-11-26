@@ -12,3 +12,4 @@ paths:
 - Configuration comes from environment variables (`OIDC_ISSUER`, `OIDC_AUDIENCE`, `DATABASE_URL`, `WEB_URSPUNG`); no secrets in code.
 - Tests (`*.test.ts`) carry the story ID in the name and cover the error shape and tenant isolation of each new route.
 - New or changed routes are documented in `docs/guides/reference/app.md` as `METHOD /path` (`make reference-check`, US-QG-10).
+- For Hono APIs not covered here, read `https://hono.dev/llms.txt`; fetch a page with `Accept: text/markdown`. The project rules above win over any example there.

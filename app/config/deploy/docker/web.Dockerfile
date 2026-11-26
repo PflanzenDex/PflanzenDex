@@ -1,19 +1,20 @@
+# syntax=docker/dockerfile:1.29@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
 # Web image (TE-03): Vite build, served as static files. Build context is `app/`.
 # Base images are pinned to an exact version and a digest (#761); Renovate keeps them current (FR-QG-15).
 FROM node:26.13.0-alpine3.24@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS build
 WORKDIR /srv/app
-COPY package.json package-lock.json ./
-COPY packages/core/package.json packages/core/
-COPY packages/api/package.json packages/api/
-COPY packages/web/package.json packages/web/
+COPY --link package.json package-lock.json ./
+COPY --link packages/core/package.json packages/core/
+COPY --link packages/api/package.json packages/api/
+COPY --link packages/web/package.json packages/web/
 # The root devDependencies stay: vite.config.ts imports `vitest/config`, which lives there.
 RUN npm ci --workspace @pflanzendex/web --include-workspace-root
-COPY config/project/tsconfig.base.json config/project/
+COPY --link config/project/tsconfig.base.json config/project/
 # vite.config.ts imports the coverage settings of the test setup; the build fails without them.
-COPY tools/check/quality/coverage/coverage-config.mjs tools/check/quality/coverage/
-COPY config/gates/coverage-thresholds.json config/gates/
-COPY packages/core packages/core
-COPY packages/web packages/web
+COPY --link tools/check/quality/coverage/coverage-config.mjs tools/check/quality/coverage/
+COPY --link config/gates/coverage-thresholds.json config/gates/
+COPY --link packages/core packages/core
+COPY --link packages/web packages/web
 ARG APP_VERSION=unknown
 # Sign-in and API addresses are compiled into the bundle (Vite); without them the local development defaults apply.
 ARG VITE_OIDC_AUTHORITY
@@ -35,6 +36,12 @@ RUN cp /usr/bin/caddy /tmp/caddy && mv /tmp/caddy /usr/bin/caddy \
 USER caddy
 
 FROM caddy
-COPY config/deploy/docker/web.Caddyfile /etc/caddy/Caddyfile
-COPY --from=build /srv/app/packages/web/dist /srv/web
+# OCI image labels (issue 2520). The licence is not an SPDX identifier, so none is set.
+ARG APP_VERSION=unknown
+LABEL org.opencontainers.image.title="PflanzenDex web" \
+      org.opencontainers.image.description="PflanzenDex web app: the static build, served by unprivileged Caddy" \
+      org.opencontainers.image.source="https://github.com/PflanzenDex/PflanzenDex" \
+      org.opencontainers.image.version="$APP_VERSION"
+COPY --link config/deploy/docker/web.Caddyfile /etc/caddy/Caddyfile
+COPY --link --from=build /srv/app/packages/web/dist /srv/web
 EXPOSE 8080
