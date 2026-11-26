@@ -1,6 +1,7 @@
 import { zoneLabel } from "@pflanzendex/core";
 
-const count = (n: number) => (n === 1 ? "1 Pflanze" : `${n} Pflanzen`);
+/** A no-break space joins the number and its unit (SG-TYPE-07). */
+const count = (n: number) => (n === 1 ? "1\u00a0Pflanze" : `${n}\u00a0Pflanzen`);
 
 /**
  * The heading of a group: the place, its zone and the number of plants (FR-BES-23: the full count of the server). The zone
