@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.29@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
 # Web image (TE-03): Vite build, served as static files. Build context is `app/`.
-# Base images are pinned to an exact version and a digest (#761); Renovate keeps them current (FR-QG-15).
+# Base images are pinned to an exact version and a digest (#761); Dependabot keeps them current (FR-QG-15).
 FROM node:26.13.0-alpine3.24@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS build
 WORKDIR /srv/app
 COPY --link package.json package-lock.json ./

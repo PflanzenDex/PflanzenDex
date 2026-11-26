@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.29@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
 # API image (TE-03). Build context is `app/`. Reproducible: base image pinned to an exact version and a digest (#761,
-# Renovate keeps it current), `npm ci` from the lock file. Runs as the image's user `node`, never as root.
+# Dependabot keeps it current), `npm ci` from the lock file. Runs as the image's user `node`, never as root.
 # The same image runs the migrations (`migrate` service in docker-compose.yml, #201): `db` ships its SQL files.
 # `core` is exported as TypeScript source, so the API runs through tsx (there is no separate build step).
 # Two stages (issue 2520): `deps` installs the packages, the runtime stage copies them. The npm cache stays in `deps`,

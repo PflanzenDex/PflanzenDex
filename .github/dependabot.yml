@@ -1,24 +1,37 @@
-# Dependabot version updates for the Docker ecosystem only (owner decision d-128, 2026-11-26, issue 2529).
-# npm and GitHub Actions stay out of scope; Renovate (renovate.json5) keeps its own routine (FR-QG-15, US-DEV-03).
-# Scope: the Dockerfiles in app/config/deploy/docker/ (base images and the BuildKit syntax pin by digest).
-# The compose images (app/config/dev/compose.yaml, app/config/deploy/*.yml) need the `docker-compose` ecosystem
-# and are not covered; adding them is an owner question.
+# Dependabot version updates for container images (owner decisions d-128 and d-129, 2026-11-26, issue 2529).
+# Docker only: the Dockerfiles (base images and the BuildKit syntax pin) and the compose files. npm and GitHub Actions
+# stay out of scope. Dependabot replaces Renovate (FR-QG-15, US-DEV-03).
+# One multi-ecosystem group: one pull request per week for both ecosystems.
+# Not covered, updated by hand (Dependabot reads no Makefile or shell script):
+#   tools/lint/image-scan.sh (grype), Makefile (test database postgres), app/config/deploy/scripts/deploy.sh (alpine),
+#   app/config/deploy/scripts/restore/restore-test.sh (postgres), tools/lint/actionlint.sh (actionlint).
 version: 2
-updates:
-  - package-ecosystem: docker
-    directory: /app/config/deploy/docker
-    target-branch: dev
+multi-ecosystem-groups:
+  images:
     schedule:
       interval: weekly
       day: monday
       time: "05:00"
       timezone: Europe/Berlin
-    open-pull-requests-limit: 1
+    target-branch: dev
     # The squash commit takes the PR title: Conventional Commits type and scope (commitlint) plus a story ID,
     # so that `make merge` finds a story in the title (US-DEV-03).
     commit-message:
       prefix: "chore(deps): US-DEV-03"
-    groups:
-      docker-images:
-        patterns:
-          - "*"
+updates:
+  - package-ecosystem: docker
+    directory: /app/config/deploy/docker
+    multi-ecosystem-group: images
+    patterns:
+      - "*"
+  - package-ecosystem: docker-compose
+    directories:
+      - /app/config/dev
+      - /app/config/deploy
+    multi-ecosystem-group: images
+    patterns:
+      - "*"
+    # PostgreSQL major upgrades only with a migration plan and a restore test (US-DEV-07, NFR-15).
+    ignore:
+      - dependency-name: postgres
+        update-types: ["version-update:semver-major"]

@@ -1,6 +1,6 @@
 # Runbook: PostgreSQL 16 to 18 (one-time upgrade of a host)
 
-Ticket US-DEV-07 (#981). Basis: NFR-15 (a restorable backup before every change), E-01 (one host, Docker Compose). Renovate does not propose PostgreSQL major versions (`.github/renovate.json5`), so a major is a planned upgrade with this runbook. The test host goes first; staging or production follow the same steps.
+Ticket US-DEV-07 (#981). Basis: NFR-15 (a restorable backup before every change), E-01 (one host, Docker Compose). Dependabot does not propose PostgreSQL major versions (`ignore` in `.github/dependabot.yml`), so a major is a planned upgrade with this runbook. The test host goes first; staging or production follow the same steps.
 
 ## What changes
 

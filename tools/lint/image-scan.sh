@@ -12,7 +12,7 @@ cache="$app/.cache"
 report="$cache/image-scan.md"
 work="$(mktemp -d)"
 trap 'rm -rf -- "$work"' EXIT
-# Renovate updates the pin (docker manager, `config:best-practices`).
+# Nothing updates the pin (Dependabot reads no shell script): update it by hand.
 grype_image="anchore/grype:v0.121.0@sha256:621d56d1d68106b787022c81546f7e0a36202a25d1239f0c20195fab8c16f7ea"
 mkdir -p "$cache/grype-db"
 
