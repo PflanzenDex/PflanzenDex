@@ -189,35 +189,105 @@ describe("US-POK-08 sort", () => {
     expect(within(layer).getByText(/Artenzahl der Gattungen ist noch unbekannt/)).toBeTruthy();
   });
 
-  it("US-POK-08 · US-QS-22 · US-QS-32 · SG-ICON-01 by family: the family is chosen from a row with its count, 'n / unbekannt' is named", async () => {
+  it("US-POK-08 · US-QS-15 · SG-LIST-06 · SG-LIST-08 by family: every family is a section with its count, the chips only jump, 'n / unbekannt' is named", async () => {
     await open();
     await sortBy("Familie");
-    const choices = screen.getByRole("group", { name: "Familie wählen" });
-    // The chosen family carries a check icon, the others none (SG-ICON-01).
+    const jump = screen.getByRole("group", { name: "Zu Familie springen" });
+    // The chips are no filter: none is pressed and none carries a check icon (SG-LIST-06).
     expect(
-      within(choices)
+      within(jump)
         .getAllByRole("button")
-        .map((b) => [b.textContent, b.querySelector("svg") !== null]),
+        .map((b) => [
+          b.textContent,
+          b.hasAttribute("aria-pressed"),
+          b.querySelector("svg") !== null,
+        ]),
     ).toEqual([
-      ["Asphodelaceae (1)", true],
-      ["Moraceae (2)", false],
+      ["Asphodelaceae · 1 / unbekannt", false, false],
+      ["Moraceae · 2 / unbekannt", false, false],
     ]);
-    expect(shown()).toEqual(["Aloe vera"]);
-    await userEvent.click(within(choices).getByRole("button", { name: /Moraceae/ }));
-    expect(screen.getByText(/Moraceae \(Maulbeergewächse\) · 2 \/ unbekannt/)).toBeTruthy();
-    expect(shown()).toEqual(["Ficus lyrata", "Ficus elastica"]);
+    // Every family is on the page: no chooser hides one (owner decision 2026-11-22).
+    expect(shown()).toEqual(["Aloe vera", "Ficus lyrata", "Ficus elastica"]);
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toContain(
+      "Moraceae (Maulbeergewächse) · 2 / unbekannt",
+    );
+    const moraceae = screen.getByRole("region", { name: /^Moraceae/ });
+    expect(
+      [...moraceae.querySelectorAll("[data-species]")].map((el) => el.getAttribute("data-species")),
+    ).toEqual(["Ficus lyrata", "Ficus elastica"]);
   });
 
-  it("US-POK-08 a species without a known family is grouped under 'Ohne bekannte Familie', last", async () => {
+  it("US-POK-08 · SG-LIST-06 a species without a known family is grouped under 'Ohne bekannte Familie', last", async () => {
     await open([species("Citrus limon"), ...caught]);
     await sortBy("Familie");
-    const choices = screen.getByRole("group", { name: "Familie wählen" });
-    const labels = within(choices)
+    const jump = screen.getByRole("group", { name: "Zu Familie springen" });
+    const labels = within(jump)
       .getAllByRole("button")
       .map((b) => b.textContent);
     expect(labels.at(-1)).toContain("Ohne bekannte Familie");
-    await userEvent.click(within(choices).getByRole("button", { name: /Ohne bekannte Familie/ }));
-    expect(shown()).toEqual(["Citrus limon"]);
+    const sections = screen.getAllByRole("region").filter((r) => r.hasAttribute("data-group-key"));
+    const last = sections.at(-1) as HTMLElement;
+    expect(last.querySelector("h2")?.textContent).toContain("Ohne bekannte Familie");
+    expect(
+      [...last.querySelectorAll("[data-species]")].map((el) => el.getAttribute("data-species")),
+    ).toEqual(["Citrus limon"]);
+  });
+});
+
+/** 101 species: Ahorn 1 … 60, Birke 1 … 40 and one Zypresse, so the list is longer than 100 rows. */
+const many = [
+  ...Array.from({ length: 60 }, (_, i) =>
+    species(`Acer ${String(i).padStart(2, "0")}`, {
+      germanName: `Ahorn ${String(i).padStart(2, "0")}`,
+    }),
+  ),
+  ...Array.from({ length: 40 }, (_, i) =>
+    species(`Betula ${String(i).padStart(2, "0")}`, {
+      germanName: `Birke ${String(i).padStart(2, "0")}`,
+    }),
+  ),
+  species("Cupressus sempervirens", { germanName: "Zypresse" }),
+];
+const strip = () => screen.queryByRole("slider", { name: "Springen zu Buchstabe" });
+
+describe("US-QS-15 · SG-LIST-06 the letter index of the Pokédex: over 100 species, sorted by name", () => {
+  it("US-QS-15 the strip shows beside a list of more than 100 species sorted by name, and its name is German", async () => {
+    await open(many);
+    expect(strip()).not.toBeNull();
+    expect(document.querySelectorAll("[data-letter-index]")).toHaveLength(1);
+    // The species list keeps its box: the strip is its sibling, not a cover.
+    const list = screen.getByRole("list", { name: "Gefangene Arten" });
+    expect(strip()?.parentElement?.contains(list)).toBe(true);
+  });
+
+  it("US-QS-15 the strip files a species under the name its row shows: the German name where there is one", async () => {
+    await open(many);
+    const letters = [...(strip() as HTMLElement).children];
+    const present = letters
+      .filter((el) => el.className.includes("text-primary"))
+      .map((el) => el.textContent);
+    // Acer and Betula are filed under A and B (their German names Ahorn and Birke), Cupressus under Z (Zypresse).
+    expect(present).toEqual(["A", "B", "Z"]);
+  });
+
+  it("US-QS-15 the strip shows on no list of 100 species or fewer", async () => {
+    await open(many.slice(0, 100));
+    expect(strip()).toBeNull();
+  });
+
+  it("US-QS-15 the strip is hidden when the list is sorted otherwise, and comes back with the name order", async () => {
+    await open(many);
+    await sortBy("Fangdatum");
+    expect(strip()).toBeNull();
+    await sortBy("Alphabetisch");
+    expect(strip()).not.toBeNull();
+  });
+
+  it("US-QS-15 a filter that leaves 100 species or fewer takes the strip away", async () => {
+    await open(many);
+    await search("Ahorn");
+    expect(strip()).toBeNull();
+    expect(screen.getByRole("list", { name: "Gefangene Arten" })).toBeTruthy();
   });
 });
 
@@ -225,7 +295,7 @@ describe("US-POK-09 · US-QS-22 the details of a species are a layer", () => {
   it("US-POK-08 the group without a known family reads 'Ohne bekannte Familie' and does not say 'unbekannt' twice", async () => {
     await open([species("Citrus limon")]);
     await sortBy("Familie");
-    const title = screen.getByText(/Ohne bekannte Familie · /);
+    const title = screen.getByRole("heading", { name: /Ohne bekannte Familie · / });
     expect(title.textContent).toContain("1 Art");
     expect(title.textContent).not.toContain("unbekannt");
     expect(screen.queryByText(/Familie unbekannt/)).toBeNull();

@@ -1,26 +1,28 @@
-import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-groups";
+import { GroupSections } from "@/shared/lists/grouped-list/grouped-sections/grouped-sections";
+import type { SectionGroup } from "@/shared/lists/grouped-list/grouped-sections/group-section/group-section";
 import type { CarePhase, LightLocation, PhasesRow } from "@pflanzendex/core";
-import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
-import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
+import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { PHASE_TEXT } from "../../shared/text";
 import { Groups, type Confirm, type GroupUndo } from "../phases-list/phases-list";
 import { Entry } from "../phases-list/entry/entry";
+import table from "../phases-list/phases-list.de.json";
 
+const ui = texts(table);
+const plural = plurals(table);
+
+/** The fixed set of care phases, in their fixed order (SG-LIST-06): every phase has its section. */
 const PHASES: readonly CarePhase[] = ["dormancy", "growth"];
 
-/** Entries per page (starting values, assumption): a phase entry is a compact card with its own action. */
-function usePageSize(): number {
-  const md = useIsMd();
-  const lg = useIsLg();
-  return lg ? 8 : md ? 4 : 2;
-}
+/** Entries asked for past the loaded ones in one step; the phase list holds every plant, so it asks for none. */
+const PAGE_SIZE = 8;
 
 /**
- * The plants with a care phase as the grouping "Nach Pflegephase" (US-QS-19): the phase is chosen from a row with its
- * count and the plants of that phase page. "Umstellen" and the group buttons work as in the list (US-PHA-03).
- * The paging is the shared `PagedGroups`, which the plants use too.
+ * The plants with a care phase as the grouping "Nach Pflegephase" (US-QS-19, SG-LIST-06): the phases are a fixed set, so
+ * both are sections of one scrolling list in their fixed order, and a phase without a plant shows a quiet line under its
+ * heading. "Umstellen" and the group buttons work as in the list (US-PHA-03); the group buttons stand under the heading of
+ * their phase. The chips jump to a phase.
  */
 export function PhasesPaged(props: {
   rows: readonly PhasesRow[];
@@ -32,40 +34,53 @@ export function PhasesPaged(props: {
   /** The undo of a bulk move held in place (US-QS-32). */
   groupUndo?: GroupUndo | undefined;
 }) {
-  const size = usePageSize();
-  const groups = PHASES.map((phase) => ({
-    key: phase,
-    label: PHASE_TEXT[phase],
-    items: props.rows.filter((z) => z.phase === phase),
-  })).filter((g) => g.items.length > 0);
+  const groups: SectionGroup<PhasesRow>[] = PHASES.map((phase) => {
+    const items = props.rows.filter((z) => z.phase === phase);
+    return {
+      key: phase,
+      label: PHASE_TEXT[phase],
+      items,
+      countText: plural.counted("phaseCount", items.length),
+      empty: ui("phaseNone"),
+      ...(items.length === 0
+        ? {}
+        : {
+            intro: (
+              <Groups
+                rows={items}
+                locations={props.locations}
+                busy={props.busy}
+                onConfirm={props.onConfirm}
+                groupUndo={props.groupUndo}
+              />
+            ),
+          }),
+    };
+  });
   return (
-    <section aria-labelledby="care-phases-title" className="flex flex-col gap-3">
-      <PagedGroups
-        choicesLabel="Pflegephase wählen"
-        listLabel="Pflanzen mit Pflegephase"
+    <section aria-labelledby="care-phases-title" className="flex min-h-0 flex-1 flex-col gap-3">
+      <GroupSections
+        label={ui("list")}
+        // The page's section heading "Pflegephasen" is an h2 (sr-only), so the phases are h3 (SG-HEAD-03).
+        level={3}
+        jumpLabel={ui("jump")}
         groups={groups}
-        pageSize={size}
-        listClassName={OBJECT_GROUP}
-        getKey={(z) => z.specimenId}
-        intro={(g) => (
-          <Groups
-            rows={g.items}
-            locations={props.locations}
-            busy={props.busy}
-            onConfirm={props.onConfirm}
-            groupUndo={props.groupUndo}
-          />
-        )}
-        renderItem={(z) => (
-          <Entry
-            bare
-            row={z}
-            locations={props.locations}
-            busy={props.busy}
-            onConfirm={props.onConfirm}
-            access={props.access}
-          />
-        )}
+        list={{
+          listLabel: ui("list"),
+          pageSize: PAGE_SIZE,
+          listClassName: OBJECT_GROUP,
+          getKey: (z) => z.specimenId,
+          renderItem: (z) => (
+            <Entry
+              bare
+              row={z}
+              locations={props.locations}
+              busy={props.busy}
+              onConfirm={props.onConfirm}
+              access={props.access}
+            />
+          ),
+        }}
       />
     </section>
   );

@@ -18,5 +18,10 @@
   "targetPlace": "Soll-Standort: {place}",
   "deviationFull": "Weicht ab: steht am Standort „{here}“, Soll ist „{target}“.",
   "movedResult": "Umgestellt",
-  "groupSubject": "{count} Pflanzen nach {place}"
+  "groupSubject": "{count} Pflanzen nach {place}",
+  "phaseCount.one": "{count} Pflanze",
+  "phaseCount.other": "{count} Pflanzen",
+  "phaseNone": "Keine Pflanze in dieser Phase.",
+  "jump": "Zu Pflegephase springen",
+  "list": "Pflanzen mit Pflegephase"
 }

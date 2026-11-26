@@ -4,5 +4,11 @@
   "doneSaid": "„{name}“: „{reason}“ als erledigt eingetragen.",
   "undoSubject": "{reason} bei {name}",
   "restored": "Rückgängig gemacht.",
-  "alreadyDone": "„{name}“: „{reason}“ war schon erledigt."
+  "alreadyDone": "„{name}“: „{reason}“ war schon erledigt.",
+  "list": "Offene Behandlungen",
+  "section.overdue": "Überfällig",
+  "section.today": "Heute",
+  "section.later": "Später",
+  "section.count.one": "{count} Termin",
+  "section.count.other": "{count} Termine"
 }

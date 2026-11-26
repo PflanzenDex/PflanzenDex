@@ -23,6 +23,17 @@ export function hasLayout(element: Element): boolean {
   return element.getClientRects().length > 0;
 }
 
+/** Fails the play, naming `what`, when `ok` does not hold; a check on a measure passes without a layout (`hasLayout`, jsdom). */
+export function check(ok: boolean, what: string): void {
+  if (!ok) throw new Error(`play: ${what}`);
+}
+
+/** The element a play needs, or a failure that names it: one statement instead of a lookup and a throw. */
+export function must<T>(value: T | null | undefined, what: string): T {
+  if (value === null || value === undefined) throw new Error(`play: ${what} is missing`);
+  return value;
+}
+
 /** Presses Escape, as a keyboard user does: the overlays listen for it on the document, so the event bubbles up from `target`. */
 export function pressEscape(target: Element): void {
   target.dispatchEvent(

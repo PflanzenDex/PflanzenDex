@@ -131,7 +131,7 @@
     "path": "/collection?view=species&sheet=filters",
     "kind": "sheet",
     "state": "many",
-    "layerFile": "pokedex/pokedex-browse/pokedex-browse.tsx",
+    "layerFile": "pokedex/pokedex-browse/browse-layers/browse-layers.tsx",
     "title": "Filter"
   },
   {
@@ -140,7 +140,7 @@
     "path": "/collection?view=species&sheet=species-Adiantum+raddianum",
     "kind": "sheet",
     "state": "many",
-    "layerFile": "pokedex/pokedex-browse/pokedex-browse.tsx",
+    "layerFile": "pokedex/pokedex-browse/browse-layers/browse-layers.tsx",
     "title": "Frauenhaarfarn"
   },
   {

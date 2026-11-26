@@ -160,6 +160,12 @@ jobs:
         if: always()
         run: make health-report >> "$GITHUB_STEP_SUMMARY" || echo "Health report unavailable (report only), see the step log." >> "$GITHUB_STEP_SUMMARY"
 
+      # Issue 2520, report only: `docker build --check` lints both Dockerfiles without building an image. The output goes to
+      # the job log and to the job summary; a warning never fails the job (E-30: a gate needs a finding first).
+      - name: Dockerfile check
+        continue-on-error: true
+        run: make docker-check
+
   app-tests:
     needs: [changes, reuse]
     if: >-

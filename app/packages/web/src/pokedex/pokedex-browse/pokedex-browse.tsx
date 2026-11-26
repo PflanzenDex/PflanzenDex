@@ -7,14 +7,22 @@ import {
 import { useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
-import { LayerSheet, useExitValue } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { PagedGroups } from "@/shared/patterns/responsive/paged-groups/paged-groups";
-import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
+import { useExitValue } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
+import { IndexedList } from "@/shared/lists/indexed-list/indexed-list";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { GroupSections } from "@/shared/lists/grouped-list/grouped-sections/grouped-sections";
+import type { SectionGroup } from "@/shared/lists/grouped-list/grouped-sections/group-section/group-section";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { SpeciesPager, SpeciesRow, speciesLayerId } from "../pokedex-cards/pokedex-cards";
-import { SpeciesDetail, SpeciesProfileAction } from "../pokedex-detail/pokedex-detail";
 import { germanNameOf } from "@/shared/species-name/species-name";
-import { Controls, FILTER_LAYER, FilterPanel } from "../pokedex-controls/pokedex-controls";
+import { Controls } from "../pokedex-controls/pokedex-controls";
+import { BrowseLayers } from "./browse-layers/browse-layers";
+import table from "../pokedex-page/pokedex-page.de.json";
+
+const ui = texts(table);
+
+/** The name a species is sorted and filed by: the one its row shows, the German name where there is one (P-08). */
+const shownName = (c: CaughtSpecies): string => germanNameOf(c.species, c.germanName) ?? c.species;
 
 const plural = (n: number) => `${n} ${n === 1 ? "Art" : "Arten"}`;
 
@@ -27,6 +35,8 @@ const plural = (n: number) => `${n} ${n === 1 ? "Art" : "Arten"}`;
 export function Browse(props: {
   caught: readonly CaughtSpecies[];
   onOpenSpecies?: (id: string) => void;
+  /** The heading level of the families: one below the heading of the page or its section (SG-HEAD-03). */
+  level?: 2 | 3;
 }) {
   const { caught, onOpenSpecies } = props;
   const [query, setQuery] = useState("");
@@ -56,24 +66,31 @@ export function Browse(props: {
       {shown === 0 ? (
         <NoHit onReset={reset} />
       ) : sort === "family" ? (
-        <Families result={result} />
+        <Families result={result} level={props.level ?? 2} />
       ) : (
-        <SpeciesPager
-          label="Gefangene Arten"
-          species={result.flat}
-          resetKey={`${query}|${filter}|${sort}`}
-        />
+        // Over 100 species sorted by name: the letter strip at the trailing edge (SG-LIST-11, issue 2419).
+        <IndexedList
+          items={result.flat}
+          nameOf={shownName}
+          byName={sort === "alphabetical"}
+          label={ui("letterIndex")}
+        >
+          <SpeciesPager
+            label="Gefangene Arten"
+            species={result.flat}
+            resetKey={`${query}|${filter}|${sort}`}
+          />
+        </IndexedList>
       )}
-      <LayerSheet id={FILTER_LAYER} title="Filter">
-        <FilterPanel
-          filter={filter}
-          sort={sort}
-          poorKnown={poorKnown}
-          onFilter={setFilter}
-          onSort={setSort}
-        />
-      </LayerSheet>
-      {shownChosen ? <SpeciesLayer species={shownChosen} onOpenSpecies={onOpenSpecies} /> : null}
+      <BrowseLayers
+        filter={filter}
+        sort={sort}
+        poorKnown={poorKnown}
+        onFilter={setFilter}
+        onSort={setSort}
+        chosen={shownChosen}
+        onOpenSpecies={onOpenSpecies}
+      />
     </div>
   );
 }
@@ -99,59 +116,38 @@ function NoHit(props: { onReset: () => void }) {
 }
 
 /**
- * The species by family: the family is chosen from a row with its count, its species are paged. "n / m" keeps m
- * "unbekannt" without the catalog tree (US-POK-03), never guessed (P-08).
+ * The species by family (SG-LIST-06): every family is a section of one scrolling list, in the order of the sort, the species
+ * without a known family last. "n / m" keeps m "unbekannt" without the catalog tree (US-POK-03), never guessed (P-08). The
+ * chips jump to a family.
  */
-function Families(props: { result: ReturnType<typeof browsePokedex> }) {
-  const size = useRowPageSize();
-  const groups = props.result.groups.map((g) => {
+function Families(props: { result: ReturnType<typeof browsePokedex>; level: 2 | 3 }) {
+  const groups: SectionGroup<CaughtSpecies>[] = props.result.groups.map((g) => {
     const name = g.family === null ? "Ohne bekannte Familie" : g.family;
     const german = g.familyGerman === null ? "" : ` (${g.familyGerman})`;
     // Without a family there is no family total to compare with: "1 Art", not "1 / unbekannt" (P-08).
     const count = g.family === null ? plural(g.caught) : `${g.caught} / ${g.total ?? "unbekannt"}`;
     return {
-      key: g.family ?? "",
+      key: g.family ?? "none",
       label: name,
+      count: g.caught,
+      countText: count,
+      heading: `${name}${german} · ${count}`,
       items: g.species,
-      title: `${name}${german} · ${count}`,
     };
   });
   return (
-    <PagedGroups
-      choicesLabel="Familie wählen"
-      listLabel="Gefangene Arten"
+    <GroupSections
+      label="Gefangene Arten"
+      jumpLabel="Zu Familie springen"
+      level={props.level}
       groups={groups}
-      pageSize={size}
-      fit
-      getKey={(c) => c.species}
-      listClassName={OBJECT_GROUP}
-      renderItem={(c) => <SpeciesRow c={c} />}
-      intro={(g) => (
-        <p className="m-0 text-sm text-muted-foreground">
-          {groups.find((x) => x.key === g.key)?.title}
-        </p>
-      )}
+      list={{
+        listLabel: "Gefangene Arten",
+        pageSize: 20,
+        getKey: (c) => c.species,
+        listClassName: OBJECT_GROUP,
+        renderItem: (c) => <SpeciesRow c={c} />,
+      }}
     />
-  );
-}
-
-/** The layer of one species: its details scroll, "Zum Artprofil" stays below them when the profile is wired. */
-function SpeciesLayer(props: {
-  species: CaughtSpecies;
-  onOpenSpecies: ((id: string) => void) | undefined;
-}) {
-  const { species, onOpenSpecies } = props;
-  return (
-    <LayerSheet
-      id={speciesLayerId(species.species)}
-      title={germanNameOf(species.species, species.germanName) ?? species.species}
-      primaryAction={
-        onOpenSpecies ? (
-          <SpeciesProfileAction speciesId={species.speciesId} onOpen={onOpenSpecies} />
-        ) : undefined
-      }
-    >
-      <SpeciesDetail species={species} />
-    </LayerSheet>
   );
 }

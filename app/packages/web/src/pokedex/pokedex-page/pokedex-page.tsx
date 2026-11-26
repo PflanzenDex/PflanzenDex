@@ -1,26 +1,18 @@
-import {
-  milestoneTreeOf,
-  type Ownership,
-  type PokedexTree,
-  type UnidentifiedSpecimen,
-} from "@pflanzendex/core";
+import { milestoneTreeOf, type Ownership, type PokedexTree } from "@pflanzendex/core";
 import { useCallback, useEffect } from "react";
 import { CollectorCards } from "../pokedex-cards/collector-cards/collector-cards";
 import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { SCREEN_STALE_TIME } from "../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { Browse } from "../pokedex-browse/pokedex-browse";
 import { loadOwnership } from "../caught/ownership-api";
 import { MilestonesSkeleton, PokedexPageSkeleton, ProgressSkeleton } from "./pokedex-page.skeleton";
-import { ObjectRow } from "@/shared/lists/object-row/object-row";
-import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
-import { PATHS, plantLayerId } from "@/shared/patterns/navigation/navigation/navigation";
 import { PROGRESS_LAYER, ProgressDetail, ProgressLine } from "../collector-rank/collector-rank";
 import { loadTree, TREE_KEY } from "../collector-rank/tree-api";
 import { Milestones, MILESTONES_LAYER } from "../milestones/milestones";
 import { NewlyCaught } from "../caught/newly-caught/newly-caught";
+import { Unidentified } from "./unidentified/unidentified";
 import table from "./pokedex-page.de.json";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 
@@ -88,7 +80,11 @@ export function PokedexPage(props: {
               caught={ownership.caught}
               uncounted={ownership.unidentified.length}
             />
-            <Browse caught={ownership.caught} {...(onOpenSpecies ? { onOpenSpecies } : {})} />
+            <Browse
+              caught={ownership.caught}
+              level={host ? 3 : 2}
+              {...(onOpenSpecies ? { onOpenSpecies } : {})}
+            />
             <Layers api={api} token={token} ownership={ownership} />
           </section>
         )}
@@ -151,47 +147,5 @@ function Layers(props: {
         <Unidentified specimens={ownership.unidentified} />
       </LayerSheet>
     </>
-  );
-}
-
-/** The plant of a specimen in its plant layer (US-QS-22, US-QS-32). */
-const plantAddress = (id: string) => `${PATHS.collection}?view=plants&sheet=${plantLayerId(id)}`;
-
-/** The Latin name as stored (or "unbekannt"), plus its own next action when the rows do not share one (P-08, P-09). */
-const metaOf = (s: UnidentifiedSpecimen, common: string | null) => {
-  const name = s.latinName ?? ui("uncountedUnknown");
-  return common === null ? `${name} · ${s.nextAction}` : name;
-};
-
-/**
- * The specimens that do not count yet (US-QS-32): one line says why and what to do, once; then one row per plant that opens
- * the plant. The layer says so instead of staying empty (P-09).
- */
-function Unidentified(props: { specimens: readonly UnidentifiedSpecimen[] }) {
-  if (props.specimens.length === 0) return <p className="text-sm">{ui("uncountedNone")}</p>;
-  // A next action the rows share is said once, in the explanation (P-09).
-  const actions = new Set(props.specimens.map((s) => s.nextAction));
-  const common = actions.size === 1 ? ([...actions][0] ?? null) : null;
-  return (
-    <div className="flex min-w-0 flex-col gap-3">
-      <p className="text-sm">
-        {common === null ? ui("uncountedExplain") : `${ui("uncountedExplain")} ${common}`}
-      </p>
-      <Pager
-        items={props.specimens}
-        pageSize={4}
-        label={ui("uncountedTitle")}
-        param={LAYER_PARAM}
-        listClassName={OBJECT_GROUP}
-        getKey={(s) => s.specimenId}
-        renderItem={(s) => (
-          <ObjectRow
-            to={plantAddress(s.specimenId)}
-            title={s.specimenName}
-            meta={metaOf(s, common)}
-          />
-        )}
-      />
-    </div>
   );
 }

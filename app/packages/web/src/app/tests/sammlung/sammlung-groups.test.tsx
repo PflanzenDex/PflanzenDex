@@ -182,34 +182,59 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
     expect(screen.getByTestId("address").textContent).toBe("/collection?view=plants&sheet=view");
   });
 
-  it("US-QS-19 · US-LIC-01 · US-QS-32 · SG-ICON-01 grouped by location the groups are a row of choices with their count; the chosen one has a check icon; unknown values are named", async () => {
+  it("US-QS-15 · US-QS-19 · SG-LIST-06 · SG-LIST-08 grouped by location every place is a section with its count; the unknown place stands last with its one action; the chips only jump", async () => {
     renderAt("/collection?view=plants&group=location");
-    const row = await screen.findByRole("group", { name: "Standort wählen" });
+    const row = await screen.findByRole("group", { name: "Zu Standort springen" });
     expect(
       within(row)
         .getAllByRole("button")
-        .map((b) => [b.textContent, b.querySelector("svg.lucide-check") !== null]),
+        .map((b) => [
+          b.textContent,
+          b.hasAttribute("aria-pressed"),
+          b.querySelector("svg") !== null,
+        ]),
     ).toEqual([
-      ["Flur (1)", true],
-      ["Wohnzimmer (2)", false],
-      ["Standort unbekannt (1)", false],
+      ["Flur (1)", false, false],
+      ["Wohnzimmer (2)", false, false],
+      ["Standort unbekannt (1)", false, false],
     ]);
-    expect(screen.getByText("Flur · Zone unbekannt · 1 Pflanze")).toBeTruthy();
-    expect(plantItems()).toHaveLength(1);
-    await userEvent.click(within(row).getByRole("button", { name: /Wohnzimmer/ }));
-    expect(screen.getByText("Wohnzimmer · Zone 2 · 2 Pflanzen")).toBeTruthy();
-    expect(plantItems()).toHaveLength(2);
-    expect(screen.getByTestId("address").textContent).toBe(
-      "/collection?view=plants&group=location&part=Wohnzimmer",
+    // Every place stands in the one list, in the order of the summary; no chooser hides one.
+    await screen.findByText("Flur · Zone unbekannt · 1 Pflanze");
+    // The heading level follows the page: the area's title is the h1 and "Pflanzen" its h2 (SG-HEAD-03), so the places are h3.
+    const headings = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    expect(headings).toEqual([
+      "Flur · Zone unbekannt · 1 Pflanze",
+      "Wohnzimmer · Zone 2 · 2 Pflanzen",
+      "Standort unbekannt · Zone unbekannt · 1 Pflanze",
+    ]);
+    const sections = screen
+      .getAllByRole("region")
+      .filter((r) => r.hasAttribute("data-group-key")) as [HTMLElement, HTMLElement, HTMLElement];
+    expect(sections.map((r) => r.getAttribute("data-group-key"))).toEqual([
+      "Flur",
+      "Wohnzimmer",
+      "unplaced",
+    ]);
+    expect(within(sections[1]).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(sections[0]).getAllByRole("listitem")).toHaveLength(1);
+    // The group of the unknown value carries one plain action that sets it (SG-LIST-06), and no other group does.
+    const unknown = within(sections[2]);
+    expect(unknown.getAllByRole("link")).toHaveLength(1);
+    expect(unknown.getByRole("link", { name: "Standort setzen" }).getAttribute("href")).toBe(
+      "/today?sheet=hints",
     );
-    await userEvent.click(within(row).getByRole("button", { name: /Standort unbekannt/ }));
-    expect(screen.getByText("Standort unbekannt · Zone unbekannt · 1 Pflanze")).toBeTruthy();
+    expect(within(sections[0]).queryByRole("link", { name: "Standort setzen" })).toBeNull();
+    // A jump writes nothing into the address (SG-NAV-02).
+    await userEvent.click(within(row).getByRole("button", { name: /Wohnzimmer/ }));
+    expect(screen.getByTestId("address").textContent).toBe(
+      "/collection?view=plants&group=location",
+    );
     await openView();
     expect(pressed("Nach Standort")).toBe(true);
   });
 
-  it("US-BES-06 · FR-BES-23 grouped by location a group shows its full count, and opening it loads only its own plants", async () => {
-    // The list of the chosen group scrolls at every width (US-QS-15, SG-LIST-01), here at a tablet width.
+  it("US-BES-06 · FR-BES-23 · US-QS-15 grouped by location a group shows its full count, and every group loads its own plants, part by part", async () => {
+    // Every group is a section of the one list at every width (US-QS-15, SG-LIST-01), here at a tablet width.
     setViewportWidth(1024);
     const seen: URL[] = [];
     stubServer(
@@ -219,21 +244,29 @@ describe("US-QS-19 the plants can be grouped by care phase or by location", () =
       ],
       (u) => seen.push(u),
     );
-    renderAt("/collection?view=plants&group=location&part=Wohnzimmer");
-    const row = await screen.findByRole("group", { name: "Standort wählen" });
+    renderAt("/collection?view=plants&group=location");
+    const row = await screen.findByRole("group", { name: "Zu Standort springen" });
     expect(within(row).getByRole("button", { name: /^Wohnzimmer \(120\)$/ })).toBeTruthy();
-    expect(await screen.findByRole("list", { name: "Pflanzen" })).toBeTruthy();
+    expect(await screen.findAllByRole("list", { name: "Pflanzen" })).toHaveLength(2);
     expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
     const groupCalls = seen.filter((u) => u.pathname === "/specimens/cards");
     expect(groupCalls.some((u) => u.searchParams.get("location") === "Wohnzimmer")).toBe(true);
-    expect(groupCalls.some((u) => u.searchParams.get("location") === "Flur")).toBe(false);
+    expect(groupCalls.some((u) => u.searchParams.get("location") === "Flur")).toBe(true);
   });
 
-  it("US-QS-19 · US-PHA-01 grouped by care phase the phase of the plants shows with its count line", async () => {
+  it("US-QS-15 · US-QS-19 · US-PHA-01 · SG-LIST-06 grouped by care phase both phases stand in their fixed order; the empty one is a quiet line, not a control", async () => {
     renderAt("/collection?view=plants&group=phase");
     expect(await screen.findByRole("button", { name: /^Bogenhanf(\s|$)/ })).toBeTruthy();
     expect(await screen.findByText("1 Pflanze mit Pflegephase")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Ruhephase (1)" })).toBeTruthy();
+    // The fixed set: both phases are there, the one without a plant too (SG-LIST-06), as the headings of the page's one list.
+    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
+      "Ruhephase · 1\u00a0Pflanze",
+      "Wachstumsphase · 0\u00a0Pflanzen",
+    ]);
+    const growth = screen.getByRole("region", { name: /^Wachstumsphase/ });
+    expect(within(growth).getByText("Keine Pflanze in dieser Phase.")).toBeTruthy();
+    expect(within(growth).queryByRole("button")).toBeNull();
+    expect(within(growth).queryByRole("link")).toBeNull();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     // US-QS-32: the plant row of the grouping: its one meta line names the next change, and a plant in place shows no place.
     expect(screen.getByText("Nächster Wechsel zur Wachstumsphase: 16.03.2027")).toBeTruthy();

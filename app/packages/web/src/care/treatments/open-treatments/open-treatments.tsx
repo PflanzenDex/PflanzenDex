@@ -3,14 +3,14 @@ import { useCallback, useRef, useState } from "react";
 import type { EmptyStateAction } from "@/shared/patterns/elements/empty-state/empty-state";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { isOnline } from "@/shared/platform/browser/network";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { placeHeld, useUndo } from "@/shared/feedback/undo-row/use-undo";
 import { entityKey, useInvalidate, useWriteAction } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
-import { LIST_CLASSES, RefusalAlert } from "../../shared/notices";
-import { PAGE_SIZE, Row } from "./treatment-row/treatment-row";
+import { RefusalAlert } from "../../shared/notices";
+import { Row } from "./treatment-row/treatment-row";
+import { TreatmentSections } from "./treatment-sections/treatment-sections";
 import { OpenTreatmentsSkeleton } from "./open-treatments.skeleton";
 import {
   completeTreatment,
@@ -137,22 +137,12 @@ function OpenList(props: {
   return (
     <>
       {next && !props.host && <p className="font-semibold">{next}</p>}
-      {props.host ? (
-        <Pager
-          items={rows}
-          pageSize={PAGE_SIZE}
-          param={LAYER_PARAM}
-          label="Offene Behandlungen"
-          getKey={(row) => row.id}
-          renderItem={(row) => rowOf(row, true)}
-        />
-      ) : (
-        <ul className={LIST_CLASSES} aria-label="Offene Behandlungen">
-          {rows.map((row) => (
-            <li key={row.id}>{rowOf(row, false)}</li>
-          ))}
-        </ul>
-      )}
+      <TreatmentSections
+        rows={rows}
+        rowOf={(row) => rowOf(row, props.host)}
+        // The title is an h3 in a layer and an h2 on a page; the sections and the names of the plants follow it (SG-HEAD-03).
+        level={props.host ? 4 : 3}
+      />
     </>
   );
 }

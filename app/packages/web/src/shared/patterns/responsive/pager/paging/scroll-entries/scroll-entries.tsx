@@ -38,6 +38,11 @@ export type ScrollEntriesProps<T> = {
    * until then. A list that uses `ScrollEntries` itself, such as the friends of "Freunde", is no `Pager` and carries none.
    */
   pagerMark?: boolean;
+  /**
+   * The count of the end marker when it is not this list's own: the last section of a grouped list ends the whole list, so
+   * it names the entries of every group (SG-LIST-01). `false` shows no marker: a section that is not the last.
+   */
+  end?: number | false;
 };
 
 type Reach = {
@@ -73,12 +78,27 @@ function useWanted(list: React.RefObject<HTMLUListElement | null>, reach: Reach)
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) ask();
       },
-      { root: fit ? box : null, rootMargin: `${MORE_MARGIN_PX}px` },
+      { root: fit ? box : box.closest("[data-scroll-region]"), rootMargin: `${MORE_MARGIN_PX}px` },
     );
     observer.observe(node);
     return () => observer.disconnect();
   }, [list, paged, loaded, count, pageSize, fit, resetKey]);
   return asked.key === resetKey ? asked.wanted : 0;
+}
+
+/**
+ * The count of the end marker, or nothing: the marker needs every entry, a known count and a list that is longer than its
+ * box (`end` is the count of the whole grouped list for its last section, `false` for the sections before it).
+ */
+function endCount(c: {
+  end: number | false | undefined;
+  known: boolean;
+  longer: boolean;
+  loaded: number;
+  count: number;
+}): number | undefined {
+  if (c.end === false || !c.known || !c.longer || c.loaded === 0) return undefined;
+  return c.loaded === c.count ? (c.end ?? c.count) : undefined;
 }
 
 /**
@@ -90,6 +110,7 @@ function useWanted(list: React.RefObject<HTMLUListElement | null>, reach: Reach)
  * than its box (`ListEnd`). A list without `paging` is measured only in a box that is a marked scroll region, and adds the
  * marker row only when it is longer, so a list that fits has no row of its own and a page that scrolls does not grow by one.
  * The address holds no position: an old `?from=n` is stripped once (`useStripOldPositions`).
+ * A list inside a marked scroll region (a page's region, a layer's body) asks from the edge of that region, not of the window.
  * A list that fills its frame (`fit`) takes the room the frame leaves and scrolls in its own box, so it is a tab stop for the keyboard (WCAG 2.1.1, axe scrollable-region-focusable).
  * It never gets shorter than one row and a bit (`min-h-24`, in rem, so it follows the text size): where the frame has no
  * room left (200 % text), the frame scrolls instead and the list does not collapse to nothing. Its rows never shrink
@@ -106,6 +127,7 @@ export function ScrollEntries<T>({
   fit = false,
   paging,
   pagerMark = false,
+  end,
 }: ScrollEntriesProps<T>) {
   const paged = paging !== undefined;
   const loaded = items.length;
@@ -119,7 +141,7 @@ export function ScrollEntries<T>({
   // The count is known for a list without `paging` (every entry is loaded) and for a server list with its total (P-08). The
   // marker needs every entry, and a list that is longer than its box: a list that fits renders no row of its own.
   const known = paging === undefined || paging.total !== undefined;
-  const marker = known && longer && loaded > 0 && loaded === count ? count : undefined;
+  const marker = endCount({ end, known, longer, loaded, count });
 
   const holes = placeholderCount(paging, missing, Math.min(wanted, count) - loaded);
 

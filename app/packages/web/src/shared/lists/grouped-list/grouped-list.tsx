@@ -1,4 +1,4 @@
-import { useId, type MouseEventHandler, type ReactNode } from "react";
+import { useId, type MouseEventHandler, type ReactNode, type Ref } from "react";
 import { cn } from "@/shared/lib/utils";
 import { RowContent, RowElement } from "./row-parts/row-parts";
 import { GROUP, HAIRLINE } from "./group-classes";
@@ -6,7 +6,8 @@ import { GROUP, HAIRLINE } from "./group-classes";
 // The flat grouped list of the phone look (US-QS-32, SG-SHAPE-03): one rounded group on the page colour, rows separated
 // by a hairline that starts at the text, no shadow (SG-SHAPE-05) and no group inside a group (SG-SHAPE-06). The group
 // keeps its boundary in forced colors. The space between groups (24 px, SG-SHAPE-07) is the caller's.
-const LABEL = "text-base font-semibold text-foreground";
+// A long name breaks at a syllable with a hyphen where it is wider than the row, as at 200 % text (DS-63), and never runs sideways.
+const LABEL = "text-base font-semibold text-foreground hyphens-auto [overflow-wrap:anywhere]";
 const FOOTER = "text-sm text-muted-foreground";
 
 /** A row's own box: at least 44 px high, 12 px above and below, 16 px at the sides (SG-SHAPE-07, SG-TOUCH-01). */
@@ -22,6 +23,15 @@ const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
 const INTERACTIVE = `hover:bg-muted hover:text-foreground ${FOCUS}`;
 
+/**
+ * The heading of a group that stays at the top of its scroll region while the group passes (SG-LIST-06): an opaque surface, so
+ * the rows do not show through, and a rest position under the next group's heading (a sticky element stays inside its own
+ * section, so the next heading pushes it out). `group-data-[sticky=off]/sections` is the region's own switch: a heading that
+ * would cover more than a third of the region (a long name at 200 % text) stays in the flow (`useStickyFit`).
+ */
+const STICKY = "sticky top-0 z-10 py-1 group-data-[sticky=off]/sections:static";
+const SURFACE = { page: "bg-background", layer: "bg-card" } as const;
+
 export type GroupedListProps = {
   /** The name of the section; the section is labelled by it. Without a label the group has no name (the sign-out row). */
   label?: ReactNode;
@@ -31,26 +41,57 @@ export type GroupedListProps = {
   footer?: ReactNode;
   children: ReactNode;
   className?: string;
+  /**
+   * The label stays at the top of the scroll region while its group passes (SG-LIST-06): `page` on the page's surface, `layer`
+   * on the surface of a sheet, a dialog or a pane.
+   */
+  sticky?: keyof typeof SURFACE;
+  /** One plain action beside the label, for example "Standort setzen" of the group whose value is unknown (SG-LIST-06). */
+  action?: ReactNode;
+  /** The caller brings the group's list (a `ScrollEntries`, an empty line): the children are not wrapped in a group `ul`. */
+  free?: boolean;
+  /** The key a jump finds the section by (`data-group-key`, the chips of `GroupSections`). */
+  groupKey?: string;
+  ref?: Ref<HTMLElement>;
 };
 
 /**
  * A section of flat grouped rows (SG-SHAPE-03, SG-LIST-06): an optional label above one `ul` group and an optional
- * footer under it. Its rows are `GroupedRow`s. The label is a real heading, so the section can be reached by heading.
+ * footer under it. Its rows are `GroupedRow`s. The label is a real heading, so the section can be reached by heading. A
+ * section of a long grouped list has a `sticky` label and may bring its own list (`free`).
  */
 export function GroupedList(props: GroupedListProps) {
   const id = useId();
   const Heading = `h${props.level ?? 2}` as "h2" | "h3" | "h4";
-  return (
-    <section
-      aria-labelledby={props.label === undefined ? undefined : id}
-      className={cn("flex min-w-0 flex-col gap-2", props.className)}
-    >
-      {props.label !== undefined && (
-        <Heading id={id} className={LABEL}>
+  const head =
+    props.label === undefined ? null : props.sticky === undefined && props.action === undefined ? (
+      <Heading id={id} className={LABEL}>
+        {props.label}
+      </Heading>
+    ) : (
+      <div
+        data-group-heading=""
+        className={cn(
+          "flex min-w-0 items-center justify-between gap-2",
+          props.sticky && STICKY,
+          props.sticky && SURFACE[props.sticky],
+        )}
+      >
+        <Heading id={id} className={cn(LABEL, "min-w-0")}>
           {props.label}
         </Heading>
-      )}
-      <ul className={GROUP}>{props.children}</ul>
+        {props.action}
+      </div>
+    );
+  return (
+    <section
+      ref={props.ref}
+      aria-labelledby={props.label === undefined ? undefined : id}
+      {...(props.groupKey === undefined ? {} : { "data-group-key": props.groupKey })}
+      className={cn("flex min-w-0 flex-col gap-2", props.className)}
+    >
+      {head}
+      {props.free ? props.children : <ul className={GROUP}>{props.children}</ul>}
       {props.footer !== undefined && <p className={FOOTER}>{props.footer}</p>}
     </section>
   );
