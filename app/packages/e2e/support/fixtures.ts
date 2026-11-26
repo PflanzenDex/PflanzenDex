@@ -10,6 +10,8 @@ export async function signIn(page: Page, account: TestAccount): Promise<void> {
   await page.locator("#username").fill(account.email);
   await page.locator("#password").fill(account.password);
   await page.locator("#kc-login").click();
+  // "/" shows the skeleton of Heute (with its heading) until the redirect to "Heute" runs: a click before it is overridden (issue 2535).
+  await expect(page).toHaveURL(/\/today/);
   // The brand leaves the top bar while a page claims it (US-QS-32): the main region and the page's heading stand on every width.
   await expect(page.locator("#inhalt")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();

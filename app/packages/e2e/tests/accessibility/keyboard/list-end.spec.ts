@@ -132,8 +132,9 @@ test.describe("US-QS-15 the list of a page scrolls in its own box", () => {
     test.setTimeout(240_000);
     await page.setViewportSize(PHONE);
     await signIn(page, account);
+    // The last plant leaves for the Sammlung: no second visit to it. A link to the page that is shown is a new history entry, and
+    // the scroll below could come before the place of that entry is kept: ScrollMemory keeps the places by entry (issue 2535).
     await makePlants(page, MANY);
-    await page.getByRole("link", { name: "Sammlung", exact: true }).click();
     await expect(entries(page)).toHaveCount(MANY);
 
     // The list is bounded by the frame: it scrolls in its own box, the frame around it and the page do not.
@@ -176,6 +177,8 @@ test.describe("US-QS-15 the list of a page scrolls in its own box", () => {
     await page.waitForTimeout(300);
     await page.getByRole("link", { name: "Heute", exact: true }).click();
     await expect(page).toHaveURL(/\/today/);
+    // Heute is on the screen before Back: the address changes at once, its first load (a lazy area) takes a moment (issue 2535).
+    await expect(page.getByRole("heading", { level: 1, name: "Heute" })).toBeVisible();
     await page.goBack();
     await expect(plantList(page)).toBeVisible();
     await expect
