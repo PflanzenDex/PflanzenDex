@@ -181,7 +181,12 @@ export function AccountArea(props: Props) {
           />
         </div>
         {open !== undefined ? (
-          <LayerHost className="min-h-0 min-w-0 flex-1" contentClassName="lg:max-w-none">
+          <LayerHost
+            // The pane starts below the title "Konto", not under the top bar, so its height gives up the title and the gap
+            // too: a long layer (the achievements) then scrolls in its body and the frame does not (US-QS-15, QG-U8).
+            className="min-h-0 min-w-0 flex-1 lg:[&_[data-layer-pane]]:max-h-[calc(100dvh-6.5rem)]"
+            contentClassName="lg:max-w-none"
+          >
             <SectionView {...props} section={open} byDefault={byDefault} />
           </LayerHost>
         ) : null}

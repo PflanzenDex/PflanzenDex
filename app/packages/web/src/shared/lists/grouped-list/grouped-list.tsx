@@ -6,7 +6,8 @@ import { GROUP, HAIRLINE } from "./group-classes";
 // The flat grouped list of the phone look (US-QS-32, SG-SHAPE-03): one rounded group on the page colour, rows separated
 // by a hairline that starts at the text, no shadow (SG-SHAPE-05) and no group inside a group (SG-SHAPE-06). The group
 // keeps its boundary in forced colors. The space between groups (24 px, SG-SHAPE-07) is the caller's.
-const LABEL = "text-base font-semibold text-foreground";
+// A long name breaks at a syllable with a hyphen where it is wider than the row, as at 200 % text (DS-63), and never runs sideways.
+const LABEL = "text-base font-semibold text-foreground hyphens-auto [overflow-wrap:anywhere]";
 const FOOTER = "text-sm text-muted-foreground";
 
 /** A row's own box: at least 44 px high, 12 px above and below, 16 px at the sides (SG-SHAPE-07, SG-TOUCH-01). */
