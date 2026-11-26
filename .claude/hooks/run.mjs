@@ -16,8 +16,11 @@ import {
 import { isManifestPath } from "../../app/tools/check/code/layout/layout-manifest.mjs";
 import { bashGateWrite } from "./bash-writes.mjs";
 import {
+  APPLIED_FROM_DEV,
   changedPaths,
   loadFingerprint,
+  matchingOriginDev,
+  originDevBlobs,
   storeFingerprint,
   takeFingerprint,
 } from "./gate-fingerprint.mjs";
@@ -312,12 +315,49 @@ function fingerprintStates() {
     const key = keyOf(repo.common);
     const file = path.join(spot.dir, FINGERPRINT_FILE);
     const prev = loadFingerprint(file, key);
-    const next = takeFingerprint(folder, gatePathsRel(folder));
-    const changed = changedPaths(prev ?? {}, next).map(
-      (p) => path.relative(realpath(root), path.join(folder, p)) || p,
-    );
-    return { file, key, prev, next, changed };
+    const rels = gatePathsRel(folder);
+    const next = takeFingerprint(folder, rels);
+    const named = (p) => path.relative(realpath(root), path.join(folder, p)) || p;
+    // Issue 2557 (d-148): a gate file equal to its blob in origin/dev is reviewed work brought in by a fast-forward, a merge or a
+    // fresh worktree. It does not block and is logged as applied. A file that differs, a missing origin/dev or a git error blocks.
+    // A worktree without a stored state (a fresh one) is verified only when all its gate files and those of origin/dev are equal.
+    const candidates = prev === null ? null : changedPaths(prev, next);
+    let unverified = prev === null;
+    let changedRel = candidates ?? [];
+    const applied = [];
+    if (prev === null || changedRel.length > 0) {
+      const fromDev = matchFromDev(folder, prev === null ? null : changedRel);
+      if (prev === null) {
+        if (fromDev?.all) {
+          unverified = false;
+          applied.push("(the stored state)");
+        }
+      } else if (fromDev) {
+        applied.push(...changedRel.filter((rel) => fromDev.equal.has(rel)).map(named));
+        changedRel = changedRel.filter((rel) => !fromDev.equal.has(rel));
+      }
+    }
+    return { file, key, prev, next, changed: changedRel.map(named), applied, unverified };
   });
+}
+
+// Which gate files of `folder` equal their blob in origin/dev (issue 2557). With `rels` null, all gate files of the worktree and of
+// origin/dev are compared and `all` says whether every one is equal. Null when origin/dev is missing or git fails (fail closed).
+function matchFromDev(folder, rels) {
+  try {
+    const blobs = originDevBlobs(folder, asksBeforeEdit);
+    const list = rels ?? [...new Set([...gatePathsRel(folder), ...Object.keys(blobs)])];
+    const equal = matchingOriginDev(folder, list, blobs);
+    return { equal, all: equal.size === list.length };
+  } catch {
+    return null;
+  }
+}
+
+// Logs the gate files that origin/dev brought in (issue 2557).
+function logApplied(states, source) {
+  for (const file of states.flatMap((s) => s.applied))
+    logGate(root, { file, decision: APPLIED_FROM_DEV, source, ...requester() });
 }
 
 // Stores the states as the baseline of the next check.
@@ -723,7 +763,8 @@ const handlers = {
       });
       return preToolUse("deny", checkBeforeFailed(error));
     }
-    const unverified = states.some((s) => s.prev === null);
+    logApplied(states, "guard-bash");
+    const unverified = states.some((s) => s.unverified);
     const drift = states.flatMap((s) => s.changed);
     if (unverified || drift.length > 0) {
       for (const file of drift)
@@ -824,7 +865,8 @@ const handlers = {
       });
       return print({ decision: "block", reason: checkAfterFailed(error) });
     }
-    const unverified = states.some((s) => s.prev === null);
+    logApplied(states, "after-bash");
+    const unverified = states.some((s) => s.unverified);
     const changed = states.flatMap((s) => s.changed);
     if (unverified || changed.length > 0) {
       for (const file of changed)
