@@ -30,3 +30,19 @@ export const Open: Story = {
     </Sheet>
   ),
 };
+
+// A content that is longer than half the visible window: the sheet opens at half height with a handle and a toggle, and the
+// content scrolls inside it under the fixed title (US-QS-15). The one picture of the heights (P-V).
+export const HalfHeight: Story = {
+  render: () => (
+    <Sheet defaultOpen>
+      <SheetContent title="Pflegehinweise">
+        <ul className="flex flex-col gap-2">
+          {Array.from({ length: 30 }, (_, index) => (
+            <li key={index}>Hinweis {index + 1} zur Pflege dieser Pflanze.</li>
+          ))}
+        </ul>
+      </SheetContent>
+    </Sheet>
+  ),
+};
