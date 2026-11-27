@@ -1,7 +1,7 @@
 import type { Occasion, ReminderOccasion, ReminderRow, ReminderStatus } from "@pflanzendex/core";
 import { useCallback } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import {
   EXCHANGE_PATH,

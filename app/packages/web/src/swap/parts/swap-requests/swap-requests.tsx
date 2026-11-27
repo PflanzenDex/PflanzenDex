@@ -1,13 +1,13 @@
 import { useCallback, useState } from "react";
 import type { SwapOverview, SwapSide } from "@pflanzendex/core";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { errorText } from "@/shared/lib/error-text";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { entityKey, useInvalidate, useWriteAction } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { answerSwap, confirmHandover, loadSwaps, type AnswerInput } from "../../api/swaps-api";
-import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
+import { useCardPageSize } from "@/shared/patterns/responsive/entry-list/card-page-size";
 import { SwapCard } from "./swap-card/swap-card";
 import { PLANT_TYPE, swapTitle } from "./swap-text";
 import { texts } from "@/shared/lib/text-rules/texts";

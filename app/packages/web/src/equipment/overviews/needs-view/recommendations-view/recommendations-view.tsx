@@ -1,6 +1,6 @@
 import type { Recommendation } from "@pflanzendex/core";
 import { useFeature } from "@/shared/data";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 
 /** Recommendations asked for in one step; they scroll apart from the needs above them (starting value, assumption). */
 const PER_PAGE = 2;

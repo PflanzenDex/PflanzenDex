@@ -1,6 +1,6 @@
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
-import type { EntriesPaging } from "@/shared/patterns/responsive/pager/paging/paging";
+import type { EntriesPaging } from "@/shared/patterns/responsive/entry-list/paging/paging";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { CardPages } from "../../../specimens/cards/use-card-pages";
 import { PlantTileSkeleton } from "../../rows/plant-tile/plant-tile";

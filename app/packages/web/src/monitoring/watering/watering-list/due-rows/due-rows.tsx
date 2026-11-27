@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { keepTogether } from "@/shared/lib/format";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { texts } from "@/shared/lib/text-rules/texts";

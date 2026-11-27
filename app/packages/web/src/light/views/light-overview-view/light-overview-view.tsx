@@ -2,7 +2,7 @@ import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-secti
 import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
 import { zoneLabel } from "@pflanzendex/core";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LightNeedAction } from "../../shared/ui/light-need-action/light-need-action";
 import table from "../../light.de.json";

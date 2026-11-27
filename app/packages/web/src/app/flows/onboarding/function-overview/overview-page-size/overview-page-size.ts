@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
+import { useRowPageSize } from "@/shared/patterns/responsive/entry-list/row-page-size";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 
 /** Height the page takes besides the rows of the list: app bar, heading, the list's end row and the rest (starting value, assumption). */

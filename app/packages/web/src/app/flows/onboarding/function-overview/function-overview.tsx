@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Link } from "react-router";
 import { Button } from "@/shared/ui/button";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { LayerOpenRow } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { useOverviewPageSize } from "./overview-page-size/overview-page-size";
 import { errorText } from "@/shared/lib/error-text";

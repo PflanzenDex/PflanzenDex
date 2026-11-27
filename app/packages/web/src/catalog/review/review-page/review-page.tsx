@@ -10,9 +10,9 @@ import {
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
-import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/paging/address";
-import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
+import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/entry-list/paging/address";
+import { useRowPageSize } from "@/shared/patterns/responsive/entry-list/row-page-size";
 import { entityKey, useInvalidate, useWriteAction } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { ReviewPageSkeleton } from "./review-page.skeleton";

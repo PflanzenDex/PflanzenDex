@@ -1,7 +1,7 @@
 import type { SpecimenCard, SpecimenSummary } from "@pflanzendex/core";
 import { Plus } from "lucide-react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { Button } from "@/shared/ui/button";
 import type { CardPages } from "../specimens/cards/use-card-pages";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";

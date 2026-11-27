@@ -10,7 +10,7 @@ import {
 } from "../../shared/api/treatments-api";
 import { historyKey, OPEN_KEY, TREATMENTS } from "../../shared/api/query-keys";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { dateText } from "../../shared/text";
 import { OpenRow } from "./open-row/open-row";
 import { usePlanning } from "../../treatments/planning/planning";

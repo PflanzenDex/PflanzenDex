@@ -1,9 +1,9 @@
 import type { OfferView } from "@pflanzendex/core";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
-import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
+import { useCardPageSize } from "@/shared/patterns/responsive/entry-list/card-page-size";
 import { healthText, MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../swap.de.json";

@@ -1,5 +1,5 @@
 import type { Need } from "@pflanzendex/core";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";

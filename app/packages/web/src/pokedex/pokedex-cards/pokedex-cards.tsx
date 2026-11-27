@@ -3,8 +3,8 @@ import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { germanNameOf, SCIENTIFIC } from "@/shared/species-name/species-name";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
-import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
+import { useRowPageSize } from "@/shared/patterns/responsive/entry-list/row-page-size";
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { catchText } from "./collector-card/catch-text";
 

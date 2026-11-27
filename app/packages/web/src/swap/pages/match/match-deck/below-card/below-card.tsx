@@ -1,6 +1,6 @@
 import type { MatchCard as Card } from "@pflanzendex/core";
 import type { ReactNode } from "react";
-import { ScrollRegion } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-region/scroll-region";
+import { ScrollRegion } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-region/scroll-region";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../../swap.de.json";
 import { Actions, type Answer } from "../match-actions/match-actions";

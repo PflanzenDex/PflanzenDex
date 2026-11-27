@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { SETTLE_MS } from "@/shared/patterns/responsive/pager/paging/scroll-entries/use-scroll-overflow";
+import { SETTLE_MS } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/use-scroll-overflow";
 import { GroupedRow } from "../grouped-list";
 import { GroupSection, GroupSections, type SectionGroup } from "./grouped-sections";
 
