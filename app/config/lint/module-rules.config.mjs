@@ -22,37 +22,35 @@ export const KERNEL_GLOSSARY_WORDS = [
 // since every declared port has a contract test.
 export const PORTS_WITHOUT_CONTRACT_TEST = {};
 
-// The migrations 0001 to 0011 were applied before the English rename and must not be renamed; this map assigns them to
-// modules (AB-14). 0012 renames the objects of all modules (ADR 0004). New migrations carry the module in the name.
+// The chain 0001 to 0120 was squashed into the baseline `0001_baseline.sql` (issue 2519, owner decision d-122); the old
+// files are in git history only. The baseline spans every module, so it may touch the tables of all of them (AB-14).
+// From the baseline on, new migrations carry the module in the name (`NNNN_<module>_<name>.sql`).
 export const LEGACY_MIGRATIONS = {
-  "0001_mandantengrundlage.sql": ["kernel"],
-  "0002_betreiber_pruefstatus.sql": ["account", "catalog"],
-  "0003_anmeldung.sql": ["account"],
-  "0004_lichtzonen_standorte.sql": ["light", "kernel"],
-  "0005_katalog_artenkatalog.sql": ["catalog"],
-  "0006_licht_standort_schluessel.sql": ["light"],
-  "0007_bestand_exemplar.sql": ["collection"],
-  "0008_bestand_exemplar_art_fremdschluessel.sql": ["collection"],
-  "0009_bestand_exemplar_schluessel.sql": ["collection"],
-  "0010_pflege_messung.sql": ["care"],
-  "0011_bestand_archiv.sql": ["collection"],
-  "0012_english_names.sql": ["kernel", "account", "catalog", "light", "collection", "care"],
+  "0001_baseline.sql": [
+    "kernel",
+    "jobs",
+    "media",
+    "account",
+    "catalog",
+    "light",
+    "collection",
+    "monitoring",
+    "care",
+    "wishlist",
+    "pokedex",
+    "equipment",
+    "social",
+    "swap",
+    "achievements",
+    "privacy",
+    "discover",
+    "today",
+    "ai",
+  ],
 };
 
-// Table names as the applied migrations 0001 to 0011 wrote them (0012 renamed them); the check maps them to the registered ones.
-export const LEGACY_TABLE_NAMES = {
-  konto: "account",
-  konto_rolle: "account_role",
-  kontodaten: "account_data",
-  pruefvorgang: "review_case",
-  lichtzone: "light_zone",
-  standort: "location",
-  idempotenz: "idempotency",
-  art: "species",
-  art_name: "species_name",
-  exemplar: "specimen",
-  messung: "measurement",
-};
+// Table names of the applied migrations before the English rename (0001 to 0011, now squashed): no legacy names remain.
+export const LEGACY_TABLE_NAMES = {};
 
 // Global reference tables (AB-10, ADR 0003 O-2): tables without an account id (justified in db/src/kernel/schema.ts) that
 // other modules may point to with a plain foreign key on `(id)`, only from a module that may depend on the owner, with

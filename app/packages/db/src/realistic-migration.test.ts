@@ -21,11 +21,11 @@ function tempDir(prefix: string): string {
   return dir;
 }
 
-// US-DEV-07: every migration runs on a database with realistic data. A scratch database is migrated up to 0012 (the
-// English names, ADR 0004), filled with a data set of the order of magnitude of the prototype (13 species, 17
+// US-DEV-07: every migration runs on a database with realistic data. A scratch database is built from the baseline
+// (0001_baseline.sql, issue 2519), filled with a data set of the order of magnitude of the prototype (13 species, 17
 // specimens, measurement series; a fixture, no import), then migrated to the end. Every later migration, also every
 // future one, therefore runs over this data, and the test proves that nothing is lost and the tenants stay apart.
-const BASELINE = "0013"; // files before this name form the state the fixture is written for
+const BASELINE = "0002"; // files before this name form the state the fixture is written for: the baseline alone
 const DB = `realistic_${randomUUID()
   .replace(/[0-9-]/g, "")
   .slice(0, 8)}`;
@@ -166,8 +166,7 @@ afterAll(async () => {
 });
 
 describe("US-DEV-07 every migration runs on realistic data", () => {
-  it("US-DEV-07 all migrations after the baseline apply on the filled database", () => {
-    expect(applied[0]?.startsWith(BASELINE)).toBe(true);
+  it("US-DEV-07 all migrations after the baseline apply on the filled database (none yet: the baseline is the only one)", () => {
     const all = readdirSync(MIGRATIONS_DIRECTORY).filter(
       (n) => n.endsWith(".sql") && n >= BASELINE,
     );
