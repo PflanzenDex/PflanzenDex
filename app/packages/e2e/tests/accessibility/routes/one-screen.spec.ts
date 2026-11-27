@@ -15,7 +15,6 @@ import { measureAll } from "./one-screen.measure";
 import { registerSelfTests } from "./one-screen.register";
 import { firstSelfTests, goodFirst } from "./one-screen.first";
 import { layerSelfTests } from "./one-screen.phone";
-import { pagerSelfTests } from "./one-screen.pager";
 import { measuredSelfTests, sizeSelfTests } from "./one-screen.size";
 import { sidewaysSelfTests } from "./one-screen-sideways";
 import { shiftJudgeSelfTests, shiftSelfTests, shiftTests } from "./one-screen.shift";
@@ -174,7 +173,6 @@ test("QG-U8 self-test: a borderline entry that fits in one run does not flip the
 sidewaysSelfTests(raw, sizeOf);
 firstSelfTests(raw, sizeOf);
 layerSelfTests(raw, sizeOf);
-pagerSelfTests(raw, sizeOf);
 sizeSelfTests(raw, sizeOf);
 measuredSelfTests(raw, sizeOf);
 registerSelfTests();

@@ -1,5 +1,5 @@
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { Button } from "@/shared/ui/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { DeletionEntry } from "../../../api/access-api";
@@ -82,12 +82,10 @@ export function IdentityList(props: {
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm text-muted-foreground">{t("identity.description")}</p>
-      <Pager
+      <ScrollEntries
         items={props.entries}
         pageSize={DELETIONS_PAGE_SIZE}
         label={t("pager.label")}
-        param={LAYER_PARAM}
-        replace
         getKey={(e) => e.entryId ?? e.requestedAt}
         renderItem={(e) => <IdentityRow entry={e} running={props.running} onMark={props.onMark} />}
       />

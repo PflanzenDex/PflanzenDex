@@ -6,7 +6,7 @@ import type { ConfirmResult } from "@pflanzendex/core";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { PATHS, todayAddress } from "@/shared/patterns/navigation/navigation/navigation";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { focusIt } from "@/shared/platform/routing/route-focus/view-start";
@@ -79,7 +79,7 @@ export function ResultStep(props: { view: ImportFlow; moved: boolean }) {
         <p className="m-0 text-sm">{ui("markersUnused", { count: result.unusedMarkers.length })}</p>
       ) : null}
       {outcomes.length > 0 ? (
-        <Pager
+        <ScrollEntries
           items={outcomes}
           pageSize={rows}
           fit

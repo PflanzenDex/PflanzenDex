@@ -7,7 +7,7 @@ import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
  * (never while one is on its way or after a failure). The entries that are not loaded yet show as a note, never as an
  * empty page (P-10); a failed page shows its `failure` with a button that retries from the same place.
  */
-export type PagerPaging = {
+export type EntriesPaging = {
   /** All entries on the server; absent while unknown (P-08): no end marker, no part asked past the loaded entries. */
   total?: number | undefined;
   /** A page is on its way: the missing entries show the loading note. */
@@ -28,13 +28,13 @@ export type PagerPaging = {
 };
 
 /** The entries of the list: `paging.total` and at least the loaded ones; the loaded ones while the total is unknown. */
-export function knownCount(paging: PagerPaging | undefined, loaded: number): number {
+export function knownCount(paging: EntriesPaging | undefined, loaded: number): number {
   return paging ? Math.max(paging.total ?? 0, loaded) : loaded;
 }
 
 /** How many entries of the page on screen show the placeholder: the `room` left on it while its page loads, else none. */
 export function placeholderCount(
-  paging: PagerPaging | undefined,
+  paging: EntriesPaging | undefined,
   missing: boolean,
   room: number,
 ): number {
@@ -49,7 +49,7 @@ export const busyWhile = (placeholders: number) => (placeholders > 0 ? { "aria-b
 export function EntryPlaceholders(props: {
   count: number;
   from: number;
-  paging: PagerPaging | undefined;
+  paging: EntriesPaging | undefined;
 }) {
   return Array.from({ length: props.count }, (_, i) => (
     <li key={`placeholder-${props.from + i}`} aria-hidden="true" className="shrink-0">
@@ -63,7 +63,7 @@ export function EntryPlaceholders(props: {
  * on its way or has failed (P-10: the failure waits for its retry, never a loop). Returns whether entries are missing.
  */
 export function usePagingMore(
-  paging: PagerPaging | undefined,
+  paging: EntriesPaging | undefined,
   loaded: number,
   pageEnd: number,
   count: number,
@@ -82,10 +82,10 @@ export function usePagingMore(
  * list, or to the list (issue 1304, 2.4.3). A retry that failed keeps the button, and with it the focus.
  */
 export function useRetryFocus(
-  paging: PagerPaging | undefined,
+  paging: EntriesPaging | undefined,
   missing: boolean,
   list: React.RefObject<HTMLElement | null>,
-): PagerPaging | undefined {
+): EntriesPaging | undefined {
   const retried = React.useRef(false);
   React.useEffect(() => {
     if (!retried.current || missing) return;

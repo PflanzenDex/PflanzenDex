@@ -8,7 +8,7 @@ import {
   LayerSheet,
   useLayer,
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/pager";
+import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/paging/address";
 import { Button } from "@/shared/ui/button";
 import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";

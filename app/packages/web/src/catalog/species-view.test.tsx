@@ -58,8 +58,8 @@ describe("US-BES-01 profile of a species (fields from DM-BES-01)", () => {
     expect(h).toContain("Höhe");
   });
 
-  it("US-QS-32 the difficulty reads Leicht, Mittel, Schwer, the same words as the comparison", () => {
-    expect([1, 2, 3].map((d) => difficultyText(d))).toEqual(["Leicht", "Mittel", "Schwer"]);
+  it("US-QS-32 the difficulty reads Leicht, Mittel, Schwierig, the same words as the comparison", () => {
+    expect([1, 2, 3].map((d) => difficultyText(d))).toEqual(["Leicht", "Mittel", "Schwierig"]);
     expect(difficultyText(null)).toBe("unbekannt");
   });
 

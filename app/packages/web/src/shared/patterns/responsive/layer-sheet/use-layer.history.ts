@@ -57,14 +57,14 @@ export const LAYER_PARTS = [
   "ltab", // the tab of the catalog review layer
   "teil", // the part of a tab: the care part of a plant, the part of the measure course layer
   "course", // the list of the history of a plant: measurements or leaves
-  "vfrom", // the history pager of a plant
+  "vfrom", // the history list of a plant
   "verlauf", // its old page number
-  "blfrom", // the leaves pager of the history of a plant
-  "ofrom", // the open treatments pager of the care part of a plant
+  "blfrom", // the leaves list of the history of a plant
+  "ofrom", // the open treatments list of the care part of a plant
   "offen", // its old page number
-  "efrom", // the done treatments pager of the care part of a plant
+  "efrom", // the done treatments list of the care part of a plant
   "erledigt", // its old page number
-  "rfrom", // the rules pager of the reference layer, the recommendations pager of the needs layer
+  "rfrom", // the rules list of the reference layer, the recommendations list of the needs layer
   "rpage", // its old page number
 ] as const;
 

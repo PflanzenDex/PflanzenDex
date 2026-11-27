@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import type { MeasurementRow } from "@pflanzendex/core";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { cn } from "@/shared/lib/utils";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
@@ -44,8 +44,7 @@ function Entry(props: {
 
 /**
  * "Verlauf" of the plant layer (US-QS-23): the measurements with their photos, newest first (the server sorts), as
- * pages with the pager. The page has its own address part, so the list behind the layer keeps its page. Without a
- * measurement the tab says what to do next (P-09).
+ * one scrolling list. Without a measurement the tab says what to do next (P-09).
  */
 export function PlantHistory(props: {
   api: string;
@@ -85,12 +84,10 @@ export function PlantHistory(props: {
       }}
     >
       {(view) => (
-        <Pager
+        <ScrollEntries
           items={view.measurements}
           pageSize={props.pageSize ?? PAGE_SIZE}
           label={t("pager")}
-          param="vfrom"
-          replace
           getKey={(m) => m.id}
           renderItem={(m) => <Entry row={m} access={{ api, token, specimenId }} />}
         />

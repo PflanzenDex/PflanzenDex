@@ -2,7 +2,7 @@ import type { CreatedInvitation, InvitationRecord, InvitationStatus } from "@pfl
 import { ChevronRight } from "lucide-react";
 import { useRef, type ReactNode } from "react";
 import { layerOpenerId, useLayer } from "@/shared/patterns/responsive/layer-sheet/use-layer";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { Button } from "@/shared/ui/button";
 import { MoreHelp } from "@/shared/ui/more-help";
@@ -122,12 +122,10 @@ export function InvitationsArea(props: {
 export function InvitationList(props: { invitations: readonly InvitationRecord[] }) {
   if (props.invitations.length === 0) return <EmptySection text={t("invitations.none")} />;
   return (
-    <Pager
+    <ScrollEntries
       items={props.invitations}
       pageSize={INVITATIONS_PAGE_SIZE}
       label="Einladungen"
-      param={LAYER_PARAM}
-      replace
       getKey={(i) => i.id}
       renderItem={(i) => (
         <div className="rounded-lg border border-border p-3">

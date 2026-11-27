@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { NewTask } from "./new-task/new-task";
 import { Button } from "@/shared/ui/button";
 import { MoreHelp } from "@/shared/ui/more-help";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { copyText } from "@/shared/platform/browser/clipboard";
 import { entityKey, useInvalidate, useWriteAction } from "../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
@@ -117,11 +117,10 @@ function List(props: {
       {props.rows.length === 0 ? (
         <NoTasks clientConnected={props.clientConnected} />
       ) : (
-        <Pager
+        <ScrollEntries
           items={props.rows}
           pageSize={PAGE}
           label="KI-Aufträge"
-          param={LAYER_PARAM}
           getKey={(row) => row.id}
           renderItem={(row) => (
             <Task

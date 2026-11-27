@@ -1,5 +1,5 @@
 import type { MeasurementRow } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { MeasurementPhoto } from "../measurement-header/measurement-photo";
 import { PhotoAction } from "../measurement-header/photo-action";
@@ -29,14 +29,12 @@ export function MeasurementList(props: {
       <h2 id="messungen-title" className="sr-only">
         {t("heading")}
       </h2>
-      <Pager
+      <ScrollEntries
         items={measurements}
         // The starting value until the layout measures the free height of the layer (US-QS-15).
         pageSize={1}
         fit
         label={t("list")}
-        param={LAYER_PARAM}
-        replace
         getKey={(m) => m.id}
         renderItem={(m, i) => (
           <div className={CARD_CLASSES}>

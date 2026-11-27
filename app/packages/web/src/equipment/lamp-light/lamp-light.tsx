@@ -4,7 +4,7 @@ import { LimitForm } from "./limit-form/limit-form";
 import { MeasureForm } from "./measure-form/measure-form";
 import { lux } from "./parse";
 import type { MeasurementInput } from "../equipment-api";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { keepTogether } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { zoneLabel } from "@pflanzendex/core";
@@ -149,11 +149,10 @@ export function LampLightView({
       <h2 id="lamp-light-title" className="sr-only">
         Lichtstärke der Lampen
       </h2>
-      <Pager
+      <ScrollEntries
         items={view.lamps}
         pageSize={LAMPS_PER_PAGE}
         label="Lichtstärke je Lampe"
-        param={LAYER_PARAM}
         getKey={(l) => l.id}
         renderItem={(l) => <LampCard lamp={l} actions={actions} />}
       />

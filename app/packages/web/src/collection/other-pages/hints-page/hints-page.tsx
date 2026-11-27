@@ -1,7 +1,7 @@
 import { useCallback, type ReactNode } from "react";
 import type { LightLocation, SpecimenHint } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { useInvalidate, useQueryClient, useWriteAction } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { HintsPageSkeleton } from "./hints-page.skeleton";
@@ -177,12 +177,10 @@ function HintPages(props: {
   card: (h: SpecimenHint) => ReactNode;
 }) {
   return (
-    <Pager
+    <ScrollEntries
       items={props.hints}
       pageSize={PAGE_SIZE}
       fit
-      param={LAYER_PARAM}
-      replace
       label={ui("pager")}
       getKey={(h) => `${h.specimenId}-${h.kind}`}
       renderItem={(h) => props.card(h)}

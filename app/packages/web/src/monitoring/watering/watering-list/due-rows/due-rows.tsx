@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
-import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { keepTogether } from "@/shared/lib/format";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -106,7 +106,7 @@ function BulkRegion(props: {
   );
 }
 
-/** One row of the pager: a held plant shows its result, a due plant its mark and its button. */
+/** One row of the list: a held plant shows its result, a due plant its mark and its button. */
 function ItemRow(props: {
   row: WateringDueRow;
   index: number;
@@ -149,7 +149,6 @@ export function Rows(props: {
   water: (entries: readonly WaterEntry[]) => void;
   undoPlant: (group: string) => void;
   bulk: BulkUndo | null;
-  param?: PagerPart;
 }) {
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
   const toggle = (id: string) =>
@@ -168,10 +167,9 @@ export function Rows(props: {
     .filter((e) => chosen.has(e.row.specimenId) && !props.held.has(e.row.specimenId));
   return (
     <div className="flex flex-col gap-3">
-      <Pager
+      <ScrollEntries
         items={props.rows}
         pageSize={PAGE_SIZE}
-        {...(props.param ? { param: props.param } : {})}
         label={ui("pager")}
         getKey={(r) => r.specimenId}
         renderItem={(r) => (

@@ -164,7 +164,7 @@ describe("US-QS-21 the catalog list scrolls", () => {
     expect(row.querySelector('[aria-hidden="true"]')?.className).toContain("@max-[14rem]:hidden");
   });
 
-  it("US-QS-21 a short list has no pager", () => {
+  it("US-QS-21 a short list has no end marker", () => {
     search(many(2));
     expect(screen.queryByText(/Seite 1 von/)).toBeNull();
   });
@@ -220,11 +220,11 @@ describe("US-QS-21 filters live in a layer and show as chips", () => {
     expect(address()).toContain("difficulty=3");
     await userEvent.click(within(layer).getByRole("button", { name: "Fertig" }));
     const chips = await screen.findByRole("list", { name: "Gewählte Filter" });
-    expect(within(chips).getByText(/Schwierigkeit: Schwer/)).toBeTruthy();
+    expect(within(chips).getByText(/Schwierigkeit: Schwierig/)).toBeTruthy();
     expect(screen.getByText("Hard one")).toBeTruthy();
     expect(screen.queryByText("Species 1")).toBeNull();
     await userEvent.click(
-      screen.getByRole("button", { name: "Filter entfernen: Schwierigkeit: Schwer" }),
+      screen.getByRole("button", { name: "Filter entfernen: Schwierigkeit: Schwierig" }),
     );
     expect(address()).not.toContain("difficulty");
     expect(screen.getByText("Species 1")).toBeTruthy();

@@ -5,7 +5,7 @@ import { FormField, FormItem, FormMessage } from "@/shared/ui/form";
 import { SearchInput } from "@/shared/ui/search-input";
 import { Select } from "@/shared/ui/select";
 import { Label } from "@/shared/ui/label";
-import { Pager, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { TreatableSpecimen } from "../../../../shared/api/treatments-api";
@@ -104,11 +104,10 @@ function PickList(props: {
   if (props.shown.length === 0)
     return <p className="text-sm text-muted-foreground">{ui("pick.none")}</p>;
   return (
-    <Pager
+    <ScrollEntries
       items={props.shown}
       pageSize={props.pageSize}
       label={ui("pick.label")}
-      param={LAYER_PARAM}
       resetKey={props.resetKey}
       getKey={(s) => s.id}
       renderItem={(s, index) => (

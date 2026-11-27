@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { Button } from "@/shared/ui/button";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -109,13 +109,11 @@ export function WishesView(props: { wishes: EquipmentWishList; actions: WishActi
           </p>
         )
       ) : (
-        <Pager
+        <ScrollEntries
           items={items}
           pageSize={PAGE_SIZE}
           fit
           label={t(`wishes.list.${group}`)}
-          param={LAYER_PARAM}
-          replace
           resetKey={group}
           getKey={(w) => w.id}
           renderItem={(w) => <WishCard wish={w} actions={group === "open" ? actions : undefined} />}

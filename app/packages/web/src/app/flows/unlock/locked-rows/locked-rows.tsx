@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
 import table from "../../flows.de.json";
@@ -47,12 +47,10 @@ export function LockedRows(props: {
         {t("locked.title")}
       </Heading>
       {inLayer ? (
-        <Pager
+        <ScrollEntries
           items={locked}
           pageSize={PAGE_SIZE}
           fit
-          param={LAYER_PARAM}
-          replace
           label={t("locked.title")}
           getKey={(e) => e.id}
           renderItem={(e) => <LockedRow entry={e} />}

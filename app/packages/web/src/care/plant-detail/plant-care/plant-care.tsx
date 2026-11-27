@@ -10,7 +10,7 @@ import {
 } from "../../shared/api/treatments-api";
 import { historyKey, OPEN_KEY, TREATMENTS } from "../../shared/api/query-keys";
 import { RefusalAlert, StatusNote } from "../../shared/notices/notices";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { dateText } from "../../shared/text";
 import { OpenRow } from "./open-row/open-row";
 import { usePlanning } from "../../treatments/planning/planning";
@@ -25,10 +25,6 @@ const Loading = ({ text }: { text: string }) => (
     {text}
   </p>
 );
-
-/** The address parts of the two lists of the layer: each list keeps its own page (US-QS-23, US-QS-15). */
-const OPEN_PARAM = "ofrom";
-const DONE_PARAM = "efrom";
 
 /** The open treatments of this plant with "Abhaken" (US-BEH-02, US-BEH-03). */
 function OpenTreatmentsOfPlant(props: { api: string; token: Token; specimen: Specimen }) {
@@ -51,12 +47,10 @@ function OpenTreatmentsOfPlant(props: { api: string; token: Token; specimen: Spe
           const rows = all.filter((r) => r.specimenId === specimen.id);
           if (rows.length === 0) return <p className="text-sm">Keine offene Behandlung.</p>;
           return (
-            <Pager
+            <ScrollEntries
               items={rows}
               pageSize={1}
               label="Offene Behandlungen"
-              param={OPEN_PARAM}
-              replace
               getKey={(row) => row.id}
               renderItem={(row) => (
                 <OpenRow
@@ -98,12 +92,10 @@ function DoneTreatments(props: { api: string; token: Token; specimenId: string }
         rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">Noch keine erledigte Behandlung.</p>
         ) : (
-          <Pager
+          <ScrollEntries
             items={rows}
             pageSize={3}
             label="Erledigte Behandlungen"
-            param={DONE_PARAM}
-            replace
             listClassName="gap-1 text-sm"
             getKey={(row) => row.id}
             renderItem={(row) => (

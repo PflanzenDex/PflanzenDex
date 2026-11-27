@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
+import { useInLayer } from "@/shared/ui/layer-scope";
 import {
   EntryPlaceholders,
   busyWhile,
@@ -7,7 +8,7 @@ import {
   placeholderCount,
   usePagingMore,
   useRetryFocus,
-  type PagerPaging,
+  type EntriesPaging,
 } from "../paging";
 import { ListEnd } from "./list-end/list-end";
 import { useScrollOverflow } from "./use-scroll-overflow";
@@ -29,15 +30,13 @@ export type ScrollEntriesProps<T> = {
   listClassName?: string;
   /** A changed value (filter, search) starts again at the first part: what was asked for is forgotten. */
   resetKey?: string | number | undefined;
-  /** Inside a frame that fills one screen, the list scrolls within the frame. */
-  fit?: boolean;
-  /** The entries live on the server in parts (FR-BES-23): the next part is asked for when the end shows, see `PagerPaging`. */
-  paging?: PagerPaging;
   /**
-   * The list is a use of `Pager` (its call sites go in issue 2422): it carries the marker `data-pager`, which the gate QG-U8 counts
-   * until then. A list that uses `ScrollEntries` itself, such as the friends of "Freunde", is no `Pager` and carries none.
+   * On a page the list fills its frame and scrolls in its own box. In a sheet, a dialog or a pane it has no effect: the
+   * list is the content of the layer, which scrolls (issue 2418).
    */
-  pagerMark?: boolean;
+  fit?: boolean;
+  /** The entries live on the server in parts (FR-BES-23): the next part is asked for when the end shows, see `EntriesPaging`. */
+  paging?: EntriesPaging;
   /**
    * The count of the end marker when it is not this list's own: the last section of a grouped list ends the whole list, so
    * it names the entries of every group (SG-LIST-01). `false` shows no marker: a section that is not the last.
@@ -112,6 +111,7 @@ function endCount(c: {
  * The address holds no position: an old `?from=n` is stripped once (`useStripOldPositions`).
  * A list inside a marked scroll region (a page's region, a layer's body) asks from the edge of that region, not of the window.
  * A list that fills its frame (`fit`) takes the room the frame leaves and scrolls in its own box, so it is a tab stop for the keyboard (WCAG 2.1.1, axe scrollable-region-focusable).
+ * In a sheet, a dialog or a pane (`useInLayer()`) `fit` has no effect: the list is the content of the layer, which scrolls under the title and the actions of the layer (owner decision 2026-11-23, issue 2418).
  * It never gets shorter than one row and a bit (`min-h-24`, in rem, so it follows the text size): where the frame has no
  * room left (200 % text), the frame scrolls instead and the list does not collapse to nothing. Its rows never shrink
  * below their content: a group clips its rows (`overflow-hidden`), which would let a flex column squeeze them to nothing.
@@ -124,11 +124,13 @@ export function ScrollEntries<T>({
   label,
   listClassName,
   resetKey,
-  fit = false,
+  fit: wantsFit = false,
   paging,
-  pagerMark = false,
   end,
 }: ScrollEntriesProps<T>) {
+  // A list in a layer is the content of the layer, which scrolls under its title and its action: it takes no box of its own.
+  const inLayer = useInLayer();
+  const fit = wantsFit && !inLayer;
   const paged = paging !== undefined;
   const loaded = items.length;
   const count = knownCount(paging, loaded);
@@ -146,10 +148,7 @@ export function ScrollEntries<T>({
   const holes = placeholderCount(paging, missing, Math.min(wanted, count) - loaded);
 
   return (
-    <div
-      {...(pagerMark ? { "data-pager": "" } : {})}
-      className={cn("flex flex-col gap-3", fit && "min-h-24 flex-1")}
-    >
+    <div className={cn("flex flex-col gap-3", fit && "min-h-24 flex-1")}>
       <ul
         ref={list}
         {...(fit ? { "data-page-fit": "", "data-scroll-region": "", tabIndex: 0 } : {})}

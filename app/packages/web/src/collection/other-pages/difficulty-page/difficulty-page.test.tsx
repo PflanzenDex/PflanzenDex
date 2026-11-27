@@ -76,7 +76,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
     expect(entries).toHaveLength(2);
     expect(entries[0]?.textContent).toContain("Bogenhanf");
     expect(entries[0]?.textContent).toContain("Leicht · Zone 2");
-    expect(entries[1]?.textContent).toContain("Schwer");
+    expect(entries[1]?.textContent).toContain("Schwierig");
   });
 
   it("US-QS-32 · SG-ICON-01 every comparison entry ends with a chevron icon, not the glyph ›, and its name stays the visible text", async () => {
@@ -293,7 +293,7 @@ describe("US-QS-24 the comparison folds unknown values", () => {
     ).getAllByRole("listitem");
     expect(entries[0]?.textContent).toContain("Leicht");
     expect(entries[0]?.textContent).not.toContain("fehlt");
-    expect(entries[1]?.textContent).toContain("Schwer");
+    expect(entries[1]?.textContent).toContain("Schwierig");
     expect(entries[1]?.textContent).not.toContain("fehlt");
     expect(
       screen.getByText("Bei keiner Art angegeben, deshalb nicht in der Liste: Lichtzone."),

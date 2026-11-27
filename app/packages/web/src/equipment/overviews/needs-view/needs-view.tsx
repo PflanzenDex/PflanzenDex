@@ -1,5 +1,5 @@
 import type { Need } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
@@ -9,7 +9,7 @@ import table from "../../equipment.de.json";
 
 const t = texts(table);
 
-/** `Pager` asks for a part size; the needs are all loaded and have no `paging`, so every need is on the list at once (US-QS-15). */
+/** `ScrollEntries` asks for a part size; the needs are all loaded and have no `paging`, so every need is on the list at once (US-QS-15). */
 const NEEDS_PER_PART = 2;
 
 /** The address of a device's record: the equipment page with its item layer open (US-QS-22). */
@@ -69,12 +69,10 @@ export function NeedsView(props: {
       {needs.length === 0 ? (
         <p className="m-0 text-muted-foreground">{t("needs.none")}</p>
       ) : (
-        <Pager
+        <ScrollEntries
           items={needs}
           pageSize={NEEDS_PER_PART}
           label={t("needs.title")}
-          param={LAYER_PARAM}
-          replace
           // The list is the content of its layer, which scrolls (issue 2418): it is as high as its rows, so the recommendations
           // start below the last row. No size containment: it would make the list 0 px high and the rows would run over the
           // recommendations (issue 2535). The rows never shrink below their content: the list gives every row `shrink-0`.

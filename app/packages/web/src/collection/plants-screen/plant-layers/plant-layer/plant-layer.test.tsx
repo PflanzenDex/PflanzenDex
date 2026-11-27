@@ -7,7 +7,7 @@ import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { EMPTY_DISTRIBUTION } from "../../../insights/distribution-test-helpers";
 import { PlantsScreen } from "../../plants-screen";
 import { pagesOf, summaryOf } from "../../../specimens/tests/plants-test-helpers";
@@ -603,14 +603,13 @@ describe("US-QS-32 the action row of a plant has all its buttons from the first 
   });
 });
 
-/** The Pflege tab with a paged list of three treatments: its own page part `ofrom`, as the care part pages its list. */
+/** The Pflege tab with a list of three treatments; an old address may still hold the page part `ofrom` of the care part. */
 function PagedCare() {
   return (
-    <Pager
+    <ScrollEntries
       items={["Erste Behandlung", "Zweite Behandlung", "Dritte Behandlung"]}
       pageSize={1}
       label="Behandlungen"
-      param="ofrom"
       renderItem={(item) => <p>{item}</p>}
     />
   );

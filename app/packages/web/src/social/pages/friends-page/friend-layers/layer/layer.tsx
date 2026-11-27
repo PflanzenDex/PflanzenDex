@@ -3,7 +3,7 @@ import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/l
 
 /**
  * A layer whose content exists only while it is open: `LayerSheet` keeps its children mounted below the pane width, and a
- * closed layer must neither load its data nor page the address (several pagers share the address).
+ * closed layer must neither load its data nor write the address (several lists once shared it).
  */
 export function Layer(props: {
   id: string;

@@ -3,7 +3,7 @@
 import { useLayoutEffect, useRef } from "react";
 import type { ImportPreview } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { focusIt } from "@/shared/platform/routing/route-focus/view-start";
@@ -113,7 +113,7 @@ export function PreviewStep(props: { view: ImportFlow; moved: boolean }) {
       ) : null}
       {flow.failure ? <FailureNote error={flow.failure} onRetry={view.retry} /> : null}
       <MarkerAnswers requests={preview.markers} onAnswer={view.answer} />
-      <Pager
+      <ScrollEntries
         items={preview.rows}
         pageSize={rows}
         fit

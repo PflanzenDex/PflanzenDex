@@ -24,7 +24,7 @@ import {
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { Button } from "@/shared/ui/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { RefusalAlert } from "../shared/notices/notices";
@@ -116,11 +116,10 @@ function LeafList(props: { view: LeafLogView; busy: boolean; onRemove: (row: Lea
       {view.comparison ? (
         <p>{t(COMPARISON[view.comparison.measure][view.comparison.direction])}</p>
       ) : null}
-      <Pager
+      <ScrollEntries
         items={view.leaves}
         pageSize={PAGE_SIZE}
         label={t("list")}
-        param="blfrom"
         getKey={(leaf) => leaf.id}
         renderItem={(leaf) => <LeafRow row={leaf} busy={props.busy} onRemove={props.onRemove} />}
       />

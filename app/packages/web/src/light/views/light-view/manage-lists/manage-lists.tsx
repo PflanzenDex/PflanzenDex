@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LayerOpener, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { Button } from "@/shared/ui/button";
@@ -22,9 +22,6 @@ const t = texts(table);
 
 /** The list on a phone: `zones` (default) or `locations`, in the address (US-QS-19). */
 export const LIST_PARAM = "list";
-/** The page of each list; two names, because on a desktop both lists stand side by side. */
-const ZONE_PAGE = "zfrom";
-const LOCATION_PAGE = "sfrom";
 type ListKind = "zones" | "locations";
 
 /** The "+" of a list: opens the create layer of that kind (US-QS-19). */
@@ -71,12 +68,11 @@ function ZoneColumn(props: {
       {props.zones.length === 0 ? (
         <ZoneEmpty actions={props.actions} />
       ) : (
-        <Pager
+        <ScrollEntries
           items={props.zones}
           pageSize={props.size}
           fit
           label={t("lists.zones")}
-          param={ZONE_PAGE}
           listClassName={LIGHT_ROW_LIST}
           getKey={(z) => z.id}
           renderItem={(z) => (
@@ -101,12 +97,11 @@ function LocationColumn(props: { data: LightData; active: boolean; size: number 
       {data.locations.length === 0 ? (
         <LocationEmpty />
       ) : (
-        <Pager
+        <ScrollEntries
           items={data.locations}
           pageSize={props.size}
           fit
           label={t("lists.locations")}
-          param={LOCATION_PAGE}
           listClassName={LIGHT_ROW_LIST}
           getKey={(s) => s.id}
           renderItem={(s) => (

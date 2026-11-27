@@ -1,12 +1,12 @@
-// The page that prints the QR pot labels (US-BES-17, FR-BES-25): the keeper chooses plants and a format, "Etiketten drucken" opens
-// the print dialog. The labels live in a print-only region in the body; the rest of the app is hidden in print.
+// The page that prints the QR pot labels (US-BES-17, FR-BES-25): the keeper chooses plants and a format, "Etiketten drucken" opens the print dialog.
 import { useState } from "react";
 import { Navigate } from "react-router";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { ADD_PLANT_PATH, PATHS } from "@/shared/patterns/navigation/navigation/navigation";
-import { Pager, type PagerPaging } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import type { EntriesPaging } from "@/shared/patterns/responsive/pager/paging/paging";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
@@ -26,8 +26,8 @@ type Token = () => Promise<string | undefined>;
 const ui = texts(table);
 const plural = plurals(table);
 
-/** The server paging of the plant list for the Pager (FR-BES-23): the total, the loading state and a failure's text. */
-function pagingOf(list: CardPages): PagerPaging {
+/** The server paging of the plant list for the list (FR-BES-23): the total, the loading state and a failure's text. */
+function pagingOf(list: CardPages): EntriesPaging {
   return {
     total: list.total ?? 0,
     loading: list.status === "pending" || list.loadingMore,
@@ -144,7 +144,7 @@ function ChoicePanel(props: {
           onChange={onFormat}
         />
       </div>
-      <Pager
+      <ScrollEntries
         items={list.cards}
         pageSize={rows}
         fit

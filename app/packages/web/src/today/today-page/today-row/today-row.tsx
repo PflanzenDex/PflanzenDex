@@ -46,7 +46,7 @@ type RowProps = {
   item: TodayItem;
   /** The date of the list, shown only on the most urgent row when it is not today's (US-QS-32). */
   date?: string | undefined;
-  /** The row is one of a list of its own (a pager's list wraps it), so it is no list item of its own. */
+  /** The row is one of a list of its own (the list of `ScrollEntries` wraps it), so it is no list item of its own. */
   bare?: boolean | undefined;
 };
 

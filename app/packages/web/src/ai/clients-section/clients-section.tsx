@@ -3,7 +3,7 @@ import type { AiConnection, AiRights } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button";
 import { MoreHelp } from "@/shared/ui/more-help";
 import { Select } from "@/shared/ui/select";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { entityKey, useInvalidate, useWriteAction } from "../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { allowAgain, loadConnections, revokeConnection, setRights } from "../api/connections-api";
@@ -156,11 +156,10 @@ function List(props: { api: string; token: Token; rows: readonly AiConnection[] 
           label={ui("step.connect")}
         />
       ) : (
-        <Pager
+        <ScrollEntries
           items={props.rows}
           pageSize={PAGE}
           label="Verbundene KI-Clients"
-          param={LAYER_PARAM}
           getKey={(row) => row.id}
           renderItem={(row) => (
             <Connection api={props.api} row={row} busy={write.running} run={write.run} />
