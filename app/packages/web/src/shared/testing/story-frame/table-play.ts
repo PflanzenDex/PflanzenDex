@@ -14,7 +14,7 @@ const DRIFT_PX = 0.5;
 /** How far the play scrolls the region, down and sideways. */
 const SCROLL_PX = 140;
 
-const boxOf = (element: Element): Box => {
+export const boxOf = (element: Element): Box => {
   const { top, left, right, bottom } = element.getBoundingClientRect();
   return { top, left, right, bottom };
 };
@@ -120,7 +120,7 @@ function expectOnTop(region: HTMLElement, cells: ReturnType<typeof cellsOf>): vo
 }
 
 /** Waits until the fonts are in and two frames have passed: a box that a late font or a style change moves is not measured. */
-async function settle(): Promise<void> {
+export async function settle(): Promise<void> {
   await document.fonts.ready;
   const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
   await frame();
