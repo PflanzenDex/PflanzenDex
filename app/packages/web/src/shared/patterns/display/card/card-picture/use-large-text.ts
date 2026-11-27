@@ -13,8 +13,10 @@ export function useLargeText(): boolean {
     read();
     const probe = document.createElement("div");
     probe.setAttribute("aria-hidden", "true");
-    probe.style.cssText =
-      "position:fixed;width:1rem;height:0;visibility:hidden;pointer-events:none;overflow:hidden";
+    probe.setAttribute(
+      "style",
+      "position:fixed;width:1rem;height:0;visibility:hidden;pointer-events:none;overflow:hidden",
+    );
     document.body.appendChild(probe);
     const sizes = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(read);
     sizes?.observe(probe);
