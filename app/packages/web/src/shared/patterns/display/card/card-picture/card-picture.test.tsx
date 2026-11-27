@@ -45,6 +45,49 @@ describe("US-QS-32 · SG-PHOTO-01 the 4:3 box keeps its ratio when the card is s
   });
 });
 
+describe("US-QS-32 · SG-PHOTO-01 a card in a deck takes the picture width the free height allows (issue 2421)", () => {
+  const boxOf = (container: HTMLElement) =>
+    container.querySelector("figure")?.firstElementChild as HTMLElement;
+
+  it("US-QS-32 · SG-PHOTO-01 with a reserve the box is 4:3, centred and at most as wide as the height of its card leaves, never below 7.5 rem", () => {
+    const { container } = render(<CardPicture src={null} alt="Bild" reserve="8rem" />);
+    const box = boxOf(container);
+    expect(box.className).toContain("aspect-[4/3]");
+    expect(box.className).toContain("mx-auto");
+    expect(box.className).toContain("100cqh");
+    expect(box.className).toContain("var(--card-rest)");
+    expect(box.className).toContain("7.5rem");
+    expect(box.getAttribute("style")).toContain("--card-rest: 8rem");
+    // The cap reads the height of the card (a size container), never a constant of the window.
+    expect(box.className).not.toMatch(/dvh|vh\b/);
+  });
+
+  it("US-QS-32 · SG-PHOTO-01 without a reserve (large text, a row of cards) the box is the full width of its card", () => {
+    const { container } = render(<CardPicture src={null} alt="Bild" />);
+    expect(boxOf(container).className).not.toMatch(/cqh|max-w-/);
+    expect(boxOf(container).hasAttribute("style")).toBe(false);
+  });
+});
+
+describe("US-QS-32 a badge lies on the picture and costs the card no line of its own", () => {
+  it("US-QS-32 the overlay sits inside the picture box, at its top left corner", () => {
+    const { container } = render(
+      <CardPicture src={null} alt="Bild" overlay={<span>Mal etwas anderes</span>} />,
+    );
+    const box = container.querySelector("figure")?.firstElementChild as HTMLElement;
+    const holder = screen.getByText("Mal etwas anderes").parentElement as HTMLElement;
+    expect(box.contains(holder)).toBe(true);
+    expect(holder.className).toContain("absolute");
+    expect(holder.className).toContain("top-2");
+    expect(holder.className).toContain("left-2");
+  });
+
+  it("US-QS-32 without an overlay the box holds nothing but the picture", () => {
+    const { container } = render(<CardPicture src="https://example.org/a.jpg" alt="Bild" />);
+    expect(container.querySelector("figure")?.firstElementChild?.children).toHaveLength(1);
+  });
+});
+
 describe("US-QS-32 · SG-PHOTO-02 a missing or failed picture shows the drawn placeholder in the same box", () => {
   it("US-QS-32 · SG-PHOTO-02 without a picture address the drawn sprout stands in: no image, no emoji, the box keeps its 4:3 room", () => {
     const { container } = render(<CardPicture src={null} alt="Bild von Aloe vera" />);

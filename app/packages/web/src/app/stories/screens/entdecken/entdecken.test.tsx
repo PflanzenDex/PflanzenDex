@@ -15,8 +15,9 @@ describe("US-QS-14 · page story Entdecken", () => {
   it("US-QS-14 · the suggestions mode shows the first card of the deck", async () => {
     await SuggestionsPhone.run();
     expect(await screen.findByText("Karte 1 von 2")).toBeTruthy();
-    // The next card underneath repeats the heading, hidden from assistive tech (US-ENT-01): only the front card counts.
-    expect(screen.getByRole("heading", { name: "Warum diese Art?" })).toBeTruthy();
+    // The next card underneath repeats the heading, hidden from assistive tech (US-ENT-01): only the front card counts. Its
+    // "Mehr" button names the card (US-QS-15, issue 2421).
+    expect(screen.getByRole("button", { name: /^Mehr: / })).toBeTruthy();
   });
 
   it("US-QS-14 · the catalog mode lists the species of the search", async () => {

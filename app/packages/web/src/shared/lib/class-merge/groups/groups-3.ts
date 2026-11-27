@@ -105,6 +105,10 @@ export const GROUPS_3: Config<string, string>["classGroups"] = {
     },
   ],
   "pointer-events": [{ "pointer-events": ["auto", "none"] }],
+  // The card row snaps each card to the start of its shelf (`CardRow`, issue 2421).
+  "snap-type": [{ snap: ["none", "x", "y", "both"] }],
+  "snap-strictness": [{ snap: ["mandatory", "proximity"] }],
+  "snap-align": [{ snap: ["start", "end", "center", "align-none"] }],
   "scroll-mt": [{ "scroll-mt": scaleUnambiguousSpacing() }],
   "scroll-mb": [{ "scroll-mb": scaleUnambiguousSpacing() }],
   "scroll-py": [{ "scroll-py": scaleUnambiguousSpacing() }],

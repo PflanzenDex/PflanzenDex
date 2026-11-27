@@ -36,9 +36,12 @@ export function FactList(props: { children: ReactNode }) {
   return <ul className="m-0 flex min-w-0 list-none flex-wrap gap-2 p-0">{props.children}</ul>;
 }
 
+/** The word of each level of 1 to 3, one name for it everywhere (SG-COPY-03, issue 1933). */
+const WORD = { 1: "difficultyEasy", 2: "difficultyMedium", 3: "difficultyHard" } as const;
+
 /** "★★☆ Mittel" for a level of 1 to 3: the stars, their text alternative and the word every keeper sees. */
 function Difficulty(props: { level: number }) {
-  const word = t(`difficulty.${props.level}` as "difficulty.1");
+  const word = t(WORD[props.level as 1 | 2 | 3]);
   return (
     <>
       <DifficultyStars level={props.level} label={t("difficultyLabel", { level: props.level })} />

@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { Button } from "@/shared/ui/button";
@@ -17,9 +17,12 @@ const t = texts(table);
  */
 export function CardMore(props: { name: string; children: ReactNode }) {
   const [built, setBuilt] = useState(false);
+  // A tap does not focus a button in every browser (Safari): the focus returns to this button, not to what had it at open.
+  const opener = useRef<HTMLButtonElement>(null);
   return (
     <ResponsiveModal
       title={props.name}
+      returnFocusTo={opener}
       halfHeight
       onOpenChange={(open) => {
         if (open) setBuilt(true);
@@ -27,6 +30,7 @@ export function CardMore(props: { name: string; children: ReactNode }) {
       onExited={() => setBuilt(false)}
       trigger={
         <Button
+          ref={opener}
           type="button"
           variant="plain"
           size="sm"
