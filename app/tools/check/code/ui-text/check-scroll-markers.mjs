@@ -26,6 +26,9 @@ const SCROLL_X_VALUES = ["table", "cards", "chips", "tabs", "row"];
 const SHARED_SCROLL = [
   "packages/web/src/shared/ui/table.",
   "packages/web/src/shared/patterns/display/panels/tabs/",
+  // The card row and the chip row mark their sideways regions themselves (`data-scroll-x`, issue 2421).
+  "packages/web/src/shared/patterns/display/card-row/",
+  "packages/web/src/shared/patterns/elements/chip-row/",
   // remove with #2422 (the frame and one-screen component ticket)
   "packages/web/src/shared/patterns/responsive/pager/paging/scroll-entries/",
   "packages/web/src/shared/patterns/responsive/layer-sheet/layer-host/layer-pane/",

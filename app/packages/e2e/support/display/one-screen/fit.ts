@@ -110,6 +110,9 @@ const paintHandle = (page: Page) =>
       const rc = el.getBoundingClientRect();
       const st = getComputedStyle(el);
       if (el.closest("[aria-hidden='true']") || rc.width <= 1 || rc.height <= 1) continue;
+      // What a marked sideways region holds is clipped by it (a card row, a chip row, a table, a tab strip: `data-scroll-x`,
+      // DS-63): its own box is measured, the cards that wait beyond its edge do not paint on the page (issue 2421, d-163).
+      if (el.parentElement?.closest("[data-scroll-x]")) continue;
       if (st.visibility === "hidden" || +st.opacity === 0 || !paints(el, st)) continue;
       if (rc.left < edges.left) Object.assign(edges, { left: rc.left, leftEl: el });
       if (rc.right > edges.right) Object.assign(edges, { right: rc.right, rightEl: el });
