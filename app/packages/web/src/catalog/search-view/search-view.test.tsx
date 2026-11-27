@@ -164,7 +164,7 @@ describe("US-QS-21 the catalog list scrolls", () => {
     expect(row.querySelector('[aria-hidden="true"]')?.className).toContain("@max-[14rem]:hidden");
   });
 
-  it("US-QS-21 a short list has no pager", () => {
+  it("US-QS-21 a short list has no end marker", () => {
     search(many(2));
     expect(screen.queryByText(/Seite 1 von/)).toBeNull();
   });

@@ -5,7 +5,6 @@ import {
   LayerSheet,
   useLayer,
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { HintsPage } from "@/collection";
 import { PlanLayer, TreatmentsPage } from "@/care";
 import { WateringList } from "@/monitoring";
@@ -164,7 +163,7 @@ function Tasks(props: {
       </LayerSheet>
       <LayerSheet id="watering" title="Gießen">
         <InLayer skeleton={<WateringLayerSkeleton />}>
-          <WateringList api={api} token={token} param={LAYER_PARAM} />
+          <WateringList api={api} token={token} />
         </InLayer>
       </LayerSheet>
       <LayerSheet id="hints" title="Fehlt noch">

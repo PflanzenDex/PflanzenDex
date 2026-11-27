@@ -3,13 +3,13 @@ import { MemoryRouter } from "react-router";
 import { withText200 } from "@/shared/testing/story-frame/story-frame";
 import { hasLayout, waitUntil } from "@/shared/testing/story-frame/story-play";
 import { ScrollEntries } from "./scroll-entries";
-import type { PagerPaging } from "../paging";
+import type { EntriesPaging } from "../paging";
 
 // Catalog of the scrolling list (US-QS-15, SG-LIST-01, DS-60): the end of the list in its four states. Each story has a
 // play function that the QG-U5 conformance run waits for (P-B, issue 2432); a story fails when its play throws.
 const plants = (count: number) => Array.from({ length: count }, (_, i) => `Monstera ${i + 1}`);
 
-function paging(over: Partial<PagerPaging> = {}): PagerPaging {
+function paging(over: Partial<EntriesPaging> = {}): EntriesPaging {
   return {
     total: 20,
     loading: false,

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import type { ApiError } from "../../../../../shared/data";
@@ -56,11 +56,10 @@ function Items(props: { data: EquipmentData; lamps: Lamps }) {
   if (data.items.length === 0)
     return <Nothing title={t("items.none.title")} description={t("items.none.description")} />;
   return (
-    <Pager
+    <ScrollEntries
       items={data.items}
       pageSize={ITEMS_PER_PAGE}
       label={t("items.label")}
-      param={LAYER_PARAM}
       listClassName={OBJECT_GROUP}
       getKey={(item) => item.id}
       renderItem={(item) => <ItemRow item={item} zone={zoneNames.get(item.lightZoneId ?? "")} />}

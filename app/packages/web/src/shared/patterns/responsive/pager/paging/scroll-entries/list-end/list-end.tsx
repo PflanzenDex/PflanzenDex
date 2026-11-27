@@ -2,7 +2,7 @@ import { Button } from "@/shared/ui/button";
 import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
 import { texts } from "@/shared/lib/text-rules/texts";
-import type { PagerPaging } from "../../paging";
+import type { EntriesPaging } from "../../paging";
 import table from "./list-end.de.json";
 
 const t = texts(table);
@@ -43,7 +43,7 @@ function LoaderRow({ quiet }: { quiet: boolean }) {
  * above the button, so it never breaks beside it at 200 % text. The loaded entries stay; a cause the caller knows
  * (`failure`) is added below the sentence.
  */
-function RetryRow({ paging }: { paging: PagerPaging }) {
+function RetryRow({ paging }: { paging: EntriesPaging }) {
   return (
     <li data-list-end="" className="col-span-full flex flex-col items-start gap-2 py-2">
       <p role="alert" className="text-sm">
@@ -82,7 +82,7 @@ export function ListEnd({
   missing,
   marker,
 }: {
-  paging: PagerPaging | undefined;
+  paging: EntriesPaging | undefined;
   missing: boolean;
   marker: number | undefined;
 }) {

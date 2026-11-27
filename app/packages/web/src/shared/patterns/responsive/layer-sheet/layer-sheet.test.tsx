@@ -91,7 +91,7 @@ function MountedOnlyLayer() {
   );
 }
 
-function Pager() {
+function PageButton() {
   const [, setParams] = useSearchParams();
   return (
     <button type="button" onClick={() => setParams({ page: "2" })}>
@@ -110,7 +110,7 @@ describe("LayerSheet (US-QS-15)", () => {
             <RouteFocus titleOf={() => "Start"} />
             <h1>Start</h1>
             <LayerOpener id="licht">Licht</LayerOpener>
-            <Pager />
+            <PageButton />
             <LayerSheet id="licht" title="Lichtzonen">
               <p>Inhalt</p>
             </LayerSheet>
@@ -125,13 +125,13 @@ describe("LayerSheet (US-QS-15)", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await new Promise((r) => setTimeout(r, 400));
     expect(document.activeElement).toBe(opener);
-    const pager = screen.getByRole("button", { name: "Seite 2" });
-    await userEvent.click(pager);
+    const control = screen.getByRole("button", { name: "Seite 2" });
+    await userEvent.click(control);
     await new Promise((r) => setTimeout(r, 400));
-    expect(document.activeElement).toBe(pager);
+    expect(document.activeElement).toBe(control);
   });
 
-  it("US-QS-22 a closed layer mounts no content, so it loads nothing and holds no pager", () => {
+  it("US-QS-22 a closed layer mounts no content, so it loads nothing and holds no list", () => {
     setViewportWidth(360);
     render(<Example />);
     expect(screen.queryByText("Inhalt")).toBeNull();
@@ -276,7 +276,7 @@ describe("LayerSheet (US-QS-15)", () => {
     act(() => setViewportWidth(1280));
     const pane = screen.getByRole("complementary", { name: "Lichtzonen" });
     expect(pane.className).not.toContain("page-fit");
-    // The pane is a layer too: what it holds is in the layer scope, so a Pager there does not page.
+    // The pane is a layer too: what it holds is in the layer scope, so a list there does not page.
     expect(pane.querySelector("[data-layer-body] > [data-scroll-region]")).not.toBeNull();
   });
 

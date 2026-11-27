@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Link } from "react-router";
 import { Button } from "@/shared/ui/button";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { LayerOpenRow } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
 import { useOverviewPageSize } from "./overview-page-size/overview-page-size";
 import { errorText } from "@/shared/lib/error-text";
@@ -100,7 +100,7 @@ function Overview(props: { api: string; token: Token }) {
       )}
       <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,1fr)] gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className="flex min-h-0 min-w-0 flex-col">
-          <Pager
+          <ScrollEntries
             items={entries}
             pageSize={size}
             fit

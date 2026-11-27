@@ -4,7 +4,7 @@ import { BrowserRouter, MemoryRouter, useLocation, useNavigate } from "react-rou
 import { afterEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerScope } from "@/shared/ui/layer-scope";
-import { Pager } from "../../pager";
+import { ScrollEntries } from "./scroll-entries";
 
 afterEach(() => {
   cleanup();
@@ -15,7 +15,7 @@ afterEach(() => {
 const plants = Array.from({ length: 12 }, (_, i) => `Pflanze ${i + 1}`);
 
 function list() {
-  return <Pager items={plants} pageSize={4} label="Pflanzen" renderItem={(t) => t} />;
+  return <ScrollEntries items={plants} pageSize={4} label="Pflanzen" renderItem={(t) => t} />;
 }
 
 /** Writes the address and the history state the way the router keeps them (`usr` holds the state of the entry). */

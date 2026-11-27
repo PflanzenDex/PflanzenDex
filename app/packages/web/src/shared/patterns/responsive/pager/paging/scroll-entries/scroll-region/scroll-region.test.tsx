@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Pager } from "../../../pager";
+import { ScrollEntries } from "../scroll-entries";
 import { SETTLE_MS } from "../use-scroll-overflow";
 import { ScrollRegion } from "./scroll-region";
 
@@ -52,7 +52,7 @@ describe("US-QS-15 · SG-LIST-01 the scroll region of a page", () => {
     const view = (items: string[]) => (
       <MemoryRouter>
         <ScrollRegion label="Freunde">
-          <Pager items={items} pageSize={10} label="Liste" renderItem={(t) => t} />
+          <ScrollEntries items={items} pageSize={10} label="Liste" renderItem={(t) => t} />
         </ScrollRegion>
       </MemoryRouter>
     );

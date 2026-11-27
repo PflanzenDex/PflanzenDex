@@ -3,7 +3,7 @@ import { Button } from "@/shared/ui/button";
 import { DateField } from "@/shared/ui/input.date-field";
 import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import { Label } from "@/shared/ui/label";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { currentTimeZone } from "../../../shared/data";
 import { addDays, localToday } from "./pause";
 
@@ -79,11 +79,10 @@ export function PauseRows(props: {
         was fällig ist; Daten gehen nicht verloren. Einen Anlass ganz auszuschalten geht unter
         Einstellungen.
       </p>
-      <Pager
+      <ScrollEntries
         items={REMINDER_OCCASIONS}
         pageSize={PAUSE_PAGE}
         label="Anlässe"
-        param={LAYER_PARAM}
         getKey={(o) => o}
         renderItem={(o) => (
           <PauseRow occasion={o} until={props.paused[o] ?? ""} onChange={props.onChange} />

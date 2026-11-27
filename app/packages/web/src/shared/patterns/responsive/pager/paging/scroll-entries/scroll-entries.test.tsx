@@ -4,8 +4,8 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerScope } from "@/shared/ui/layer-scope";
-import { Pager } from "../../pager";
-import type { PagerPaging } from "../paging";
+import { ScrollEntries } from "./scroll-entries";
+import type { EntriesPaging } from "../paging";
 
 afterEach(() => {
   cleanup();
@@ -17,10 +17,10 @@ const plants = Array.from({ length: 20 }, (_, i) => `Pflanze ${i + 1}`);
 
 type ListOptions = { resetKey?: string; fit?: boolean };
 
-function list(items: readonly string[], paging?: PagerPaging, more: ListOptions = {}) {
+function list(items: readonly string[], paging?: EntriesPaging, more: ListOptions = {}) {
   return (
     <MemoryRouter>
-      <Pager
+      <ScrollEntries
         items={items}
         pageSize={4}
         label="Pflanzen"
@@ -33,7 +33,7 @@ function list(items: readonly string[], paging?: PagerPaging, more: ListOptions 
   );
 }
 
-function serverPaging(total: number, onMore: () => void): PagerPaging {
+function serverPaging(total: number, onMore: () => void): EntriesPaging {
   return {
     total,
     loading: false,
@@ -93,7 +93,7 @@ describe("US-QS-32 · SG-LIST-01 a list on a phone scrolls instead of paging", (
     setViewportWidth(360);
     render(
       <MemoryRouter>
-        <Pager items={plants} pageSize={4} label="Pflanzen" renderItem={(t) => t} fit />
+        <ScrollEntries items={plants} pageSize={4} label="Pflanzen" renderItem={(t) => t} fit />
       </MemoryRouter>,
     );
     const list = screen.getByRole("list", { name: "Pflanzen" });
@@ -111,11 +111,31 @@ describe("US-QS-32 · SG-LIST-01 a list on a phone scrolls instead of paging", (
       expect(screen.getAllByRole("listitem")).toHaveLength(plants.length);
       expect(screen.queryByRole("button", { name: "Weiter" })).toBeNull();
       const box = screen.getByRole("list", { name: "Pflanzen" });
-      // The layer scrolls its content: the list takes no marker of a scroll region, no tab stop and no Pager marker of the gate.
+      // The layer scrolls its content: the list takes no marker of a scroll region, no tab stop and no marker of the gate.
       expect(box.hasAttribute("tabindex")).toBe(false);
       expect(box.hasAttribute("data-page-fit")).toBe(false);
-      expect(box.parentElement?.hasAttribute("data-pager")).toBe(false);
       unmount();
+    }
+  });
+
+  it("US-QS-15 · SG-LIST-01 a fit list in a sheet, a dialog or a pane takes no fit and no scroll box of its own: the layer scrolls", () => {
+    render(
+      <LayerScope.Provider value>{list(plants, undefined, { fit: true })}</LayerScope.Provider>,
+    );
+    const box = screen.getByRole("list", { name: "Pflanzen" });
+    expect(box.hasAttribute("data-page-fit")).toBe(false);
+    expect(box.hasAttribute("data-scroll-region")).toBe(false);
+    expect(box.hasAttribute("tabindex")).toBe(false);
+    expect(box.className).not.toContain("overflow-y-auto");
+    expect(document.querySelector("[data-pager]")).toBeNull();
+  });
+
+  it("US-QS-15 · SG-LIST-01 the list of a page carries no data-pager marker at any width: no list is cut into pages", () => {
+    for (const width of [360, 768, 1024, 1920]) {
+      setViewportWidth(width);
+      const view = render(list(plants, undefined, { fit: true }));
+      expect(document.querySelector("[data-pager]")).toBeNull();
+      view.unmount();
     }
   });
 

@@ -2,7 +2,7 @@ import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-secti
 import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import type { LightOverview, LightOverviewRow } from "../../shared/light-api/light-api";
 import { zoneLabel } from "@pflanzendex/core";
-import { Pager, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LightNeedAction } from "../../shared/ui/light-need-action/light-need-action";
 import table from "../../light.de.json";
@@ -59,13 +59,11 @@ export function LightOverviewView(props: { data: LightOverview }) {
       ) : (
         <>
           <p className="text-sm text-muted-foreground">{t("overview.intro")}</p>
-          <Pager
+          <ScrollEntries
             items={data.rows}
             pageSize={PAGE_SIZE}
             fit
             label={t("overview.list")}
-            param={LAYER_PARAM}
-            replace
             getKey={(r) => r.speciesId}
             renderItem={(r) => <Row r={r} />}
           />

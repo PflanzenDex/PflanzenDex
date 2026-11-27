@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { SharingRow, SpecimenRow } from "@pflanzendex/core";
 import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -155,7 +155,7 @@ export function SharingPanel(props: {
       ) : (
         <>
           <BulkBar count={rows.length} busy={props.busy} onSetAll={props.onSetAll} />
-          <Pager
+          <ScrollEntries
             items={rows}
             pageSize={size}
             label="Pflanzen zum Teilen"

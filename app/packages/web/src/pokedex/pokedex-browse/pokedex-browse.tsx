@@ -13,7 +13,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { GroupSections } from "@/shared/lists/grouped-list/grouped-sections/grouped-sections";
 import type { SectionGroup } from "@/shared/lists/grouped-list/grouped-sections/group-section/group-section";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
-import { SpeciesPager, SpeciesRow, speciesLayerId } from "../pokedex-cards/pokedex-cards";
+import { SpeciesList, SpeciesRow, speciesLayerId } from "../pokedex-cards/pokedex-cards";
 import { germanNameOf } from "@/shared/species-name/species-name";
 import { Controls } from "../pokedex-controls/pokedex-controls";
 import { BrowseLayers } from "./browse-layers/browse-layers";
@@ -75,7 +75,7 @@ export function Browse(props: {
           byName={sort === "alphabetical"}
           label={ui("letterIndex")}
         >
-          <SpeciesPager
+          <SpeciesList
             label="Gefangene Arten"
             species={result.flat}
             resetKey={`${query}|${filter}|${sort}`}

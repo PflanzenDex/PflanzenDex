@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Button } from "@/shared/ui/button";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { entityKey, useInvalidate, useWriteAction } from "../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { adoptDraft, discardDraft, loadDrafts, type AiDraftRow } from "../api/connections-api";
@@ -126,11 +126,10 @@ function List(props: { api: string; token: Token; rows: readonly AiDraftRow[] })
           label={ui("step.newTask")}
         />
       ) : (
-        <Pager
+        <ScrollEntries
           items={props.rows}
           pageSize={2}
           label="KI-Entwürfe"
-          param={LAYER_PARAM}
           getKey={(row) => row.id}
           renderItem={(row) => (
             <Draft api={props.api} row={row} busy={write.running} run={write.run} />

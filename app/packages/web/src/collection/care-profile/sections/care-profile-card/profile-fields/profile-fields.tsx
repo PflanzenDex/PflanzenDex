@@ -1,6 +1,6 @@
 import type { Control } from "react-hook-form";
 import type { CareProfileChanges, CareProfileEntry } from "@pflanzendex/core";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import type { CareProfileFields } from "../../../../specimens/model/schemas";
 import {
   Days,
@@ -37,7 +37,7 @@ function pageFields(page: number, shared: ProfileShared, lists: Lists) {
 export function ProfileFields(props: { shared: ProfileShared; lists: Lists; name: string }) {
   const { shared, lists, name } = props;
   return (
-    <Pager
+    <ScrollEntries
       items={PAGES}
       pageSize={1}
       label={`Felder des Pflegeprofils für „${name}“`}

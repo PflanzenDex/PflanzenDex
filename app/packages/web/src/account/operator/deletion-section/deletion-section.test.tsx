@@ -7,7 +7,7 @@ import { DeadlineRow, DeletionBody, DeletionSection, deadlineSummary } from "./d
 import { utcText } from "./deletion-parts/deletion-parts";
 import { markIdentityRemoved, type DeletionsView } from "../../api/access-api";
 
-// The layers and the pager keep their place in the address, so every render needs a router (US-QS-15).
+// The layers keep their place in the address, so every render needs a router (US-QS-15).
 const inRouter = (ui: ReactElement) => <MemoryRouter>{ui}</MemoryRouter>;
 const json = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

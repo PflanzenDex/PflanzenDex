@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { HistoryEntry } from "@pflanzendex/core";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { currentTimeZone } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
@@ -97,7 +97,7 @@ export function SwapHistory(props: { api: string; token: Token }) {
           data.entries.length === 0 ? (
             <EmptySection text={t("history.none")} />
           ) : (
-            <Pager
+            <ScrollEntries
               items={data.entries}
               pageSize={size}
               fit

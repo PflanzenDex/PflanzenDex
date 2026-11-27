@@ -13,10 +13,10 @@ export const PAGE_PARAM = "from";
 export const LAYER_PARAM = "lfrom";
 
 /**
- * Every address part a paged list may hold (FR-BES-23, US-QS-15): `Pager` takes only these as its `param`, and
- * `RouteFocus` leaves them out when it tells a view change apart (issue 1550). A new list adds its part here once.
+ * Every address part a paged list may hold (FR-BES-23, US-QS-15): an old address may hold one of these, and
+ * `RouteFocus` leaves them out when it tells a view change apart (issue 1550). They are stripped, never written.
  */
-export const PAGER_PARTS = [
+export const LIST_PARTS = [
   PAGE_PARAM,
   LAYER_PARAM,
   "vfrom",
@@ -28,12 +28,12 @@ export const PAGER_PARTS = [
   "blfrom",
 ] as const;
 
-/** An address part of a paged list (see `PAGER_PARTS`). */
-export type PagerPart = (typeof PAGER_PARTS)[number];
+/** An address part of a paged list (see `LIST_PARTS`). */
+export type ListPart = (typeof LIST_PARTS)[number];
 
 /**
  * The address part that a list held before issue 1492, by its name now: a page number (`?page=2`, counted from 1). Such an
- * address is converted once, see `Pager`. Two lists share `rpage` on different screens, so they share `rfrom`.
+ * address is stripped once, see `useStripOldPositions`. Two lists share `rpage` on different screens, so they share `rfrom`.
  */
 export const OLD_PARTS = new Map<string, string>([
   [PAGE_PARAM, "page"],

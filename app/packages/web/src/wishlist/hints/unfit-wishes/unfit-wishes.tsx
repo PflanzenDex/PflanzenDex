@@ -1,5 +1,5 @@
 import type { UnfitWish } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../wishlist.de.json";
 
@@ -29,13 +29,11 @@ export function UnfitWishes({ wishes }: { wishes: readonly UnfitWish[] }) {
         {t("unfit.title")}
       </h2>
       {shared ? <p className="font-semibold">{shared}</p> : null}
-      <Pager
+      <ScrollEntries
         items={wishes}
         pageSize={PAGE_SIZE}
         fit
         label={t("unfit.title")}
-        param={LAYER_PARAM}
-        replace
         listClassName="gap-3"
         getKey={(w) => w.id}
         renderItem={(w) => (

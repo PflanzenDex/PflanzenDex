@@ -1,6 +1,6 @@
 import { Leaf } from "lucide-react";
 import type { SpeciesHit, NameField } from "@pflanzendex/core";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { Button } from "@/shared/ui/button";
 import { badge, difficultyText } from "../../shared/text";
 
@@ -65,7 +65,7 @@ export function HitList(props: {
   resetKey: string;
 }) {
   return (
-    <Pager
+    <ScrollEntries
       items={props.hit}
       pageSize={HITS_PER_PAGE}
       fit

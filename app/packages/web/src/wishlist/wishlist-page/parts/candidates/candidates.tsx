@@ -1,7 +1,7 @@
 import type { Candidate, CandidateList } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LayerOpener, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { Button } from "@/shared/ui/button";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
@@ -41,7 +41,7 @@ export function Candidates(props: {
       {list.hint.nextAction ? (
         <p className="text-sm text-muted-foreground">{list.hint.nextAction}</p>
       ) : null}
-      <Pager
+      <ScrollEntries
         items={list.candidates}
         pageSize={size}
         fit

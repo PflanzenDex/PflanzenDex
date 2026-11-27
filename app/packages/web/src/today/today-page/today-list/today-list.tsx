@@ -4,7 +4,7 @@ import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { GroupedList } from "@/shared/lists/grouped-list/grouped-list";
 import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
-import { Pager, type PagerPart } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { localToday, type TodayList } from "@pflanzendex/core";
 import type { ReactNode } from "react";
@@ -61,27 +61,24 @@ function Content(props: {
   );
 }
 
-/** The further tasks of the day, treatments excluded: one pager, in the page below the tiles or in the layer. */
+/** The further tasks of the day, treatments excluded: one list, in the page below the tiles or in the layer. */
 export function FurtherTasks(props: {
   list: TodayList;
-  param?: PagerPart;
   /** The page takes the free height below the tiles (the page, not the layer). */
   fit?: boolean;
 }) {
   const pageSize = useIsMd() ? PAGE_SIZE.md : PAGE_SIZE.phone;
   const rest = props.list.items.slice(1).filter((item) => !isTreatment(item));
   return (
-    <Pager
+    <ScrollEntries
       items={rest}
       pageSize={pageSize}
       {...(props.fit ? { fit: true } : {})}
       label={t("tasks.title")}
-      // The rows do not count towards the height of the section (size containment): the section keeps one row and the
-      // pager at a larger text size without growing with the page it shows, so the page size follows the free height
-      // only (issue 1113).
+      // The rows do not count towards the height of the section (size containment): the section keeps one row at a larger
+      // text size without growing with the entries it shows, so the page size follows the free height only (issue 1113).
       listClassName={props.fit ? `${ROW_GROUP} [contain:size]` : ROW_GROUP}
       getKey={(item) => item.id}
-      {...(props.param ? { param: props.param } : {})}
       renderItem={(item) => <TodayRow item={item} bare />}
     />
   );
@@ -96,7 +93,7 @@ export function Below(props: { list: TodayList }) {
     <>
       {rest.length > 0 && (
         // No min-h-0: when the page has no free height left (200 % text, `main` scrolls), the section keeps one row and
-        // the pager instead of collapsing to nothing below the next line.
+        // the list instead of collapsing to nothing below the next line.
         <section aria-labelledby="tasks-title" className="flex min-w-0 flex-1 flex-col gap-2">
           <h2 id="tasks-title" className="text-sm font-semibold">
             {t("tasks.title")}

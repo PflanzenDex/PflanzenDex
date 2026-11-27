@@ -67,7 +67,7 @@ function Thumbnail({ src, alt }: { src: string | undefined; alt: string }) {
 
 /**
  * One object in a list (US-QS-32, SG-LIST-03). The row is a `GroupedRow` of the object variant without its own list item,
- * because the list of a pager already wraps each row. An action sits beside the link or button, so a button never nests
+ * because the list of `ScrollEntries` already wraps each row. An action sits beside the link or button, so a button never nests
  * in another one. Every row that opens a view or a layer shows the chevron unless a trailing element or an action takes its
  * place; there is no way to hide it (SG-TOUCH-02, issue 2355).
  */

@@ -1,6 +1,6 @@
 import { createContext, useContext, type Key, type ReactNode } from "react";
 import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
-import type { PagerPaging } from "@/shared/patterns/responsive/pager/pager";
+import type { EntriesPaging } from "@/shared/patterns/responsive/pager/paging/paging";
 import { GroupedList } from "../../grouped-list";
 
 /** One group of a grouped list: its entries, its count and what stands in its section (SG-LIST-06, SG-LIST-08). */
@@ -18,8 +18,8 @@ export type SectionGroup<T> = {
    * "Zone 3 · 5 Pflanzen" instead of "Zone 3 (5)". Without it the count is a bare number.
    */
   countText?: string;
-  /** The server paging of the group's entries (see `PagerPaging`): each group loads and ends on its own. */
-  paging?: PagerPaging;
+  /** The server paging of the group's entries (see `EntriesPaging`): each group loads and ends on its own. */
+  paging?: EntriesPaging;
   /**
    * The quiet line of a group without entries (SG-LIST-06): a fixed set of groups shows every group in its order, an empty one
    * as this line, not styled as a control. Without it an empty group still shows its heading and no line.

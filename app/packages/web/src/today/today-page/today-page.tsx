@@ -1,7 +1,6 @@
 import { useCallback, type ReactNode } from "react";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
-import { LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { useRequest } from "../../shared/data";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { loadToday, TODAY_LIST_KEY } from "../today-api";
@@ -71,7 +70,7 @@ export function TodayPage(props: {
       {/* The former address of the further tasks stays valid: the layer lists the same rows. */}
       <LayerSheet id={TASKS} title={t("tasks.title")}>
         {/* The same request as the page (no second observer, see above). The rows page by the free height of the layer,
-            so the pager stays inside the pane (issue 1182). */}
+            so the list stays inside the pane (issue 1182). */}
         <RequestState
           status={today.status}
           {...(today.error ? { errorText: today.error.text } : {})}
@@ -79,7 +78,7 @@ export function TodayPage(props: {
           offline={today.offline}
           skeleton={<NowSkeleton label={loading} />}
         >
-          {today.value ? <FurtherTasks list={today.value} param={LAYER_PARAM} fit /> : null}
+          {today.value ? <FurtherTasks list={today.value} fit /> : null}
         </RequestState>
       </LayerSheet>
     </div>

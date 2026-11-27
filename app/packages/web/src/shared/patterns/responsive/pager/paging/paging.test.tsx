@@ -3,11 +3,11 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Pager } from "../pager";
+import { ScrollEntries } from "./scroll-entries/scroll-entries";
 import { LayerScope } from "@/shared/ui/layer-scope";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { dropPageParts } from "./address";
-import { knownCount, type PagerPaging } from "./paging";
+import { knownCount, type EntriesPaging } from "./paging";
 
 afterEach(cleanup);
 // A list in a layer is one scroll list (US-QS-15, SG-LIST-01, issue 2418): these tests pin the focus after a retry there.
@@ -19,7 +19,7 @@ function Paged(props: { loaded: number; failure?: string; plain?: boolean }) {
   return (
     <MemoryRouter initialEntries={["/?from=3"]}>
       <LayerScope.Provider value>
-        <Pager
+        <ScrollEntries
           items={plants.slice(0, props.loaded)}
           pageSize={3}
           label="Pflanzen"
@@ -78,7 +78,7 @@ describe("FR-BES-23 the address parts of a list (issue 1492)", () => {
 });
 
 describe("US-QS-15 · FR-BES-23 the count of a server list", () => {
-  const known = (total?: number): PagerPaging => ({
+  const known = (total?: number): EntriesPaging => ({
     total,
     loading: false,
     onMore: vi.fn(),
