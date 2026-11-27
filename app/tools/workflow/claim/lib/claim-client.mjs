@@ -1,6 +1,7 @@
 // The claim tools' reads and writes on the repository, issues, pull requests and assignees (US-DEV-08). REST only (FR-DEV-10, #1412):
 // REST has its own budget and spends no GraphQL point, so the claim, worktree and board tools keep working when the GraphQL budget
-// is used up. The board is in board-client.mjs; the transport (gh and git calls, paging, time limit) in calls/github-calls.mjs,
+// is used up. The caller's login (`me`, `claimant`) is in lib/identity/claim-identity.mjs; it falls back to the GraphQL viewer for an App
+// identity (issue 2556). The board is in board-client.mjs; the transport (gh and git calls, paging, time limit) in calls/github-calls.mjs,
 // and the process handling of a call (time limit, process group) in calls/process-group.mjs.
 import { claimKey } from "./claim-lib.mjs";
 import { json, restPages } from "./calls/github-calls.mjs";
@@ -21,9 +22,6 @@ const memo = new WeakMap(); // client -> lookups that are read once per run
 // The fetch refspec `git clone` writes: every branch lands in refs/remotes/origin/*.
 const STANDARD_FETCH = "+refs/heads/*:refs/remotes/origin/*";
 const NOT_A_FEATURE = new Set(["main", "dev", "HEAD"]);
-
-export const me = async (client) =>
-  (await client.run("gh", ["api", "user", "-q", ".login"])).trim();
 
 /** "owner/name" of the repository of the checkout (GH_REPO in CI); one REST call per run. */
 export function repoName(client) {

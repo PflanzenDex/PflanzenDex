@@ -11,6 +11,8 @@ make claim ISSUE=<n>     # claim the issue, branch and draft PR
 make board               # who works on what (optional: RELEASE="R0 Fundament")
 ```
 
+A bot cannot be an assignee. When the agent runs as the GitHub App `pflanzendex-agent[bot]`, set `PFLANZENDEX_CLAIM_ASSIGNEE` to the login of the responsible human. `make claim` then assigns that human and names them in the Handoff, and the bot opens the draft PR. Without the variable, `make claim` refuses before it writes anything. `make worktree` counts an assignee that is the human or the bot as yours (US-DEV-08, issue 2556).
+
 `make claim` (`app/tools/workflow/claim/claim.mjs`) refuses with exit 1 and names the finding when
 
 - the issue has an assignee,
