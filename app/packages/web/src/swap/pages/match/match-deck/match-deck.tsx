@@ -115,7 +115,9 @@ function Current(props: {
         onExited={props.finish}
         className={cn(
           "mx-auto flex w-full min-w-0 max-w-md",
-          !large && "min-h-[18.25rem] flex-1 basis-0",
+          // At large text the card keeps the height of its content (its own, not the free height of the frame): a card that
+          // shrinks collapses to its stack reserve, and the buttons below it would lie over the card (issue 2637).
+          large ? "flex-none" : "min-h-[18.25rem] flex-1 basis-0",
         )}
       >
         <MatchCard card={c} fill={!large} />
