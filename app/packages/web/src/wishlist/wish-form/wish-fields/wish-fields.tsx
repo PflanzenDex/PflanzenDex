@@ -89,7 +89,7 @@ export function ChoiceFields({ control, zones }: FieldProps & { zones: readonly 
                 <option value="">unbekannt</option>
                 <option value="1">Leicht</option>
                 <option value="2">Mittel</option>
-                <option value="3">Schwer</option>
+                <option value="3">Schwierig</option>
               </Select>
             </FormControl>
             <FormMessage />

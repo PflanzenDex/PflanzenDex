@@ -21,7 +21,7 @@
   "card.difficulty": "Schwierigkeit: {level}",
   "card.level.easy": "Leicht",
   "card.level.medium": "Mittel",
-  "card.level.hard": "Schwer",
+  "card.level.hard": "Schwierig",
   "card.unknown": "unbekannt",
   "card.buy": "Gekauft",
   "card.buyLabel": "Gekauft: {title}",
