@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react";
+import { cva } from "class-variance-authority";
 import { cn } from "@/shared/lib/utils";
 
 /**
@@ -18,6 +19,22 @@ export function FieldSet({ className, ...props }: ComponentProps<"fieldset">) {
   );
 }
 
+/**
+ * `legend` is the size of a group heading (16 px), `label` the size of a field label (14 px); `srOnly` keeps the name for the
+ * screen reader and drops every look. Plain size classes, so a caller's `text-*` or `font-*` wins (DS-31).
+ */
+const legendVariants = cva("", {
+  variants: {
+    variant: { legend: "", label: "" },
+    srOnly: { true: "sr-only", false: "" },
+  },
+  compoundVariants: [
+    { variant: "legend", srOnly: false, className: "mb-1.5 text-base font-medium" },
+    { variant: "label", srOnly: false, className: "mb-1.5 text-sm font-medium" },
+  ],
+  defaultVariants: { variant: "legend", srOnly: false },
+});
+
 type FieldLegendProps = ComponentProps<"legend"> & {
   /** `legend` is the size of a group heading (16 px), `label` the size of a field label (14 px). */
   variant?: "legend" | "label";
@@ -36,12 +53,7 @@ export function FieldLegend({
     <legend
       data-slot="field-legend"
       data-variant={variant}
-      className={cn(
-        srOnly
-          ? "sr-only"
-          : "mb-1.5 font-medium data-[variant=label]:text-sm data-[variant=legend]:text-base",
-        className,
-      )}
+      className={cn(legendVariants({ variant, srOnly }), className)}
       {...props}
     />
   );

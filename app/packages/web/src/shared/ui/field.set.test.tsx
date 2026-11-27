@@ -75,15 +75,15 @@ describe("US-QS-09 · FieldSet and FieldLegend name a group of controls", () => 
       </>,
     );
     expect(screen.getByText("Groß").getAttribute("data-variant")).toBe("legend");
-    expect(screen.getByText("Groß").className).toContain("data-[variant=legend]:text-base");
+    expect(screen.getByText("Groß").className).toContain("text-base");
     expect(screen.getByText("Klein").getAttribute("data-variant")).toBe("label");
-    expect(screen.getByText("Klein").className).toContain("data-[variant=label]:text-sm");
+    expect(screen.getByText("Klein").className).toContain("text-sm");
   });
 
   it("US-QS-09 a fieldset can shrink inside a flex row (min-w-0) and caller classes win over the defaults", () => {
     render(
       <FieldSet className="gap-0 rounded-lg border-2" data-testid="set">
-        <FieldLegend className="mb-0 px-1 font-semibold">Pflanzen</FieldLegend>
+        <FieldLegend className="mb-0 px-1 text-lg font-semibold">Pflanzen</FieldLegend>
       </FieldSet>,
     );
     const set = screen.getByTestId("set");
@@ -96,6 +96,8 @@ describe("US-QS-09 · FieldSet and FieldLegend name a group of controls", () => 
     expect(legend.className).not.toContain("mb-1.5");
     expect(legend.className).toContain("font-semibold");
     expect(legend.className).not.toContain("font-medium");
+    expect(legend.className).toContain("text-lg");
+    expect(legend.className).not.toContain("text-base");
   });
 
   it("US-QS-09 attributes reach the fieldset: a message can describe the group and the group can be disabled", () => {
