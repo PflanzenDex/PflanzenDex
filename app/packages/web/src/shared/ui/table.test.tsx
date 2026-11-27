@@ -238,6 +238,15 @@ function stubColumnWidths(first: { width: number }) {
   });
 }
 
+/** Layout that jsdom lacks: the region is `box.width` px wide inside (`clientWidth`), as far as the table judges its first column. */
+function stubRegionWidth(box: { width: number }) {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return this.hasAttribute("data-scroll-region") ? box.width : 0;
+  });
+}
+
 describe("Table keeps a focused control clear of its first column (US-QS-15, WCAG 2.4.11, issue 2573)", () => {
   const region = () => screen.getByRole("region", { name: "Tabelle" });
 
@@ -283,12 +292,13 @@ describe("Table keeps a focused control clear of its first column (US-QS-15, WCA
     expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("188px");
   });
 
-  it("US-QS-15 · 2.4.11 the region watches the table and its first cell, and lets go of both when it unmounts", () => {
+  it("US-QS-15 · 2.4.11 the region watches itself, the table and its first cell, and lets go of all when it unmounts", () => {
     const seen = stubResizeObserver();
     stubColumnWidths({ width: 100 });
     const { unmount } = render(framed());
     const [entry] = seen;
     expect(seen).toHaveLength(1);
+    expect(entry?.observed).toContain(region());
     expect(entry?.observed).toContain(screen.getByRole("table"));
     expect(entry?.observed).toContain(screen.getByRole("columnheader", { name: "Name" }));
     unmount();
@@ -361,6 +371,319 @@ describe("Table keeps a focused control clear of its first column (US-QS-15, WCA
     // The caller's `scroll-pl-4` replaces the class of the region (the class merge knows the group, DS-31).
     expect(classesOf(region())).toContain("scroll-pl-4");
     expect(classesOf(region())).not.toContain(`scroll-pl-(${FIRST_COLUMN})`);
+  });
+});
+
+/** The attribute of the region that says whether the first column sticks or is loose (`useFirstColumn`). */
+const firstColOf = (el: HTMLElement) => el.getAttribute("data-first-col");
+
+describe("Table lets a wide first column loose (US-QS-15, WCAG 2.4.11, issue 2601)", () => {
+  const region = () => screen.getByRole("region", { name: "Tabelle" });
+
+  it("US-QS-15 · 2.4.11 the first column sticks while it takes at most half of the region", () => {
+    stubResizeObserver();
+    stubColumnWidths({ width: 164 });
+    stubRegionWidth({ width: 328 });
+    render(framed());
+    expect(firstColOf(region())).toBe("sticky");
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("164px");
+  });
+
+  it("US-QS-15 · 2.4.11 a first column wider than half of the region is loose, and the variable of the scroll padding is gone", () => {
+    stubResizeObserver();
+    stubColumnWidths({ width: 165 });
+    stubRegionWidth({ width: 328 });
+    render(framed());
+    expect(firstColOf(region())).toBe("loose");
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("");
+  });
+
+  it("US-QS-15 · 2.4.11 at 200 % text on a phone (243 px of 329) the first column is loose", () => {
+    stubResizeObserver();
+    stubColumnWidths({ width: 243 });
+    stubRegionWidth({ width: 329 });
+    render(framed());
+    expect(firstColOf(region())).toBe("loose");
+  });
+
+  it("US-QS-15 · 2.4.11 the region judges again when it changes its own size, and the column sticks again in a wider region", () => {
+    const seen = stubResizeObserver();
+    stubColumnWidths({ width: 150 });
+    const box = { width: 400 };
+    stubRegionWidth(box);
+    render(framed());
+    expect(firstColOf(region())).toBe("sticky");
+    box.width = 290;
+    act(() => seen.forEach((entry) => entry.run()));
+    expect(firstColOf(region())).toBe("loose");
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("");
+    box.width = 400;
+    act(() => seen.forEach((entry) => entry.run()));
+    expect(firstColOf(region())).toBe("sticky");
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("150px");
+  });
+
+  it("US-QS-15 · 2.4.11 the region judges again when the text grows and the first column with it, and back when it shrinks", () => {
+    const seen = stubResizeObserver();
+    const first = { width: 100 };
+    stubColumnWidths(first);
+    stubRegionWidth({ width: 329 });
+    render(framed());
+    expect(firstColOf(region())).toBe("sticky");
+    first.width = 243;
+    act(() => seen.forEach((entry) => entry.run()));
+    expect(firstColOf(region())).toBe("loose");
+    first.width = 100;
+    act(() => seen.forEach((entry) => entry.run()));
+    expect(firstColOf(region())).toBe("sticky");
+  });
+
+  it("US-QS-15 · 2.4.11 the judgement does not flip back and forth: the same sizes give the same result on every run", () => {
+    // A cell that stops sticking keeps its width (only its place changes), so the width the judgement reads is the same in
+    // both states, and a run after a run changes nothing.
+    const seen = stubResizeObserver();
+    stubColumnWidths({ width: 243 });
+    stubRegionWidth({ width: 329 });
+    render(framed());
+    for (let run = 0; run < 5; run++) {
+      act(() => seen.forEach((entry) => entry.run()));
+      expect(firstColOf(region())).toBe("loose");
+      expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("");
+    }
+  });
+
+  it("US-QS-15 · 2.4.11 a region without a width (jsdom, hidden) does not make the column loose", () => {
+    stubResizeObserver();
+    stubColumnWidths({ width: 243 });
+    render(framed());
+    expect(firstColOf(region())).toBe("sticky");
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("243px");
+  });
+
+  it("US-QS-15 · 2.4.11 a table that is hidden (no width) has neither the attribute nor the variable, and gets both when it shows", () => {
+    const seen = stubResizeObserver();
+    const first = { width: 0 };
+    stubColumnWidths(first);
+    stubRegionWidth({ width: 328 });
+    render(framed());
+    expect(firstColOf(region())).toBeNull();
+    first.width = 100;
+    act(() => seen.forEach((entry) => entry.run()));
+    expect(firstColOf(region())).toBe("sticky");
+    first.width = 0;
+    act(() => seen.forEach((entry) => entry.run()));
+    expect(firstColOf(region())).toBeNull();
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("");
+  });
+
+  it("US-QS-15 · 2.4.11 a browser without a ResizeObserver judges once and sets the attribute", () => {
+    vi.stubGlobal("ResizeObserver", undefined);
+    stubColumnWidths({ width: 243 });
+    stubRegionWidth({ width: 329 });
+    render(framed());
+    expect(firstColOf(region())).toBe("loose");
+  });
+
+  it("US-QS-15 · 2.4.11 the first cells stop sticking to the left when the first column is loose, the header row keeps its top", () => {
+    render(framed());
+    const cells = [
+      screen.getByRole("columnheader", { name: "Name" }),
+      screen.getByRole("rowheader", { name: "Monstera" }),
+      screen.getByRole("cell", { name: "Efeutute" }),
+    ];
+    for (const cell of cells) {
+      expect(classesOf(cell)).toContain("group-data-[first-col=loose]/table:first:left-auto");
+      // Opaque and layered as before: only the `left` goes.
+      expect(classesOf(cell).some((c) => /^(first:)?bg-card$/.test(c))).toBe(true);
+    }
+    expect(classesOf(region())).toContain("group/table");
+    for (const head of screen.getAllByRole("columnheader")) {
+      expect(classesOf(head)).toContain("sticky");
+      expect(classesOf(head)).toContain("top-0");
+    }
+  });
+
+  it("US-QS-15 · 2.4.11 the region keeps 8 px of scroll padding on the right, more than a focus ring and its offset need", () => {
+    render(framed());
+    // `ring-2` and `ring-offset-2` reach 4 px beyond a control; `scroll-pr-2` is 2 spacing steps (8 px at 100 % text).
+    expect(classesOf(region())).toContain("scroll-pr-2");
+  });
+
+  it("US-QS-15 · DS-36 the caller's `scroll-pr-4` replaces the right padding (the class merge knows the group)", () => {
+    stubResizeObserver();
+    render(<Table containerClassName="scroll-pr-4" />);
+    expect(classesOf(region())).toContain("scroll-pr-4");
+    expect(classesOf(region())).not.toContain("scroll-pr-2");
+  });
+});
+
+/** The room of the region and the boxes of the controls in it, in px across (one line of cells is enough). */
+type Room = { left: number; width: number; ring: number; column: number };
+
+/**
+ * Layout for the handler of the focus: the region is `room.width` px wide from `room.left`, keeps `room.column` px on the left
+ * (the variable of the sticky first column) and `room.ring` px on the right as scroll padding; `scrolled.by` is how far it is
+ * scrolled sideways; a control stands at `at` px in the content, `width` px wide, and moves with the scroll.
+ */
+function stubFocusLayout(
+  room: Room,
+  scrolled: { by: number },
+  boxes: Map<Element, [number, number]>,
+) {
+  // The scroll padding the classes of the region give in a browser (jsdom knows no such property).
+  const real = window.getComputedStyle.bind(window);
+  vi.spyOn(window, "getComputedStyle").mockImplementation((element, pseudo) => {
+    const style = real(element, pseudo);
+    if (element.hasAttribute("data-scroll-region")) {
+      const left = room.column > 0 ? `${room.column}px` : "auto";
+      Object.defineProperties(style, {
+        scrollPaddingLeft: { value: left, configurable: true },
+        scrollPaddingRight: { value: `${room.ring}px`, configurable: true },
+      });
+    }
+    return style;
+  });
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return this.hasAttribute("data-scroll-region") ? room.width : 0;
+  });
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+    if (this.hasAttribute("data-scroll-region"))
+      return { left: room.left, right: room.left + room.width } as DOMRect;
+    const box = boxes.get(this);
+    if (!box) return { left: 0, right: 0, width: 0 } as DOMRect;
+    const left = room.left + box[0] - scrolled.by;
+    return { left, right: left + box[1], width: box[1] } as DOMRect;
+  });
+}
+
+describe("Table brings a control that gets the focus from the keyboard into the free room (US-QS-15, WCAG 2.4.11, issue 2601)", () => {
+  const region = () => screen.getByRole("region", { name: "Tabelle" });
+
+  /** A table with a control in the third cell of a row, a control in the first cell and one in the corner. */
+  function withControls() {
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>
+              <button type="button">Kopf</button>
+            </TableHead>
+            <TableHead>Standort</TableHead>
+            <TableHead>Raum</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableHead scope="row">
+              <button type="button">Spalte</button>
+            </TableHead>
+            <TableCell>Fenster</TableCell>
+            <TableCell>
+              <button type="button">Wohnzimmer</button>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    );
+  }
+
+  /** Sets up the layout and the scroll of the region; the region scrolls through `scrolled.by`. */
+  function setup(
+    room: Room,
+    at: [number, number],
+    scrolled = { by: 0 },
+    column: [number, number] = [0, 90],
+  ) {
+    stubResizeObserver();
+    render(withControls());
+    const control = screen.getByRole("button", { name: "Wohnzimmer" });
+    const boxes = new Map<Element, [number, number]>([
+      [control, at],
+      [screen.getByRole("button", { name: "Spalte" }), column],
+      [screen.getByRole("button", { name: "Kopf" }), [0, 90]],
+    ]);
+    stubFocusLayout(room, scrolled, boxes);
+    Object.defineProperty(region(), "scrollLeft", {
+      configurable: true,
+      get: () => scrolled.by,
+      set: (to: number) => {
+        scrolled.by = Math.max(0, to);
+      },
+    });
+    return { control, scrolled };
+  }
+
+  const room = { left: 16, width: 328, ring: 8, column: 120 };
+
+  it("US-QS-15 · 2.4.11 a control that is partly under the first column is scrolled to the room beside it, with room for its ring", () => {
+    // The control stands at 260 to 360 in the content; scrolled by 300 it is at -24 to 76 on the screen: 40 px of it show
+    // right of the column (which ends at 16 + 120 = 136), and Chromium would leave it there.
+    const { control, scrolled } = setup(room, [320, 100], { by: 300 });
+    act(() => control.focus());
+    // It starts 8 px right of the column (the room of the ring): at 144 on the screen, content 320 - scroll = 128.
+    expect(16 + 320 - scrolled.by).toBe(144);
+  });
+
+  it("US-QS-15 · 2.4.11 a control that is partly outside the right edge is scrolled in, up to the room of its ring", () => {
+    // Content 246 to 359 (113 px wide), not scrolled: the region ends at 344, so 15 px of the control are outside.
+    const { control, scrolled } = setup(room, [230, 113]);
+    act(() => control.focus());
+    // Its right edge ends 8 px before the right edge of the region: 344 - 8 = 336.
+    expect(16 + 230 + 113 - scrolled.by).toBe(336);
+  });
+
+  it("US-QS-15 · 2.4.11 a control that fits in the free room is left where it is", () => {
+    const { control, scrolled } = setup(room, [200, 100], { by: 50 });
+    act(() => control.focus());
+    expect(scrolled.by).toBe(50);
+  });
+
+  it("US-QS-15 · 2.4.11 a control wider than the free room is aligned to the left of the room, so that its start shows", () => {
+    const { control, scrolled } = setup({ ...room, column: 200 }, [260, 216], { by: 100 });
+    act(() => control.focus());
+    // Left edge at the column (16 + 200) plus the ring room.
+    expect(16 + 260 - scrolled.by).toBe(224);
+  });
+
+  it("US-QS-15 · 2.4.11 while the first column is loose the room starts at the left edge of the region, with the room of the ring", () => {
+    const { control, scrolled } = setup({ ...room, column: 0 }, [330, 216], { by: 400 });
+    act(() => control.focus());
+    // Content 330 - 400 = -70, so the control is 70 px outside the left edge: left edge at 16 + 8.
+    expect(16 + 330 - scrolled.by).toBe(24);
+  });
+
+  it("US-QS-15 · 2.4.11 a control that gets the focus from the pointer is left where it is, so the click is not lost", () => {
+    const { control, scrolled } = setup(room, [230, 113]);
+    const matches = Element.prototype.matches;
+    vi.spyOn(Element.prototype, "matches").mockImplementation(function (this: Element, query) {
+      return query === ":focus-visible" ? false : matches.call(this, query);
+    });
+    act(() => control.focus());
+    expect(scrolled.by).toBe(0);
+  });
+
+  it("US-QS-15 · 2.4.11 a control in the sticky first column or the corner is always in view and does not scroll the region", () => {
+    const { scrolled } = setup(room, [230, 113], { by: 200 });
+    // Within the sticky column the box is at its place on the screen whatever the scroll; the stub puts it at 0 (+ scroll).
+    act(() => screen.getByRole("button", { name: "Spalte" }).focus());
+    act(() => screen.getByRole("button", { name: "Kopf" }).focus());
+    expect(scrolled.by).toBe(200);
+  });
+
+  it("US-QS-15 · 2.4.11 a control in a loose first column scrolls into the room like any other", () => {
+    const { scrolled } = setup({ ...room, column: 0 }, [230, 113], { by: 200 }, [60, 90]);
+    region().setAttribute("data-first-col", "loose");
+    act(() => screen.getByRole("button", { name: "Spalte" }).focus());
+    // Content 60 - 200 = -140: scrolled back until the control stands at the left edge plus the ring room (16 + 8).
+    expect(16 + 60 - scrolled.by).toBe(24);
+  });
+
+  it("US-QS-15 · 2.4.11 the region itself, a tab stop of its own, has no control to bring in", () => {
+    const { scrolled } = setup(room, [230, 113], { by: 123 });
+    act(() => region().focus());
+    expect(scrolled.by).toBe(123);
   });
 });
 

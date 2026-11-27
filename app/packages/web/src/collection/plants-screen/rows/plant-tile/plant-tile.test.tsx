@@ -41,7 +41,7 @@ describe("US-QS-32 a plant row without a photo shows the drawn placeholder (SG-P
   });
 });
 
-describe("US-QS-32 a plant row: the name wraps to two lines, one meta line (SG-TYPE-05, SG-LIST-03)", () => {
+describe("US-QS-32 a plant row: the name wraps to two lines, the meta line wraps too (SG-TYPE-05, SG-LIST-03)", () => {
   it("US-QS-32 a long name is clamped at two lines, not cut at one", () => {
     const long = {
       ...card,
@@ -58,14 +58,15 @@ describe("US-QS-32 a plant row: the name wraps to two lines, one meta line (SG-T
     expect(name.className).not.toContain("truncate");
   });
 
-  it("US-QS-32 the meta line of a plant is one line that truncates", () => {
+  it("US-QS-32 the meta line of a plant wraps and is never cut (d-168, issue 2599)", () => {
     render(
       <MemoryRouter>
         <PlantTile card={card} access={noPhoto} />
       </MemoryRouter>,
     );
     const zone = screen.getByText("Lichtzone unbekannt");
-    expect(zone.className).toContain("truncate");
+    expect(zone.className).not.toContain("truncate");
+    expect(zone.className).toContain("[overflow-wrap:break-word]");
   });
 });
 

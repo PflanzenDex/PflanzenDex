@@ -14,6 +14,7 @@ import { AnswerLists } from "./answer-lists/answer-lists";
 import { countOf, laterCards, type DeckAction, type DeckState } from "./deck-state";
 import { Confirm, Empty, UndoButton, type Answer } from "./match-actions/match-actions";
 import { BelowCard } from "./below-card/below-card";
+import { DeckHelp } from "./deck-help/deck-help";
 import { useDeck, type OnAnswer, type OnUndo, type OnYes } from "./use-deck";
 
 const t = texts(table);
@@ -89,9 +90,13 @@ function Current(props: {
   const { s, c, dispatch, large } = props;
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-      <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
-        {`Karte ${s.pos + 1} von ${s.round.length}`}
-      </p>
+      {/* The info button has the 44 px target of SG-TOUCH-01 and takes no height of its own (-my-3 in `DeckHelp`): the row is one line (US-QS-15, d-170). */}
+      <div className="flex items-center justify-center gap-1">
+        <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
+          {`Karte ${s.pos + 1} von ${s.round.length}`}
+        </p>
+        <DeckHelp friend={c.ownerName} />
+      </div>
       {s.notice !== null && (
         <p role="status" className="m-0 text-center text-sm">
           {s.notice}

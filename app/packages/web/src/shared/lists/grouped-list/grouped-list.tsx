@@ -121,8 +121,8 @@ export type GroupedRowProps = {
   tone?: "default" | "destructive" | "warning" | undefined;
   /**
    * `object` is a row of an object (a plant, a species, a wish; SG-LIST-03): the name wraps to two lines and clamps, the
-   * meta line is one line that truncates, and a link or button is named by its visible content in its visible order (the
-   * title, then the meta and the trailing element). `list` (the default) is a settings row.
+   * meta line wraps to further lines and is never cut, and a link or button is named by its visible content in its visible
+   * order (the title, then the meta and the trailing element). `list` (the default) is a settings row.
    */
   variant?: "list" | "object" | undefined;
   /**

@@ -7,10 +7,12 @@ import { cn } from "@/shared/lib/utils";
 /**
  * An object's name wraps to two lines before it is cut (SG-TYPE-05) and breaks at German syllables, not at any letter, when
  * one word is wider than the column at 200 % text ("Schmetterlings-orchidee", `lang="de"` on the document, issue 2366). A
- * scientific name in the title is italic and carries `hyphens-manual` itself. Its meta line is one line that truncates.
+ * scientific name in the title is italic and carries `hyphens-manual` itself. Its meta line wraps to further lines when it is
+ * long (owner decision d-168, issue 2599): nothing is hidden and the row grows only when needed. It breaks at spaces, so
+ * between words and at the " · " parts; `break-word` lets one word wider than the column break as the last resort only.
  */
 export const OBJECT_TITLE = "line-clamp-2 hyphens-auto";
-export const OBJECT_META = "truncate";
+export const OBJECT_META = "[overflow-wrap:break-word]";
 
 export type RowContentProps = {
   leading: ReactNode;
@@ -68,9 +70,9 @@ export function RowContent(props: RowContentProps) {
             {" "}
             <span
               className={cn(
-                "text-sm [overflow-wrap:anywhere]",
+                "text-sm",
+                props.object ? OBJECT_META : "[overflow-wrap:anywhere]",
                 !props.warning && "text-muted-foreground",
-                props.object && OBJECT_META,
               )}
             >
               {props.meta}

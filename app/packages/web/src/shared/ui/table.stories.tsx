@@ -1,4 +1,4 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { keepsFocusClear } from "@/shared/testing/story-frame/table-focus-play";
 import { expectLargeText, keepsHeaderAndColumn } from "@/shared/testing/story-frame/table-play";
 import { withText200 } from "@/shared/testing/story-frame/story-frame";
@@ -12,10 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "./table";
+import { inFrameOf } from "./table.frame";
 
 // Catalog of the Table parts (TE-18, DS-24). The scroll region is focusable (DS-37); the Scrolling story shows it. The two
 // stories of the fixed header row and first column (US-QS-15, SG-LIST-01, issue 2420) have a play function that scrolls the
-// region and measures the boxes of the cells that stay (the QG-U5 conformance run waits for it, 360 x 640 px).
+// region and measures the boxes of the cells that stay (the QG-U5 conformance run waits for it, 360 x 640 px). At 200 % text
+// the first column takes more than half of the region and is loose (issue 2601): only the header row stays at the top.
 const meta = { title: "ui/Table", component: Table } satisfies Meta<typeof Table>;
 
 export default meta;
@@ -115,13 +117,6 @@ const plants = Array.from({ length: 16 }, (_, index) => [
   "vor 3 Tagen",
 ]);
 
-/** The frame of a screen (DS-58): a column of a given height that the table fills and scrolls in; the frame itself never scrolls. */
-const inFrame: Decorator = (Story) => (
-  <div data-frame="" className="flex h-[360px] w-full flex-col p-4">
-    <Story />
-  </div>
-);
-
 /** `withControls`: the facts of the third column are buttons, the controls of the focus stories (US-QS-15, issue 2573). */
 function BigTable({ withControls = false }: { withControls?: boolean }) {
   return (
@@ -159,34 +154,46 @@ function BigTable({ withControls = false }: { withControls?: boolean }) {
 // A table larger than its frame: the region scrolls down and sideways, the header row and the first column stay, the page
 // and the frame do not move (US-QS-15, SG-LIST-01, DS-58, DS-61).
 export const FixedHeaderAndColumn: Story = {
-  decorators: [inFrame],
+  decorators: [inFrameOf(360)],
   render: () => <BigTable />,
   play: ({ canvasElement }) => keepsHeaderAndColumn(canvasElement),
 };
 
-// The same at 200 % text on a phone: the cells grow, the frame still holds and the header row and the first column stay.
+// The same at 200 % text on a phone: the frame still holds and the header row stays; the first column takes more than half
+// of the region, so it scrolls with the cells (issue 2601).
 export const FixedHeaderAndColumnAt200: Story = {
-  decorators: [inFrame, withText200],
+  decorators: [inFrameOf(360), withText200],
   render: () => <BigTable />,
   play: async ({ canvasElement }) => {
     await expectLargeText(canvasElement);
-    await keepsHeaderAndColumn(canvasElement);
+    await keepsHeaderAndColumn(canvasElement, "loose");
   },
 };
 
-// A control in a later column that has the focus while it stands under the first column and the header row: the region scrolls
-// it clear of both, so the sticky cells never cover the focus (WCAG 2.4.11, US-QS-15, issue 2573). At 200 % text as well.
+// A control in a later column that has the focus while it stands under the first column and the header row, partly under
+// them or partly outside the right edge: the region scrolls it entirely into the free room, with room for its focus ring
+// (WCAG 2.4.11, US-QS-15, issues 2573 and 2601). 100 % text on a 360 px phone: the first column sticks.
 export const FocusClearOfFixedCells: Story = {
-  decorators: [inFrame],
+  decorators: [inFrameOf(360)],
   render: () => <BigTable withControls />,
-  play: ({ canvasElement }) => keepsFocusClear(canvasElement),
+  play: ({ canvasElement }) => keepsFocusClear(canvasElement, "sticky"),
 };
 
+/** At 200 % text the first column is loose and the control stands in the whole region. */
+const looseFocus: Story["play"] = async ({ canvasElement }) => {
+  await expectLargeText(canvasElement);
+  await keepsFocusClear(canvasElement, "loose");
+};
+
+// The same at 200 % text on the phones of issue 2601, 360 and 393 px wide (the region is 294 and 327 px).
 export const FocusClearOfFixedCellsAt200: Story = {
-  decorators: [inFrame, withText200],
+  decorators: [inFrameOf(360), withText200],
   render: () => <BigTable withControls />,
-  play: async ({ canvasElement }) => {
-    await expectLargeText(canvasElement);
-    await keepsFocusClear(canvasElement);
-  },
+  play: looseFocus,
+};
+
+export const FocusClearOfFixedCellsAt200W393: Story = {
+  decorators: [inFrameOf(393), withText200],
+  render: () => <BigTable withControls />,
+  play: looseFocus,
 };
