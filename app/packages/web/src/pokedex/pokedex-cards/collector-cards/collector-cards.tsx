@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { call, currentTimeZone, type Response } from "@/shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { CollectorCard } from "../collector-card/collector-card";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { CardRow } from "@/shared/patterns/display/card-row/card-row";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./collector-cards.de.json";
 import { CollectorCardsSkeleton } from "./collector-cards.skeleton";
@@ -22,9 +22,9 @@ async function loadCards(api: string, token: string): Promise<Response<Card[]>> 
 }
 
 /**
- * The collector cards of the taxonomy tree (US-POK-01) in pages, shown in their layer (US-QS-22): caught species colored, the others as "missing" cards. Caught is
- * derived live by the server from the specimens, never stored (P-01). The page holds the whole cards that fit the free
- * height of the layer; 2 is the starting value until the layout measures it (issue 1154).
+ * The collector cards of the taxonomy tree (US-POK-01) as a card row, shown in their layer (US-QS-22, US-QS-15, issue 2421): a
+ * sideways shelf with the next card peeking in, never pages. Caught species are colored, the others show as "missing" cards.
+ * Caught is derived live by the server from the specimens, never stored (P-01).
  */
 export function CollectorCards(props: { api: string; token: () => Promise<string | undefined> }) {
   const { api, token } = props;
@@ -32,7 +32,7 @@ export function CollectorCards(props: { api: string; token: () => Promise<string
   return (
     <section aria-labelledby="collector-cards-title" className="flex min-h-0 flex-1 flex-col">
       <h2 id="collector-cards-title" className="sr-only">
-        Sammlerkarten
+        {ui("title")}
       </h2>
       <LoadFrame
         queryKey={["pokedex", "cards"]}
@@ -42,26 +42,17 @@ export function CollectorCards(props: { api: string; token: () => Promise<string
         loadingFallback={<CollectorCardsSkeleton label={ui("loading")} />}
         empty={{
           isEmpty: (cards: Card[]) => cards.length === 0,
-          title: "Noch keine Sammlerkarten",
-          description: "Sie erscheinen, sobald der Katalog-Baum aufgebaut ist.",
-          action: { label: "Zum Artenkatalog", href: "/species" },
+          title: ui("empty.title"),
+          description: ui("empty.description"),
+          action: { label: ui("empty.action"), href: "/species" },
         }}
       >
         {(cards: Card[]) => (
-          <Pager
-            items={cards}
-            pageSize={2}
-            fit
-            label="Sammlerkarten"
-            param={LAYER_PARAM}
-            replace
-            getKey={(c) => c.species}
-            renderItem={(c) => (
-              <ul className="m-0 list-none p-0">
-                <CollectorCard card={c} />
-              </ul>
-            )}
-          />
+          <CardRow label={ui("row")}>
+            {cards.map((c) => (
+              <CollectorCard key={c.species} card={c} />
+            ))}
+          </CardRow>
         )}
       </LoadFrame>
     </section>

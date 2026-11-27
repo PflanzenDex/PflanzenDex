@@ -1,3 +1,8 @@
 {
-  "loading": "Sammlerkarten werden geladen …"
+  "title": "Sammlerkarten",
+  "row": "Sammlerkarten nebeneinander",
+  "loading": "Sammlerkarten werden geladen …",
+  "empty.title": "Noch keine Sammlerkarten",
+  "empty.description": "Sie erscheinen, sobald der Katalog-Baum aufgebaut ist.",
+  "empty.action": "Zum Artenkatalog"
 }

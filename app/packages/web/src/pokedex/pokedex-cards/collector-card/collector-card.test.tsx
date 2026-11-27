@@ -1,23 +1,19 @@
 // @vitest-environment jsdom
 import type { CollectorCard as Card } from "@pflanzendex/core";
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { CollectorCard } from "./collector-card";
 
-afterEach(() => {
-  cleanup();
-  vi.unstubAllGlobals();
+beforeAll(() => {
+  // jsdom has no pointer capture; Vaul calls it on pointerdown inside the sheet.
+  Element.prototype.setPointerCapture ??= () => undefined;
+  Element.prototype.releasePointerCapture ??= () => undefined;
+  setViewportWidth(360);
 });
 
-/** A window of the given height for the `max-height` query of a short screen. */
-function windowHeight(px: number) {
-  vi.stubGlobal("matchMedia", (query: string) => ({
-    matches: /max-height: 700px/.test(query) && px <= 700,
-    media: query,
-    addEventListener: () => undefined,
-    removeEventListener: () => undefined,
-  }));
-}
+afterEach(cleanup);
 
 const card = (extra: Partial<Card> = {}): Card => ({
   number: 7,
@@ -44,55 +40,104 @@ const card = (extra: Partial<Card> = {}): Card => ({
 });
 const show = (c: Card) => render(<CollectorCard card={c} />);
 
+/** Opens the sheet of "Mehr" and returns it (US-QS-15, d-066); the name of the card is the German name, else the scientific one. */
+async function showMore(c: Card = card()) {
+  const view = show(c);
+  const name = c.germanName ?? c.species;
+  await userEvent.click(screen.getByRole("button", { name: `Mehr: ${name}` }));
+  return { ...view, sheet: within(await screen.findByRole("dialog", { name })) };
+}
+
 describe("US-POK-01 collector card", () => {
-  it("US-POK-01 shows number, names, text, genus count, difficulty and light zone", () => {
+  it("US-POK-01 · d-160 the front shows the number with the catch, the names, the light zone and the difficulty", () => {
     show(card());
-    expect(screen.getByText("#007")).toBeTruthy();
+    expect(screen.getByText("#007 · noch nicht gefangen")).toBeTruthy();
     expect(screen.getByText("Ficus benjamina")).toBeTruthy();
     expect(screen.getByText("Birkenfeige").getAttribute("title")).toBe("Birkenfeige (Zimmerlinde)");
-    expect(screen.getByText("Ein Baum.")).toBeTruthy();
-    expect(screen.getByText("Gattung: 800 Arten")).toBeTruthy();
-    expect(screen.getByText("★★☆").getAttribute("aria-hidden")).toBe("true");
     expect(screen.getByText("Lichtzone 3")).toBeTruthy();
+    expect(screen.getByText("★★☆").getAttribute("aria-hidden")).toBe("true");
+    expect(screen.getByText("Mittel")).toBeTruthy();
   });
 
-  it("US-QS-14 the difficulty is plain text for screen readers, not an aria-label on a span", () => {
+  it("US-QS-14 · US-QS-32 the difficulty is plain text for screen readers, not an aria-label on a span", () => {
     show(card());
     expect(screen.getByText("Schwierigkeit 2 von 3").className).toContain("sr-only");
     expect(document.querySelector("span[aria-label]")).toBeNull();
   });
 
-  it("US-POK-01 a missing card keeps name and text visible and says it is not caught yet", () => {
+  it("US-POK-01 · d-160 the front shows at most two facts, and no text, genus count, rarity line or source", () => {
+    show(card({ natureRarity: { iucn: null, occurrences: null, threatened: true } }));
+    expect(within(screen.getByRole("list")).getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.queryByText("Ein Baum.")).toBeNull();
+    expect(screen.queryByText(/Gattung/)).toBeNull();
+    expect(screen.queryByText(/In der Natur|In PflanzenDéx/)).toBeNull();
+    expect(screen.queryByRole("group", { name: "Quellen" })).toBeNull();
+  });
+
+  it("US-POK-01 · d-160 the front has no action but 'Mehr': the card is the one button of its front", () => {
     show(card());
-    expect(screen.getByText("noch nicht gefangen")).toBeTruthy();
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["Mehr"]);
+  });
+
+  it("US-POK-01 the sheet shows the short text, the genus count and the scientific name above the sections", async () => {
+    const { sheet } = await showMore();
+    expect(sheet.getByText("Ein Baum.")).toBeTruthy();
+    expect(sheet.getByText("Gattung: 800 Arten")).toBeTruthy();
+    expect(sheet.getByText("Ficus benjamina").className).toContain("italic");
+  });
+
+  it("US-POK-01 · P-08 unknown values read 'unbekannt' instead of a number, on the front and in the sheet", async () => {
+    const { sheet } = await showMore(
+      card({ genusSpeciesCount: null, difficulty: null, lightZone: null, germanName: null }),
+    );
+    expect(screen.getByText("Lichtzone unbekannt")).toBeTruthy();
+    expect(screen.getByText("Schwierigkeit unbekannt")).toBeTruthy();
+    // Unknown lines fold into one line that opens them, with the next step (US-QS-24).
+    expect(sheet.getByText("4 Angaben fehlen")).toBeTruthy();
+    const fold = sheet.getByText("4 Angaben fehlen").closest("details") as HTMLElement;
+    expect(fold.textContent).toContain("Gattung: Artenzahl unbekannt");
+  });
+
+  it("US-POK-01 a missing card keeps name and facts visible and says it is not caught yet", () => {
+    show(card());
+    expect(screen.getByText(/noch nicht gefangen/)).toBeTruthy();
     expect(screen.queryByText(/^\d+ Pflanzen$/)).toBeNull();
   });
 
-  it("US-POK-01 a caught card shows the catch chip and the number of specimens only above 1", () => {
+  it("US-POK-01 · d-160 a caught card shows the number with the date as TT.MM.JJJJ (SG-FMT-01), the number of specimens only above 1 and in the sheet", async () => {
     const caught = {
       state: "caught",
-      caughtDate: { date: "2026-03-05", source: "caught_at" },
+      caughtDate: { date: "2026-03-12", source: "caught_at" },
     } as const;
     const { rerender } = show(card({ ...caught, specimenCount: 1 }));
-    expect(screen.getByText("gefangen 05.03.2026")).toBeTruthy();
-    expect(screen.queryByText(/^\d+ Pflanzen?$/)).toBeNull();
+    expect(screen.getByText("#007 · gefangen 12.03.2026")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Mehr: Birkenfeige" }));
+    expect(within(await screen.findByRole("dialog")).queryByText(/^\d+ Pflanzen?$/)).toBeNull();
+    await userEvent.keyboard("{Escape}");
     rerender(<CollectorCard card={card({ ...caught, specimenCount: 3 })} />);
-    expect(screen.getByText("3 Pflanzen")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Mehr: Birkenfeige" }));
+    expect(within(await screen.findByRole("dialog")).getByText("3 Pflanzen")).toBeTruthy();
   });
 
-  it("US-POK-01 without text it says that no description is available", () => {
-    show(card({ summary: null }));
-    expect(screen.getByText("Keine Beschreibung vorhanden.")).toBeTruthy();
+  it("US-POK-07 a creation date reads 'gefangen ≈ …', and a caught card without a date still says it is caught (P-08)", () => {
+    const { rerender } = show(
+      card({ state: "caught", caughtDate: { date: "2026-03-05", source: "created_at" } }),
+    );
+    expect(screen.getByText("#007 · gefangen ≈ 05.03.2026")).toBeTruthy();
+    rerender(
+      <CollectorCard
+        card={card({ state: "caught", caughtDate: { date: null, source: "unknown" } })}
+      />,
+    );
+    expect(screen.getByText("#007 · gefangen, Datum unbekannt")).toBeTruthy();
   });
 
-  it("US-POK-01 unknown values read 'unbekannt' instead of a number (P-08)", () => {
-    show(card({ genusSpeciesCount: null, difficulty: null, lightZone: null, germanName: null }));
-    expect(screen.getByText("Gattung: Artenzahl unbekannt")).toBeTruthy();
-    expect(screen.getByText("Schwierigkeit unbekannt")).toBeTruthy();
-    expect(screen.getByText("Lichtzone unbekannt")).toBeTruthy();
+  it("US-POK-01 without text the sheet says that no description is available", async () => {
+    const { sheet } = await showMore(card({ summary: null }));
+    expect(sheet.getByText("Keine Beschreibung vorhanden.")).toBeTruthy();
   });
 
-  it("US-POK-01 links the image from its source and the source with its license", () => {
+  it("US-POK-01 links the image from its source, with the license in the credit under it", () => {
     show(card());
     expect(screen.getByRole("img").getAttribute("src")).toBe("https://upload.example/ficus.jpg");
     const link = screen.getByRole("link", { name: /^Bild: Wikipedia/ });
@@ -100,16 +145,19 @@ describe("US-POK-01 collector card", () => {
     expect(link.textContent).toContain("CC BY-SA");
   });
 
-  it("US-POK-01 without an image the drawn placeholder stands in and without source there is no link", () => {
+  it("US-POK-01 without an image the drawn placeholder stands in and without source there is no link on the front", () => {
     show(card({ imageUrl: null, sourceUrl: null }));
     expect(screen.queryByRole("img")).toBeNull();
     expect(screen.queryByRole("link")).toBeNull();
   });
 
-  it("US-POK-01 a species-poor genus gets the badge, a caught one also the rarity frame", () => {
-    const { container, rerender } = show(card({ speciesPoor: true, genusSpeciesCount: 4 }));
-    expect(screen.getByText("Artenarm")).toBeTruthy();
+  it("US-POK-01 a species-poor genus gets the badge in the sheet, a caught one also the rarity frame on the card", async () => {
+    const { container, sheet, rerender } = await showMore(
+      card({ speciesPoor: true, genusSpeciesCount: 4 }),
+    );
+    expect(sheet.getByText("Artenarm")).toBeTruthy();
     expect(container.querySelector("[data-rarity]")).toBeNull();
+    await userEvent.keyboard("{Escape}");
     rerender(
       <CollectorCard card={card({ speciesPoor: true, genusSpeciesCount: 4, state: "caught" })} />,
     );
@@ -117,12 +165,55 @@ describe("US-POK-01 collector card", () => {
   });
 });
 
+describe("US-QS-15 · US-QS-32 · d-066 the collector card opens its details behind Mehr", () => {
+  it("US-QS-15 · US-QS-32 'Mehr' is named 'Mehr: {name}' and opens a sheet titled with the card name", async () => {
+    show(card());
+    const button = screen.getByRole("button", { name: "Mehr: Birkenfeige" });
+    expect(button.textContent).toBe("Mehr");
+    await userEvent.click(button);
+    expect(await screen.findByRole("dialog", { name: "Birkenfeige" })).toBeTruthy();
+  });
+
+  it("US-QS-15 without a German name the sheet is titled with the scientific name", async () => {
+    const { sheet } = await showMore(card({ germanName: null, germanNameFull: null }));
+    expect(sheet.getByRole("heading", { name: "Ficus benjamina", level: 2 })).toBeTruthy();
+  });
+
+  it("US-QS-15 the sections of the sheet are Beschreibung, Merkmale and Quellen", async () => {
+    const { sheet } = await showMore();
+    expect(sheet.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
+      "Beschreibung",
+      "Merkmale",
+      "Quellen",
+    ]);
+  });
+
+  it("US-QS-15 · US-QS-08 closing the sheet returns the focus to 'Mehr'", async () => {
+    show(card());
+    const button = screen.getByRole("button", { name: "Mehr: Birkenfeige" });
+    await userEvent.click(button);
+    const sheet = within(await screen.findByRole("dialog", { name: "Birkenfeige" }));
+    await userEvent.click(sheet.getByRole("button", { name: "Schließen" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("US-QS-15 · US-QS-32 the card has no scroll region of its own: the deck never scrolls", () => {
+    const { container } = show(card());
+    expect(
+      container.querySelectorAll(
+        '[class*="overflow-y-auto"], [class*="overflow-auto"], [data-scroll-region]',
+      ),
+    ).toHaveLength(0);
+  });
+});
+
 describe("US-QS-06 sources and licenses on the collector card (FR-POK-07)", () => {
-  it("US-QS-06 Wikipedia text without a known source link still names source and license, without a link", () => {
-    show(card({ imageUrl: null, sourceUrl: null }));
-    expect(screen.getByText("Wikipedia (CC BY-SA)")).toBeTruthy();
-    expect(screen.getByText("Link unbekannt")).toBeTruthy();
-    expect(screen.queryByRole("link")).toBeNull();
+  it("US-QS-06 Wikipedia text without a known source link still names source and license in the sheet, without a link", async () => {
+    const { sheet } = await showMore(card({ imageUrl: null, sourceUrl: null }));
+    expect(sheet.getByText("Wikipedia (CC BY-SA)")).toBeTruthy();
+    expect(sheet.getByText("Link unbekannt")).toBeTruthy();
+    expect(sheet.queryByRole("link")).toBeNull();
   });
 
   it("US-QS-06 a Wikipedia image without a known source link also names source and license", () => {
@@ -130,9 +221,10 @@ describe("US-QS-06 sources and licenses on the collector card (FR-POK-07)", () =
     expect(screen.getByText("Bild: Wikipedia (CC BY-SA), Link unbekannt")).toBeTruthy();
   });
 
-  it("US-QS-06 nothing from Wikipedia on the card: no attribution", () => {
-    show(card({ summary: null, imageUrl: null, sourceUrl: null }));
+  it("US-QS-06 nothing from Wikipedia on the card: no attribution", async () => {
+    const { sheet } = await showMore(card({ summary: null, imageUrl: null, sourceUrl: null }));
     expect(screen.queryByText(/Wikipedia/)).toBeNull();
+    expect(sheet.queryByText(/Wikipedia/)).toBeNull();
   });
 });
 
@@ -142,15 +234,16 @@ describe("US-POK-13 rarity in nature on the card", () => {
     retrievedAt: "2026-10-16T10:00:00.000Z",
   };
 
-  it("US-POK-13 says unknown when no source gave a value (P-08)", () => {
-    show(card());
-    expect(screen.getByText("In der Natur: Gefährdung unbekannt")).toBeTruthy();
-    expect(screen.getByText("In der Natur: Fundmeldungen unbekannt")).toBeTruthy();
-    expect(screen.queryByText(/Hinweis/)).toBeNull();
+  it("US-POK-13 says unknown when no source gave a value (P-08)", async () => {
+    const { sheet } = await showMore();
+    const fold = sheet.getByText(/Angaben fehlen/).closest("details") as HTMLElement;
+    expect(fold.textContent).toContain("In der Natur: Gefährdung unbekannt");
+    expect(fold.textContent).toContain("In der Natur: Fundmeldungen unbekannt");
+    expect(sheet.queryByText(/Hinweis/)).toBeNull();
   });
 
-  it("US-POK-13 labels category and occurrence count 'in der Natur'; their source and retrieval date are in the sources row", () => {
-    show(
+  it("US-POK-13 labels category and occurrence count 'in der Natur'; their source and retrieval date are in the sources section", async () => {
+    const { sheet } = await showMore(
       card({
         natureRarity: {
           iucn: { category: "VU", ...src },
@@ -163,32 +256,34 @@ describe("US-POK-13 rarity in nature on the card", () => {
         },
       }),
     );
-    expect(screen.getByText("In der Natur: gefährdet (VU)")).toBeTruthy();
-    expect(screen.getByText("In der Natur: 1.231 Fundmeldungen (GBIF)")).toBeTruthy();
-    const row = screen.getByRole("group", { name: "Quellen" });
+    expect(sheet.getByText("In der Natur: gefährdet (VU)")).toBeTruthy();
+    expect(sheet.getByText("In der Natur: 1.231 Fundmeldungen (GBIF)")).toBeTruthy();
+    const row = sheet.getByRole("group", { name: "Quellen" });
     expect(within(row).getAllByRole("link", { name: "GBIF" })).toHaveLength(1);
     expect(row.textContent).toContain("abgerufen 16.10.2026");
   });
 
-  it("US-POK-13 shows a neutral note for a threatened species and none for a safe one", () => {
-    show(
+  it("US-POK-13 shows a neutral note for a threatened species and none for a safe one", async () => {
+    const safe = await showMore(
       card({
         natureRarity: { iucn: { category: "LC", ...src }, occurrences: null, threatened: false },
       }),
     );
-    expect(screen.getByText("In der Natur: nicht gefährdet (LC)")).toBeTruthy();
-    expect(screen.queryByText(/Hinweis/)).toBeNull();
+    expect(safe.sheet.getByText("In der Natur: nicht gefährdet (LC)")).toBeTruthy();
+    expect(safe.sheet.queryByText(/Hinweis/)).toBeNull();
     cleanup();
-    show(
+    const threatened = await showMore(
       card({
         natureRarity: { iucn: { category: "EN", ...src }, occurrences: null, threatened: true },
       }),
     );
-    expect(screen.getByText("Hinweis: Diese Art gilt in der Natur als bedroht.")).toBeTruthy();
+    expect(
+      threatened.sheet.getByText("Hinweis: Diese Art gilt in der Natur als bedroht."),
+    ).toBeTruthy();
   });
 
-  it("US-POK-13 does not link a source that is not https: the sources row names it as text with its date", () => {
-    show(
+  it("US-POK-13 does not link a source that is not https: the sources section names it as text with its date", async () => {
+    const { sheet } = await showMore(
       card({
         natureRarity: {
           iucn: { category: "LC", ...src, url: "javascript:alert(1)" },
@@ -197,25 +292,28 @@ describe("US-POK-13 rarity in nature on the card", () => {
         },
       }),
     );
-    expect(screen.queryByRole("link", { name: "GBIF" })).toBeNull();
-    const row = screen.getByRole("group", { name: "Quellen" });
+    expect(sheet.queryByRole("link", { name: "GBIF" })).toBeNull();
+    const row = sheet.getByRole("group", { name: "Quellen" });
     expect(row.textContent).toContain("GBIF");
     expect(row.textContent).toContain("abgerufen 16.10.2026");
   });
 });
 
 describe("US-POK-14 rarity in PflanzenDex on the card", () => {
-  it("US-POK-14 says unknown when no account takes part", () => {
-    show(card());
-    expect(screen.getByText("In PflanzenDéx: unbekannt (noch kein Konto nimmt teil)")).toBeTruthy();
+  it("US-POK-14 says unknown when no account takes part", async () => {
+    const { sheet } = await showMore();
+    const fold = sheet.getByText(/Angaben fehlen/).closest("details") as HTMLElement;
+    expect(fold.textContent).toContain("In PflanzenDéx: unbekannt (noch kein Konto nimmt teil)");
   });
 
-  it("US-POK-14 shows the share with its basis, labelled 'in PflanzenDex'", () => {
-    show(card({ appRarity: { owners: 2, participants: 5, percent: 40 } }));
-    expect(screen.getByText("In PflanzenDéx: 40 % (2 von 5 Konten)")).toBeTruthy();
+  it("US-POK-14 shows the share with its basis, labelled 'in PflanzenDex'", async () => {
+    const { sheet } = await showMore(
+      card({ appRarity: { owners: 2, participants: 5, percent: 40 } }),
+    );
+    expect(sheet.getByText("In PflanzenDéx: 40 % (2 von 5 Konten)")).toBeTruthy();
   });
 
-  it("US-POK-14 rounds honestly at the edges and uses the singular for one account", () => {
+  it("US-POK-14 rounds honestly at the edges and uses the singular for one account", async () => {
     const texts = [
       [
         { owners: 1, participants: 300, percent: 0 },
@@ -229,8 +327,8 @@ describe("US-POK-14 rarity in PflanzenDex on the card", () => {
       [{ owners: 1, participants: 1, percent: 100 }, "In PflanzenDéx: 100 % (1 von 1 Konto)"],
     ] as const;
     for (const [appRarity, text] of texts) {
-      show(card({ appRarity }));
-      expect(screen.getByText(text)).toBeTruthy();
+      const { sheet } = await showMore(card({ appRarity }));
+      expect(sheet.getByText(text)).toBeTruthy();
       cleanup();
     }
   });
@@ -262,47 +360,6 @@ describe("US-QS-32 the collector card names a species the SG-TYPE-08 way", () =>
   });
 });
 
-describe("US-POK-01 · US-QS-24 the card on a short screen (issue 1154)", () => {
-  const unknownCard = card({ difficulty: null, lightZone: null });
-
-  it("US-QS-24 · issue 1154 on a screen at most 700 px high the unknown lines fold into one line with a next step", () => {
-    windowHeight(640);
-    show(unknownCard);
-    // Difficulty, light zone, both rarity values in nature and the share in PflanzenDex are unknown.
-    expect(screen.getByText("5 Angaben fehlen")).toBeTruthy();
-    expect(screen.getByText("Ergänzen, sobald du die Angaben kennst.")).toBeTruthy();
-    const fold = screen.getByText("5 Angaben fehlen").closest("details") as HTMLElement;
-    expect(fold.textContent).toContain("Schwierigkeit unbekannt");
-    expect(fold.textContent).toContain("Lichtzone unbekannt");
-    // Known facts stay outside the fold.
-    expect(fold.textContent).not.toContain("Gattung: 800 Arten");
-    expect(screen.getByText("Gattung: 800 Arten")).toBeTruthy();
-  });
-
-  it("US-QS-32 · SG-ICON-01 the fold's summary keeps 8 px between its text and its chevron (gap-2)", () => {
-    windowHeight(640);
-    show(unknownCard);
-    const summary = screen.getByText("5 Angaben fehlen").closest("summary") as HTMLElement;
-    const tokens = summary.getAttribute("class")?.split(" ") ?? [];
-    expect(tokens).toContain("inline-flex");
-    expect(tokens).toContain("gap-2");
-  });
-
-  it("US-POK-01 · issue 1154 on a taller screen every line shows as before, without a fold", () => {
-    windowHeight(844);
-    show(unknownCard);
-    expect(screen.queryByText(/Angaben fehlen/)).toBeNull();
-    expect(screen.getByText("Schwierigkeit unbekannt").closest("details")).toBeNull();
-  });
-
-  it("US-POK-01 · issue 1154 the summary is two lines on a short screen only", () => {
-    show(card());
-    expect(screen.getByText("Ein Baum.").className).toContain(
-      "[@media(max-height:700px)]:line-clamp-2",
-    );
-  });
-});
-
 /** The GBIF values of a species as the API answers them: two rows, each with its own API address. */
 const GBIF_URL = "https://api.gbif.org/v1/species/42/iucnRedListCategory";
 const GBIF: Card["natureRarity"] = {
@@ -319,13 +376,8 @@ const GBIF: Card["natureRarity"] = {
 const figureOf = (container: HTMLElement) =>
   container.querySelector("figure[data-card-picture]") as HTMLElement;
 const boxOf = (container: HTMLElement) => figureOf(container).firstElementChild as HTMLElement;
-const sourcesRow = () => screen.getByRole("group", { name: "Quellen" });
 
 describe("US-QS-32 · SG-PHOTO-01 the collector card shows its picture in a 4:3 box (F-0133)", () => {
-  afterEach(() => {
-    document.documentElement.style.fontSize = "";
-  });
-
   it("US-QS-32 · SG-PHOTO-01 a card with a picture shows it in the shared 4:3 box, not as a 128 px strip", () => {
     const { container } = show(card());
     const img = screen.getByRole("img", { name: "Bild von Ficus benjamina" });
@@ -344,29 +396,20 @@ describe("US-QS-32 · SG-PHOTO-01 the collector card shows its picture in a 4:3 
   });
 
   it("US-QS-32 · SG-PHOTO-01 the card has one column that can shrink below its widest content, so the picture stays inside the card at large text", () => {
-    const { container } = show(card());
-    expect(container.querySelector("li")?.className).toContain("grid-cols-1");
+    show(card());
+    expect(screen.getByRole("article").className).toContain("grid-cols-1");
   });
 
   it("US-QS-32 · SG-PHOTO-01 the picture box leads the card, before the number and the name", () => {
     const { container } = show(card());
-    expect(container.querySelector("li")?.firstElementChild?.contains(figureOf(container))).toBe(
-      true,
-    );
+    expect(screen.getByRole("article").firstElementChild?.contains(figureOf(container))).toBe(true);
   });
 
-  it("US-QS-32 · SG-PHOTO-01 at the normal text size the box takes its width from the height cap, so it stays 4:3 and centred", () => {
+  it("US-QS-32 · SG-PHOTO-01 the picture box is the full width of the card, with no cap from the height of the window", () => {
     const { container } = show(card());
-    expect(boxOf(container).className).toContain("mx-auto");
-    expect(boxOf(container).className).toContain("100dvh_-_600px");
-    expect(boxOf(container).className).toContain("*4/3");
-  });
-
-  it("US-QS-32 · SG-PHOTO-01 at large text (150 % and more) the box is not capped by the screen height: the card takes its own height", () => {
-    document.documentElement.style.fontSize = "32px";
-    const { container } = show(card());
+    expect(boxOf(container).className).toContain("w-full");
     expect(boxOf(container).className).not.toContain("dvh");
-    expect(boxOf(container).className).toContain("aspect-[4/3]");
+    expect(boxOf(container).className).not.toContain("mx-auto");
   });
 
   it("US-QS-32 · Q-91 an uncaught card keeps its picture in grey, a caught one shows it in colour", () => {
@@ -378,6 +421,13 @@ describe("US-QS-32 · SG-PHOTO-01 the collector card shows its picture in a 4:3 
       />,
     );
     expect(figureOf(container).parentElement?.className ?? "").not.toContain("grayscale");
+  });
+
+  it("US-QS-32 · SG-TYPE-04 the catch badge may wrap inside the card at large text (no nowrap, never wider than the card)", () => {
+    show(card());
+    const badge = screen.getByText(/noch nicht gefangen/);
+    expect(badge.className).toContain("whitespace-normal");
+    expect(badge.className).toContain("max-w-full");
   });
 });
 
@@ -391,7 +441,7 @@ describe("US-QS-32 · SG-PHOTO-03 the picture credit sits directly under the pic
       "https://de.wikipedia.org/wiki/Ficus_benjamina",
     );
     expect(
-      caption.compareDocumentPosition(screen.getByText("#007")) & Node.DOCUMENT_POSITION_FOLLOWING,
+      caption.compareDocumentPosition(screen.getByText(/^#007/)) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
@@ -415,18 +465,20 @@ describe("US-QS-32 · SG-PHOTO-03 the picture credit sits directly under the pic
   });
 });
 
-describe("US-QS-32 · SG-TOUCH-01 the sources are one row of 44 px at the foot (F-0135)", () => {
+describe("US-QS-32 · SG-TOUCH-01 the sources are a section of the sheet, each source once (F-0135)", () => {
   const withGbif = () => card({ natureRarity: GBIF });
+  const sourcesOf = (sheet: ReturnType<typeof within>) =>
+    sheet.getByRole("group", { name: "Quellen" });
 
-  it("US-QS-32 there is exactly one sources row, and it is the last part of the card", () => {
-    const { container } = show(withGbif());
-    expect(screen.getAllByRole("group", { name: "Quellen" })).toHaveLength(1);
-    expect(container.querySelector("li")?.lastElementChild).toBe(sourcesRow());
+  it("US-QS-15 · US-QS-32 there is exactly one sources section, and it is the last section of the sheet", async () => {
+    const { sheet } = await showMore(withGbif());
+    expect(sheet.getAllByRole("group", { name: "Quellen" })).toHaveLength(1);
+    expect(sheet.getAllByRole("heading", { level: 3 }).at(-1)?.textContent).toBe("Quellen");
   });
 
-  it("US-QS-32 each source appears once in the row, GBIF with its page and Wikipedia with the article", () => {
-    show(withGbif());
-    const links = within(sourcesRow()).getAllByRole("link");
+  it("US-QS-32 each source appears once in the section, GBIF with its page and Wikipedia with the article", async () => {
+    const { sheet } = await showMore(withGbif());
+    const links = within(sourcesOf(sheet)).getAllByRole("link");
     expect(links.map((l) => l.textContent)).toEqual(["GBIF", "Wikipedia (CC BY-SA)"]);
     // Both GBIF values name one link; without a species key in the card the address stays the one the card carries.
     expect(links[0]?.getAttribute("href")).toBe(GBIF_URL);
@@ -435,22 +487,19 @@ describe("US-QS-32 · SG-TOUCH-01 the sources are one row of 44 px at the foot (
     expect(links.every((l) => l.getAttribute("rel") === "noopener noreferrer")).toBe(true);
   });
 
-  it("US-QS-32 the facts above carry no link: the only links of the card are the picture credit and the sources row", () => {
-    const { container } = show(withGbif());
-    const outside = [...container.querySelectorAll("a")].filter(
-      (a) => !a.closest("figcaption") && !a.closest("[role='group']"),
-    );
-    expect(outside).toEqual([]);
-    expect(screen.getAllByRole("link")).toHaveLength(3);
+  it("US-QS-32 the facts carry no link: the only links of the card are the picture credit and the sources section", async () => {
+    const { sheet } = await showMore(withGbif());
+    expect(screen.getAllByRole("link", { hidden: true })).toHaveLength(3);
+    expect(within(sourcesOf(sheet)).getAllByRole("link")).toHaveLength(2);
   });
 
-  it("US-QS-32 the retrieval date of the GBIF numbers stays visible in the row", () => {
-    show(withGbif());
-    expect(sourcesRow().textContent).toContain("abgerufen 16.10.2026");
+  it("US-QS-32 the retrieval date of the GBIF numbers stays visible in the section", async () => {
+    const { sheet } = await showMore(withGbif());
+    expect(sourcesOf(sheet).textContent).toContain("abgerufen 16.10.2026");
   });
 
-  it("US-QS-32 two GBIF values from different days show the older day, never a fresher one than a number has", () => {
-    show(
+  it("US-QS-32 two GBIF values from different days show the older day, never a fresher one than a number has", async () => {
+    const { sheet } = await showMore(
       card({
         natureRarity: {
           ...GBIF,
@@ -462,36 +511,36 @@ describe("US-QS-32 · SG-TOUCH-01 the sources are one row of 44 px at the foot (
         },
       }),
     );
-    expect(sourcesRow().textContent).toContain("abgerufen 16.10.2026");
-    expect(sourcesRow().textContent).not.toContain("20.10.2026");
+    expect(sourcesOf(sheet).textContent).toContain("abgerufen 16.10.2026");
+    expect(sourcesOf(sheet).textContent).not.toContain("20.10.2026");
   });
 
-  it("US-QS-32 · SG-TOUCH-01 the row is at least 44 px high and each link target is at least 44 px", () => {
-    show(withGbif());
-    expect(sourcesRow().className).toContain("min-h-11");
-    for (const link of within(sourcesRow()).getAllByRole("link")) {
+  it("US-QS-32 · SG-TOUCH-01 the row of links is at least 44 px high and each link target is at least 44 px", async () => {
+    const { sheet } = await showMore(withGbif());
+    expect((sourcesOf(sheet).lastElementChild as HTMLElement).className).toContain("min-h-11");
+    for (const link of within(sourcesOf(sheet)).getAllByRole("link")) {
       expect(link.className).toContain("min-h-11");
       expect(link.className).toContain("min-w-11");
     }
   });
 
-  it("US-QS-32 · SG-ICON-01 the row is secondary text, its links carry the lucide external-link icon, hidden from assistive technology", () => {
-    show(withGbif());
-    expect(sourcesRow().className).toContain("text-muted-foreground");
-    for (const link of within(sourcesRow()).getAllByRole("link")) {
+  it("US-QS-32 · SG-ICON-01 the section is secondary text, its links carry the lucide external-link icon, hidden from assistive technology", async () => {
+    const { sheet } = await showMore(withGbif());
+    expect(sourcesOf(sheet).className).toContain("text-muted-foreground");
+    for (const link of within(sourcesOf(sheet)).getAllByRole("link")) {
       const icon = link.querySelector("svg.lucide-external-link");
       expect(icon?.getAttribute("aria-hidden")).toBe("true");
     }
   });
 
-  it("US-QS-32 the sources are separated by space, not by a dot that would hang at the end of a line or stand alone once the row wraps", () => {
-    show(withGbif());
-    expect(sourcesRow().textContent).not.toContain("·");
+  it("US-QS-32 the sources are separated by space, not by a dot that would hang at the end of a line or stand alone once the row wraps", async () => {
+    const { sheet } = await showMore(withGbif());
+    expect(sourcesOf(sheet).textContent).not.toContain("·");
   });
 
-  it("US-QS-32 the icon follows the last word of its link inside one text run, so it wraps with the text at large text size", () => {
-    show(withGbif());
-    for (const link of within(sourcesRow()).getAllByRole("link")) {
+  it("US-QS-32 the icon follows the last word of its link inside one text run, so it wraps with the text at large text size", async () => {
+    const { sheet } = await showMore(withGbif());
+    for (const link of within(sourcesOf(sheet)).getAllByRole("link")) {
       const run = link.firstElementChild as HTMLElement;
       expect(run.tagName).toBe("SPAN");
       const icon = run.querySelector("svg.lucide-external-link") as SVGElement;
@@ -503,30 +552,32 @@ describe("US-QS-32 · SG-TOUCH-01 the sources are one row of 44 px at the foot (
     }
   });
 
-  it("US-QS-32 the row is named 'Quellen' and each source of a species with only a Wikipedia text appears alone", () => {
-    show(card());
+  it("US-QS-32 the section is named 'Quellen' and a species with only a Wikipedia text shows that source alone", async () => {
+    const { sheet } = await showMore();
     expect(
-      within(sourcesRow())
+      within(sourcesOf(sheet))
         .getAllByRole("link")
         .map((l) => l.textContent),
     ).toEqual(["Wikipedia (CC BY-SA)"]);
   });
 
-  it("US-QS-32 a species with GBIF values but no Wikipedia text has a row with GBIF only", () => {
-    show(card({ summary: null, imageUrl: null, sourceUrl: null, natureRarity: GBIF }));
-    expect(sourcesRow().textContent).toContain("GBIF");
-    expect(sourcesRow().textContent).not.toContain("Wikipedia");
+  it("US-QS-32 a species with GBIF values but no Wikipedia text has a section with GBIF only", async () => {
+    const { sheet } = await showMore(
+      card({ summary: null, imageUrl: null, sourceUrl: null, natureRarity: GBIF }),
+    );
+    expect(sourcesOf(sheet).textContent).toContain("GBIF");
+    expect(sourcesOf(sheet).textContent).not.toContain("Wikipedia");
   });
 
-  it("US-QS-32 · P-10 a Wikipedia text with an address that is not https is named without a link", () => {
-    show(card({ imageUrl: null, sourceUrl: "javascript:alert(1)" }));
-    expect(within(sourcesRow()).queryByRole("link")).toBeNull();
-    expect(sourcesRow().textContent).toContain("Wikipedia (CC BY-SA)");
-    expect(sourcesRow().textContent).toContain("Link unbekannt");
+  it("US-QS-32 · P-10 a Wikipedia text with an address that is not https is named without a link", async () => {
+    const { sheet } = await showMore(card({ imageUrl: null, sourceUrl: "javascript:alert(1)" }));
+    expect(within(sourcesOf(sheet)).queryByRole("link")).toBeNull();
+    expect(sourcesOf(sheet).textContent).toContain("Wikipedia (CC BY-SA)");
+    expect(sourcesOf(sheet).textContent).toContain("Link unbekannt");
   });
 
-  it("US-QS-32 a card with neither GBIF values nor Wikipedia text has no sources row", () => {
-    show(card({ summary: null, imageUrl: null, sourceUrl: null }));
-    expect(screen.queryByRole("group", { name: "Quellen" })).toBeNull();
+  it("US-QS-32 a card with neither GBIF values nor Wikipedia text has no sources section", async () => {
+    const { sheet } = await showMore(card({ summary: null, imageUrl: null, sourceUrl: null }));
+    expect(sheet.queryByRole("group", { name: "Quellen" })).toBeNull();
   });
 });
