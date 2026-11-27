@@ -13,4 +13,15 @@ describe("US-QS-15 · NFR-13 focus ring of a navigated heading", () => {
       ':root:not([data-input="keyboard"]) :is(h1, main)[tabindex="-1"]:focus { outline: none; }',
     );
   });
+
+  it("US-QS-15 tokens.css gives every focused control a system-coloured outline in forced colors, outside the layers (issue 2629)", () => {
+    // Outside @layer the rule beats the utility `focus-visible:outline-none` of the Button and every other control.
+    const rule = flat.match(
+      /@media \(forced-colors: active\) \{ :focus-visible \{ outline: 2px solid Highlight; outline-offset: 2px; \} \}/,
+    );
+    expect(rule).not.toBeNull();
+    // Strip comments, then the braces before the rule balance out: it is not inside an @layer block.
+    const before = (rule ? flat.slice(0, rule.index) : "").replace(/\/\*.*?\*\//g, "");
+    expect(before.split("{").length).toBe(before.split("}").length);
+  });
 });
