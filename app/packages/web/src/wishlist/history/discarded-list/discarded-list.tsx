@@ -1,5 +1,5 @@
 import type { DiscardedList as Discarded } from "@pflanzendex/core";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 
 /**
  * The discarded wishes (US-WUN-05): they left the candidate list but are kept, so a discarded wish never disappears

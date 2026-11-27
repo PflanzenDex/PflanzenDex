@@ -16,7 +16,7 @@ import * as layerSheet from "../../../../shared/patterns/responsive/layer-sheet/
 import * as layerSheetHeights from "../../../../shared/patterns/responsive/layer-sheet/layer-sheet.heights.stories";
 import * as layerSheetLists from "../../../../shared/patterns/responsive/layer-sheet/layer-sheet.lists.stories";
 import * as layerSheetStates from "../../../../shared/patterns/responsive/layer-sheet/layer-sheet.states.stories";
-import * as scrollEntries from "../../../../shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries.stories";
+import * as scrollEntries from "../../../../shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries.stories";
 import * as responsiveModal from "../../../../shared/patterns/responsive/responsive-modal/responsive-modal.stories";
 import * as responsiveTable from "../../../../shared/patterns/responsive/responsive-table/responsive-table.stories";
 import * as toast from "../../../../shared/patterns/states/toast/toast.stories";

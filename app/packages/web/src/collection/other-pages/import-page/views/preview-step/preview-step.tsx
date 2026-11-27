@@ -3,8 +3,8 @@
 import { useLayoutEffect, useRef } from "react";
 import type { ImportPreview } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
-import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
+import { useRowPageSize } from "@/shared/patterns/responsive/entry-list/row-page-size";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { focusIt } from "@/shared/platform/routing/route-focus/view-start";
 import type { ImportFlow } from "../../import-flow";

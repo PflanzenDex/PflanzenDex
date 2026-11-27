@@ -9,8 +9,8 @@ import {
   useExitValue,
   useLayer,
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
-import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
+import { useRowPageSize } from "@/shared/patterns/responsive/entry-list/row-page-size";
 import {
   FactGrid,
   unknownInEvery,

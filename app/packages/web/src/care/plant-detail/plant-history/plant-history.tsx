@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import type { MeasurementRow } from "@pflanzendex/core";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { cn } from "@/shared/lib/utils";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadMeasurementView } from "../../shared/api/measurements-api";

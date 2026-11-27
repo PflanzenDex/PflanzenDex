@@ -14,7 +14,7 @@ import {
 } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
-import { LIST_PARTS, type ListPart } from "@/shared/patterns/responsive/pager/paging/address";
+import { LIST_PARTS, type ListPart } from "@/shared/patterns/responsive/entry-list/paging/address";
 import { RouteFocus } from "./route-focus";
 import { createFocusMover } from "./focus-moves";
 import { quietFrom } from "./quiet-steps";

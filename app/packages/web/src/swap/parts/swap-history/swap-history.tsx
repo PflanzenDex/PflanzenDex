@@ -1,11 +1,11 @@
 import { useCallback } from "react";
 import type { HistoryEntry } from "@pflanzendex/core";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { currentTimeZone } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadHistory } from "../../api/swaps-api";
-import { useCardPageSize } from "@/shared/patterns/responsive/pager/card-page-size";
+import { useCardPageSize } from "@/shared/patterns/responsive/entry-list/card-page-size";
 import { MODE_TEXT, TYPE_TEXT } from "../offer-form/health-text";
 import { CAUSE_TEXT } from "../swap-requests/swap-text";
 import { texts } from "@/shared/lib/text-rules/texts";

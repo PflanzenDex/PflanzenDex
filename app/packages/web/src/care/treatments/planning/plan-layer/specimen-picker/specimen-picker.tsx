@@ -5,7 +5,7 @@ import { FormField, FormItem, FormMessage } from "@/shared/ui/form";
 import { SearchInput } from "@/shared/ui/search-input";
 import { Select } from "@/shared/ui/select";
 import { Label } from "@/shared/ui/label";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { TreatableSpecimen } from "../../../../shared/api/treatments-api";

@@ -1,8 +1,8 @@
 import type { Candidate, CandidateList } from "@pflanzendex/core";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LayerOpener, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
-import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
+import { useRowPageSize } from "@/shared/patterns/responsive/entry-list/row-page-size";
 import { Button } from "@/shared/ui/button";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";

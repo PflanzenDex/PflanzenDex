@@ -2,7 +2,7 @@ import type { CreatedInvitation, InvitationRecord, InvitationStatus } from "@pfl
 import { ChevronRight } from "lucide-react";
 import { useRef, type ReactNode } from "react";
 import { layerOpenerId, useLayer } from "@/shared/patterns/responsive/layer-sheet/use-layer";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { Button } from "@/shared/ui/button";
 import { MoreHelp } from "@/shared/ui/more-help";

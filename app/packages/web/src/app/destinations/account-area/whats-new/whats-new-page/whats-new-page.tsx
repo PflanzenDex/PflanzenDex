@@ -5,7 +5,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { Button } from "@/shared/ui/button";
 import table from "../whats-new.de.json";

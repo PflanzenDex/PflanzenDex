@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import type { FriendCard as Card } from "@pflanzendex/core";
-import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { useIsShort } from "@/shared/patterns/responsive/entry-list/card-page-size";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";

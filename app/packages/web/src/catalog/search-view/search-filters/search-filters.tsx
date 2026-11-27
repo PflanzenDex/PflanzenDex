@@ -4,7 +4,7 @@ import { Button } from "@/shared/ui/button";
 import { Select } from "@/shared/ui/select";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/paging/address";
+import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/entry-list/paging/address";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { DIFFICULTY } from "../../shared/text";
 import table from "../search-view.de.json";
