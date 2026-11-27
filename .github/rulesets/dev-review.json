@@ -24,7 +24,7 @@
         "required_approving_review_count": 0,
         "dismiss_stale_reviews_on_push": true,
         "required_reviewers": [],
-        "require_code_owner_review": false,
+        "require_code_owner_review": true,
         "dismissal_restriction": {
           "enabled": false,
           "allowed_actors": []
