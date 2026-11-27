@@ -598,6 +598,8 @@ The migration role is the owner role. A separate runtime role is not possible ye
 
 Owner decision (2026-11-26, d-130): the database of the test host is rebuilt from `app/packages/db/migrations/0001_baseline.sql`. The migrations 0001 to 0120 are deleted from the repository; git history keeps them. The reset loses the app data on the test host. No backup is needed, because no production data exists. Owner decision d-157: the volume `${COMPOSE_PROJECT_NAME:-pflanzendex}_dbdata` stays. It also holds the sign-in service's database (`KEYCLOAK_DB_NAME`, default `keycloak`), so only the app database (`POSTGRES_DB`) is dropped and created again. The steps follow the normal deploy path. Nothing here is run from the devbox.
 
+The Deploy workflow runs steps 2 and 3 in one go: Actions, "Deploy", environment `test`, task `reset-db`, the ref from step 1. It refuses `prod`. Steps 2 and 3 below are what it runs, for a reset by hand.
+
 1. The owner gives the go. The ref to deploy is the commit on `dev` that holds `0001_baseline.sql`.
 2. On the test host, as `deploy`, in the checkout (the same Tailscale SSH path as the workflow): stop the `api` (it holds connections to the app database), then drop and create the app database as the cluster user. The role and database names (`POSTGRES_USER`, `POSTGRES_DB`) are read inside the `db` container from its own environment. The sign-in database and all roles stay.
 
