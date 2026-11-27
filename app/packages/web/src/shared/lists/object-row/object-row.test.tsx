@@ -12,7 +12,7 @@ afterEach(cleanup);
 
 const wrap = (ui: React.ReactNode) => <MemoryRouter>{ui}</MemoryRouter>;
 
-describe("US-QS-32 ObjectRow: the name wraps to two lines, the meta is one line (SG-TYPE-05, SG-LIST-03)", () => {
+describe("US-QS-32 ObjectRow: the name wraps to two lines, the meta wraps too (SG-TYPE-05, SG-LIST-03)", () => {
   it("US-QS-32 a name of two lines is clamped at two lines and never cut at one", () => {
     render(
       wrap(
@@ -37,18 +37,23 @@ describe("US-QS-32 ObjectRow: the name wraps to two lines, the meta is one line 
     expect(screen.getByText("Phalaenopsis").className.split(" ")).not.toContain("hyphens-auto");
   });
 
-  it("US-QS-32 the meta line is one line that truncates, so it never adds a second line to the row", () => {
-    render(
-      wrap(
-        <ObjectRow
-          to="/plant/s1"
-          title="Clip"
-          meta="Efeutute · Lichtzone unbekannt · Schlafzimmer am Fenster"
-        />,
-      ),
-    );
-    const meta = screen.getByText("Efeutute · Lichtzone unbekannt · Schlafzimmer am Fenster");
-    expect(meta.className).toContain("truncate");
+  it("US-QS-32 the meta line wraps to further lines when it is long and is never cut with an ellipsis (d-168, issue 2599)", () => {
+    const long = "Zone 3 · 39 Pflanzen · Schwierigkeit: unbekannt";
+    render(wrap(<ObjectRow to="/plant/s1" title="Clip" meta={long} />));
+    // The whole text is in the DOM, not cut by script.
+    const meta = screen.getByText(long);
+    const classes = meta.className.split(" ");
+    // `truncate` is overflow hidden, an ellipsis and no wrapping: none of the three may stay (jsdom has no layout).
+    expect(classes).not.toContain("truncate");
+    expect(classes).not.toContain("text-ellipsis");
+    expect(classes).not.toContain("overflow-hidden");
+    expect(classes).not.toContain("whitespace-nowrap");
+    // It breaks at spaces; a word wider than the column breaks as the last resort only, not at any letter.
+    expect(classes).toContain("[overflow-wrap:break-word]");
+    expect(classes).not.toContain("[overflow-wrap:anywhere]");
+    // The meta line is no name: it takes no title clamp and no automatic hyphens.
+    expect(classes).not.toContain("line-clamp-2");
+    expect(classes).not.toContain("hyphens-auto");
   });
 
   it("US-QS-32 the thumbnail box is 56 px square and is reserved even while no picture is there (SG-PHOTO-01)", () => {

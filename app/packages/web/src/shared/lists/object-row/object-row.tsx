@@ -5,8 +5,8 @@ import { OBJECT_TEXT, ROW_ACTION } from "../grouped-list/group-classes";
 import { ObjectPlaceholder } from "../object-placeholder/object-placeholder";
 
 // The row of one object (a plant, a species, a wish; US-QS-32, SG-LIST-03): a 56 px square thumbnail, the name on up to two
-// lines, one meta line and at most one trailing element. The whole row is the target. The row has no surface of its own: it
-// sits in one flat group (FX-35, SG-SHAPE-03), which draws the card and the hairline between its rows.
+// lines, a meta line that wraps (never cut, d-168) and at most one trailing element. The whole row is the target. The row has
+// no surface of its own: it sits in one flat group (FX-35, SG-SHAPE-03), which draws the card and the hairline between its rows.
 // An action beside the row wraps: when the text (thumbnail and two lines of name) and the action do not fit beside each other,
 // the action moves below the text on its own line (issue 2322, SG-TYPE-05, SG-LIST-03); the text keeps its basis width.
 const SURFACE = "flex min-w-0 flex-wrap items-stretch text-card-foreground";
@@ -28,7 +28,7 @@ export type ObjectRowProps = {
   alt?: string | undefined;
   /** The name: wraps to two lines, then clamps (SG-TYPE-05). */
   title: ReactNode;
-  /** One meta line, which truncates (SG-LIST-03). */
+  /** The meta line: it wraps to further lines when it is long and is never cut (SG-LIST-03, d-168, issue 2599). */
   meta?: ReactNode | undefined;
   /** The one trailing element: a badge or a value. It takes the place of the chevron (SG-LIST-03). */
   trailing?: ReactNode;

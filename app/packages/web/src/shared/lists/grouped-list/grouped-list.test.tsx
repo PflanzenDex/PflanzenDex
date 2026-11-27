@@ -191,6 +191,25 @@ describe("US-QS-32 GroupedRow (SG-LIST-04, SG-TYPE-02, SG-COLOR-02)", () => {
     expect(screen.getByRole("link").className).toContain("min-h-11");
   });
 
+  it("US-QS-32 the meta of an object row wraps and is never cut, a settings row keeps its own break rule (d-168, issue 2599)", () => {
+    const long = "Zone 3 · 39 Pflanzen · Schwierigkeit: unbekannt";
+    render(
+      wrap(
+        <GroupedList>
+          <GroupedRow variant="object" to="/a" title="Clip" meta={long} />
+          <GroupedRow to="/b" title="Einstellungen" meta="Konto und Datenschutz" />
+        </GroupedList>,
+      ),
+    );
+    const object = screen.getByText(long).className.split(" ");
+    expect(object).not.toContain("truncate");
+    expect(object).toContain("[overflow-wrap:break-word]");
+    expect(object).not.toContain("[overflow-wrap:anywhere]");
+    const settings = screen.getByText("Konto und Datenschutz").className.split(" ");
+    expect(settings).not.toContain("truncate");
+    expect(settings).toContain("[overflow-wrap:anywhere]");
+  });
+
   it("US-QS-32 a row keeps a visible focus ring on its link", () => {
     render(
       wrap(
