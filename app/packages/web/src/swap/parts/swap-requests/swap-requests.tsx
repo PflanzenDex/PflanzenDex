@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import type { SwapOverview, SwapSide } from "@pflanzendex/core";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { errorText } from "@/shared/lib/error-text";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
@@ -49,7 +49,7 @@ function handoverText(s: SwapSide, status: "waiting" | "handed_over"): string {
   return t("handover.doneKept");
 }
 
-/** The requests for my offers and the ones I sent in one list, each marked, so one pager serves both (US-QS-20). */
+/** The requests for my offers and the ones I sent in one list, each marked, so one list serves both (US-QS-20). */
 function Section(props: {
   rows: readonly { s: SwapSide; caption: string }[];
   size: number;
@@ -58,7 +58,7 @@ function Section(props: {
   onHandover: (s: SwapSide, marker: string | null) => void;
 }) {
   return (
-    <Pager
+    <ScrollEntries
       items={props.rows}
       pageSize={props.size}
       fit

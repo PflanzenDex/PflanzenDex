@@ -186,7 +186,7 @@ describe("US-QS-32 a task row of Heute is one row with its whole target (SG-TOUC
     expect(screen.queryByText(/Stand:/)).toBeNull();
   });
 
-  it("US-QS-32 a row of a pager's list is bare: the list wraps it, so it is no list item of its own", () => {
+  it("US-QS-32 a row of a scrolling list is bare: the list wraps it, so it is no list item of its own", () => {
     render(
       wrap(
         <ul>

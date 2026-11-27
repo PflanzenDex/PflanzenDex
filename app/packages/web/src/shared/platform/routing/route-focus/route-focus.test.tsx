@@ -14,7 +14,7 @@ import {
 } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
-import { PAGER_PARTS, type PagerPart } from "@/shared/patterns/responsive/pager/paging/address";
+import { LIST_PARTS, type ListPart } from "@/shared/patterns/responsive/pager/paging/address";
 import { RouteFocus } from "./route-focus";
 import { createFocusMover } from "./focus-moves";
 import { quietFrom } from "./quiet-steps";
@@ -313,7 +313,7 @@ describe("US-QS-09 · RouteFocus (2.4.2, 2.4.3)", () => {
 });
 
 /** A view with a button that moves the address part `param` on, as the old paged list did: its heading is the view's own. */
-function PartView({ param }: { param: PagerPart }) {
+function PartView({ param }: { param: ListPart }) {
   const [, setParams] = useSearchParams();
   return (
     <main id="inhalt" tabIndex={-1}>
@@ -328,7 +328,7 @@ function PartView({ param }: { param: PagerPart }) {
 
 describe("US-QS-15 · a change of the address part of a list is no view change (issue 1550)", () => {
   // The lists scroll and hold no position now (SG-LIST-01, issue 2418); an old address with a part must not move the focus.
-  const change = async (param: PagerPart) => {
+  const change = async (param: ListPart) => {
     const { unmount } = render(
       <MemoryRouter initialEntries={["/b"]}>
         <AnnouncerProvider>
@@ -351,8 +351,8 @@ describe("US-QS-15 · a change of the address part of a list is no view change (
     await change("rfrom");
   });
 
-  it("US-QS-15 a change of any list part (every address part of PAGER_PARTS) keeps the focus where it is", async () => {
-    for (const part of PAGER_PARTS) await change(part);
+  it("US-QS-15 a change of any list part (every address part of LIST_PARTS) keeps the focus where it is", async () => {
+    for (const part of LIST_PARTS) await change(part);
   }, 20000);
 });
 

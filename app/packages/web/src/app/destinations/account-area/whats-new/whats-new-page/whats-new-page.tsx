@@ -5,7 +5,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { PATHS } from "@/shared/patterns/navigation/navigation/navigation";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { Button } from "@/shared/ui/button";
 import table from "../whats-new.de.json";
@@ -13,7 +13,7 @@ import { markAllNewsSeen, NEWS_ENTRIES, appVersion } from "../whats-new";
 
 const t = texts(table);
 
-/** The size the `Pager` asks for; the list has no server paging and scrolls, so it only needs a number (starting values). */
+/** The size the list asks for; it has no server paging and scrolls, so it only needs a number (starting values). */
 const PAGE_PHONE = 2;
 const PAGE_LG = 3;
 /**
@@ -67,9 +67,8 @@ function NewsHeading({ heading }: { heading: NonNullable<NewsEntry["heading"]> }
 }
 
 /**
- * The version of the build and the lines in display order, one page at a time (US-DEV-06, US-QS-15): the unreleased
- * lines first, then each version under its heading. The pager turns the pages and keeps the first entry of the page in
- * the address. An empty list says what to do next (P-09).
+ * The version of the build and the lines in display order, in one scrolling list (US-DEV-06, US-QS-15): the unreleased
+ * lines first, then each version under its heading. An empty list says what to do next (P-09).
  */
 export function WhatsNewList(props: {
   entries: readonly NewsEntry[];
@@ -89,7 +88,7 @@ export function WhatsNewList(props: {
           action={{ label: t("empty.action"), onClick: () => void navigate(PATHS.today) }}
         />
       ) : (
-        <Pager
+        <ScrollEntries
           items={props.entries}
           pageSize={pageSize}
           fit

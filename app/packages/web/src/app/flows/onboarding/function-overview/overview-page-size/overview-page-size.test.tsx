@@ -11,7 +11,7 @@ const setHeight = (px: number) =>
 afterEach(() => setHeight(768));
 
 describe("US-QS-17 rows per page of Was die App kann", () => {
-  it("US-QS-17 · US-QS-15 on a phone the pager's size is used", () => {
+  it("US-QS-17 · US-QS-15 on a phone the size of the row page is used", () => {
     setViewportWidth(390);
     const { result } = renderHook(() => useOverviewPageSize());
     expect(result.current).toBe(4);

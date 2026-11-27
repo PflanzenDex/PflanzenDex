@@ -3,7 +3,7 @@ import { classificationRules, zoneLabel } from "@pflanzendex/core";
 import { withUnit } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import type { LightZone } from "../../shared/light-api/light-api";
 import { MoreHelp } from "@/shared/ui/more-help";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
@@ -97,11 +97,10 @@ export function RulesView({ zones }: { zones: readonly LightZone[] }) {
       <h2 id="rules" className={H2}>
         Einstufungsregeln
       </h2>
-      <Pager
+      <ScrollEntries
         items={parts}
         pageSize={1}
         label="Teile der Einstufungsregeln"
-        param="rfrom"
         getKey={(_, i) => i}
         renderItem={(part) => part}
       />

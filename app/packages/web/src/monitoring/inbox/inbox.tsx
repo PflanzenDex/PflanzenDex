@@ -1,7 +1,7 @@
 import type { Occasion, ReminderOccasion, ReminderRow, ReminderStatus } from "@pflanzendex/core";
 import { useCallback } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import {
   EXCHANGE_PATH,
@@ -118,11 +118,10 @@ export function Inbox(props: { api: string; token: () => Promise<string | undefi
             description={ui("inbox.none.description")}
           />
         ) : (
-          <Pager
+          <ScrollEntries
             items={rows}
             pageSize={PAGE}
             label={ui("inbox.label")}
-            param={LAYER_PARAM}
             getKey={(row) => row.id}
             renderItem={(row) => <Reminder row={row} />}
           />

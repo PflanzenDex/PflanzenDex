@@ -150,7 +150,7 @@ export function LayerSheet({
         closeRefusals={guard.refusals}
         halfHeight={halfHeight}
       >
-        {/* The modal keeps its children mounted when closed; a closed layer must not load data or hold a pager (US-QS-22),
+        {/* The modal keeps its children mounted when closed; a closed layer must not load data or hold a list (US-QS-22),
             so the body renders only while the layer is open or still leaving (US-QS-15, F7). */}
         {showBody ? <LayerBody {...actions}>{children}</LayerBody> : null}
       </ResponsiveModal>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import type { FriendCard as Card } from "@pflanzendex/core";
 import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { useIsLg } from "@/shared/platform/visibility/use-lg-breakpoint";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
@@ -111,7 +111,7 @@ export function FriendCards(props: {
       <WishNotice message={wish.message} error={wish.error} />
       <Next total={props.cards.length} shown={shown.length} filter={filter} name={props.name} />
       {shown.length > 0 && (
-        <Pager
+        <ScrollEntries
           items={shown}
           pageSize={size}
           label={tx("friendCollection.list", { name: props.name })}

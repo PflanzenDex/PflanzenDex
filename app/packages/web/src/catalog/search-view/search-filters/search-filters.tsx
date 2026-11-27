@@ -4,7 +4,7 @@ import { Button } from "@/shared/ui/button";
 import { Select } from "@/shared/ui/select";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/pager";
+import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/paging/address";
 import { DIFFICULTY } from "../../shared/text";
 
 /** The layer id of the filters: the address holds `?sheet=filters` while it is open (US-QS-21). */

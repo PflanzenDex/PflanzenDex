@@ -1,5 +1,5 @@
 import type { BoughtList as Bought } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { CreateSpecimenButton, type WishToPlant } from "../../actions/actions";
 
 /**
@@ -23,11 +23,10 @@ export function BoughtList(props: {
         {bought.hint.text} Sie stehen nicht mehr in der Wunschliste, bleiben aber hier erhalten.
       </p>
       <p className="font-semibold">{bought.hint.nextAction}</p>
-      <Pager
+      <ScrollEntries
         items={bought.bought}
         pageSize={4}
         label="Gekaufte Wünsche"
-        param={LAYER_PARAM}
         getKey={(w) => w.id}
         renderItem={(w) => (
           <div className="grid break-words rounded-lg border border-border p-3">

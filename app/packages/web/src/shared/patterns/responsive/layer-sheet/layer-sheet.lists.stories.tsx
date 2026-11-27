@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import {
   closeLayer,
   openLayer,
@@ -29,11 +29,11 @@ type Story = StoryObj<typeof meta>;
 const PLANTS = Array.from({ length: 14 }, (_, index) => `Monstera ${index + 1}`);
 
 // A list in a layer is never cut into pages (US-QS-15, DS-60): it is the content of the layer, which scrolls under the title
-// and the primary action. The sheet has two heights, and nothing is marked as a Pager.
+// and the primary action. The sheet has two heights, and the list takes no scroll box of its own, even with `fit`.
 export const ListScrollsInLayer: Story = {
   render: () => (
     <Layer>
-      <Pager
+      <ScrollEntries
         fit
         items={PLANTS}
         pageSize={4}
@@ -48,8 +48,8 @@ export const ListScrollsInLayer: Story = {
     if (!list) throw new Error("play: the list is missing");
     if (list.children.length !== PLANTS.length)
       throw new Error("play: the list must hold every entry, not one page");
-    if (layer.querySelector("[data-pager], [data-page-fit]"))
-      throw new Error("play: a list in a layer carries no marker of a paging list");
+    if (layer.querySelector("[data-page-fit]"))
+      throw new Error("play: a list in a layer takes no scroll box of its own");
     if (Array.from(layer.querySelectorAll("button")).some((b) => b.textContent === "Weiter"))
       throw new Error("play: a list in a layer has no Weiter");
     const sheet = sheetOf();

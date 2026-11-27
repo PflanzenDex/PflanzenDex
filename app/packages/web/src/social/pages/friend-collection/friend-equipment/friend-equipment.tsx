@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { SharedDevice } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { withUnit } from "@/shared/lib/format";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
@@ -99,12 +99,10 @@ export function FriendEquipment(props: {
           data.devices.length === 0 ? (
             <EmptySection text={t("friendEquipment.none", { name })} />
           ) : (
-            <Pager
+            <ScrollEntries
               items={data.devices}
               pageSize={DEVICES_PER_PAGE}
               label={`Geräte von ${name}`}
-              param={LAYER_PARAM}
-              replace
               getKey={(d) => d.id}
               renderItem={(d) => <Device d={d} />}
             />

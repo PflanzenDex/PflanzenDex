@@ -1,5 +1,5 @@
 import { equipmentCosts, type EquipmentRow } from "@pflanzendex/core";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../equipment.de.json";
 import { TYPE_LABELS } from "../../labels";
@@ -31,13 +31,11 @@ export function CostsView(props: { items: readonly EquipmentRow[] }) {
         <span className="text-2xl font-semibold">{euro(view.total.sumEur)}</span>{" "}
         <span className="text-muted-foreground">{view.coverage}</span>
       </p>
-      <Pager
+      <ScrollEntries
         items={view.byType}
         pageSize={COSTS_PER_PAGE}
         fit
         label={t("costs.list")}
-        param={LAYER_PARAM}
-        replace
         getKey={(l) => l.type}
         listClassName="gap-0"
         renderItem={(l) => (

@@ -53,20 +53,6 @@
     "path": "/collection?view=species",
     "kind": "list",
     "state": "one",
-    "steps": [
-      {
-        "role": "button",
-        "name": "Filter"
-      },
-      {
-        "role": "combobox",
-        "name": "Sortierung",
-        "select": "family"
-      },
-      {
-        "key": "Escape"
-      }
-    ],
     "title": "Sammlung",
     "family": "collection-species",
     "expect": {
@@ -123,7 +109,7 @@
   {
     "id": "collection-plants-one",
     "account": "test5",
-    "path": "/collection?view=plants&group=location",
+    "path": "/collection?view=plants",
     "kind": "list",
     "state": "one",
     "title": "Sammlung",

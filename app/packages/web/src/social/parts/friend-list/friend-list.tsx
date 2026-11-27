@@ -40,7 +40,7 @@ function FriendRow(props: { friend: Friend }) {
  * one row per friend. Nothing from their collections here: what a friend sees is decided per specimen, private by default
  * (US-SOZ-04, P-05). No rankings. The number counts only what the friend shares: "unbekannt" when nothing is shared, never 0
  * by guess (P-08). The label carries no "· 0": without a friend the empty state names the next step, "Freund hinzufügen"
- * (P-09, SG-STATE-01). The list is no `Pager`: it is `ScrollEntries` itself, every friend loaded.
+ * (P-09, SG-STATE-01). The list is `ScrollEntries`, every friend loaded.
  */
 export function FriendList(props: { friends: readonly Friend[] }) {
   const heading = useId();

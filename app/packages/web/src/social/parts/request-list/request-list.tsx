@@ -1,5 +1,5 @@
 import type { FriendRequest, OpenRequests } from "@pflanzendex/core";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
@@ -84,7 +84,7 @@ export function RequestList(props: {
       {entries.length === 0 ? (
         <EmptySection text={tx("requests.none")} />
       ) : (
-        <Pager
+        <ScrollEntries
           items={entries}
           pageSize={PAGE_SIZE}
           label="Anfragen"

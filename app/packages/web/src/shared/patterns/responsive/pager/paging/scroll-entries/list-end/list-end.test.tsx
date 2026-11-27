@@ -3,8 +3,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { Pager } from "../../../pager";
-import type { PagerPaging } from "../../paging";
+import { ScrollEntries } from "../scroll-entries";
+import type { EntriesPaging } from "../../paging";
 import { SKELETON_DELAY_MS, STATUS_HOLD_MS } from "@/shared/ui/skeleton.delayed";
 import { SETTLE_MS } from "../use-scroll-overflow";
 
@@ -17,7 +17,7 @@ afterEach(() => {
 
 const plants = Array.from({ length: 30 }, (_, i) => `Pflanze ${i + 1}`);
 
-function paging(over: Partial<PagerPaging> = {}): PagerPaging {
+function paging(over: Partial<EntriesPaging> = {}): EntriesPaging {
   return {
     total: 30,
     loading: false,
@@ -29,10 +29,10 @@ function paging(over: Partial<PagerPaging> = {}): PagerPaging {
   };
 }
 
-function list(items: readonly string[], more?: PagerPaging, resetKey = "alle") {
+function list(items: readonly string[], more?: EntriesPaging, resetKey = "alle") {
   return (
     <MemoryRouter>
-      <Pager
+      <ScrollEntries
         items={items}
         pageSize={10}
         label="Pflanzen"
@@ -207,7 +207,7 @@ describe("US-QS-15 · SG-LIST-01 the end marker 'Das waren alle n'", () => {
     );
     const plain = (items: readonly string[]) => (
       <MemoryRouter>
-        <Pager items={items} pageSize={10} label="Pflanzen" renderItem={(t) => t} />
+        <ScrollEntries items={items} pageSize={10} label="Pflanzen" renderItem={(t) => t} />
       </MemoryRouter>
     );
     // In the page (`main`) a page that scrolls must not grow by a row: nothing is measured, nothing is added.

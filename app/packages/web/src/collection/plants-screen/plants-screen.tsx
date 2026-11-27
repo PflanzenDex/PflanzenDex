@@ -1,7 +1,7 @@
 import type { SpecimenCard, SpecimenSummary } from "@pflanzendex/core";
 import { Plus } from "lucide-react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { Button } from "@/shared/ui/button";
 import type { CardPages } from "../specimens/cards/use-card-pages";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
@@ -33,7 +33,7 @@ const TILES = OBJECT_GROUP;
 function Tiles(props: Props & { items: readonly SpecimenCard[]; resetKey: string }) {
   const size = usePageSize();
   return (
-    <Pager
+    <ScrollEntries
       items={props.items}
       pageSize={size}
       fit

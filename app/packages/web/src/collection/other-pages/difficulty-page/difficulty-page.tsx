@@ -9,7 +9,7 @@ import {
   useExitValue,
   useLayer,
 } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import {
   FactGrid,
@@ -176,7 +176,7 @@ function DifficultyTable(props: {
           {hidden.length > 0 ? (
             <Quiet>{`Bei keiner Art angegeben, deshalb nicht in der Liste: ${hidden.join(", ")}.`}</Quiet>
           ) : null}
-          <Pager
+          <ScrollEntries
             items={rows}
             pageSize={size}
             fit

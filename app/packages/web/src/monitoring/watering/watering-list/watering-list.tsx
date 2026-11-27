@@ -1,7 +1,6 @@
 import { useCallback, type ReactNode } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
-import type { PagerPart } from "@/shared/patterns/responsive/pager/pager";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { placeHeld } from "@/shared/feedback/undo-row/use-undo";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
@@ -26,11 +25,6 @@ export function WateringList(props: {
   token: Token;
   /** With `count` the list renders nothing of its own and hands the due count to it (US-QS-18). */
   count?: (due: DueCount) => ReactNode;
-  /**
-   * The address part of its pages: a list in a layer passes `LAYER_PARAM`, so it does not share `from` with the screen
-   * behind it (US-QS-18, issue 2070). Alone on its screen it keeps the default.
-   */
-  param?: PagerPart;
 }) {
   if (props.count)
     return (
@@ -38,9 +32,7 @@ export function WateringList(props: {
         {props.count}
       </DueCountOf>
     );
-  return (
-    <DueList api={props.api} token={props.token} {...(props.param ? { param: props.param } : {})} />
-  );
+  return <DueList api={props.api} token={props.token} />;
 }
 
 /**
@@ -49,7 +41,7 @@ export function WateringList(props: {
  * line carries no role). A write that made the entries stays in place with its undo instead (SG-FEED-03, US-QS-32). A
  * refusal is the alert below the list (P-10, SG-FEED-02).
  */
-function DueList(props: { api: string; token: Token; param?: PagerPart }) {
+function DueList(props: { api: string; token: Token }) {
   const load = useCallback((t: string) => loadWateringDue(props.api, t), [props.api]);
   const due = useDueWrite(props.api, props.token);
   const heldBy = new Map(due.held.map((h) => [h.key, h] as const));
@@ -77,7 +69,6 @@ function DueList(props: { api: string; token: Token; param?: PagerPart }) {
               water={due.water}
               undoPlant={due.undoPlant}
               bulk={due.bulk}
-              {...(props.param ? { param: props.param } : {})}
             />
           );
         }}

@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadLog, type AiLogEntry } from "../api/connections-api";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -18,11 +18,10 @@ function Entries({ rows }: { rows: readonly AiLogEntry[] }) {
       </p>
     );
   return (
-    <Pager
+    <ScrollEntries
       items={rows}
       pageSize={3}
       label="KI-Protokoll"
-      param={LAYER_PARAM}
       getKey={(row) => row.id}
       renderItem={(row) => (
         <div className="flex flex-col gap-1 rounded-lg border border-border p-3">

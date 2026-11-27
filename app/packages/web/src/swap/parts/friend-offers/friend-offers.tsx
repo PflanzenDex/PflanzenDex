@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ExchangeOffer } from "@pflanzendex/core";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
@@ -123,7 +123,7 @@ function Offers(props: {
           <RefusalClose error={write.error} />
         </p>
       )}
-      <Pager
+      <ScrollEntries
         items={data.offers}
         pageSize={size}
         fit

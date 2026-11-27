@@ -1,7 +1,7 @@
 import { Fragment, type CSSProperties } from "react";
 import { SpeciesNameInline } from "@/shared/species-name/species-name";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { dateText } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import {
@@ -89,11 +89,10 @@ export function Milestones(props: {
   return (
     <section aria-label={ui("sectionLabel")} className="grid gap-3">
       {open.length > 0 ? (
-        <Pager
+        <ScrollEntries
           items={open}
           pageSize={PAGE_SIZE}
           label={ui("openList")}
-          param={LAYER_PARAM}
           getKey={(m) => m.id}
           renderItem={(m) => <Open milestone={m} />}
         />

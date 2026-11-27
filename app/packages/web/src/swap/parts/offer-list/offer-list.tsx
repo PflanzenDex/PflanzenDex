@@ -1,5 +1,5 @@
 import type { OfferView } from "@pflanzendex/core";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
@@ -40,7 +40,7 @@ export function OfferList(props: {
         // One line only: "Zum Tausch anbieten" stands in the page's title bar (SG-STATE-01, issue 2233).
         <EmptySection text={t("offers.none")} />
       ) : (
-        <Pager
+        <ScrollEntries
           items={props.offers}
           pageSize={size}
           fit

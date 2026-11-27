@@ -2,7 +2,7 @@ import type { UnidentifiedSpecimen } from "@pflanzendex/core";
 import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { PATHS, plantLayerId } from "@/shared/patterns/navigation/navigation/navigation";
-import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../pokedex-page.de.json";
 
@@ -31,11 +31,10 @@ export function Unidentified(props: { specimens: readonly UnidentifiedSpecimen[]
       <p className="text-sm">
         {common === null ? ui("uncountedExplain") : `${ui("uncountedExplain")} ${common}`}
       </p>
-      <Pager
+      <ScrollEntries
         items={props.specimens}
         pageSize={4}
         label={ui("uncountedTitle")}
-        param={LAYER_PARAM}
         listClassName={OBJECT_GROUP}
         getKey={(s) => s.specimenId}
         renderItem={(s) => (

@@ -3,7 +3,7 @@ import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { germanNameOf, SCIENTIFIC } from "@/shared/species-name/species-name";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Pager } from "@/shared/patterns/responsive/pager/pager";
+import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { catchText } from "./collector-card/catch-text";
@@ -73,17 +73,17 @@ export function SpeciesRow({ c }: { c: CaughtSpecies }) {
 }
 
 /**
- * The caught species as pages of object rows in one group (US-POK-06, US-QS-22, US-QS-32); a tap opens the details as a
+ * The caught species as one scrolling list of object rows in one group (US-POK-06, US-QS-22, US-QS-32); a tap opens the details as a
  * layer (US-POK-09); the German name is shown where it is known, never invented (P-08).
  */
-export function SpeciesPager(props: {
+export function SpeciesList(props: {
   label: string;
   species: readonly CaughtSpecies[];
   resetKey: string;
 }) {
   const size = useRowPageSize();
   return (
-    <Pager
+    <ScrollEntries
       items={props.species}
       pageSize={size}
       fit

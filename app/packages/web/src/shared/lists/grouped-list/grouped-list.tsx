@@ -126,7 +126,7 @@ export type GroupedRowProps = {
    */
   variant?: "list" | "object" | undefined;
   /**
-   * The row is no list item of its own: the host already wraps it in one (the list of a pager does). Without it the row
+   * The row is no list item of its own: the host already wraps it in one (the list of `ScrollEntries` does). Without it the row
    * is an `li` of its `GroupedList`.
    */
   bare?: boolean | undefined;
