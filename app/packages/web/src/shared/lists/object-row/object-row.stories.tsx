@@ -127,7 +127,7 @@ export const MetaPartsAt200: Story = {
   args: {
     to: "#pflanze",
     title: "Efeutute",
-    meta: "Zone 3 — 1 Pflanzen · Schwierigkeit: mittel · Pflege fällig",
+    meta: "Zone 3 — 1 Pflanzen · Wechsel zur Wachstumsphase am 16.03.2027 nach dem Umtopfen · Pflege fällig",
   },
   play: async ({ canvasElement }) => {
     await waitForText200(canvasElement);

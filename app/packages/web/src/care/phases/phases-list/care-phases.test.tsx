@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderToString as render } from "react-dom/server";
 import { MemoryRouter } from "react-router";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
@@ -8,7 +9,11 @@ import { loadCarePhases } from "../../shared/api/care-phases-api";
 import { plain } from "@/shared/testing/plain-text";
 
 /** The text of rendered markup, as a keeper reads it (the dot of a meta line follows a no-break space, issue 2606). */
-const textOf = (html: string) => plain(html.replace(/<[^>]*>/g, ""));
+const textOf = (html: string) => {
+  const host = document.createElement("div");
+  host.innerHTML = html;
+  return plain(host.textContent);
+};
 
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
 /** A compact row opens its plant with the router of the page around it (US-QS-19). */
