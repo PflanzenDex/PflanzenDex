@@ -20,7 +20,7 @@ type Chip = {
 };
 
 /**
- * One toggle chip. Pressed it shows a check mark, a thicker border and a bold label besides `aria-pressed`, so the state
+ * One toggle chip. Unpressed it is outlined on the neutral surface; pressed it is filled and shows a check mark, a thicker border and a bold label besides `aria-pressed`, so the state
  * is not told by colour alone (SG-COLOR-03, as the filter of the species page does). It is a 44 px target that never
  * shrinks and never breaks its text.
  */
@@ -30,14 +30,17 @@ function ToggleChip(props: { chip: Chip; describedBy?: string | undefined; measu
   return (
     <Button
       type="button"
-      variant={pressed ? "secondary" : "plain"}
+      variant={pressed ? "secondary" : "ghost"}
       aria-pressed={pressed}
       disabled={!measure && chip.disabled}
       aria-describedby={props.describedBy}
       tabIndex={measure ? -1 : undefined}
       className={cn(
         "shrink-0 whitespace-nowrap rounded-full px-4",
-        pressed && "border-2 border-primary font-bold",
+        // Unpressed: outlined on the neutral surface; the border is `--input`, the 1.4.11 boundary token (owner decision d-171).
+        pressed
+          ? "border-2 border-primary font-bold"
+          : "border border-input bg-background text-foreground",
       )}
       onClick={chip.toggle}
     >
