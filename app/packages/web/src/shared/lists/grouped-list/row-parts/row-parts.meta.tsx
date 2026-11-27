@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from "react";
+import { Children, Fragment, isValidElement, type ReactNode } from "react";
 
 /** The separator the callers put between the parts of a meta line, for example "Efeutute · Zone 2". */
 const SEPARATOR = " · ";
@@ -11,22 +11,60 @@ const DOT = " ·";
  */
 const PART = "inline-block max-w-full align-top";
 
+/** The parts of a meta line: a string is cut at each " · ", any other node (an italic name) stays whole inside its part. */
+function cut(items: ReactNode[]): ReactNode[][] {
+  const parts: ReactNode[][] = [];
+  let current: ReactNode[] = [];
+  const close = () => {
+    // The dot joins the text before it, so a part is one text node where it can be.
+    const last = current[current.length - 1];
+    if (typeof last === "string") current[current.length - 1] = `${last}${DOT}`;
+    else current.push(DOT);
+    parts.push(current);
+    current = [];
+  };
+  for (const item of items) {
+    if (typeof item !== "string") {
+      current.push(item);
+      continue;
+    }
+    item.split(SEPARATOR).forEach((text, i) => {
+      if (i > 0) close();
+      if (text !== "") current.push(text);
+    });
+  }
+  // A text that ends with a separator has no part after it.
+  if (current.length > 0) parts.push(current);
+  return parts;
+}
+
+/** The content of a meta line as a list: a string, or the children of a fragment (an italic name and its text). */
+function itemsOf(meta: ReactNode): ReactNode[] | null {
+  if (typeof meta === "string") return [meta];
+  if (isValidElement<{ children?: ReactNode }>(meta) && meta.type === Fragment)
+    return Children.toArray(meta.props.children);
+  return null;
+}
+
 /**
  * The meta line of an object row (issue 2606, d-168): the text is split at " · " and each part stays together, so the line breaks
  * between the parts and not inside one ("Zone 3 — 1" / "Pflanzen"). The separator stays at the end of the line before the
  * break, in the span of the part before it, and the only plain space is the one between two parts, where a break may fall.
  * The text of the line is the string of the caller, so the accessible name of the row keeps its order (WCAG 2.5.3); the space
- * before a dot is a no-break space, which reads and matches as a space. A text with one part is returned as it is.
+ * before a dot is a no-break space, which reads and matches as a space. A fragment of elements and strings is split the same
+ * way (the wish row: its scientific name in italics, then the text); any other node, and a text with one part, stays as given.
  */
-export function metaParts(text: string): ReactNode {
-  const parts = text.split(SEPARATOR);
-  if (parts.length < 2) return text;
-  return parts.map((part, i) => (
-    // The parts are a fixed list of strings that never changes order, so the position is the key.
+export function metaParts(meta: ReactNode): ReactNode {
+  const items = itemsOf(meta);
+  if (items === null) return meta;
+  const parts = cut(items);
+  if (parts.length < 2) return meta;
+  return parts.map((nodes, i) => (
+    // The parts are a fixed list that never changes order, so the position is the key.
     <Fragment key={i}>
       {i > 0 && " "}
       <span data-meta-part="" className={PART}>
-        {i < parts.length - 1 ? `${part}${DOT}` : part}
+        {nodes}
       </span>
     </Fragment>
   ));

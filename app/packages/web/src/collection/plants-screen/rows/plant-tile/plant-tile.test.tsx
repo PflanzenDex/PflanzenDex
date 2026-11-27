@@ -133,6 +133,30 @@ describe("US-QS-32 the title of a plant is its own name, the species is its meta
   });
 });
 
+describe("US-QS-32 a plant row with an attention state: the meta line breaks between the state and the zone (issue 2606)", () => {
+  it("US-QS-32 the state leads the meta line as its own part, and the dot ends it", () => {
+    const etiolated = {
+      ...card,
+      lastMeasurement: { quality: "etiolated", date: "2026-10-01", value: 24, note: null },
+    } as unknown as SpecimenCard;
+    render(
+      <MemoryRouter>
+        <PlantTile card={etiolated} access={noPhoto} />
+      </MemoryRouter>,
+    );
+    const row = screen.getByRole("button", { name: /^Aloe(\s|$)/ });
+    const parts = Array.from(row.querySelectorAll("[data-meta-part]"));
+    // The state and the zone are one part each; no part starts with the dot.
+    expect(parts).toHaveLength(2);
+    for (const part of parts)
+      expect((part.textContent ?? "").trimStart().startsWith("·")).toBe(false);
+    expect(parts.slice(0, -1).every((p) => p.textContent?.endsWith("\u00A0·"))).toBe(true);
+    expect(plain(row.querySelector("[data-row-meta]")?.textContent)).toMatch(
+      /^.+ · Lichtzone unbekannt$/,
+    );
+  });
+});
+
 describe("US-QS-32 a plant row shows at most one trailing element: the attention state (SG-COLOR-04)", () => {
   it("US-QS-32 an open treatment is the trailing warning badge", () => {
     const due = {

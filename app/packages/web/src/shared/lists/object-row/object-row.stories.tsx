@@ -96,6 +96,21 @@ export const MetaBreaksBetweenParts: Story = {
   play: ({ canvasElement }) => checkMetaLine(canvasElement, "none"),
 };
 
+// A meta that starts with an italic scientific name (the wish row) breaks between its parts the same way.
+export const MetaWithScientificName: Story = {
+  args: {
+    to: "#pflanze",
+    title: "1. Zebra-Haworthie",
+    meta: (
+      <>
+        <i>Haworthia fasciata</i>
+        {" · Zone 3 — 1 Pflanzen · Schwierigkeit: Mittel"}
+      </>
+    ),
+  },
+  play: ({ canvasElement }) => checkMetaLine(canvasElement, "none"),
+};
+
 // A part wider than the column wraps at its own spaces, takes the whole column and does not run sideways.
 export const MetaPartWiderThanColumn: Story = {
   args: {

@@ -58,7 +58,7 @@ describe("US-QS-22 a compact wish row (issue 1045)", () => {
     show();
     const open = screen.getByRole("button", { name: /^1\. Aloe/ });
     expect(open.textContent).toContain("Schwierigkeit: unbekannt");
-    expect(open.textContent).toContain("Zone 2 · 3 Pflanzen");
+    expect(plain(open.textContent)).toContain("Zone 2 · 3 Pflanzen");
     expect(open.textContent).not.toContain("—");
   });
 });
@@ -154,7 +154,8 @@ describe("US-QS-32 the wish row names a species the SG-TYPE-08 way (F-0067)", ()
     expect(title.querySelector("i")).toBeNull();
     const latin = within(container).getByText("Aloe vera");
     expect(latin.tagName).toBe("I");
-    expect(latin.parentElement?.textContent).toBe(
+    // The name is the first part of the meta line, which breaks between its parts (issue 2606).
+    expect(plain(latin.closest("[data-row-meta]")?.textContent)).toBe(
       "Aloe vera · Zone 2 · 3 Pflanzen · Schwierigkeit: unbekannt",
     );
   });
@@ -196,7 +197,7 @@ describe("US-QS-32 the wish row's name reads in the order it shows (WCAG 2.5.3, 
     show();
     const row = screen.getByRole("button", { name: /^1\. Aloe/ });
     expect(row.hasAttribute("aria-label")).toBe(false);
-    expect(row.textContent).toBe(
+    expect(plain(row.textContent)).toBe(
       "1. Aloe Aloe vera · Zone 2 · 3 Pflanzen · Schwierigkeit: unbekannt",
     );
   });

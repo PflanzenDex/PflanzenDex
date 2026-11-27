@@ -79,7 +79,7 @@ export function RowContent(props: RowContentProps) {
                 !props.warning && "text-muted-foreground",
               )}
             >
-              {props.object && typeof props.meta === "string" ? metaParts(props.meta) : props.meta}
+              {props.object ? metaParts(props.meta) : props.meta}
             </span>
           </>
         )}

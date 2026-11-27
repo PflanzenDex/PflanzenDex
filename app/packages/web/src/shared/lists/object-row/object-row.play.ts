@@ -23,6 +23,18 @@ function charBox(node: Text, index: number): DOMRect {
   return range.getBoundingClientRect();
 }
 
+/** The last `count` characters of a part, across its text nodes (an italic name and the text after it are two nodes). */
+function lastChars(part: HTMLElement, count: number): { node: Text; index: number }[] {
+  const walker = document.createTreeWalker(part, NodeFilter.SHOW_TEXT);
+  const nodes: Text[] = [];
+  for (let n = walker.nextNode(); n !== null; n = walker.nextNode()) nodes.push(n as Text);
+  const chars: { node: Text; index: number }[] = [];
+  for (const node of nodes.reverse())
+    for (let index = node.length - 1; index >= 0 && chars.length < count; index -= 1)
+      chars.unshift({ node, index });
+  return chars;
+}
+
 /** The text is at 200 % when the root font size is twice 16 px (the one-screen gate sets the same rule). */
 export async function waitForText200(canvas: HTMLElement): Promise<void> {
   const line = must(canvas.querySelector<HTMLElement>("[data-row-meta]"), "the meta line");
@@ -63,13 +75,15 @@ export function checkMetaLine(canvas: HTMLElement, inside: "none" | "some"): voi
       `part ${i + 1} breaks inside (${lines} lines, ${box.width} px) though it is narrower than the column of ${column.width} px`,
     );
     // The dot ends its part (after a no-break space), so it must stand on the line of the character before the space.
-    const text = part.firstChild;
-    if (i === parts.length - 1 || !(text instanceof Text) || text.length < 3) return;
-    const dot = charBox(text, text.length - 1);
-    const before = charBox(text, text.length - 3);
+    if (i === parts.length - 1) return;
+    const [before, , dot] = lastChars(part, 3);
+    check(before !== undefined && dot !== undefined, `part ${i + 1} does not end with a dot`);
+    if (before === undefined || dot === undefined) return;
+    const dotTop = charBox(dot.node, dot.index).top;
+    const beforeTop = charBox(before.node, before.index).top;
     check(
-      Math.abs(dot.top - before.top) < lineHeight / 2,
-      `the dot after part ${i + 1} starts a line (${dot.top} px, the word before it ${before.top} px)`,
+      Math.abs(dotTop - beforeTop) < lineHeight / 2,
+      `the dot after part ${i + 1} starts a line (${dotTop} px, the word before it ${beforeTop} px)`,
     );
   });
   if (inside === "some") check(wrapped > 0, "no part wraps inside, the story shows no wide part");

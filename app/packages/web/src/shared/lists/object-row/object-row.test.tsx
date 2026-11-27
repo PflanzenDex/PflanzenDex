@@ -350,25 +350,66 @@ describe("US-QS-32 ObjectRow: the meta line breaks only between its parts and ne
     expect(metaOf(row()).className.split(" ")).toContain("text-pretty");
   });
 
-  it("US-QS-32 a meta without a separator stays one plain text, and a meta that is no string stays as given", () => {
+  it("US-QS-32 a meta without a separator stays one plain text, and an element that is no fragment stays as given", () => {
     const { rerender } = render(wrap(<ObjectRow to="/plant/s1" title="Clip" meta="Efeutute" />));
     expect(partsOf(row())).toHaveLength(0);
     expect(metaOf(row()).textContent).toBe("Efeutute");
-    rerender(
+    rerender(wrap(<ObjectRow to="/plant/s1" title="Clip" meta={<b>Efeutute · Zone 2</b>} />));
+    expect(partsOf(row())).toHaveLength(0);
+    expect(metaOf(row()).textContent).toBe("Efeutute · Zone 2");
+  });
+
+  it("US-QS-32 a fragment of an italic name and a text is split too: the name stays whole in its part (the wish row, issue 2606)", () => {
+    render(
       wrap(
         <ObjectRow
           to="/plant/s1"
           title="Clip"
           meta={
             <>
-              <b>Efeutute</b> · Zone 2
+              <i className="italic">Haworthia fasciata</i>
+              {" · Zone 3 — 1 Pflanzen · Schwierigkeit: Mittel"}
             </>
           }
         />,
       ),
     );
-    expect(partsOf(row())).toHaveLength(0);
-    expect(metaOf(row()).textContent).toBe("Efeutute · Zone 2");
+    const parts = partsOf(row());
+    expect(parts.map((p) => plain(p.textContent))).toEqual([
+      "Haworthia fasciata ·",
+      "Zone 3 — 1 Pflanzen ·",
+      "Schwierigkeit: Mittel",
+    ]);
+    // The italic name is the first part's element, and the dot follows it in the same part.
+    expect(parts[0]?.querySelector("i")?.textContent).toBe("Haworthia fasciata");
+    expect(parts[0]?.textContent?.endsWith("\u00A0·")).toBe(true);
+    expect(plain(metaOf(row()).textContent)).toBe(
+      "Haworthia fasciata · Zone 3 — 1 Pflanzen · Schwierigkeit: Mittel",
+    );
+  });
+
+  it("US-QS-32 a fragment with a lone separator between two elements puts the dot at the end of the part before it", () => {
+    render(
+      wrap(
+        <ObjectRow
+          to="/plant/s1"
+          title="Clip"
+          meta={
+            <>
+              <b>Behandeln</b>
+              {" · "}
+              {"Efeutute · Lichtzone unbekannt"}
+            </>
+          }
+        />,
+      ),
+    );
+    expect(partsOf(row()).map((p) => plain(p.textContent))).toEqual([
+      "Behandeln ·",
+      "Efeutute ·",
+      "Lichtzone unbekannt",
+    ]);
+    expect(plain(metaOf(row()).textContent)).toBe("Behandeln · Efeutute · Lichtzone unbekannt");
   });
 
   it("US-QS-32 a row that is no object row (a settings row) keeps its meta as one text", () => {
