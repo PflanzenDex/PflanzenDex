@@ -42,11 +42,11 @@ const deck: SuggestionDeck = {
 };
 
 describe("US-QS-21 the card takes the remaining height", () => {
-  it("US-QS-21 the card fills the space, scrolls inside itself, the photo shrinks first and the buttons stay in view", () => {
+  it("US-QS-21 · US-QS-15 the card fills the space and never scrolls inside itself (the deck fits one screen, issue 2421); the buttons stay in view", () => {
     render(<DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
     const card = screen.getByRole("article");
     expect(card.className).toContain("flex-1");
-    expect(card.className).toContain("overflow-y-auto");
+    expect(card.className).not.toMatch(/overflow-(y-)?(auto|scroll)/);
     const row = screen.getByRole("button", { name: "Kein Interesse" }).parentElement?.parentElement;
     expect(row?.className).toContain("shrink-0");
     expect(row?.parentElement?.lastElementChild).toBe(row);
@@ -63,7 +63,8 @@ describe("US-QS-21 large text scrolls instead of clipping (WCAG 1.4.4, 1.4.10)",
       expect(button.className).toContain("min-w-24");
       expect(button.className).toContain("min-h-[48px]");
     }
-    expect(screen.getByRole("article").className).toContain("min-h-48");
+    // The card keeps the least height its content needs with the picture at its floor (issue 2421), so it never cuts.
+    expect(screen.getByRole("article").className).toContain("min-h-[15.5rem]");
     // The stack of the card (the column with the position, the card and the buttons) keeps the minimum height.
     expect(screen.getByRole("article").closest(".min-h-\\[21rem\\]")).not.toBeNull();
   });
@@ -82,14 +83,15 @@ describe("US-QS-21 large text scrolls instead of clipping (WCAG 1.4.4, 1.4.10)",
 });
 
 describe("US-QS-14 decision buttons stay with the card", () => {
-  it("US-QS-14 keeps Kein Interesse, Später and Wünschen in a sticky row above the bar, at the bottom from md", () => {
+  it("US-QS-14 keeps Kein Interesse, Später and Wünschen in a sticky row at the bottom of the deck frame", () => {
     render(<DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
     const row = screen.getByRole("button", { name: "Kein Interesse" }).parentElement?.parentElement;
     for (const name of ["Kein Interesse", "Später", "Wünschen"])
       expect(screen.getByRole("button", { name }).parentElement?.parentElement).toBe(row);
     expect(row?.className).toContain("sticky");
-    expect(row?.className).toContain("bottom-[calc(3.5rem+env(safe-area-inset-bottom))]");
-    expect(row?.className).toContain("md:bottom-0");
+    // The frame of the deck ends above the phone bar already, so the row sticks at its bottom edge (issue 2421).
+    expect(row?.className).toContain("bottom-0");
+    expect(row?.className).not.toContain("3.5rem");
     expect(row?.className).toContain("bg-background");
   });
 
@@ -106,10 +108,10 @@ describe("US-QS-14 decision buttons stay with the card", () => {
   it("US-QS-14 keeps the row in the flow in a window lower than 30 rem (400 % zoom) and sticky from 30 rem of height", () => {
     render(<DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />);
     const row = screen.getByRole("button", { name: "Wünschen" }).parentElement?.parentElement;
-    // Base style: no sticky class; the tall-window variant (from 30 rem of height) makes it sticky with the bar's offset.
+    // Base style: no sticky class; the tall-window variant (from 30 rem of height) makes it sticky at the bottom of the frame.
     expect(row?.classList).toContain("tall-window:sticky");
     expect(row?.classList).not.toContain("sticky");
-    expect(row?.className).toContain("tall-window:md:bottom-0");
+    expect(row?.className).toContain("tall-window:bottom-0");
   });
 });
 
@@ -313,7 +315,23 @@ describe("US-QS-32 · SG-TYPE-04 at 200 % text the deck scrolls as a whole", () 
     expect(under?.className).not.toContain("flex-1");
   });
 
-  it("US-QS-32 · SG-TYPE-04 at the normal size the card underneath fills its frame like the front card", () => {
+  it("US-QS-15 · DS-40 only the front card opens a sheet: the card underneath has no dialog trigger, so a probe never finds a button that cannot take the focus (QG-U5)", () => {
+    const { container } = render(
+      <DeckView
+        deck={{ ...deck, suggestions: [suggestion("Ficus lyrata"), suggestion("Aloe vera")] }}
+        onDecide={saveOk}
+        onUndo={undoOk}
+        onNewDeck={() => undefined}
+      />,
+    );
+    expect(container.querySelectorAll('[aria-haspopup="dialog"]')).toHaveLength(1);
+    const under = container.querySelector<HTMLElement>('[data-level="1"] article');
+    expect(under?.querySelector('[aria-haspopup="dialog"]')).toBeNull();
+    // The card underneath still has the room of the button, so it does not change size when it comes to the front.
+    expect(under?.textContent).toContain("Mehr");
+  });
+
+  it("US-QS-32 · US-QS-15 · SG-TYPE-04 at the normal size the card underneath fills its frame like the front card, and does not scroll either", () => {
     const { container } = render(
       <DeckView
         deck={{ ...deck, suggestions: [suggestion("Ficus lyrata"), suggestion("Aloe vera")] }}
@@ -324,7 +342,7 @@ describe("US-QS-32 · SG-TYPE-04 at 200 % text the deck scrolls as a whole", () 
     );
     const under = container.querySelector<HTMLElement>('[data-level="1"] article');
     expect(under?.className).toContain("flex-1");
-    expect(under?.className).toContain("overflow-y-auto");
+    expect(under?.className).not.toMatch(/overflow-(y-)?(auto|scroll)/);
   });
 
   it("US-QS-32 · SG-TYPE-04 the decision buttons come after the card in the flow, not under it", () => {

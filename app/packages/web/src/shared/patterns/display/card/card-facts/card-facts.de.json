@@ -1,0 +1,9 @@
+{
+  "zone": "Lichtzone {zone}",
+  "zoneUnknown": "Lichtzone unbekannt",
+  "difficultyUnknown": "Schwierigkeit unbekannt",
+  "difficultyLabel": "Schwierigkeit {level} von 3",
+  "difficultyEasy": "Leicht",
+  "difficultyMedium": "Mittel",
+  "difficultyHard": "Schwierig"
+}

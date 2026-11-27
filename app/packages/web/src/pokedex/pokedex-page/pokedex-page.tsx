@@ -1,6 +1,6 @@
 import { milestoneTreeOf, type Ownership, type PokedexTree } from "@pflanzendex/core";
 import { useCallback, useEffect } from "react";
-import { CollectorCards } from "../pokedex-cards/collector-cards/collector-cards";
+import { CollectorCardsLayer } from "../pokedex-cards/collector-cards-layer/collector-cards-layer";
 import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { SCREEN_STALE_TIME } from "../../shared/data";
@@ -140,9 +140,12 @@ function Layers(props: {
           )}
         </LoadFrame>
       </LayerSheet>
-      <LayerSheet id={CARDS_LAYER} title={ui("cardsTitle")}>
-        <CollectorCards api={props.api} token={props.token} />
-      </LayerSheet>
+      <CollectorCardsLayer
+        id={CARDS_LAYER}
+        title={ui("cardsTitle")}
+        api={props.api}
+        token={props.token}
+      />
       <LayerSheet id={UNCOUNTED_LAYER} title={ui("uncountedTitle")}>
         <Unidentified specimens={ownership.unidentified} />
       </LayerSheet>

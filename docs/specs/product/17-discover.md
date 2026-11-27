@@ -35,8 +35,8 @@ As a **plant keeper** I want to get species suggested one by one as a large card
 
 Acceptance criteria:
 
-- The card shows image with source and license (FR-POK-07), species name, German name, short text, target light zone, difficulty (★☆☆ … ★★★) and the attributes from DM-ENT-01 where known (otherwise "unknown").
-- Below the card are 1–3 **reasons** (US-ENT-03), no percentage and no "match".
+- The front of the card shows the image with source and license (FR-POK-07) under it, species name, German name, the two facts target light zone ("Lichtzone 2") and difficulty ("★★☆ Mittel") and "Mehr"; the short text with its credit, the attributes from DM-ENT-01 where known (otherwise "unbekannt"), their sources and the reasons (US-ENT-03) are in the sheet that "Mehr" opens (two-level card, US-QS-15; owner decisions d-066 and d-159, issue 2421).
+- The sheet of "Mehr" holds 1–3 **reasons** (US-ENT-03), no percentage and no "match".
 - Actions: **No** · **Later** · **Yes**, on the phone also by swipe gesture (left/right, and up or down for Later), always additionally as buttons (NFR-13).
 - Given a card is dragged, when the pointer moves, then the card follows it, tilted by the horizontal distance (up to 8 degrees, starting value, assumption), and the stamp of the direction ("Ja", "Nein" or "Später") fades in with the strength of the drag, so direction and strength are readable before the release.
 - Given a drag ends past the threshold (40 percent of the card width, or a flick of at least 0.6 px per ms over at least 15 percent of the width; starting values, assumption), then the card flies off in that direction and the decision is written once it has left.

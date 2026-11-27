@@ -1,5 +1,5 @@
 {
-  "maxTotal": 8,
+  "maxTotal": 7,
   "entries": [
     {
       "file": "packages/web/src/account/operator/operator-parts/new-code/new-code.tsx",
@@ -20,10 +20,6 @@
     {
       "file": "packages/web/src/catalog/profile-view/profile-view.tsx",
       "count": 2
-    },
-    {
-      "file": "packages/web/src/discover/suggestion-card/suggestion-card.tsx",
-      "count": 1
     }
   ]
 }

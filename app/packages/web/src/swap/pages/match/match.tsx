@@ -73,8 +73,9 @@ export function MatchPage(props: { api: string; token: Token; calm?: boolean }) 
   const load = useCallback((t: string) => loadMatchDeck(api, t), [api]);
   const { yes, answer, undo } = useWrites(api, token);
   return (
-    // One screen (US-QS-15, DS-61): the page does not scroll, the content region does at a large text size.
-    <div data-fit-screen="" className="flex min-w-0 flex-col">
+    // One screen (US-QS-15, DS-61): the deck fills the frame, so the card takes the free height and the page does not scroll;
+    // at a large text size the frame scrolls inside itself (issue 2421).
+    <div data-fit-screen="" data-fit-fill="" className="flex min-h-0 min-w-0 flex-col">
       <FullView
         headingId="match-page-title"
         title="Passende Angebote"

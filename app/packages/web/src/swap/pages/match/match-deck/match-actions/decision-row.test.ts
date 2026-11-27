@@ -5,7 +5,9 @@ describe("US-QS-14 the decision row sticks in a tall window at the normal text s
   it("US-QS-14 the normal size keeps the sticky classes of the row", () => {
     const row = decisionRowClass(false);
     expect(row).toContain("tall-window:sticky");
-    expect(row).toContain("tall-window:bottom-[calc(3.5rem+env(safe-area-inset-bottom))]");
+    // The frame of the deck ends above the phone bar already: the row sticks at its bottom edge (issue 2421).
+    expect(row).toContain("tall-window:bottom-0");
+    expect(row).not.toContain("3.5rem");
   });
 });
 

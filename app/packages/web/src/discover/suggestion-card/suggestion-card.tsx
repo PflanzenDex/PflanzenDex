@@ -1,37 +1,47 @@
 import type { Suggestion } from "@pflanzendex/core";
-import { useId, useState, type ReactNode, type Ref } from "react";
-import { Button } from "@/shared/ui/button";
+import { useId, type Ref } from "react";
 import { Badge } from "@/shared/ui/badge";
-import {
-  CardPicture,
-  PICTURE_HEIGHT_CAP,
-} from "@/shared/patterns/display/card/card-picture/card-picture";
+import { CardPicture } from "@/shared/patterns/display/card/card-picture/card-picture";
+import { CardFacts } from "@/shared/patterns/display/card/card-facts/card-facts";
+import { CardMore, MoreButton } from "@/shared/patterns/display/card/card-more/card-more";
 import { cn } from "@/shared/lib/utils";
-import { AttributeSources, attributeRows, UNKNOWN } from "./attribute-view/attribute-view";
-import { DifficultyStars, WikipediaSource } from "@/pokedex";
+import { WikipediaSource } from "@/pokedex";
+import { SuggestionDetails } from "./suggestion-details/suggestion-details";
 import table from "../discover.de.json";
 import { texts } from "@/shared/lib/text-rules/texts";
 
 const t = texts(table);
 
 /**
- * The picture with its credit directly under it (US-QS-32, SG-PHOTO-03): the image is a link to its source, not a
- * copy (P-05); without a picture the drawn placeholder of the family stands in (SG-PHOTO-02), never an emoji.
+ * The height the rest of the card needs inside its padding, in rem (see `CardPicture`): the credit, the gaps, the name row of
+ * two lines and the row of facts, which takes two rows when both values are unknown. The picture takes what the deck leaves.
  */
-function Picture({ s, fill }: { s: Suggestion; fill: boolean }) {
-  const shown = s.summary !== null || s.imageUrl !== null;
+const REST = "8rem";
+
+/**
+ * The picture with its credit directly under it (US-QS-32, SG-PHOTO-03): the image is a link to its source, not a copy
+ * (P-05); without a picture the drawn placeholder of the family stands in (SG-PHOTO-02), never an emoji, and nothing is
+ * credited. The credit of the text is in the sheet of "Mehr".
+ */
+function Picture({ s, fit }: { s: Suggestion; fit: boolean }) {
+  const shown = s.imageUrl !== null;
   return (
     <CardPicture
       src={s.imageUrl}
       alt={t("card.imageAlt", { species: s.species })}
-      boxClassName={fill ? PICTURE_HEIGHT_CAP : undefined}
+      {...(fit ? { reserve: REST } : {})}
+      overlay={
+        s.exploration ? (
+          <Badge className="max-w-full whitespace-normal">{t("card.exploration")}</Badge>
+        ) : undefined
+      }
       credit={
-        s.sourceUrl !== null || shown ? (
+        shown ? (
           <WikipediaSource
-            label={t("card.sourceLabel")}
+            label={t("card.pictureCredit")}
             sourceUrl={s.sourceUrl}
-            shown={shown}
-            className="inline-flex min-h-11 items-center text-muted-foreground"
+            shown
+            className="-my-3 inline-flex min-h-11 items-center text-muted-foreground"
           />
         ) : undefined
       }
@@ -40,88 +50,12 @@ function Picture({ s, fill }: { s: Suggestion; fill: boolean }) {
 }
 
 /**
- * The Wikipedia text keeps the language it was stored in. Where that is known, `lang` tells a screen reader to switch the
- * voice (WCAG 3.1.2) and a visible hint names a foreign language; where it is unknown no language is claimed (P-08).
- * While collapsed the text is clamped to three lines on purpose: it carries `data-clamped` and the button that opens the rest
- * (`toggle`) stands beside it, so the display check reads the clamp as deliberate (US-QS-12, issue 2535).
- */
-function Summary({ s, more, toggle }: { s: Suggestion; more: boolean; toggle: ReactNode }) {
-  if (s.summary === null)
-    return (
-      <div className="grid gap-1">
-        <p className="m-0 text-sm">{t("card.noSummary")}</p>
-        {toggle}
-      </div>
-    );
-  const foreign = s.summaryLanguage === "en";
-  return (
-    <div className="grid gap-1">
-      {foreign && <p className="m-0 text-xs text-muted-foreground">{t("card.foreignLanguage")}</p>}
-      <p
-        {...(s.summaryLanguage === null ? {} : { lang: s.summaryLanguage })}
-        {...(more ? {} : { "data-clamped": "" })}
-        className={cn("m-0 text-sm", !more && "line-clamp-3")}
-      >
-        {s.summary}
-      </p>
-      {toggle}
-    </div>
-  );
-}
-
-function Facts({ s }: { s: Suggestion }) {
-  return (
-    <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-      <dt className="text-muted-foreground">{t("card.zone")}</dt>
-      <dd className="m-0">
-        {s.lightZone === null ? UNKNOWN : t("card.zoneValue", { zone: s.lightZone })}
-      </dd>
-      <dt className="text-muted-foreground">{t("card.difficulty")}</dt>
-      <dd className="m-0">
-        {s.difficulty === null ? (
-          UNKNOWN
-        ) : (
-          <DifficultyStars
-            level={s.difficulty}
-            label={t("card.difficultyLabel", { level: s.difficulty })}
-          />
-        )}
-      </dd>
-      {attributeRows(s.attributes).flatMap(([name, value]) => [
-        <dt key={`${name}-t`} className="text-muted-foreground">
-          {name}
-        </dt>,
-        <dd key={`${name}-d`} className="m-0">
-          {value}
-        </dd>,
-      ])}
-    </dl>
-  );
-}
-
-/** Facts, sources and reasons after "Mehr erfahren"; collapsed, the card fits one screen (US-QS-21, SG-COPY-05). */
-function Details({ s, more }: { s: Suggestion; more: boolean }) {
-  return (
-    <div className={cn("grid gap-3", !more && "hidden")}>
-      <Facts s={s} />
-      <AttributeSources sources={s.attributeSources ?? []} />
-      <section aria-label={t("card.reasonsLabel")}>
-        <h3 className="m-0 mb-1 text-sm font-semibold">{t("card.reasonsTitle")}</h3>
-        <ul className="m-0 grid list-disc gap-1 pl-5 text-sm">
-          {s.reasons.map((r) => (
-            <li key={r}>{r}</li>
-          ))}
-        </ul>
-      </section>
-    </div>
-  );
-}
-
-/**
- * One suggestion as a large card (US-ENT-01): image with source and license (FR-POK-07), names, text, zone, difficulty
- * and the attributes of DM-ENT-01, the reasons below. The gesture and its stamps are the shared `SwipeCard` around it;
- * the buttons stay the way without a gesture (NFR-13). No percentage and no "match" (FR-ENT-06). Its heading id is made
- * per card (`useId`), so the next card can be rendered underneath without a duplicate id on the page.
+ * One suggestion as a two-level card (US-ENT-01, US-QS-32, owner decisions d-066 and d-159): the front shows the picture
+ * with its credit, the name, the two facts that decide the swipe (light zone, difficulty) and "Mehr"; the description, the
+ * attributes of DM-ENT-01, the sources and the reasons are in the sheet that "Mehr" opens. The gesture and its stamps are the
+ * shared `SwipeCard` around it; the buttons stay the way without a gesture (NFR-13). No percentage and no "match"
+ * (FR-ENT-06). Its heading id is made per card (`useId`), so the next card can be rendered underneath without a duplicate id
+ * on the page. The card never scrolls (US-QS-15): the deck fits one screen, and at large text the deck scrolls as a whole.
  */
 export function SuggestionCard(props: {
   suggestion: Suggestion;
@@ -132,50 +66,49 @@ export function SuggestionCard(props: {
    * so the deck scrolls as a whole and the decision buttons follow the card (US-QS-32, SG-TYPE-04).
    */
   fill?: boolean;
+  /**
+   * The card underneath the front card in the stack (US-ENT-10): hidden from assistive technology and inert. It keeps the room
+   * of "Mehr" but opens no sheet and holds no dialog trigger, so nothing on the page is a trigger that cannot take the focus
+   * (DS-40, QG-U5).
+   */
+  preview?: boolean;
 }) {
   const s = props.suggestion;
-  const [more, setMore] = useState(false);
   const titleId = useId();
   const fill = props.fill ?? true;
   return (
     <article
       aria-labelledby={titleId}
       className={cn(
-        "mx-auto flex min-h-48 w-full min-w-0 max-w-md touch-pan-y flex-col gap-2 break-words",
+        "mx-auto flex w-full min-w-0 max-w-md touch-pan-y flex-col gap-2 break-words",
         "rounded-card border border-border bg-card p-3 text-card-foreground",
-        // Filling the deck, a card that is still too tall scrolls inside itself as the last resort (the one-screen gate reports it).
-        fill ? "flex-1 basis-0 overflow-y-auto" : "flex-none",
+        // The least height the content needs with the picture at its floor: a frame that is lower scrolls, the card never cuts.
+        fill ? "min-h-[15.5rem] flex-1 basis-0 [container-type:size]" : "flex-none",
       )}
     >
-      <Picture s={s} fill={fill} />
-      <div>
-        {s.exploration && <Badge className="mb-1">{t("card.exploration")}</Badge>}
-        <h2
-          id={titleId}
-          ref={props.titleRef}
-          tabIndex={-1}
-          className="m-0 scroll-mb-24 text-xl font-semibold"
-        >
-          {s.species}
-        </h2>
-        <p className="m-0 text-base">{s.germanName ?? t("card.germanNameUnknown")}</p>
-      </div>
-      <Summary
-        s={s}
-        more={more}
-        toggle={
-          <Button
-            type="button"
-            variant="link"
-            aria-expanded={more}
-            className="mt-1 min-h-11 w-fit px-0"
-            onClick={() => setMore((m) => !m)}
+      <Picture s={s} fit={fill} />
+      {/* "Mehr" stands beside the name and costs no line of its own; at large text it drops below the name. */}
+      <div className="flex flex-wrap items-start justify-between gap-x-2">
+        <div className="min-w-0 flex-[1_1_12rem]">
+          <h2
+            id={titleId}
+            ref={props.titleRef}
+            tabIndex={-1}
+            className="m-0 scroll-mb-24 text-xl font-semibold"
           >
-            {more ? t("card.less") : t("card.more")}
-          </Button>
-        }
-      />
-      <Details s={s} more={more} />
+            {s.species}
+          </h2>
+          <p className="m-0 text-base">{s.germanName ?? t("card.germanNameUnknown")}</p>
+        </div>
+        {props.preview ? (
+          <MoreButton name={s.species} />
+        ) : (
+          <CardMore name={s.species}>
+            <SuggestionDetails s={s} />
+          </CardMore>
+        )}
+      </div>
+      <CardFacts lightZone={s.lightZone} difficulty={s.difficulty} />
     </article>
   );
 }

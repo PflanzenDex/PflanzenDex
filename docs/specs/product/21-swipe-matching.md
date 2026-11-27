@@ -38,7 +38,7 @@ Acceptance criteria:
 
 - Given a friend has an open offer (US-SOZ-08) and its species is on my wishlist with status `Wishlist` (compared by the folded Latin name, as in the hint of US-SOZ-09), when I open the match deck, then the offer appears as a card.
 - Given an offer matches no wish of mine, then it does not appear in the deck (it stays in the swap exchange).
-- The card shows: species (German and Latin name), the giver's display name, type (`cutting | plant | offshoot`), mode (`swap | give away`), wish and note of the offer, photo (if shared), health details and dormancy hint as in US-SOZ-09, and the fit reasons (US-TAU-04). No percentage, no "match" score, no stars.
+- The front of the card shows: the catalog picture with its credit, species (German and Latin name), "Von <giver's display name>", one reason badge (the most specific: "Passt in beide Richtungen" before "Auf deiner Wunschliste"), type and mode as one fact ("Steckling · Tauschen") and, while a treatment is open, "Behandlung offen" as the second fact (the offer holds no pest name, follow-up issue 2577); wish and note of the offer, health details and dormancy hint as in US-SOZ-09 and the fit reasons (US-TAU-04) are in the sheet that "Mehr" opens (two-level card, US-QS-15; owner decisions d-066 and d-160, issue 2421). No percentage, no "match" score, no stars.
 - Given the offer is mine, or the giver is not a confirmed friend (any more), or the offer is no longer open, then it never appears (P-05).
 - Order: oldest open offer first, then giver name, then species. The order is fixed for the same data (FR-TAU-05) and contains no ranking.
 - Given I am on a 360 px viewport, then one card fills the width and the three actions are reachable with one thumb (NFR-13, US-QS-14).

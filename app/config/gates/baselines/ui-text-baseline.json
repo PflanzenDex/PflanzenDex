@@ -1,5 +1,5 @@
 {
-  "maxTotal": 931,
+  "maxTotal": 908,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -438,16 +438,8 @@
       "count": 7
     },
     {
-      "file": "packages/web/src/pokedex/pokedex-cards/collector-card/collector-card.tsx",
-      "count": 10
-    },
-    {
       "file": "packages/web/src/pokedex/pokedex-cards/collector-card/rarity-note/rarity-note.tsx",
       "count": 7
-    },
-    {
-      "file": "packages/web/src/pokedex/pokedex-cards/collector-cards/collector-cards.tsx",
-      "count": 2
     },
     {
       "file": "packages/web/src/pokedex/pokedex-cards/pokedex-cards.tsx",
@@ -546,10 +538,6 @@
       "count": 12
     },
     {
-      "file": "packages/web/src/swap/pages/match/match-card/match-card.tsx",
-      "count": 10
-    },
-    {
       "file": "packages/web/src/swap/pages/match/match-deck/answer-lists/answer-lists.tsx",
       "count": 7
     },
@@ -559,7 +547,7 @@
     },
     {
       "file": "packages/web/src/swap/pages/match/match-deck/match-deck.tsx",
-      "count": 6
+      "count": 5
     },
     {
       "file": "packages/web/src/swap/pages/match/match.tsx",

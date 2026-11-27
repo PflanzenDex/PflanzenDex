@@ -24,6 +24,15 @@ describe("US-QS-32 · SG-PHOTO-01 the card picture has a 4:3 box, and its room i
   });
 });
 
+describe("US-QS-32 · SG-PHOTO-01 the box is the full width of the card and no height cap shrinks it (issue 2383, issue 2421)", () => {
+  it("US-QS-32 · SG-PHOTO-01 the box takes the whole width of its card and has no width derived from the window height", () => {
+    const { container } = render(<CardPicture src="https://example.org/a.jpg" alt="Bild" />);
+    const box = container.querySelector("figure")?.firstElementChild as HTMLElement;
+    expect(box.className).toContain("w-full");
+    expect(box.className).not.toMatch(/dvh|vh|mx-auto|min\(/);
+  });
+});
+
 describe("US-QS-32 · SG-PHOTO-01 the 4:3 box keeps its ratio when the card is short of room", () => {
   it("US-QS-32 · SG-PHOTO-01 the box does not shrink (shrink-0), so the picture keeps 4:3 at every card height and text size", () => {
     const { container } = render(<CardPicture src="https://example.org/a.jpg" alt="Bild" />);
@@ -33,6 +42,49 @@ describe("US-QS-32 · SG-PHOTO-01 the 4:3 box keeps its ratio when the card is s
     expect(classes).toContain("shrink-0");
     expect(classes).not.toContain("shrink");
     expect(box.className).not.toContain("min-h-");
+  });
+});
+
+describe("US-QS-32 · SG-PHOTO-01 a card in a deck takes the picture width the free height allows (issue 2421)", () => {
+  const boxOf = (container: HTMLElement) =>
+    container.querySelector("figure")?.firstElementChild as HTMLElement;
+
+  it("US-QS-32 · SG-PHOTO-01 with a reserve the box is 4:3, centred and at most as wide as the height of its card leaves, never below 7.5 rem", () => {
+    const { container } = render(<CardPicture src={null} alt="Bild" reserve="8rem" />);
+    const box = boxOf(container);
+    expect(box.className).toContain("aspect-[4/3]");
+    expect(box.className).toContain("mx-auto");
+    expect(box.className).toContain("100cqh");
+    expect(box.className).toContain("var(--card-rest)");
+    expect(box.className).toContain("7.5rem");
+    expect(box.getAttribute("style")).toContain("--card-rest: 8rem");
+    // The cap reads the height of the card (a size container), never a constant of the window.
+    expect(box.className).not.toMatch(/dvh|vh\b/);
+  });
+
+  it("US-QS-32 · SG-PHOTO-01 without a reserve (large text, a row of cards) the box is the full width of its card", () => {
+    const { container } = render(<CardPicture src={null} alt="Bild" />);
+    expect(boxOf(container).className).not.toMatch(/cqh|max-w-/);
+    expect(boxOf(container).hasAttribute("style")).toBe(false);
+  });
+});
+
+describe("US-QS-32 a badge lies on the picture and costs the card no line of its own", () => {
+  it("US-QS-32 the overlay sits inside the picture box, at its top left corner", () => {
+    const { container } = render(
+      <CardPicture src={null} alt="Bild" overlay={<span>Mal etwas anderes</span>} />,
+    );
+    const box = container.querySelector("figure")?.firstElementChild as HTMLElement;
+    const holder = screen.getByText("Mal etwas anderes").parentElement as HTMLElement;
+    expect(box.contains(holder)).toBe(true);
+    expect(holder.className).toContain("absolute");
+    expect(holder.className).toContain("top-2");
+    expect(holder.className).toContain("left-2");
+  });
+
+  it("US-QS-32 without an overlay the box holds nothing but the picture", () => {
+    const { container } = render(<CardPicture src="https://example.org/a.jpg" alt="Bild" />);
+    expect(container.querySelector("figure")?.firstElementChild?.children).toHaveLength(1);
   });
 });
 

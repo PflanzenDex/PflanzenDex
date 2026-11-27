@@ -1,5 +1,5 @@
 {
-  "maxTotal": 299,
+  "maxTotal": 297,
   "entries": [
     {
       "file": "packages/api/src/achievements/history/year.ts",
@@ -550,10 +550,6 @@
     {
       "file": "packages/web/src/swap/pages/exchange/exchange.tsx",
       "enums": 1
-    },
-    {
-      "file": "packages/web/src/swap/pages/match/match-card/match-card.tsx",
-      "enums": 2
     },
     {
       "file": "packages/web/src/swap/pages/match/match-deck/answer-lists/answer-lists.tsx",

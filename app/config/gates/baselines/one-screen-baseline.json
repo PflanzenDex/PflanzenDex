@@ -1,5 +1,5 @@
 {
-  "maxEntries": 479,
+  "maxEntries": 473,
   "entries": [
     {
       "screen": "account-achievements",
@@ -1392,24 +1392,24 @@
       "size": "360x640",
       "page": 1,
       "inner": 1,
-      "rules": ["pager", "size"]
-    },
-    {
-      "screen": "collection-view-species-sheet-cards",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1,
       "rules": ["pager"]
     },
     {
       "screen": "collection-view-species-sheet-cards",
-      "size": "768x1024",
+      "size": "390x844",
       "page": 1,
       "inner": 1,
       "rules": ["pager"]
     },
     {
       "screen": "collection-view-species-sheet-cards",
+      "size": "768x1024",
+      "page": 1,
+      "inner": 1,
+      "rules": ["pager"]
+    },
+    {
+      "screen": "collection-view-species-sheet-cards",
       "size": "1024x768",
       "page": 1,
       "inner": 1,
@@ -1427,7 +1427,7 @@
       "size": "360x640@200%",
       "page": 1,
       "inner": 1,
-      "rules": ["pager", "size"]
+      "rules": ["pager"]
     },
     {
       "screen": "collection-view-species-sheet-filters",
@@ -2100,34 +2100,6 @@
       "page": 1,
       "inner": 1,
       "rules": ["pager"]
-    },
-    {
-      "screen": "discover-view-suggestions",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1,
-      "rules": ["size"]
-    },
-    {
-      "screen": "discover-view-suggestions",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 1,
-      "rules": ["size"]
-    },
-    {
-      "screen": "discover",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1,
-      "rules": ["size"]
-    },
-    {
-      "screen": "discover",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 1,
-      "rules": ["size"]
     },
     {
       "screen": "friend-collection",
@@ -2469,22 +2441,8 @@
       "screen": "friends-match-card",
       "size": "360x640",
       "page": 1,
-      "inner": 1.36,
-      "rules": ["frame", "size"]
-    },
-    {
-      "screen": "friends-match-card",
-      "size": "390x844",
-      "page": 1,
-      "inner": 1.24,
+      "inner": 1.07,
       "rules": ["frame"]
-    },
-    {
-      "screen": "friends-match-card",
-      "size": "360x640@200%",
-      "page": 1,
-      "inner": 1,
-      "rules": ["size"]
     },
     {
       "screen": "light-location-edit",

@@ -62,11 +62,11 @@ function NameWithIcon({ name }: { name: string }) {
 }
 
 /**
- * The sources of a collector card in one row at its foot (US-QS-32, F-0135, SG-TOUCH-01): "Quellen" with each source once,
- * in secondary text. The row and each link are at least 44 px high (`min-h-11`), the link has the lucide external-link icon
- * after its last word, so the icon wraps with the text at large text size. The sources are separated by space, not by a
- * dot: a dot would hang at the end of a line or stand alone once the row wraps. The facts above carry no links. Without a
- * source nothing is shown (P-08).
+ * The sources of a collector card, the section "Quellen" of the sheet that "Mehr" opens (US-QS-15, US-QS-32, F-0135,
+ * SG-TOUCH-01): its heading, and under it each source once, in secondary text. The row of links and each link are at least
+ * 44 px high (`min-h-11`), the link has the lucide external-link icon after its last word, so the icon wraps with the text at
+ * large text size. The sources are separated by space, not by a dot: a dot would hang at the end of a line or stand alone once
+ * the row wraps. The facts carry no links. Without a source nothing is shown (P-08).
  */
 export function SourcesRow({ card }: { card: Card }) {
   const titleId = useId();
@@ -78,26 +78,30 @@ export function SourcesRow({ card }: { card: Card }) {
     <div
       role="group"
       aria-labelledby={titleId}
-      className="flex min-h-11 min-w-0 flex-wrap items-center gap-x-3 text-sm text-muted-foreground"
+      className="grid min-w-0 gap-1 text-sm text-muted-foreground"
     >
-      <span id={titleId}>{t("sources.title")}</span>
-      {sources.map((s) => (
-        <span key={s.key} className="inline-flex min-w-0 flex-wrap items-center gap-x-2">
-          {s.url === null ? (
-            <span className="inline-flex min-h-11 items-center">{s.name}</span>
-          ) : (
-            <a
-              href={s.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-11 min-w-11 items-center underline"
-            >
-              <NameWithIcon name={s.name} />
-            </a>
-          )}
-          {s.note !== null && <span>{s.note}</span>}
-        </span>
-      ))}
+      <h3 id={titleId} className="m-0 text-base font-semibold text-foreground">
+        {t("sources.title")}
+      </h3>
+      <div className="flex min-h-11 min-w-0 flex-wrap items-center gap-x-3">
+        {sources.map((s) => (
+          <span key={s.key} className="inline-flex min-w-0 flex-wrap items-center gap-x-2">
+            {s.url === null ? (
+              <span className="inline-flex min-h-11 items-center">{s.name}</span>
+            ) : (
+              <a
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 min-w-11 items-center underline"
+              >
+                <NameWithIcon name={s.name} />
+              </a>
+            )}
+            {s.note !== null && <span>{s.note}</span>}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

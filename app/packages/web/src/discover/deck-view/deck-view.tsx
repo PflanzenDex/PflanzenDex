@@ -94,14 +94,12 @@ function Stack(props: {
         stamps={STAMPS}
         depth={suggestions.length - props.position - 1}
         enterFrom={props.returned}
-        under={
-          next === undefined ? undefined : <SuggestionCard suggestion={next} fill={!props.large} />
-        }
+        under={next && <SuggestionCard suggestion={next} fill={!props.large} preview />}
         onSwipe={props.onSwipe}
         onExited={props.onExited}
         className={cn(
-          "mx-auto flex min-h-48 w-full max-w-md",
-          props.large ? "flex-none" : "flex-1 basis-0",
+          "mx-auto flex w-full max-w-md",
+          props.large ? "flex-none" : "min-h-[16.5rem] flex-1 basis-0",
         )}
       >
         <SuggestionCard suggestion={current} titleRef={props.frontTitle} fill={!props.large} />

@@ -48,7 +48,7 @@ afterEach(() => {
 });
 
 describe("US-POK-01 collector cards section", () => {
-  it("US-POK-01 shows caught and missing cards with the catch chip, loaded with the time zone", async () => {
+  it("US-POK-01 · US-QS-15 shows caught and missing cards with the catch badge on a card row, loaded with the time zone", async () => {
     setViewportWidth(1024);
     const fetchFn = vi.fn<typeof fetch>(async () =>
       response(200, {
@@ -69,14 +69,23 @@ describe("US-POK-01 collector cards section", () => {
       }),
     );
     vi.stubGlobal("fetch", fetchFn);
-    view(<CollectorCards api="http://api" token={token} />);
-    const list = await screen.findByRole("list", { name: "Sammlerkarten" });
-    // US-QS-22, US-QS-15: every card is on the one scrolling list, with no pages, also from 768 px.
-    const items = [...list.querySelectorAll<HTMLElement>("li[data-state]")];
+    view(
+      <CollectorCards
+        api="http://api"
+        token={token}
+        detail={null}
+        onOpen={() => undefined}
+        onBack={() => undefined}
+      />,
+    );
+    const row = await screen.findByRole("region", { name: "Sammlerkarten nebeneinander" });
+    // US-QS-15, US-QS-22: every card is on the one sideways shelf, a card row (the marker `cards`), with no pages, also from 768 px.
+    expect(row.getAttribute("data-scroll-x")).toBe("cards");
+    const items = [...row.querySelectorAll<HTMLElement>("article[data-state]")];
     expect(items).toHaveLength(3);
-    expect(within(items[0] as HTMLElement).getByText("gefangen 05.03.2026")).toBeTruthy();
-    expect(within(items[1] as HTMLElement).getByText("noch nicht gefangen")).toBeTruthy();
-    expect(within(items[2] as HTMLElement).getByText("Datum unbekannt")).toBeTruthy();
+    expect(within(items[0] as HTMLElement).getByText(/gefangen 05.03.2026/)).toBeTruthy();
+    expect(within(items[1] as HTMLElement).getByText(/noch nicht gefangen/)).toBeTruthy();
+    expect(within(items[2] as HTMLElement).getByText(/gefangen, Datum unbekannt/)).toBeTruthy();
     expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
     expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
     expect(String(fetchFn.mock.calls[0]?.[0])).toMatch(/^http:\/\/api\/pokedex\/cards\?timeZone=/);
@@ -87,9 +96,17 @@ describe("US-POK-01 collector cards section", () => {
       "fetch",
       vi.fn<typeof fetch>(async () => response(200, { cards: [] })),
     );
-    view(<CollectorCards api="http://api" token={token} />);
+    view(
+      <CollectorCards
+        api="http://api"
+        token={token}
+        detail={null}
+        onOpen={() => undefined}
+        onBack={() => undefined}
+      />,
+    );
     expect(await screen.findByText(/Noch keine Sammlerkarten/)).toBeTruthy();
-    expect(screen.queryByRole("list", { name: "Sammlerkarten" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Sammlerkarten nebeneinander" })).toBeNull();
   });
 
   it("US-POK-01 a failing load shows the error with a retry (P-10)", async () => {
@@ -99,7 +116,15 @@ describe("US-POK-01 collector cards section", () => {
         response(500, { error: { code: "server.error", text: "Der Server antwortet nicht." } }),
       ),
     );
-    view(<CollectorCards api="http://api" token={token} />);
+    view(
+      <CollectorCards
+        api="http://api"
+        token={token}
+        detail={null}
+        onOpen={() => undefined}
+        onBack={() => undefined}
+      />,
+    );
     expect((await screen.findByRole("alert")).textContent).toContain("Der Server antwortet nicht.");
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });
