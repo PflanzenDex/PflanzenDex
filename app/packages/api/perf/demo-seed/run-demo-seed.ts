@@ -13,9 +13,11 @@ import { seedCatalog } from "../catalog-seed/seed-catalog.ts";
 import { replaceTaxonWithFixture, seedTaxonFixture } from "../catalog-seed/taxon-fixture.ts";
 import { PROFILES, seedStates, type Profile } from "./states/profile.ts";
 import { seedGateAccount } from "./accounts/common/gate-account.ts";
+import { seedEmptyAccount } from "./accounts/common/empty-account.ts";
 
 // Usage: PFLANZENDEX_ENV=local npm run seed:demo -w @pflanzendex/api
-// Fills the dev accounts test, test2 and test3 (#924). Local or test setups only; idempotent. See app.md "Demo seed".
+// Fills the dev accounts test, test2 and test3 (#924) and the empty account test7 (issue 2500, both profiles). Local or test
+// setups only; idempotent. See app.md "Demo seed".
 // `DEMO_SEED_PROFILE=states` adds the feature states of states/states-map.md after the base seed (US-DEV-01, #1072): worktree or test
 // databases only, never the shared dev database. `DEMO_TAXON_FIXTURE=reset` replaces the Pokédex tree by the fixture CI uses
 // (issue 2488); unset, a tree that is already there is kept.
@@ -66,6 +68,8 @@ try {
     ...(media ? { media } : {}),
     log: console.log,
   });
+  // The empty account test7: no plant, wish or friend, in both profiles (issue 2500, the empty states of the Sammlung).
+  await seedEmptyAccount(pool, { log: console.log });
   if (profile === "states") {
     await seedStates(pool, { subjects, log: console.log });
     // The Pokédex tree without foreign servers, so the card layers show content with TAXONOMY_BUILD=off (issue 1164).
@@ -78,7 +82,9 @@ try {
     await restoreAchievementNews(pool, subjects);
     console.log("Achievement news restored: test2's first-handover is new again.");
   }
-  console.log(`Demo seed done (${profile}): test, test2 and test3 (password testtest12).`);
+  console.log(
+    `Demo seed done (${profile}): test, test2, test3 and the empty test7 (password testtest12).`,
+  );
 } finally {
   await pool.end();
 }

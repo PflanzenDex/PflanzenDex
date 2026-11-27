@@ -40,12 +40,14 @@ export interface Expect {
 // reported as fitting now, only as new or worse). `test4` is the gate account with more than 100 plants (issue 1378), `test5`
 // and `test6` are the hint accounts with one plant, style few and a calm hint due (issue 2384): `test5` shows
 // `first_plant_saved` on the plant layer, `test6` `first_measurement` in "Verlauf"; both show `function_unlocked` on Heute.
+// `test7` is the empty account (issue 2500): no plant, wish or friend, so the empty states of the Sammlung (plants and species)
+// are on it.
 // Issue 2431: `kind` is what the view is and `state` the state this entry measures; `family` groups the states of one view;
 // `fail` is a path whose GET is refused (the error state); `expect` is the precondition; `sizes` names the sizes of a new state
 // (three; no field means every size of SIZES).
 export interface Screen {
   id: string;
-  account: "test" | "test2" | "test3" | "test4" | "test5" | "test6" | "anon";
+  account: "test" | "test2" | "test3" | "test4" | "test5" | "test6" | "test7" | "anon";
   path: string;
   steps?: Step[];
   route?: string;
