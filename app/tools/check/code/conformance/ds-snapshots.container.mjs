@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { serve } from "./check-conformance.mjs";
+import { updateMode } from "./ds-snapshots.lib.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const { server, url } = await serve(process.env.DS_CATALOG);
@@ -16,7 +17,7 @@ const child = spawn(
     "test",
     "-c",
     path.join(here, "ds-snapshots.config.mjs"),
-    `--update-snapshots=${process.env.DS_UPDATE === "1" ? "all" : "none"}`,
+    `--update-snapshots=${updateMode(process.env.DS_UPDATE === "1")}`,
   ],
   { stdio: "inherit", env: { ...process.env, DS_BASE_URL: url } },
 );

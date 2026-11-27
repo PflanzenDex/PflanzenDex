@@ -18,6 +18,7 @@ import {
   pageStoryIds,
   quarantineFindings,
   replacePngs,
+  seedStaging,
   snapshotStoryIds,
 } from "./ds-snapshots.lib.mjs";
 import { isEntryPoint } from "../../shared/entry-point.mjs";
@@ -104,9 +105,15 @@ function render(run) {
   fs.rmSync(outputDir, { recursive: true, force: true });
   fs.mkdirSync(outputDir, { recursive: true });
   prepare([snapshotDir, pageSnapshotDir]);
-  // An update renders into empty staging folders: the baselines are replaced only after a passing run, so a failed
-  // `make ds-snapshots` leaves the committed pictures as they were (issue 2286).
+  // An update renders into staging folders: the baselines are replaced only after a passing run, so a failed
+  // `make ds-snapshots` leaves the committed pictures as they were (issue 2286). The staging folders start with the
+  // committed pictures of the stories that still render, and the run writes only the ones that fail or are missing,
+  // so a picture that differs below the tolerance keeps its file (issue 2641).
   const staged = update ? { snapshotDir: stage(), pageSnapshotDir: stage() } : null;
+  if (staged) {
+    seedStaging(snapshotDir, staged.snapshotDir, expectedBaselines(ids));
+    seedStaging(pageSnapshotDir, staged.pageSnapshotDir, expectedPageBaselines(pages, skipped));
+  }
   try {
     const args = dockerArgs({
       ...run,
