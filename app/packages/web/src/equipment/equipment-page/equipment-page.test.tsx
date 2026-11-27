@@ -8,6 +8,7 @@ import { FeaturesProvider } from "@/shared/data";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { plain } from "@/shared/testing/plain-text";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { EquipmentPage } from "./equipment-page";
 import { EquipmentPageSkeleton } from "./equipment-page.skeleton";
@@ -624,7 +625,9 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(active.textContent).not.toContain("Defekt");
     const retired = screen.getByRole("button", { name: /Lampe alt/ });
     // The retirement is plain muted text at the head of the meta line, so the row has no trailing badge at all.
-    expect(within(retired).getByText("Ausgemustert · Lampe · Lichtzone fehlt")).toBeTruthy();
+    expect(plain(retired.querySelector("[data-row-meta]")?.textContent)).toBe(
+      "Ausgemustert · Lampe · Lichtzone fehlt",
+    );
     expect(within(retired).queryByText("Ausgemustert")).toBeNull();
     expect(retired.querySelector(".bg-warning")).toBeNull();
     expect(retired.textContent).toMatch(/Lichtzone fehlt$/);
@@ -634,7 +637,8 @@ describe("US-QS-22 the equipment fits one screen", () => {
     fakeServer([item({ id: "e3", name: "Lampe alt", status: "retired" })]);
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
     const row = await screen.findByRole("button", { name: /Lampe alt/ });
-    const meta = within(row).getByText("Ausgemustert · Lampe · Lichtzone fehlt");
+    const meta = row.querySelector("[data-row-meta]") as HTMLElement;
+    expect(plain(meta.textContent)).toBe("Ausgemustert · Lampe · Lichtzone fehlt");
     expect(meta.className.split(" ")).toEqual(
       expect.arrayContaining(["[overflow-wrap:break-word]", "text-muted-foreground"]),
     );
@@ -642,7 +646,7 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(meta.className.split(" ")).not.toContain("max-w-[60%]");
     expect(meta.parentElement?.className.split(" ")).not.toContain("max-w-[60%]");
     // Only the name and the meta line are in the row's text: nothing trails them but the chevron.
-    expect(row.textContent).toBe("Lampe alt Ausgemustert · Lampe · Lichtzone fehlt");
+    expect(plain(row.textContent)).toBe("Lampe alt Ausgemustert · Lampe · Lichtzone fehlt");
     expect(row.querySelectorAll("svg")).toHaveLength(2);
   });
 
@@ -898,7 +902,7 @@ describe("US-QS-32 zone names and a missing zone in equipment", () => {
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
     const layer = await screen.findByRole("dialog", { name: "Geräte" });
     const regal = await within(layer).findByRole("button", { name: /Regal Lampe/ });
-    expect(regal.textContent).toContain("Lampe · Zone 1 (Stecklingslicht)");
+    expect(plain(regal.textContent)).toContain("Lampe · Zone 1 (Stecklingslicht)");
     expect(regal.textContent).not.toContain("Zone 1 · Stecklingslicht");
     const lose = within(layer).getByRole("button", { name: /Lose Lampe/ });
     expect(lose.textContent).toContain("Lichtzone fehlt");
@@ -1032,7 +1036,9 @@ describe("US-QS-32 the equipment rows are flat grouped rows (FX-35, SG-LIST-03, 
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=items");
     const row = await screen.findByRole("button", { name: /Lampe defekt/ });
     expect(row.querySelector('[class~="size-[56px]"] svg')).not.toBeNull();
-    expect(within(row).getByText("Lampe · Lichtzone fehlt")).toBeTruthy();
+    expect(plain(row.querySelector("[data-row-meta]")?.textContent)).toBe(
+      "Lampe · Lichtzone fehlt",
+    );
     expect(within(row).getByText("Defekt").className).toContain("bg-warning");
     // The badge takes the place of the chevron: the placeholder is the row's only icon (SG-LIST-03).
     expect(row.querySelectorAll("svg")).toHaveLength(1);

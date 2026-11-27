@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { Anniversaries, anniversaryText } from "./anniversaries";
+import { plain } from "@/shared/testing/plain-text";
 
 afterEach(() => {
   cleanup();
@@ -72,7 +73,7 @@ describe("US-ACH-06 anniversaries on the Today list", () => {
     show();
     const row = await screen.findByRole("link", { name: /„Aloe“ ist 1 Jahr bei dir/ });
     expect(row.getAttribute("href")).toBe("/collection?view=plants&sheet=plant-s1");
-    expect(row.textContent).toContain("Jubiläum · Seit dem 10.04.2025.");
+    expect(plain(row.textContent)).toContain("Jubiläum · Seit dem 10.04.2025.");
     expect(row.querySelector("svg")).not.toBeNull();
     expect(screen.queryByRole("button", { name: /Zur Sammlung/ })).toBeNull();
   });

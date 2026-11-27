@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
 import { OBJECT_GROUP, ROW_GROUP } from "./group-classes";
 import { GroupedList, GroupedRow } from "./grouped-list";
 
@@ -201,7 +202,10 @@ describe("US-QS-32 GroupedRow (SG-LIST-04, SG-TYPE-02, SG-COLOR-02)", () => {
         </GroupedList>,
       ),
     );
-    const object = screen.getByText(long).className.split(" ");
+    // The text is split into one span per part (issue 2606): the meta line is the parent of the parts.
+    const line = screen.getByRole("link", { name: /^Clip/ }).querySelector("[data-row-meta]");
+    expect(plain(line?.textContent)).toBe(long);
+    const object = (line?.className ?? "").split(" ");
     expect(object).not.toContain("truncate");
     expect(object).toContain("[overflow-wrap:break-word]");
     expect(object).not.toContain("[overflow-wrap:anywhere]");

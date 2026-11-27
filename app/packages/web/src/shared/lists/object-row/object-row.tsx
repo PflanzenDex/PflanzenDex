@@ -28,7 +28,10 @@ export type ObjectRowProps = {
   alt?: string | undefined;
   /** The name: wraps to two lines, then clamps (SG-TYPE-05). */
   title: ReactNode;
-  /** The meta line: it wraps to further lines when it is long and is never cut (SG-LIST-03, d-168, issue 2599). */
+  /**
+   * The meta line: it wraps to further lines when it is long and is never cut (SG-LIST-03, d-168, issue 2599). A text with
+   * " · " parts (a string, or a fragment of elements and strings) breaks between its parts, not inside one (issue 2606).
+   */
   meta?: ReactNode | undefined;
   /** The one trailing element: a badge or a value. It takes the place of the chevron (SG-LIST-03). */
   trailing?: ReactNode;

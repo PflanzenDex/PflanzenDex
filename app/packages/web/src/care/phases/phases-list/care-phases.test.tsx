@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderToString as render } from "react-dom/server";
 import { MemoryRouter } from "react-router";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
@@ -5,6 +6,14 @@ import { describe, expect, it, vi } from "vitest";
 import { PhasesList } from "./phases-list";
 import { Entry } from "./entry/entry";
 import { loadCarePhases } from "../../shared/api/care-phases-api";
+import { plain } from "@/shared/testing/plain-text";
+
+/** The text of rendered markup, as a keeper reads it (the dot of a meta line follows a no-break space, issue 2606). */
+const textOf = (html: string) => {
+  const host = document.createElement("div");
+  host.innerHTML = html;
+  return plain(host.textContent);
+};
 
 const renderToString = (e: Parameters<typeof render>[0]) => render(e).replaceAll("<!-- -->", "");
 /** A compact row opens its plant with the router of the page around it (US-QS-19). */
@@ -149,7 +158,7 @@ describe("US-QS-32 the phase row is the plant row: its own name, its species, on
   it("US-QS-32 a plant with its own name shows that name as the title and its species in the one meta line", () => {
     const h = onlyRow({ name: "Bogenhanf – Ableger", marker: "Ableger", speciesName: "Bogenhanf" });
     expect(h).toContain(">Ableger<");
-    expect(h).toContain("Bogenhanf · Nächster Wechsel zur Wachstumsphase: 16.03.2027");
+    expect(textOf(h)).toContain("Bogenhanf · Nächster Wechsel zur Wachstumsphase: 16.03.2027");
   });
 
   it("US-QS-32 a plant without its own name shows its name as the title and no species again (SG-LIST-07)", () => {
@@ -243,7 +252,7 @@ describe("US-QS-32 the meta line of a phase row: species first, then the forecas
   });
 
   it("US-QS-32 a plant with its own name: its species comes first, then the forecast", () => {
-    expect(rowWith({ name: "Bogenhanf – Ableger", marker: "Ableger" })).toContain(
+    expect(textOf(rowWith({ name: "Bogenhanf – Ableger", marker: "Ableger" }))).toContain(
       "Bogenhanf · Nächster Wechsel zur Wachstumsphase: 16.03.2027",
     );
   });
@@ -257,14 +266,16 @@ describe("US-QS-32 the meta line of a phase row: species first, then the forecas
 
   it("US-QS-32 a moving plant with its own name reads 'species · Soll-Standort: target'", () => {
     expect(
-      rowWith(
-        {
-          name: "Bogenhanf – Ableger",
-          marker: "Ableger",
-          locationId: "s1",
-          targetLocationId: "s2",
-        },
-        true,
+      textOf(
+        rowWith(
+          {
+            name: "Bogenhanf – Ableger",
+            marker: "Ableger",
+            locationId: "s1",
+            targetLocationId: "s2",
+          },
+          true,
+        ),
       ),
     ).toContain("Bogenhanf · Soll-Standort: Keller");
   });

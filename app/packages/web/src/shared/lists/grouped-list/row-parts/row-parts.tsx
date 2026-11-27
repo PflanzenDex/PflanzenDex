@@ -3,16 +3,19 @@ import { Link } from "react-router";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
+import { metaParts } from "./row-parts.meta";
 
 /**
  * An object's name wraps to two lines before it is cut (SG-TYPE-05) and breaks at German syllables, not at any letter, when
  * one word is wider than the column at 200 % text ("Schmetterlings-orchidee", `lang="de"` on the document, issue 2366). A
  * scientific name in the title is italic and carries `hyphens-manual` itself. Its meta line wraps to further lines when it is
- * long (owner decision d-168, issue 2599): nothing is hidden and the row grows only when needed. It breaks at spaces, so
- * between words and at the " · " parts; `break-word` lets one word wider than the column break as the last resort only.
+ * long (owner decision d-168, issue 2599): nothing is hidden and the row grows only when needed. It breaks between its " · "
+ * parts and not inside one, and never before a dot (`metaParts`, issue 2606); a part wider than the column wraps at its own
+ * spaces, and `break-word` lets one word wider than the column break as the last resort only. `text-pretty` keeps a single
+ * word from standing alone on the last line of such a part.
  */
 export const OBJECT_TITLE = "line-clamp-2 hyphens-auto";
-export const OBJECT_META = "[overflow-wrap:break-word]";
+export const OBJECT_META = "text-pretty [overflow-wrap:break-word]";
 
 export type RowContentProps = {
   leading: ReactNode;
@@ -69,13 +72,14 @@ export function RowContent(props: RowContentProps) {
           <>
             {" "}
             <span
+              data-row-meta={props.object ? "" : undefined}
               className={cn(
                 "text-sm",
                 props.object ? OBJECT_META : "[overflow-wrap:anywhere]",
                 !props.warning && "text-muted-foreground",
               )}
             >
-              {props.meta}
+              {props.object ? metaParts(props.meta) : props.meta}
             </span>
           </>
         )}
