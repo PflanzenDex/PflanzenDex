@@ -3,7 +3,7 @@ import { Button } from "@/shared/ui/button";
 import { DateField } from "@/shared/ui/input.date-field";
 import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import { Label } from "@/shared/ui/label";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { currentTimeZone } from "../../../shared/data";
 import { addDays, localToday } from "./pause";
 

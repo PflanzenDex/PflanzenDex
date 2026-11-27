@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { Button } from "@/shared/ui/button";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LayerHost, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { ScrollRegion } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-region/scroll-region";
+import { ScrollRegion } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-region/scroll-region";
 import { GroupedList } from "@/shared/lists/grouped-list/grouped-list";
 import { useInvalidate } from "../../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";

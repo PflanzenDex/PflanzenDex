@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { SharingRow, SpecimenRow } from "@pflanzendex/core";
-import { useIsShort } from "@/shared/patterns/responsive/pager/card-page-size";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { useIsShort } from "@/shared/patterns/responsive/entry-list/card-page-size";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { texts } from "@/shared/lib/text-rules/texts";

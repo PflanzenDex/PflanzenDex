@@ -29,8 +29,8 @@ const SHARED_SCROLL = [
   // The card row and the chip row mark their sideways regions themselves (`data-scroll-x`, issue 2421).
   "packages/web/src/shared/patterns/display/card-row/",
   "packages/web/src/shared/patterns/elements/chip-row/",
-  // remove with #2422 (the frame and one-screen component ticket)
-  "packages/web/src/shared/patterns/responsive/pager/paging/scroll-entries/",
+  // ScrollEntries owns the scroll region of every list (the Pager is gone since #2422; directory renamed in #2603).
+  "packages/web/src/shared/patterns/responsive/entry-list/paging/scroll-entries/",
   "packages/web/src/shared/patterns/responsive/layer-sheet/layer-host/layer-pane/",
   "packages/web/src/shared/ui/sheet.",
   "packages/web/src/shared/ui/dialog.",

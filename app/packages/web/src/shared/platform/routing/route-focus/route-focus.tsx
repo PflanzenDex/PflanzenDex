@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigationType } from "react-router";
 import { useAnnounce } from "@/shared/platform/announcer/context";
-import { OLD_PARTS, LIST_PARTS } from "@/shared/patterns/responsive/pager/paging/address";
+import { OLD_PARTS, LIST_PARTS } from "@/shared/patterns/responsive/entry-list/paging/address";
 import { takeQuiet } from "./quiet-steps";
 import { claimedTitle } from "./view-start";
 

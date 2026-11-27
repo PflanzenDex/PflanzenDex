@@ -4,7 +4,7 @@ import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { GroupedList } from "@/shared/lists/grouped-list/grouped-list";
 import { ROW_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { localToday, type TodayList } from "@pflanzendex/core";
 import type { ReactNode } from "react";

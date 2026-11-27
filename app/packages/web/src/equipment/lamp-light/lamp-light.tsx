@@ -4,7 +4,7 @@ import { LimitForm } from "./limit-form/limit-form";
 import { MeasureForm } from "./measure-form/measure-form";
 import { lux } from "./parse";
 import type { MeasurementInput } from "../equipment-api";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { keepTogether } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { zoneLabel } from "@pflanzendex/core";

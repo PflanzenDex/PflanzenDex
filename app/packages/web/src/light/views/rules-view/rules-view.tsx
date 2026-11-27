@@ -3,7 +3,7 @@ import { classificationRules, zoneLabel } from "@pflanzendex/core";
 import { withUnit } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import type { LightZone } from "../../shared/light-api/light-api";
 import { MoreHelp } from "@/shared/ui/more-help";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";

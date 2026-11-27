@@ -1,6 +1,6 @@
 import { createContext, useContext, type Key, type ReactNode } from "react";
-import { ScrollEntries } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-entries";
-import type { EntriesPaging } from "@/shared/patterns/responsive/pager/paging/paging";
+import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
+import type { EntriesPaging } from "@/shared/patterns/responsive/entry-list/paging/paging";
 import { GroupedList } from "../../grouped-list";
 
 /** One group of a grouped list: its entries, its count and what stands in its section (SG-LIST-06, SG-LIST-08). */

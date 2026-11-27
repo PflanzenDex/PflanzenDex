@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from "react";
-import { ScrollRegion } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-region/scroll-region";
+import { ScrollRegion } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-region/scroll-region";
 import { scrollToTop } from "@/shared/platform/device/motion/scroll-top";
 import {
   countOf,
