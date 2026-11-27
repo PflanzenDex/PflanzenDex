@@ -1,5 +1,5 @@
 import type { EmptyReason, MatchCard as Card, MatchEntry } from "@pflanzendex/core";
-import { useState, type ReactNode, type Ref } from "react";
+import { type ReactNode, type Ref } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
@@ -7,7 +7,7 @@ import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
 import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { largeText } from "@/shared/patterns/display/card/card-picture/large-text";
+import { useLargeText } from "@/shared/patterns/display/card/card-picture/use-large-text";
 import table from "../../../swap.de.json";
 import { MatchCard } from "../match-card/match-card";
 import { AnswerLists } from "./answer-lists/answer-lists";
@@ -155,8 +155,8 @@ export function MatchDeck(props: {
 }) {
   const { s, dispatch, busy, current, heading, answer, swipe, finish, exit, ask, undo, takeBack } =
     useDeck(props);
-  // Read once, as the discover deck does: a text size set while the deck is open takes effect with the next deck (US-QS-32).
-  const [large] = useState(largeText);
+  // Follows a text size set after mount (issue 2617, US-QS-32).
+  const large = useLargeText();
   const lists = (
     <AnswerLists
       entries={s.entries}

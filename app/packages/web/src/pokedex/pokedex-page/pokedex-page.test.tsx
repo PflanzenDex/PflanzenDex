@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { plain } from "@/shared/testing/plain-text";
 import { deviceTimeZone, setProfileTimeZone } from "../../shared/data";
 import { PokedexPage } from "./pokedex-page";
 import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
@@ -167,9 +168,11 @@ describe("US-POK-06 page of the caught species", () => {
     );
     view(<PokedexPage api="http://api" token={token} />, "/?sheet=uncounted");
     const first = await screen.findByRole("link", { name: /Amaryllis/ });
-    expect(first.textContent).toBe("Amaryllis Hippeastrum · Bestimme die Art, dann zählt sie.");
+    expect(plain(first.textContent)).toBe(
+      "Amaryllis Hippeastrum · Bestimme die Art, dann zählt sie.",
+    );
     const other = screen.getByRole("link", { name: /Kaktus/ });
-    expect(other.textContent).toBe("Kaktus Art nicht lesbar · Lege die Art fest.");
+    expect(plain(other.textContent)).toBe("Kaktus Art nicht lesbar · Lege die Art fest.");
     expect(
       screen.getByText("Diese Pflanzen haben noch keine bestimmte Art und zählen noch nicht."),
     ).toBeTruthy();

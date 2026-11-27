@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Badge } from "@/shared/ui/badge";
+import { plain } from "@/shared/testing/plain-text";
 import { Button } from "@/shared/ui/button";
 import { GroupedRow } from "../grouped-list/grouped-list";
 import { ObjectRow } from "./object-row";
@@ -11,6 +12,10 @@ import { ObjectRow } from "./object-row";
 afterEach(cleanup);
 
 const wrap = (ui: React.ReactNode) => <MemoryRouter>{ui}</MemoryRouter>;
+
+/** The meta line of a row (`data-row-meta`), and the parts it holds (`data-meta-part`). */
+const metaOf = (row: Element) => row.querySelector("[data-row-meta]") as HTMLElement;
+const partsOf = (row: Element) => Array.from(row.querySelectorAll<HTMLElement>("[data-meta-part]"));
 
 describe("US-QS-32 ObjectRow: the name wraps to two lines, the meta wraps too (SG-TYPE-05, SG-LIST-03)", () => {
   it("US-QS-32 a name of two lines is clamped at two lines and never cut at one", () => {
@@ -40,8 +45,9 @@ describe("US-QS-32 ObjectRow: the name wraps to two lines, the meta wraps too (S
   it("US-QS-32 the meta line wraps to further lines when it is long and is never cut with an ellipsis (d-168, issue 2599)", () => {
     const long = "Zone 3 · 39 Pflanzen · Schwierigkeit: unbekannt";
     render(wrap(<ObjectRow to="/plant/s1" title="Clip" meta={long} />));
-    // The whole text is in the DOM, not cut by script.
-    const meta = screen.getByText(long);
+    // The whole text is in the DOM, not cut by script (the no-break space before each dot is a space to the eye).
+    const meta = metaOf(screen.getByRole("link", { name: /^Clip/ }));
+    expect(plain(meta.textContent)).toBe(long);
     const classes = meta.className.split(" ");
     // `truncate` is overflow hidden, an ellipsis and no wrapping: none of the three may stay (jsdom has no layout).
     expect(classes).not.toContain("truncate");
@@ -77,7 +83,9 @@ describe("US-QS-32 ObjectRow: the whole row is the target, named by its title (S
         />,
       ),
     );
-    const link = screen.getByRole("link", { name: "Clip Efeutute · Zone 2 Behandeln" });
+    const link = screen.getByRole("link", {
+      name: (name) => plain(name) === "Clip Efeutute · Zone 2 Behandeln",
+    });
     expect(link.getAttribute("href")).toBe("/plant/s1");
     expect(link.getAttribute("aria-labelledby")).toBeNull();
     expect(link.getAttribute("aria-describedby")).toBeNull();
@@ -293,5 +301,145 @@ describe("US-QS-32 ObjectRow: the row wraps its action, and the name keeps its t
     const { container } = render(wrap(<ObjectRow to="/plant/s1" title="Clip" />));
     expect(container.querySelector('[class~="max-w-full"]')).toBeNull();
     expect(classesOf(container.firstElementChild)).toContain("flex-wrap");
+  });
+});
+
+describe("US-QS-32 ObjectRow: the meta line breaks only between its parts and never starts with a dot (issue 2606, d-168)", () => {
+  const META = "Efeutute · Zone 3 — 1 Pflanzen · Mittel";
+  const row = () => screen.getByRole("link", { name: /^Clip/ });
+
+  it("US-QS-32 a meta with several parts renders one span per part, and its text is the original string", () => {
+    render(wrap(<ObjectRow to="/plant/s1" title="Clip" meta={META} />));
+    const parts = partsOf(row());
+    expect(parts).toHaveLength(3);
+    expect(parts.map((p) => plain(p.textContent))).toEqual([
+      "Efeutute ·",
+      "Zone 3 — 1 Pflanzen ·",
+      "Mittel",
+    ]);
+    // Every part is a child of the meta line, and the text of the line is the string the caller gave.
+    for (const part of parts) expect(part.parentElement).toBe(metaOf(row()));
+    expect(plain(metaOf(row()).textContent)).toBe(META);
+  });
+
+  it("US-QS-32 no part starts with the dot: the separator ends the part before it, after a no-break space", () => {
+    render(wrap(<ObjectRow to="/plant/s1" title="Clip" meta={META} />));
+    const parts = partsOf(row());
+    for (const part of parts) expect(part.textContent?.trimStart().startsWith("·")).toBe(false);
+    // The last part has no separator; each other part ends with "\u00A0·" (no break before the dot).
+    expect(parts.map((p) => p.textContent?.endsWith("\u00A0·"))).toEqual([true, true, false]);
+    // Between two parts there is one plain space: the only place where the line may break.
+    const line = metaOf(row());
+    const gaps = Array.from(line.childNodes)
+      .filter((n) => n.nodeType === Node.TEXT_NODE)
+      .map((n) => n.textContent);
+    expect(gaps).toEqual([" ", " "]);
+  });
+
+  it("US-QS-32 a part stays together when it fits and wraps at its own spaces only when wider than the column", () => {
+    render(wrap(<ObjectRow to="/plant/s1" title="Clip" meta={META} />));
+    const classes = partsOf(row())[1]?.className.split(" ") ?? [];
+    // An inline box that is as wide as its text, never wider than the column; `align-top` keeps the lines of a wrapped part aligned.
+    expect(classes).toEqual(expect.arrayContaining(["inline-block", "max-w-full", "align-top"]));
+    // A long word inside a part breaks as the last resort (inherited from the meta line), never overflows.
+    expect(metaOf(row()).className.split(" ")).toContain("[overflow-wrap:break-word]");
+  });
+
+  it("US-QS-32 the meta line balances its last line, so a single word does not stand alone (text-pretty)", () => {
+    render(wrap(<ObjectRow to="/plant/s1" title="Clip" meta={META} />));
+    expect(metaOf(row()).className.split(" ")).toContain("text-pretty");
+  });
+
+  it("US-QS-32 a meta without a separator stays one plain text, and an element that is no fragment stays as given", () => {
+    const { rerender } = render(wrap(<ObjectRow to="/plant/s1" title="Clip" meta="Efeutute" />));
+    expect(partsOf(row())).toHaveLength(0);
+    expect(metaOf(row()).textContent).toBe("Efeutute");
+    rerender(wrap(<ObjectRow to="/plant/s1" title="Clip" meta={<b>Efeutute · Zone 2</b>} />));
+    expect(partsOf(row())).toHaveLength(0);
+    expect(metaOf(row()).textContent).toBe("Efeutute · Zone 2");
+  });
+
+  it("US-QS-32 a fragment of an italic name and a text is split too: the name stays whole in its part (the wish row, issue 2606)", () => {
+    render(
+      wrap(
+        <ObjectRow
+          to="/plant/s1"
+          title="Clip"
+          meta={
+            <>
+              <i className="italic">Haworthia fasciata</i>
+              {" · Zone 3 — 1 Pflanzen · Schwierigkeit: Mittel"}
+            </>
+          }
+        />,
+      ),
+    );
+    const parts = partsOf(row());
+    expect(parts.map((p) => plain(p.textContent))).toEqual([
+      "Haworthia fasciata ·",
+      "Zone 3 — 1 Pflanzen ·",
+      "Schwierigkeit: Mittel",
+    ]);
+    // The italic name is the first part's element, and the dot follows it in the same part.
+    expect(parts[0]?.querySelector("i")?.textContent).toBe("Haworthia fasciata");
+    expect(parts[0]?.textContent?.endsWith("\u00A0·")).toBe(true);
+    expect(plain(metaOf(row()).textContent)).toBe(
+      "Haworthia fasciata · Zone 3 — 1 Pflanzen · Schwierigkeit: Mittel",
+    );
+  });
+
+  it("US-QS-32 a fragment with a lone separator between two elements puts the dot at the end of the part before it", () => {
+    render(
+      wrap(
+        <ObjectRow
+          to="/plant/s1"
+          title="Clip"
+          meta={
+            <>
+              <b>Behandeln</b>
+              {" · "}
+              {"Efeutute · Lichtzone unbekannt"}
+            </>
+          }
+        />,
+      ),
+    );
+    expect(partsOf(row()).map((p) => plain(p.textContent))).toEqual([
+      "Behandeln ·",
+      "Efeutute ·",
+      "Lichtzone unbekannt",
+    ]);
+    expect(plain(metaOf(row()).textContent)).toBe("Behandeln · Efeutute · Lichtzone unbekannt");
+  });
+
+  it("US-QS-32 a row that is no object row (a settings row) keeps its meta as one text", () => {
+    render(
+      <MemoryRouter>
+        <ul>
+          <GroupedRow to="/konto" title="Konto" meta="Lena · Europe/Berlin" />
+        </ul>
+      </MemoryRouter>,
+    );
+    expect(document.querySelectorAll("[data-meta-part]")).toHaveLength(0);
+    expect(screen.getByText("Lena · Europe/Berlin")).toBeTruthy();
+  });
+
+  it("US-QS-32 WCAG 2.5.3 the link is named by its visible text in order, the parts included", () => {
+    render(
+      wrap(
+        <ObjectRow
+          to="/plant/s1"
+          title="Clip"
+          meta="Efeutute · Zone 2"
+          trailing={<Badge variant="warning">Behandeln</Badge>}
+        />,
+      ),
+    );
+    // The no-break space before a dot is a space to a screen reader and to speech input.
+    const link = screen.getByRole("link", {
+      name: (name) => plain(name) === "Clip Efeutute · Zone 2 Behandeln",
+    });
+    expect(plain(link.textContent)).toBe("Clip Efeutute · Zone 2 Behandeln");
+    expect(link.getAttribute("aria-labelledby")).toBeNull();
   });
 });

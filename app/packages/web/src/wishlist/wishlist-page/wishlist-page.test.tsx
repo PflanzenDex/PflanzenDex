@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { plain } from "@/shared/testing/plain-text";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { classesOf, hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button.roles";
 import { WishlistPage } from "./wishlist-page";
@@ -230,7 +231,7 @@ describe("US-WUN-01 page of the candidate list", () => {
     const rows = screen.getAllByRole("listitem");
     expect(rows[0]?.textContent).toContain("1. Korbmarante");
     expect(rows[1]?.textContent).toContain("2. Ficus");
-    expect(rows[1]?.textContent).toContain("Ziel-Zone unbekannt · Schwierigkeit: unbekannt");
+    expect(plain(rows[1]?.textContent)).toContain("Ziel-Zone unbekannt · Schwierigkeit: unbekannt");
   });
 
   it("US-WUN-01 · US-QS-22 the card of a wish without picture says 'Kein Bild' and 'Schwierigkeit: unbekannt'", async () => {

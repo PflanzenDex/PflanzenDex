@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "../pokedex-page/pokedex-page";
 import { pokedexReadAnswer } from "../pokedex-page/pokedex-reads-fake";
+import { plain } from "@/shared/testing/plain-text";
 import { isFilled, isPlain, isTinted } from "@/shared/ui/button.roles";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
@@ -331,7 +332,10 @@ describe("US-QS-32 the species list names a species the SG-TYPE-08 way (F-0119)"
     expect(within(entry).getByText("Geigenfeige").closest("i")).toBeNull();
     const latin = within(entry).getByText("Ficus lyrata");
     expect(latin.tagName).toBe("I");
-    expect(latin.parentElement?.textContent).toBe("Ficus lyrata · gefangen 05.03.2026");
+    // The name is the first part of the meta line (issue 2606): the line is its closest meta element.
+    expect(plain(latin.closest("[data-row-meta]")?.textContent)).toBe(
+      "Ficus lyrata · gefangen 05.03.2026",
+    );
   });
 
   it("US-QS-32 without a German name the scientific name is the one italic title, once", async () => {
