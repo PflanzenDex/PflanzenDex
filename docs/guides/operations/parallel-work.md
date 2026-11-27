@@ -172,7 +172,15 @@ The roles are indexed in `CLAUDE.md` ("Agent sessions and models"); each subagen
 - One lead runs one implementer. The orchestrator adds implementers by the machine's resources (CPU, free RAM, running heavy jobs); heavy work waits on the heavy lock: `make heavy-lock` for a heavy target, `make heavy RUN="<command>"` for an ad-hoc command (see "One heavy job at a time").
 - No hard cap on open PRs; with three open PRs that are all drafts, it finishes them before claiming more.
 - It takes the owner's decisions and relays them to the leads, and spot-checks each lead's report against the merged head on `dev`.
-- It works on one large item and several small items at once, only when their files do not collide (owner decision 2026-11-26, d-118). Before it starts an item, it compares `git diff --name-only origin/dev...<branch>` of each running item with the files of the new one. This replaces the one-item rule of 2026-11-21 (issue 2413). The item's own implementer and specialists are part of it. Heavy jobs still go through `make heavy` and `make heavy-lock`.
+- The number of items it runs at once is not fixed (owner decision 2026-11-27, d-177; it replaces the rule of one large item and several small items, d-118, and the one-item rule of 2026-11-21, issue 2413). Before it starts another lead, it checks the capacity:
+  - Machine resources: free RAM of the 16 GB that Colima and the builds share, CPU, and the queue of the heavy lock. Heavy jobs still go through `make heavy` and `make heavy-lock`.
+  - The session and weekly usage limit that is left.
+  - The orchestrator bottleneck. Only the main session does story snapshot runs, gate edits, merges into `dev` and fast-forwards of the checkout.
+  - Open owner questions that wait for an answer.
+  - File collisions. Compare `git diff --name-only origin/dev...<branch>` of each running item with the files of the new one. Shared hot files count too: the counters in the product readme, the gate baselines and the design-system inventory. A collision stays a hard stop.
+  - The CI queue and the free disk. Each worktree has its own `node_modules` and test database.
+
+  The item's own implementer and specialists are part of the item.
 - The owner may set GitHub auto-merge on an `owner-merge` PR. Before a lead says "waiting for the owner" or runs `make merge`, it checks `gh pr view <n> --json autoMergeRequest`. With auto-merge on, the lead pushes only complete states and never runs `make merge`.
 - It asks the owner the item's open questions before the lead briefs an implementer (step 0 of `ticket-lead.md`), so an item stops for the owner once. While the owner is present, it asks the open decisions of an item at once. A tool-adoption ticket stops at its marked decision points, even at night (d-114).
 - After each merged item it updates the session handoff and suggests `/clear` to the owner, once every open PR's Handoff carries the state, open questions and owner decisions; a short context costs less on every turn (issue 2413).
