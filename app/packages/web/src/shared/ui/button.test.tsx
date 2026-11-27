@@ -158,6 +158,40 @@ describe("Button (US-QS-07, DS-15, DS-34, DS-36)", () => {
     expect(screen.getByTestId("glyph").getAttribute("aria-hidden")).toBe("true");
   });
 
+  it("US-QS-07 · SG-ICON-01 an icon in a button keeps its size and does not take the press (issue 2564)", () => {
+    // jsdom has no layout: the rule is checked in the class string; the width at 320 px is the story `LongLabelWithIcon`.
+    for (const size of ["default", "sm", "lg", "touch", "row"] as const) {
+      render(
+        <Button size={size}>
+          <svg data-testid={`glyph-${size}`} aria-hidden="true" className="size-5" />
+          Zur Pflanze mit dem sehr langen Namen
+        </Button>,
+      );
+      const glyph = screen.getByTestId(`glyph-${size}`);
+      const classes = (glyph.closest("button")?.className ?? "").split(/\s+/);
+      expect(classes).toContain("[&_svg]:shrink-0");
+      expect(classes).toContain("[&_svg]:pointer-events-none");
+      // Upstream's default `size-4` is not taken: SG-ICON-01 fixes 20 px and every caller sets its own size class.
+      expect(classes.some((c) => c.startsWith("[&_svg]:size-"))).toBe(false);
+      // The icon's own size class stays on the icon, not on the button.
+      expect(glyph.getAttribute("class")).toBe("size-5");
+    }
+  });
+
+  it("US-QS-07 · SG-ICON-01 a link button (asChild) gets the same icon rules (issue 2564)", () => {
+    render(
+      <Button asChild variant="tinted">
+        <a href="/pflanzen">
+          <svg aria-hidden="true" className="size-5" />
+          Zu den Pflanzen
+        </a>
+      </Button>,
+    );
+    const classes = screen.getByRole("link", { name: "Zu den Pflanzen" }).className.split(/\s+/);
+    expect(classes).toContain("[&_svg]:shrink-0");
+    expect(classes).toContain("[&_svg]:pointer-events-none");
+  });
+
   it("US-QS-07 · DS-17 an icon-only button without aria-label does not type-check", () => {
     // @ts-expect-error size="icon" requires aria-label
     render(<Button size="icon" />);
