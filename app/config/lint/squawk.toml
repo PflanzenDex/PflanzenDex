@@ -1,6 +1,5 @@
-# squawk rule set of d-121 (issue 2519), for the migrations in app/packages/db/migrations/. Not wired into the Makefile or CI yet
-# (owner decision): run it as `npx --yes squawk-cli@2.74.0 --config app/config/lint/squawk.toml app/packages/db/migrations/*.sql`
-# (squawk-cli is not a dependency of the repo). The runner runs every file in a transaction, hence assume_in_transaction;
+# squawk rule set of d-121 (issue 2519), for the migrations in app/packages/db/migrations/. Run by `make squawk` (a step of `make gates`, issue 2512);
+# squawk-cli is a pinned devDependency of app/ (`npm run squawk`). The runner runs every file in a transaction, hence assume_in_transaction;
 # the timeout rules (require-lock-timeout, require-statement-timeout) and require-concurrent-index-creation are on by default.
 excluded_rules = ["prefer-robust-stmts"]
 assume_in_transaction = true

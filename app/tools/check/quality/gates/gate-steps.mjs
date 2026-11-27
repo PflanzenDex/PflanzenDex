@@ -20,6 +20,7 @@ export const GATE_STEPS = [
   npmStep("layout"),
   npmStep("boundaries"),
   npmStep("db-indexes"),
+  npmStep("squawk"),
   npmStep("migration-numbers"),
   npmStep("baseline", needsSharedPass),
   npmStep("design-system"),

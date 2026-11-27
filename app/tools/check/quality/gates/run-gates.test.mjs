@@ -26,6 +26,7 @@ const CHAIN = [
   "layout",
   "boundaries",
   "db-indexes",
+  "squawk",
   "migration-numbers",
   "baseline",
   "design-system",
