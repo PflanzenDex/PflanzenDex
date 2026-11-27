@@ -72,13 +72,6 @@
       "rules": ["action"]
     },
     {
-      "screen": "friends-match-card",
-      "size": "360x640",
-      "page": 1,
-      "inner": 1.07,
-      "rules": ["frame"]
-    },
-    {
       "screen": "unlock-friends",
       "size": "360x640@200%",
       "page": 1,
