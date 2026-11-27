@@ -19,6 +19,9 @@ const UNCAUGHT_PARAM = "uncaught";
 
 export type Filters = { difficulty: 1 | 2 | 3 | null; own: boolean; uncaught: boolean };
 
+/** A changed filter moves the focus to the heading, unless the control stays and passes `keepFocus` (US-QS-15, issue 2628). */
+export type FilterChange = (patch: Partial<Filters>, options?: { keepFocus?: boolean }) => void;
+
 /**
  * The quick filters of "Entdecken" (US-QS-15, US-QS-21, owner decision d-166, issues 2587 and 2615): the chips "Leicht" and
  * "Noch nicht gefangen" above the list. `caught` holds the ids of the species the account has caught, which the app reads
@@ -47,7 +50,7 @@ function useFilters(canUncaught: boolean) {
     uncaught: params.get(UNCAUGHT_PARAM) === "1",
   };
   const filters: Filters = { ...chosen, uncaught: chosen.uncaught && canUncaught };
-  const change = (patch: Partial<Filters>) => {
+  const change: FilterChange = (patch, options) => {
     const next = new URLSearchParams(params);
     const merged = { ...chosen, ...patch };
     if (merged.difficulty === null) next.delete(DIFFICULTY_PARAM);
@@ -58,7 +61,8 @@ function useFilters(canUncaught: boolean) {
     else next.delete(UNCAUGHT_PARAM);
     // A changed filter starts the list at the first entry (US-QS-15).
     dropPageParts(next, PAGE_PARAM);
-    setParams(next, { replace: true });
+    // The state is the flag alone, never the old one: with `layerFromApp` kept, "Fertig" would go back and undo the choice.
+    setParams(next, { replace: true, state: options?.keepFocus ? { keepFocus: true } : undefined });
   };
   return {
     filters,
@@ -101,11 +105,7 @@ function applyFilters(
  * (`quick`) "Leicht" and "Noch nicht gefangen" are pressed chips above the list and are not repeated here (SG-LIST-07);
  * "Noch nicht gefangen" is only in force with the quick filters, so it has no entry of its own.
  */
-export function FilterChips(props: {
-  filters: Filters;
-  quick?: boolean;
-  onChange: (patch: Partial<Filters>) => void;
-}) {
+export function FilterChips(props: { filters: Filters; quick?: boolean; onChange: FilterChange }) {
   const { filters, onChange } = props;
   const chips: { name: string; remove: () => void }[] = [];
   if (filters.difficulty !== null && !(props.quick && filters.difficulty === 1))
@@ -159,8 +159,10 @@ const CHOICES: readonly { value: Filters["difficulty"]; label: string }[] = [
 export function FiltersLayer(props: {
   filters: Filters;
   quick: QuickFilters | undefined;
-  onChange: (patch: Partial<Filters>) => void;
+  onChange: FilterChange;
 }) {
+  // The controls stay in the layer after a change, so the focus stays on the one that was used (issue 2628).
+  const change = (patch: Partial<Filters>) => props.onChange(patch, { keepFocus: true });
   return (
     <LayerSheet id={FILTERS_LAYER} title="Filter" primaryAction={<Done />}>
       <div className="flex flex-col gap-3">
@@ -168,7 +170,7 @@ export function FiltersLayer(props: {
           Schwierigkeit
           <Select
             value={props.filters.difficulty === null ? "" : String(props.filters.difficulty)}
-            onChange={(e) => props.onChange({ difficulty: difficultyOf(e.target.value || null) })}
+            onChange={(e) => change({ difficulty: difficultyOf(e.target.value || null) })}
           >
             {CHOICES.map((c) => (
               <option key={c.label} value={c.value === null ? "" : String(c.value)}>
@@ -177,17 +179,14 @@ export function FiltersLayer(props: {
             ))}
           </Select>
         </label>
-        <Checkbox
-          checked={props.filters.own}
-          onChange={(e) => props.onChange({ own: e.target.checked })}
-        >
+        <Checkbox checked={props.filters.own} onChange={(e) => change({ own: e.target.checked })}>
           Nur meine Vorschläge
         </Checkbox>
         {props.quick && (
           <Checkbox
             checked={props.filters.uncaught}
             disabled={props.quick.caught === null}
-            onChange={(e) => props.onChange({ uncaught: e.target.checked })}
+            onChange={(e) => change({ uncaught: e.target.checked })}
           >
             {t("quick.uncaught")}
           </Checkbox>
