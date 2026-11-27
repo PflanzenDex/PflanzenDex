@@ -1,5 +1,6 @@
 import { useFormContext, useWatch, type Control } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
+import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import { Select } from "@/shared/ui/select";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { MONTHS } from "../care-profile-fields";
@@ -95,8 +96,10 @@ export function MonthDay(props: {
   const accessible = (part: string) =>
     t("restPart", { when: t(props.when), part, species: props.species });
   return (
-    <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-      <legend className="text-sm font-medium">{t(props.when)}</legend>
+    <FieldSet className="gap-2">
+      <FieldLegend variant="label" className="mb-0">
+        {t(props.when)}
+      </FieldLegend>
       <div className="grid grid-cols-2 gap-2">
         <MonthSelect
           control={props.control}
@@ -111,6 +114,6 @@ export function MonthDay(props: {
           accessible={accessible(t("day"))}
         />
       </div>
-    </fieldset>
+    </FieldSet>
   );
 }

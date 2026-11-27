@@ -1,6 +1,7 @@
 import { REMINDER_OCCASIONS, type ReminderOccasion } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button";
 import { DateField } from "@/shared/ui/input.date-field";
+import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import { Label } from "@/shared/ui/label";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { currentTimeZone } from "../../../shared/data";
@@ -71,8 +72,8 @@ export function PauseRows(props: {
   onChange: (o: ReminderOccasion, until: string) => void;
 }) {
   return (
-    <fieldset className="m-0 flex flex-col gap-3 border-0 p-0">
-      <legend className="sr-only">Erinnerungen aussetzen</legend>
+    <FieldSet className="gap-3">
+      <FieldLegend srOnly>Erinnerungen aussetzen</FieldLegend>
       <p className="m-0 text-sm text-muted-foreground">
         Eine Pause gilt bis zum gewählten Tag einschließlich. Die Heute-Liste zeigt weiterhin alles,
         was fällig ist; Daten gehen nicht verloren. Einen Anlass ganz auszuschalten geht unter
@@ -88,6 +89,6 @@ export function PauseRows(props: {
           <PauseRow occasion={o} until={props.paused[o] ?? ""} onChange={props.onChange} />
         )}
       />
-    </fieldset>
+    </FieldSet>
   );
 }
