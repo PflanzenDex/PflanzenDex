@@ -34,7 +34,7 @@ const onSearch = vi.fn();
 const onOpen = vi.fn();
 const onPropose = vi.fn();
 
-type Quick = { caught: ReadonlySet<string> | null } | undefined;
+type Quick = { caught: ReadonlySet<string> | null; loading?: boolean } | undefined;
 
 const tree = (hits: readonly SpeciesHit[], quick: Quick, at: string) => (
   <MemoryRouter initialEntries={[at]}>
@@ -326,6 +326,75 @@ describe("US-QS-15 the reason of the disabled chip Noch nicht gefangen is a visi
   it("US-QS-15 the chip Leicht has no description: only the disabled chip points to the reason", () => {
     search({ caught: null });
     expect(chip("Leicht").hasAttribute("aria-describedby")).toBe(false);
+  });
+});
+
+describe("US-QS-15 while the caught species still load, the disabled chip says nothing and the row keeps its height (issue 2615, CLS)", () => {
+  const REASON = "Deine gefangenen Arten sind noch nicht bekannt.";
+
+  it("US-QS-15 loading: the chip Noch nicht gefangen is disabled, no reason text is in the document and the chip has no aria-describedby", () => {
+    search({ caught: null, loading: true });
+    const uncaught = chip("Noch nicht gefangen") as HTMLButtonElement;
+    expect(uncaught.disabled).toBe(true);
+    expect(uncaught.hasAttribute("aria-describedby")).toBe(false);
+    expect(screen.queryByText(REASON)).toBeNull();
+    expect(document.querySelector("[data-quick-row] p")).toBeNull();
+  });
+
+  it("US-QS-15 loading: Leicht still works and the chip row is the only child of the quick row besides the measuring row", async () => {
+    search({ caught: null, loading: true });
+    expect((chip("Leicht") as HTMLButtonElement).disabled).toBe(false);
+    await userEvent.click(chip("Leicht"));
+    expect(shown()).toEqual(["a", "b"]);
+    const row = document.querySelector("[data-quick-row]");
+    expect(
+      [...(row?.children ?? [])].map((child) => child.getAttribute("role") ?? "measure"),
+    ).toEqual(["group", "measure"]);
+  });
+
+  it("US-QS-15 loading: the layer checkbox Noch nicht gefangen is disabled too, as before", async () => {
+    search({ caught: null, loading: true }, "/discover?view=catalog&sheet=filters");
+    const layer = await screen.findByRole("dialog", { name: "Filter" });
+    const box = within(layer).getByRole("checkbox", { name: "Noch nicht gefangen" });
+    expect((box as HTMLInputElement).disabled).toBe(true);
+  });
+
+  it("US-QS-15 failed (no caught set, not loading): the visible reason shows as before and the chip points to it", () => {
+    search({ caught: null, loading: false });
+    const uncaught = chip("Noch nicht gefangen") as HTMLButtonElement;
+    expect(uncaught.disabled).toBe(true);
+    const why = document.getElementById(uncaught.getAttribute("aria-describedby") ?? "");
+    expect(why?.tagName).toBe("P");
+    expect(why?.textContent).toBe(REASON);
+  });
+
+  it("US-QS-15 no loading flag at all reads as not loading: a caller without it keeps the reason", () => {
+    search({ caught: null });
+    expect(screen.queryByText(REASON)).not.toBeNull();
+  });
+
+  it("US-QS-15 loaded: the chip is enabled, with no reason and no description", () => {
+    search({ caught: new Set(["a"]), loading: false });
+    const uncaught = chip("Noch nicht gefangen") as HTMLButtonElement;
+    expect(uncaught.disabled).toBe(false);
+    expect(uncaught.hasAttribute("aria-describedby")).toBe(false);
+    expect(screen.queryByText(REASON)).toBeNull();
+  });
+
+  it("US-QS-15 loading then loaded: the chip becomes enabled and no reason ever shows in between", () => {
+    const { rerender } = search({ caught: null, loading: true });
+    expect(screen.queryByText(REASON)).toBeNull();
+    rerender(tree(HITS, { caught: new Set(["a"]), loading: false }, "/discover?view=catalog"));
+    expect(screen.queryByText(REASON)).toBeNull();
+    expect((chip("Noch nicht gefangen") as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("US-QS-15 loading then failed: the reason shows once the load has failed (P-10)", () => {
+    const { rerender } = search({ caught: null, loading: true });
+    expect(screen.queryByText(REASON)).toBeNull();
+    rerender(tree(HITS, { caught: null, loading: false }, "/discover?view=catalog"));
+    expect(screen.queryByText(REASON)).not.toBeNull();
+    expect(chip("Noch nicht gefangen").getAttribute("aria-describedby")).toBeTruthy();
   });
 });
 
