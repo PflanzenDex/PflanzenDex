@@ -69,7 +69,15 @@ describe("US-POK-01 collector cards section", () => {
       }),
     );
     vi.stubGlobal("fetch", fetchFn);
-    view(<CollectorCards api="http://api" token={token} />);
+    view(
+      <CollectorCards
+        api="http://api"
+        token={token}
+        detail={null}
+        onOpen={() => undefined}
+        onBack={() => undefined}
+      />,
+    );
     const row = await screen.findByRole("region", { name: "Sammlerkarten nebeneinander" });
     // US-QS-15, US-QS-22: every card is on the one sideways shelf, a card row (the marker `cards`), with no pages, also from 768 px.
     expect(row.getAttribute("data-scroll-x")).toBe("cards");
@@ -88,7 +96,15 @@ describe("US-POK-01 collector cards section", () => {
       "fetch",
       vi.fn<typeof fetch>(async () => response(200, { cards: [] })),
     );
-    view(<CollectorCards api="http://api" token={token} />);
+    view(
+      <CollectorCards
+        api="http://api"
+        token={token}
+        detail={null}
+        onOpen={() => undefined}
+        onBack={() => undefined}
+      />,
+    );
     expect(await screen.findByText(/Noch keine Sammlerkarten/)).toBeTruthy();
     expect(screen.queryByRole("region", { name: "Sammlerkarten nebeneinander" })).toBeNull();
   });
@@ -100,7 +116,15 @@ describe("US-POK-01 collector cards section", () => {
         response(500, { error: { code: "server.error", text: "Der Server antwortet nicht." } }),
       ),
     );
-    view(<CollectorCards api="http://api" token={token} />);
+    view(
+      <CollectorCards
+        api="http://api"
+        token={token}
+        detail={null}
+        onOpen={() => undefined}
+        onBack={() => undefined}
+      />,
+    );
     expect((await screen.findByRole("alert")).textContent).toContain("Der Server antwortet nicht.");
     expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBeTruthy();
   });

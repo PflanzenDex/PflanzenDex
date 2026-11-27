@@ -208,6 +208,24 @@ describe("US-QS-15 · US-QS-32 · d-066 the collector card opens its details beh
   });
 });
 
+describe("US-QS-15 · SG-SHEET-03 · d-163 a card inside a sheet hands Mehr to the sheet", () => {
+  it("US-QS-15 · SG-SHEET-03 with onMore the button opens no sheet of its own and tells the card", async () => {
+    const asked: string[] = [];
+    render(<CollectorCard card={card()} onMore={(c) => asked.push(c.species)} />);
+    const button = screen.getByRole("button", { name: "Mehr: Birkenfeige" });
+    expect(button.textContent).toBe("Mehr");
+    expect(button.hasAttribute("aria-haspopup")).toBe(false);
+    await userEvent.click(button);
+    expect(asked).toEqual(["Ficus benjamina"]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("US-QS-15 the card names its species for the way back (data-species)", () => {
+    show(card());
+    expect(screen.getByRole("article").getAttribute("data-species")).toBe("Ficus benjamina");
+  });
+});
+
 describe("US-QS-06 sources and licenses on the collector card (FR-POK-07)", () => {
   it("US-QS-06 Wikipedia text without a known source link still names source and license in the sheet, without a link", async () => {
     const { sheet } = await showMore(card({ imageUrl: null, sourceUrl: null }));

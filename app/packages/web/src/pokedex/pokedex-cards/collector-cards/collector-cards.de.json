@@ -4,5 +4,6 @@
   "loading": "Sammlerkarten werden geladen …",
   "empty.title": "Noch keine Sammlerkarten",
   "empty.description": "Sie erscheinen, sobald der Katalog-Baum aufgebaut ist.",
-  "empty.action": "Zum Artenkatalog"
+  "empty.action": "Zum Artenkatalog",
+  "back": "Zurück zu den Karten"
 }

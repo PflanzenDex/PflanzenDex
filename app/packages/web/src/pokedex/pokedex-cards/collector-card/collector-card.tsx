@@ -2,13 +2,14 @@ import { useId } from "react";
 import type { CollectorCard as Card } from "@pflanzendex/core";
 import { CardPicture } from "@/shared/patterns/display/card/card-picture/card-picture";
 import { CardFacts } from "@/shared/patterns/display/card/card-facts/card-facts";
-import { CardMore } from "@/shared/patterns/display/card/card-more/card-more";
+import { CardMore, MoreButton } from "@/shared/patterns/display/card/card-more/card-more";
 import { Badge } from "@/shared/ui/badge";
-import { SpeciesName, germanNameOf } from "@/shared/species-name/species-name";
+import { SpeciesName } from "@/shared/species-name/species-name";
 import { dateText } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./collector-card.de.json";
+import { cardName } from "./card-name";
 import { CollectorDetails } from "./collector-details/collector-details";
 import { WikipediaSource } from "./wikipedia-source/wikipedia-source";
 
@@ -64,16 +65,25 @@ function catchBadge(c: Card): string {
  * colored, missing keeps name and facts visible and shows the picture in grey. A caught species of a species-poor genus gets
  * a rarity frame. The card never scrolls; it is one card of a card row (`CardRow`).
  */
-export function CollectorCard(props: { card: Card }) {
+export function CollectorCard(props: {
+  card: Card;
+  /**
+   * The card stands in a sheet (the layer "Sammlerkarten"): "Mehr" tells the sheet to show the details of this card in its own
+   * place, because a sheet never opens a second sheet (SG-SHEET-03, owner decision d-163). Without it "Mehr" opens a sheet of
+   * its own.
+   */
+  onMore?: (card: Card) => void;
+}) {
   const c = props.card;
   const titleId = useId();
   const caught = c.state === "caught";
   const rare = caught && c.speciesPoor;
-  const name = germanNameOf(c.species, c.germanName) ?? c.species;
+  const name = cardName(c);
   return (
     <article
       aria-labelledby={titleId}
       data-state={c.state}
+      data-species={c.species}
       {...(rare ? { "data-rarity": "" } : {})}
       className={cn(
         "grid min-w-0 grid-cols-1 content-start gap-2 break-words rounded-card bg-card p-3 text-card-foreground shadow-elevation-1",
@@ -92,9 +102,13 @@ export function CollectorCard(props: { card: Card }) {
       </div>
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-2">
         <CardFacts lightZone={c.lightZone} difficulty={c.difficulty} />
-        <CardMore name={name}>
-          <CollectorDetails card={c} />
-        </CardMore>
+        {props.onMore ? (
+          <MoreButton name={name} onClick={() => props.onMore?.(c)} />
+        ) : (
+          <CardMore name={name}>
+            <CollectorDetails card={c} />
+          </CardMore>
+        )}
       </div>
     </article>
   );

@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { CardMore, CardSection } from "./card-more";
+import { CardMore, CardSection, MoreButton } from "./card-more";
 
 beforeAll(() => {
   // jsdom has no pointer capture; Vaul calls it on pointerdown inside the sheet.
@@ -96,5 +96,19 @@ describe("US-QS-32 · US-QS-15 · d-066 the Mehr button of a two-level card", ()
     await userEvent.click(screen.getByRole("button", { name: "Mehr: Schwiegermutterzunge" }));
     const title = await screen.findByRole("heading", { name: "Schwiegermutterzunge", level: 2 });
     expect(title.className).toContain("break-words");
+  });
+});
+
+describe("US-QS-15 · SG-SHEET-03 · d-163 the Mehr button alone, for a card inside a sheet", () => {
+  it("US-QS-15 · SG-SHEET-03 MoreButton reads 'Mehr', is named 'Mehr: {name}', is 44 px and opens no sheet of its own", async () => {
+    setViewportWidth(360);
+    const clicks: string[] = [];
+    render(<MoreButton name="Monstera deliciosa" onClick={() => clicks.push("more")} />);
+    const button = screen.getByRole("button", { name: "Mehr: Monstera deliciosa" });
+    expect(button.textContent).toBe("Mehr");
+    expect(button.className).toContain("min-h-[44px]");
+    await userEvent.click(button);
+    expect(clicks).toEqual(["more"]);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

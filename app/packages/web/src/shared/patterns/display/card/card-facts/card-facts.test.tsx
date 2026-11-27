@@ -15,13 +15,13 @@ describe("US-QS-32 · d-159 the facts of a card front: the light zone, then the 
     expect(items[1]?.textContent).toContain("Mittel");
   });
 
-  it("US-QS-32 · d-159 names the three levels Leicht, Mittel and Schwer, with one to three filled stars", () => {
+  it("US-QS-32 · d-159 names the three levels Leicht, Mittel and Schwierig (owner decision d-163), with one to three filled stars", () => {
     const { rerender } = render(<CardFacts lightZone={3} difficulty={1} />);
     expect(screen.getByText("★☆☆")).toBeTruthy();
     expect(screen.getByText("Leicht")).toBeTruthy();
     rerender(<CardFacts lightZone={3} difficulty={3} />);
     expect(screen.getByText("★★★")).toBeTruthy();
-    expect(screen.getByText("Schwer")).toBeTruthy();
+    expect(screen.getByText("Schwierig")).toBeTruthy();
   });
 
   it("US-QS-14 · US-QS-32 the stars are hidden from assistive technology and a visually hidden text reads the level", () => {
