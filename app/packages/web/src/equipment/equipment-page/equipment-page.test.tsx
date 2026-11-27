@@ -636,8 +636,9 @@ describe("US-QS-22 the equipment fits one screen", () => {
     const row = await screen.findByRole("button", { name: /Lampe alt/ });
     const meta = within(row).getByText("Ausgemustert · Lampe · Lichtzone fehlt");
     expect(meta.className.split(" ")).toEqual(
-      expect.arrayContaining(["truncate", "text-muted-foreground"]),
+      expect.arrayContaining(["[overflow-wrap:break-word]", "text-muted-foreground"]),
     );
+    expect(meta.className.split(" ")).not.toContain("truncate");
     expect(meta.className.split(" ")).not.toContain("max-w-[60%]");
     expect(meta.parentElement?.className.split(" ")).not.toContain("max-w-[60%]");
     // Only the name and the meta line are in the row's text: nothing trails them but the chevron.
