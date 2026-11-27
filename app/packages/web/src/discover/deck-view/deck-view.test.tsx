@@ -63,7 +63,8 @@ describe("US-QS-21 large text scrolls instead of clipping (WCAG 1.4.4, 1.4.10)",
       expect(button.className).toContain("min-w-24");
       expect(button.className).toContain("min-h-[48px]");
     }
-    expect(screen.getByRole("article").className).toContain("min-h-48");
+    // The card keeps the least height its content needs with the picture at its floor (issue 2421), so it never cuts.
+    expect(screen.getByRole("article").className).toContain("min-h-[15.5rem]");
     // The stack of the card (the column with the position, the card and the buttons) keeps the minimum height.
     expect(screen.getByRole("article").closest(".min-h-\\[21rem\\]")).not.toBeNull();
   });

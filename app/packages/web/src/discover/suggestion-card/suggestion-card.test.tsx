@@ -375,7 +375,7 @@ describe("US-QS-32 · US-QS-15 · SG-PHOTO-01 the deck never scrolls: no scroll 
     },
   );
 
-  it("US-QS-32 · SG-PHOTO-01 the picture box is the full width of the card: 4:3, no width cap from the window height", () => {
+  it("US-QS-32 · SG-PHOTO-01 the picture box is 4:3 with no width cap from a constant of the window height", () => {
     const { container } = render(
       <SuggestionCard
         suggestion={suggestion({ imageUrl: "https://upload.wikimedia.org/a.jpg" })}
@@ -385,6 +385,32 @@ describe("US-QS-32 · US-QS-15 · SG-PHOTO-01 the deck never scrolls: no scroll 
     expect(box.className).toContain("aspect-[4/3]");
     expect(box.className).toContain("w-full");
     expect(box.className).not.toContain("dvh");
+  });
+
+  it("US-QS-32 the exploration badge lies on the picture, so it costs the card no line (US-ENT-06)", () => {
+    const { container } = render(<SuggestionCard suggestion={suggestion({ exploration: true })} />);
+    expect(boxOf(container).contains(screen.getByText("Mal etwas anderes"))).toBe(true);
+  });
+
+  it("US-QS-32 · US-QS-15 in the deck the card is the size container its picture reads: the picture takes the width the free height leaves", () => {
+    const { container } = render(
+      <SuggestionCard
+        suggestion={suggestion({ imageUrl: "https://upload.wikimedia.org/a.jpg" })}
+      />,
+    );
+    expect(screen.getByRole("article").className).toContain("[container-type:size]");
+    expect(boxOf(container).className).toContain("100cqh");
+  });
+
+  it("US-QS-32 at large text the card has its own height: no size container, the picture is the full width", () => {
+    const { container } = render(
+      <SuggestionCard
+        suggestion={suggestion({ imageUrl: "https://upload.wikimedia.org/a.jpg" })}
+        fill={false}
+      />,
+    );
+    expect(screen.getByRole("article").className).not.toContain("container-type");
+    expect(boxOf(container).className).not.toContain("cqh");
   });
 
   it("US-QS-32 · SG-TYPE-05 a long one-word name breaks inside the card instead of widening it", () => {

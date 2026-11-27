@@ -74,9 +74,10 @@ export function SuggestionCard(props: {
     <article
       aria-labelledby={titleId}
       className={cn(
-        "mx-auto flex min-h-48 w-full min-w-0 max-w-md touch-pan-y flex-col gap-2 break-words",
+        "mx-auto flex w-full min-w-0 max-w-md touch-pan-y flex-col gap-2 break-words",
         "rounded-card border border-border bg-card p-3 text-card-foreground",
-        fill ? "flex-1 basis-0 [container-type:size]" : "flex-none",
+        // The least height the content needs with the picture at its floor: a frame that is lower scrolls, the card never cuts.
+        fill ? "min-h-[15.5rem] flex-1 basis-0 [container-type:size]" : "flex-none",
       )}
     >
       <Picture s={s} fit={fill} />

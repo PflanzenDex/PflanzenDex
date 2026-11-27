@@ -2,19 +2,18 @@ import type { EmptyReason, MatchCard as Card, MatchEntry } from "@pflanzendex/co
 import { useState, type ReactNode, type Ref } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { MoreHelp } from "@/shared/ui/more-help";
 import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
 import { cn } from "@/shared/lib/utils";
-import { ScrollRegion } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-region/scroll-region";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { largeText } from "@/shared/patterns/display/card/card-picture/large-text";
 import table from "../../../swap.de.json";
 import { MatchCard } from "../match-card/match-card";
 import { AnswerLists } from "./answer-lists/answer-lists";
 import { countOf, laterCards, type DeckAction, type DeckState } from "./deck-state";
-import { Actions, Confirm, Empty, UndoButton, type Answer } from "./match-actions/match-actions";
+import { Confirm, Empty, UndoButton, type Answer } from "./match-actions/match-actions";
+import { BelowCard } from "./below-card/below-card";
 import { useDeck, type OnAnswer, type OnUndo, type OnYes } from "./use-deck";
 
 const t = texts(table);
@@ -106,7 +105,10 @@ function Current(props: {
         disabled={props.busy}
         onSwipe={props.swipe}
         onExited={props.finish}
-        className={cn("mx-auto flex w-full min-w-0 max-w-md", !large && "min-h-48 flex-1 basis-0")}
+        className={cn(
+          "mx-auto flex w-full min-w-0 max-w-md",
+          !large && "min-h-[18.25rem] flex-1 basis-0",
+        )}
       >
         <MatchCard card={c} fill={!large} />
       </SwipeCard>
@@ -120,15 +122,7 @@ function Current(props: {
       )}
       {s.error !== null && <Banner variant="error">{s.error}</Banner>}
       {s.last !== null && <UndoButton onClick={props.undo} />}
-      {/* One line above the buttons (SG-COPY-05, US-QS-32, F-0279); the rest sits behind Mehr erfahren. */}
-      <MoreHelp className="text-center" more={t("deck.askMore")}>
-        {c.ownerName ?? t("deck.friendFallback")} erfährt nur von einer Anfrage.
-      </MoreHelp>
-      <Actions card={c} busy={props.busy} onAnswer={props.answer} large={large} />
-      {/* The answers below the deck scroll in a region of their own, so they never take the room of the card (US-QS-15, issue 2421). */}
-      <ScrollRegion label={t("deck.listsLabel")} className="max-h-36 flex-none">
-        {props.lists}
-      </ScrollRegion>
+      <BelowCard c={c} busy={props.busy} answer={props.answer} large={large} lists={props.lists} />
     </div>
   );
 }

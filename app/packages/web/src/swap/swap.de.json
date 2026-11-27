@@ -89,6 +89,7 @@
   "match.alreadyRequested": "Schon angefragt: {title}.",
   "deck.askMore": "„Anfragen“ fragt das Angebot an, „Ablehnen“ und „Später“ bleiben bei dir gespeichert. Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen.",
   "deck.friendFallback": "Ein Freund",
+  "deck.askLine": "{name} erfährt nur von einer Anfrage.",
   "deck.listsLabel": "Deine Antworten auf Angebote",
   "handover.waiting": "Deine Bestätigung ist gesichert. Sobald {who} auch bestätigt hat, wird übergeben.",
   "handover.doneRecipient": "Die Übergabe ist abgeschlossen. Die Pflanze ist jetzt in deiner Sammlung.",

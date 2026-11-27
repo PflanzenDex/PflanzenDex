@@ -100,8 +100,8 @@ function Stack(props: {
         onSwipe={props.onSwipe}
         onExited={props.onExited}
         className={cn(
-          "mx-auto flex min-h-48 w-full max-w-md",
-          props.large ? "flex-none" : "flex-1 basis-0",
+          "mx-auto flex w-full max-w-md",
+          props.large ? "flex-none" : "min-h-[16.5rem] flex-1 basis-0",
         )}
       >
         <SuggestionCard suggestion={current} titleRef={props.frontTitle} fill={!props.large} />

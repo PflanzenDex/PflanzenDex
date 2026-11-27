@@ -93,7 +93,8 @@ export function MatchCard(props: {
         // One column that shrinks to the card: a credit or a name at 200 % text wraps instead of widening the card (US-QS-32).
         "grid w-full min-w-0 grid-cols-[minmax(0,1fr)] touch-pan-y content-start gap-2 break-words",
         "rounded-card border border-border bg-card p-4 text-card-foreground",
-        fill && "flex-1 basis-0 [container-type:size]",
+        // The least height the content needs with the picture at its floor: a frame that is lower scrolls, the card never cuts.
+        fill && "min-h-[17.25rem] flex-1 basis-0 [container-type:size]",
       )}
     >
       <Picture c={c} fit={fill} />
