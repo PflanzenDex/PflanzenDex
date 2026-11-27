@@ -1,29 +1,64 @@
-# Owners per area (US-DEV-08, FR-DEV-09). Changes to this file require review.
-# The last matching rule wins. Until there is a team, @MaxNize owns everything;
-# as the team grows, add an owner per epic or folder.
-# Rulesets require a code-owner review (admins may bypass via PR, ADR 0001).
+# Gate paths only (US-QG-07, issue 2556, owner decisions d-146, d-155). Every path that isGateFile of .claude/hooks/rules.mjs
+# marks gets the three owners below; an approval from any one of them is enough. Non-gate paths have no code owner, so app
+# pull requests merge through make merge without a human. There is no default * line. The check
+# app/tools/check/docs/agents/check-codeowners.mjs (npm run codeowners, part of make gates) fails for a gate file without an
+# owner line and for a line that owns a file that is no gate file.
 
-*                                   @MaxNize
+# Agent rules, guardrails and CI
+/.githooks/                   @konradhe14 @MaxNize @NiklasKoch-14
+/.github/workflows/           @konradhe14 @MaxNize @NiklasKoch-14
+/.github/rulesets/            @konradhe14 @MaxNize @NiklasKoch-14
+/.github/CODEOWNERS          @konradhe14 @MaxNize @NiklasKoch-14
+/.github/dependabot.y*ml      @konradhe14 @MaxNize @NiklasKoch-14
+/.claude/                     @konradhe14 @MaxNize @NiklasKoch-14
+/.agents/skills/              @konradhe14 @MaxNize @NiklasKoch-14
+/.gitleaksignore              @konradhe14 @MaxNize @NiklasKoch-14
+/Makefile                     @konradhe14 @MaxNize @NiklasKoch-14
+/AGENTS.md                    @konradhe14 @MaxNize @NiklasKoch-14
 
-/.github/CODEOWNERS                 @MaxNize
-/.github/workflows/                 @MaxNize
-/.github/rulesets/                  @konradhe14 @MaxNize @NiklasKoch-14
-/Makefile                           @MaxNize
-/tools/                             @MaxNize
+# Lint and repo tooling, with the tests of the lint scripts
+/tools/lint/gitleaks.sh       @konradhe14 @MaxNize @NiklasKoch-14
+/tools/lint/actionlint.sh     @konradhe14 @MaxNize @NiklasKoch-14
+/tools/lint/tool.sh           @konradhe14 @MaxNize @NiklasKoch-14
+/tools/repo/rulesets-apply.sh @konradhe14 @MaxNize @NiklasKoch-14
+/tools/lint/**/*.test.mjs     @konradhe14 @MaxNize @NiklasKoch-14
+/tools/lint/**/*.test.ts      @konradhe14 @MaxNize @NiklasKoch-14
+/tools/lint/**/*.test.js      @konradhe14 @MaxNize @NiklasKoch-14
+/tools/lint/**/*.selftest.mjs @konradhe14 @MaxNize @NiklasKoch-14
 
-/app/packages/core/                 @MaxNize
-/app/packages/api/                  @MaxNize
-/app/packages/web/                  @MaxNize
+# App configuration that defines gates
+/app/eslint.config.js                     @konradhe14 @MaxNize @NiklasKoch-14
+/app/.prettierrc.json                     @konradhe14 @MaxNize @NiklasKoch-14
+/app/.prettierignore                      @konradhe14 @MaxNize @NiklasKoch-14
+/app/config/lint/knip.json                @konradhe14 @MaxNize @NiklasKoch-14
+/app/config/lint/layout.config.mjs        @konradhe14 @MaxNize @NiklasKoch-14
+/app/config/project/commitlint.config.js  @konradhe14 @MaxNize @NiklasKoch-14
+/app/config/project/release.config.js     @konradhe14 @MaxNize @NiklasKoch-14
+/app/config/project/tsconfig.base.json    @konradhe14 @MaxNize @NiklasKoch-14
+/app/config/project/issue-taxonomy.json   @konradhe14 @MaxNize @NiklasKoch-14
+/app/config/gates/*.json                  @konradhe14 @MaxNize @NiklasKoch-14
+/app/packages/*/vitest.config.ts          @konradhe14 @MaxNize @NiklasKoch-14
+/app/packages/*/tsconfig.json             @konradhe14 @MaxNize @NiklasKoch-14
 
-/docs/specs/product/                @MaxNize
-# Allowed issue labels (FR-DEV-10): a new type or epic is approved by the owner only.
-/app/config/project/issue-taxonomy.json @MaxNize
-/docs/specs/prototype/         @MaxNize
-/docs/guides/operations/                   @MaxNize
+# Check scripts (every .mjs there is a gate file or a gate test), make merge and CI reuse, with their tests
+/app/tools/check/**/*.mjs                                @konradhe14 @MaxNize @NiklasKoch-14
+/app/tools/check/**/*.test.ts                            @konradhe14 @MaxNize @NiklasKoch-14
+/app/tools/check/**/*.test.js                            @konradhe14 @MaxNize @NiklasKoch-14
+/app/tools/workflow/merge-pr.mjs                         @konradhe14 @MaxNize @NiklasKoch-14
+/app/tools/workflow/merge-pr.test.mjs                    @konradhe14 @MaxNize @NiklasKoch-14
+/app/tools/workflow/merge-pr.test.ts                     @konradhe14 @MaxNize @NiklasKoch-14
+/app/tools/workflow/merge-pr.test.js                     @konradhe14 @MaxNize @NiklasKoch-14
+/app/tools/workflow/merge-pr.selftest.mjs                @konradhe14 @MaxNize @NiklasKoch-14
+/app/tools/workflow/actions/ci-reuse/**/*.test.mjs       @konradhe14 @MaxNize @NiklasKoch-14
+/app/tools/workflow/actions/ci-reuse/**/*.test.ts        @konradhe14 @MaxNize @NiklasKoch-14
+/app/tools/workflow/actions/ci-reuse/**/*.test.js        @konradhe14 @MaxNize @NiklasKoch-14
+/app/tools/workflow/actions/ci-reuse/**/*.selftest.mjs   @konradhe14 @MaxNize @NiklasKoch-14
 
-# Agent instructions and guardrails: what AI agents read and may do. Never changed without a human owner's review.
-/CLAUDE.md                          @konradhe14 @MaxNize @NiklasKoch-14
-/AGENTS.md                          @konradhe14 @MaxNize @NiklasKoch-14
-/.claude/                           @konradhe14 @MaxNize @NiklasKoch-14
-/.agents/                           @konradhe14 @MaxNize @NiklasKoch-14
-/.githooks/                         @konradhe14 @MaxNize @NiklasKoch-14
+# Display tolerances (one-screen and a11y judges) and the changelog logic
+/app/packages/e2e/support/display/one-screen/baseline.ts     @konradhe14 @MaxNize @NiklasKoch-14
+/app/packages/e2e/support/display/one-screen/judge.ts        @konradhe14 @MaxNize @NiklasKoch-14
+/app/packages/e2e/support/display/one-screen/judge.size.ts   @konradhe14 @MaxNize @NiklasKoch-14
+/app/packages/e2e/support/display/one-screen/judge.shift.ts  @konradhe14 @MaxNize @NiklasKoch-14
+/app/packages/e2e/support/display/a11y/findings.ts           @konradhe14 @MaxNize @NiklasKoch-14
+/app/packages/e2e/support/display/a11y/axe-findings.ts       @konradhe14 @MaxNize @NiklasKoch-14
+/app/packages/web/src/app/destinations/account-area/whats-new/news-lines.mjs  @konradhe14 @MaxNize @NiklasKoch-14

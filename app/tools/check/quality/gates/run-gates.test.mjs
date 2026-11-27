@@ -39,6 +39,7 @@ const CHAIN = [
   "dod-numbers",
   "principles",
   "skills",
+  "codeowners",
   "reference",
   "duplicates",
   "dup",
