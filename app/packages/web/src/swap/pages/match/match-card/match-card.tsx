@@ -22,7 +22,7 @@ const REST = "9.5rem";
 /**
  * The one reason on the front (US-TAU-04, US-TAU-05, owner decision d-160): the most specific one. "Passt in beide Richtungen"
  * wins over "Auf deiner Wunschliste"; the other one is in the sheet of "Mehr". The wish names no species: it is the species
- * of the card. A card with neither reason shows no badge.
+ * of the card. The caller shows it only for a card that has a reason; a card with none shows no badge and no empty box.
  */
 function Reason({ card: c }: { card: Card }) {
   if (c.reasons.some((r) => r.kind === "both_ways"))
@@ -32,13 +32,11 @@ function Reason({ card: c }: { card: Card }) {
       </Badge>
     );
   // The other kind of reason is the wish on the keeper's list: the species of the card.
-  if (c.reasons.length > 0)
-    return (
-      <Badge variant="outline" className="max-w-full whitespace-normal">
-        {t("card.reasonWishlist")}
-      </Badge>
-    );
-  return null;
+  return (
+    <Badge variant="outline" className="max-w-full whitespace-normal">
+      {t("card.reasonWishlist")}
+    </Badge>
+  );
 }
 
 /**
@@ -53,7 +51,7 @@ function Picture({ c, fit }: { c: Card; fit: boolean }) {
       src={c.imageUrl}
       alt={t("card.imageAlt", { species: cardTitle(c) })}
       {...(fit ? { reserve: REST } : {})}
-      overlay={<Reason card={c} />}
+      overlay={c.reasons.length > 0 ? <Reason card={c} /> : undefined}
       credit={
         c.imageSourceUrl !== null || shown ? (
           <WikipediaSource

@@ -192,6 +192,13 @@ describe("US-QS-32 · d-160 the front of the match card: one reason, the giver, 
     expect(sheet.getByText(/Ben möchte Geigenfeige von dir\./)).toBeTruthy();
   });
 
+  it("US-QS-32 · d-160 a card with no reason shows no badge, and no empty box on the picture", () => {
+    const { container } = render(<MatchCard card={card({ reasons: [] })} />);
+    expect(screen.queryByText("Auf deiner Wunschliste")).toBeNull();
+    expect(screen.queryByText("Passt in beide Richtungen")).toBeNull();
+    expect(boxOf(container).children).toHaveLength(1);
+  });
+
   it("US-QS-32 · SG-TYPE-04 a reason badge may wrap inside the card at large text (no nowrap, never wider than the card)", () => {
     render(<MatchCard card={card({ reasons: [wishlist, bothWays] })} />);
     const badge = screen.getByText("Passt in beide Richtungen");

@@ -94,9 +94,7 @@ function Stack(props: {
         stamps={STAMPS}
         depth={suggestions.length - props.position - 1}
         enterFrom={props.returned}
-        under={
-          next === undefined ? undefined : <SuggestionCard suggestion={next} fill={!props.large} />
-        }
+        under={next && <SuggestionCard suggestion={next} fill={!props.large} preview />}
         onSwipe={props.onSwipe}
         onExited={props.onExited}
         className={cn(

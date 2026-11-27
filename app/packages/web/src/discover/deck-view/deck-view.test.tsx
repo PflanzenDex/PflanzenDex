@@ -315,6 +315,22 @@ describe("US-QS-32 · SG-TYPE-04 at 200 % text the deck scrolls as a whole", () 
     expect(under?.className).not.toContain("flex-1");
   });
 
+  it("US-QS-15 · DS-40 only the front card opens a sheet: the card underneath has no dialog trigger, so a probe never finds a button that cannot take the focus (QG-U5)", () => {
+    const { container } = render(
+      <DeckView
+        deck={{ ...deck, suggestions: [suggestion("Ficus lyrata"), suggestion("Aloe vera")] }}
+        onDecide={saveOk}
+        onUndo={undoOk}
+        onNewDeck={() => undefined}
+      />,
+    );
+    expect(container.querySelectorAll('[aria-haspopup="dialog"]')).toHaveLength(1);
+    const under = container.querySelector<HTMLElement>('[data-level="1"] article');
+    expect(under?.querySelector('[aria-haspopup="dialog"]')).toBeNull();
+    // The card underneath still has the room of the button, so it does not change size when it comes to the front.
+    expect(under?.textContent).toContain("Mehr");
+  });
+
   it("US-QS-32 · US-QS-15 · SG-TYPE-04 at the normal size the card underneath fills its frame like the front card, and does not scroll either", () => {
     const { container } = render(
       <DeckView

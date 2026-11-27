@@ -286,6 +286,22 @@ describe("US-QS-15 · US-QS-32 · d-066 the card opens its details in a sheet be
   });
 });
 
+describe("US-QS-15 · DS-40 the card underneath is a preview: it keeps the room of Mehr but opens nothing", () => {
+  it("US-QS-15 a preview shows the word Mehr without a dialog trigger, and the front card keeps its trigger", () => {
+    const { container } = render(
+      <>
+        <SuggestionCard suggestion={suggestion({ species: "Aloe vera" })} />
+        <SuggestionCard suggestion={suggestion({ species: "Ficus lyrata" })} preview />
+      </>,
+    );
+    const [front, under] = screen.getAllByRole("article", { hidden: true });
+    expect(front?.querySelector('[aria-haspopup="dialog"]')).not.toBeNull();
+    expect(under?.querySelector('[aria-haspopup="dialog"]')).toBeNull();
+    expect(under?.textContent).toContain("Mehr");
+    expect(container.querySelectorAll('[aria-haspopup="dialog"]')).toHaveLength(1);
+  });
+});
+
 describe("NFR-12 the suggestion picture loads when it is near the viewport", () => {
   it("NFR-12 the picture of a suggestion is loaded lazily (loading=lazy)", () => {
     show(suggestion({ imageUrl: "https://upload.wikimedia.org/a.jpg" }));

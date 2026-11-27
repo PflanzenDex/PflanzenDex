@@ -84,6 +84,24 @@ export const OpensHalfHeight: Story = {
   },
 };
 
+// The focus returns to "Mehr" after the close button too, not only after Escape (WCAG 2.4.3, DS-40): the button the sheet
+// closes from is the one a keeper pressed to open it.
+export const FocusReturnsAfterClose: Story = {
+  args: { children: sections },
+  play: async ({ canvasElement }) => {
+    const opener = must(
+      canvasElement.querySelector<HTMLElement>('[aria-haspopup="dialog"]'),
+      "the Mehr button",
+    );
+    opener.focus();
+    const layer = await openLayer(canvasElement);
+    const close = must(layer.querySelector<HTMLElement>("[data-close]"), "the close button");
+    close.click();
+    await waitUntil(() => document.querySelector('[role="dialog"]') === null, "the sheet closes");
+    await waitUntil(() => document.activeElement === opener, "the focus returns to Mehr");
+  },
+};
+
 // A long one-word name breaks inside the sheet title and does not widen the sheet (SG-TYPE-05).
 export const LongNameTitle: Story = {
   args: { name: "Schwiegermutterzungenblattpflanze", children: sections },

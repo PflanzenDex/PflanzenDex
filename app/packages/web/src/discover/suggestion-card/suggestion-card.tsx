@@ -3,7 +3,7 @@ import { useId, type Ref } from "react";
 import { Badge } from "@/shared/ui/badge";
 import { CardPicture } from "@/shared/patterns/display/card/card-picture/card-picture";
 import { CardFacts } from "@/shared/patterns/display/card/card-facts/card-facts";
-import { CardMore } from "@/shared/patterns/display/card/card-more/card-more";
+import { CardMore, MoreButton } from "@/shared/patterns/display/card/card-more/card-more";
 import { cn } from "@/shared/lib/utils";
 import { WikipediaSource } from "@/pokedex";
 import { SuggestionDetails } from "./suggestion-details/suggestion-details";
@@ -66,6 +66,12 @@ export function SuggestionCard(props: {
    * so the deck scrolls as a whole and the decision buttons follow the card (US-QS-32, SG-TYPE-04).
    */
   fill?: boolean;
+  /**
+   * The card underneath the front card in the stack (US-ENT-10): hidden from assistive technology and inert. It keeps the room
+   * of "Mehr" but opens no sheet and holds no dialog trigger, so nothing on the page is a trigger that cannot take the focus
+   * (DS-40, QG-U5).
+   */
+  preview?: boolean;
 }) {
   const s = props.suggestion;
   const titleId = useId();
@@ -94,9 +100,13 @@ export function SuggestionCard(props: {
           </h2>
           <p className="m-0 text-base">{s.germanName ?? t("card.germanNameUnknown")}</p>
         </div>
-        <CardMore name={s.species}>
-          <SuggestionDetails s={s} />
-        </CardMore>
+        {props.preview ? (
+          <MoreButton name={s.species} />
+        ) : (
+          <CardMore name={s.species}>
+            <SuggestionDetails s={s} />
+          </CardMore>
+        )}
       </div>
       <CardFacts lightZone={s.lightZone} difficulty={s.difficulty} />
     </article>
