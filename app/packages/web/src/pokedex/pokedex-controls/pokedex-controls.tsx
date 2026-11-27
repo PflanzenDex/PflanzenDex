@@ -1,6 +1,7 @@
 import type { PokedexFilter, PokedexSort } from "@pflanzendex/core";
 import { useId, type RefObject } from "react";
 import { Check } from "lucide-react";
+import { PRESSED_CHIP } from "@/shared/patterns/elements/chip-row/pressed-chip";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Button } from "@/shared/ui/button";
 import { SearchInput } from "@/shared/ui/search-input";
@@ -58,7 +59,8 @@ export function Controls(props: {
 /**
  * The content of the layer "Filter" (US-POK-08, US-QS-22): the filters that work, the sorting and, as text, the
  * reasons why "Fehlend" and "Artenarm" cannot be used yet (P-08, P-10). The chosen filter is marked by a check mark and
- * a thicker border, not only by `aria-pressed`.
+ * a thicker border, not only by `aria-pressed`. The chosen chip is an outlined chip, not a tinted button (`PRESSED_CHIP`,
+ * owner decision d-178, SG-TYPE-01, issue 2612).
  */
 export function FilterPanel(props: {
   filter: PokedexFilter;
@@ -78,9 +80,9 @@ export function FilterPanel(props: {
             <Button
               key={f.id}
               type="button"
-              variant={selected ? "secondary" : "plain"}
+              variant={selected ? "ghost" : "plain"}
               aria-pressed={selected}
-              className={cn("rounded-full px-4", selected && "border-2 border-primary font-bold")}
+              className={cn("rounded-full px-4", selected && PRESSED_CHIP)}
               onClick={() => props.onFilter(f.id)}
             >
               {selected && <Check aria-hidden="true" className="size-5 shrink-0" />}

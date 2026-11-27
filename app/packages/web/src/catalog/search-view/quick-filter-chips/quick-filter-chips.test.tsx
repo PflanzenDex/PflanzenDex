@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import type { SpeciesHit } from "@pflanzendex/core";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { isFilled, isTinted } from "@/shared/ui/button.roles";
 import { SpeciesSearch } from "../search-view";
 
 /** A hit with the fields the list reads; the id and the difficulty tell the hits apart. */
@@ -149,7 +150,51 @@ describe("US-QS-15 · US-QS-21 the quick filters Leicht and Noch nicht gefangen 
     expect(pressed("Leicht")).toBe("true");
     expect(chip("Leicht").querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
     expect(chip("Leicht").className).toContain("border-2");
-    expect(chip("Leicht").className).toContain("font-bold");
+  });
+
+  it("US-QS-15 SG-TYPE-01 the pressed chip keeps the weight 600 of every control label; 700 is for the page title only (issue 2612)", async () => {
+    search({ caught: new Set() });
+    await userEvent.click(chip("Leicht"));
+    const classes = chip("Leicht").className.split(/\s+/);
+    expect(classes).toContain("font-semibold");
+    for (const heavy of ["font-bold", "font-extrabold", "font-black"]) {
+      expect(classes).not.toContain(heavy);
+    }
+    // The measuring row draws the same pressed form, so its width is the width of the pressed chip.
+    for (const measured of document.querySelectorAll("[data-quick-measure] button")) {
+      expect(measured.className.split(/\s+/)).not.toContain("font-bold");
+    }
+  });
+
+  it("US-QS-15 d-178 a pressed chip is an outlined chip, not a tinted button: card fill, a 2 px primary border, primary label and check, a neutral hover (SG-BTN-02, SG-COLOR-01)", async () => {
+    search({ caught: new Set() });
+    await userEvent.click(chip("Leicht"));
+    const pressedChip = chip("Leicht");
+    const classes = pressedChip.className.split(/\s+/);
+    expect(isTinted(pressedChip)).toBe(false);
+    expect(isFilled(pressedChip)).toBe(false);
+    for (const wanted of ["bg-card", "border-2", "border-primary", "text-primary"]) {
+      expect(classes).toContain(wanted);
+    }
+    // The hover is the neutral ghost hover of every chip, as for the unpressed chip; no variant colours it green at rest.
+    expect(classes).toContain("hover:bg-accent");
+    expect(chip("Noch nicht gefangen").className.split(/\s+/)).toContain("hover:bg-accent");
+    // The state is not told by colour alone (SG-COLOR-05): the check mark, the border and aria-pressed.
+    expect(pressedChip.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+    expect(pressedChip.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("US-QS-15 d-171 an unpressed chip is outlined on the neutral surface: the card fill of the search field and the --input border, in light and dark (issue 2612)", () => {
+    search({ caught: new Set() });
+    const field = screen.getByRole("searchbox").className.split(/\s+/);
+    expect(field).toContain("bg-card");
+    for (const name of ["Leicht", "Noch nicht gefangen"]) {
+      const classes = chip(name).className.split(/\s+/);
+      // The same token as the field, so the two cannot differ in dark (page 11,11,12 against card 22,22,24).
+      expect(classes).toContain("bg-card");
+      expect(classes).not.toContain("bg-background");
+      expect(classes).toContain("border-input");
+    }
   });
 });
 
@@ -283,7 +328,7 @@ describe("US-QS-15 the reason of the disabled chip Noch nicht gefangen is a visi
   });
 
   it("US-QS-15 the reason stays in view when the chips scroll sideways, because it is not part of the scrolling row", () => {
-    layout = { row: 300, chips: [90, 230] };
+    layout = { row: 300, chips: [90, 330] };
     search({ caught: null });
     const group = screen.getByRole("group", { name: "Schnellfilter" });
     expect(group.className).toContain("overflow-x-auto");
@@ -496,17 +541,38 @@ describe("US-QS-15 the chip row decides with the real fitting logic (useChipsFit
     expect(form()).toBe("chips");
   });
 
-  it("US-QS-15 below 768 px chips that do not fit one line stay in one line that scrolls sideways", () => {
-    layout = { row: 300, chips: [90, 230] };
+  it("US-QS-15 issue 2612 at 360 px both pressed chips (317 px) need two lines in the 294 px row: they wrap, none is cut at the edge of the row", () => {
+    layout = { row: 294, chips: [105, 204] };
+    search({ caught: new Set() });
+    expect(form()).toBe("chips");
+    const group = screen.getByRole("group", { name: "Schnellfilter" });
+    expect(group.className).toContain("flex-wrap");
+    expect(group.className).not.toContain("overflow-x-auto");
+  });
+
+  it("US-QS-15 issue 2612 the form does not depend on the chosen chips: the decision reads the widest (pressed) form, so pressing a chip never switches between wrapping and scrolling", async () => {
+    layout = { row: 294, chips: [105, 204] };
+    search({ caught: new Set() });
+    expect(form()).toBe("chips");
+    await userEvent.click(chip("Leicht"));
+    await userEvent.click(chip("Noch nicht gefangen"));
+    expect(form()).toBe("chips");
+    await userEvent.click(chip("Leicht"));
+    await userEvent.click(chip("Noch nicht gefangen"));
+    expect(form()).toBe("chips");
+  });
+
+  it("US-QS-15 below 768 px a chip that is wider than the row (large text) cannot wrap: the chips stay in one line that scrolls sideways, the next one peeking in", () => {
+    layout = { row: 294, chips: [210, 408] };
     search({ caught: new Set() });
     expect(form()).toBe("scroll");
   });
 
   it("US-QS-15 a resize that makes the chips fit again changes the form through the ResizeObserver", () => {
-    layout = { row: 300, chips: [90, 230] };
+    layout = { row: 300, chips: [90, 330] };
     search({ caught: new Set() });
     expect(form()).toBe("scroll");
-    layout = { row: 340, chips: [90, 230] };
+    layout = { row: 340, chips: [90, 330] };
     act(() => {
       for (const callback of [...observers]) callback([], {} as ResizeObserver);
     });

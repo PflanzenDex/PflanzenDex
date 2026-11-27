@@ -65,13 +65,17 @@ function fitsInLines(row: HTMLElement, measure: HTMLElement, maxLines: number): 
 
 /**
  * Whether the chips of a group row fit the row (US-QS-19, issue 1281): one line below 768 px, up to two lines from
- * 768 px, measured in the layout before the browser paints. A hidden measuring row draws every chip in its widest form.
- * The decision runs after every render (a new count changes the widths; the result is compared, so a repeated one
- * renders nothing and cannot loop) and whenever the row or the measuring row changes its size (a resize, a rotation, a
- * text size, late fonts) or the breakpoint changes. `active` is false while the row has no choices: it is measured
- * again as soon as there are some.
+ * 768 px, measured in the layout before the browser paints. `maxLines` overrides that limit for a row that may take two
+ * lines on a phone, because its chips would otherwise be cut at the edge (the quick filters at 360 px, issue 2612). A hidden
+ * measuring row draws every chip in its widest form. The decision runs after every render (a new count changes the widths;
+ * the result is compared, so a repeated one renders nothing and cannot loop) and whenever the row or the measuring row
+ * changes its size (a resize, a rotation, a text size, late fonts) or the breakpoint changes. `active` is false while the
+ * row has no choices: it is measured again as soon as there are some.
  */
-export function useChipsFit(active: boolean): {
+export function useChipsFit(
+  active: boolean,
+  maxLines?: number,
+): {
   row: RefObject<HTMLDivElement | null>;
   measure: RefObject<HTMLDivElement | null>;
   fits: boolean;
@@ -86,7 +90,7 @@ export function useChipsFit(active: boolean): {
       const r = row.current;
       const m = measure.current;
       if (!r || !m) return;
-      const next = fitsInLines(r, m, wide ? 2 : 1);
+      const next = fitsInLines(r, m, maxLines ?? (wide ? 2 : 1));
       setFits((prev) => (prev === next ? prev : next));
     };
     check.current();

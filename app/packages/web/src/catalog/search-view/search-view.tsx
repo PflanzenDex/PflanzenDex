@@ -77,7 +77,7 @@ function SearchField(props: { searchText: string; onSearch: (text: string) => vo
                   {...field}
                   autoComplete="off"
                   maxLength={120}
-                  placeholder="Name der Art"
+                  placeholder={t("search.placeholder")}
                   keyHint={hint("search")}
                   onChange={(e) => {
                     field.onChange(e);
