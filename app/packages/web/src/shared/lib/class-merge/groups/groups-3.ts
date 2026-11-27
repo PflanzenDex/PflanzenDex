@@ -109,6 +109,8 @@ export const GROUPS_3: Config<string, string>["classGroups"] = {
   "scroll-mb": [{ "scroll-mb": scaleUnambiguousSpacing() }],
   "scroll-py": [{ "scroll-py": scaleUnambiguousSpacing() }],
   "scroll-pt": [{ "scroll-pt": scaleUnambiguousSpacing() }],
+  // The room of the bottom bar at the end of a scroll region (`Table`, `--bar-clearance`, SG-LIST-02, issue 2420).
+  "scroll-pb": [{ "scroll-pb": scaleUnambiguousSpacing() }],
   touch: [{ touch: ["auto", "none", "manipulation"] }],
   "touch-x": [{ "touch-pan": ["x", "left", "right"] }],
   "touch-y": [{ "touch-pan": ["y", "up", "down"] }],

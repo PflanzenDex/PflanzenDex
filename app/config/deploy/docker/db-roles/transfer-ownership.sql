@@ -3,7 +3,8 @@
 -- `select set_config('pflanzendex.new_owner', '<role>', false)` in the same session (init-db-roles.sh does that).
 -- Needed once per database that was created and migrated by the cluster superuser (the default of the postgres image):
 -- a superuser as table owner makes every `security definer` function ignore row security (see
--- docs/guides/reference/security-definer-audit.md). Policies bound to the old owner follow in migration 0094.
+-- docs/guides/reference/security-definer-audit.md). Policies bound to the old owner follow in the last loop below: the
+-- step migration 0094 held until the squash (issue 2519, the chain is in git history).
 -- Objects that belong to an extension are left alone.
 do $$
 declare
@@ -50,6 +51,17 @@ begin
        and not exists (select from pg_depend d where d.objid = t.oid and d.deptype = 'e')
   loop
     execute format('alter type %s owner to %I', r.name, new_owner);
+  end loop;
+  -- Row rules bound to a role other than the application role and the new owner (the old superuser of the baseline, when
+  -- the cluster user applied it) move to the new owner: the owner's policies must see what the checked functions read.
+  for r in
+    select pol.polname as name, pol.polrelid::regclass::text as tbl
+      from pg_policy pol
+     where pol.polroles <> '{0}'::oid[]
+       and not (pol.polroles @> array[(select oid from pg_roles where rolname = 'pflanzendex_app')])
+       and not (pol.polroles @> array[new_oid])
+  loop
+    execute format('alter policy %I on %s to %I', r.name, r.tbl, new_owner);
   end loop;
 end
 $$;

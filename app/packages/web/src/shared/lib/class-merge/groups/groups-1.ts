@@ -73,6 +73,8 @@ export const GROUPS_1: Config<string, string>["classGroups"] = {
   bottom: [{ bottom: scaleInset() }],
   left: [{ left: scaleInset() }],
   visibility: ["visible", "invisible", "collapse"],
+  // The table region keeps the layers of its sticky cells inside itself (`Table`, US-QS-15, issue 2420).
+  isolation: ["isolate", "isolation-auto"],
   z: [{ z: [isInteger, "auto", isArbitraryVariable, isArbitraryValue] }],
   "flex-direction": [{ flex: ["row", "row-reverse", "col", "col-reverse"] }],
   "flex-wrap": [{ flex: ["nowrap", "wrap", "wrap-reverse"] }],
@@ -85,6 +87,7 @@ export const GROUPS_1: Config<string, string>["classGroups"] = {
   "row-start-end": [{ row: scaleGridColRowStartAndEnd() }],
   "row-start": [{ "row-start": scaleGridColRowStartOrEnd() }],
   "row-end": [{ "row-end": scaleGridColRowStartOrEnd() }],
+  "field-sizing": [{ "field-sizing": ["fixed", "content"] }],
   overscroll: [{ overscroll: scaleOverscroll() }],
   "overscroll-x": [{ "overscroll-x": scaleOverscroll() }],
   "overscroll-y": [{ "overscroll-y": scaleOverscroll() }],
