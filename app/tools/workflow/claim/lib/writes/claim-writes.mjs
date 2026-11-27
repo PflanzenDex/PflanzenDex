@@ -17,8 +17,9 @@ import {
 } from "./claim-steps.mjs";
 
 /**
- * Assigns the issue to the caller (REST). The answer lists the assignees after the add; somebody else in it means the claim
- * was lost, and the caller's undo removes its own assignment again.
+ * Assigns the issue to the claimant (REST). The answer lists the assignees after the add; somebody else in it means the claim
+ * was lost, and the caller's undo removes its own assignment again. A login missing from the answer means GitHub ignored it
+ * (a bot, or a misspelt PFLANZENDEX_CLAIM_ASSIGNEE): the claim fails and is undone, it is never reported as done (US-DEV-08, issue 2556).
  */
 async function assign(client, issue, login) {
   const after = await setAssignee(client, issue.number, login, true);
@@ -29,6 +30,11 @@ async function assign(client, issue, login) {
   if (others.length) {
     throw new ClaimRefused(
       others.map((a) => ({ text: `@${a.login} claimed #${issue.number} first` })),
+    );
+  }
+  if (!assignees.some((a) => a.login === login)) {
+    throw new Error(
+      `GitHub did not assign #${issue.number} to @${login}: GitHub ignores a login it cannot assign (a bot, or a misspelt PFLANZENDEX_CLAIM_ASSIGNEE)`,
     );
   }
 }

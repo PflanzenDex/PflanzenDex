@@ -9,15 +9,17 @@
 // ends its process group, so no gate run is left behind.
 // RESERVE_MIGRATION=1 also reserves the next migration number in the Handoff (issue #831).
 // Waive merged PRs that close the issue (follow-up work on a story): ALLOW_PRIOR_WORK=1. Everything else needs a human decision.
+// The agent may run as a GitHub App, whose bot cannot be an assignee (US-DEV-08, issue 2556): the claim then assigns and names the
+// human of PFLANZENDEX_CLAIM_ASSIGNEE; without it the claim refuses before any write. The draft PR is opened by the caller's token.
 import {
   fetchBranches,
   fetchIssue,
   fetchPrs,
-  me,
   PUSH_LIMIT,
   realClient,
   repoName,
 } from "./lib/claim-client.mjs";
+import { claimant } from "./lib/identity/claim-identity.mjs";
 import { boardItemOf } from "./lib/board-client.mjs";
 import { checkFree, ClaimRefused, refusalReport } from "./lib/claim-lib.mjs";
 import { rollBack } from "./lib/writes/claim-undo.mjs";
@@ -80,7 +82,7 @@ export async function claim(
   log("claim: fetching origin");
   await client.run("git", ["fetch", "--quiet", "--prune", "origin"]);
   await check(client);
-  const [login, repo] = await Promise.all([me(client), repoName(client)]);
+  const [login, repo] = await Promise.all([claimant(client, env), repoName(client)]);
   log(`claim: reading #${number}, the pull requests, the branches and the board`);
   const [board, found, prs, branches] = await Promise.all([
     readBoard(client, repo, number, log),

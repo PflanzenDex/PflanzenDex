@@ -19,6 +19,9 @@ const issue = {
 };
 
 const REPO = "PflanzenDex/PflanzenDex";
+const HTTP_403 = "gh: Resource not accessible by integration (HTTP 403)";
+const APP_BOT = "pflanzendex-agent[bot]";
+const SETTING = { PFLANZENDEX_CLAIM_ASSIGNEE: "konradhe14" };
 const PULLS_POST = /-X POST repos\/PflanzenDex\/PflanzenDex\/pulls/;
 const STANDARD_FETCH = "+refs/heads/*:refs/remotes/origin/*";
 
@@ -63,6 +66,9 @@ const DEFAULTS = {
   undoAlwaysFails: false,
   graphqlFails: false,
   board: undefined,
+  restUserFails: false, // the REST user answers 403, as for a GitHub App identity (US-DEV-08, issue 2556)
+  viewer: "max", // the login the GraphQL viewer answers (the bot of an App)
+  assignIgnored: false, // GitHub answers the assignees without the login it was asked to add (it ignores it)
 };
 
 function fake(options = {}) {
@@ -80,6 +86,9 @@ function fake(options = {}) {
     undoAlwaysFails,
     graphqlFails,
     board,
+    restUserFails,
+    viewer,
+    assignIgnored,
   } = { ...DEFAULTS, ...options };
   const calls = [];
   const drafts = []; // the body text of every draft PR the claim opened (US-DEV-08)
@@ -135,6 +144,8 @@ function fake(options = {}) {
   };
   const graphql = (line) => {
     if (graphqlFails) throw new Error("GraphQL: API rate limit already exceeded for user ID 1.");
+    if (line.includes("{ viewer { login } }"))
+      return JSON.stringify({ data: { viewer: { login: viewer } } });
     if (line.includes("fields(first")) return JSON.stringify(meta);
     if (line.includes("addProjectV2ItemById"))
       return JSON.stringify({ data: { addProjectV2ItemById: { item: { id: "NEW" } } } });
@@ -154,11 +165,17 @@ function fake(options = {}) {
       .map(([name, sha]) => `${sha}\trefs/heads/${name}`);
     return lines.length ? `${lines.join("\n")}\n` : "";
   };
-  const assigneeAnswer = () =>
-    JSON.stringify({
+  // GitHub answers with the assignees after the add: the login that was asked for (unless it is ignored), and the race's login.
+  const assigneeAnswer = (line) => {
+    const asked = line.match(/assignees\[\]=(\S+)/)[1];
+    return JSON.stringify({
       ...restIssue(issues[0]),
-      assignees: [{ login: "max" }, ...(raceWith ? [{ login: raceWith }] : [])],
+      assignees: [
+        ...(assignIgnored ? [] : [{ login: asked }]),
+        ...(raceWith ? [{ login: raceWith }] : []),
+      ],
     });
+  };
   const rules = [
     [
       `gh api repos/${REPO}/issues/62`,
@@ -166,7 +183,7 @@ function fake(options = {}) {
     ],
     [`gh api repos/${REPO}/pulls`, () => JSON.stringify(prs.map(restPr))],
     ["gh api repos/{owner}/{repo}", () => `${REPO}\n`],
-    ["gh api user", () => "max\n"],
+    ["gh api user", () => (restUserFails ? fail(HTTP_403)() : "max\n")],
     ["git ls-remote", lsRemote],
     ["git config --get-all remote.origin.fetch", () => (trackedRefs ? `${STANDARD_FETCH}\n` : "")],
     [
@@ -176,7 +193,7 @@ function fake(options = {}) {
     ["gh api graphql", graphql],
     [
       `gh api -X POST repos/${REPO}/issues/62/assignees`,
-      assignApplies ? fail("gh: connection reset") : () => assigneeAnswer(),
+      assignApplies ? fail("gh: connection reset") : (line) => assigneeAnswer(line),
     ],
     [
       `gh api -X DELETE repos/${REPO}/issues/62/assignees`,
@@ -655,6 +672,84 @@ test("US-DEV-08: the undo's push --delete runs under the push limit too, because
       .every((c) => c.line.startsWith("git push origin ")),
     "only git push calls carry the push limit",
   );
+});
+
+// The agent as a GitHub App (US-DEV-08, issue 2556): REST user 403, the GraphQL viewer names the bot. A bot cannot be assigned.
+const appFake = (options = {}) => fake({ restUserFails: true, viewer: APP_BOT, ...options });
+const ASSIGN_HUMAN =
+  /-X POST repos\/PflanzenDex\/PflanzenDex\/issues\/62\/assignees -f assignees\[\]=konradhe14$/;
+
+test("US-DEV-08: an agent running as a GitHub App without PFLANZENDEX_CLAIM_ASSIGNEE is refused with the instruction, and nothing is written", async () => {
+  const client = appFake();
+  await assert.rejects(
+    claim(client, 62, quiet),
+    (e) =>
+      e.message ===
+      "the agent runs as pflanzendex-agent[bot], a bot cannot be assigned: set PFLANZENDEX_CLAIM_ASSIGNEE to the responsible human's login",
+  );
+  assert.ok(
+    !client.calls.some((c) => /-X |git push|git commit-tree/.test(c)),
+    "nothing is written",
+  );
+});
+
+test("US-DEV-08: an agent running as a GitHub App claims for the human named in PFLANZENDEX_CLAIM_ASSIGNEE: assignee, handoff and draft PR name the human, the bot is never assigned", async () => {
+  const client = appFake();
+  const result = await claim(client, 62, { ...quiet, env: SETTING });
+  assert.equal(result.branch, "feat/issue-62-delete-specimen");
+  assert.ok(
+    client.calls.some((c) => ASSIGN_HUMAN.test(c)),
+    "the human is assigned",
+  );
+  assert.ok(
+    !client.calls.some((c) => c.includes("assignees[]=pflanzendex-agent")),
+    "the bot is never asked to be an assignee",
+  );
+  assert.match(client.drafts[0], /Claimed with `make claim` by @konradhe14 for issue-62/);
+  assert.ok(
+    client.calls.some((c) => PULLS_POST.test(c)),
+    "the draft PR is opened",
+  );
+});
+
+test("US-DEV-08: PFLANZENDEX_CLAIM_ASSIGNEE overrides a user viewer: the named human is assigned, the user is not", async () => {
+  const client = fake();
+  await claim(client, 62, { ...quiet, env: SETTING });
+  assert.ok(client.calls.some((c) => ASSIGN_HUMAN.test(c)));
+  assert.ok(!client.calls.some((c) => /assignees\[\]=max$/.test(c)), "the user is not assigned");
+  assert.match(client.drafts[0], /by @konradhe14/);
+});
+
+test("US-DEV-08: a re-run of the agent continues the half claim of the human named in the setting", async () => {
+  const mine = { ...issue, assignees: [{ login: "konradhe14" }] };
+  const result = await claim(appFake({ issues: [mine] }), 62, { ...quiet, env: SETTING });
+  assert.equal(result.branch, "feat/issue-62-delete-specimen");
+});
+
+test("US-DEV-08: the agent as a GitHub App refuses an issue assigned to someone else, names them and writes nothing", async () => {
+  const client = appFake({ issues: [{ ...issue, assignees: [{ login: "anna" }] }] });
+  await assert.rejects(
+    claim(client, 62, { ...quiet, env: SETTING }),
+    (e) => e instanceof ClaimRefused && /@anna/.test(e.message),
+  );
+  assert.ok(!client.calls.some((c) => /-X |git push/.test(c)));
+});
+
+test("US-DEV-08: an assignee login that GitHub silently ignores (a misspelt setting) fails the claim and is undone, no draft PR is opened", async () => {
+  const client = fake({ assignIgnored: true });
+  await assert.rejects(
+    claim(client, 62, { ...quiet, env: SETTING }),
+    /GitHub did not assign #62 to @konradhe14/,
+  );
+  assert.ok(
+    client.calls.some((c) => /-X DELETE .*assignees/.test(c)),
+    "the assignee step is undone",
+  );
+  assert.ok(
+    client.calls.some((c) => /git push origin --delete feat\/issue-62-delete-specimen/.test(c)),
+    "the branch is deleted",
+  );
+  assert.ok(!client.calls.some((c) => PULLS_POST.test(c)), "no draft PR");
 });
 
 test("US-DEV-08: CLAIM_TIMEOUT_S (60 s) and CLAIM_PUSH_TIMEOUT_S (300 s) are the starting values; a value that is not a positive number is refused", () => {
