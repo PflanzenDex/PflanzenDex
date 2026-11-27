@@ -1,4 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
+import { expectLargeText, keepsHeaderAndColumn } from "@/shared/testing/story-frame/table-play";
+import { withText200 } from "@/shared/testing/story-frame/story-frame";
 import {
   Table,
   TableBody,
@@ -9,7 +11,9 @@ import {
   TableRow,
 } from "./table";
 
-// Catalog of the Table parts (TE-18, DS-24). The scroll region is focusable (DS-37); the Scrolling story shows it.
+// Catalog of the Table parts (TE-18, DS-24). The scroll region is focusable (DS-37); the Scrolling story shows it. The two
+// stories of the fixed header row and first column (US-QS-15, SG-LIST-01, issue 2420) have a play function that scrolls the
+// region and measures the boxes of the cells that stay (the QG-U5 conformance run waits for it, 360 x 640 px).
 const meta = { title: "ui/Table", component: Table } satisfies Meta<typeof Table>;
 
 export default meta;
@@ -71,4 +75,90 @@ export const Scrolling: Story = {
       </Table>
     </div>
   ),
+};
+
+// The two kinds of header cell (`TableHead`, DS-34): the column header of the header row and the row header of the first
+// column (`scope="row"`), which looks like the cells of its row; both stick while the region scrolls (US-QS-15).
+export const AllVariants: Story = {
+  render: (args) => (
+    <div className="p-4">
+      <Table {...args} containerLabel="Kopfzellen">
+        <TableCaption>Eine Spaltenüberschrift und eine Zeilenüberschrift</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Standort</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map(([name, spot]) => (
+            <TableRow key={name}>
+              <TableHead scope="row">{name}</TableHead>
+              <TableCell>{spot}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  ),
+};
+
+/** Sixteen rows of six columns: a table larger than its frame, in height and in width. */
+const plants = Array.from({ length: 16 }, (_, index) => [
+  `Pflanze ${index + 1}`,
+  "Fenster",
+  "Wohnzimmer",
+  "hell",
+  "alle 7 Tage",
+  "vor 3 Tagen",
+]);
+
+/** The frame of a screen (DS-58): a column of a given height that the table fills and scrolls in; the frame itself never scrolls. */
+const inFrame: Decorator = (Story) => (
+  <div data-frame="" className="flex h-[360px] w-full flex-col p-4">
+    <Story />
+  </div>
+);
+
+function BigTable() {
+  return (
+    <Table containerLabel="Pflanzenliste" className="min-w-[44rem]">
+      <TableCaption className="sr-only">Meine Pflanzen</TableCaption>
+      <TableHeader>
+        <TableRow>
+          {["Name", "Standort", "Raum", "Licht", "Gießen", "Zuletzt"].map((title) => (
+            <TableHead key={title}>{title}</TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {plants.map(([name, ...facts]) => (
+          <TableRow key={name}>
+            <TableHead scope="row">{name}</TableHead>
+            {facts.map((fact, column) => (
+              <TableCell key={column}>{fact}</TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
+// A table larger than its frame: the region scrolls down and sideways, the header row and the first column stay, the page
+// and the frame do not move (US-QS-15, SG-LIST-01, DS-58, DS-61).
+export const FixedHeaderAndColumn: Story = {
+  decorators: [inFrame],
+  render: () => <BigTable />,
+  play: ({ canvasElement }) => keepsHeaderAndColumn(canvasElement),
+};
+
+// The same at 200 % text on a phone: the cells grow, the frame still holds and the header row and the first column stay.
+export const FixedHeaderAndColumnAt200: Story = {
+  decorators: [inFrame, withText200],
+  render: () => <BigTable />,
+  play: async ({ canvasElement }) => {
+    await expectLargeText(canvasElement);
+    await keepsHeaderAndColumn(canvasElement);
+  },
 };
