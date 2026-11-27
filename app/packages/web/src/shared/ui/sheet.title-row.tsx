@@ -7,10 +7,12 @@ import { cva } from "class-variance-authority";
  * The title takes the focus by script, so it draws no browser outline, as the layer heading does (US-QS-15, F15). Its
  * focus ring shows only after keyboard input (DS-37, issue 1714): a pointer user gets no frame, a keyboard user the ring.
  * The ring sits inside the title's box, because the sheet spans the full width of the window and an outer ring would be
- * cut off at its edges.
+ * cut off at its edges. A word wider than the title, beside the two buttons at 200 % text, breaks at a syllable with a hyphen,
+ * or inside the word where the language has no rule (`break-words hyphens-auto`, SG-TYPE-05, issue 2421): the title of a
+ * card sheet is a name, and a long one-word name must not leave the sheet.
  */
 const TITLE =
-  "min-w-0 flex-1 text-lg font-semibold focus-visible:outline-none keyboard-input:focus-visible:ring-2 keyboard-input:focus-visible:ring-inset keyboard-input:focus-visible:ring-ring";
+  "min-w-0 flex-1 text-lg font-semibold break-words hyphens-auto focus-visible:outline-none keyboard-input:focus-visible:ring-2 keyboard-input:focus-visible:ring-inset keyboard-input:focus-visible:ring-ring";
 
 /** The title: drawn, or read to assistive technology only in a window too short for the whole header (DS-34: a variant). */
 const titleLook = cva(TITLE, {

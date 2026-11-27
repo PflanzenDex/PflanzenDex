@@ -24,6 +24,15 @@ describe("US-QS-32 · SG-PHOTO-01 the card picture has a 4:3 box, and its room i
   });
 });
 
+describe("US-QS-32 · SG-PHOTO-01 the box is the full width of the card and no height cap shrinks it (issue 2383, issue 2421)", () => {
+  it("US-QS-32 · SG-PHOTO-01 the box takes the whole width of its card and has no width derived from the window height", () => {
+    const { container } = render(<CardPicture src="https://example.org/a.jpg" alt="Bild" />);
+    const box = container.querySelector("figure")?.firstElementChild as HTMLElement;
+    expect(box.className).toContain("w-full");
+    expect(box.className).not.toMatch(/dvh|vh|mx-auto|min\(/);
+  });
+});
+
 describe("US-QS-32 · SG-PHOTO-01 the 4:3 box keeps its ratio when the card is short of room", () => {
   it("US-QS-32 · SG-PHOTO-01 the box does not shrink (shrink-0), so the picture keeps 4:3 at every card height and text size", () => {
     const { container } = render(<CardPicture src="https://example.org/a.jpg" alt="Bild" />);
