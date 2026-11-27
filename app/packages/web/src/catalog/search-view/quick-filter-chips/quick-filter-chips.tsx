@@ -2,6 +2,7 @@ import { useId, type RefObject } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { ChipRow } from "@/shared/patterns/elements/chip-row/chip-row";
+import { PRESSED_CHIP } from "@/shared/patterns/elements/chip-row/pressed-chip";
 import { useChipsFit } from "@/shared/lists/grouped-list/grouped-sections/group-jump/use-chips-fit";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
@@ -10,6 +11,13 @@ import type { Filters } from "../search-filters/search-filters";
 import table from "../search-view.de.json";
 
 const t = texts(table);
+
+/**
+ * The most lines the chips may take on a phone (issue 2612): both pressed they need 317 px, and a phone of 360 px leaves the
+ * row 294 px, so the second chip would stand half out of the row and read as cut. Two lines show every chip whole; only a
+ * chip that is wider than the row itself (large text) scrolls.
+ */
+const MAX_LINES = 2;
 
 type Chip = {
   key: string;
@@ -20,9 +28,11 @@ type Chip = {
 };
 
 /**
- * One toggle chip. Unpressed it is outlined on the neutral surface; pressed it is filled and shows a check mark, a thicker border and a bold label besides `aria-pressed`, so the state
- * is not told by colour alone (SG-COLOR-03, as the filter of the species page does). It is a 44 px target that never
- * shrinks and never breaks its text.
+ * One toggle chip. Unpressed it is outlined on the neutral surface: the fill of the search field next to it (`bg-card`, so
+ * the two cannot differ in dark mode) and the `--input` border. Pressed it is filled and shows a check mark and a thicker
+ * border besides `aria-pressed`, so the state is not told by colour alone (SG-COLOR-03, as the filter of the species page
+ * does); the label keeps the weight 600 (`PRESSED_CHIP`, SG-TYPE-01, issue 2612). It is a 44 px target that never shrinks
+ * and never breaks its text.
  */
 function ToggleChip(props: { chip: Chip; describedBy?: string | undefined; measure?: boolean }) {
   const { chip, measure } = props;
@@ -37,10 +47,9 @@ function ToggleChip(props: { chip: Chip; describedBy?: string | undefined; measu
       tabIndex={measure ? -1 : undefined}
       className={cn(
         "shrink-0 whitespace-nowrap rounded-full px-4",
-        // Unpressed: outlined on the neutral surface; the border is `--input`, the 1.4.11 boundary token (owner decision d-171).
-        pressed
-          ? "border-2 border-primary font-bold"
-          : "border border-input bg-background text-foreground",
+        // Unpressed: outlined on the neutral surface, the card fill of the search field; the border is `--input`, the 1.4.11
+        // boundary token (owner decision d-171, issue 2612).
+        pressed ? PRESSED_CHIP : "border border-input bg-card text-foreground",
       )}
       onClick={chip.toggle}
     >
@@ -74,7 +83,9 @@ function MeasureRow(props: { chips: readonly Chip[]; measure: RefObject<HTMLDivE
  * The quick filters of "Entdecken", mode Katalog (US-QS-15, US-QS-21, owner decision d-166, issue 2587): "Leicht" and "Noch
  * nicht gefangen" as toggle chips in one chip row under the search field. They are the same filters as the layer "Filter"
  * holds (difficulty 1 and uncaught), so chips and layer are one state. The row wraps while the chips fit and scrolls sideways
- * inside itself when they do not (`ChipRow`, `useChipsFit`, the same logic as the group jump, SG-LIST-06). While the caught
+ * inside itself when they do not (`ChipRow`, `useChipsFit`, the same logic as the group jump, SG-LIST-06), with one change: on
+ * a phone it may take two lines (`MAX_LINES`), so at 360 px both pressed chips are whole in two lines and none stands half out
+ * of the row (issue 2612). The form never depends on the chosen chips: the decision reads the widest (pressed) form. While the caught
  * species are not known (`caughtKnown` false) "Noch nicht gefangen" is disabled, never filtering on a guess (P-08, P-10). When
  * the load has failed (`caughtLoading` false) it says why in a visible line under the row (`aria-describedby` points to it;
  * SG-BTN-05, issue 2610). While the species still load (`caughtLoading` true) the chip is disabled and the line stays away,
@@ -90,7 +101,7 @@ export function QuickFilterChips(props: {
 }) {
   const { filters, caughtKnown, caughtLoading = false, onChange } = props;
   const showWhy = !caughtKnown && !caughtLoading;
-  const { row, measure, fits } = useChipsFit(true);
+  const { row, measure, fits } = useChipsFit(true, MAX_LINES);
   const whyId = useId();
   const chips: readonly Chip[] = [
     {

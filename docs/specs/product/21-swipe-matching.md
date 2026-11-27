@@ -42,6 +42,7 @@ Acceptance criteria:
 - Given the offer is mine, or the giver is not a confirmed friend (any more), or the offer is no longer open, then it never appears (P-05).
 - Order: oldest open offer first, then giver name, then species. The order is fixed for the same data (FR-TAU-05) and contains no ranking.
 - Given I am on a 360 px viewport, then one card fills the width and the three actions are reachable with one thumb (NFR-13, US-QS-14).
+- Given the match deck, then no help block stands under the card. The help of requests opens in a sheet (a dialog from 768 px) from an info button "Hilfe zu Anfragen" in the row of the counter "Karte n von m" (owner decision d-170, finding F-0279, issues 2607 and 2611, US-QS-15). The sheet "So funktionieren Anfragen" says that the giver learns only of a request ("<name> erfährt nur von einer Anfrage."; "Ein Freund" when the card has no name) and what "Anfragen", "Ablehnen" and "Später" do. The button is a 44 px target and the deck fits 360x640 without a page scroll; the focus returns to the button when the sheet closes.
 
 ### US-TAU-02 · Answer with Yes, No or Later · 🟨 new
 

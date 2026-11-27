@@ -39,6 +39,22 @@ describe("US-QS-15 · SG-LIST-06 the chip row is a marked sideways region (DS-63
     expect(row.className).not.toContain("flex-wrap");
   });
 
+  it("US-QS-15 · DS-37 · WCAG 2.4.7 the scrolling row keeps 4 px of room on every side, so the focus ring (2 px ring, 2 px offset) of a chip at its edge is not clipped (issue 2612)", () => {
+    render(
+      <ChipRow label="Zum Standort springen" scroll>
+        {chips}
+      </ChipRow>,
+    );
+    const classes = screen
+      .getByRole("group", { name: "Zum Standort springen" })
+      .className.split(/\s+/);
+    // The padding is cancelled by the same negative margin, so the row costs no height or width.
+    expect(classes).toContain("p-1");
+    expect(classes).toContain("-m-1");
+    expect(classes).not.toContain("pb-1");
+    expect(classes).not.toContain("-mb-1");
+  });
+
   it("US-QS-15 the chips of the scrolling row keep their width: they never shrink and never break their text", () => {
     render(
       <ChipRow label="Zum Standort springen" scroll>

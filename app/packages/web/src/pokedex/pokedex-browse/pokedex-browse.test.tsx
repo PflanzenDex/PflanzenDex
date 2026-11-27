@@ -398,4 +398,14 @@ describe("US-QS-32 · SG-BTN-01 the filter chips: no outline button (FX-39 sweep
     expect(isTinted(within(layer).getByRole("button", { name: "Gefangen" }))).toBe(true);
     expect(isPlain(within(layer).getByRole("button", { name: "Alle" }))).toBe(true);
   });
+
+  it("US-QS-15 SG-TYPE-01 the chosen filter chip keeps the weight 600 of a control label, never 700 (issue 2612: the same pressed look as the quick filters)", async () => {
+    await open();
+    const layer = await openFilters();
+    const classes = within(layer).getByRole("button", { name: "Alle" }).className.split(/\s+/);
+    expect(classes).toContain("font-semibold");
+    expect(classes).not.toContain("font-bold");
+    expect(classes).toContain("border-2");
+    expect(classes).toContain("border-primary");
+  });
 });
