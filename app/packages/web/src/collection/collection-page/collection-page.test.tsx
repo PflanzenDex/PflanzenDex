@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Species, Specimen, SpecimenCard } from "@pflanzendex/core";
 import { MemoryRouter, useLocation } from "react-router";
@@ -335,6 +335,8 @@ describe("US-BES-06 · FR-BES-23 the server list of the collection page scrolls 
   afterEach(() => setViewportWidth(360));
 
   const plants = () => screen.getByRole("list", { name: "Pflanzen" });
+  /** The plant rows of the list, without the loader, retry and end rows at its end (counted on the list, no role query). */
+  const rows = () => plants().querySelectorAll(":scope > li:not([data-list-end])");
 
   it("US-QS-15 · FR-BES-23 every plant of the server total ends up on the one list, with no Zurück, Weiter or page position", async () => {
     const { fetchFn } = fakeServer({ specimens: many(150) });
@@ -369,8 +371,9 @@ describe("US-BES-06 · FR-BES-23 the server list of the collection page scrolls 
 
   it("P-10 FR-BES-23 a further part that fails keeps the loaded plants; Erneut versuchen continues from the same cursor", async () => {
     let failed = false;
+    // One part holds one hundred plants (FR-BES-23), so one plant more is a second part that has to be asked for.
     const { fetchFn } = fakeServer({
-      specimens: many(150),
+      specimens: many(101),
       answer: (u) => {
         if (u.pathname !== "/specimens/cards" || !u.searchParams.has("after") || failed)
           return null;
@@ -384,9 +387,13 @@ describe("US-BES-06 · FR-BES-23 the server list of the collection page scrolls 
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Die Pflanzen konnten nicht geladen werden.",
     );
-    expect(screen.getByRole("button", { name: /^Pflanze 001(\s|$)/ })).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
-    expect(await screen.findByRole("button", { name: /^Pflanze 150(\s|$)/ })).toBeTruthy();
+    expect(rows()).toHaveLength(100);
+    expect(screen.getByText("Pflanze 001")).toBeTruthy();
+    // The retry row can be swapped for the loader for a moment (the held loader of useHeldLoader), and a click on a button
+    // that has left the page is lost. So the button is found and clicked in one step; the step waits until the button is there.
+    await waitFor(() => fireEvent.click(screen.getByText("Erneut versuchen")));
+    expect(await screen.findByText("Pflanze 101")).toBeTruthy();
+    expect(rows()).toHaveLength(101);
     const cursors = cardCalls(fetchFn)
       .map((u) => u.searchParams.get("after"))
       .filter((after): after is string => after !== null);
