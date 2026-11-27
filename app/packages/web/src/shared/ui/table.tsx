@@ -1,6 +1,8 @@
 import * as React from "react";
 import { cva } from "class-variance-authority";
 import { cn } from "@/shared/lib/utils";
+import { keepFocusClear } from "./table.focus";
+import { useFirstColumn } from "./table.first-column";
 
 export type TableProps = React.TableHTMLAttributes<HTMLTableElement> & {
   /** Classes for the scroll container around the table. */
@@ -8,42 +10,6 @@ export type TableProps = React.TableHTMLAttributes<HTMLTableElement> & {
   /** Accessible name of the scroll region (German, supplied by the caller; DS-37). */
   containerLabel?: string;
 };
-
-/** The variable that holds the measured width of the first column; the class `scroll-pl-(--table-first-col)` reads it. */
-const FIRST_COLUMN_WIDTH = "--table-first-col";
-
-/**
- * Writes the width of the first column (its first cell, `th` or `td`) as the variable `--table-first-col` on the scroll
- * region, so that the region can keep that width as scroll padding on the left (WCAG 2.4.11, US-QS-15, issue 2573). The width
- * is not known in advance: it follows the content and the text size. It is measured before the first paint and again when
- * the table or its first cell changes its size; a first cell that is replaced is watched from then on. A table without a
- * width (hidden, `display: none`), without a row, or in a browser without a `ResizeObserver` (measured once) leaves no
- * variable: the padding then is 0, as it was before.
- */
-function useFirstColumnWidth(region: React.RefObject<HTMLElement | null>): void {
-  React.useLayoutEffect(() => {
-    const box = region.current;
-    if (!box) return;
-    let watched: Element | null = null;
-    const observer =
-      typeof ResizeObserver === "function" ? new ResizeObserver(() => measure()) : null;
-    const measure = () => {
-      const cell = box.querySelector("table")?.rows[0]?.cells[0] ?? null;
-      if (cell !== watched) {
-        if (watched) observer?.unobserve(watched);
-        if (cell) observer?.observe(cell);
-        watched = cell;
-      }
-      const width = cell?.getBoundingClientRect().width ?? 0;
-      if (width > 0) box.style.setProperty(FIRST_COLUMN_WIDTH, `${width}px`);
-      else box.style.removeProperty(FIRST_COLUMN_WIDTH);
-    };
-    const table = box.querySelector("table");
-    if (table) observer?.observe(table);
-    measure();
-    return () => observer?.disconnect();
-  }, [region]);
-}
 
 /**
  * Semantic table (US-QS-07, DS-24, DS-37) that keeps its header row and its first column while it scrolls (US-QS-15, DS-58,
@@ -53,16 +19,20 @@ function useFirstColumnWidth(region: React.RefObject<HTMLElement | null>): void 
  * inside itself (`overflow-auto`, `overscroll-contain`), and is a named tab stop, so the keyboard scrolls it. The page never
  * scrolls. A focused control stays clear of everything that stays (WCAG 2.4.11), because the region keeps the room of the
  * sticky parts as scroll padding on each side: the width of the first column on the left (`scroll-pl-(--table-first-col)`,
- * measured, see `useFirstColumnWidth`), the height of the header row at the top (`scroll-pt-11`, the same length as its
- * `h-11`), and below 768 px the room of the bottom bar at the bottom (`--bar-clearance`, SG-LIST-02; from `md` there is
- * none, DS-12). `isolate` keeps the layers of the sticky cells inside the region. The lines of the cells are borders of the
- * cells (`border-separate`), because a line of a row does not stay with a sticky cell. Below `md` modules render cards
- * instead (ResponsiveTable).
+ * measured, see `useFirstColumn`), the height of the header row at the top (`scroll-pt-11`, the same length as its `h-11`),
+ * the room of a focus ring on the right (`scroll-pr-2`, more than ring and offset) and below 768 px the room of the bottom
+ * bar at the bottom (`--bar-clearance`, SG-LIST-02; from `md` there is none, DS-12). The first column sticks only while it
+ * takes at most half of the region (`data-first-col="sticky"`); a wider one, as at 200 % text on a phone, is loose
+ * (`data-first-col="loose"`): its cells scroll with the others, only the header row and the corner stay at the top, and the
+ * scroll padding on the left is 0 (issue 2601). `isolate` keeps the layers of the sticky cells inside the region. The lines
+ * of the cells are borders of the cells (`border-separate`), because a line of a row does not stay with a sticky cell. Below
+ * `md` modules render cards instead (ResponsiveTable). A control that gets the focus from the keyboard is brought entirely into
+ * the free room sideways (`keepFocusClear`): the browser leaves one that shows 32 px or more where it is.
  */
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
   ({ className, containerClassName, containerLabel = "Tabelle", ...props }, ref) => {
     const region = React.useRef<HTMLDivElement>(null);
-    useFirstColumnWidth(region);
+    useFirstColumn(region);
     return (
       <div
         ref={region}
@@ -71,8 +41,9 @@ const Table = React.forwardRef<HTMLTableElement, TableProps>(
         data-scroll-region=""
         data-scroll-x="table"
         tabIndex={0}
+        onFocus={keepFocusClear}
         className={cn(
-          "isolate min-h-24 w-full min-w-0 flex-1 scroll-pl-(--table-first-col) scroll-pt-11 overflow-auto overscroll-contain rounded-card border border-border bg-card text-card-foreground scroll-pb-(--bar-clearance) md:scroll-pb-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "group/table isolate min-h-24 w-full min-w-0 flex-1 scroll-pl-(--table-first-col) scroll-pr-2 scroll-pt-11 overflow-auto overscroll-contain rounded-card border border-border bg-card text-card-foreground scroll-pb-(--bar-clearance) md:scroll-pb-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           containerClassName,
         )}
       >
@@ -110,12 +81,17 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
 TableRow.displayName = "TableRow";
 
 /**
+ * The first cell of a row stops sticking to the left while the first column is loose: the region reads `data-first-col`
+ * (`useFirstColumn`, issue 2601), and the cell has no `left` then, so it scrolls with the others. Its top stays as it is.
+ */
+const LOOSE_FIRST = "group-data-[first-col=loose]/table:first:left-auto";
+
+/**
  * The layers of the cells that stay (US-QS-15, SG-LIST-01): the cells of the body scroll under the first column (`z-10`), the
  * first column scrolls under the header row (`z-20`) and everything scrolls under the corner (`z-30`). A cell that stays is
  * opaque (`bg-card`, the surface of the region) and has a line on the side where the cells scroll under it.
  */
-const STICKY_FIRST =
-  "first:sticky first:left-0 first:z-10 first:border-r first:border-border first:bg-card";
+const STICKY_FIRST = `first:sticky first:left-0 first:z-10 first:border-r first:border-border first:bg-card ${LOOSE_FIRST}`;
 
 /**
  * The two looks of a header cell (US-QS-15, SG-LIST-01, DS-34). A column header sticks to the top of the region, and the first
@@ -125,8 +101,7 @@ const STICKY_FIRST =
 const headVariants = cva("border-b border-border px-3 text-left align-middle font-semibold", {
   variants: {
     kind: {
-      column:
-        "sticky top-0 z-20 h-11 bg-card text-xs text-muted-foreground first:left-0 first:z-30 first:border-r",
+      column: `sticky top-0 z-20 h-11 bg-card text-xs text-muted-foreground first:left-0 first:z-30 first:border-r ${LOOSE_FIRST}`,
       row: `py-3 text-sm text-foreground ${STICKY_FIRST}`,
     },
   },

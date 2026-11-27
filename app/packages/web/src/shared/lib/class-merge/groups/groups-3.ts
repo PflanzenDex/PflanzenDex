@@ -117,6 +117,8 @@ export const GROUPS_3: Config<string, string>["classGroups"] = {
   "scroll-pb": [{ "scroll-pb": scaleUnambiguousSpacing() }],
   // The width of the sticky first column at the start of a scroll region (`Table`, `--table-first-col`, issue 2573).
   "scroll-pl": [{ "scroll-pl": scaleUnambiguousSpacing() }],
+  // The room of a focus ring at the right edge of a scroll region (`Table`, `scroll-pr-2`, issue 2601).
+  "scroll-pr": [{ "scroll-pr": scaleUnambiguousSpacing() }],
   touch: [{ touch: ["auto", "none", "manipulation"] }],
   "touch-x": [{ "touch-pan": ["x", "left", "right"] }],
   "touch-y": [{ "touch-pan": ["y", "up", "down"] }],
