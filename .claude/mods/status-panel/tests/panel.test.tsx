@@ -86,7 +86,7 @@ function engine(on: On, world: World) {
     if (a.includes("worktree list")) return out(0, world.worktrees);
     if (a.startsWith("kill -0")) return out(0, "");
     if (!world.hasGh) return out(1, "");
-    if (a.includes("api user")) return out(0, "someone\n");
+    if (a.includes("viewer")) return out(0, "someone\n");
     if (a.includes("pr list")) return out(0, JSON.stringify(PRS));
     if (a.includes("issue list") && a.includes("--assignee someone")) {
       return out(0, JSON.stringify([{ number: 2 }]));

@@ -156,8 +156,17 @@ export function parseWorktrees(
 let login: string | null = null;
 
 async function readGh($: $T, root: string) {
-  if (!login) login = (await gh($, ["api", "user", "--jq", ".login"], root)).trim() || null;
-  if (!login) throw new Error("gh api user gave no login");
+  // GraphQL `viewer` answers for a user and for the App pflanzendex-agent[bot]; `gh api user` is 403 for an App (#2556).
+  if (!login)
+    login =
+      (
+        await gh(
+          $,
+          ["api", "graphql", "-f", "query={ viewer { login } }", "--jq", ".data.viewer.login"],
+          root,
+        )
+      ).trim() || null;
+  if (!login) throw new Error("gh api graphql viewer gave no login");
   const prs = JSON.parse(
     await gh(
       $,
@@ -183,7 +192,9 @@ async function readGh($: $T, root: string) {
         "--state",
         "open",
         "--assignee",
-        login,
+        // Claims assign the responsible human, not the bot (#2580, d-161). The mod may run without `process`.
+        (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env
+          ?.PFLANZENDEX_CLAIM_ASSIGNEE || login,
         "--limit",
         "500",
         "--json",
