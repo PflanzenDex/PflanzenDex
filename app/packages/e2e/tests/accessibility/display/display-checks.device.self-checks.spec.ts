@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { layoutProblems } from "../../../support/display/display";
 import { cellName, type Cell } from "../../../support/device-check/device";
 import {
   boolCheck,
@@ -152,5 +153,33 @@ test.describe("US-DEV-01 self-test: the table and the counts of the summary", ()
     });
     expect(countsOf([skipped]).skipped).toBe(1);
     expect(rowOf(skipped)).toContain("skipped no phone attached");
+  });
+});
+
+test.describe("US-DEV-01 self-test: intentional sideways scrollers", () => {
+  const rows = `<style>body{margin:0}.row{display:flex;gap:8px;overflow-x:auto;width:300px}
+    .row>*{flex:none;width:200px;height:40px}</style>
+    <div class="row" data-scroll-x="cards"><div>a</div><div>b</div><div>c</div></div>
+    <div class="row" data-scroll-x="chips"><span>x</span><span>y</span><span>z</span></div>`;
+
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 640 });
+  });
+
+  test("US-DEV-01 a card row and a chip row pass the overflow check", async ({ page }) => {
+    await page.setContent(rows);
+    expect((await layoutProblems(page, { skipScrollX: true })).join("\n")).toBe("");
+  });
+
+  test("US-DEV-01 a real overflow next to the scrollers still fails", async ({ page }) => {
+    await page.setContent(`${rows}<p style="width:600px;margin:0">sticks out</p>`);
+    const problems = await layoutProblems(page, { skipScrollX: true });
+    expect(overflowCheck(problems).ok).toBe(false);
+    expect(problems.join("\n")).toContain("sticks out");
+  });
+
+  test("US-DEV-01 without the mark, a scroller's content still counts", async ({ page }) => {
+    await page.setContent(rows.replaceAll("data-scroll-x", "data-x"));
+    expect(overflowCheck(await layoutProblems(page, { skipScrollX: true })).ok).toBe(false);
   });
 });
