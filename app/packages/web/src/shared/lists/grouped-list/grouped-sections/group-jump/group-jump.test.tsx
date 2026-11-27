@@ -77,15 +77,14 @@ function show(choices: GroupChoice[]) {
   return render(tree(choices));
 }
 
-/** The form the row shows now: the chips, the selection field, or nothing. */
-const formOf = () =>
-  screen.queryByRole("combobox", { name: "Zum Standort springen" })
-    ? "select"
-    : screen.queryByRole("group", { name: "Zum Standort springen" })
-      ? "chips"
-      : "none";
+/** The form the row shows now: the chips that wrap, the chips that scroll sideways, or nothing. */
+const formOf = () => {
+  const row = screen.queryByRole("group", { name: "Zum Standort springen" });
+  if (row === null) return "none";
+  return row.className.includes("overflow-x-auto") ? "scroll" : "chips";
+};
 
-describe("US-QS-15 · SG-LIST-06 group jump: chips on one or two lines, otherwise a selection field (issue 1281)", () => {
+describe("US-QS-15 · SG-LIST-06 group jump: chips on one or two lines, otherwise a chip row that scrolls sideways (issue 1281, issue 2421)", () => {
   it("US-QS-15 below 768 px chips that fit one line show as a row, without a scroll", () => {
     layout = { row: 300, chips: [90, 90, 90] };
     show(choicesOf(3));
@@ -97,10 +96,10 @@ describe("US-QS-15 · SG-LIST-06 group jump: chips on one or two lines, otherwis
     expect(row.className).toContain("flex-wrap");
   });
 
-  it("US-QS-15 below 768 px chips that need two lines show as a selection field, though two lines fit twice the width", () => {
+  it("US-QS-15 below 768 px chips that need two lines show as a chip row that scrolls sideways, though two lines fit twice the width", () => {
     layout = { row: 300, chips: [120, 120, 120, 120] };
     show(choicesOf(4));
-    expect(formOf()).toBe("select");
+    expect(formOf()).toBe("scroll");
   });
 
   it("US-QS-15 from 768 px chips that take two lines show as a row of choices", () => {
@@ -110,28 +109,28 @@ describe("US-QS-15 · SG-LIST-06 group jump: chips on one or two lines, otherwis
     expect(formOf()).toBe("chips");
   });
 
-  it("US-QS-15 from 768 px chips that need three lines show as a selection field", () => {
+  it("US-QS-15 from 768 px chips that need three lines show as a chip row that scrolls sideways", () => {
     setViewportWidth(800);
     layout = { row: 300, chips: [120, 120, 120, 120, 120, 120] };
     show(choicesOf(6));
-    expect(formOf()).toBe("select");
+    expect(formOf()).toBe("scroll");
   });
 
-  it("US-QS-15 a single chip wider than the row shows as a selection field", () => {
+  it("US-QS-15 a single chip wider than the row shows as a chip row that scrolls sideways", () => {
     setViewportWidth(800);
     layout = { row: 300, chips: [400] };
     show(choicesOf(1));
-    expect(formOf()).toBe("select");
+    expect(formOf()).toBe("scroll");
   });
 
   it("US-QS-15 a resize across 768 px switches the form both ways", () => {
     layout = { row: 300, chips: [120, 120, 120, 120] };
     show(choicesOf(4));
-    expect(formOf()).toBe("select");
+    expect(formOf()).toBe("scroll");
     act(() => setViewportWidth(800));
     expect(formOf()).toBe("chips");
     act(() => setViewportWidth(360));
-    expect(formOf()).toBe("select");
+    expect(formOf()).toBe("scroll");
   });
 
   it("US-QS-15 · SG-LIST-06 a chip jumps to its group and is no filter: it holds no pressed state and no check mark", async () => {
@@ -157,42 +156,48 @@ describe("US-QS-15 · SG-LIST-06 group jump: chips on one or two lines, otherwis
     }
   });
 
-  it("US-QS-15 · SG-LIST-06 choosing in the selection field jumps and the field rests on its name again", async () => {
+  it("US-QS-15 · SG-LIST-06 · issue 2421 the chips of the scrolling row are the same buttons with the same names and counts, and a chip jumps", async () => {
     layout = { row: 300, chips: [200, 200, 200] };
     show(choicesOf(3));
-    const select = screen.getByRole("combobox", {
-      name: "Zum Standort springen",
-    }) as HTMLSelectElement;
-    expect(select.value).toBe("");
-    await userEvent.selectOptions(select, "g2");
+    expect(formOf()).toBe("scroll");
+    const row = screen.getByRole("group", { name: "Zum Standort springen" });
+    // It is the marked sideways region 'chips' (DS-63); no selection field is left.
+    expect(row.getAttribute("data-scroll-x")).toBe("chips");
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.getAllByRole("button", { name: /Gruppe/ }).map((b) => b.textContent)).toEqual([
+      "Gruppe 1 (1)",
+      "Gruppe 2 (2)",
+      "Gruppe 3 (3)",
+    ]);
+    await userEvent.click(screen.getByRole("button", { name: /Gruppe 2/ }));
     expect(jumped).toEqual(["g2"]);
-    expect(formOf()).toBe("select");
-    expect(select.value).toBe("");
+    expect(formOf()).toBe("scroll");
   });
 
-  it("US-QS-15 the keyboard focus stays on the selection field after choosing", async () => {
+  it("US-QS-15 · WCAG 2.1.1 the keyboard reaches every chip of the scrolling row, and the chip keeps the focus after it jumped", async () => {
     layout = { row: 300, chips: [200, 200, 200] };
     show(choicesOf(3));
-    const select = screen.getByRole("combobox", { name: "Zum Standort springen" });
-    select.focus();
-    await userEvent.selectOptions(select, "g3");
-    expect(document.activeElement).toBe(select);
+    const chip = screen.getByRole("button", { name: /Gruppe 3/ });
+    chip.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(jumped).toEqual(["g3"]);
+    expect(document.activeElement).toBe(chip);
   });
 
-  it("US-QS-15 a row that starts without choices becomes a selection field once its choices are too wide", () => {
+  it("US-QS-15 a row that starts without choices becomes a scrolling chip row once its choices are too wide", () => {
     layout = { row: 300, chips: [200, 200, 200] };
     const { rerender } = render(tree([]));
     expect(formOf()).toBe("none");
     rerender(tree(choicesOf(3)));
-    expect(formOf()).toBe("select");
+    expect(formOf()).toBe("scroll");
   });
 
-  it("US-QS-15 changed counts re-decide: chips that grow past the row become a selection field", () => {
+  it("US-QS-15 changed counts re-decide: chips that grow past the row become a scrolling chip row", () => {
     layout = { row: 330 };
     const { rerender } = render(tree(choicesOf(3, [1, 2, 3])));
     expect(formOf()).toBe("chips");
     rerender(tree(choicesOf(3, [100, 100, 100])));
-    expect(formOf()).toBe("select");
+    expect(formOf()).toBe("scroll");
   });
 
   it("US-QS-15 a change of the chips' widths without a render re-decides through the ResizeObserver", () => {
@@ -200,7 +205,7 @@ describe("US-QS-15 · SG-LIST-06 group jump: chips on one or two lines, otherwis
     show(choicesOf(3));
     expect(formOf()).toBe("chips");
     resize({ row: 330, chips: [200, 200, 200] });
-    expect(formOf()).toBe("select");
+    expect(formOf()).toBe("scroll");
   });
 
   it("US-QS-15 the measuring row is hidden from assistive technology and cannot take the focus", () => {
@@ -225,7 +230,7 @@ describe("US-QS-15 · SG-LIST-06 group jump: chips on one or two lines, otherwis
     try {
       layout = { row: 300, chips: [120, 120, 120, 120] };
       show(choicesOf(4));
-      expect(formOf()).toBe("select");
+      expect(formOf()).toBe("scroll");
     } finally {
       window.matchMedia = saved;
     }
@@ -233,7 +238,7 @@ describe("US-QS-15 · SG-LIST-06 group jump: chips on one or two lines, otherwis
 });
 
 describe("US-ACH-02 group chips say what they count (countText)", () => {
-  it("US-ACH-02 countText replaces the count in brackets in the chips, the measure and the selection field", () => {
+  it("US-ACH-02 countText replaces the count in brackets in the chips, the measure and the scrolling row", () => {
     const choices: GroupChoice[] = [
       { key: "g1", label: "Pflege", count: 3, countText: "2 von 3" },
       { key: "g2", label: "Wachstum", count: 2, countText: "0 von 2" },
@@ -249,9 +254,9 @@ describe("US-ACH-02 group chips say what they count (countText)", () => {
     cleanup();
     layout = { row: 300, chips: [200, 200] };
     show(choices);
-    expect(formOf()).toBe("select");
-    expect(screen.getByRole("option", { name: "Pflege · 2 von 3" })).toBeTruthy();
-    expect(screen.getByRole("option", { name: "Wachstum · 0 von 2" })).toBeTruthy();
+    expect(formOf()).toBe("scroll");
+    expect(screen.getByRole("button", { name: "Pflege · 2 von 3" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Wachstum · 0 von 2" })).toBeTruthy();
   });
 });
 

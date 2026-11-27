@@ -1,4 +1,3 @@
-import { ChevronRight } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
@@ -32,10 +31,9 @@ export function CardMore(props: { name: string; children: ReactNode }) {
           variant="plain"
           size="sm"
           aria-label={t("openNamed", { name: props.name })}
-          className="w-fit self-start"
+          className="shrink-0"
         >
           {t("open")}
-          <ChevronRight aria-hidden="true" className="size-5" />
         </Button>
       }
     >
