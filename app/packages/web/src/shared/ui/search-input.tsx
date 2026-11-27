@@ -14,7 +14,7 @@ const ui = texts(table);
  * its placeholder the width (DS-34: the variant is chosen by cva, not by a class string; SG-SEARCH-01, 200 % text).
  */
 const endRoom = cva("", {
-  variants: { room: { none: "", end: "pr-11" } },
+  variants: { room: { none: "", hint: "md:pr-11", end: "pr-11" } },
   defaultVariants: { room: "none" },
 });
 
@@ -40,7 +40,8 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
     // One stable callback for both refs: the clear button needs the element, the caller keeps its ref.
     const setRef = React.useMemo(() => mergeRefs(inner, ref), [ref]);
     // The end of the field is reserved while the clear button or the key hint is there.
-    const showsEnd = !disabled && (value !== "" || Boolean(keyHint));
+    // The key hint shows only from md (768 px), so below it an empty field keeps the full width for the placeholder.
+    const room = disabled ? "none" : value !== "" ? "end" : keyHint ? "hint" : "none";
     return (
       <div className={cn("relative", className)}>
         {/* Decorative: the field's accessible name is the label (SG-ICON-02). 20 px in a field (SG-ICON-01). */}
@@ -60,7 +61,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           // that width (SG-SEARCH-01, 200 % text). The native cancel icon is hidden (WebKit, Blink).
           className={cn(
             "ps-10 [&::-webkit-search-cancel-button]:appearance-none",
-            endRoom({ room: showsEnd ? "end" : "none" }),
+            endRoom({ room }),
           )}
         />
         {keyHint && value === "" && !disabled && (

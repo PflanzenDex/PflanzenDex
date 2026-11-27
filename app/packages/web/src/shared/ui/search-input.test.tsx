@@ -81,6 +81,29 @@ describe("US-QS-11 · the search field shows its key", () => {
   });
 });
 
+describe("US-QS-15 · issue 2633 the end room follows what shows", () => {
+  const tokens = (el: HTMLElement) => el.className.split(/\s+/);
+
+  it("US-QS-15 an empty field with a key hint reserves the end room only from md, where the key shows", () => {
+    render(<Harness initial="" keyHint={{ visible: "/", aria: "/" }} />);
+    const t = tokens(screen.getByRole("searchbox"));
+    expect(t).toContain("md:pr-11");
+    expect(t).not.toContain("pr-11");
+  });
+
+  it("US-QS-15 an empty field without a key hint reserves no end room", () => {
+    render(<Harness initial="" />);
+    const t = tokens(screen.getByRole("searchbox"));
+    expect(t).not.toContain("pr-11");
+    expect(t).not.toContain("md:pr-11");
+  });
+
+  it("US-QS-15 a field with text reserves the end room at every width for the clear button", () => {
+    render(<Harness initial="Monstera" keyHint={{ visible: "/", aria: "/" }} />);
+    expect(tokens(screen.getByRole("searchbox"))).toContain("pr-11");
+  });
+});
+
 describe("US-QS-32 · SG-SEARCH-01 the search field shows the search icon at its left", () => {
   it("US-QS-32 · SG-SEARCH-01 the search icon sits inside the field at its left edge and is hidden from assistive technology", () => {
     render(<Harness initial="" />);
