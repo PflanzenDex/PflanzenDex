@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -726,7 +726,7 @@ describe("US-QS-32 · US-QS-15 the match deck: no intro under the title, the hel
 });
 
 describe("US-QS-32 · SG-TYPE-04 at 200 % text the match deck scrolls as a whole", () => {
-  /** Opens the deck at a 200 % root text size (32 px), as the keeper's setting gives it (US-QS-21, WCAG 1.4.4). The deck reads the size when it mounts, after the load. */
+  /** Opens the deck at a 200 % root text size (32 px), as the keeper's setting gives it (US-QS-21, WCAG 1.4.4). The deck reads the size when it mounts and follows a later change (issue 2617). */
   async function openAt200(cards: unknown[] = [card(1)]) {
     server(cards);
     const size = vi
@@ -740,6 +740,22 @@ describe("US-QS-32 · SG-TYPE-04 at 200 % text the match deck scrolls as a whole
   /** The root of the deck: its first child is the row of the counter "Karte n von m" and the info button. */
   const deckRoot = () =>
     screen.getByText(/^Karte \d+ von \d+$/).parentElement?.parentElement as HTMLElement;
+
+  it("US-QS-15 · US-QS-32 issue 2617 the deck lays out again when the text size is raised after mount", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    const sticky = () => screen.getByRole("button", { name: /^Ablehnen:/ }).closest("div.border-t");
+    expect(sticky()?.className).toContain("sticky");
+    const size = vi
+      .spyOn(window, "getComputedStyle")
+      .mockReturnValue({ fontSize: "32px" } as CSSStyleDeclaration);
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    size.mockRestore();
+    expect(sticky()?.className).not.toContain("sticky");
+  });
 
   it("US-QS-32 · SG-TYPE-04 the decision row is not sticky at large text, so it cannot cover the card", async () => {
     await openAt200();
