@@ -614,27 +614,114 @@ describe("US-TAU-02 the summary counts the open requests the server holds", () =
   });
 });
 
-describe("US-QS-32 the match deck: no intro under the title, one line above the buttons (F-0279)", () => {
-  it("US-QS-32 F-0279 no intro under the title; one line above the buttons names the friend, the rest sits behind Mehr erfahren", async () => {
+describe("US-QS-32 · US-QS-15 the match deck: no intro under the title, the help of requests in a sheet behind an info button (F-0279, d-170)", () => {
+  /** The info button in the row of the counter "Karte n von m". */
+  const helpButton = () => screen.getByRole("button", { name: "Hilfe zu Anfragen" });
+
+  it("US-QS-32 F-0279 no intro under the title", async () => {
     server([card(1)]);
     open();
     await current();
     expect(screen.queryByText(/Angebote deiner Freunde, deren Art/)).toBeNull();
-    const line = screen.getByText("Ben1 erfährt nur von einer Anfrage.");
-    expect(line.closest("details")).toBeNull();
-    const more = line.parentElement?.querySelector("details");
-    expect(more?.textContent).toContain("„Anfragen“ fragt das Angebot an");
-    expect(more?.textContent).toContain(
-      "Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen.",
-    );
-    expect(more?.textContent).not.toContain("Der Freund erfährt davon nichts");
   });
 
-  it("US-QS-32 F-0279 a card without its giver's name says 'Ein Freund' in the same line", async () => {
+  it("US-QS-15 d-170 no help block under the card: the line and 'Mehr erfahren' appear only in the sheet", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    expect(screen.queryByText(/erfährt nur von einer Anfrage/)).toBeNull();
+    expect(screen.queryByText("Mehr erfahren")).toBeNull();
+    expect(document.querySelector("details")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("US-QS-15 d-170 the info button stands in the row of the counter, which keeps its live text", async () => {
+    server([card(1), card(2)]);
+    open();
+    await current();
+    const counter = screen.getByText("Karte 1 von 2");
+    expect(counter.getAttribute("aria-live")).toBe("polite");
+    expect(counter.parentElement?.contains(helpButton())).toBe(true);
+    // The live region holds the counter only: the button is not announced with every card.
+    expect(counter.contains(helpButton())).toBe(false);
+  });
+
+  it("US-QS-15 · SG-TOUCH-01 · SG-ICON-02 the info button is an icon with a German name, a target of 44 px, and its icon is hidden", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    const button = helpButton();
+    expect(button.className).toContain("min-h-[44px]");
+    expect(button.className).toContain("min-w-[44px]");
+    expect(button.textContent).toBe("");
+    expect(button.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("US-QS-15 d-170 the button opens a sheet titled 'So funktionieren Anfragen' with the friend's name line and the rest of the help", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    await userEvent.click(helpButton());
+    const sheet = within(await screen.findByRole("dialog", { name: "So funktionieren Anfragen" }));
+    expect(sheet.getByText("Ben1 erfährt nur von einer Anfrage.")).toBeTruthy();
+    expect(sheet.getByText(/„Anfragen“ fragt das Angebot an/)).toBeTruthy();
+    expect(
+      sheet.getByText(/Bei Tauschangeboten ergänzt du die Gegengabe unter Anfragen\./),
+    ).toBeTruthy();
+    expect(sheet.queryByText(/Der Freund erfährt davon nichts/)).toBeNull();
+  });
+
+  it("US-QS-32 F-0279 d-170 a card without its giver's name says 'Ein Freund' in the sheet", async () => {
     server([card(1, { ownerName: null })]);
     open();
     await current();
-    expect(screen.getByText("Ein Freund erfährt nur von einer Anfrage.")).toBeTruthy();
+    await userEvent.click(helpButton());
+    const sheet = within(await screen.findByRole("dialog", { name: "So funktionieren Anfragen" }));
+    expect(sheet.getByText("Ein Freund erfährt nur von einer Anfrage.")).toBeTruthy();
+  });
+
+  it("US-QS-15 · US-QS-08 Escape closes the sheet and the focus returns to the info button", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    const button = helpButton();
+    await userEvent.click(button);
+    await screen.findByRole("dialog", { name: "So funktionieren Anfragen" });
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("US-QS-15 · SG-SHEET-02 'Schließen' closes the sheet and the focus returns to the info button", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    const button = helpButton();
+    await userEvent.click(button);
+    const sheet = await screen.findByRole("dialog", { name: "So funktionieren Anfragen" });
+    await userEvent.click(within(sheet).getByRole("button", { name: "Schließen" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("US-QS-15 d-170 the keyboard opens the sheet: Enter on the info button", async () => {
+    server([card(1)]);
+    open();
+    await current();
+    helpButton().focus();
+    await userEvent.keyboard("{Enter}");
+    expect(await screen.findByRole("dialog", { name: "So funktionieren Anfragen" })).toBeTruthy();
+  });
+
+  it("US-QS-15 d-170 at 200 % text the button stays in the row of the counter", async () => {
+    server([card(1)]);
+    const size = vi
+      .spyOn(window, "getComputedStyle")
+      .mockReturnValue({ fontSize: "32px" } as CSSStyleDeclaration);
+    open();
+    await current();
+    size.mockRestore();
+    expect(screen.getByText("Karte 1 von 1").parentElement?.contains(helpButton())).toBe(true);
   });
 });
 
@@ -650,8 +737,9 @@ describe("US-QS-32 · SG-TYPE-04 at 200 % text the match deck scrolls as a whole
     size.mockRestore();
     return article;
   }
-  /** The root of the deck: its first line is "Karte n von m". */
-  const deckRoot = () => screen.getByText(/^Karte \d+ von \d+$/).parentElement as HTMLElement;
+  /** The root of the deck: its first child is the row of the counter "Karte n von m" and the info button. */
+  const deckRoot = () =>
+    screen.getByText(/^Karte \d+ von \d+$/).parentElement?.parentElement as HTMLElement;
 
   it("US-QS-32 · SG-TYPE-04 the decision row is not sticky at large text, so it cannot cover the card", async () => {
     await openAt200();
