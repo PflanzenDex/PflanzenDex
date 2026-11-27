@@ -1,10 +1,10 @@
 import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type UseFormReturn, type UseFormSetError } from "react-hook-form";
-import { Button } from "@/shared/ui/button/button";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
+import { Button } from "@/shared/ui/button";
+import { FormBar } from "@/shared/ui/form-bar";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/form";
 import type { ApiError } from "../../../shared/data";
 import { duplicate } from "../form";
 import { MoreDetails } from "../more-details/more-details";

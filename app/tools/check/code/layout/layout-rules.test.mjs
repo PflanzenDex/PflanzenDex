@@ -296,6 +296,66 @@ describe("US-QG-09 LY-4 component folders", () => {
   it("only applies below the component roots", () => {
     assert.deepEqual(run(["app/other/thing.tsx"]), []);
   });
+  it("does not apply in a collection directory: a flat component file is the layout there (R3, issue 2509)", () => {
+    const dirs = [
+      ...config.dirs,
+      { path: "app/web/ui", collection: /^[a-z]+(\.(stories|test))?\.tsx$/ },
+    ];
+    assert.deepEqual(run(["app/web/ui/badge.tsx", "app/web/ui/badge.test.tsx"], { dirs }), []);
+  });
+  it("still applies next to a collection directory and below it", () => {
+    const dirs = [
+      ...config.dirs,
+      { path: "app/web/ui", collection: /^[a-z]+(\.(stories|test))?\.tsx$/ },
+    ];
+    const f = run(["app/web/ui/badge.tsx", "app/web/other/badge.tsx", "app/web/ui/x/y.tsx"], {
+      dirs,
+    });
+    assert.deepEqual(
+      rules(f).sort(),
+      ["LY-2 app/web/ui", "LY-4 app/web/ui/x", "LY-4 app/web/other"].sort(),
+    );
+  });
+});
+
+describe("US-QG-09 LY-2 flat UI primitives (R3, owner decisions d-132 and d-133, issue 2509)", () => {
+  const ui = "app/packages/web/src/shared/ui";
+  const flat = [
+    "button.tsx",
+    "button.stories.tsx",
+    "button.test.tsx",
+    "button.de.json",
+    "button.roles.ts",
+    "form-bar.slot.tsx",
+    "form-bar.page.tsx",
+    "sheet.height.test.tsx",
+    "sheet.detents.test.ts",
+    "sheet.test-helpers.ts",
+    "input.date-field.de.json",
+    "layer-scope.ts",
+  ];
+  it("accepts a collection of flat primitives with no unit limit and no LY-4", () => {
+    const many = Array.from({ length: 40 }, (_, i) => `part${i}.tsx`);
+    const paths = [...flat, ...many].map((n) => `${ui}/${n}`);
+    assert.deepEqual(findLayout(paths, layoutConfig), []);
+    assert.deepEqual(judgeLayout(paths, layoutConfig).hints, []);
+  });
+  it("fails a subfolder, a capital or snake_case name, a foreign extension and a name with two kinds", () => {
+    const bad = ["Button.tsx", "button_roles.ts", "button.css", "button.stories.json", "a.b.c.tsx"];
+    const f = findLayout(
+      [...bad.map((n) => `${ui}/${n}`), `${ui}/button/button.tsx`],
+      layoutConfig,
+    );
+    assert.deepEqual(rules(f), [`LY-2 ${ui}`]);
+    assert.deepEqual(f[0].items.sort(), [...bad, "button"].sort());
+  });
+  it("keeps LY-4 for a component elsewhere in the web package", () => {
+    const f = findLayout(
+      [`${ui}/button.tsx`, "app/packages/web/src/shared/patterns/badge.tsx"],
+      layoutConfig,
+    );
+    assert.deepEqual(rules(f), ["LY-4 app/packages/web/src/shared/patterns"]);
+  });
 });
 
 describe("US-QG-09 LY-5 repo root", () => {

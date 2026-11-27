@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { Inbox } from "./inbox";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import table from "../monitoring.de.json";
 import { InboxSkeleton } from "./inbox.skeleton";
 

@@ -3,7 +3,7 @@ import { type Resolver, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { localToday, specimenName, speciesDisplayName, type Species } from "@pflanzendex/core";
 import { refusalText } from "@/shared/lib/error-text";
-import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
+import { useServerRefusal } from "@/shared/ui/form.server-refusal";
 import {
   createSchema,
   createSpecimen,
@@ -18,7 +18,7 @@ import {
 import { currentTimeZone, SIGN_IN, type ApiError, useRepeatKey } from "../../../../shared/data";
 import { FIRST_PLANT, useSaveFailure } from "./save-step/save-failure";
 import { useOwnZones } from "./save-step/use-own-zones";
-import { useFieldForm } from "@/shared/ui/fields/form/form";
+import { useFieldForm } from "@/shared/ui/form";
 
 type Token = () => Promise<string | undefined>;
 

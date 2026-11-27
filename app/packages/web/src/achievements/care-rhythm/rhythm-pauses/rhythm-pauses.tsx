@@ -1,9 +1,9 @@
 import { forwardRef, useId, useRef, useState } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { localToday, MAX_PAUSE_DAYS } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
-import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
+import { Button } from "@/shared/ui/button";
+import { DateField } from "@/shared/ui/input.date-field";
+import { isHandedDate } from "@/shared/ui/input.date-schema";
 import { dateText } from "@/shared/lib/format";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";

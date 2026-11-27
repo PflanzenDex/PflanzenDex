@@ -4,7 +4,7 @@ import { Quiet } from "../parts/parts";
 import { dateText, valueText } from "../../model/text";
 import { overdueChip, summaryDate } from "@/shared/lib/format";
 import { currentTimeZone } from "../../../../shared/data";
-import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import { DisclosureSummary } from "@/shared/ui/more-help.disclosure-summary";
 
 // The facts of a specimen card (US-BES-06): the last measurement, the open treatment and the provenance. The plant layer
 // (US-QS-23) places them in its tabs; derived data only.

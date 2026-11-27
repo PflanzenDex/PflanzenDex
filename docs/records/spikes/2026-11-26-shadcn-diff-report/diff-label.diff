@@ -1,0 +1,46 @@
+--- a/src/shared/ui/label.tsx
++++ b/src/shared/ui/label.tsx
+@@ -1,31 +1,21 @@
+ import * as React from "react"
+-import { cn } from "@/shared/lib/utils"
++import { cn } from "cn"
+-import { texts } from "@/shared/lib/text-rules/texts"
++import { Label as LabelPrimitive } from "radix-ui"
+-import table from "./label.de.json"
+ 
+-const t = texts(table)
++function Label({
+-
++  className,
+-export type LabelProps = React  .LabelHTMLAttributes<HTMLLabelElement> & {
++  ...props
+-  /** Adds " (optional)" after the text: a field that may stay empty says so, a required one says nothing (SG-FORM-01). */
++}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+-  optional?: boolean | undefined
++  return (
+-}
++    <LabelPrimitive.Root
+-
++      data-slot="label"
+-/** Form label (US-QS-07, DS-36). Put it before its control; the control may carry the `peer` class to dim the label when disabled. */
+-const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
+-  ({ className, optional, children, ...props }, ref) => (
+-    <label
+-      ref={ref}
+       className={cn(
+-        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
++        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+         className
+       )}
+       {...props}
+->
++    />
+   )
+-      {children}
++}
+-      {optional ? ` ${t("optional")}` : null}
+-    </label>
+-)
+-Label.displayName = "Label"
+ 
+ export { Label }

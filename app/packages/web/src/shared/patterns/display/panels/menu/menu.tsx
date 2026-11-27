@@ -1,6 +1,6 @@
 import { EllipsisVertical } from "lucide-react";
 import * as React from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { popupAlignClass, popupPanelClass, usePopup, type PopupAlign } from "../popover/use-popup";
 

@@ -1,6 +1,8 @@
 // Single source for the file layout (FR-QG-21). Describes the TARGET layout; what does not
 // match yet is listed in layout-baseline.json and only shrinks (FR-QG-22).
 const story = "[a-z0-9][a-z0-9-]*";
+// One kebab-case word group of a file name (the same pattern as `story`, one star only: ESLint security/detect-unsafe-regex).
+const word = story;
 export default {
   // The size hint of a module directory (FR-QG-21, d-136 of 2026-11-26, issue 2546): above it `make layout` prints a hint
   // and does not fail (8 since owner decision d-133, issue 2543; 5 before). A per-path rule below is a hard limit (d-133);
@@ -51,6 +53,18 @@ export default {
         /^(package(-lock)?\.json|tsconfig[a-z0-9.-]*\.json|components\.json|[a-z0-9.-]+\.config\.(m?js|ts|cjs))$/,
     },
     { path: "app/packages/*/src", maxUnits: Infinity },
+    // The flat UI primitives (R3, owner decisions d-132 and d-133, issue 2509): `npx shadcn add <name>` writes `<name>.tsx` into
+    // `src/shared/ui`, so this folder is a collection of files with no unit limit, no subfolder and no LY-4 (a flat component is
+    // the layout here). A name is a component (`button.tsx`), its story or test (`button.stories.tsx`, `button.test.tsx`), its
+    // message table (`button.de.json`), a part or sidecar of it (`<name>.<kind>.ts` and `<name>.<kind>.tsx`: `button.roles.ts`,
+    // `form-bar.slot.tsx`, with a test `<name>.<kind>.test.ts(x)`) or a helper module (`layer-scope.ts`). The word groups are
+    // kebab-case; a dotted name has one `.<kind>` at most, so a part is never a component of its own for QG-U5.
+    {
+      path: "app/packages/web/src/shared/ui",
+      collection: new RegExp(
+        `^${word}(\\.${word})?(\\.(stories|test))?\\.tsx?$|^${word}(\\.${word})?\\.de\\.json$`,
+      ),
+    },
     // The changelog fragments (US-DEV-06, issue 1486): one JSON file per PR, named by its issue number and a slug. Each
     // file is a unit of its own, so a unit cap would stop the folder after nine PRs; the name pattern (LY-2) is the rule.
     { path: "app/packages/web/src/news/unreleased", collection: /^\d+-[a-z0-9-]+\.json$/ },

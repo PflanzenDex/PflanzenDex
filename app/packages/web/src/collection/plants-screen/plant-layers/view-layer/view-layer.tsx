@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
 import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./view-layer.de.json";
 

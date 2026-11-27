@@ -1,7 +1,7 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { useState, type RefObject } from "react";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { CATALOG_ADDRESS } from "@/shared/patterns/navigation/navigation/navigation";
 import { SuggestionCard } from "../suggestion-card/suggestion-card";
 import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";

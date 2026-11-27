@@ -1,7 +1,7 @@
 import type { Control } from "react-hook-form";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Field } from "@/shared/ui/fields/form/field/field";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Field } from "@/shared/ui/field";
+import { Select } from "@/shared/ui/select";
 import type { RepotFields } from "../../../../specimens/model/schemas";
 import { potItemText, potSizeText } from "../../repot-plan/pot-text";
 import type { RepotPlanView } from "../../repot-api";

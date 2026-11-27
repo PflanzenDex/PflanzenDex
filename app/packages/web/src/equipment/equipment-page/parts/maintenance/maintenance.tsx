@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { localToday } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { FormRoot } from "@/shared/ui/fields/form/form";
-import { Input } from "@/shared/ui/fields/input/input";
-import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
-import { isHandedDate } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
+import { Button } from "@/shared/ui/button";
+import { FormRoot } from "@/shared/ui/form";
+import { Input } from "@/shared/ui/input";
+import { DateField } from "@/shared/ui/input.date-field";
+import { isHandedDate } from "@/shared/ui/input.date-schema";
 import { currentTimeZone } from "../../../../shared/data";
 import type { EquipmentRow } from "../../../equipment-api";
 import type { MaintenanceInput } from "../../../upkeep-api";
 import { wholeNumber } from "../../../lamp-light/parse";
 import { dateText, keepTogether, summaryDate } from "@/shared/lib/format";
-import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import { DisclosureSummary } from "@/shared/ui/more-help.disclosure-summary";
 
 const LABEL = "flex min-w-0 flex-col gap-1 text-sm";
 const UNKNOWN = "unbekannt";

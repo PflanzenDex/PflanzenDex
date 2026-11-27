@@ -10,8 +10,8 @@ import { Pager, type PagerPaging } from "@/shared/patterns/responsive/pager/page
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
-import { Button } from "@/shared/ui/button/button";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { Button } from "@/shared/ui/button";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { errorText } from "@/shared/lib/error-text";
 import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { useFeature } from "@/shared/data";

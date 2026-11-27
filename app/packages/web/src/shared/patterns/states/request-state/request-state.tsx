@@ -3,10 +3,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { useOnline } from "@/shared/platform/browser/network";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
-import {
-  DelayedSkeleton,
-  useHeldLoader,
-} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 import { EmptyState } from "../../elements/empty-state/empty-state";
 import table from "./request-state.de.json";
 

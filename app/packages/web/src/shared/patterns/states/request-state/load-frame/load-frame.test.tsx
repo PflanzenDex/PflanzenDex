@@ -3,11 +3,11 @@ import { cleanup, render, renderHook, screen, waitFor } from "@testing-library/r
 import userEvent from "@testing-library/user-event";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { useClearOnSignOut, useWriteAction, useInvalidate, type Response } from "@/shared/data";
-import { SLOW_LOAD_MS } from "@/shared/ui/display/skeleton/loading-contract";
+import { SLOW_LOAD_MS } from "@/shared/ui/skeleton.loading-contract";
 import { LoadFrame } from "./load-frame";
 
 const token = async () => "tok";

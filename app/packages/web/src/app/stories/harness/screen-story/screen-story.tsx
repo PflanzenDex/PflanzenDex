@@ -7,7 +7,7 @@ import { createQueryClient } from "@/shared/data";
 import { AppShell } from "@/app/frame/app-shell/app-shell";
 import { navItems, viewTitle } from "@/shared/patterns/navigation/navigation/navigation";
 import { fakeFetch, type Routes } from "../fake-api.fixtures";
-import { SKELETON_DELAY_MS } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { SKELETON_DELAY_MS } from "@/shared/ui/skeleton.delayed";
 
 // The page stories render the real screen inside the real page frame (US-QS-14). Server state lives in a query client
 // that a loader fills before the story renders, so the story starts with its data and never shows a skeleton.

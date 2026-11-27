@@ -9,7 +9,7 @@ import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { CollectionPage } from "./collection-page";
 import { EMPTY_DISTRIBUTION } from "../insights/distribution-test-helpers";
 import { answerCardRead } from "../specimens/tests/cards-fake";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

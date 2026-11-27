@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { accountAddress } from "@/shared/patterns/navigation/navigation/navigation";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { LINE_HIT } from "@/shared/feedback/line-hit";
 import { useInvalidate, useRequest, WRITE_SUCCEEDED, newRepeatKey } from "../../shared/data";
 import { loadNews, markSeen } from "../achievements-api";

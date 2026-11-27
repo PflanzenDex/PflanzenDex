@@ -1,11 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  SKELETON_DELAY_MS,
-  STATUS_HOLD_MS,
-} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { SKELETON_DELAY_MS, STATUS_HOLD_MS } from "@/shared/ui/skeleton.delayed";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import {
   expectTitleInBar,
   renderInTopBar,

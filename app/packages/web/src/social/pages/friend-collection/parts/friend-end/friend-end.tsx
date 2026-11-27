@@ -3,7 +3,7 @@ import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { useNavigate } from "react-router";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { Menu } from "@/shared/patterns/display/panels/menu/menu";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { errorText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { isOnline } from "@/shared/platform/browser/network";

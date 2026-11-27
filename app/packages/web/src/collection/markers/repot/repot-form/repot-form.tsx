@@ -4,9 +4,9 @@ import { type Control } from "react-hook-form";
 import { useRequest, type ApiError } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
-import { useHeldLoader } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { useHeldLoader } from "@/shared/ui/skeleton.delayed";
 import {
   Form,
   FormControl,
@@ -17,8 +17,8 @@ import {
   FormMessage,
   FormRoot,
   useFieldForm,
-} from "@/shared/ui/fields/form/form";
-import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+} from "@/shared/ui/form";
+import { DateField } from "@/shared/ui/input.date-field";
 import { FormButtons, LoadingNote, Quiet, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";
 import { repotSchema, type RepotFields } from "../../../specimens/model/schemas";

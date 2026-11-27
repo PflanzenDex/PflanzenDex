@@ -4,7 +4,7 @@ import type { ApiError } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import table from "../../import-page.de.json";
 
 const ui = texts(table);

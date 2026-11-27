@@ -6,10 +6,10 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../shared/data";
 import { DraftsSection } from "./drafts-section";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import table from "../ai.de.json";
 import { DraftsSkeleton } from "./drafts-section.skeleton";
-import { hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button/button-roles";
+import { hasOwnBorder, isFilled, isPlain } from "@/shared/ui/button.roles";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

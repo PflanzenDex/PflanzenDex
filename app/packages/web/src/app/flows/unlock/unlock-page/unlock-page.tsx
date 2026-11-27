@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { Link, useParams } from "react-router";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./unlock-page.de.json";
 import { UnlockSkeleton } from "./unlock-page.skeleton";

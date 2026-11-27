@@ -1,16 +1,10 @@
 import type { Control } from "react-hook-form";
 import type { LightLocation, LightZone } from "@pflanzendex/core";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/shared/ui/fields/form/form";
-import { Field } from "@/shared/ui/fields/form/field/field";
-import { Input } from "@/shared/ui/fields/input/input";
-import { Select } from "@/shared/ui/fields/select/select";
-import { Textarea } from "@/shared/ui/fields/textarea/textarea";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
+import { Field } from "@/shared/ui/field";
+import { Input } from "@/shared/ui/input";
+import { Select } from "@/shared/ui/select";
+import { Textarea } from "@/shared/ui/textarea";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Row } from "./care-profile-row/care-profile-row";
 import table from "./care-profile-fields.de.json";

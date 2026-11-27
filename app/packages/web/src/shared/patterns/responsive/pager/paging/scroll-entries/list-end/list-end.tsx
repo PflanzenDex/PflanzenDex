@@ -1,8 +1,5 @@
-import { Button } from "@/shared/ui/button/button";
-import {
-  DelayedSkeleton,
-  useHeldLoader,
-} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { Button } from "@/shared/ui/button";
+import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { PagerPaging } from "../../paging";

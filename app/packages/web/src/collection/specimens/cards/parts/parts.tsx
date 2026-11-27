@@ -1,16 +1,13 @@
 import type { ReactNode } from "react";
-import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
+import { NetworkSlot } from "@/shared/ui/button.network-gate";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { Banner, type BannerAction } from "@/shared/patterns/states/banner/banner";
 import { useStoredPhoto, type PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { refusalText } from "@/shared/lib/error-text";
 import { dateText } from "../../model/text";
 import { cn } from "@/shared/lib/utils";
-import {
-  DelayedSkeleton,
-  useHeldLoader,
-} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 
 /**
  * The page of the module on the page colour, flat (US-QS-32, SG-SHAPE-06): no frame and no border around it, so a group

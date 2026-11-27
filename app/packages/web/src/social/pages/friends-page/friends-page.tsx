@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { LayerHost, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { ScrollRegion } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-region/scroll-region";

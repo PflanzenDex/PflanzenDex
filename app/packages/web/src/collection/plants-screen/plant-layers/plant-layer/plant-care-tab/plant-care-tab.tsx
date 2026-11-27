@@ -10,11 +10,8 @@ import { LayerOpener, LayerSheet } from "@/shared/patterns/responsive/layer-shee
 import { PageSubject } from "@/shared/patterns/navigation/page-header/page-header";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { refusalText } from "@/shared/lib/error-text";
-import { Button } from "@/shared/ui/button/button";
-import {
-  DelayedSkeleton,
-  useHeldLoader,
-} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { Button } from "@/shared/ui/button";
+import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 import { Quiet, ErrorNotice } from "../../../../specimens/cards/parts/parts";
 import { Observations } from "../../../../markers/repot/repot-plan/observations/observations";
 import {

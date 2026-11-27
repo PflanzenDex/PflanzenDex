@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import { GROUP } from "@/shared/lists/grouped-list/group-classes";
 
 /** The six parts of the overview, each one line of one grouped list (US-QS-32, FX-35 step 5): name and value, no thumbnail. */

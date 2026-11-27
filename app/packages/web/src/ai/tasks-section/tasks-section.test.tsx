@@ -11,8 +11,8 @@ import { NewTaskPart, TasksSection } from "./tasks-section";
 function Address() {
   return <output data-testid="address">{useLocation().search}</output>;
 }
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
-import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button.roles";
 import table from "../ai.de.json";
 import { TasksSkeleton } from "./tasks-section.skeleton";
 

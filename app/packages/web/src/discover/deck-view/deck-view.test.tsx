@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GENERIC_ERROR_TEXT } from "@/shared/lib/error-text";
 import { DeckView } from "./deck-view";
-import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button.roles";
 
 afterEach(cleanup);
 

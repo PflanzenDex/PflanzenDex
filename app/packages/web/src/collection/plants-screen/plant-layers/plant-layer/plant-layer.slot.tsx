@@ -1,6 +1,6 @@
 import { createContext, Suspense, useContext, type ReactNode } from "react";
 import type { SpecimenCard } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { SlotFallback, SlotRender } from "../layer-ids";
 import table from "../plant-layers.de.json";

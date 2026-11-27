@@ -1,7 +1,7 @@
 import { EQUIPMENT_LIMITS, EQUIPMENT_TYPES } from "@pflanzendex/core";
 import { z } from "zod";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { dateValue } from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
+import { dateValue } from "@/shared/ui/input.date-schema";
 import type { EquipmentInput } from "./equipment-api";
 import type { EquipmentWishInput } from "./overviews/wishes-view/wishes-api";
 import { isSizeCm, POT_FORM, potInput, type PotInput } from "./equipment-form/pot-form";

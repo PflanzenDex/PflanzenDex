@@ -1,8 +1,8 @@
 import type { SpeciesHit } from "@pflanzendex/core";
 import { useSearchParams } from "react-router";
-import { Button } from "@/shared/ui/button/button";
-import { Select } from "@/shared/ui/fields/select/select";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { Button } from "@/shared/ui/button";
+import { Select } from "@/shared/ui/select";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { dropPageParts, PAGE_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { DIFFICULTY } from "../../shared/text";

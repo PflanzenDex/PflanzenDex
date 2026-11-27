@@ -1,12 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useId, useState, type FormEvent, type ReactNode } from "react";
 import { type Control, type Path } from "react-hook-form";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
-import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
+import { FormBar } from "@/shared/ui/form-bar";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/form";
 import { deviceTimeZone, type ApiError } from "../../../../shared/data";
 import type { AccountProfile } from "../../../api/account-api";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { useServerRefusal } from "@/shared/ui/fields/form/server-refusal";
+import { useServerRefusal } from "@/shared/ui/form.server-refusal";
 import { toProfile, toProfileFields, type ProfileFields as Fields } from "../../../schemas";
 import { fixText, groupSchema } from "./group-rules";
 import { BufferField, NameFields, ThresholdsField } from "../../../settings-fields/settings-fields";

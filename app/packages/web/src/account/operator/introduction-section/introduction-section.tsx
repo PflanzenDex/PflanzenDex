@@ -3,7 +3,7 @@ import { useCallback, type ReactNode } from "react";
 import { Check, X } from "lucide-react";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadIntroduction } from "../../api/access-api";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { MoreHelp } from "@/shared/ui/more-help";
 import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { keepTogether, withUnit } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";

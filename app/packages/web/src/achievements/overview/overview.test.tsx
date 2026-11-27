@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { AchievementsOverviewSection } from "./overview";
-import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 
 beforeAll(() => {
   // jsdom has no matchMedia; a wide screen shows the layer as a pane beside the list (US-QS-15), not as a modal.

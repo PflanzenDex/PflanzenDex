@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SwapHistory, outcomeLine } from "./swap-history";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import table from "../../swap.de.json";
 import { SwapHistorySkeleton } from "./swap-history.skeleton";
 

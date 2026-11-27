@@ -19,7 +19,7 @@ import { withRouter } from "@/shared/testing/story-frame/story-frame";
 import { hasLayout, waitUntil } from "@/shared/testing/story-frame/story-play";
 import type { ReactNode } from "react";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { LayerHost, LayerOpener, LayerSheet } from "./layer-sheet";
 
 // Plays of the sheet and layer heights (US-QS-15, owner decision 4 of 2026-11-21, issue 2412; owner answers 2026-11-21,

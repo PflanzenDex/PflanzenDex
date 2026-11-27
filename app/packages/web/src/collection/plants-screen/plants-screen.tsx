@@ -2,7 +2,7 @@ import type { SpecimenCard, SpecimenSummary } from "@pflanzendex/core";
 import { Plus } from "lucide-react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import type { CardPages } from "../specimens/cards/use-card-pages";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PlantTile } from "./rows/plant-tile/plant-tile";

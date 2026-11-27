@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { RowChevron } from "@/shared/lists/grouped-list/row-parts/row-parts";
 import { NavNote } from "@/shared/patterns/navigation/nav-note/nav-note";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
 import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../social.de.json";
 

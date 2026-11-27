@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { localToday } from "@pflanzendex/core";
-import { useFieldForm } from "@/shared/ui/fields/form/form";
+import { useFieldForm } from "@/shared/ui/form";
 import { currentTimeZone, type ApiError } from "../../../shared/data";
 import { photoProblem } from "../measurement-header/measurement-photo";
 import { PhotoInput } from "./form-parts/form-parts";

@@ -1,8 +1,8 @@
 import { useId, useState } from "react";
 import type { LightLocation } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { Label } from "@/shared/ui/display/label/label";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Button } from "@/shared/ui/button";
+import { Label } from "@/shared/ui/label";
+import { Select } from "@/shared/ui/select";
 import { Actions, Quiet } from "../../../specimens/cards/parts/parts";
 
 /**

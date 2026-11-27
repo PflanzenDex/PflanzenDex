@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CarePhasesPage } from "./care-phases-page";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

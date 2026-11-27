@@ -3,8 +3,8 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Badge } from "@/shared/ui/display/badge/badge";
-import { Button } from "@/shared/ui/button/button";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { GroupedRow } from "../grouped-list/grouped-list";
 import { ObjectRow } from "./object-row";
 

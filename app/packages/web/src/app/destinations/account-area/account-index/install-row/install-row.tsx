@@ -4,7 +4,7 @@
 // browser offers no installation or the app is installed.
 import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import {
   promptInstall,
   useInstallOffer,

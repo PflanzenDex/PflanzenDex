@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
+import { NetworkSlot } from "@/shared/ui/button.network-gate";
 import type { LightLocation, LightZone } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { Label } from "@/shared/ui/display/label/label";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Button } from "@/shared/ui/button";
+import { Label } from "@/shared/ui/label";
+import { Select } from "@/shared/ui/select";
 import { errorText, refusalText } from "@/shared/lib/error-text";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
 import { setSpecimenLocation } from "../../../../../collection";

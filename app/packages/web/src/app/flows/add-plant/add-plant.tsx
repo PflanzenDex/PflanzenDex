@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { FIRST_PLANT_STEPS, type Species } from "@pflanzendex/core";
 import { ImportEntry } from "@/collection";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { PATHS } from "../../../shared/patterns/navigation/navigation/navigation";
 import { FullView } from "@/shared/patterns/navigation/full-view/full-view";
 import { SaveButton } from "../onboarding/onboarding-wizard/save-step/save-button/save-button";

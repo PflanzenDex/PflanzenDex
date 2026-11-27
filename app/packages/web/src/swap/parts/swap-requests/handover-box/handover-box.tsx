@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import type { SwapSide } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
-import { Input } from "@/shared/ui/fields/input/input";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { PARAM } from "@/shared/patterns/responsive/layer-sheet/use-layer.history";
 import { ARCHIVE_LAYER } from "@/collection";

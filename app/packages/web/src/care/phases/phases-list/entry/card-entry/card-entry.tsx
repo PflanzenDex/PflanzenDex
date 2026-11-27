@@ -1,5 +1,5 @@
 import { phaseStatus, type LightLocation, type PhasesRow } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { CARD_CLASSES, WARNING_CLASSES } from "../../../../shared/notices/notices";

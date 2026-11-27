@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import type { CreatedFriendCode } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { useSay } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import {
   createKey,

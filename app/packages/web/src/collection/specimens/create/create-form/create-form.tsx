@@ -7,10 +7,10 @@ import {
   type LightLocation,
   type LightZone,
 } from "@pflanzendex/core";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
-import { FormBarRegion } from "@/shared/ui/button/form-bar/form-bar.page";
+import { FormBar } from "@/shared/ui/form-bar";
+import { FormBarRegion } from "@/shared/ui/form-bar.page";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
-import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/form";
 import { isKeyConflict, type ApiError } from "../../../../shared/data";
 import { refusesCatchDate } from "../../../markers/catch-date/catch-date-field/catch-date-field";
 import { useToday } from "../../../markers/catch-date/use-today";

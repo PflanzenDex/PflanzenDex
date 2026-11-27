@@ -1,5 +1,5 @@
 import type { CaughtSpecies } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { germanNameOf } from "@/shared/species-name/species-name";
 import { Chips, catchText, countText } from "../pokedex-cards/pokedex-cards";
 

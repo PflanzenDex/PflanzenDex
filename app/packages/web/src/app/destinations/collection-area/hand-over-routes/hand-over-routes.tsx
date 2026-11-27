@@ -7,7 +7,7 @@ import { AddPlant } from "@/app/flows";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { AreaSection } from "../../area-parts/area-section/area-section";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
 import table from "./hand-over-routes.de.json";
 
 const t = texts(table);

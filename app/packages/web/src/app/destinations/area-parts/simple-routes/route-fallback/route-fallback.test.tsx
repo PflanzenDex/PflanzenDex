@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { VIEW_KEY } from "@/app/sammlung-view";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import {
   expectTitleInBar,
   renderInTopBar,

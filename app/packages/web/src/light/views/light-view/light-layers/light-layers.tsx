@@ -1,6 +1,6 @@
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { MoreHelp } from "@/shared/ui/more-help";
 import { useState } from "react";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";

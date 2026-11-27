@@ -1,10 +1,10 @@
 import type { Lamp, ZoneEquipment, ZoneEquipmentView } from "@pflanzendex/core";
 import { EQUIPMENT_STATUSES, zoneLabel } from "@pflanzendex/core";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Select } from "@/shared/ui/select";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { STATUS_LABELS } from "../../labels";
 import type { EquipmentStatus } from "../../equipment-api";
-import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import { DisclosureSummary } from "@/shared/ui/more-help.disclosure-summary";
 import table from "../../equipment.de.json";
 
 const ui = texts(table);

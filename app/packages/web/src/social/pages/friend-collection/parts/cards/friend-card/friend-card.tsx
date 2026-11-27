@@ -1,6 +1,6 @@
 import type { FriendCard as Card } from "@pflanzendex/core";
-import { Badge } from "@/shared/ui/display/badge/badge";
-import { Button } from "@/shared/ui/button/button";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { dateText } from "../../../../../parts/invite-card/invite-card";

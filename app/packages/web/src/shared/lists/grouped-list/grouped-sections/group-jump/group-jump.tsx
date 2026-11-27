@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
-import { Button } from "@/shared/ui/button/button";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Button } from "@/shared/ui/button";
+import { Select } from "@/shared/ui/select";
 import { useChipsFit } from "./use-chips-fit";
 
 export type GroupChoice = {

@@ -7,8 +7,8 @@ import { WishlistPageSkeleton } from "@/wishlist";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton } from "@/shared/ui/skeleton";
 import type { SammlungShape } from "../../sammlung-view";
 import table from "./collection-area.de.json";
 

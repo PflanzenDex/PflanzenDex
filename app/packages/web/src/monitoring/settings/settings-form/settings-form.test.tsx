@@ -7,8 +7,8 @@ import { createQueryClient } from "../../../shared/data";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RemindersSection } from "../../reminders-section/reminders-section";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
-import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 import table from "../../monitoring.de.json";
 import { SettingsFormSkeleton } from "./settings-form.skeleton";
 

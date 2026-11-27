@@ -1,9 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { MutableRefObject } from "react";
 import { useUnsavedInput } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/shared/ui/button/button";
-import { Form, FormRoot, useFieldForm } from "@/shared/ui/fields/form/form";
-import { TextField } from "@/shared/ui/fields/input/input";
+import { Button } from "@/shared/ui/button";
+import { Form, FormRoot, useFieldForm } from "@/shared/ui/form";
+import { TextField } from "@/shared/ui/input";
 import { BUSY_LOOK } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { DAYS, invitationDaysSchema, type InvitationDaysFields } from "../../../schemas";

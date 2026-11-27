@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import type { TreatmentListRow } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 import { Row } from "./treatment-row";
 
 afterEach(cleanup);

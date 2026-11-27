@@ -35,7 +35,7 @@ vi.mock("../../../../care-profile-page/care-profile-page", () => ({
 // this the first status on screen could be the sheet's (issue 2136).
 beforeAll(async () => {
   await Promise.all([
-    import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"),
+    import("@/shared/ui/sheet.panel"),
     import("../../../../care-profile-page/care-profile-page"),
   ]);
 }, 30_000);

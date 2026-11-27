@@ -7,7 +7,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/ui/display/table/table";
+} from "@/shared/ui/table";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 
 export type ResponsiveColumn<Row> = {

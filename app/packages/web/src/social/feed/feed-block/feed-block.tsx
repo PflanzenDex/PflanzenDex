@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import type { Feed, FeedEvent, FeedType } from "@pflanzendex/core";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
-import { Button } from "@/shared/ui/button/button";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
-import { Label } from "@/shared/ui/display/label/label";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Button } from "@/shared/ui/button";
+import { Checkbox } from "@/shared/ui/checkbox";
+import { Label } from "@/shared/ui/label";
+import { Select } from "@/shared/ui/select";
 import { keepTogether } from "@/shared/lib/format";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { SegmentedControl } from "@/shared/patterns/elements/segmented-control/segmented-control";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../equipment.de.json";
 import { TYPE_LABELS } from "../../labels";

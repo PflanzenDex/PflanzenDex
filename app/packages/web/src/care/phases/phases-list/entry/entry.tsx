@@ -4,8 +4,8 @@ import {
   type PhaseStatus,
   type PhasesRow,
 } from "@pflanzendex/core";
-import { Badge } from "@/shared/ui/display/badge/badge";
-import { Button } from "@/shared/ui/button/button";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { ObjectRow } from "@/shared/lists/object-row/object-row";
 import { useObjectPhoto } from "@/shared/lists/object-row/use-object-photo";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";

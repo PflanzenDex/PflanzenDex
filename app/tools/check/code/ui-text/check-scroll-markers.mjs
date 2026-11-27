@@ -20,15 +20,17 @@ import { isEntryPoint } from "../../shared/entry-point.mjs";
 
 const BASELINE_FILE = "config/gates/baselines/scroll-markers-baseline.json";
 const SCROLL_X_VALUES = ["table", "cards", "chips", "tabs", "row"];
-// The shared scroll components (DS-61): a folder prefix with its trailing slash.
+// The shared scroll components (DS-61): a folder prefix with its trailing slash. The flat primitives of src/shared/ui (R3,
+// issue 2509) have no folder: their prefix is the file name up to the dot (`table.` is table.tsx, `sheet.` is the sheet and
+// its parts), so `table-extra.tsx` is not part of it.
 const SHARED_SCROLL = [
-  "packages/web/src/shared/ui/display/table/",
+  "packages/web/src/shared/ui/table.",
   "packages/web/src/shared/patterns/display/panels/tabs/",
   // remove with #2422 (the frame and one-screen component ticket)
   "packages/web/src/shared/patterns/responsive/pager/paging/scroll-entries/",
   "packages/web/src/shared/patterns/responsive/layer-sheet/layer-host/layer-pane/",
-  "packages/web/src/shared/ui/overlays/sheet/sheet-panel/",
-  "packages/web/src/shared/ui/overlays/dialog/",
+  "packages/web/src/shared/ui/sheet.",
+  "packages/web/src/shared/ui/dialog.",
 ];
 const APP_DIR = fileURLToPath(new URL("../../../../", import.meta.url));
 const REGION = /(?<![\w-])overflow-(?:x-|y-)?(?:auto|scroll)(?![\w-])/;

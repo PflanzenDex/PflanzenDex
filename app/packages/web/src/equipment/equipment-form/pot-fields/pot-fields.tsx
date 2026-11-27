@@ -1,8 +1,8 @@
 import { useWatch, type Control } from "react-hook-form";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Field } from "@/shared/ui/fields/form/field/field";
-import { Input } from "@/shared/ui/fields/input/input";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Field } from "@/shared/ui/field";
+import { Input } from "@/shared/ui/input";
+import { Select } from "@/shared/ui/select";
 import { POT_TYPE } from "../../labels";
 import table from "../../equipment.de.json";
 import type { EquipmentFields } from "../../schemas";

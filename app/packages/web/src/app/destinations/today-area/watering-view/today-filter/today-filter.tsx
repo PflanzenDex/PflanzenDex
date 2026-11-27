@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./today-filter.de.json";

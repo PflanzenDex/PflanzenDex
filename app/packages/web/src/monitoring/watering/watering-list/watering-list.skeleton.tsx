@@ -1,5 +1,5 @@
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 
 /**
  * Placeholder with the layout of the watering list on a phone: three rows (checkbox with name and interval, the

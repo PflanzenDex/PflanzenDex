@@ -6,10 +6,10 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeaturesProvider } from "@/shared/data";
 import { PotLabelPage } from "./pot-label-page";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import table from "./pot-label-page.de.json";
 import { PotLabelSkeleton } from "./pot-label-page.skeleton";
-import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button.roles";
 
 const json = (status: number, body: unknown) => Response.json(body, { status });
 const TOKEN = async () => "tok";

@@ -1,8 +1,8 @@
 import { entityKey, useRepeatKey } from "@/shared/data";
 import { useState } from "react";
-import { Button } from "@/shared/ui/button/button";
-import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
-import { Label } from "@/shared/ui/display/label/label";
+import { Button } from "@/shared/ui/button";
+import { FileField } from "@/shared/ui/input.file-field";
+import { Label } from "@/shared/ui/label";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import { errorText, refusalText } from "@/shared/lib/error-text";
 import { useSay, type Say } from "@/shared/patterns/states/toast/toast-provider/toast-provider";

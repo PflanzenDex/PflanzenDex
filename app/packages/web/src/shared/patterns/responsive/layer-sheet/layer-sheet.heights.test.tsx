@@ -5,12 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
-import {
-  heightOf,
-  layout,
-  setWindowHeight,
-  stubSheetLayout,
-} from "@/shared/ui/overlays/sheet/sheet.test-helpers";
+import { heightOf, layout, setWindowHeight, stubSheetLayout } from "@/shared/ui/sheet.test-helpers";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerHost, LayerOpener, LayerSheet, useUnsavedInput } from "./layer-sheet";
 

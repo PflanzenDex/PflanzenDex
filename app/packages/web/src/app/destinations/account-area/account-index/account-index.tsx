@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { useFeature } from "@/shared/data";
 import { BUSY_LOOK, cn } from "@/shared/lib/utils";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { RetryFailedLoad } from "@/shared/patterns/states/request-state/failed-value/failed-value";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";
 import {

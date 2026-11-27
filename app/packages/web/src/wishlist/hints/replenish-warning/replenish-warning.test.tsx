@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import type { Replenishment } from "@pflanzendex/core";
-import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 import { ReplenishWarning } from "./replenish-warning";
 
 afterEach(cleanup);

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router";
 import { ChevronLeft } from "lucide-react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { useAppBarSlot, useBarClaim } from "./app-bar-slot/app-bar-slot";

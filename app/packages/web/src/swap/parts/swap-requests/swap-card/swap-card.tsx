@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { SwapSide } from "@pflanzendex/core";
-import { Badge } from "@/shared/ui/display/badge/badge";
-import { Button } from "@/shared/ui/button/button";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import type { AnswerInput } from "../../../api/swaps-api";
 import { MODE_TEXT, TYPE_TEXT } from "../../offer-form/health-text";
 import { HandoverBox } from "../handover-box/handover-box";

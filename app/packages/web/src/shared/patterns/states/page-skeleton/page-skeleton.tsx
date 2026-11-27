@@ -1,7 +1,7 @@
 import { PageTitle } from "@/shared/patterns/navigation/page-header/page-title/page-title";
 import { PlantLoader } from "@/shared/patterns/states/plant-loader/plant-loader";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 
 export type PageSkeletonProps = {
   /** Loading text for assistive technology (German). */

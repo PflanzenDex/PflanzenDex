@@ -51,7 +51,7 @@ beforeAll(async () => {
     import("@/wishlist/wishlist-page/wishlist-page"),
     import("@/wishlist/actions/actions"),
     import("@/social/pages/friends-page/friends-page"),
-    import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"),
+    import("@/shared/ui/sheet.panel"),
     import("@/app/flows/add-plant/add-plant"),
   ]);
 }, 30_000);

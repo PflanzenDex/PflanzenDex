@@ -4,7 +4,7 @@ import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
 import { withUnit } from "@/shared/lib/format";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { loadFriendEquipment } from "../../../api/friends-api";
 import { texts } from "@/shared/lib/text-rules/texts";

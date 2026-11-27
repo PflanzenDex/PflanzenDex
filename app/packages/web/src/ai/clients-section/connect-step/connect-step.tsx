@@ -1,4 +1,4 @@
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 

@@ -118,14 +118,19 @@ function judgeDir(dir, children, manifest, config) {
   return out;
 }
 
-// LY-4: a component x.tsx lives in a directory x/.
+// LY-4: a component x.tsx lives in a directory x/. A collection directory (a per-path rule with `collection`, LY-2) is
+// exempt: its name pattern is its rule, and the flat primitives of src/shared/ui (the shadcn layout, R3, d-133, issue 2509)
+// are component files there.
 function componentFindings(paths, config) {
   const byDir = new Map();
+  const isCollection = (dir) =>
+    config.dirs.find((r) => matchDir(r.path, dir))?.collection !== undefined;
   for (const p of paths) {
     const parts = p.split("/");
     const name = parts.at(-1);
     const dir = parts.slice(0, -1).join("/");
     if (!config.componentRoots.some((r) => dir === r || dir.startsWith(`${r}/`))) continue;
+    if (isCollection(dir)) continue;
     if (!name.endsWith(".tsx") || isTestOrStory(name)) continue;
     if (config.componentExempt.includes(stemOf(name))) continue;
     if (parts.at(-2) === stemOf(name)) continue;

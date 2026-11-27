@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
+import { FormBar } from "@/shared/ui/form-bar";
 import { LayerHost, LayerOpener, LayerSheet, useUnsavedInput } from "./layer-sheet";
 
 beforeAll(() => {

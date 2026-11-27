@@ -11,7 +11,7 @@ import {
 } from "@/achievements";
 import { AccountView, MeasuredView, SettingsPage } from "@/account";
 import type { Account } from "@/account";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import {
   MANAGE_ADDRESS,
   type AccountSection,

@@ -1,7 +1,7 @@
 import type { ReviewEntry } from "@pflanzendex/core";
 import type { ReactNode } from "react";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Badge } from "@/shared/ui/display/badge/badge";
+import { Badge } from "@/shared/ui/badge";
 import { ageText, issueText } from "../../review-text";
 import {
   FIELDS,

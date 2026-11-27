@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
+import { NetworkSlot } from "@/shared/ui/button.network-gate";
 import {
   localToday,
   type LeafDirection,
@@ -22,7 +22,7 @@ import {
   type WriteOptions,
 } from "@/shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { ResponsiveModal } from "@/shared/patterns/responsive/responsive-modal/responsive-modal";

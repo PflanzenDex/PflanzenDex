@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import { Form } from "@/shared/ui/fields/form/form";
+import { Form } from "@/shared/ui/form";
 import type { ApiError } from "../../../../shared/data";
 import { useSiblings } from "../../../specimens/cards/use-card-pages";
 import type { Token } from "../../../specimens/hooks/use-collection";

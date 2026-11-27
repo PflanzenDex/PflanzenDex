@@ -5,7 +5,7 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { GroupedList, GroupedRow } from "@/shared/lists/grouped-list/grouped-list";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import type { LightZone } from "../../shared/light-api/light-api";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { MoreHelp } from "@/shared/ui/more-help";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import table from "./rules-view.de.json";
 

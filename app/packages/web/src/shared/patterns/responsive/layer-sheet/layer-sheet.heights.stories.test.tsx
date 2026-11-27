@@ -9,7 +9,7 @@ import {
   setWindowHeight,
   stubBoxes,
   stubSheetLayout,
-} from "@/shared/ui/overlays/sheet/sheet.test-helpers";
+} from "@/shared/ui/sheet.test-helpers";
 import * as heights from "./layer-sheet.heights.stories";
 import * as lists from "./layer-sheet.lists.stories";
 import * as states from "./layer-sheet.states.stories";

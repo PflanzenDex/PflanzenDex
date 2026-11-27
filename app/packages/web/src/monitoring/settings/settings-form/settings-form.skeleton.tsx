@@ -1,5 +1,5 @@
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 
 /** A reminder form: three labelled fields and the save button (US-MON-08, DS-52, DS-53); shows after the delay (DS-57). */
 export function SettingsFormSkeleton({ label }: { label: string }) {

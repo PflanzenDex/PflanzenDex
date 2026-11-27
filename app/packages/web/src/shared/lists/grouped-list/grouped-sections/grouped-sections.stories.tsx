@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { withText200 } from "@/shared/testing/story-frame/story-frame";
 import { check, hasLayout, must, waitUntil } from "@/shared/testing/story-frame/story-play";
 import { ARGS, GROUPS, group, inFrame, plants, sectionsOf } from "./grouped-sections.parts";

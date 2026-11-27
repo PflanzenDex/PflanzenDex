@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Leaf } from "lucide-react";
 import { speciesHints, type Species } from "@pflanzendex/core";
-import { Badge } from "@/shared/ui/display/badge/badge";
-import { Button } from "@/shared/ui/button/button";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
 import {
   FactGrid,

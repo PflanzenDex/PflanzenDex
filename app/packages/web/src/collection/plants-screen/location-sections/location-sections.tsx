@@ -8,7 +8,7 @@ import {
 import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
 import { todayAddress } from "@/shared/patterns/navigation/navigation/navigation";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useCardPages } from "../../specimens/cards/use-card-pages";
 import { PlantTile } from "../rows/plant-tile/plant-tile";

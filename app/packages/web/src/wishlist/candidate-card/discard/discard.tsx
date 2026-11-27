@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type Ref } from "react";
 import type { Candidate } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 
 /**
  * "Verwerfen" asks before it writes: the wish stays stored under "Verworfen", but there is no way back yet (P-10). The

@@ -12,7 +12,7 @@ import { loadSpecimenHints } from "../../insights/api/hints-api";
 import { locateKey, setSpecimenLocation } from "../../specimens/model/specimens-api";
 import { HintCount, type useHintCount } from "../../insights/api/hint-count/hint-count";
 import { HintCard, type HintTarget } from "./hint-card/hint-card";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { MoreHelp } from "@/shared/ui/more-help";
 import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import table from "./hints-page.de.json";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";

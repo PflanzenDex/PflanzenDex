@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
 import { entityKey, useRequest, useInvalidate, useWriteAction } from "../../../shared/data";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { errorText } from "@/shared/lib/error-text";
 import { loadVisibleToFriends, setWishVisibleToFriends } from "../../wishlist-api";
 

@@ -11,9 +11,9 @@ import {
   FormMessage,
   FormRoot,
   useFieldForm,
-} from "@/shared/ui/fields/form/form";
-import { Input } from "@/shared/ui/fields/input/input";
-import { Select } from "@/shared/ui/fields/select/select";
+} from "@/shared/ui/form";
+import { Input } from "@/shared/ui/input";
+import { Select } from "@/shared/ui/select";
 import type { ApiError } from "../../../shared/data";
 import { FormButtons, Quiet, ErrorNotice } from "../../specimens/cards/parts/parts";
 import { refusalText } from "@/shared/lib/error-text";

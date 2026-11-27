@@ -6,7 +6,7 @@ import type { Species, SpeciesHit } from "@pflanzendex/core";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { SpeciesSearch } from "./search-view";
-import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 
 const species: Species = {
   id: "a1",

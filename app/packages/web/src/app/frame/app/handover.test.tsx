@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { beginAppStart } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { beginAppStart } from "@/shared/ui/skeleton.delayed";
 
 // The chunks of the start are held until the test opens them, one stage after the other (issue 2230): the sign-in check, the
 // shell's code, the route table and the code of "Heute". The app and its modules run for real. The gates start closed for
@@ -214,8 +214,7 @@ describe("US-QS-32 the start hands over to Heute in one picture (SG-STATE-02, is
     // test's closed gate, and a later import would get that pending module (seen with vitest 5.1).
     vi.resetModules();
     holdChunks();
-    const { beginAppStart: startApp } =
-      await import("@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton");
+    const { beginAppStart: startApp } = await import("@/shared/ui/skeleton.delayed");
     const { App: FreshApp } = await import("./app");
     const end = startApp();
     try {
@@ -271,8 +270,7 @@ describe("US-QS-32 the start hands over to Heute in one picture (SG-STATE-02, is
     // which reads the address again after the address is put back (issue 1823).
     vi.resetModules();
     holdChunks();
-    const { beginAppStart: startApp } =
-      await import("@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton");
+    const { beginAppStart: startApp } = await import("@/shared/ui/skeleton.delayed");
     const { App: ReturnApp } = await import("./app");
     const { TransitionRouter } =
       await import("@/shared/platform/routing/route-transition/transition-router/transition-router");

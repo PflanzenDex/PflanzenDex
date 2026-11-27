@@ -10,7 +10,7 @@ import { createQueryClient } from "@/shared/data";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { SEARCH_KEY } from "../species-hooks";
 import { SpeciesPage } from "./species-page";
-import { delayLoads } from "@/shared/ui/display/skeleton/loading-contract";
+import { delayLoads } from "@/shared/ui/skeleton.loading-contract";
 
 const response = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

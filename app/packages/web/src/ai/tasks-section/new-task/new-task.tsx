@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
-import { Button } from "@/shared/ui/button/button";
-import { Input } from "@/shared/ui/fields/input/input";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Select } from "@/shared/ui/select";
 import { copyText } from "@/shared/platform/browser/clipboard";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { createKey, useWriteAction } from "../../../shared/data";

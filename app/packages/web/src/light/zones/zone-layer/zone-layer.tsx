@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { returnFocus } from "@/shared/platform/routing/route-focus/view-start";
 import type { ApiError, LightZone } from "../../shared/light-api/light-api";

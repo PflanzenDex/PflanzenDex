@@ -4,14 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FriendOffers } from "./friend-offers";
-import { expectOneLoadingStatus } from "@/shared/ui/display/skeleton/loading-contract";
-import {
-  filledIn,
-  hasOwnBorder,
-  isFilled,
-  isPlain,
-  isTinted,
-} from "@/shared/ui/button/button-roles";
+import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
+import { filledIn, hasOwnBorder, isFilled, isPlain, isTinted } from "@/shared/ui/button.roles";
 import table from "../../swap.de.json";
 import { FriendOffersSkeleton } from "./friend-offers.skeleton";
 

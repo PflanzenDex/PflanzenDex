@@ -1,7 +1,7 @@
 import { PageTitle } from "@/shared/patterns/navigation/page-header/page-title/page-title";
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
-import { Skeleton } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { SkeletonGroup } from "@/shared/ui/skeleton";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "./today-skeleton.de.json";
 import { TodaySkeletonBody } from "./today-skeleton-body/today-skeleton-body";

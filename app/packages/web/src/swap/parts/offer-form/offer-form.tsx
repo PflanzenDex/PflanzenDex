@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
+import { FormBar } from "@/shared/ui/form-bar";
 import { errorText } from "@/shared/lib/error-text";
 import {
   createKey,

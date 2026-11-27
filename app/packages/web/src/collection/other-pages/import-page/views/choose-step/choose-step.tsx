@@ -1,10 +1,10 @@
 // The first step of the CSV import (US-BES-18, FR-BES-26): the file, the template and what its columns mean. Nothing is
 // written here; "Vorschau ansehen" asks the server for the preview.
 import { useEffect, useRef } from "react";
-import { Button } from "@/shared/ui/button/button";
-import { Label } from "@/shared/ui/display/label/label";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
+import { Button } from "@/shared/ui/button";
+import { Label } from "@/shared/ui/label";
+import { MoreHelp } from "@/shared/ui/more-help";
+import { FileField } from "@/shared/ui/input.file-field";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { focusIt } from "@/shared/platform/routing/route-focus/view-start";
 import { templateBlob } from "../../import-api";

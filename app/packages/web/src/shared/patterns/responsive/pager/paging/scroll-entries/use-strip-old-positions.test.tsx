@@ -3,7 +3,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
+import { LayerScope } from "@/shared/ui/layer-scope";
 import { Pager } from "../../pager";
 
 afterEach(() => {

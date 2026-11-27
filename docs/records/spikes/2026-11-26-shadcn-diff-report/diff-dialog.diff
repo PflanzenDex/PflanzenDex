@@ -1,0 +1,245 @@
+--- a/src/shared/ui/dialog.tsx
++++ b/src/shared/ui/dialog.tsx
+@@ -1,86 +1,166 @@
+-import * as DialogPrimitive from "@radix-ui/react-dialog"
+ import * as React from "react"
+-import { X } from "lucide-react"
++import { cn } from "cn"
+-import { cn } from "@/shared/lib/utils"
++import { Dialog as DialogPrimitive } from "radix-ui"
+-import { StatusBarDim } from "@/shared/platform/device/status-bar/status-bar"
+-import { PinnedBar } from "@/shared/ui/form-bar.slot"
+-import { LayerScope } from "./layer-scope"
+-import { useScrollAccess } from "./dialog.scroll-access"
+ 
+-const Dialog = DialogPrimitive.Root
++import { Button } from "@/shared/ui/button"
+-const DialogTrigger = DialogPrimitive.Trigger
++import { XIcon } from "lucide-react"
+ 
+-export type DialogContentProps = Omit<
++function Dialog({
+-  React  .ComponentPropsWithoutRef<typeof DialogPrimitive.Content>,
++  ...props
+-  "title"
++}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+-> & {
++  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+-  /** Required: the accessible name of the dialog (DS-40). */
+-  title: string
+-  /** Optional description linked via `aria-describedby`. */
+-  description?: string
+-  /** Accessible name of the close button. The caller supplies the German wording. */
+-  closeLabel?: string
+-  /**
+-   * Receives the dialog"s bar (US-QS-32, owner decision d-115): the element under the scroll region that the form bar of a
+-   * layer draws its pair into, so the confirming action is always in view. Without it the dialog has no bar.
+-   */
+-  onBarSlot?: (element: HTMLElement | null) => void
+ }
+ 
+-/**
++function DialogTrigger({
+- * Modal dialog (US-QS-07, DS-23, DS-40): focus trap, Esc closes, focus returns to the trigger (Radix)  . The title stays, and
++  ...props
+- * what the dialog holds is its scroll region when it is longer than the dialog (US-QS-15, DS-61); the bar of a form (`onBarSlot`,
++}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
+- * US-QS-32) stays below it. The margin and the padding
++  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+- * of the region are 1 rem and cancel each other: the region reaches into the padding of the dialog, so the focus ring of a
++}
+- * control at its edge is not clipped, and the layer inside it (`LayerBody`, the same 1 rem) adds no sideways scroll.
++
+- */
++function DialogPortal({
+-const DialogContent = React  .forwardRef<HTMLDivElement, DialogContentProps>(
++  ...props
+-  (
++}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+-    { className, title, description, closeLabel ="Schließen", onBarSlot, children, ...props},
++  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+-    ref,
++}
+-  ) => {
++
+-    const [region, setRegion] = React.useState<HTMLElement | null>(null)
++function DialogClose({
+-    useScrollAccess(region)
++  ...props
+-    return (
++}: React.ComponentProps<typeof DialogPrimitive.Close>) {
+-<DialogPrimitive.Portal>
++  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
+-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-scrim">
++}
+-          <StatusBarDim />
++
+-        </DialogPrimitive.Overlay>
++function DialogOverlay({
+   className,
+-        <DialogPrimitive  .Content
++  ...props
+-          ref={ref}
++}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+-          className={cn(
++  return (
+-            "fixed left-1/2 top-1/2 z-50 flex max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-card bg-card p-6 text-foreground shadow-elevation-2",
++    <DialogPrimitive.Overlay
+-          )}
++      data-slot="dialog-overlay"
+-{...props}
++      className={cn(
+-        >
++        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+-          <DialogPrimitive.Title tabIndex={-1}        className="text-lg font-semibold leading-none">
++        className
+-            {title}
++      )}
+-          </DialogPrimitive.Title>
++      {...props}
+-          {description ? (
++    />
+-            <DialogPrimitive.Description className="text-sm text-muted-foreground">
++  )
+-              {description}
++}
+-            </DialogPrimitive.Description>
++
+-          ) : null}
++function DialogContent({
+-          <div
++  className,
+-            ref={setRegion}
++  children,
+-            data-scroll-region=""
++  showCloseButton = true,
+-            className="-m-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
++  ...props
+-> 
++}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+-            <LayerScope.Provider value>{children}</LayerScope.Provider>
++  showCloseButton?: boolean
+-          </div>
++}) {
+-          {onBarSlot ? <PinnedBar slotRef={onBarSlot} /> : null}
++  return (
+-    <DialogPrimitive.Close
++    <DialogPortal>
+-            aria-label={closeLabel}
++      <DialogOverlay />
+-            className="absolute right-2 top-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-control forced-colors:border forced-colors:border-[color:ButtonText] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
++      <DialogPrimitive.Content
+-          >
++        data-slot="dialog-content"
+-            <X aria-hidden="true"        className="size-5" />
++        className={cn(
++          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
++          className
++        )}
++        {...props}
++      >
++        {children}
++        {showCloseButton && (
++          <DialogPrimitive.Close data-slot="dialog-close" asChild>
++            <Button
++              variant="ghost"
++              className="absolute top-2 right-2"
++              size="icon-sm"
++            >
++              <XIcon
++              />
++              <span className="sr-only">Close</span>
++            </Button>
+           </DialogPrimitive.Close>
+-        </DialogPrimitive.Content>
++        )}
+-      </DialogPrimitive.Portal>
++      </DialogPrimitive.Content>
+-    )
++    </DialogPortal>
+   )
+ }
+-DialogContent.displayName = "DialogContent"
+ 
+-export { Dialog, DialogContent, DialogTrigger }
++function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
++  return (
++    <div
++      data-slot="dialog-header"
++      className={cn("flex flex-col gap-2", className)}
++      {...props}
++    />
++  )
++}
++
++function DialogFooter({
++  className,
++  showCloseButton = false,
++  children,
++  ...props
++}: React.ComponentProps<"div"> & {
++  showCloseButton?: boolean
++}) {
++  return (
++    <div
++      data-slot="dialog-footer"
++      className={cn(
++        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end",
++        className
++      )}
++      {...props}
++    >
++      {children}
++      {showCloseButton && (
++        <DialogPrimitive.Close asChild>
++          <Button variant="outline">Close</Button>
++        </DialogPrimitive.Close>
++      )}
++    </div>
++  )
++}
++
++function DialogTitle({
++  className,
++  ...props
++}: React.ComponentProps<typeof DialogPrimitive.Title>) {
++  return (
++    <DialogPrimitive.Title
++      data-slot="dialog-title"
++      className={cn(
++        "text-base leading-none font-medium",
++        className
++      )}
++      {...props}
++    />
++  )
++}
++
++function DialogDescription({
++  className,
++  ...props
++}: React.ComponentProps<typeof DialogPrimitive.Description>) {
++  return (
++    <DialogPrimitive.Description
++      data-slot="dialog-description"
++      className={cn(
++        "text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
++        className
++      )}
++      {...props}
++    />
++  )
++}
++
++export {
++  Dialog,
++  DialogClose,
++  DialogContent,
++  DialogDescription,
++  DialogFooter,
++  DialogHeader,
++  DialogOverlay,
++  DialogPortal,
++  DialogTitle,
++  DialogTrigger,
++}

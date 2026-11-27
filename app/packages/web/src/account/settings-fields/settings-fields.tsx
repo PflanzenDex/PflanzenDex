@@ -6,9 +6,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/shared/ui/fields/form/form";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { Input } from "@/shared/ui/fields/input/input";
+} from "@/shared/ui/form";
+import { MoreHelp } from "@/shared/ui/more-help";
+import { Input } from "@/shared/ui/input";
 import { POSITION_THRESHOLD_DEFAULTS as DEFAULTS } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { OCCASIONS, type Occasion } from "../api/account-api";

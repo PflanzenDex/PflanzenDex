@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { LightLocation, LightZone } from "@pflanzendex/core";
-import { Label } from "@/shared/ui/display/label/label";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Label } from "@/shared/ui/label";
+import { Select } from "@/shared/ui/select";
 import { loadCardSummary } from "../../../../collection";
 import { sharedLocations, sharedZones } from "../../../../light";
 import { useQueryClient, type QueryClient } from "../../../../shared/data";

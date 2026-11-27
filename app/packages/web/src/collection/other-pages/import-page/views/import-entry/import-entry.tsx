@@ -5,7 +5,7 @@ import { useFeature } from "@/shared/data";
 import { cn } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { IMPORT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
-import { buttonVariants } from "@/shared/ui/button/button";
+import { buttonVariants } from "@/shared/ui/button";
 import table from "../../import-page.de.json";
 
 const ui = texts(table);

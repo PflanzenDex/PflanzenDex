@@ -3,8 +3,8 @@ import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { LayerPane } from "@/shared/patterns/responsive/layer-sheet/layer-host/layer-pane/layer-pane";
-import { Dialog, DialogContent } from "@/shared/ui/overlays/dialog/dialog";
-import { Sheet, SheetContent } from "@/shared/ui/overlays/sheet/sheet";
+import { Dialog, DialogContent } from "@/shared/ui/dialog";
+import { Sheet, SheetContent } from "@/shared/ui/sheet";
 import { Popover } from "../popover/popover";
 import { Menu } from "./menu";
 

@@ -2,7 +2,7 @@
 // needs, every row with its state and reasons, and the one filled action. Nothing is written before "importieren".
 import { useLayoutEffect, useRef } from "react";
 import type { ImportPreview } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { Pager } from "@/shared/patterns/responsive/pager/pager";
 import { useRowPageSize } from "@/shared/patterns/responsive/pager/row-page-size";
 import { texts } from "@/shared/lib/text-rules/texts";

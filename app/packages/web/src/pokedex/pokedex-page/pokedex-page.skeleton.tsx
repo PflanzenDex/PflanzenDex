@@ -1,5 +1,5 @@
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import { ObjectRowsSkeleton } from "@/shared/lists/object-row-skeleton/object-row-skeleton";
 
 /**

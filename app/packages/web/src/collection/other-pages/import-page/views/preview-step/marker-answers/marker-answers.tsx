@@ -3,10 +3,10 @@
 import { useState } from "react";
 import type { MarkerRequest } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Button } from "@/shared/ui/button/button";
-import { Label } from "@/shared/ui/display/label/label";
-import { FormRoot } from "@/shared/ui/fields/form/form";
-import { Input } from "@/shared/ui/fields/input/input";
+import { Button } from "@/shared/ui/button";
+import { Label } from "@/shared/ui/label";
+import { FormRoot } from "@/shared/ui/form";
+import { Input } from "@/shared/ui/input";
 import type { MarkerAnswer } from "../../../import-api";
 import table from "../../../import-page.de.json";
 

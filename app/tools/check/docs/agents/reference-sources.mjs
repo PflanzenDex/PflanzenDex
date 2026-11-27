@@ -55,10 +55,17 @@ export function coreOperations(src = path.join(APP, "packages/core/src")) {
   );
 }
 
-/** PascalCase name of a component file `<name>/<name>.tsx`, or undefined for a file that is no component. */
+/**
+ * PascalCase name of a component file `<name>/<name>.tsx` or, in the flat shadcn layout of `shared/ui` (R3, issue 2509), of
+ * `shared/ui/<name>.tsx`; undefined for a file that is no component. A name with a further dot (`sheet.panel.tsx`,
+ * `form-bar.slot.tsx`) is a part of a component, as in components-check and the story check.
+ */
 export function componentName(file) {
   const stem = path.basename(file, ".tsx");
-  if (!file.endsWith(".tsx") || path.basename(path.dirname(file)) !== stem) return undefined;
+  if (!file.endsWith(".tsx")) return undefined;
+  const dir = path.dirname(file);
+  const flat = path.basename(dir) === "ui" && path.basename(path.dirname(dir)) === "shared";
+  if (path.basename(dir) !== stem && !(flat && !stem.includes("."))) return undefined;
   return stem.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase());
 }
 

@@ -2,7 +2,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { isPlain, isTinted } from "@/shared/ui/button/button-roles";
+import { isPlain, isTinted } from "@/shared/ui/button.roles";
 import { LocationForm } from "./locations-view";
 
 afterEach(cleanup);

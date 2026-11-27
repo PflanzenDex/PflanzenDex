@@ -1,5 +1,5 @@
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 
 /**
  * Placeholder with the layout of the suggestion card on a phone: image, name, text and three buttons (US-ENT-01, DS-52,

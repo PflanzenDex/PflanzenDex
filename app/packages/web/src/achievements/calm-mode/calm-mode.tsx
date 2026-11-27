@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { MoreHelp } from "@/shared/ui/more-help";
+import { Checkbox } from "@/shared/ui/checkbox";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import { refusalText } from "@/shared/lib/error-text";
 import { cn } from "@/shared/lib/utils";
 import { accountKey, SIGN_IN, useInvalidate, type ApiError, useRepeatKey } from "../../shared/data";

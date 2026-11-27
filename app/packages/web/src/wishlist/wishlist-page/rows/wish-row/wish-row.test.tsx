@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Candidate } from "@pflanzendex/core";
-import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
+import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button.roles";
 import { WishRow } from "./wish-row";
 
 afterEach(() => {

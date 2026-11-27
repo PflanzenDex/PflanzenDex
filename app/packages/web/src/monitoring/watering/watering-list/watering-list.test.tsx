@@ -6,7 +6,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../../shared/data";
 import { AnnouncerProvider } from "../../../shared/platform/announcer/announcer";
-import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 import { WateringList } from "./watering-list";
 
 const response = (status: number, body: unknown) =>

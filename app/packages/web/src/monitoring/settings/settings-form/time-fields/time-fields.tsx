@@ -1,5 +1,5 @@
-import { Input } from "@/shared/ui/fields/input/input";
-import { Label } from "@/shared/ui/display/label/label";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
 
 type TimeFieldsProps = {
   sendTime: string;

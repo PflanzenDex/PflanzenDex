@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NewlyCaught } from "./newly-caught";
-import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 
 afterEach(() => {
   cleanup();

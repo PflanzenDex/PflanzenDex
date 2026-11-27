@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { useRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { hasOwnBorder, isTinted } from "@/shared/ui/button/button-roles";
+import { hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 import { LightNeedAction } from "./light-need-action";
 
 afterEach(cleanup);

@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
+import { LayerScope } from "@/shared/ui/layer-scope";
 import { RulesView } from "./rules-view";
 import type { LightZone } from "../../shared/light-api/light-api";
 

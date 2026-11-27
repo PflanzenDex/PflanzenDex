@@ -5,11 +5,8 @@ import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LayerSheet, useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { layerOpenerId } from "@/shared/patterns/responsive/layer-sheet/use-layer";
-import { Button } from "@/shared/ui/button/button";
-import {
-  DelayedSkeleton,
-  useHeldLoader,
-} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { Button } from "@/shared/ui/button";
+import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { Quiet, ErrorNotice } from "../../../../specimens/cards/parts/parts";
 import { notesKey, useNotes } from "../../../../specimens/hooks/use-notes";

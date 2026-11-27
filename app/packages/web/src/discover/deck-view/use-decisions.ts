@@ -4,7 +4,7 @@ import { refusalText } from "@/shared/lib/error-text";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
 import { useAnnounce } from "@/shared/platform/announcer/context";
 import { useOnline } from "@/shared/platform/browser/network";
-import { offlineReason } from "@/shared/ui/button/network-gate/network-gate";
+import { offlineReason } from "@/shared/ui/button.network-gate";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { Response } from "../../shared/data";
 import table from "../discover.de.json";

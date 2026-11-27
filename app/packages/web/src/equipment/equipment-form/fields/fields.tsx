@@ -7,12 +7,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/shared/ui/fields/form/form";
-import { Field } from "@/shared/ui/fields/form/field/field";
-import { Input } from "@/shared/ui/fields/input/input";
-import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
-import { Select } from "@/shared/ui/fields/select/select";
-import { Textarea } from "@/shared/ui/fields/textarea/textarea";
+} from "@/shared/ui/form";
+import { Field } from "@/shared/ui/field";
+import { Input } from "@/shared/ui/input";
+import { DateField } from "@/shared/ui/input.date-field";
+import { Select } from "@/shared/ui/select";
+import { Textarea } from "@/shared/ui/textarea";
 import { TYPE_LABELS } from "../../labels";
 import type { EquipmentFields } from "../../schemas";
 

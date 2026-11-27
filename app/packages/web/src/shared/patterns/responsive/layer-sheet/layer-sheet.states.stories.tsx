@@ -15,8 +15,8 @@ import {
 } from "@/shared/testing/story-frame/sheet-play";
 import { withRouter } from "@/shared/testing/story-frame/story-frame";
 import { hasLayout, pressEscape, waitUntil } from "@/shared/testing/story-frame/story-play";
-import { Button } from "@/shared/ui/button/button";
-import { Input } from "@/shared/ui/fields/input/input";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
 import { LayerSheet, useUnsavedInput } from "./layer-sheet";
 import { Layer } from "./layer-sheet.heights.stories";
 

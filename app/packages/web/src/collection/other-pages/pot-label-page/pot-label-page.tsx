@@ -27,7 +27,7 @@ import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { RequestState } from "@/shared/patterns/states/request-state/request-state";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import table from "./pot-label-page.de.json";
 import { Archived } from "./pot-label-page.archived";
 import { LastFertilized } from "./last-fertilized/last-fertilized";

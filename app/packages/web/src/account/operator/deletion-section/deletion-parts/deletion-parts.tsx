@@ -1,6 +1,6 @@
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { LAYER_PARAM, Pager } from "@/shared/patterns/responsive/pager/pager";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import type { DeletionEntry } from "../../../api/access-api";
 import { BUSY_LOOK } from "@/shared/lib/utils";

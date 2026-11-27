@@ -2,11 +2,8 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { layerOpenerId } from "@/shared/patterns/responsive/layer-sheet/use-layer";
 import { LayerPart } from "@/shared/patterns/responsive/layer-sheet/layer-part/layer-part";
-import { Button } from "@/shared/ui/button/button";
-import {
-  DelayedSkeleton,
-  useHeldLoader,
-} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { Button } from "@/shared/ui/button";
+import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { FailedValue } from "@/shared/patterns/states/request-state/failed-value/failed-value";
 import { useRequest } from "../../shared/data";

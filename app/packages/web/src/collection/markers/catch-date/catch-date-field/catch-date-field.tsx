@@ -12,8 +12,8 @@ import {
   FormMessage,
   FormRoot,
   useFieldForm,
-} from "@/shared/ui/fields/form/form";
-import { DateField } from "@/shared/ui/fields/input/native-fields/date-field/date-field";
+} from "@/shared/ui/form";
+import { DateField } from "@/shared/ui/input.date-field";
 import type { ApiError } from "../../../../shared/data";
 import { FormButtons, Quiet, ErrorNotice } from "../../../specimens/cards/parts/parts";
 import { useEdited, useRefusal } from "../../../specimens/model/refusal";

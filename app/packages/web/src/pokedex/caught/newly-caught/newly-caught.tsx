@@ -1,7 +1,7 @@
 import type { CaughtSpecies } from "@pflanzendex/core";
 import { newlyCaught } from "@pflanzendex/core";
 import { useCallback, useEffect, useRef } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { errorText } from "@/shared/lib/error-text";
 import { useInvalidate, useRequest, useWriteAction } from "../../../shared/data";
 import { loadSeen, markSeen } from "../seen-api";

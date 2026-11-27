@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority";
 import * as React from "react";
-import { Button, type ButtonProps } from "@/shared/ui/button/button";
+import { Button, type ButtonProps } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
 /**

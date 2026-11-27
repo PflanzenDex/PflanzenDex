@@ -44,6 +44,7 @@ expect: 25
 
 - A per-path rule in `app/config/lint/layout.config.mjs` is a hard limit. A manifest does not raise it. Since d-139 (issue 2546) no per-path rule sets a number: the fixed limits are manifests (see below), and `app/packages/*/src` keeps no limit.
 - Kebab-case names, one folder per component and the collections (migrations, ADRs, test logs, dated spike folders) keep their rules. A manifest does not replace a name pattern.
+- One folder is the exception to "one folder per component": `app/packages/web/src/shared/ui` (rule R3, d-132 and d-133, issue 2509). It is a collection of flat files, so that `npx shadcn@latest add <name>` writes `<name>.tsx` where the layout expects it. It has no unit limit, no subfolder and no LY-4. A name there is `<name>.tsx`, `<name>.stories.tsx`, `<name>.test.tsx`, `<name>.de.json`, `<name>.<kind>.ts`, `<name>.<kind>.tsx` (a part or sidecar, for example `button.roles.ts` and `sheet.panel.tsx`, with the tests `<name>.<kind>.test.ts(x)`) or a helper module `<name>.ts`. Any other name, and any subfolder, fails with `LY-2`. The rules for the folder and its files are in `docs/guides/reference/design-system.md`, section 1.4.
 
 ## Approval
 

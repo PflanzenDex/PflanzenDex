@@ -8,7 +8,7 @@ import { answerCardRead } from "../../../specimens/tests/cards-fake";
 import type { CreateFields } from "../../../specimens/model/schemas";
 import { markerFormStart, type MarkerRule } from "../marker-rule";
 import { MarkerSection } from "./marker-section";
-import { useFieldForm } from "@/shared/ui/fields/form/form";
+import { useFieldForm } from "@/shared/ui/form";
 
 // One plant of the species, without a marker: the keeper owns the species, so the rule requires a marker.
 const OWNED = [

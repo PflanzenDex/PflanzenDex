@@ -1,9 +1,6 @@
 import { z } from "zod";
 import type { Sibling } from "../../markers/marker/marker-rule";
-import {
-  requiredDate,
-  dateValue,
-} from "@/shared/ui/fields/input/native-fields/date-field/date-field-schema";
+import { requiredDate, dateValue } from "@/shared/ui/input.date-schema";
 
 /** Fast client feedback in German (DS-47, DS-49); the server operation validates again (P-03). */
 export const MARKER_MISSING =

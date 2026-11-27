@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { ShortcutHelpButton, ShortcutOverview } from "./shortcut-overview";
 
 // The overview of the keyboard shortcuts (US-QS-11): opened by `?` and by the help entry; a sheet on a phone, a dialog from md.

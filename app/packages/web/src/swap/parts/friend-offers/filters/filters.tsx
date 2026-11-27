@@ -1,6 +1,6 @@
 import type { OfferType } from "@pflanzendex/core";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Checkbox } from "@/shared/ui/checkbox";
+import { Select } from "@/shared/ui/select";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../swap.de.json";
 import { TYPE_TEXT } from "../../offer-form/health-text";

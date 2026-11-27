@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
-import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import { DisclosureSummary } from "@/shared/ui/more-help.disclosure-summary";
 
 /**
  * One label and its value. A value is unknown when it is `null`, `undefined`, `false`, or a string that is empty or

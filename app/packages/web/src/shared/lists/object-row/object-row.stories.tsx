@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { withRouter } from "@/shared/testing/story-frame/story-frame";
-import { Badge } from "@/shared/ui/display/badge/badge";
-import { Button } from "@/shared/ui/button/button";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { ObjectRow } from "./object-row";
 
 // Catalog of the object row (US-QS-32, SG-LIST-03): the 56 px thumbnail, the name on up to two lines, one meta line and

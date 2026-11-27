@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useInLayer } from "@/shared/ui/overlays/layer-scope/layer-scope";
+import { useInLayer } from "@/shared/ui/layer-scope";
 import { ScrollEntries } from "./paging/scroll-entries/scroll-entries";
 import { type PagerPart } from "./paging/address";
 import { type PagerPaging } from "./paging/paging";

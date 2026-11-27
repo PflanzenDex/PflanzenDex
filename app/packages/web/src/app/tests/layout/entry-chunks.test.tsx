@@ -72,7 +72,7 @@ vi.mock("../../flows/unlock/locked-rows/locked-rows", () => {
   return { LockedRows: () => null };
 });
 
-vi.mock("@/shared/ui/overlays/dialog/dialog", () => {
+vi.mock("@/shared/ui/dialog", () => {
   loaded.pages.push("dialog");
   return { Dialog: () => null, DialogContent: () => null, DialogTrigger: () => null };
 });

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { errorText } from "@/shared/lib/error-text";
 import type { ApiError } from "../../shared/data";
 import { useCandidateWrite, type Outcome, type WishToPlant } from "./use-candidate-write";

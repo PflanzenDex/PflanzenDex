@@ -7,7 +7,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { ArchivedList } from "../../../collection/archived/archived-list/archived-list";
 import { Row as CareProfileRow } from "../../../collection/care-profile/sections/care-profile-fields/care-profile-row/care-profile-row";
 import { EMPTY_DISTRIBUTION } from "../../../collection/insights/distribution-test-helpers";

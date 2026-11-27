@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
-import { Form } from "@/shared/ui/fields/form/form";
+import { Form } from "@/shared/ui/form";
 import type { TreatableSpecimen } from "../../../../shared/api/treatments-api";
 import { treatmentDefaults, type TreatmentFields } from "../../../../shared/schemas";
 import { SpecimenPicker } from "./specimen-picker";

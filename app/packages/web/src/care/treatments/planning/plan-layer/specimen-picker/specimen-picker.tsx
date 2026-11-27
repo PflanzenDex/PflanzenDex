@@ -1,10 +1,10 @@
 import { useId, useState, type MutableRefObject } from "react";
 import type { ControllerRenderProps, Control } from "react-hook-form";
-import { Checkbox } from "@/shared/ui/fields/checkbox/checkbox";
-import { FormField, FormItem, FormMessage } from "@/shared/ui/fields/form/form";
-import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
-import { Select } from "@/shared/ui/fields/select/select";
-import { Label } from "@/shared/ui/display/label/label";
+import { Checkbox } from "@/shared/ui/checkbox";
+import { FormField, FormItem, FormMessage } from "@/shared/ui/form";
+import { SearchInput } from "@/shared/ui/search-input";
+import { Select } from "@/shared/ui/select";
+import { Label } from "@/shared/ui/label";
 import { Pager, LAYER_PARAM } from "@/shared/patterns/responsive/pager/pager";
 import { useIsMd } from "@/shared/platform/browser/use-breakpoint";
 import { texts } from "@/shared/lib/text-rules/texts";

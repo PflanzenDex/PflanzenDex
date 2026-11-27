@@ -2,7 +2,7 @@ import type { OperatorOverview } from "@pflanzendex/core";
 import { useCallback } from "react";
 import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { MoreHelp } from "@/shared/ui/more-help";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadOverview } from "../../api/access-api";
 import { DeadlineRow, DeletionSection } from "../deletion-section/deletion-section";

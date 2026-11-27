@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { accountAddress } from "@/shared/patterns/navigation/navigation/navigation";
 import { returnFocus } from "@/shared/platform/routing/route-focus/view-start";
-import { Dialog, DialogContent } from "@/shared/ui/overlays/dialog/dialog";
+import { Dialog, DialogContent } from "@/shared/ui/dialog";
 import { germanDate, type NewsEntry } from "../../news-lines.mjs";
 import table from "../../whats-new.de.json";
 

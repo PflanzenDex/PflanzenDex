@@ -2,10 +2,10 @@ import type { PokedexFilter, PokedexSort } from "@pflanzendex/core";
 import { useId, type RefObject } from "react";
 import { Check } from "lucide-react";
 import { LayerOpener } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
-import { Button } from "@/shared/ui/button/button";
-import { SearchInput } from "@/shared/ui/fields/input/search-input/search-input";
-import { Label } from "@/shared/ui/display/label/label";
-import { Select } from "@/shared/ui/fields/select/select";
+import { Button } from "@/shared/ui/button";
+import { SearchInput } from "@/shared/ui/search-input";
+import { Label } from "@/shared/ui/label";
+import { Select } from "@/shared/ui/select";
 import { cn } from "@/shared/lib/utils";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 

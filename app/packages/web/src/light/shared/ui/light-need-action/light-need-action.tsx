@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { profileAddress } from "@/shared/patterns/navigation/navigation/navigation";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../light.de.json";

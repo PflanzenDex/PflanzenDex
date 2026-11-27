@@ -1,7 +1,7 @@
 import type { RefObject } from "react";
 import { Keyboard } from "lucide-react";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import {
   focusModalTitle,
   ResponsiveModal,

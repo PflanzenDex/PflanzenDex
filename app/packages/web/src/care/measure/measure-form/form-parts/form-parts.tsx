@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import { MEDIA_LIMITS } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
-import { FormBar } from "@/shared/ui/button/form-bar/form-bar";
-import { FileField } from "@/shared/ui/fields/input/native-fields/file-field/file-field";
-import { Label } from "@/shared/ui/display/label/label";
-import { DisclosureSummary } from "@/shared/ui/display/more-help/disclosure-summary/disclosure-summary";
+import { FormBar } from "@/shared/ui/form-bar";
+import { FileField } from "@/shared/ui/input.file-field";
+import { Label } from "@/shared/ui/label";
+import { DisclosureSummary } from "@/shared/ui/more-help.disclosure-summary";
 import table from "./form-parts.de.json";
 
 const t = texts(table);

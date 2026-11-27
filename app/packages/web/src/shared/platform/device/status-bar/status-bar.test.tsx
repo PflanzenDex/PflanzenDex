@@ -5,8 +5,8 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { Dialog, DialogContent, DialogTrigger } from "@/shared/ui/overlays/dialog/dialog";
-import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
+import { Dialog, DialogContent, DialogTrigger } from "@/shared/ui/dialog";
+import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/sheet";
 import { PAGE_BACKGROUND, dimStatusBar, dimmedPageColour } from "./theme-colour";
 
 const metaContent = (scheme: "light" | "dark") =>

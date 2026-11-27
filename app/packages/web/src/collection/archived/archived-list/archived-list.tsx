@@ -1,7 +1,7 @@
 import type { ArchivedEntry } from "@pflanzendex/core";
-import { NetworkSlot } from "@/shared/ui/button/network-gate/network-gate";
+import { NetworkSlot } from "@/shared/ui/button.network-gate";
 import { Card } from "@/shared/patterns/display/card/card";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { Actions, GRID, Quiet, SUBTITLE } from "../../specimens/cards/parts/parts";
 import { UNKNOWN, dateText } from "../../specimens/model/text";
 

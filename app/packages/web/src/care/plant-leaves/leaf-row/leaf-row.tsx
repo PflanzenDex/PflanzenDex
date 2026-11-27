@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { LeafRow as Leaf } from "@pflanzendex/core";
-import { Button } from "@/shared/ui/button/button";
+import { Button } from "@/shared/ui/button";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { dateText } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";

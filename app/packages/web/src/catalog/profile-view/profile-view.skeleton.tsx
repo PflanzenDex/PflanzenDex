@@ -1,5 +1,5 @@
-import { DelayedSkeleton } from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
-import { Skeleton, SkeletonGroup } from "@/shared/ui/display/skeleton/skeleton";
+import { DelayedSkeleton } from "@/shared/ui/skeleton.delayed";
+import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 
 /**
  * Placeholder with the layout of the species profile (DS-52, DS-53), as `SpeciesProfile` lays it out: the way back beside

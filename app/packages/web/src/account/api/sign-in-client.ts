@@ -1,5 +1,5 @@
 import type { UserManager, User } from "oidc-client-ts";
-import { runWithoutEndingStart } from "../../shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { runWithoutEndingStart } from "@/shared/ui/skeleton.delayed";
 import { addressFromState, oidcSettings, returnAddress, returnState } from "./account-api";
 import { shareSilentSignin } from "./renewal";
 

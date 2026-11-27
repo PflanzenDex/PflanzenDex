@@ -12,10 +12,7 @@ import { PlantsScreen } from "../../../plants-screen";
 import { useListActions, type ListActions } from "../../../../specimens/hooks/use-list-actions";
 import type { CardPages } from "../../../../specimens/cards/use-card-pages";
 import { formText, type FormAddress, type FormPlant } from "../address/form-address";
-import {
-  DelayedSkeleton,
-  useHeldLoader,
-} from "@/shared/ui/display/skeleton/delayed-skeleton/delayed-skeleton";
+import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 
 /**
  * A close of a form by its own control goes through the address: with unsaved input it asks first (US-QS-15). The state

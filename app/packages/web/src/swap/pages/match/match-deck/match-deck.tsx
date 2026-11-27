@@ -2,7 +2,7 @@ import type { EmptyReason, MatchCard as Card, MatchEntry } from "@pflanzendex/co
 import { useState, type ReactNode, type Ref } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
-import { MoreHelp } from "@/shared/ui/display/more-help/more-help";
+import { MoreHelp } from "@/shared/ui/more-help";
 import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";

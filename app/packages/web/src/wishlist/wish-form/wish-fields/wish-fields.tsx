@@ -7,10 +7,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/shared/ui/fields/form/form";
-import { Input } from "@/shared/ui/fields/input/input";
-import { Select } from "@/shared/ui/fields/select/select";
-import { Textarea } from "@/shared/ui/fields/textarea/textarea";
+} from "@/shared/ui/form";
+import { Input } from "@/shared/ui/input";
+import { Select } from "@/shared/ui/select";
+import { Textarea } from "@/shared/ui/textarea";
 import type { WishFields } from "../../schemas";
 
 const plants = (n: number) => `${n} ${n === 1 ? "Pflanze" : "Pflanzen"}`;

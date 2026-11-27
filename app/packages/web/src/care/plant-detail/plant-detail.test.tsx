@@ -5,8 +5,8 @@ import type { GrowthTrend, MeasurementRow, MeasurementView, PhasesRow } from "@p
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button/button-roles";
-import { LayerScope } from "@/shared/ui/overlays/layer-scope/layer-scope";
+import { hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button.roles";
+import { LayerScope } from "@/shared/ui/layer-scope";
 import { PlantCare } from "./plant-care/plant-care";
 import { PlantGrowth } from "./plant-growth/plant-growth";
 import { PlantHistory } from "./plant-history/plant-history";

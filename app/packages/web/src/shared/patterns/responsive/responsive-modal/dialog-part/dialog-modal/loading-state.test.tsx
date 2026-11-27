@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { captureExpectedErrors } from "@/shared/testing/test-setup/expected-errors";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
-import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/overlays/sheet/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/shared/ui/sheet";
 import { DialogPart } from "../dialog-part";
 
 // A chunk that waits until the test releases it, as on a slow network: while `hold` is set, a lazy page does not load.
@@ -242,9 +242,7 @@ describe("US-QS-07 · DS-08 the loading status waits 300 ms, so a window that op
       const trigger = screen.getByRole("button", { name: "Öffnen" });
       // Pointer enter starts the preload (DS-08); the test then waits until the module has arrived.
       await userEvent.hover(trigger);
-      await (kind === "dialog"
-        ? import("./dialog-modal")
-        : import("@/shared/ui/overlays/sheet/sheet-panel/sheet-panel"));
+      await (kind === "dialog" ? import("./dialog-modal") : import("@/shared/ui/sheet.panel"));
       const watch = watchStatus();
       await userEvent.click(trigger);
       expect(await screen.findByRole("dialog", { name: "Pflanze bearbeiten" })).toBeTruthy();
