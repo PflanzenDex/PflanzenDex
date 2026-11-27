@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { checkFocusRings } from "@/shared/testing/focus-ring/focus-ring.play";
 import { withRouter } from "@/shared/testing/story-frame/story-frame";
 import { GroupedList, GroupedRow } from "./grouped-list";
 
@@ -35,6 +36,9 @@ export const Default: Story = {
       </>
     ),
   },
+  // The group clips its rows (`overflow-hidden rounded-card`): the ring of a row and the outline of forced colors stay inside it
+  // (issue 2647, WCAG 2.4.7).
+  play: ({ canvasElement }) => checkFocusRings(canvasElement),
 };
 
 export const WithFooter: Story = {
@@ -75,6 +79,7 @@ export const ActionRow: Story = {
       </>
     ),
   },
+  play: ({ canvasElement }) => checkFocusRings(canvasElement),
 };
 
 export const DestructiveAlone: Story = {
@@ -98,4 +103,5 @@ export const WithLeadingAndMeta: Story = {
       </>
     ),
   },
+  play: ({ canvasElement }) => checkFocusRings(canvasElement),
 };

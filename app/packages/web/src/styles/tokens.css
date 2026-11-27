@@ -505,12 +505,14 @@
 
 /*
  * Forced colors (Windows contrast themes; WCAG 2.4.7, 1.4.11, DS-37): the focus ring is a box shadow, which forced
- * colors drop, so a system-coloured outline carries the focus for every focusable element, also for future ones.
+ * colors drop, so a system-coloured outline carries the focus for every focusable element, also for future ones. The
+ * outline lies inside the element's own box (`outline-offset: -2px` with a 2px line): rows and cards sit in lists that clip
+ * their content (`overflow-hidden`, `overflow-y-auto`), and a ring outside the box is cut off there (issue 2647).
  */
 @media (forced-colors: active) {
   :focus-visible {
     outline: 2px solid Highlight;
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 }
 
