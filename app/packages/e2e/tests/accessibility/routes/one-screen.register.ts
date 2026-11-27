@@ -41,11 +41,16 @@ function familyTests(): void {
     expect(registerProblems(SCREENS).filter((p) => !p.startsWith("family "))).toEqual([]);
   });
 
-  // Issue 2431: the friends list, the wishlist and the match deck have no complete family yet (see the report): the seed or the
-  // layout does not give every required state. Until one does, the checked-in register names only the family of "today".
-  test("US-QS-15 the checked-in register has no family that is not complete: the list and deck families wait for their states", () => {
+  // Issue 2431: a family of an enforced kind needs its required states. The plants and species of the Sammlung are complete since
+  // issue 2500: the empty account test7 gives their empty state. The register names these families, the match deck and "today".
+  test("US-QS-15 the checked-in register has no family that is not complete: the Sammlung lists (issue 2500) and the deck are whole", () => {
     const families = SCREENS.flatMap((s) => (s.family === undefined ? [] : [s.family]));
-    expect([...new Set(families)].sort()).toEqual(["friends-match", "today"]);
+    expect([...new Set(families)].sort()).toEqual([
+      "collection-plants",
+      "collection-species",
+      "friends-match",
+      "today",
+    ]);
     expect(registerProblems(SCREENS)).toEqual([]);
   });
 
@@ -101,6 +106,8 @@ function problemTests(): void {
       sizesOf(SCREENS.find((s) => s.id === id) as Screen).map((s) => s.name);
     expect(named("wishlist-empty")).toEqual(["360x640", "390x844", "360x640@200%"]);
     expect(named("friends-error")).toEqual(["360x640", "390x844", "360x640@200%"]);
+    expect(named("collection-plants-empty")).toEqual(["360x640", "390x844", "360x640@200%"]);
+    expect(named("collection-species-one")).toEqual(["360x640", "390x844", "360x640@200%"]);
     expect(named("friends-match")).toHaveLength(7);
     expect(measurementsOf(SCREENS)).toBe(
       SCREENS.reduce((n, s) => n + (s.sizes ? s.sizes.length : 7), 0),

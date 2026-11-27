@@ -2,8 +2,9 @@ import { test as base, type Browser, type BrowserContext } from "@playwright/tes
 import { settle } from "./fit";
 
 // Sign-in of the one-screen gate (issue 1137, QG-U8): the dev accounts test, test2 and test3 of the realm import and the
-// accounts test4, test5 and test6 that the states profile creates (docs/guides/reference/app.md) sign in through the real
-// sign-in page, each with its own user name and the one demo password.
+// accounts test4, test5 and test6 that the states profile creates, and the empty account test7 that both profiles create
+// (issue 2500; docs/guides/reference/app.md) sign in through the real sign-in page, each with its own user name and the one
+// demo password.
 
 export const WEB = `http://localhost:${process.env["E2E_WEB_PORT"] ?? "5173"}`;
 export const PASSWORD = "testtest12";

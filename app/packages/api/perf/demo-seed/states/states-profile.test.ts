@@ -10,6 +10,7 @@ import { resetDemoFriends, restoreAchievementNews } from "../access/reset-demo.t
 import { parseSubjects } from "../access/subjects.ts";
 import { seedAll } from "../accounts/seed-all.ts";
 import { daysAgo, TZ } from "../accounts/common/shared.ts";
+import { seedEmptyAccount } from "../accounts/common/empty-account.ts";
 import { seedStates } from "./profile.ts";
 
 // US-DEV-01 / #1072: the states profile makes every feature state of the inventory reachable (states/states-map.md). The test runs
@@ -26,9 +27,12 @@ const subjectOf = { anna: SUBJECTS.test, ben: SUBJECTS.test2, clara: SUBJECTS.te
 // The hint accounts are the Keycloak users test5 and test6 that the seed creates through the admin API; the test bypasses it.
 const HINT_SUBJECT = `st-hint-${DB}`;
 const HINT_MEASURE_SUBJECT = `st-hint-measure-${DB}`;
+// The empty account test7 (issue 2500) is created through the admin API as well; the test bypasses it the same way.
+const EMPTY_SUBJECT = `st-empty-${DB}`;
 const SEED_ENV = {
   DEMO_SEED_HINT_SUBJECT: HINT_SUBJECT,
   DEMO_SEED_HINT_MEASURE_SUBJECT: HINT_MEASURE_SUBJECT,
+  DEMO_SEED_EMPTY_SUBJECT: EMPTY_SUBJECT,
 } as NodeJS.ProcessEnv;
 
 const scratchUrl = () => {
@@ -78,12 +82,54 @@ describe("US-DEV-01 states profile makes every inventory state reachable (#1072)
   it("US-DEV-01 the base seed and the states profile run and a second run changes nothing", async () => {
     const run = async () => {
       await seedAll(pool, { subjects: SUBJECTS });
+      await seedEmptyAccount(pool, { env: SEED_ENV });
       await seedStates(pool, { subjects: SUBJECTS, env: SEED_ENV });
     };
     await run();
     first = await snapshot();
     await run();
     expect(await snapshot()).toEqual(first);
+  }, 600_000);
+
+  it("US-DEV-01 the empty account test7 has style few and no plant, wish or friend, and a second run changes none of it (issue 2500)", async () => {
+    // The owner connection counts the rows of the account (row security does not apply to it); the API answers what the screens ask.
+    const rowsOf = async () => {
+      const row = await one(
+        `select (select count(*) from specimen s join account a on a.id = s.account_id where a.subject = $1) as specimen,
+                (select count(*) from wish w join account a on a.id = w.account_id where a.subject = $1) as wish,
+                (select count(*) from friendship f join account a on a.id = f.account_id where a.subject = $1) as friendship`,
+        [EMPTY_SUBJECT],
+      );
+      return {
+        specimen: Number(row["specimen"]),
+        wish: Number(row["wish"]),
+        friendship: Number(row["friendship"]),
+      };
+    };
+    const answers = async () => ({
+      style: await get(EMPTY_SUBJECT, "/onboarding/style"),
+      plants: list(await get(EMPTY_SUBJECT, "/specimens"), "specimens"),
+      summary: await get(EMPTY_SUBJECT, "/specimens/cards/summary"),
+    });
+    expect(await count("select count(*) n from account where subject = $1", [EMPTY_SUBJECT])).toBe(
+      1,
+    );
+    expect(await rowsOf()).toEqual({ specimen: 0, wish: 0, friendship: 0 });
+    expect(await answers()).toMatchObject({
+      style: { style: "few", chosen: true },
+      plants: [],
+      summary: { total: 0 },
+    });
+
+    const before = await rowsOf();
+    const beforeAnswers = await answers();
+    await seedEmptyAccount(pool, { env: SEED_ENV });
+    expect(await rowsOf()).toEqual(before);
+    expect(await answers()).toEqual(beforeAnswers);
+    // The second run adds no second account row for the same subject.
+    expect(await count("select count(*) n from account where subject = $1", [EMPTY_SUBJECT])).toBe(
+      1,
+    );
   }, 600_000);
 
   it("US-DEV-01 roles and the review queue: reviewer and operator, open and approved cases, the Dublette hint", async () => {

@@ -31,7 +31,63 @@
     "path": "/collection?view=species",
     "kind": "list",
     "state": "many",
-    "title": "Sammlung"
+    "title": "Sammlung",
+    "family": "collection-species"
+  },
+  {
+    "id": "collection-species-empty",
+    "account": "test7",
+    "path": "/collection?view=species",
+    "kind": "list",
+    "state": "empty",
+    "title": "Sammlung",
+    "family": "collection-species",
+    "expect": {
+      "text": "Noch keine Art gefangen"
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
+  },
+  {
+    "id": "collection-species-one",
+    "account": "test5",
+    "path": "/collection?view=species",
+    "kind": "list",
+    "state": "one",
+    "steps": [
+      {
+        "role": "button",
+        "name": "Filter"
+      },
+      {
+        "role": "combobox",
+        "name": "Sortierung",
+        "select": "family"
+      },
+      {
+        "key": "Escape"
+      }
+    ],
+    "title": "Sammlung",
+    "family": "collection-species",
+    "expect": {
+      "css": "ul[aria-label=\"Gefangene Arten\"] li",
+      "count": 1
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
+  },
+  {
+    "id": "collection-species-error",
+    "account": "test2",
+    "path": "/collection?view=species",
+    "kind": "list",
+    "state": "error",
+    "title": "Sammlung",
+    "family": "collection-species",
+    "fail": "/pokedex/ownership",
+    "expect": {
+      "text": "Erneut versuchen"
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
   },
   {
     "id": "collection-view-species-sheet-view",
@@ -48,7 +104,49 @@
     "path": "/collection?view=plants",
     "kind": "list",
     "state": "many",
-    "title": "Sammlung"
+    "title": "Sammlung",
+    "family": "collection-plants"
+  },
+  {
+    "id": "collection-plants-empty",
+    "account": "test7",
+    "path": "/collection?view=plants",
+    "kind": "list",
+    "state": "empty",
+    "title": "Sammlung",
+    "family": "collection-plants",
+    "expect": {
+      "text": "Du hast noch keine Pflanze"
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
+  },
+  {
+    "id": "collection-plants-one",
+    "account": "test5",
+    "path": "/collection?view=plants&group=location",
+    "kind": "list",
+    "state": "one",
+    "title": "Sammlung",
+    "family": "collection-plants",
+    "expect": {
+      "css": "ul[aria-label=\"Pflanzen\"] li",
+      "count": 1
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
+  },
+  {
+    "id": "collection-plants-error",
+    "account": "test2",
+    "path": "/collection?view=plants",
+    "kind": "list",
+    "state": "error",
+    "title": "Sammlung",
+    "family": "collection-plants",
+    "fail": "/specimens/cards",
+    "expect": {
+      "text": "Erneut versuchen"
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
   },
   {
     "id": "collection-labels",
