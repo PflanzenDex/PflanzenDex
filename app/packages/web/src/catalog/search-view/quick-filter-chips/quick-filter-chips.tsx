@@ -7,7 +7,7 @@ import { useChipsFit } from "@/shared/lists/grouped-list/grouped-sections/group-
 import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
 import { DIFFICULTY } from "../../shared/difficulty";
-import type { Filters } from "../search-filters/search-filters";
+import type { Filters, FilterChange } from "../search-filters/search-filters";
 import table from "../search-view.de.json";
 
 const t = texts(table);
@@ -18,6 +18,9 @@ const t = texts(table);
  * chip that is wider than the row itself (large text) scrolls.
  */
 const MAX_LINES = 2;
+
+/** A chip stays on the page when it is pressed, so the focus stays on it (US-QS-15, issue 2628). */
+const KEEP_FOCUS = { keepFocus: true };
 
 type Chip = {
   key: string;
@@ -98,7 +101,7 @@ export function QuickFilterChips(props: {
   caughtKnown: boolean;
   /** The caught species are on their way: the chip is disabled, but the reason is not shown yet. */
   caughtLoading?: boolean;
-  onChange: (patch: Partial<Filters>) => void;
+  onChange: FilterChange;
 }) {
   const { filters, caughtKnown, caughtLoading = false, onChange } = props;
   const showWhy = !caughtKnown && !caughtLoading;
@@ -110,14 +113,14 @@ export function QuickFilterChips(props: {
       label: DIFFICULTY[1] ?? "",
       pressed: filters.difficulty === 1,
       disabled: false,
-      toggle: () => onChange({ difficulty: filters.difficulty === 1 ? null : 1 }),
+      toggle: () => onChange({ difficulty: filters.difficulty === 1 ? null : 1 }, KEEP_FOCUS),
     },
     {
       key: "uncaught",
       label: t("quick.uncaught"),
       pressed: filters.uncaught,
       disabled: !caughtKnown,
-      toggle: () => onChange({ uncaught: !filters.uncaught }),
+      toggle: () => onChange({ uncaught: !filters.uncaught }, KEEP_FOCUS),
     },
   ];
   return (

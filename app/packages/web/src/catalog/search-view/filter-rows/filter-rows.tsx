@@ -1,4 +1,9 @@
-import { FilterChips, type Filters, type QuickFilters } from "../search-filters/search-filters";
+import {
+  FilterChips,
+  type Filters,
+  type FilterChange,
+  type QuickFilters,
+} from "../search-filters/search-filters";
 import { QuickFilterChips } from "../quick-filter-chips/quick-filter-chips";
 
 /**
@@ -9,7 +14,7 @@ import { QuickFilterChips } from "../quick-filter-chips/quick-filter-chips";
 export function FilterRows(props: {
   filters: Filters;
   quick: QuickFilters | undefined;
-  onChange: (patch: Partial<Filters>) => void;
+  onChange: FilterChange;
 }) {
   const { filters, quick, onChange } = props;
   return (
