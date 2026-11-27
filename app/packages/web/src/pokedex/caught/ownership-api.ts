@@ -1,6 +1,9 @@
 import type { Ownership } from "@pflanzendex/core";
 import { call, currentTimeZone, type Response } from "../../shared/data";
 
+/** The query key of the ownership: the species page and the catalog's quick filter read the same copy (US-POK-06, US-QS-21). */
+export const OWNERSHIP_KEY = ["pokedex", "ownership"] as const;
+
 /**
  * Loads which species the account has caught (US-POK-06) with the catch date (US-POK-07); derived from the specimens,
  * never stored. The time zone of the profile (device zone as fallback, US-ACC-02) decides the local date of a creation moment (NFR-08).

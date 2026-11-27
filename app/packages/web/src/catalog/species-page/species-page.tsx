@@ -12,6 +12,7 @@ import type { ApiError, Request } from "../../shared/data";
 import { useOpenId, useProfile, useSearch, useSend } from "../species-hooks";
 import { SpeciesProfile } from "../profile-view/profile-view";
 import { SpeciesSearch } from "../search-view/search-view";
+import type { QuickFilters } from "../search-view/search-filters/search-filters";
 import { ProposalForm } from "../proposal/proposal-form/proposal-form";
 import { ProfileSkeleton } from "../profile-view/profile-view.skeleton";
 import { PROFILE_CARD } from "../profile-view/profile-card";
@@ -112,6 +113,12 @@ type SpeciesPageProps = {
   profileSection?: (species: Species) => ReactNode;
   /** Shown below the title of a destination (Entdecken, mode Katalog): the headings are h2 (US-QS-14). */
   embedded?: boolean;
+  /**
+   * The chips "Leicht" and "Noch nicht gefangen" under the search field, with the ids of the caught species that the app
+   * reads from `pokedex` (`null` while unknown); only "Entdecken" sets it, so the collection's hand-over has no chips
+   * (US-QS-15, US-QS-21, owner decision d-166, issue 2587).
+   */
+  quickFilters?: QuickFilters;
 };
 
 /** The address without its layer (`sheet`): the page of the list stays. */
@@ -166,6 +173,7 @@ export function SpeciesPage(props: SpeciesPageProps) {
           onOpen={open}
           onPropose={() => propose.openLayer()}
           embedded={props.embedded}
+          quickFilters={props.quickFilters}
         >
           <LayerSheet id={PROPOSE_LAYER} title="Art vorschlagen">
             <ProposalForm start={searchText} onSend={send} onExisting={open} />

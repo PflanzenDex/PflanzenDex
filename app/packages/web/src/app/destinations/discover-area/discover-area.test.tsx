@@ -337,3 +337,100 @@ describe("US-ENT-01 issue 1652 · Vorschläge keep the last deck while they refe
     expect(screen.queryByRole("heading", { name: "Aspidistra elatior" })).toBeNull();
   });
 });
+
+/** A catalog hit with the fields the list reads; the id tells it apart (US-QS-21). */
+const catalogHit = (id: string, difficulty: 1 | 2 | 3) => ({
+  id,
+  latinName: `Species ${id}`,
+  germanName: null,
+  difficulty,
+  reviewStatus: "reviewed",
+  own: false,
+  hit: null,
+});
+
+/** The catalog with two species, easy s1 and medium s2, and an ownership that holds the species s1 as caught. */
+function stubCatalog(ownership: () => Promise<Response>) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>(async (url) => {
+      const path = new URL(String(url)).pathname;
+      if (path === "/species")
+        return response(200, { species: [catalogHit("s1", 1), catalogHit("s2", 2)], more: false });
+      if (path === "/pokedex/ownership") return ownership();
+      return response(200, empty);
+    }),
+  );
+}
+const ownsS1 = () =>
+  response(200, {
+    ownership: { caught: [{ species: "Species s1", speciesId: "s1" }], unidentified: [] },
+  });
+const listed = () =>
+  screen
+    .queryAllByRole("button", { name: /^Species / })
+    .map((b) => /Species (s\d)/.exec(b.textContent ?? "")?.[1]);
+const uncaughtChip = () => screen.getByRole("button", { name: "Noch nicht gefangen" });
+
+describe("US-QS-15 · US-QS-21 Entdecken: the chips Leicht and Noch nicht gefangen in the mode Katalog (issue 2587, owner decision d-166)", () => {
+  it("US-QS-15 · US-QS-21 the mode Katalog shows both chips as one row under the search field, and Vorschläge shows none and asks for no ownership", async () => {
+    stubCatalog(ownsS1);
+    renderAt("/discover?view=catalog");
+    await catalogShown();
+    const group = screen.getByRole("group", { name: "Schnellfilter" });
+    expect(group.getAttribute("data-scroll-x")).toBe("chips");
+    expect([...group.querySelectorAll("button")].map((b) => b.textContent)).toEqual([
+      "Leicht",
+      "Noch nicht gefangen",
+    ]);
+    cleanup();
+    vi.mocked(fetch).mockClear();
+    renderAt("/discover?view=suggestions");
+    await suggestionsShown();
+    expect(screen.queryByRole("group", { name: "Schnellfilter" })).toBeNull();
+    const asked = vi.mocked(fetch).mock.calls.map(([u]) => new URL(String(u)).pathname);
+    expect(asked).not.toContain("/pokedex/ownership");
+  });
+
+  it("US-QS-15 · US-QS-21 the caught species come from the ownership: Noch nicht gefangen hides s1, Leicht keeps the easy s1", async () => {
+    stubCatalog(ownsS1);
+    renderAt("/discover?view=catalog");
+    await waitFor(() => expect(listed()).toEqual(["s1", "s2"]));
+    await waitFor(() => expect((uncaughtChip() as HTMLButtonElement).disabled).toBe(false));
+    await userEvent.click(uncaughtChip());
+    expect(screen.getByTestId("address").textContent).toBe("/discover?view=catalog&uncaught=1");
+    expect(listed()).toEqual(["s2"]);
+    await userEvent.click(uncaughtChip());
+    await userEvent.click(screen.getByRole("button", { name: "Leicht" }));
+    expect(listed()).toEqual(["s1"]);
+  });
+
+  it("US-QS-15 · US-QS-21 while the ownership loads the chip is disabled and nothing is filtered on a guess, then it works (P-08, P-10)", async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    stubCatalog(async () => {
+      await gate;
+      return ownsS1();
+    });
+    renderAt("/discover?view=catalog&uncaught=1");
+    await waitFor(() => expect(listed()).toEqual(["s1", "s2"]));
+    expect((uncaughtChip() as HTMLButtonElement).disabled).toBe(true);
+    expect(uncaughtChip().getAttribute("aria-pressed")).toBe("false");
+    release();
+    await waitFor(() => expect(listed()).toEqual(["s2"]));
+    expect((uncaughtChip() as HTMLButtonElement).disabled).toBe(false);
+    expect(uncaughtChip().getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("US-QS-15 · US-QS-21 an ownership that fails leaves the chip disabled and the list whole, and Leicht keeps working (P-10)", async () => {
+    stubCatalog(() => response(500, { error: { code: "system.unexpected" } }));
+    renderAt("/discover?view=catalog");
+    await waitFor(() => expect(listed()).toEqual(["s1", "s2"]));
+    await waitFor(() => expect(vi.mocked(fetch).mock.calls.length).toBeGreaterThan(1));
+    expect((uncaughtChip() as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.click(screen.getByRole("button", { name: "Leicht" }));
+    expect(listed()).toEqual(["s1"]);
+  });
+});
