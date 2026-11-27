@@ -33,6 +33,7 @@ export const GATE_STEPS = [
   npmStep("dod-numbers"),
   npmStep("principles"),
   npmStep("skills"),
+  npmStep("codeowners"),
   npmStep("reference"),
   npmStep("duplicates"),
   npmStep("dup"),
