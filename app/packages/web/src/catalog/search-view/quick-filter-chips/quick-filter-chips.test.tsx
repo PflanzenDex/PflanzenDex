@@ -215,7 +215,7 @@ describe("US-QS-15 · US-QS-21 the chip Noch nicht gefangen hides the caught spe
     expect((uncaught as HTMLButtonElement).disabled).toBe(true);
     expect(uncaught.getAttribute("aria-describedby")).toBeTruthy();
     const why = document.getElementById(uncaught.getAttribute("aria-describedby") ?? "");
-    expect(why?.textContent).toBe("Deine gefangenen Arten sind noch nicht bekannt.");
+    expect(why?.textContent).toBe("Gefangene Arten sind unbekannt.");
     expect((chip("Leicht") as HTMLButtonElement).disabled).toBe(false);
     await userEvent.click(chip("Leicht"));
     expect(shown()).toEqual(["a", "b"]);
@@ -246,7 +246,7 @@ describe("US-QS-15 · US-QS-21 the chip Noch nicht gefangen hides the caught spe
 });
 
 describe("US-QS-15 the reason of the disabled chip Noch nicht gefangen is a visible line under the row (issue 2610, SG-BTN-05, P-09, P-10)", () => {
-  const REASON = "Deine gefangenen Arten sind noch nicht bekannt.";
+  const REASON = "Gefangene Arten sind unbekannt.";
   const whyOf = () => {
     const id = chip("Noch nicht gefangen").getAttribute("aria-describedby") ?? "";
     return document.getElementById(id);
@@ -330,7 +330,7 @@ describe("US-QS-15 the reason of the disabled chip Noch nicht gefangen is a visi
 });
 
 describe("US-QS-15 while the caught species still load, the disabled chip says nothing and the row keeps its height (issue 2615, CLS)", () => {
-  const REASON = "Deine gefangenen Arten sind noch nicht bekannt.";
+  const REASON = "Gefangene Arten sind unbekannt.";
 
   it("US-QS-15 loading: the chip Noch nicht gefangen is disabled, no reason text is in the document and the chip has no aria-describedby", () => {
     search({ caught: null, loading: true });
