@@ -86,7 +86,11 @@ export function ListEnd({
   missing: boolean;
   marker: number | undefined;
 }) {
-  const loading = useHeldLoader(paging !== undefined && missing && paging.failure === undefined);
+  const pending = paging !== undefined && missing && paging.failure === undefined;
+  const held = useHeldLoader(pending);
+  // The hold keeps a loader that ended well; after a failure the retry row stands at once (P-10, issue 2591): a tap on it
+  // must never land on a row the hold is about to swap for the loader.
+  const loading = pending && held;
   if (paging && loading) return <LoaderRow quiet={paging.placeholder !== undefined} />;
   if (paging && missing) return <RetryRow paging={paging} />;
   return marker === undefined ? null : <EndMarker count={marker} />;

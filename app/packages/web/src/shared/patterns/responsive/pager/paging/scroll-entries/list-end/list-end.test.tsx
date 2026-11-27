@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { Pager } from "../../../pager";
 import type { PagerPaging } from "../../paging";
+import { SKELETON_DELAY_MS, STATUS_HOLD_MS } from "@/shared/ui/skeleton.delayed";
 import { SETTLE_MS } from "../use-scroll-overflow";
 
 afterEach(() => {
@@ -286,5 +287,46 @@ describe("US-QS-15 · SG-LIST-01 the retry row of a failed part (P-10)", () => {
     render(list(plants.slice(0, 8), paging({ failure: "" })));
     expect(screen.queryByRole("button", { name: /mehr laden/i })).toBeNull();
     expect(screen.getAllByRole("button")).toHaveLength(1);
+  });
+});
+
+describe("FR-BES-23 · P-10 the retry row is there at once after a failed part (issue 2591)", () => {
+  it("FR-BES-23 · P-10 a part that fails after its loader showed puts the retry row in at once, and a tap starts exactly one request", () => {
+    vi.useFakeTimers();
+    try {
+      setViewportWidth(360);
+      const onRetry = vi.fn();
+      const view = render(list(plants.slice(0, 8), paging({ loading: true, onRetry })));
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_DELAY_MS + 50);
+      });
+      expect(screen.queryByRole("button", { name: "Erneut versuchen" })).toBeNull();
+      view.rerender(list(plants.slice(0, 8), paging({ failure: "", onRetry })));
+      // No hold: the loader does not keep the place of the retry row.
+      const button = screen.getByRole("button", { name: "Erneut versuchen" });
+      fireEvent.click(button);
+      expect(onRetry).toHaveBeenCalledTimes(1);
+      act(() => {
+        vi.advanceTimersByTime(STATUS_HOLD_MS * 2);
+      });
+      expect(screen.getByRole("button", { name: "Erneut versuchen" })).toBe(button);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("FR-BES-23 · P-10 a part that is on its way still shows its loader after the delay", () => {
+    vi.useFakeTimers();
+    try {
+      setViewportWidth(360);
+      render(list(plants.slice(0, 8), paging({ loading: true })));
+      act(() => {
+        vi.advanceTimersByTime(SKELETON_DELAY_MS);
+      });
+      expect(screen.getAllByRole("status").length).toBeGreaterThan(0);
+      expect(screen.queryByRole("button", { name: "Erneut versuchen" })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
