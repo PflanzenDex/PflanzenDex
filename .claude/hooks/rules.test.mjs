@@ -711,7 +711,7 @@ test("US-QG-07: commands that discard uncommitted work need confirmation", () =>
 });
 
 test("US-QG-07: only existing migration files are protected by the edit guard", () => {
-  assert.equal(isMigrationFile("app/packages/db/migrations/0004_lichtzonen_standorte.sql"), true);
+  assert.equal(isMigrationFile("app/packages/db/migrations/0001_baseline.sql"), true);
   assert.equal(isMigrationFile("app/packages/db/src/migrate.ts"), false);
   assert.equal(isMigrationFile("app/packages/db/migrations/README.md"), false);
   const hook = fileURLToPath(new URL("./run.mjs", import.meta.url));
@@ -722,9 +722,7 @@ test("US-QG-07: only existing migration files are protected by the edit guard", 
       env: { ...process.env, CLAUDE_PROJECT_DIR: root },
       encoding: "utf8",
     });
-  const existing = JSON.parse(
-    guard(`${root}/app/packages/db/migrations/0001_mandantengrundlage.sql`),
-  );
+  const existing = JSON.parse(guard(`${root}/app/packages/db/migrations/0001_baseline.sql`));
   assert.equal(existing.hookSpecificOutput.permissionDecision, "deny");
   assert.equal(guard(`${root}/app/packages/db/migrations/9999_new_one.sql`), "");
 });
