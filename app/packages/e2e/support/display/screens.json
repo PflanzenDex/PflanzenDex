@@ -567,7 +567,7 @@
     "path": "/collection?view=species&sheet=cards",
     "kind": "card-row",
     "state": "many",
-    "layerFile": "pokedex/pokedex-page/pokedex-page.tsx",
+    "layerFile": "pokedex/pokedex-cards/collector-cards-layer/collector-cards-layer.tsx",
     "title": "Sammlerkarten"
   },
   {

@@ -45,6 +45,7 @@ const PANE_FRAMES: Record<string, readonly string[]> = {
     COLLECTION,
   ],
   "pokedex/pokedex-browse/browse-layers/browse-layers.tsx": [COLLECTION],
+  "pokedex/pokedex-cards/collector-cards-layer/collector-cards-layer.tsx": [COLLECTION],
   "pokedex/pokedex-page/pokedex-page.tsx": [COLLECTION],
   "care/treatments/planning/plan-layer/plan-layer.tsx": [TODAY],
   "light/views/light-view/light-layers/light-layers.tsx": [COLLECTION],
