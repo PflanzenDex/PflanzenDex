@@ -85,6 +85,7 @@ export const GROUPS_1: Config<string, string>["classGroups"] = {
   "row-start-end": [{ row: scaleGridColRowStartAndEnd() }],
   "row-start": [{ "row-start": scaleGridColRowStartOrEnd() }],
   "row-end": [{ "row-end": scaleGridColRowStartOrEnd() }],
+  "field-sizing": [{ "field-sizing": ["fixed", "content"] }],
   overscroll: [{ overscroll: scaleOverscroll() }],
   "overscroll-x": [{ "overscroll-x": scaleOverscroll() }],
   "overscroll-y": [{ "overscroll-y": scaleOverscroll() }],
