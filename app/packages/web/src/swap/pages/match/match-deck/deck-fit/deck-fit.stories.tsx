@@ -22,7 +22,8 @@ export const CardFillsFrame: Story = {
   play: async ({ canvasElement }) => judgeDeckFit(canvasElement, "normal"),
 };
 
-// At 200 % text (set before the deck mounts): the card is as high as its content and the buttons follow it below.
+// At 200 % text (set before the deck mounts; the deck follows it a few frames later, and the play waits for that, issue 2637): the
+// card is as high as its content and the buttons follow it below.
 export const CardKeepsContentAtLargeText: Story = {
   render: () => <FramedDeck />,
   beforeEach: () => {

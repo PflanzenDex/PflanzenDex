@@ -1,5 +1,5 @@
 import { texts } from "@/shared/lib/text-rules/texts";
-import { check, hasLayout, must } from "@/shared/testing/story-frame/story-play";
+import { check, hasLayout, must, waitUntil } from "@/shared/testing/story-frame/story-play";
 import { boxOf, settle, type Box } from "@/shared/testing/story-frame/table-measure";
 import table from "../../../../swap.de.json";
 import { OWNER } from "./deck-fit.frame";
@@ -26,12 +26,20 @@ const TOLERANCE = 1;
 
 const height = (box: Box) => box.bottom - box.top;
 
+const CARD = "article[aria-labelledby='match-title']";
+
+/**
+ * Whether the card takes the free height of the frame, as a size container (`fill`): the card of the normal text size does, the
+ * card of 200 % text keeps its content and does not. The deck follows a text size a few frames after it is set (`useLargeText`,
+ * issue 2617), and on a loaded machine later (issue 2637: in 4 of 50 loads on 8 pages at once the play measured a card of 568 px
+ * with the content of 577 px, the card of the normal size at the root size of 200 %). A measure before the follow judges a state
+ * that no keeper sees for long, so the play waits for the card of the size it judges.
+ */
+const fills = (card: Element) => getComputedStyle(card).containerType === "size";
+
 /** The parts of the deck the play measures: the card with its name and byline, and the three decision buttons below it. */
 function partsOf(canvas: HTMLElement) {
-  const card = must(
-    canvas.querySelector("article[aria-labelledby='match-title']"),
-    "the card of the deck",
-  );
+  const card = must(canvas.querySelector(CARD), "the card of the deck");
   const byline = t("card.byline", { name: OWNER });
   const buttons = [t("stamp.no"), t("stamp.later"), t("stamp.yes")].map((label) => ({
     label,
@@ -63,9 +71,14 @@ function partsOf(canvas: HTMLElement) {
  * and the frame scrolls; at the normal size the card takes the free height and the frame does not scroll.
  */
 export async function judgeDeckFit(canvas: HTMLElement, size: TextSize): Promise<void> {
-  const { card, lines, frame, ...rest } = partsOf(canvas);
-  if (!hasLayout(card)) return;
+  const first = must(canvas.querySelector(CARD), "the card of the deck");
+  if (!hasLayout(first)) return;
+  await waitUntil(
+    () => fills(first) === (size === "normal"),
+    `the deck follows the ${size} text size`,
+  );
   await settle();
+  const { card, lines, frame, ...rest } = partsOf(canvas);
   // The boxes are read after the layout has settled: a box read before the fonts are in and the text size is followed is stale.
   const buttons = rest.buttons.map(({ label, element }) => ({ label, box: boxOf(element) }));
   const box = boxOf(card);

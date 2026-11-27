@@ -15,6 +15,8 @@ const t = texts(table);
 const ZERO: Box = { top: 0, left: 0, right: 0, bottom: 0 };
 
 const boxes = new Map<Element, Box>();
+/** The `container-type` of an element: "size" for the card of the normal text size (it takes the free height), else "normal". */
+const containers = new Map<Element, string>();
 /** False: the elements report no client rects, as in jsdom (no layout). */
 let laidOut = true;
 
@@ -87,7 +89,25 @@ function deck(scrolls = false): Deck {
   sizeOf(card, 276, 276);
   if (scrolls) sizeOf(frame, 1177, 496);
   else sizeOf(frame, 568, 568);
+  containers.set(card, scrolls ? "normal" : "size");
   return { canvas, frame, card, name, byline, buttons, no, later, yes };
+}
+
+/**
+ * The boxes of the deck at 200 % text on a 360 x 640 px phone, as the browser measured them: the card is as high as its content
+ * (92 to 647.5 px, no size container), the buttons stand one under the other below it, out of the frame until the frame
+ * scrolls to them (the stub of `scrollIntoView` moves a button into the frame).
+ */
+function atLargeText({ card, name, byline, buttons }: Deck): void {
+  containers.set(card, "normal");
+  boxes.set(card, at(92, 647.5));
+  boxes.set(name, at(180, 220));
+  boxes.set(byline, at(250, 290));
+  sizeOf(card, 555, 555);
+  buttons.forEach((button, row) => boxes.set(button, at(696.5 + row * 64, 744.5 + row * 64)));
+  vi.mocked(Element.prototype.scrollIntoView).mockImplementation(function (this: Element) {
+    boxes.set(this, at(100, 148));
+  });
 }
 
 beforeEach(() => {
@@ -98,6 +118,10 @@ beforeEach(() => {
     const box = boxes.get(this);
     return (laidOut && box ? [rect(box)] : []) as unknown as DOMRectList;
   });
+  vi.spyOn(window, "getComputedStyle").mockImplementation(
+    (element: Element) =>
+      ({ containerType: containers.get(element) ?? "normal" }) as unknown as CSSStyleDeclaration,
+  );
   // jsdom has no `scrollIntoView`: the stub leaves every box where it is.
   Element.prototype.scrollIntoView = vi.fn();
   // jsdom loads no fonts: `settle` waits for `document.fonts.ready` and two animation frames, which run at once here.
@@ -112,8 +136,10 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  containers.clear();
   Reflect.deleteProperty(document, "fonts");
   Reflect.deleteProperty(Element.prototype, "scrollIntoView");
   boxes.clear();
@@ -144,17 +170,45 @@ describe("US-QS-15 · US-TAU-01 · the card of the match deck: the play measures
   });
 
   it("US-QS-15 US-TAU-01 200 % text passes: the card keeps its content, the buttons follow it, the frame scrolls", async () => {
-    const { canvas, card, name, byline, buttons } = deck(true);
-    boxes.set(card, at(92, 647.5));
-    boxes.set(name, at(180, 220));
-    boxes.set(byline, at(250, 290));
-    sizeOf(card, 555, 555);
-    // The buttons stand one under the other below the card, out of the frame until the frame scrolls to them.
-    buttons.forEach((button, at_) => boxes.set(button, at(696.5 + at_ * 64, 744.5 + at_ * 64)));
-    vi.mocked(Element.prototype.scrollIntoView).mockImplementation(function (this: Element) {
-      boxes.set(this, at(100, 148));
-    });
-    await expect(judgeDeckFit(canvas, "large")).resolves.toBeUndefined();
+    const d = deck(true);
+    atLargeText(d);
+    await expect(judgeDeckFit(d.canvas, "large")).resolves.toBeUndefined();
+  });
+
+  it("US-QS-15 US-TAU-01 200 % text: the play waits until the deck follows the text size (issue 2637)", async () => {
+    const d = deck(true);
+    // The deck still shows the card of the normal size at the root size of 200 %: 568 px high, its content 577 px high.
+    containers.set(d.card, "size");
+    boxes.set(d.card, at(92, 660));
+    sizeOf(d.card, 577, 566);
+    // The deck follows 80 ms later; a measure before it would fail on the card of the other size.
+    setTimeout(() => {
+      containers.delete(d.card);
+      atLargeText(d);
+    }, 80);
+    await expect(judgeDeckFit(d.canvas, "large")).resolves.toBeUndefined();
+  });
+
+  it("US-QS-15 200 % text: a deck that never follows the text size fails and names it", async () => {
+    vi.useFakeTimers();
+    const { canvas, card } = deck(true);
+    containers.set(card, "size");
+    const run = expect(judgeDeckFit(canvas, "large")).rejects.toThrow(
+      "play: the deck follows the large text size did not happen within 2000 ms",
+    );
+    await vi.advanceTimersByTimeAsync(2100);
+    await run;
+  });
+
+  it("US-QS-15 normal text: a card that is no size container does not take the free height and fails", async () => {
+    vi.useFakeTimers();
+    const { canvas, card } = deck();
+    containers.set(card, "normal");
+    const run = expect(judgeDeckFit(canvas, "normal")).rejects.toThrow(
+      "play: the deck follows the normal text size did not happen within 2000 ms",
+    );
+    await vi.advanceTimersByTimeAsync(2100);
+    await run;
   });
 
   it("US-TAU-01 200 % text: a card squeezed to 32 px fails", async () => {
