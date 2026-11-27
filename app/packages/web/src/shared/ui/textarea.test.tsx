@@ -20,7 +20,7 @@ describe("Textarea (US-QS-07, DS-15, DS-38)", () => {
     render(<Textarea aria-label="Notiz" className="min-h-40" />);
     const cls = screen.getByLabelText("Notiz").className;
     expect(cls).toContain("min-h-40");
-    expect(cls).not.toContain("min-h-[88px]");
+    expect(cls).not.toContain("min-h-[calc(3lh");
   });
 
   it("US-QS-07 · DS-38 an invalid field is exposed with aria-invalid and its error text", () => {
@@ -45,6 +45,17 @@ describe("Textarea (US-QS-07, DS-15, DS-38)", () => {
     const cls = screen.getByLabelText("Notiz").className;
     expect(cls).toContain("text-base");
     expect(cls).toContain("focus-visible:ring-2");
+  });
+});
+
+describe("Textarea grows with its text (US-QS-07, issue 2563)", () => {
+  it("US-QS-07 grows from 3 to 8 lines, then scrolls inside", () => {
+    render(<Textarea aria-label="Notiz" />);
+    const cls = screen.getByLabelText("Notiz").className;
+    expect(cls).toContain("field-sizing-content");
+    expect(cls).toContain("min-h-[calc(3lh+");
+    expect(cls).toContain("max-h-[calc(8lh+");
+    expect(cls).toContain("overscroll-contain");
   });
 });
 

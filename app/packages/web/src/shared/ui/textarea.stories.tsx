@@ -50,3 +50,16 @@ export const Invalid: Story = {
     </div>
   ),
 };
+
+export const LongText: Story = {
+  render: (args) => (
+    <div className="flex flex-col gap-2 p-4">
+      <Label htmlFor="t-long">Notiz</Label>
+      <Textarea
+        {...args}
+        id="t-long"
+        defaultValue={Array.from({ length: 12 }, (_, i) => `Zeile ${i + 1}`).join("\n")}
+      />
+    </div>
+  ),
+};

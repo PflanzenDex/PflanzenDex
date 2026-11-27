@@ -571,13 +571,13 @@ Issue #907. Why: a `security definer` function runs with the rights of the table
 | `pflanzendex_app`                             | NOLOGIN, NOSUPERUSER, NOBYPASSRLS                         | the api switches to it per transaction (`set local role`), all row rules apply          |
 | `keycloak` (`KEYCLOAK_DB_USER`)               | login, own database only                                  | the sign-in service                                                                     |
 
-The migration role is the owner role. A separate runtime role is not possible yet: the background jobs and the checked functions need the owner's rights, and the policies that name the owner (`owner_count`, `owner_decides`, `lock_for_merge`, ...) are bound to whoever runs the migrations (migration 0094 keeps them on the current owner).
+The migration role is the owner role. A separate runtime role is not possible yet: the background jobs and the checked functions need the owner's rights, and the policies that name the owner (`owner_count`, `owner_decides`, `lock_for_merge`, ...) are bound to whoever runs the migrations (the baseline binds them to `current_user`, the role that applies it).
 
 ### Checklist
 
 1. `.env` has `DB_OWNER_PASSWORD` (random hex, different from the other secrets; `DB_OWNER_USER` only if you want another name than `pflanzendex_owner`). `docker compose` stops with "DB_OWNER_PASSWORD is missing" otherwise.
 2. `docker compose ... up -d` runs the one-shot `db-roles` (as the cluster user) before `migrate`: it creates `pflanzendex_app` and the owner role, makes the owner the database owner and, on an existing volume, moves every table, sequence, type and function of schema `public` from the cluster user to the owner (`app/config/deploy/docker/db-roles/`). Idempotent; the password follows `.env` on every run.
-3. `migrate` and `api` connect as the owner and run with `DB_ROLE_CHECK=enforce`: they refuse to start when the connection role, the owner of the tables or `pflanzendex_app` is a superuser or has `BYPASSRLS`. The existing deployment is converted in place by the next `make deploy`; migration 0094 then re-targets the owner policies. Take `make backup` first (the deploy does).
+3. `migrate` and `api` connect as the owner and run with `DB_ROLE_CHECK=enforce`: they refuse to start when the connection role, the owner of the tables or `pflanzendex_app` is a superuser or has `BYPASSRLS`. Since issue 2519 no migration converts a superuser-owned database any more: the test host is reset to the baseline instead (section "Reset the test host database to the baseline"). `transfer-ownership.sql` now holds the owner-policy step that migration 0094 held before the squash, so a conversion in place re-targets the policies as well.
 4. Check afterwards:
 
    ```bash
@@ -593,6 +593,25 @@ The migration role is the owner role. A separate runtime role is not possible ye
 5. Restore: `restore.sh` restores the app dump as `DB_OWNER_USER` (`pg_restore --role`), so a restore keeps the ownership; the role must exist (run `up` once on a fresh host before restoring). `make restore-test` proves it. Never restore the app dump with another tool as the cluster user: the objects would belong to the superuser again and the api would refuse to start.
 6. Local development (`make dev`, `make db-up`) still uses the image's superuser; `DB_ROLE_CHECK` defaults to `warn` there and logs the finding. The test suite runs as a plain owner (QG-D1) and in a superuser-owner scratch database for the functions that matter.
 7. Rolling back to a release before this change works without touching the database: the old compose file connects as the cluster user (a superuser can use everything the owner owns), the policies already follow the owner. Do not move the ownership back; fix forward.
+
+## Reset the test host database to the baseline (issue 2519, d-130, d-157)
+
+Owner decision (2026-11-26, d-130): the database of the test host is rebuilt from `app/packages/db/migrations/0001_baseline.sql`. The migrations 0001 to 0120 are deleted from the repository; git history keeps them. The reset loses the app data on the test host. No backup is needed, because no production data exists. Owner decision d-157: the volume `${COMPOSE_PROJECT_NAME:-pflanzendex}_dbdata` stays. It also holds the sign-in service's database (`KEYCLOAK_DB_NAME`, default `keycloak`), so only the app database (`POSTGRES_DB`) is dropped and created again. The steps follow the normal deploy path. Nothing here is run from the devbox.
+
+1. The owner gives the go. The ref to deploy is the commit on `dev` that holds `0001_baseline.sql`.
+2. On the test host, as `deploy`, in the checkout (the same Tailscale SSH path as the workflow): stop the `api` (it holds connections to the app database), then drop and create the app database as the cluster user. The role and database names (`POSTGRES_USER`, `POSTGRES_DB`) are read inside the `db` container from its own environment. The sign-in database and all roles stay.
+
+   ```bash
+   c="docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml"
+   $c stop api
+   $c exec -T db sh -c 'psql -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 \
+     -c "drop database \"$POSTGRES_DB\" with (force)" -c "create database \"$POSTGRES_DB\""'
+   ```
+
+3. Actions, "Deploy", environment `test`, the ref from step 1. The deploy runs `db-roles` (the owner role becomes the owner of the new, empty database), `migrate` applies `0001_baseline.sql` as the owner, and the API starts. The deploy does not seed demo data and needs no workflow input.
+4. Check: `$c logs migrate` ends with `Applied: 0001_baseline.sql`; the two queries of item 4 of the checklist above give `pflanzendex_owner|f|f` and `0`; `$c ps` shows `api` healthy and `keycloak` unchanged; `GET /health` answers `{"status":"ok"}` (section "Health check").
+
+These steps are written from the scripts (`deploy.sh`, `docker-compose.yml`, `db-roles`). They have not been run on a host yet; the first reset checks them.
 
 ## Health check (US-DEV-09)
 

@@ -30,7 +30,25 @@ export function nextNumber({ taken, own }) {
   return Math.max(0, ...used) + 1;
 }
 
-/** Problems of a migration directory: duplicate numbers, and new files not above the maximum on dev. */
+export const BASELINE = "0001_baseline.sql";
+
+/**
+ * True for a squash of the whole chain (issue 2519, owner decisions d-122 and d-149): the branch deletes every migration of
+ * origin/dev and holds exactly one migration, the baseline. Only then may a new file be numbered below the dev maximum.
+ */
+export function isSquash({ files, devFiles }) {
+  const name = (f) => f.split("/").pop();
+  const own = files.filter((f) => numberOf(f) !== undefined).map(name);
+  const left = new Set(own);
+  return (
+    devFiles.length > 0 &&
+    devFiles.every((f) => !left.has(name(f))) &&
+    own.length === 1 &&
+    own[0] === BASELINE
+  );
+}
+
+/** Problems of a migration directory: duplicate numbers, and new files not above the maximum on dev (except a squash). */
 export function findProblems({ files, devFiles }) {
   const problems = [];
   const byNumber = new Map();
@@ -40,7 +58,7 @@ export function findProblems({ files, devFiles }) {
   }
   for (const [n, list] of byNumber)
     if (list.length > 1) problems.push(`number ${pad(n)} is used twice: ${list.join(", ")}`);
-  if (devFiles) {
+  if (devFiles && !isSquash({ files, devFiles })) {
     const known = new Set(devFiles);
     const max = Math.max(0, ...devFiles.map(numberOf).filter((n) => n !== undefined));
     for (const f of files) {

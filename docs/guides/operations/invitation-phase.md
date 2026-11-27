@@ -28,7 +28,7 @@ Placeholders: `<kc-container>` is the Keycloak container on the host, `<admin>` 
 
 ### 1. Preconditions
 
-- The stack runs and the database schema contains at least migration `0018_account_invitation.sql`. Check: `compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "select exists (select from schema_migrations where name = '\''0018_account_invitation.sql'\'')"'` prints `t`.
+- The stack runs and the database schema is the baseline `0001_baseline.sql` (issue 2519; it holds the invitation tables of the former migration 0018). Check: `compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "select exists (select from schema_migrations where name = '\''0001_baseline.sql'\'')"'` prints `t`.
 - A fresh backup: `make backup`.
 
 ### 2. Close self-registration in the realm

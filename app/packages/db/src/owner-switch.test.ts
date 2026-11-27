@@ -1,7 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 import type { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -14,17 +12,13 @@ import {
 } from "./fixtures.ts";
 import { SharingPostgres } from "./social/index.ts";
 import { dbRoleFindings } from "./kernel/connection/role-check.ts";
-import {
-  MIGRATIONS_DIRECTORY,
-  migrate,
-  openPool,
-  testDatabaseUrl,
-  withAccount,
-} from "./kernel/index.ts";
+import { migrate, openPool, testDatabaseUrl, withAccount } from "./kernel/index.ts";
 
-// #907, US-DEV-07, P-04: an existing database that was created and migrated by the cluster superuser is handed to a plain
-// owner role (deploy: app/config/deploy/docker/db-roles/). The migrations of the superuser era are applied first (all but the
-// last one, 0094), then the ownership moves, then the owner applies the rest and everything still works.
+// #907, US-DEV-07, P-04, d-130: an existing database that was created and migrated by the cluster superuser is handed to a
+// plain owner role (deploy: app/config/deploy/docker/db-roles/). Since the squash (issue 2519) the superuser era is the
+// baseline applied as superuser: the test builds that state, moves the ownership, and lets the owner open the database.
+// transfer-ownership.sql re-targets the row rules bound to the superuser (the step migration 0094 held before the squash),
+// so the checked functions see what they read under the owner, as before.
 const TRANSFER = readFileSync(
   new URL("../../../config/deploy/docker/db-roles/transfer-ownership.sql", import.meta.url),
   "utf8",
@@ -35,16 +29,10 @@ const OWNER = `ownsw_${randomUUID()
 const PASSWORD = "owner-switch-local-only"; // loopback test container only, never a real credential
 let db: SuperuserOwnerDatabase;
 let owner: Pool;
-let oldMigrations: string;
 const [anna, ben, cleo] = [randomUUID(), randomUUID(), randomUUID()];
 
 beforeAll(async () => {
-  oldMigrations = mkdtempSync(join(tmpdir(), "pdx-migrations-"));
-  for (const f of readdirSync(MIGRATIONS_DIRECTORY).filter(
-    (x) => x.endsWith(".sql") && !x.startsWith("0094_"),
-  ))
-    cpSync(join(MIGRATIONS_DIRECTORY, f), join(oldMigrations, f));
-  db = await createSuperuserOwnerDatabase("ownersw", { directory: oldMigrations });
+  db = await createSuperuserOwnerDatabase("ownersw");
   await db.pool.query(
     `create role ${OWNER} login nosuperuser nocreatedb nocreaterole nobypassrls password '${PASSWORD}'`,
   );
@@ -59,7 +47,6 @@ afterAll(async () => {
   await owner?.end();
   await db.drop();
   await db.pool.query(`drop role if exists ${OWNER}`).catch(() => undefined);
-  rmSync(oldMigrations, { recursive: true, force: true });
 });
 
 describe("US-DEV-07 handing an existing database to a plain owner role (#907)", () => {
@@ -77,20 +64,24 @@ describe("US-DEV-07 handing an existing database to a plain owner role (#907)", 
     expect(left.rows[0]).toEqual({ relations: "0", routines: "0" });
   });
 
-  it("US-DEV-07 the owner applies migration 0094: the owner policies follow, the start-up check is clean", async () => {
+  it("US-DEV-07 the owner opens the transferred database: no migration is pending, no row rule stays on the superuser, the start-up check is clean", async () => {
     const url = new URL(testDatabaseUrl());
     url.username = OWNER;
     url.password = PASSWORD;
     url.pathname = new URL(db.url).pathname;
     owner = openPool(url.toString());
     owner.on("error", () => undefined);
-    expect(await migrate(owner)).toEqual([expect.stringMatching(/^0094_/)]);
+    expect(await migrate(owner)).toEqual([]);
     const stale = await owner.query(
       `select count(*) as n from pg_policy where polroles <> '{0}'::oid[]
           and not (polroles @> array[(select oid from pg_roles where rolname = 'pflanzendex_app')])
           and not (polroles @> array[(select oid from pg_roles where rolname = current_user)])`,
     );
     expect(stale.rows[0]).toEqual({ n: "0" });
+    const named = await owner.query(
+      `select count(*) as n from pg_policy where polroles @> array[(select oid from pg_roles where rolname = current_user)]`,
+    );
+    expect(Number(named.rows[0]?.n)).toBeGreaterThan(0);
     expect(await dbRoleFindings(owner)).toEqual([]);
   });
 
