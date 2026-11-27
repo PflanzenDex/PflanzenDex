@@ -6,6 +6,8 @@ import { MoreHelp } from "@/shared/ui/more-help";
 import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { SwipeCard } from "@/shared/patterns/elements/swipe-card/swipe-card";
 import type { SwipeDirection } from "@/shared/patterns/elements/swipe-card/swipe-gesture";
+import { cn } from "@/shared/lib/utils";
+import { ScrollRegion } from "@/shared/patterns/responsive/pager/paging/scroll-entries/scroll-region/scroll-region";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { largeText } from "@/shared/patterns/display/card/card-picture/large-text";
 import table from "../../../swap.de.json";
@@ -82,12 +84,12 @@ function Current(props: {
   undo: () => void;
   lists: ReactNode;
   dispatch: (a: DeckAction) => void;
-  /** Large text (US-QS-32): the picture of the card is not capped by the screen height. */
+  /** Large text (US-QS-32): the row of decision buttons does not stick, because it would cover the card. */
   large: boolean;
 }) {
   const { s, c, dispatch, large } = props;
   return (
-    <div className="grid min-w-0 gap-3">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
       <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
         {`Karte ${s.pos + 1} von ${s.round.length}`}
       </p>
@@ -104,9 +106,9 @@ function Current(props: {
         disabled={props.busy}
         onSwipe={props.swipe}
         onExited={props.finish}
-        className="mx-auto w-full min-w-0 max-w-md"
+        className={cn("mx-auto flex w-full min-w-0 max-w-md", !large && "min-h-48 flex-1 basis-0")}
       >
-        <MatchCard card={c} large={large} />
+        <MatchCard card={c} fill={!large} />
       </SwipeCard>
       {s.confirming && (
         <Confirm
@@ -123,7 +125,10 @@ function Current(props: {
         {c.ownerName ?? t("deck.friendFallback")} erfährt nur von einer Anfrage.
       </MoreHelp>
       <Actions card={c} busy={props.busy} onAnswer={props.answer} large={large} />
-      {props.lists}
+      {/* The answers below the deck scroll in a region of their own, so they never take the room of the card (US-QS-15, issue 2421). */}
+      <ScrollRegion label={t("deck.listsLabel")} className="max-h-36 flex-none">
+        {props.lists}
+      </ScrollRegion>
     </div>
   );
 }

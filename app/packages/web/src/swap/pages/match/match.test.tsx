@@ -113,19 +113,23 @@ afterEach(() => {
 });
 
 describe("US-TAU-01 match card in the web app", () => {
-  it("US-TAU-01 shows one card with names, giver, type, mode, note, health and the reason, without any score", async () => {
+  it("US-TAU-01 · US-QS-32 shows one card with names, giver, the offer as one fact and the reason; the rest is in the sheet of Mehr, without any score", async () => {
     server([card(1), card(2)]);
     open();
     const c = within(await current());
     expect(c.getByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
     expect(c.getByText("Aloe vera 1")).toBeTruthy();
-    expect(c.getByText("Von Ben1 · Steckling · Tauschen")).toBeTruthy();
-    expect(c.getByText("Hinweis: Gut bewurzelt")).toBeTruthy();
-    expect(c.getByText("Zuletzt behandelt: Wollläuse, 10.09.2026")).toBeTruthy();
-    expect(c.getByText("Zurzeit in der Ruhephase.")).toBeTruthy();
-    expect(c.getByText("Auf deiner Wunschliste: Aloe vera 1")).toBeTruthy();
+    expect(c.getByText("Von Ben1")).toBeTruthy();
+    expect(c.getByText("Steckling · Tauschen")).toBeTruthy();
+    expect(c.getByText("Auf deiner Wunschliste")).toBeTruthy();
+    expect(c.queryByText(/Gut bewurzelt|Wollläuse|Ruhephase/)).toBeNull();
     expect(screen.getByText("Karte 1 von 2")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/%|Punkte|Sterne/);
+    await userEvent.click(c.getByRole("button", { name: "Mehr: Echte Aloe 1" }));
+    const sheet = within(await screen.findByRole("dialog", { name: "Echte Aloe 1" }));
+    expect(sheet.getByText("Gut bewurzelt")).toBeTruthy();
+    expect(sheet.getByText("Zuletzt behandelt: Wollläuse, 10.09.2026")).toBeTruthy();
+    expect(sheet.getByText("Zurzeit in der Ruhephase.")).toBeTruthy();
   });
 
   it("US-TAU-04 shows the own reasoning of the wish exactly as written, and nothing when there is none", async () => {
@@ -137,8 +141,11 @@ describe("US-TAU-01 match card in the web app", () => {
     ]);
     open();
     const c = within(await current());
-    expect(c.getByText("Dein Grund: Bleibt klein!")).toBeTruthy();
-    expect(c.getByText("Auf deiner Wunschliste: Aloe vera 1")).toBeTruthy();
+    expect(c.getByText("Auf deiner Wunschliste")).toBeTruthy();
+    await userEvent.click(c.getByRole("button", { name: "Mehr: Echte Aloe 1" }));
+    const sheet = within(await screen.findByRole("dialog", { name: "Echte Aloe 1" }));
+    expect(sheet.getByText("Dein Grund: Bleibt klein!")).toBeTruthy();
+    await userEvent.click(sheet.getByRole("button", { name: "Schließen" }));
     await press(/^Ablehnen:/);
     await screen.findByRole("heading", { name: "Echte Aloe 2" });
     expect(screen.queryByText(/Dein Grund/)).toBeNull();
@@ -447,7 +454,10 @@ describe("US-TAU-05 fits both ways in the web app", () => {
     open();
     const c = within(await current());
     expect(c.getByText("Passt in beide Richtungen")).toBeTruthy();
-    expect(c.getByText("Ben1 möchte Echeverie von dir.")).toBeTruthy();
+    await userEvent.click(c.getByRole("button", { name: "Mehr: Echte Aloe 1" }));
+    const sheet = within(await screen.findByRole("dialog", { name: "Echte Aloe 1" }));
+    expect(sheet.getByText("Ben1 möchte Echeverie von dir.")).toBeTruthy();
+    await userEvent.click(sheet.getByRole("button", { name: "Schließen" }));
     await press(/^Ablehnen:/);
     await screen.findByRole("heading", { name: "Echte Aloe 2" });
     expect(screen.queryByText("Passt in beide Richtungen")).toBeNull();
