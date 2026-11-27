@@ -69,7 +69,7 @@ export async function screenChecksOf(
   size: Size,
   text: "100" | "200",
 ): Promise<Check[]> {
-  const problems = await layoutProblems(page);
+  const problems = await layoutProblems(page, { skipScrollX: true });
   const sized = await sizesOf(page);
   const found = sizeFound(sized, size);
   return [overflowCheck(problems), floorCheck(found), textCheck(await rootFontOf(page), text)];

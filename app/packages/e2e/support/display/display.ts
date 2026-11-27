@@ -2,8 +2,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 import type { TestAccount } from "../account";
 import { SCREENS } from "./one-screen/register";
 
-// Helpers for the adaptable display checks (US-QS-12): every view, measured in the real browser.
-
+// Helpers for the adaptable display checks (US-QS-12), measured in the real browser.
 /**
  * The views every account can open, derived from the register of the one-screen gate (issue 1137): destinations that need
  * no click and no query and are routes of their own (the role-bound review and operator views and the lock pages are not).
@@ -17,7 +16,7 @@ export const VIEWS: readonly string[] = SCREENS.filter(
     !s.path.startsWith("/review"),
 ).map((s) => s.path);
 
-/** WCAG 1.4.12: the text spacing a user may set (line height 1.5, paragraphs 2, letters 0.12, words 0.16). */
+/** WCAG 1.4.12: the text spacing a user may set. */
 export const TEXT_SPACING_CSS = `
   * { line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important; }
   p { margin-bottom: 2em !important; }
@@ -37,7 +36,7 @@ export async function signInToApp(page: Page, account: TestAccount): Promise<voi
   await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
 }
 
-/** Opens a view and waits until it has loaded: a main heading and no running request. */
+/** Opens a view and waits for its heading and no running request. */
 export async function openView(page: Page, path: string): Promise<void> {
   await page.goto(path);
   await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
@@ -55,9 +54,13 @@ export async function openView(page: Page, path: string): Promise<void> {
  * visible button with `aria-expanded='false'` that opens the rest. The rest is one press away, so nothing is lost
  * (P-10). Only that one finding is skipped: sideways cut-offs and ellipses on the same element still count, and so does
  * a clamp without such a button, because nothing on the page would show the rest.
+ * `skipScrollX` (device check, issue 2596): the content of a `data-scroll-x` element scrolls on purpose and is not judged.
  */
-export async function layoutProblems(page: Page): Promise<string[]> {
-  return page.evaluate(() => {
+export async function layoutProblems(
+  page: Page,
+  o: { skipScrollX?: boolean } = {},
+): Promise<string[]> {
+  return page.evaluate((skipScrollX) => {
     const width = document.documentElement.clientWidth;
     const label = (el: Element) => {
       const text = (el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 40);
@@ -69,7 +72,7 @@ export async function layoutProblems(page: Page): Promise<string[]> {
       const tiny = r.width <= 1 || r.height <= 1;
       return style.display !== "none" && style.visibility !== "hidden" && !tiny;
     };
-    const clips = (value: string) => value === "hidden" || value === "clip";
+    const clips = (v: string) => v === "hidden" || v === "clip";
     /** A deliberate clamp (US-QS-12): marked `data-clamped`, its parent holds a visible collapsed button that opens it. */
     const deliberateClamp = (el: Element): boolean => {
       if (!el.hasAttribute("data-clamped") || !el.parentElement) return false;
@@ -90,13 +93,12 @@ export async function layoutProblems(page: Page): Promise<string[]> {
         found.push("ellipsis hides text");
       return found.map((p) => `${p}: ${label(el)}`);
     };
-    const root = document.documentElement;
-    const page =
-      root.scrollWidth > width + 1
-        ? [`page scrolls sideways (${root.scrollWidth} > ${width})`]
-        : [];
+    const sw = document.documentElement.scrollWidth;
+    const page = sw > width + 1 ? [`page scrolls sideways (${sw} > ${width})`] : [];
     const elements = Array.from(document.body.querySelectorAll("*")).filter(
-      (el) => !el.closest("[aria-hidden='true']"),
+      (el) =>
+        !el.closest("[aria-hidden='true']") &&
+        !(skipScrollX && el.parentElement?.closest("[data-scroll-x]")),
     );
     return page.concat(
       elements.flatMap((el) => {
@@ -104,10 +106,10 @@ export async function layoutProblems(page: Page): Promise<string[]> {
         return shown(el, style) ? problemsOf(el, style) : [];
       }),
     );
-  });
+  }, o.skipScrollX === true);
 }
 
-/** Elements that would need the 1.4.13 behavior (Esc, hoverable, persistent): native and ARIA tooltips. */
+/** Elements that need the 1.4.13 behavior: native and ARIA tooltips. */
 export async function tooltips(page: Page): Promise<string[]> {
   return page.evaluate(() =>
     Array.from(document.querySelectorAll("[title], [role='tooltip']")).map(
@@ -116,7 +118,7 @@ export async function tooltips(page: Page): Promise<string[]> {
   );
 }
 
-/** What the focused element shows as focus indicator: its outline or a box shadow (the ring). */
+/** The focus indicator of the focused element: outline or ring. */
 export async function focusIndicator(
   page: Page,
 ): Promise<{ element: string; outline: string; ring: string } | null> {
