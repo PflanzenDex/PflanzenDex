@@ -5,6 +5,7 @@ import type {
   LightLocation,
   LightZone,
 } from "@pflanzendex/core";
+import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import { Quiet } from "../../../specimens/cards/parts/parts";
 import {
   Choice,
@@ -84,11 +85,13 @@ export function Dormancy(props: Shared) {
       busy={props.busy}
       onReset={() => props.reset({ dormancyFrom: null, dormancyUntil: null }, NAME.period)}
     >
-      <fieldset className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0">
-        <legend className="mb-1 text-sm font-medium">{NAME.period}</legend>
+      <FieldSet className="gap-3">
+        <FieldLegend variant="label" className="mb-1">
+          {NAME.period}
+        </FieldLegend>
         <MonthDay control={control} when="from" species={name} month="fromMonth" day="fromDay" />
         <MonthDay control={control} when="until" species={name} month="untilMonth" day="untilDay" />
-      </fieldset>
+      </FieldSet>
     </Row>
   );
 }

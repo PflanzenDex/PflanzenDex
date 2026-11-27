@@ -128,6 +128,7 @@ Acceptance criteria:
 - Given a help or contact entry, then it is in the same place in every view (3.2.6), and navigation entries keep their order and names across views (3.2.3, 3.2.4).
 - Given sign-in or sign-up, then no step requires solving a puzzle or remembering a code by heart; pasting passwords and codes and password managers work (3.3.8).
 - Given a view has nothing to do, then it says so and names the next step (P-09), also for screen reader users.
+- Given a set of related checkboxes, radios or fields (the plants of a treatment, the two ends of a rest period, the four thresholds of a recommendation), then the set has one name that the screen reader reads before its first control (1.3.1, 4.1.2).
 
 ### US-QS-10 · Changes are announced, not only shown · 🟨 new
 

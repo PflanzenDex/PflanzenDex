@@ -4,6 +4,7 @@ import { entityKey, SIGN_IN, type ApiError, useRepeatKey } from "@/shared/data";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import type { PhotoAccess } from "@/shared/platform/browser/use-stored-photo";
 import { Quiet, ErrorNotice } from "../../../../specimens/cards/parts/parts";
 import { setRepotSign } from "../../repot-api";
@@ -57,8 +58,8 @@ export function Observations(props: {
     else setFailed({ sign, ticked, error: r.error });
   };
   return (
-    <fieldset className="grid gap-1 border-0 p-0">
-      <legend className="font-semibold">{t("observe.legend")}</legend>
+    <FieldSet className="grid gap-1">
+      <FieldLegend className="mb-0 font-semibold">{t("observe.legend")}</FieldLegend>
       <Quiet>{t("observe.hint")}</Quiet>
       {SIGNS.map((sign) => (
         <Checkbox
@@ -81,6 +82,6 @@ export function Observations(props: {
           <p>{refusalText(failed.error)}</p>
         </ErrorNotice>
       ) : null}
-    </fieldset>
+    </FieldSet>
   );
 }

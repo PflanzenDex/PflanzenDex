@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/shared/ui/button";
+import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import { MoreHelp } from "@/shared/ui/more-help";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -32,8 +33,8 @@ function StyleFieldset(props: { api: string; token: Token; state: KeeperStyleSta
     refresh();
   });
   return (
-    <fieldset className="m-0 flex min-w-0 flex-col rounded-lg border-2 border-border px-3 pb-2 pt-1">
-      <legend className="sr-only">Wie nutzt du die App?</legend>
+    <FieldSet className="gap-0 rounded-lg border-2 border-border px-3 pb-2 pt-1">
+      <FieldLegend srOnly>Wie nutzt du die App?</FieldLegend>
       <StyleSelect value={style} busy={saving} onPick={(s) => void save(s)} />
       {/* One line of hint (SG-COPY-05, US-QS-32); what the chosen style means and what stays open sit behind it. */}
       <MoreHelp
@@ -52,7 +53,7 @@ function StyleFieldset(props: { api: string; token: Token; state: KeeperStyleSta
           {message}
         </p>
       )}
-    </fieldset>
+    </FieldSet>
   );
 }
 

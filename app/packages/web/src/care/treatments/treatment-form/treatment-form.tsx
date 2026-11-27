@@ -3,6 +3,7 @@ import { useWatch, type Control, type ControllerRenderProps } from "react-hook-f
 import { localToday, TREATMENT_LIMITS } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import {
   Form,
   FormField,
@@ -39,11 +40,11 @@ function Choice(props: {
       field.value.includes(id) ? field.value.filter((x) => x !== id) : [...field.value, id],
     );
   return (
-    <fieldset
+    <FieldSet
       aria-describedby={error ? messageId : undefined}
-      className="m-0 flex min-w-0 flex-col rounded-lg border-2 border-border px-3 pb-2 pt-1"
+      className="gap-0 rounded-lg border-2 border-border px-3 pb-2 pt-1"
     >
-      <legend className="px-1 font-semibold">Pflanzen</legend>
+      <FieldLegend className="mb-0 px-1 font-semibold">Pflanzen</FieldLegend>
       {props.specimens.map((z, i) => (
         <Checkbox
           key={z.id}
@@ -63,7 +64,7 @@ function Choice(props: {
         </Checkbox>
       ))}
       <FormMessage />
-    </fieldset>
+    </FieldSet>
   );
 }
 

@@ -1,4 +1,5 @@
 import { Input } from "@/shared/ui/input";
+import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import { Label } from "@/shared/ui/label";
 
 type TimeFieldsProps = {
@@ -31,8 +32,10 @@ export function TimeFields({ sendTime, quiet, days, on }: TimeFieldsProps) {
           ist.
         </p>
       </div>
-      <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-        <legend className="mb-1 text-sm font-medium">Ruhezeit</legend>
+      <FieldSet className="gap-2">
+        <FieldLegend variant="label" className="mb-1">
+          Ruhezeit
+        </FieldLegend>
         <div className="flex flex-wrap gap-3">
           <div className="flex flex-col gap-1">
             <Label htmlFor="quiet-from">Von</Label>
@@ -57,7 +60,7 @@ export function TimeFields({ sendTime, quiet, days, on }: TimeFieldsProps) {
           In dieser Zeit kommt nichts an; die Erinnerung wartet bis zum Ende. Beide Zeiten leer:
           keine Pause.
         </p>
-      </fieldset>
+      </FieldSet>
       <div className="flex flex-col gap-1">
         <Label htmlFor="measurement-days">Messung überfällig nach (Tagen)</Label>
         <Input

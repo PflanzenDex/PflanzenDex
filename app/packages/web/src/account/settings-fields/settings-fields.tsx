@@ -8,6 +8,7 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 import { MoreHelp } from "@/shared/ui/more-help";
+import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import { Input } from "@/shared/ui/input";
 import { POSITION_THRESHOLD_DEFAULTS as DEFAULTS } from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -65,8 +66,10 @@ const POSITION_LABELS = [
 /** The four thresholds of the position recommendation: one labelled field each, German grouping, the unit Lux. */
 export function ThresholdsField({ control }: FieldProps) {
   return (
-    <fieldset className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
-      <legend className="p-0 text-sm font-medium">Schwellen der Positionsempfehlung</legend>
+    <FieldSet>
+      <FieldLegend variant="label" className="mb-0">
+        Schwellen der Positionsempfehlung
+      </FieldLegend>
       <MoreHelp more={`Vorgabe: ${DEFAULTS.map(formatLux).join(", ")} Lux (eine Annahme).`}>
         Vier Lux-Werte von hoch nach niedrig.
       </MoreHelp>
@@ -99,7 +102,7 @@ export function ThresholdsField({ control }: FieldProps) {
           )}
         />
       ))}
-    </fieldset>
+    </FieldSet>
   );
 }
 

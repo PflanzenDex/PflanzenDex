@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { MoreHelp } from "@/shared/ui/more-help";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import { refusalText } from "@/shared/lib/error-text";
 import { cn } from "@/shared/lib/utils";
@@ -45,8 +46,8 @@ function CalmModeSwitch(props: { api: string; token: Token; settings: Achievemen
   };
 
   return (
-    <fieldset className="m-0 flex min-w-0 flex-col rounded-lg border-2 border-border px-3 pb-2 pt-1">
-      <legend className="px-1 font-semibold">Erfolge und Belohnungen</legend>
+    <FieldSet className="gap-0 rounded-lg border-2 border-border px-3 pb-2 pt-1">
+      <FieldLegend className="mb-0 px-1 font-semibold">Erfolge und Belohnungen</FieldLegend>
       <Checkbox
         name="calmMode"
         checked={calm}
@@ -75,7 +76,7 @@ function CalmModeSwitch(props: { api: string; token: Token; settings: Achievemen
           {message}
         </p>
       )}
-    </fieldset>
+    </FieldSet>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useWatch, type Control } from "react-hook-form";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { Field } from "@/shared/ui/field";
+import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import { Input } from "@/shared/ui/input";
 import { Select } from "@/shared/ui/select";
 import { POT_TYPE } from "../../labels";
@@ -19,8 +20,8 @@ export function PotFields({ control }: { control: Control<EquipmentFields> }) {
   const type = useWatch({ control, name: "type" });
   if (type !== POT_TYPE) return null;
   return (
-    <fieldset className="grid gap-4 border-0 p-0">
-      <legend className="mb-2 font-semibold">{t("pot.legend")}</legend>
+    <FieldSet className="grid gap-4">
+      <FieldLegend className="mb-2 font-semibold">{t("pot.legend")}</FieldLegend>
       <Field
         control={control}
         name="diameterCm"
@@ -45,6 +46,6 @@ export function PotFields({ control }: { control: Control<EquipmentFields> }) {
           </Select>
         )}
       </Field>
-    </fieldset>
+    </FieldSet>
   );
 }
