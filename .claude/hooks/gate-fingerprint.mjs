@@ -88,16 +88,36 @@ export function originDevBlobs(folder, keep) {
 }
 
 // The paths of `rels` whose file in the worktree at `folder` equals its blob in `blobs` (a file absent in both counts as equal),
-// as a Set. Any git error throws (fail closed).
+// as a Set. Any git error throws (fail closed). Issue 2578: a symlink is compared by its link text, as git stores it. The old
+// code hashed what the link points to; a link to a folder (the skill links under the .claude folder) made `git hash-object` fail
+// with 128, so no real worktree was ever verified. A path that is neither a file nor a link (a folder) is not equal.
 export function matchingOriginDev(folder, rels, blobs) {
-  const present = rels.filter((rel) => fs.existsSync(path.join(folder, rel)));
-  const ids = present.length
-    ? gitOut(folder, ["hash-object", "--no-filters", "--stdin-paths"], `${present.join("\n")}\n`)
+  const local = {};
+  const files = [];
+  for (const rel of rels) {
+    let stat = null;
+    try {
+      stat = fs.lstatSync(path.join(folder, rel));
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+    if (stat?.isSymbolicLink())
+      local[rel] = gitOut(
+        folder,
+        ["hash-object", "--stdin"],
+        fs.readlinkSync(path.join(folder, rel)),
+      ).trim();
+    else if (stat?.isFile()) files.push(rel);
+  }
+  const ids = files.length
+    ? gitOut(folder, ["hash-object", "--no-filters", "--stdin-paths"], `${files.join("\n")}\n`)
         .trim()
         .split("\n")
     : [];
-  if (ids.length !== present.length) throw new Error("git hash-object returned a wrong count");
-  const local = Object.fromEntries(present.map((rel, i) => [rel, ids[i]]));
+  if (ids.length !== files.length) throw new Error("git hash-object returned a wrong count");
+  files.forEach((rel, i) => {
+    local[rel] = ids[i];
+  });
   return new Set(rels.filter((rel) => local[rel] === blobs[rel]));
 }
 
