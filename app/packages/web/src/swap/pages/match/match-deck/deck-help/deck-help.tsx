@@ -11,8 +11,9 @@ const t = texts(table);
  * The help of the match deck behind an info button in the row of the counter (US-QS-15, US-QS-32, F-0279, owner decision
  * d-170): what a request tells the friend, and what "Ablehnen" and "Später" do. It stood as a block under the card; at 360 x 640
  * px that block made the frame scroll, so the card has the room again and the help opens in a sheet (a dialog from 768 px,
- * `ResponsiveModal`). The button is a 44 px target that does not make the row taller than its line (the negative margin, as
- * the credit of the card does), and the focus returns to it when the sheet closes, also where a tap does not focus a button.
+ * `ResponsiveModal`). The button is a 44 px target (SG-TOUCH-01) and makes the row of the counter 44 px high: a negative margin
+ * that kept the row to one line put the top of the target under the edge of the frame and its foot under the card, and cut
+ * the focus ring (issue 2611). The focus returns to the button when the sheet closes, also where a tap does not focus a button.
  */
 export function DeckHelp(props: { friend: string | null }) {
   const opener = useRef<HTMLButtonElement>(null);
@@ -27,7 +28,7 @@ export function DeckHelp(props: { friend: string | null }) {
           variant="plain"
           size="icon"
           aria-label={t("deck.helpButton")}
-          className="-my-3 shrink-0"
+          className="shrink-0"
         >
           <Info aria-hidden="true" className="size-5" />
         </Button>

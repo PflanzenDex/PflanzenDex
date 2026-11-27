@@ -89,9 +89,12 @@ function Current(props: {
 }) {
   const { s, c, dispatch, large } = props;
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-      {/* The info button has the 44 px target of SG-TOUCH-01 and takes no height of its own (-my-3 in `DeckHelp`): the row is one line (US-QS-15, d-170). */}
-      <div className="flex items-center justify-center gap-1">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+      {/* The row is as high as the 44 px target of the info button (SG-TOUCH-01), with no negative margin: the whole target and its
+          4 px focus ring stand inside the frame, 4 px clear of the counter text (gap-2) and 4 px clear of the card (the column's
+          gap-2). The 24 px of the taller row come from the card and the list region below it; the column gap, 4 px less than
+          before at its three gaps, gives 12 of them back (US-QS-15, d-170, issue 2611). */}
+      <div className="flex items-center justify-center gap-2">
         <p aria-live="polite" className="m-0 text-center text-sm text-muted-foreground">
           {`Karte ${s.pos + 1} von ${s.round.length}`}
         </p>
