@@ -6,7 +6,12 @@ import * as tableStories from "@/shared/ui/table.stories";
 import { unmountStoryRuns } from "../story-teardown/story-teardown";
 
 setProjectAnnotations([preview]);
-const { FixedHeaderAndColumn, FixedHeaderAndColumnAt200 } = composeStories(tableStories);
+const {
+  FixedHeaderAndColumn,
+  FixedHeaderAndColumnAt200,
+  FocusClearOfFixedCells,
+  FocusClearOfFixedCellsAt200,
+} = composeStories(tableStories);
 
 /** What a model of the layout gets wrong: the play must fail for each of them (P-B). */
 type Fault = {
@@ -19,6 +24,8 @@ type Fault = {
   /** The cells that stay have no `position: sticky`, or a transparent surface. */
   unstuck?: boolean;
   transparent?: boolean;
+  /** The region has no scroll padding for the cells that stay: a focused control is scrolled into the box only. */
+  unpadded?: boolean;
 };
 
 const REGION = { left: 16, top: 16, width: 328, height: 328 };
@@ -27,6 +34,10 @@ const CELL_WIDTH = 100;
 const CELL_HEIGHT = 40;
 const COLUMNS = 6;
 const ROWS = 17;
+/** A control (a button) in a cell: 12 px in from the cell's top left corner, 60 x 16 px. */
+const CONTROL = { inset: 12, width: 60, height: 16 };
+/** `scroll-pt-11` in px at the default text size: 11 steps of 4 px. */
+const HEAD_PADDING = 44;
 
 const rect = (left: number, top: number, width: number, height: number) =>
   ({
@@ -102,7 +113,58 @@ function layout(fault: Fault = {}) {
   });
   vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
     if (isRegion(this)) return rect(REGION.left, REGION.top, REGION.width, REGION.height);
+    const cell = this.tagName === "BUTTON" ? this.closest("td, th") : null;
+    if (cell) {
+      const at = place(cell);
+      return rect(at.left + CONTROL.inset, at.top + CONTROL.inset, CONTROL.width, CONTROL.height);
+    }
     return isCell(this) ? place(this) : rect(0, 0, 0, 0);
+  });
+  // The scroll padding that the classes of the region give in a browser: the width of the first column on the left (the
+  // variable the region measured) and the header's height on top. Chromium takes the scrollport less this padding as the
+  // room where a focused box counts as shown (measured in Chromium 2026-11-27, issue 2573).
+  const padding = (region: Element) => ({
+    left:
+      fault.unpadded || !region.classList.contains("scroll-pl-(--table-first-col)")
+        ? 0
+        : parseFloat((region as HTMLElement).style.getPropertyValue("--table-first-col")) || 0,
+    top: fault.unpadded || !region.classList.contains("scroll-pt-11") ? 0 : HEAD_PADDING,
+  });
+  // What `focus()` scrolls on one axis, for a box from `lo` to `hi` and a room from `from` to `to`: nothing for a box that
+  // shows in full; for a box that shows in part the closest edge (down, up) or nothing (sideways: Chromium treats a box
+  // with a part in the room as shown); the middle of the room for a box that is hidden.
+  const reveal = (lo: number, hi: number, from: number, to: number, partial: "edge" | "none") => {
+    const shown = Math.min(hi, to) - Math.max(lo, from);
+    if (shown >= hi - lo) return 0;
+    if (shown > 0) return partial === "none" ? 0 : lo < from ? lo - from : hi - to;
+    return (lo + hi) / 2 - (from + to) / 2;
+  };
+  const focus = HTMLElement.prototype.focus;
+  vi.spyOn(HTMLElement.prototype, "focus").mockImplementation(function (
+    this: HTMLElement,
+    options,
+  ) {
+    focus.call(this, options);
+    const region = this.closest("[data-scroll-region]");
+    if (!region) return;
+    const pad = padding(region);
+    const box = this.getBoundingClientRect();
+    const sideways = reveal(
+      box.left,
+      box.right,
+      REGION.left + pad.left,
+      REGION.left + REGION.width,
+      "none",
+    );
+    const down = reveal(
+      box.top,
+      box.bottom,
+      REGION.top + pad.top,
+      REGION.top + REGION.height,
+      "edge",
+    );
+    left = Math.max(0, Math.min(left + sideways, scrollWidth - REGION.width));
+    top = Math.max(0, Math.min(top + down, scrollHeight - REGION.height));
   });
   const real = window.getComputedStyle.bind(window);
   vi.spyOn(window, "getComputedStyle").mockImplementation((element, pseudo) => {
@@ -189,5 +251,38 @@ describe("US-QS-15 · SG-LIST-01 the plays of the Table stories hold under a mod
     vi.restoreAllMocks();
     layout({ transparent: true });
     await expect(FixedHeaderAndColumn.run()).rejects.toThrow(/not opaque/);
+  });
+});
+
+describe("US-QS-15 · WCAG 2.4.11 the plays of the Table stories of the focus hold under a model of the layout", () => {
+  it("US-QS-15 · 2.4.11 the play of the focus passes when the browser scrolls the control clear of the first column and the header row", async () => {
+    layout();
+    await FocusClearOfFixedCells.run();
+    const region = document.querySelector("[data-scroll-region]") as HTMLElement;
+    // The measured width of the first column is the scroll padding the model reads; the play puts the scroll back.
+    expect(region.style.getPropertyValue("--table-first-col")).toBe(`${FIRST_WIDTH}px`);
+    expect([region.scrollTop, region.scrollLeft]).toEqual([0, 0]);
+  });
+
+  it("US-QS-15 · DS-63 · 2.4.11 the same play passes at 200 % text", async () => {
+    layout();
+    await FocusClearOfFixedCellsAt200.run();
+    expect(document.documentElement.style.getPropertyValue("font-size")).toBe("200%");
+  });
+
+  it("US-QS-15 · 2.4.11 the play fails when the region has no scroll padding for the cells that stay", async () => {
+    layout({ unpadded: true });
+    await expect(FocusClearOfFixedCells.run()).rejects.toThrow(/stands under the first column/);
+  });
+
+  it("US-QS-15 · 2.4.11 the play fails when the control does not start under the cells that stay, because it then proves nothing", async () => {
+    layout({ fits: true });
+    await expect(FocusClearOfFixedCells.run()).rejects.toThrow(/proves nothing/);
+  });
+
+  it("US-QS-15 · 2.4.11 the play fails when the control does not get the focus", async () => {
+    layout();
+    vi.spyOn(HTMLElement.prototype, "focus").mockImplementation(() => undefined);
+    await expect(FocusClearOfFixedCells.run()).rejects.toThrow(/gets the focus/);
   });
 });

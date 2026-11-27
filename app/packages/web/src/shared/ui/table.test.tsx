@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { createRef } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   Table,
   TableBody,
@@ -12,7 +12,11 @@ import {
   TableRow,
 } from "./table";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe("Table scroll container (US-QS-15, DS-63, issue 2417)", () => {
   it("US-QS-15 the scroll container of a table is the marked table region of the one-screen gate", () => {
@@ -194,6 +198,169 @@ describe("Table keeps its header row and first column (US-QS-15, DS-58, DS-61, D
     expect(classesOf(ref.current as HTMLElement)).toContain("min-w-[40rem]");
     expect(classesOf(screen.getByRole("region", { name: "Liste" }))).toContain("h-40");
     expect(classesOf(screen.getByText("x"))).toContain("px-9");
+  });
+});
+
+/** The name of the variable that carries the width of the first column; the class of the region reads it. */
+const FIRST_COLUMN = "--table-first-col";
+
+/** A ResizeObserver that jsdom lacks: it keeps what is observed and lets the test call the callbacks. */
+function stubResizeObserver() {
+  const seen: { observed: Element[]; disconnected: boolean; run: () => void }[] = [];
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      readonly entry: (typeof seen)[number];
+      constructor(callback: () => void) {
+        this.entry = { observed: [], disconnected: false, run: callback };
+        seen.push(this.entry);
+      }
+      observe(element: Element) {
+        this.entry.observed.push(element);
+      }
+      unobserve(element: Element) {
+        this.entry.observed = this.entry.observed.filter((e) => e !== element);
+      }
+      disconnect() {
+        this.entry.disconnected = true;
+      }
+    },
+  );
+  return seen;
+}
+
+/** Layout that jsdom lacks: a cell of the first column is `first.width` px wide, every other cell 90 px. */
+function stubColumnWidths(first: { width: number }) {
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+    const isFirst = this instanceof HTMLTableCellElement && this.cellIndex === 0;
+    const width = isFirst ? first.width : this instanceof HTMLTableCellElement ? 90 : 0;
+    return { width, height: 44, top: 0, left: 0, right: width, bottom: 44, x: 0, y: 0 } as DOMRect;
+  });
+}
+
+describe("Table keeps a focused control clear of its first column (US-QS-15, WCAG 2.4.11, issue 2573)", () => {
+  const region = () => screen.getByRole("region", { name: "Tabelle" });
+
+  it("US-QS-15 · 2.4.11 the region takes scroll padding for all three sticky parts: the first column, the header row and the bar", () => {
+    render(framed());
+    const classes = classesOf(region());
+    expect(classes).toContain(`scroll-pl-(${FIRST_COLUMN})`);
+    expect(classes).toContain("scroll-pt-11");
+    expect(classes).toContain("scroll-pb-(--bar-clearance)");
+    expect(classes).toContain("md:scroll-pb-0");
+  });
+
+  it("US-QS-15 · 2.4.11 the scroll padding on top is as high as the header row, and both follow the same size", () => {
+    render(framed());
+    // `scroll-pt-11` and `h-11` are the same length (11 spacing steps, in rem), so they grow together at 200 % text.
+    for (const head of screen.getAllByRole("columnheader"))
+      expect(classesOf(head)).toContain("h-11");
+    expect(classesOf(region())).toContain("scroll-pt-11");
+  });
+
+  it("US-QS-15 · 2.4.11 the region writes the measured width of the first column as a variable, before it shows", () => {
+    stubResizeObserver();
+    stubColumnWidths({ width: 132.5 });
+    render(framed());
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("132.5px");
+  });
+
+  it("US-QS-15 · 2.4.11 the width comes from the first cell of the table, and the cells after it do not count", () => {
+    stubResizeObserver();
+    stubColumnWidths({ width: 61 });
+    render(framed());
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("61px");
+  });
+
+  it("US-QS-15 · 2.4.11 the region measures again when the first column changes its size", () => {
+    const seen = stubResizeObserver();
+    const first = { width: 100 };
+    stubColumnWidths(first);
+    render(framed());
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("100px");
+    first.width = 188;
+    act(() => seen.forEach((entry) => entry.run()));
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("188px");
+  });
+
+  it("US-QS-15 · 2.4.11 the region watches the table and its first cell, and lets go of both when it unmounts", () => {
+    const seen = stubResizeObserver();
+    stubColumnWidths({ width: 100 });
+    const { unmount } = render(framed());
+    const [entry] = seen;
+    expect(seen).toHaveLength(1);
+    expect(entry?.observed).toContain(screen.getByRole("table"));
+    expect(entry?.observed).toContain(screen.getByRole("columnheader", { name: "Name" }));
+    unmount();
+    expect(entry?.disconnected).toBe(true);
+  });
+
+  it("US-QS-15 · 2.4.11 the region follows a first cell that is replaced, and watches the new one", () => {
+    const seen = stubResizeObserver();
+    stubColumnWidths({ width: 100 });
+    const { rerender } = render(framed());
+    const old = screen.getByRole("columnheader", { name: "Name" });
+    rerender(
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead key="other">Art</TableHead>
+          </TableRow>
+        </TableHeader>
+      </Table>,
+    );
+    act(() => seen.forEach((entry) => entry.run()));
+    const now = screen.getByRole("columnheader", { name: "Art" });
+    expect(seen[0]?.observed).toContain(now);
+    expect(seen[0]?.observed).not.toContain(old);
+  });
+
+  it("US-QS-15 · 2.4.11 a table that is hidden (no width) leaves no padding, and gets it back when it shows", () => {
+    const seen = stubResizeObserver();
+    const first = { width: 0 };
+    stubColumnWidths(first);
+    render(framed());
+    // No variable: the class reads an unset variable, so the scroll padding is 0, as before.
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("");
+    first.width = 140;
+    act(() => seen.forEach((entry) => entry.run()));
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("140px");
+    first.width = 0;
+    act(() => seen.forEach((entry) => entry.run()));
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("");
+  });
+
+  it("US-QS-15 · 2.4.11 a browser without a ResizeObserver measures once and does not fail", () => {
+    vi.stubGlobal("ResizeObserver", undefined);
+    stubColumnWidths({ width: 77 });
+    render(framed());
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("77px");
+  });
+
+  it("US-QS-15 · 2.4.11 a table without rows has nothing to measure and sets no variable", () => {
+    stubResizeObserver();
+    stubColumnWidths({ width: 77 });
+    render(<Table />);
+    expect(region().style.getPropertyValue(FIRST_COLUMN)).toBe("");
+  });
+
+  it("US-QS-15 · DS-36 the caller's ref still reaches the table, and the caller's classes still win", () => {
+    stubResizeObserver();
+    stubColumnWidths({ width: 100 });
+    const ref = createRef<HTMLTableElement>();
+    render(
+      <Table ref={ref} containerClassName="scroll-pl-4">
+        <TableBody>
+          <TableRow>
+            <TableCell>x</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>,
+    );
+    expect(ref.current).toBe(screen.getByRole("table"));
+    // The caller's `scroll-pl-4` replaces the class of the region (the class merge knows the group, DS-31).
+    expect(classesOf(region())).toContain("scroll-pl-4");
+    expect(classesOf(region())).not.toContain(`scroll-pl-(${FIRST_COLUMN})`);
   });
 });
 

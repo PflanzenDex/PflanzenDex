@@ -1,6 +1,8 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react-vite";
+import { keepsFocusClear } from "@/shared/testing/story-frame/table-focus-play";
 import { expectLargeText, keepsHeaderAndColumn } from "@/shared/testing/story-frame/table-play";
 import { withText200 } from "@/shared/testing/story-frame/story-frame";
+import { Button } from "./button";
 import {
   Table,
   TableBody,
@@ -120,7 +122,8 @@ const inFrame: Decorator = (Story) => (
   </div>
 );
 
-function BigTable() {
+/** `withControls`: the facts of the third column are buttons, the controls of the focus stories (US-QS-15, issue 2573). */
+function BigTable({ withControls = false }: { withControls?: boolean }) {
   return (
     <Table containerLabel="Pflanzenliste" className="min-w-[44rem]">
       <TableCaption className="sr-only">Meine Pflanzen</TableCaption>
@@ -136,7 +139,15 @@ function BigTable() {
           <TableRow key={name}>
             <TableHead scope="row">{name}</TableHead>
             {facts.map((fact, column) => (
-              <TableCell key={column}>{fact}</TableCell>
+              <TableCell key={column}>
+                {withControls && column === 1 ? (
+                  <Button variant="plain" size="sm">
+                    {fact}
+                  </Button>
+                ) : (
+                  fact
+                )}
+              </TableCell>
             ))}
           </TableRow>
         ))}
@@ -160,5 +171,22 @@ export const FixedHeaderAndColumnAt200: Story = {
   play: async ({ canvasElement }) => {
     await expectLargeText(canvasElement);
     await keepsHeaderAndColumn(canvasElement);
+  },
+};
+
+// A control in a later column that has the focus while it stands under the first column and the header row: the region scrolls
+// it clear of both, so the sticky cells never cover the focus (WCAG 2.4.11, US-QS-15, issue 2573). At 200 % text as well.
+export const FocusClearOfFixedCells: Story = {
+  decorators: [inFrame],
+  render: () => <BigTable withControls />,
+  play: ({ canvasElement }) => keepsFocusClear(canvasElement),
+};
+
+export const FocusClearOfFixedCellsAt200: Story = {
+  decorators: [inFrame, withText200],
+  render: () => <BigTable withControls />,
+  play: async ({ canvasElement }) => {
+    await expectLargeText(canvasElement);
+    await keepsFocusClear(canvasElement);
   },
 };

@@ -9,37 +9,84 @@ export type TableProps = React.TableHTMLAttributes<HTMLTableElement> & {
   containerLabel?: string;
 };
 
+/** The variable that holds the measured width of the first column; the class `scroll-pl-(--table-first-col)` reads it. */
+const FIRST_COLUMN_WIDTH = "--table-first-col";
+
+/**
+ * Writes the width of the first column (its first cell, `th` or `td`) as the variable `--table-first-col` on the scroll
+ * region, so that the region can keep that width as scroll padding on the left (WCAG 2.4.11, US-QS-15, issue 2573). The width
+ * is not known in advance: it follows the content and the text size. It is measured before the first paint and again when
+ * the table or its first cell changes its size; a first cell that is replaced is watched from then on. A table without a
+ * width (hidden, `display: none`), without a row, or in a browser without a `ResizeObserver` (measured once) leaves no
+ * variable: the padding then is 0, as it was before.
+ */
+function useFirstColumnWidth(region: React.RefObject<HTMLElement | null>): void {
+  React.useLayoutEffect(() => {
+    const box = region.current;
+    if (!box) return;
+    let watched: Element | null = null;
+    const observer =
+      typeof ResizeObserver === "function" ? new ResizeObserver(() => measure()) : null;
+    const measure = () => {
+      const cell = box.querySelector("table")?.rows[0]?.cells[0] ?? null;
+      if (cell !== watched) {
+        if (watched) observer?.unobserve(watched);
+        if (cell) observer?.observe(cell);
+        watched = cell;
+      }
+      const width = cell?.getBoundingClientRect().width ?? 0;
+      if (width > 0) box.style.setProperty(FIRST_COLUMN_WIDTH, `${width}px`);
+      else box.style.removeProperty(FIRST_COLUMN_WIDTH);
+    };
+    const table = box.querySelector("table");
+    if (table) observer?.observe(table);
+    measure();
+    return () => observer?.disconnect();
+  }, [region]);
+}
+
 /**
  * Semantic table (US-QS-07, DS-24, DS-37) that keeps its header row and its first column while it scrolls (US-QS-15, DS-58,
  * SG-LIST-01). The scroll container is the marked scroll region of its frame (`data-scroll-region`, with
  * `data-scroll-x="table"` for the sideways scroll, DS-61, DS-63): it takes the height that is left in the frame
  * (`min-h-24 flex-1`, so the frame must be a column of a given height, as for `ScrollRegion`), scrolls down and sideways
  * inside itself (`overflow-auto`, `overscroll-contain`), and is a named tab stop, so the keyboard scrolls it. The page never
- * scrolls. Below 768 px the region keeps the room of the bottom bar as scroll padding (`--bar-clearance`, SG-LIST-02; from
- * `md` there is none, DS-12), and at the top the height of the header row (`scroll-pt-11`, WCAG 2.4.11). `isolate` keeps
- * the layers of the sticky cells inside the region. The lines of the cells are borders of the cells (`border-separate`),
- * because a line of a row does not stay with a sticky cell. Below `md` modules render cards instead (ResponsiveTable).
+ * scrolls. A focused control stays clear of everything that stays (WCAG 2.4.11), because the region keeps the room of the
+ * sticky parts as scroll padding on each side: the width of the first column on the left (`scroll-pl-(--table-first-col)`,
+ * measured, see `useFirstColumnWidth`), the height of the header row at the top (`scroll-pt-11`, the same length as its
+ * `h-11`), and below 768 px the room of the bottom bar at the bottom (`--bar-clearance`, SG-LIST-02; from `md` there is
+ * none, DS-12). `isolate` keeps the layers of the sticky cells inside the region. The lines of the cells are borders of the
+ * cells (`border-separate`), because a line of a row does not stay with a sticky cell. Below `md` modules render cards
+ * instead (ResponsiveTable).
  */
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
-  ({ className, containerClassName, containerLabel = "Tabelle", ...props }, ref) => (
-    <div
-      role="region"
-      aria-label={containerLabel}
-      data-scroll-region=""
-      data-scroll-x="table"
-      tabIndex={0}
-      className={cn(
-        "isolate min-h-24 w-full min-w-0 flex-1 scroll-pt-11 overflow-auto overscroll-contain rounded-card border border-border bg-card text-card-foreground scroll-pb-(--bar-clearance) md:scroll-pb-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        containerClassName,
-      )}
-    >
-      <table
-        ref={ref}
-        className={cn("w-full caption-bottom border-separate border-spacing-0 text-sm", className)}
-        {...props}
-      />
-    </div>
-  ),
+  ({ className, containerClassName, containerLabel = "Tabelle", ...props }, ref) => {
+    const region = React.useRef<HTMLDivElement>(null);
+    useFirstColumnWidth(region);
+    return (
+      <div
+        ref={region}
+        role="region"
+        aria-label={containerLabel}
+        data-scroll-region=""
+        data-scroll-x="table"
+        tabIndex={0}
+        className={cn(
+          "isolate min-h-24 w-full min-w-0 flex-1 scroll-pl-(--table-first-col) scroll-pt-11 overflow-auto overscroll-contain rounded-card border border-border bg-card text-card-foreground scroll-pb-(--bar-clearance) md:scroll-pb-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          containerClassName,
+        )}
+      >
+        <table
+          ref={ref}
+          className={cn(
+            "w-full caption-bottom border-separate border-spacing-0 text-sm",
+            className,
+          )}
+          {...props}
+        />
+      </div>
+    );
+  },
 );
 Table.displayName = "Table";
 
