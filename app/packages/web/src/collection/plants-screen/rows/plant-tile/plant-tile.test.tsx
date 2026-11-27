@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SpecimenCard } from "@pflanzendex/core";
 import { PlantTile, tileLines } from "./plant-tile";
+import { plain } from "@/shared/testing/plain-text";
 
 afterEach(cleanup);
 
@@ -124,7 +125,9 @@ describe("US-QS-32 the title of a plant is its own name, the species is its meta
         <PlantTile card={marked} access={noPhoto} />
       </MemoryRouter>,
     );
-    const row = screen.getByRole("button", { name: "Ableger Efeutute · Lichtzone unbekannt" });
+    const row = screen.getByRole("button", {
+      name: (name) => plain(name) === "Ableger Efeutute · Lichtzone unbekannt",
+    });
     expect(row.getAttribute("aria-labelledby")).toBeNull();
     expect(row.getAttribute("aria-describedby")).toBeNull();
   });

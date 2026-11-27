@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Candidate } from "@pflanzendex/core";
 import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button.roles";
 import { WishRow } from "./wish-row";
+import { plain } from "@/shared/testing/plain-text";
 
 afterEach(() => {
   cleanup();
@@ -203,7 +204,9 @@ describe("US-QS-32 the wish row's name reads in the order it shows (WCAG 2.5.3, 
   it("US-QS-32 without a German name the row's name names the scientific name once", () => {
     show({ ...wish, german: null, title: "Aloe vera" } as Candidate);
     const row = screen.getByRole("button", { name: /^1\. Aloe vera/ });
-    expect(row.textContent).toBe("1. Aloe vera Zone 2 · 3 Pflanzen · Schwierigkeit: unbekannt");
+    expect(plain(row.textContent)).toBe(
+      "1. Aloe vera Zone 2 · 3 Pflanzen · Schwierigkeit: unbekannt",
+    );
   });
 });
 

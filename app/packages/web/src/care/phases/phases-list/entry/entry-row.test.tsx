@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation, useNavigationType } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { LightLocation, PhasesRow } from "@pflanzendex/core";
 import { Entry } from "./entry";
+import { plain } from "@/shared/testing/plain-text";
 
 afterEach(cleanup);
 afterEach(() => vi.unstubAllGlobals());
@@ -167,9 +168,9 @@ describe("US-QS-32 a phase row opens its plant the way the list 'Alle' does (SG-
       </MemoryRouter>,
     );
     const opener = screen.getByRole("button", { name: /^Ableger(\s|$)/ });
-    expect(
-      within(opener).getByText("Bogenhanf · Nächster Wechsel zur Wachstumsphase: 16.03.2027"),
-    ).toBeTruthy();
+    expect(plain(opener.querySelector("[data-row-meta]")?.textContent)).toBe(
+      "Bogenhanf · Nächster Wechsel zur Wachstumsphase: 16.03.2027",
+    );
   });
 });
 
