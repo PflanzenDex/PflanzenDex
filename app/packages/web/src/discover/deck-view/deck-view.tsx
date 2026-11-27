@@ -1,5 +1,5 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
-import { useState, type RefObject } from "react";
+import type { RefObject } from "react";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { Button } from "@/shared/ui/button";
 import { CATALOG_ADDRESS } from "@/shared/patterns/navigation/navigation/navigation";
@@ -13,7 +13,7 @@ import { useDecisions, type Decision, type OnDecide, type OnUndo } from "./use-d
 import { useDeckPosition } from "./use-deck-position";
 import { useDeckKeys } from "./use-deck-keys";
 import { Actions, DeckEmpty, DeckEnd, UndoButton } from "./deck-states/deck-states";
-import { largeText } from "@/shared/patterns/display/card/card-picture/large-text";
+import { useLargeText } from "@/shared/patterns/display/card/card-picture/use-large-text";
 
 const t = texts(table);
 
@@ -137,8 +137,8 @@ function Cards(props: {
     props.onUndo,
     moves,
   );
-  // Read once, as the decision row does: a text size set while the deck is open takes effect with the next deck.
-  const [large] = useState(largeText);
+  // Kept current, as the decision row is: a text size set while the deck is open lays the deck out again (issue 2622, US-QS-32).
+  const large = useLargeText();
   const current = deck.empty === null ? deck.suggestions[position] : undefined;
   const onKeyDown = useDeckKeys({
     onFly: current === undefined ? undefined : fly,

@@ -88,7 +88,7 @@ export const InfoButtonInFrame: Story = {
   play: async ({ canvasElement }) => judgeInfoButton(canvasElement),
 };
 
-// At 200 % text (set before the deck mounts, because the deck reads the size once): the same boxes stand clear.
+// At 200 % text (set before the deck mounts; the deck follows a later change too, issue 2617): the same boxes stand clear.
 export const InfoButtonAtLargeText: Story = {
   render: () => <Deck />,
   beforeEach: () => {

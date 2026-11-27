@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 import { WEB, test } from "../../../support/display/one-screen/sign-in";
 import { readBaseline, saveResults } from "../../../support/display/reporter";
 import { openScreen } from "../../../support/display/one-screen/fit";
-import { applyFail, checkExpect } from "../../../support/display/one-screen/fit.expect";
+import { applyFail, applyReply, checkExpect } from "../../../support/display/one-screen/fit.expect";
 import { SCREENS, screensOf } from "../../../support/display/one-screen/register";
 import {
   SIZES,
@@ -13,6 +13,7 @@ import {
 } from "../../../support/display/one-screen/judge";
 import { measureAll } from "./one-screen.measure";
 import { registerSelfTests } from "./one-screen.register";
+import { replySelfTests } from "./one-screen.reply";
 import { firstSelfTests, goodFirst } from "./one-screen.first";
 import { layerSelfTests } from "./one-screen.phone";
 import { measuredSelfTests, sizeSelfTests } from "./one-screen.size";
@@ -59,6 +60,7 @@ test.describe("US-QS-15 every screen fits the window (QG-U8)", () => {
         route.request().method() === "GET" ? route.continue() : route.abort(),
       );
       await applyFail(context, screen, API);
+      await applyReply(context, screen, API);
       const page = await context.newPage();
       page.on("dialog", (dialog) => void dialog.dismiss().catch(() => undefined));
       try {
@@ -176,6 +178,7 @@ layerSelfTests(raw, sizeOf);
 sizeSelfTests(raw, sizeOf);
 measuredSelfTests(raw, sizeOf);
 registerSelfTests();
+replySelfTests();
 
 test("QG-U8 self-test: a screen that lands on Heute instead of its path is named", () => {
   expect(lostScreen("http://x/account/data", "http://x/today")).toContain("landed on /today");
