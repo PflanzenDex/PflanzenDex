@@ -27,7 +27,11 @@ const SORTS: readonly { id: PokedexSort; label: string }[] = [
   { id: "species_count", label: "Artenzahl" },
 ];
 
-/** The row of controls (US-QS-22): the search field and the button that opens the layer "Filter". */
+/**
+ * The row of controls (US-QS-22): the search field and the button that opens the layer "Filter". As in the Katalog search
+ * (issue 1019), a 10 rem basis keeps the field from shrinking to a sliver: at 200 % text the row wraps and the button goes
+ * under the field, so the placeholder keeps its word (US-QS-15, issue 2644).
+ */
 export function Controls(props: {
   query: string;
   searchRef: RefObject<HTMLInputElement | null>;
@@ -36,8 +40,8 @@ export function Controls(props: {
   const searchId = useId();
   const { hint } = useShortcuts();
   return (
-    <div className="flex items-end gap-2">
-      <div className="min-w-0 flex-1">
+    <div className="flex flex-wrap items-start gap-2">
+      <div className="min-w-0 grow basis-40">
         <Label htmlFor={searchId} className="sr-only">
           Suche (Art, deutscher Name, Gattung, Familie)
         </Label>
@@ -51,7 +55,9 @@ export function Controls(props: {
           onClear={() => props.onQuery("")}
         />
       </div>
-      <LayerOpener id={FILTER_LAYER}>Filter</LayerOpener>
+      <LayerOpener id={FILTER_LAYER} className="shrink-0">
+        Filter
+      </LayerOpener>
     </div>
   );
 }
