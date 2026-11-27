@@ -9,8 +9,8 @@ import { check, hasLayout, must } from "@/shared/testing/story-frame/story-play"
  *   box, `ring-2` with `ring-offset-2` reaches 4 px out), and an outline when the element has one;
  * - the outline of forced colors: the story's browser cannot emulate that media, so the helper reads the shipped rule
  *   (`@media (forced-colors: active) { :focus-visible { … } }` of `tokens.css`) from the style sheets and applies its geometry.
- * A play that calls it runs in jsdom too, where only the structure is checked and every measure passes: the conformance run and
- * `make sb-test` judge the boxes.
+ * A play that calls it (and returns its promise) runs in jsdom too, where only the structure is checked and every measure passes:
+ * the conformance run and `make sb-test` judge the boxes.
  */
 
 /** Layout rounds a box to a fraction of a pixel: a ring this close to a clip edge still shows whole. */
@@ -54,14 +54,44 @@ function ringsOf(boxShadow: string): Ring[] {
   return rings;
 }
 
+type PageRing = { reach: number; shown: boolean };
+
 /** How far the focus indicator of the page reaches beyond the box of the element, and whether there is one. */
-function pageRing(element: HTMLElement): { reach: number; shown: boolean } {
+function pageRing(element: HTMLElement): PageRing {
   const style = getComputedStyle(element);
   const rings = ringsOf(style.boxShadow);
   const outline = style.outlineStyle !== "none" && (px(style.outlineWidth) ?? 0) > 0;
   const outlineReach = outline ? (px(style.outlineOffset) ?? 0) + (px(style.outlineWidth) ?? 0) : 0;
   const shadowReach = Math.max(0, ...rings.filter((r) => !r.inset).map((r) => r.spread));
   return { reach: Math.max(shadowReach, outlineReach), shown: rings.length > 0 || outline };
+}
+
+/** How long a focus ring may take to settle. */
+const SETTLE_MS = 1000;
+
+const frame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+/**
+ * The focus ring of the focused control once its transitions are over. A control with `transition-property: all` (a plain link)
+ * starts a transition when the focus lands, and where the transitions last 1 ms (reduced motion in `tokens.css`; the conformance
+ * run emulates it) the first read still gives the style from before the focus: a ring of no width and no colour. The clock of a
+ * transition moves with the frames of the page, so a timer cannot tell when it is over (two reads of an unmoved clock agree
+ * too): the ring is read after two frames and after the finite animations of the control have finished, as `settleStyles` of the
+ * conformance run does. A ring that is still changing after `SETTLE_MS` is judged as it stands.
+ */
+async function settledRing(element: HTMLElement): Promise<PageRing> {
+  await frame();
+  await frame();
+  const running = element
+    .getAnimations()
+    .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+    // A transition that is cancelled (a newer style replaces it) rejects `finished`: the ring is read again below either way.
+    .map((animation) => animation.finished.catch(() => undefined));
+  await Promise.race([
+    Promise.all(running),
+    new Promise((resolve) => setTimeout(resolve, SETTLE_MS)),
+  ]);
+  return pageRing(element);
 }
 
 type Outline = { width: number; offset: number };
@@ -140,7 +170,10 @@ function checkInsideClips(element: HTMLElement, what: string, reach: number): vo
  * and the outline of forced colors lie inside every ancestor that clips. The story must show the controls inside the clipping
  * list that the check is about, at the edge of it where a ring outside the box would be cut.
  */
-export function checkFocusRings(canvas: HTMLElement, selector = "a[href], button"): void {
+export async function checkFocusRings(
+  canvas: HTMLElement,
+  selector = "a[href], button",
+): Promise<void> {
   const targets = Array.from(canvas.querySelectorAll<HTMLElement>(selector));
   check(targets.length > 0, `the story shows no control of "${selector}"`);
   const first = must(targets[0], "a control");
@@ -152,7 +185,7 @@ export function checkFocusRings(canvas: HTMLElement, selector = "a[href], button
   for (const target of targets) {
     target.focus();
     check(document.activeElement === target, `${nameOf(target)} did not take the focus`);
-    const ring = pageRing(target);
+    const ring = await settledRing(target);
     check(ring.shown, `${nameOf(target)} shows no focus ring (no box shadow ring, no outline)`);
     checkInsideClips(target, "the focus ring", ring.reach);
     checkInsideClips(target, "the forced-colors outline", forced.offset + forced.width);
