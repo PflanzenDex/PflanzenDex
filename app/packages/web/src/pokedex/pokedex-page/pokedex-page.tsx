@@ -6,7 +6,7 @@ import { plurals, texts } from "@/shared/lib/text-rules/texts";
 import { SCREEN_STALE_TIME } from "../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { Browse } from "../pokedex-browse/pokedex-browse";
-import { loadOwnership } from "../caught/ownership-api";
+import { loadOwnership, OWNERSHIP_KEY } from "../caught/ownership-api";
 import { MilestonesSkeleton, PokedexPageSkeleton, ProgressSkeleton } from "./pokedex-page.skeleton";
 import { PROGRESS_LAYER, ProgressDetail, ProgressLine } from "../collector-rank/collector-rank";
 import { loadTree, TREE_KEY } from "../collector-rank/tree-api";
@@ -53,7 +53,7 @@ export function PokedexPage(props: {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <LoadFrame
-        queryKey={["pokedex", "ownership"]}
+        queryKey={OWNERSHIP_KEY}
         token={token}
         load={load}
         loadingText={ui("loading")}

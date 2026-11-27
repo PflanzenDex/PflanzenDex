@@ -21,12 +21,12 @@ import { searchSchema, type SearchFields } from "../shared/schemas";
 import { SearchResultsSkeleton } from "./search-view.skeleton";
 import { HitList } from "./hit-list/hit-list";
 import {
-  applyFilters,
-  FilterChips,
   FILTERS_LAYER,
   FiltersLayer,
-  useFilters,
+  useCatalogFilters,
+  type QuickFilters,
 } from "./search-filters/search-filters";
+import { FilterRows } from "./filter-rows/filter-rows";
 import table from "./search-view.de.json";
 
 const t = texts(table);
@@ -115,12 +115,7 @@ function SearchTitle(props: { Heading: "h1" | "h2"; hasHits: boolean }) {
   );
 }
 
-/**
- * Catalog search by Latin or German name and synonyms (US-QS-21): the field, a page of compact results, the filters in
- * a layer with the chosen ones as chips. Without hits "Propose species" follows (P-09). `children` are further layers
- * of the page (the proposal), rendered beside the list so that a pane can take its own column.
- */
-export function SpeciesSearch(props: {
+type SpeciesSearchProps = {
   searchText: string;
   hit: readonly SpeciesHit[];
   /** More species match than the hits show (FR-BES-24): a one-line notice above the list. */
@@ -133,11 +128,20 @@ export function SpeciesSearch(props: {
   onPropose: () => void;
   /** Below a destination title the search is a section: its name is then an h2 (US-QS-14). */
   embedded?: boolean | undefined;
+  /** "Entdecken" only: the chips "Leicht" and "Noch nicht gefangen" under the search field (US-QS-21, issue 2587). */
+  quickFilters?: QuickFilters | undefined;
   children?: ReactNode;
-}) {
+};
+
+/**
+ * Catalog search by Latin or German name and synonyms (US-QS-21): the field, a page of compact results, the filters in
+ * a layer with the chosen ones as chips. Without hits "Propose species" follows (P-09). `children` are further layers
+ * of the page (the proposal), rendered beside the list so that a pane can take its own column.
+ */
+export function SpeciesSearch(props: SpeciesSearchProps) {
   const Heading = props.embedded ? "h2" : "h1";
-  const { filters, change, clear, key, active } = useFilters();
-  const shown = applyFilters(props.hit, filters);
+  const quick = props.quickFilters;
+  const { filters, change, clear, key, active, shown } = useCatalogFilters(props.hit, quick);
   const hasHits = props.hit.length > 0;
   // The search runs beside the hits it already has: its status holds once shown (D5). The hits stay on screen, so they
   // are not held: the status is an annotation, not what the hits replace.
@@ -157,7 +161,7 @@ export function SpeciesSearch(props: {
             </LayerOpener>
           )}
         </div>
-        <FilterChips filters={filters} onChange={change} />
+        <FilterRows filters={filters} quick={quick} onChange={change} />
         {props.loading && !hasHits && <SearchResultsSkeleton />}
         {running && (
           <DelayedSkeleton>
@@ -180,7 +184,7 @@ export function SpeciesSearch(props: {
           />
         )}
       </section>
-      <FiltersLayer filters={filters} onChange={change} />
+      <FiltersLayer filters={filters} quick={quick} onChange={change} />
       {props.children}
     </div>
   );

@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router";
 import type { Species } from "@pflanzendex/core";
 import { DiscoverPage } from "@/discover";
 import { SpeciesPage } from "@/catalog";
+import { useCaughtSpeciesIds } from "@/pokedex";
 import { LayerHost } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { SammlungHeader } from "@/app/destinations/collection-area/sammlung-header/sammlung-header";
 import { DISCOVER_VIEWS, useDiscoverView, useSuggestionsOn } from "./discover-view";
@@ -19,6 +20,33 @@ function zoneOf(value: string | null): number | undefined {
 }
 
 type Token = () => Promise<string | undefined>;
+
+/**
+ * The mode "Katalog" (US-QS-21): the species page with the chips "Leicht" and "Noch nicht gefangen" (US-QS-15, owner decision
+ * d-166, issue 2587). The app wires them: it reads the caught species from `pokedex` and hands the ids to `catalog`, which does
+ * not know `pokedex`. They load only while this mode shows, and the chip waits for them (`null`, disabled) instead of guessing.
+ */
+function CatalogMode(props: {
+  api: string;
+  token: Token;
+  onChoose: (species: Species) => void;
+  profileSection: (species: Species) => ReactNode;
+  searchStart?: string | undefined;
+}) {
+  const caught = useCaughtSpeciesIds(props.api, props.token);
+  return (
+    <SpeciesPage
+      api={props.api}
+      token={props.token}
+      onChoose={props.onChoose}
+      openId={null}
+      profileSection={props.profileSection}
+      embedded
+      quickFilters={{ caught }}
+      {...(props.searchStart ? { initialSearch: props.searchStart } : {})}
+    />
+  );
+}
 
 /**
  * The destination "Entdecken" (US-QS-14): a switch between the suggestions as cards (`discover`) and the species
@@ -54,14 +82,12 @@ export function DiscoverArea(props: {
       />
       <Suspense fallback={<DiscoverModeSkeleton view={view} />}>
         {view === "catalog" ? (
-          <SpeciesPage
+          <CatalogMode
             api={props.api}
             token={props.token}
             onChoose={props.onChoose}
-            openId={null}
             profileSection={props.profileSection}
-            embedded
-            {...(props.searchStart ? { initialSearch: props.searchStart } : {})}
+            searchStart={props.searchStart}
           />
         ) : (
           <DiscoverPage

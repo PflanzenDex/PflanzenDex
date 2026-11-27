@@ -568,3 +568,23 @@ describe("US-QS-21 propose in two steps", () => {
     expect(name.getAttribute("aria-invalid")).toBe("true");
   }, 20_000);
 });
+
+describe("US-QS-15 · US-QS-21 the quick filters are an option of the page (issue 2587)", () => {
+  it("US-QS-15 · US-QS-21 without quickFilters, as the collection's hand-over renders it, the page shows no chips and the layer no such checkbox", async () => {
+    fakeServer({ species: [hit] });
+    render(page());
+    expect(await screen.findByText("Dracaena trifasciata")).toBeTruthy();
+    expect(screen.queryByRole("group", { name: "Schnellfilter" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Noch nicht gefangen" })).toBeNull();
+  });
+
+  it("US-QS-15 · US-QS-21 with quickFilters the chips show and Noch nicht gefangen hides the caught species", async () => {
+    fakeServer({ species: [hit, { ...hit, id: "b2", latinName: "Ficus lyrata" }] });
+    render(page({ quickFilters: { caught: new Set(["a1"]) } }));
+    expect(await screen.findByText("Dracaena trifasciata")).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Schnellfilter" })).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Noch nicht gefangen" }));
+    expect(screen.queryByText("Dracaena trifasciata")).toBeNull();
+    expect(screen.getByText("Ficus lyrata")).toBeTruthy();
+  });
+});

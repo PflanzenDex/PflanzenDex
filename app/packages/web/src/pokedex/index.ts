@@ -7,3 +7,6 @@ export const PokedexPage = lazyPage(() =>
 export { WikipediaSource } from "./pokedex-cards/collector-card/wikipedia-source/wikipedia-source";
 // The skeleton of the species mode, the mode's skeleton on "Sammlung" (US-QS-14, issue 1727).
 export { PokedexPageSkeleton } from "./pokedex-page/pokedex-page.skeleton";
+// The ids of the caught species for the catalog's quick filter on "Entdecken" (US-QS-15, US-QS-21, issue 2587): the hook and the
+// ownership call only, so the page itself stays out of the chunk of "Entdecken".
+export { useCaughtSpeciesIds } from "./caught/caught-species-ids";
