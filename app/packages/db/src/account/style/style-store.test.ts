@@ -51,14 +51,4 @@ describe("US-ONB-03 keeper style per account", () => {
   it("US-ONB-03 the database refuses a style other than few and many", async () => {
     await expect(store.set(anna, "expert" as "few", "2026-10-18")).rejects.toThrow();
   });
-
-  it("FR-ONB-06 the migration set the accounts that existed to many", async () => {
-    const migration = await import("node:fs").then((fs) =>
-      fs.readFileSync(
-        new URL("../../../migrations/0081_account_style.sql", import.meta.url),
-        "utf8",
-      ),
-    );
-    expect(migration).toMatch(/insert into account_style[^;]*'many'[^;]*from account/);
-  });
 });

@@ -99,7 +99,9 @@ insert into ${seen} select current_setting('lock_timeout');`,
 create table ${seen}_own (v text);
 insert into ${seen}_own select current_setting('lock_timeout');`,
     });
-    onTestFinished(() => pool.query(`drop table if exists ${seen}, ${seen}_own`));
+    onTestFinished(async () => {
+      await pool.query(`drop table if exists ${seen}, ${seen}_own`);
+    });
     await migrate(pool, { directory: dir, tableName: TABLE_NAME, lockTimeoutMs: LOCK_TIMEOUT_MS });
     const runner = await pool.query<{ v: string }>(`select v from ${seen}`);
     const file = await pool.query<{ v: string }>(`select v from ${seen}_own`);
@@ -130,7 +132,9 @@ describe("US-DEV-07 no-transaction marker", () => {
     await pool.query(`drop table if exists ${TABLE_NAME}`);
     const table = unique("cic");
     await pool.query(`create table ${table} (id int)`);
-    onTestFinished(() => pool.query(`drop table if exists ${table}`));
+    onTestFinished(async () => {
+      await pool.query(`drop table if exists ${table}`);
+    });
     const dir = directory({
       "0001_index.sql": `-- migrate: no-transaction
 set lock_timeout = '5s';
@@ -148,7 +152,9 @@ create index concurrently if not exists ${table}_id on ${table} (id);`,
     await pool.query(`drop table if exists ${TABLE_NAME}`);
     const table = unique("cic_plain");
     await pool.query(`create table ${table} (id int)`);
-    onTestFinished(() => pool.query(`drop table if exists ${table}`));
+    onTestFinished(async () => {
+      await pool.query(`drop table if exists ${table}`);
+    });
     const dir = directory({
       "0001_index.sql": `create index concurrently ${table}_id on ${table} (id);`,
     });
@@ -161,7 +167,9 @@ create index concurrently if not exists ${table}_id on ${table} (id);`,
   it("US-DEV-07 a failing statement of a marked file leaves the file unrecorded", async () => {
     await pool.query(`drop table if exists ${TABLE_NAME}`);
     const table = unique("marked_fail");
-    onTestFinished(() => pool.query(`drop table if exists ${table}`));
+    onTestFinished(async () => {
+      await pool.query(`drop table if exists ${table}`);
+    });
     const dir = directory({
       "0001_partial.sql": `-- migrate: no-transaction
 create table ${table} (id int);
