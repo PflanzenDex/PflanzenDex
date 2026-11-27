@@ -308,15 +308,24 @@ const foldersToWatch = () => [
 // The fingerprint state of each watched worktree (round 3, issue 2554): the stored state (null when missing or not verified), the
 // state now, and the gate paths whose content differs, named from the session root. Any error throws: the callers block.
 function fingerprintStates() {
-  return foldersToWatch().map((folder) => {
+  const own = repoAt(root)?.toplevel;
+  const states = foldersToWatch().map((folder) => {
     const repo = repoAt(folder);
     const spot = confirmationSpot(folder);
-    if (!repo || !spot) throw new Error(`${folder} is not a worktree that git can read`);
+    // Issue 2578: a worktree that `git worktree remove` takes away while this hook runs is still listed, but has lost its files (the
+    // folder goes first, the git folder last). It has no gate file left, so it drops out silently and is not drift. The worktree of
+    // the session itself never drops out: its gate files must stay (fail closed).
+    if (!repo || !spot) {
+      if (folder !== own && !fs.existsSync(path.join(folder, ".git"))) return null;
+      throw new Error(`${folder} is not a worktree that git can read`);
+    }
     const key = keyOf(repo.common);
     const file = path.join(spot.dir, FINGERPRINT_FILE);
     const prev = loadFingerprint(file, key);
     const rels = gatePathsRel(folder);
     const next = takeFingerprint(folder, rels);
+    if (folder !== own && Object.keys(next).length === 0 && prev && Object.keys(prev).length > 0)
+      return null;
     const named = (p) => path.relative(realpath(root), path.join(folder, p)) || p;
     // Issue 2557 (d-148): a gate file equal to its blob in origin/dev is reviewed work brought in by a fast-forward, a merge or a
     // fresh worktree. It does not block and is logged as applied. A file that differs, a missing origin/dev or a git error blocks.
@@ -339,6 +348,7 @@ function fingerprintStates() {
     }
     return { file, key, prev, next, changed: changedRel.map(named), applied, unverified };
   });
+  return states.filter((state) => state !== null);
 }
 
 // Which gate files of `folder` equal their blob in origin/dev (issue 2557). With `rels` null, all gate files of the worktree and of
