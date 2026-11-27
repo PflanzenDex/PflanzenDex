@@ -1,5 +1,6 @@
 import { Leaf } from "lucide-react";
 import type { SpeciesHit, NameField } from "@pflanzendex/core";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { Button } from "@/shared/ui/button";
 import { badge, difficultyText } from "../../shared/text";
@@ -47,9 +48,9 @@ function Hit({ t, onOpen }: { t: SpeciesHit; onOpen: (id: string) => void }) {
           <span className="text-base font-semibold [overflow-wrap:anywhere]">
             <i>{t.latinName}</i>
           </span>
+          {/* "German name · fact" breaks only between its two parts, never inside one ("Schwierigkeit: / unbekannt"), like the meta line of an object row (`metaParts`, issues 2606, 2632). */}
           <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
-            {t.germanName ? `${t.germanName} · ` : ""}
-            {fact(t)}
+            {metaParts(t.germanName ? `${t.germanName} · ${fact(t)}` : fact(t))}
           </span>
         </span>
       </Button>

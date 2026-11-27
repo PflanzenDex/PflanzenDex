@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router";
 import type { Species, SpeciesHit } from "@pflanzendex/core";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { SpeciesSearch } from "./search-view";
 import { hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
@@ -146,7 +147,11 @@ describe("US-QS-21 the catalog list scrolls", () => {
     expect(within(list).getAllByRole("button")).toHaveLength(45);
     expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
     expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
-    expect(within(list).getAllByText("Bogenhanf · Schwierigkeit: Leicht")).toHaveLength(45);
+    // The meta line is split into parts (issue 2632): its text is the one string "name · fact".
+    const withFact = within(list)
+      .getAllByRole("button")
+      .filter((row) => plain(row.textContent).endsWith("Bogenhanf · Schwierigkeit: Leicht"));
+    expect(withFact).toHaveLength(45);
     expect(screen.queryByText("Mehr laden")).toBeNull();
   });
 
