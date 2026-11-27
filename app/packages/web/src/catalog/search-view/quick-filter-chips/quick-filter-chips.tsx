@@ -75,8 +75,9 @@ function MeasureRow(props: { chips: readonly Chip[]; measure: RefObject<HTMLDivE
  * nicht gefangen" as toggle chips in one chip row under the search field. They are the same filters as the layer "Filter"
  * holds (difficulty 1 and uncaught), so chips and layer are one state. The row wraps while the chips fit and scrolls sideways
  * inside itself when they do not (`ChipRow`, `useChipsFit`, the same logic as the group jump, SG-LIST-06). While the caught
- * species are not known (`caughtKnown` false) "Noch nicht gefangen" is disabled and says why, never filtering on a guess
- * (P-08, P-10).
+ * species are not known (`caughtKnown` false) "Noch nicht gefangen" is disabled and says why in a visible line under the row
+ * (`aria-describedby` points to it; SG-BTN-05, issue 2610), never filtering on a guess (P-08, P-10). The line stands outside the
+ * row, so it stays in view when the chips scroll sideways, and the measuring row does not count it.
  */
 export function QuickFilterChips(props: {
   filters: Filters;
@@ -108,12 +109,12 @@ export function QuickFilterChips(props: {
         {chips.map((chip) => (
           <ToggleChip key={chip.key} chip={chip} describedBy={chip.disabled ? whyId : undefined} />
         ))}
-        {!caughtKnown && (
-          <span id={whyId} className="sr-only">
-            {t("quick.uncaughtUnknown")}
-          </span>
-        )}
       </ChipRow>
+      {!caughtKnown && (
+        <p id={whyId} className="mt-2 text-sm text-muted-foreground">
+          {t("quick.uncaughtUnknown")}
+        </p>
+      )}
       <MeasureRow chips={chips} measure={measure} />
     </div>
   );

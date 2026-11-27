@@ -245,6 +245,90 @@ describe("US-QS-15 · US-QS-21 the chip Noch nicht gefangen hides the caught spe
   });
 });
 
+describe("US-QS-15 the reason of the disabled chip Noch nicht gefangen is a visible line under the row (issue 2610, SG-BTN-05, P-09, P-10)", () => {
+  const REASON = "Deine gefangenen Arten sind noch nicht bekannt.";
+  const whyOf = () => {
+    const id = chip("Noch nicht gefangen").getAttribute("aria-describedby") ?? "";
+    return document.getElementById(id);
+  };
+
+  it("US-QS-15 while the caught species are not known the reason is a paragraph that everyone sees, not a screen-reader-only span, and the disabled chip points to it with aria-describedby", () => {
+    search({ caught: null });
+    const why = whyOf();
+    expect(why?.tagName).toBe("P");
+    expect(why?.textContent).toBe(REASON);
+    for (const hidden of ["sr-only", "invisible", "hidden", "opacity-0"]) {
+      expect(why?.className.split(/\s+/)).not.toContain(hidden);
+    }
+    expect(why?.closest("[aria-hidden]")).toBeNull();
+    expect(why?.closest("[inert]")).toBeNull();
+    // The text of the reason is on the page once: the measuring row repeats no text.
+    expect(screen.getAllByText(REASON)).toHaveLength(1);
+  });
+
+  it("US-QS-15 the reason stands directly under the chip row, outside the row, in the quiet text of a hint (14 px, muted), and it may wrap", () => {
+    search({ caught: null });
+    const group = screen.getByRole("group", { name: "Schnellfilter" });
+    const why = whyOf();
+    expect(why).not.toBeNull();
+    expect(group.contains(why)).toBe(false);
+    expect(group.nextElementSibling).toBe(why);
+    expect(why?.parentElement).toBe(group.parentElement);
+    const classes = why?.className.split(/\s+/) ?? [];
+    expect(classes).toContain("text-sm");
+    expect(classes).toContain("text-muted-foreground");
+    for (const clipped of ["truncate", "whitespace-nowrap", "line-clamp-1", "overflow-hidden"]) {
+      expect(classes).not.toContain(clipped);
+    }
+  });
+
+  it("US-QS-15 the reason stays in view when the chips scroll sideways, because it is not part of the scrolling row", () => {
+    layout = { row: 300, chips: [90, 230] };
+    search({ caught: null });
+    const group = screen.getByRole("group", { name: "Schnellfilter" });
+    expect(group.className).toContain("overflow-x-auto");
+    expect(group.textContent).toBe("LeichtNoch nicht gefangen");
+    expect(whyOf()?.textContent).toBe(REASON);
+  });
+
+  it("US-QS-15 the line does not touch the measuring row: it holds the chips only and the choice between wrapping and scrolling stays the same", () => {
+    layout = { row: 340, chips: [90, 170] };
+    search({ caught: null });
+    const measure = document.querySelector("[data-quick-measure]");
+    expect(measure?.querySelectorAll("p")).toHaveLength(0);
+    expect(measure?.children).toHaveLength(2);
+    expect(screen.getByRole("group", { name: "Schnellfilter" }).className).not.toContain(
+      "overflow-x-auto",
+    );
+  });
+
+  it("US-QS-15 once the caught species are known the line is gone, the chip is enabled and no space is kept", () => {
+    const { rerender } = search({ caught: null });
+    expect(screen.queryByText(REASON)).not.toBeNull();
+    rerender(tree(HITS, { caught: new Set(["a"]) }, "/discover?view=catalog"));
+    expect(screen.queryByText(REASON)).toBeNull();
+    const uncaught = chip("Noch nicht gefangen") as HTMLButtonElement;
+    expect(uncaught.disabled).toBe(false);
+    expect(uncaught.hasAttribute("aria-describedby")).toBe(false);
+    const row = document.querySelector("[data-quick-row]");
+    expect(
+      [...(row?.children ?? [])].map((child) => child.getAttribute("role") ?? "measure"),
+    ).toEqual(["group", "measure"]);
+    expect(row?.querySelector("p")).toBeNull();
+  });
+
+  it("US-QS-15 when the caught species are known from the start there is no line at all", () => {
+    search({ caught: new Set() });
+    expect(screen.queryByText(REASON)).toBeNull();
+    expect(chip("Noch nicht gefangen").hasAttribute("aria-describedby")).toBe(false);
+  });
+
+  it("US-QS-15 the chip Leicht has no description: only the disabled chip points to the reason", () => {
+    search({ caught: null });
+    expect(chip("Leicht").hasAttribute("aria-describedby")).toBe(false);
+  });
+});
+
 describe('US-QS-15 · US-QS-21 the chips and the layer "Filter" are one state', () => {
   it("US-QS-15 · US-QS-21 the layer has the checkbox Noch nicht gefangen, checked while the chip is pressed, and the select shows Leicht", async () => {
     search(
