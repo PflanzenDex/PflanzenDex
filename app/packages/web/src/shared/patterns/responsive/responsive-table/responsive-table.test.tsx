@@ -63,3 +63,61 @@ describe("ResponsiveTable (US-QS-07, DS-24)", () => {
     expect((screen.getAllByRole("listitem")[0] as HTMLElement).className).toContain("break-words");
   });
 });
+
+describe("ResponsiveTable keeps header row and first column (US-QS-15, DS-58, SG-LIST-01, issue 2420)", () => {
+  it("US-QS-15 · SG-LIST-01 from md the first column of every row is its row header, the other columns are cells", () => {
+    setViewportWidth(768);
+    render(<Example />);
+    const table = screen.getByRole("table", { name: "Meine Pflanzen" });
+    const rowHeaders = within(table).getAllByRole("rowheader");
+    expect(rowHeaders.map((h) => h.textContent)).toEqual(["Monstera", "Efeutute"]);
+    for (const head of rowHeaders) expect(head.getAttribute("scope")).toBe("row");
+    // The column headers stay `scope="col"`; the other cells of a row are plain cells.
+    for (const head of within(table).getAllByRole("columnheader"))
+      expect(head.getAttribute("scope")).toBe("col");
+    const rows = within(table).getAllByRole("row").slice(1);
+    for (const row of rows) {
+      expect(within(row).getAllByRole("rowheader")).toHaveLength(1);
+      expect(within(row).getAllByRole("cell")).toHaveLength(2);
+    }
+    expect(within(rows[0] as HTMLElement).getByRole("cell", { name: "Fenster" })).toBeTruthy();
+  });
+
+  it("US-QS-15 · DS-58 from md the table is the marked scroll region of its frame, header row and first column stick", () => {
+    setViewportWidth(1024);
+    render(<Example />);
+    const region = screen.getByRole("region", { name: "Meine Pflanzen" });
+    expect(region.hasAttribute("data-scroll-region")).toBe(true);
+    expect(region.getAttribute("data-scroll-x")).toBe("table");
+    const rowHeader = within(region).getAllByRole("rowheader")[0] as HTMLElement;
+    expect(rowHeader.className.split(/\s+/)).toContain("first:sticky");
+    for (const head of within(region).getAllByRole("columnheader"))
+      expect(head.className.split(/\s+/)).toContain("sticky");
+  });
+
+  it("US-QS-15 · DS-24 a row action stays the last column and keeps its link", () => {
+    setViewportWidth(768);
+    render(<Example />);
+    const table = screen.getByRole("table", { name: "Meine Pflanzen" });
+    const first = within(table).getAllByRole("row")[1] as HTMLElement;
+    const last = first.lastElementChild as HTMLElement;
+    expect(within(last).getByRole("link", { name: "Monstera öffnen" })).toBeTruthy();
+    expect(last.tagName).toBe("TD");
+  });
+
+  it("US-QS-15 · DS-24 without a data column the row action is no row header", () => {
+    setViewportWidth(768);
+    render(
+      <ResponsiveTable
+        caption="Aktionen"
+        columns={[]}
+        rows={rows}
+        getRowKey={(r) => r.id}
+        rowAction={rowAction}
+      />,
+    );
+    const table = screen.getByRole("table", { name: "Aktionen" });
+    expect(within(table).queryAllByRole("rowheader")).toHaveLength(0);
+    expect(within(table).getAllByRole("link")).toHaveLength(2);
+  });
+});
