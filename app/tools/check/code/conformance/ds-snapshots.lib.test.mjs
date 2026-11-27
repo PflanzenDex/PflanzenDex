@@ -13,7 +13,9 @@ import {
   PAGE_SIZES,
   quarantineFindings,
   replacePngs,
+  seedStaging,
   snapshotStoryIds,
+  updateMode,
 } from "./ds-snapshots.lib.mjs";
 
 const entry = (id, importPath, type = "story") => ({ id, importPath, type });
@@ -128,6 +130,33 @@ describe("QG-U5 · US-QS-07 · an update replaces the baselines only when it pas
       assert.equal(fs.readFileSync(path.join(target, "a.png"), "utf8"), "new-a");
       assert.equal(fs.readFileSync(path.join(target, "b.png"), "utf8"), "new-b");
       assert.equal(fs.readFileSync(path.join(target, "README.md"), "utf8"), "keep");
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("QG-U5 · US-QS-07 · an update rewrites only the changed baselines (#2641)", () => {
+  it("QG-U5 · US-QS-07 · an update asks Playwright for the changed pictures only; a check writes none", () => {
+    assert.equal(updateMode(true), "changed");
+    assert.equal(updateMode(false), "none");
+  });
+
+  it("QG-U5 · US-QS-07 · seedStaging copies the expected baselines that exist and leaves out stale ones", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "ds-seed-"));
+    try {
+      const baselines = path.join(root, "baselines");
+      const staged = path.join(root, "staged");
+      fs.mkdirSync(baselines);
+      fs.writeFileSync(path.join(baselines, "a.png"), "a"); // expected, copied
+      fs.writeFileSync(path.join(baselines, "stale.png"), "s"); // no story renders it, not copied
+      seedStaging(baselines, staged, ["a.png", "new.png"]); // new.png has no baseline yet
+      assert.deepEqual(fs.readdirSync(staged).sort(), ["a.png"]);
+      assert.equal(fs.readFileSync(path.join(staged, "a.png"), "utf8"), "a");
+      // After the swap the stale picture goes away and the unchanged one keeps its bytes.
+      replacePngs(staged, baselines);
+      assert.deepEqual(fs.readdirSync(baselines).sort(), ["a.png"]);
+      assert.equal(fs.readFileSync(path.join(baselines, "a.png"), "utf8"), "a");
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

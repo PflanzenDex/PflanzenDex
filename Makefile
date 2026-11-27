@@ -286,7 +286,7 @@ conformance: ## Component conformance over all stories: axe, 44 px targets, focu
 ds-snapshots-check: ## Visual regression in the pinned Playwright container: components/ui stories (360 px, .storybook/snapshots) and page stories (5 sizes, .storybook/page-snapshots), light and dark; also runs its self-test (QG-U5, US-QS-07, FR-QG-27; needs Docker)
 	cd $(APP) && npm run ds-snapshots
 
-ds-snapshots: ## Rewrite the baselines of the ui stories and of the page stories (pinned Playwright container, needs Docker); review the images, then commit them (QG-U5, US-QS-07, FR-QG-27)
+ds-snapshots: ## Rewrite the baselines of the ui stories and of the page stories that changed: only pictures that fail the comparison or are missing are written, stale ones are removed (pinned Playwright container, needs Docker; issue 2641); review the images, then commit them (QG-U5, US-QS-07, FR-QG-27)
 	cd $(APP) && npm run ds-snapshots:update
 
 # One heavy job at a time (US-DEV-08, issue 1745): the first prerequisite of every heavy target, so the lock is taken before

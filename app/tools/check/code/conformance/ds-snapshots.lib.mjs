@@ -134,6 +134,27 @@ export function dockerArgs({
 }
 
 /**
+ * The Playwright update mode: an update writes only the pictures that fail the comparison or are missing ("changed"),
+ * so pictures that differ below the tolerance keep their committed file (issue 2641); a check writes nothing.
+ */
+export function updateMode(update) {
+  return update ? "changed" : "none";
+}
+
+/**
+ * An update starts from the committed pictures: the staging folder gets a copy of each expected baseline that exists,
+ * so the "changed" mode compares against them and rewrites only what fails. Stale pictures (no story renders them) are
+ * not copied, so replacePngs still removes them (issue 2641).
+ */
+export function seedStaging(baselineDir, stagedDir, expected) {
+  fs.mkdirSync(stagedDir, { recursive: true });
+  for (const f of expected) {
+    const from = path.join(baselineDir, f);
+    if (fs.existsSync(from)) fs.copyFileSync(from, path.join(stagedDir, f));
+  }
+}
+
+/**
  * An update that passed: the staged pictures move into the baseline folder (over the old file of the same name), the
  * old pictures that no story renders any more are removed, and every other file stays (issue 2286). Staged files go
  * in first, so no picture is missing in between.
