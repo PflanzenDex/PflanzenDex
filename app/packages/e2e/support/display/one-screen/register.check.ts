@@ -24,6 +24,20 @@ const STATES: readonly State[] = [
   "half",
 ];
 
+/** A reply answers the write of a step (issue 2622): it needs a step, an API path and a status of an answer. */
+function replyProblems(s: Screen): string[] {
+  const reply = s.reply;
+  if (!reply) return [];
+  const problems: string[] = [];
+  if (!s.steps?.length)
+    problems.push(`${s.id}: reply answers the write of a step, but there is no step`);
+  if (!reply.path.startsWith("/"))
+    problems.push(`${s.id}: reply path "${reply.path}" is no API path`);
+  if (!Number.isInteger(reply.status) || reply.status < 200 || reply.status > 599)
+    problems.push(`${s.id}: reply status ${String(reply.status)} is no HTTP status`);
+  return problems;
+}
+
 /** The kind of an entry and its family's states: a message for each kind, state or size name that is unknown, and each missing state. */
 function entryProblems(s: Screen, sizeNames: ReadonlySet<string>): string[] {
   const problems: string[] = [];
@@ -35,6 +49,7 @@ function entryProblems(s: Screen, sizeNames: ReadonlySet<string>): string[] {
     if (!sizeNames.has(name)) problems.push(`${s.id}: size "${name}" is not in SIZES`);
   if (s.expect && !s.expect.text && !s.expect.css)
     problems.push(`${s.id}: expect names neither a text nor a css selector`);
+  problems.push(...replyProblems(s));
   return problems;
 }
 

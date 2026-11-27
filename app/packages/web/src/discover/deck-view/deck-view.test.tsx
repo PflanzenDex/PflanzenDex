@@ -297,6 +297,35 @@ describe("US-QS-32 · SG-TYPE-04 at 200 % text the deck scrolls as a whole", () 
     return view;
   }
 
+  it("US-QS-15 · US-QS-32 issue 2622 the Entdecken deck lays out again when the text size is raised after mount", () => {
+    const { container } = render(
+      <DeckView deck={deck} onDecide={saveOk} onUndo={undoOk} onNewDeck={() => undefined} />,
+    );
+    const row = () => screen.getByRole("button", { name: "Wünschen" }).parentElement?.parentElement;
+    const front = () => screen.getByRole("article");
+    expect(row()?.className).toContain("tall-window:sticky");
+    expect(front().className).toContain("flex-1");
+    const size = vi
+      .spyOn(window, "getComputedStyle")
+      .mockReturnValue({ fontSize: "32px" } as CSSStyleDeclaration);
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    size.mockRestore();
+    // The row no longer sticks and the cards take their own height, as if the deck had mounted at 200 % text.
+    expect(row()?.className).not.toContain("sticky");
+    expect(row()?.className).toContain("tall-window:mb-20");
+    expect(front().className).toContain("flex-none");
+    expect(front().className).not.toContain("flex-1");
+    expect(container.querySelector(".min-h-\\[21rem\\]")).toBeNull();
+    // And back at the normal size, the deck fills its frame again.
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(row()?.className).toContain("tall-window:sticky");
+    expect(front().className).toContain("flex-1");
+  });
+
   it("US-QS-32 · SG-TYPE-04 no element between the card and the deck holds a scroll region of its own", () => {
     const { container } = renderAt200();
     const card = screen.getByRole("article");

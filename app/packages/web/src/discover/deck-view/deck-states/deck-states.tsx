@@ -1,6 +1,6 @@
 import type { SuggestionDeck } from "@pflanzendex/core";
 import { NetworkSlot } from "@/shared/ui/button.network-gate";
-import { useState, type RefObject } from "react";
+import type { RefObject } from "react";
 import { EmptyState } from "@/shared/patterns/elements/empty-state/empty-state";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { CATALOG_ADDRESS } from "@/shared/patterns/navigation/navigation/navigation";
@@ -9,13 +9,13 @@ import { texts } from "@/shared/lib/text-rules/texts";
 import { cn } from "@/shared/lib/utils";
 import type { Decision } from "../use-decisions";
 import table from "../../discover.de.json";
-import { largeText } from "@/shared/patterns/display/card/card-picture/large-text";
+import { useLargeText } from "@/shared/patterns/display/card/card-picture/use-large-text";
 
 const t = texts(table);
 
 /** "Kein Interesse · Später · Wünschen" as buttons; they are the way without a swipe gesture (NFR-13). */
 export function Actions(props: { onDecide: (d: Decision) => void }) {
-  const [large] = useState(largeText);
+  const large = useLargeText();
   return (
     <div
       className={cn(

@@ -1,7 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 import { WEB, test } from "../../../support/display/one-screen/sign-in";
 import { openScreen, settle } from "../../../support/display/one-screen/fit";
-import { applyFail, checkExpect } from "../../../support/display/one-screen/fit.expect";
+import { applyFail, applyReply, checkExpect } from "../../../support/display/one-screen/fit.expect";
 import { lostScreen } from "../../../support/display/one-screen/baseline";
 import { screensOf, type Screen } from "../../../support/display/one-screen/register";
 import { axeFindings } from "../../../support/display/a11y/axe-findings";
@@ -52,6 +52,7 @@ test.describe("FR-QG-24 accessibility per route (QG-U7)", () => {
         route.request().method() === "GET" ? route.continue() : route.abort(),
       );
       await applyFail(context, screen, API);
+      await applyReply(context, screen, API);
       const page = await context.newPage();
       page.on("dialog", (dialog) => void dialog.dismiss().catch(() => undefined));
       try {

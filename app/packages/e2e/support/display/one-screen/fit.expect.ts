@@ -48,3 +48,45 @@ export async function applyFail(
     (route) => (route.request().method() === "GET" ? route.abort() : route.continue()),
   );
 }
+
+/** The API path of a request matches the pattern of a reply: the same segments, `*` for any one segment. */
+const matchesPath = (pattern: string, path: string): boolean => {
+  const want = pattern.split("/");
+  const have = path.split("/");
+  return want.length === have.length && want.every((s, i) => s === "*" || s === have[i]);
+};
+
+/**
+ * Answers the one write of the screen's `reply` itself (issue 2622): the gate aborts every write, so a state that only a refused
+ * write shows could not be reached by its click. The request gets the status and body of the reply, with the headers that the
+ * browser needs for a request to another origin, and never reaches the API. Other requests pass to the routes before it.
+ */
+export async function applyReply(
+  context: BrowserContext,
+  screen: Screen,
+  api: string,
+): Promise<void> {
+  const reply = screen.reply;
+  if (!reply) return;
+  const origin = new URL(api).origin;
+  // Registered after the API route of the spec, so it is checked first (the last route that matches wins).
+  await context.route(
+    (url) => url.origin === origin && matchesPath(reply.path, url.pathname),
+    (route) => {
+      const request = route.request();
+      const headers = {
+        "access-control-allow-origin": request.headers()["origin"] ?? "*",
+        "access-control-allow-headers": "authorization, content-type, idempotency-key",
+        "access-control-allow-methods": reply.method,
+      };
+      if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+      if (request.method() !== reply.method) return route.fallback();
+      return route.fulfill({
+        status: reply.status,
+        contentType: "application/json",
+        headers,
+        body: JSON.stringify(reply.body),
+      });
+    },
+  );
+}

@@ -313,6 +313,28 @@
     "sizes": ["360x640", "360x640@200%", "390x844"]
   },
   {
+    "id": "friends-match-card-requested",
+    "account": "test3",
+    "path": "/friends/match",
+    "kind": "deck",
+    "state": "card",
+    "family": "friends-match",
+    "title": "Passende Angebote",
+    "steps": [{ "role": "button", "re": "^Ablehnen:" }],
+    "reply": {
+      "method": "PUT",
+      "path": "/exchange/match/*/answer",
+      "status": 409,
+      "body": {
+        "error": { "code": "swap.already_requested", "text": "The offer has an open request." }
+      }
+    },
+    "expect": {
+      "text": "Schon angefragt:"
+    },
+    "sizes": ["360x640", "360x640@200%", "390x844"]
+  },
+  {
     "id": "friends-exchange-part-friends",
     "account": "test2",
     "path": "/friends/exchange?part=friends",
