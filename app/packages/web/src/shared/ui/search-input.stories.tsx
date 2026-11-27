@@ -13,7 +13,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-function Demo(props: { id: string; initial: string; disabled?: boolean }) {
+function Demo(props: {
+  id: string;
+  initial: string;
+  disabled?: boolean;
+  keyHint?: { visible: string; aria: string };
+}) {
   const [text, setText] = useState(props.initial);
   return (
     <div className="flex flex-col gap-2 p-4">
@@ -24,6 +29,7 @@ function Demo(props: { id: string; initial: string; disabled?: boolean }) {
         autoComplete="off"
         value={text}
         disabled={props.disabled}
+        keyHint={props.keyHint}
         onChange={(e) => setText(e.target.value)}
         onClear={() => setText("")}
       />
@@ -31,7 +37,10 @@ function Demo(props: { id: string; initial: string; disabled?: boolean }) {
   );
 }
 
-export const Default: Story = { render: () => <Demo id="s-default" initial="" /> };
+// With the key hint: the end room is reserved from md only, where the key shows, so at 360 px the placeholder has the full width (issue 2633).
+export const Default: Story = {
+  render: () => <Demo id="s-default" initial="" keyHint={{ visible: "/", aria: "/" }} />,
+};
 
 export const WithText: Story = { render: () => <Demo id="s-text" initial="Monstera" /> };
 
