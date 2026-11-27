@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { findProblems, nextNumber, numberOf, reservedIn } from "./migration-lib.mjs";
+import { findProblems, isSquash, nextNumber, numberOf, reservedIn } from "./migration-lib.mjs";
 import { stub } from "./new-migration.mjs";
 import { collect } from "./git-view.mjs";
 
@@ -36,6 +36,24 @@ test("US-DEV-07: a new migration must be above the highest number on origin/dev"
     /not above 0003/,
   );
   assert.deepEqual(findProblems({ files: ["0002_a_n.sql"] }), []);
+});
+
+test("US-DEV-07: a squash that deletes every dev migration and adds only 0001_baseline.sql passes (issue 2519, d-149)", () => {
+  const devFiles = ["0001_a_x.sql", "0002_b_y.sql", "0120_c_z.sql"];
+  assert.equal(isSquash({ files: ["0001_baseline.sql"], devFiles }), true);
+  assert.deepEqual(findProblems({ files: ["0001_baseline.sql"], devFiles }), []);
+});
+
+test("US-DEV-07: anything short of a full squash keeps the number rule (issue 2519, d-149)", () => {
+  const devFiles = ["0001_a_x.sql", "0002_b_y.sql", "0120_c_z.sql"];
+  // A dev file is left next to the baseline.
+  assert.equal(findProblems({ files: ["0120_c_z.sql", "0001_baseline.sql"], devFiles }).length, 1);
+  // A second new file next to the baseline.
+  assert.equal(isSquash({ files: ["0001_baseline.sql", "0002_extra.sql"], devFiles }), false);
+  // A low number under another name.
+  assert.equal(findProblems({ files: ["0001_other.sql"], devFiles }).length, 1);
+  // No dev files at all is no squash.
+  assert.equal(isSquash({ files: ["0001_baseline.sql"], devFiles: [] }), false);
 });
 
 test("US-DEV-07: the stub names the module and the story of the branch", () => {

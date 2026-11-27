@@ -14,7 +14,7 @@ A friend gets a whitelist, not a filtered copy of the owner's data: the response
 5. The scenario must produce a row. The helper fails on an empty array on purpose: seed both sides of the friendship and at least one row of each list.
 6. A nullable nested object is not inspected (`null` passes). The test asserts it non-null next to the call and then checks its keys, as in `app/packages/api/src/swap/exchange/exchange.test.ts` (`expect(mine.health.lastTreated).not.toBeNull()`, then `expectExactKeys(mine.health.lastTreated, …)`).
 7. A key the spec does not allow is a privacy finding (P-05). Never widen the shape to make the test pass. Remove the field at the route or stop it in the query, and tell the owner. A shape changes only together with a spec change, spec first (`AGENTS.md`, step 1).
-8. Database side: friend reads go through database functions that return only their columns, such as `friend_shares()` (`app/packages/db/migrations/0044_swap_swap_request.sql` names the pattern). Their contract test selects the columns and compares the field names, see `app/packages/db/src/wish-friends.test.ts` ("QG-D2 contract").
+8. Database side: friend reads go through database functions that return only their columns, such as `friend_shares()` (`app/packages/db/migrations/0001_baseline.sql` names the pattern). Their contract test selects the columns and compares the field names, see `app/packages/db/src/wish-friends.test.ts` ("QG-D2 contract").
 9. Name a new or changed output in `docs/guides/reference/app.md` under its epic, with its whitelist.
 
 ## Check
