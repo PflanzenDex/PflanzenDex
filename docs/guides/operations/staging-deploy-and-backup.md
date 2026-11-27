@@ -594,24 +594,22 @@ The migration role is the owner role. A separate runtime role is not possible ye
 6. Local development (`make dev`, `make db-up`) still uses the image's superuser; `DB_ROLE_CHECK` defaults to `warn` there and logs the finding. The test suite runs as a plain owner (QG-D1) and in a superuser-owner scratch database for the functions that matter.
 7. Rolling back to a release before this change works without touching the database: the old compose file connects as the cluster user (a superuser can use everything the owner owns), the policies already follow the owner. Do not move the ownership back; fix forward.
 
-## Reset the test host database to the baseline (issue 2519, d-130)
+## Reset the test host database to the baseline (issue 2519, d-130, d-157)
 
-Owner decision (2026-11-26, d-130): the database of the test host is rebuilt from `app/packages/db/migrations/0001_baseline.sql`. The migrations 0001 to 0120 are deleted from the repository; git history keeps them. The reset loses the data on the test host. No backup is taken, because no production data exists. Start the reset only after the owner's go.
+Owner decision (2026-11-26, d-130): the database of the test host is rebuilt from `app/packages/db/migrations/0001_baseline.sql`. The migrations 0001 to 0120 are deleted from the repository; git history keeps them. The reset loses the app data on the test host. No backup is needed, because no production data exists. Owner decision d-157: the volume `${COMPOSE_PROJECT_NAME:-pflanzendex}_dbdata` stays. It also holds the sign-in service's database (`KEYCLOAK_DB_NAME`, default `keycloak`), so only the app database (`POSTGRES_DB`) is dropped and created again. The steps follow the normal deploy path. Nothing here is run from the devbox.
 
-The database volume holds every database of the host, the sign-in service's too, so the reset removes the volume and the deploy builds the stack again. The steps follow the normal deploy path. Nothing here is run from the devbox.
-
-1. The owner gives the go and names the ref to deploy: the commit on `dev` that holds `0001_baseline.sql`.
-2. On the test host, as `deploy`, in the checkout (the same Tailscale SSH path as the workflow): stop the stack and remove its database volume. The volume name is `${COMPOSE_PROJECT_NAME:-pflanzendex}_dbdata` (`deploy.sh`).
+1. The owner gives the go. The ref to deploy is the commit on `dev` that holds `0001_baseline.sql`.
+2. On the test host, as `deploy`, in the checkout (the same Tailscale SSH path as the workflow): stop the `api` (it holds connections to the app database), then drop and create the app database as the cluster user. The role and database names (`POSTGRES_USER`, `POSTGRES_DB`) are read inside the `db` container from its own environment. The sign-in database and all roles stay.
 
    ```bash
-   docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml down
-   docker volume rm pflanzendex_dbdata
+   c="docker compose --env-file app/config/deploy/.env -f app/config/deploy/docker-compose.yml"
+   $c stop api
+   $c exec -T db sh -c 'psql -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 \
+     -c "drop database \"$POSTGRES_DB\" with (force)" -c "create database \"$POSTGRES_DB\""'
    ```
 
-   Before this step the owner decides how the sign-in service is set up again: its database is in the same volume.
-
-3. Actions, "Deploy", environment `test`, the ref from step 1. `deploy.sh` finds no volume, `db-roles` creates the roles and the owner, `migrate` applies `0001_baseline.sql` as the owner, and the API starts. The deploy does not seed demo data.
-4. Check: `$c logs migrate` (the command of the checklist) ends with `Applied: 0001_baseline.sql`, and the two queries of item 4 of the checklist give `pflanzendex_owner|f|f` and `0`.
+3. Actions, "Deploy", environment `test`, the ref from step 1. The deploy runs `db-roles` (the owner role becomes the owner of the new, empty database), `migrate` applies `0001_baseline.sql` as the owner, and the API starts. The deploy does not seed demo data and needs no workflow input.
+4. Check: `$c logs migrate` ends with `Applied: 0001_baseline.sql`; the two queries of item 4 of the checklist above give `pflanzendex_owner|f|f` and `0`; `$c ps` shows `api` healthy and `keycloak` unchanged; `GET /health` answers `{"status":"ok"}` (section "Health check").
 
 These steps are written from the scripts (`deploy.sh`, `docker-compose.yml`, `db-roles`). They have not been run on a host yet; the first reset checks them.
 
