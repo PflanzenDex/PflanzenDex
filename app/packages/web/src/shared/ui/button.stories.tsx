@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Sprout } from "lucide-react";
 import { Button } from "./button";
 
 // Catalog of every Button variant, size and state (TE-18, DS-15, DS-35). Sample texts are German as in the app.
@@ -110,6 +111,23 @@ export const Row: Story = {
     <div className="w-72 p-4">
       <Button {...args} variant="ghost" size="row">
         Zeile in einer Liste
+      </Button>
+    </div>
+  ),
+};
+
+// A long German label beside an icon on a 320 px phone: 288 px of content with 16 px padding (US-QS-07, SG-ICON-01, issue 2564).
+// The box is 320 px, not 20 rem, so it stays narrow at a large text size. The label wraps and the icon keeps its size.
+export const LongLabelWithIcon: Story = {
+  render: (args) => (
+    <div className="flex w-[320px] flex-col gap-2 p-4">
+      <Button {...args}>
+        <Sprout aria-hidden="true" className="size-5" />
+        Pflanze mit frischer Erde in den neuen Topf umsetzen
+      </Button>
+      <Button {...args} variant="tinted">
+        <Sprout aria-hidden="true" className="size-5" />
+        Düngerlösung für Orchideen ansetzen
       </Button>
     </div>
   ),

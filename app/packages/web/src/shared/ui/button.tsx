@@ -11,6 +11,9 @@ const buttonVariants = cva(
     "transition-[color,background-color,transform] duration-(--motion-fast) ease-(--ease-enter) active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 " +
     // Forced colors replace the fill; the border keeps the button's boundary visible (US-QS-12, WCAG 1.4.11).
     "forced-colors:border forced-colors:border-[color:ButtonText] " +
+    // An icon keeps its size beside a long label and does not take the press (issue 2564, shadcn's SVG rules). Upstream's
+    // default `size-4` is left out on purpose: SG-ICON-01 fixes 20 px in buttons and every caller sets its own size class.
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 " +
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background " +
     "disabled:pointer-events-none disabled:opacity-50 aria-disabled:opacity-50",
   {
