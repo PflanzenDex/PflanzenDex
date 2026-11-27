@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import type { SpeciesHit } from "@pflanzendex/core";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
+import { isFilled, isTinted } from "@/shared/ui/button.roles";
 import { SpeciesSearch } from "../search-view";
 
 /** A hit with the fields the list reads; the id and the difficulty tell the hits apart. */
@@ -163,6 +164,24 @@ describe("US-QS-15 · US-QS-21 the quick filters Leicht and Noch nicht gefangen 
     for (const measured of document.querySelectorAll("[data-quick-measure] button")) {
       expect(measured.className.split(/\s+/)).not.toContain("font-bold");
     }
+  });
+
+  it("US-QS-15 d-178 a pressed chip is an outlined chip, not a tinted button: card fill, a 2 px primary border, primary label and check, a neutral hover (SG-BTN-02, SG-COLOR-01)", async () => {
+    search({ caught: new Set() });
+    await userEvent.click(chip("Leicht"));
+    const pressedChip = chip("Leicht");
+    const classes = pressedChip.className.split(/\s+/);
+    expect(isTinted(pressedChip)).toBe(false);
+    expect(isFilled(pressedChip)).toBe(false);
+    for (const wanted of ["bg-card", "border-2", "border-primary", "text-primary"]) {
+      expect(classes).toContain(wanted);
+    }
+    // The hover is the neutral ghost hover of every chip, as for the unpressed chip; no variant colours it green at rest.
+    expect(classes).toContain("hover:bg-accent");
+    expect(chip("Noch nicht gefangen").className.split(/\s+/)).toContain("hover:bg-accent");
+    // The state is not told by colour alone (SG-COLOR-05): the check mark, the border and aria-pressed.
+    expect(pressedChip.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+    expect(pressedChip.getAttribute("aria-pressed")).toBe("true");
   });
 
   it("US-QS-15 d-171 an unpressed chip is outlined on the neutral surface: the card fill of the search field and the --input border, in light and dark (issue 2612)", () => {

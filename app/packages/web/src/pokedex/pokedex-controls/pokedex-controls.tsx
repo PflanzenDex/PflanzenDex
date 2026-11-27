@@ -59,7 +59,8 @@ export function Controls(props: {
 /**
  * The content of the layer "Filter" (US-POK-08, US-QS-22): the filters that work, the sorting and, as text, the
  * reasons why "Fehlend" and "Artenarm" cannot be used yet (P-08, P-10). The chosen filter is marked by a check mark and
- * a thicker border, not only by `aria-pressed`; its label keeps the weight 600 (`PRESSED_CHIP`, SG-TYPE-01, issue 2612).
+ * a thicker border, not only by `aria-pressed`. The chosen chip is an outlined chip, not a tinted button (`PRESSED_CHIP`,
+ * owner decision d-178, SG-TYPE-01, issue 2612).
  */
 export function FilterPanel(props: {
   filter: PokedexFilter;
@@ -79,7 +80,7 @@ export function FilterPanel(props: {
             <Button
               key={f.id}
               type="button"
-              variant={selected ? "secondary" : "plain"}
+              variant={selected ? "ghost" : "plain"}
               aria-pressed={selected}
               className={cn("rounded-full px-4", selected && PRESSED_CHIP)}
               onClick={() => props.onFilter(f.id)}

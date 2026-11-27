@@ -28,11 +28,12 @@ type Chip = {
 };
 
 /**
- * One toggle chip. Unpressed it is outlined on the neutral surface: the fill of the search field next to it (`bg-card`, so
- * the two cannot differ in dark mode) and the `--input` border. Pressed it is filled and shows a check mark and a thicker
- * border besides `aria-pressed`, so the state is not told by colour alone (SG-COLOR-03, as the filter of the species page
- * does); the label keeps the weight 600 (`PRESSED_CHIP`, SG-TYPE-01, issue 2612). It is a 44 px target that never shrinks
- * and never breaks its text.
+ * One toggle chip, an outlined chip in both states (owner decisions d-171 and d-178, issue 2612). Unpressed it is outlined on
+ * the neutral surface: the fill of the search field next to it (`bg-card`, so the two cannot differ in dark mode), the
+ * `--input` border and the text colour. Pressed it keeps the card fill and takes a 2 px primary border, primary text and a
+ * check mark (`PRESSED_CHIP`, SG-TYPE-01: weight 600), so it is no tinted button and the state is not told by colour alone
+ * (SG-COLOR-03, SG-COLOR-05; `aria-pressed` besides). The variant is the neutral `ghost` for both. It is a 44 px target that
+ * never shrinks and never breaks its text.
  */
 function ToggleChip(props: { chip: Chip; describedBy?: string | undefined; measure?: boolean }) {
   const { chip, measure } = props;
@@ -40,7 +41,7 @@ function ToggleChip(props: { chip: Chip; describedBy?: string | undefined; measu
   return (
     <Button
       type="button"
-      variant={pressed ? "secondary" : "ghost"}
+      variant="ghost"
       aria-pressed={pressed}
       disabled={!measure && chip.disabled}
       aria-describedby={props.describedBy}

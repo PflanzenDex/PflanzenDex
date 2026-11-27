@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PokedexPage } from "../pokedex-page/pokedex-page";
 import { pokedexReadAnswer } from "../pokedex-page/pokedex-reads-fake";
-import { isPlain, isTinted } from "@/shared/ui/button.roles";
+import { isFilled, isPlain, isTinted } from "@/shared/ui/button.roles";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. */
 const view = (ui: ReactElement, url = "/") =>
@@ -385,17 +385,23 @@ describe("US-QS-32 each caught species is one object row in one group (FX-35, SG
   });
 });
 
-describe("US-QS-32 · SG-BTN-01 the filter chips: no outline button (FX-39 sweep 4)", () => {
-  it("US-QS-32 · SG-BTN-01 · SG-COLOR-03 a filter chip is plain until it is chosen, the chosen one is tinted with its check and border", async () => {
+describe("US-QS-32 · SG-BTN-01 the filter chips: plain until chosen, the chosen one outlined (FX-39 sweep 4, owner decision d-178)", () => {
+  it("US-QS-32 · SG-BTN-01 · SG-COLOR-03 · d-178 a filter chip is plain until it is chosen, the chosen one is an outlined chip with its check and 2 px primary border, not a tinted button", async () => {
     await open();
     const layer = await openFilters();
     const all = within(layer).getByRole("button", { name: "Alle" });
     const caughtChip = within(layer).getByRole("button", { name: "Gefangen" });
-    expect(isTinted(all)).toBe(true);
+    expect(isTinted(all)).toBe(false);
+    expect(isFilled(all)).toBe(false);
     expect(all.className).toContain("border-primary");
+    expect(all.className).toContain("bg-card");
+    expect(all.className).toContain("text-primary");
     expect(isPlain(caughtChip)).toBe(true);
     await userEvent.click(caughtChip);
-    expect(isTinted(within(layer).getByRole("button", { name: "Gefangen" }))).toBe(true);
+    const chosen = within(layer).getByRole("button", { name: "Gefangen" });
+    expect(isTinted(chosen)).toBe(false);
+    expect(chosen.className).toContain("border-primary");
+    expect(chosen.querySelector("svg.lucide-check")).not.toBeNull();
     expect(isPlain(within(layer).getByRole("button", { name: "Alle" }))).toBe(true);
   });
 

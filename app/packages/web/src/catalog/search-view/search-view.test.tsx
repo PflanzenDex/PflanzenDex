@@ -90,6 +90,12 @@ describe("US-BES-01 search", () => {
     ).toBeTruthy();
   });
 
+  it("US-QS-21 SG-SEARCH-01 d-179 the placeholder of the search field is the short example 'Name', which stays whole at 200 % text on a 360 px phone (issue 2612)", () => {
+    search([]);
+    const field = screen.getByRole("searchbox", { name: "Lateinischer oder deutscher Name" });
+    expect(field.getAttribute("placeholder")).toBe("Name");
+  });
+
   it("for a hit via synonym, names what the species was found by (Sansevieria -> Dracaena)", () => {
     search([hit(species, { field: "synonym", display: "Sansevieria trifasciata" })]);
     expect(screen.getByText("Dracaena trifasciata")).toBeTruthy();
