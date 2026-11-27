@@ -79,7 +79,7 @@ afterEach(() => {
 });
 
 describe("US-ENT-01 suggestions as a card", () => {
-  it("US-ENT-01 shows one card with names, text, zone, difficulty, attributes as unbekannt, source and reasons", async () => {
+  it("US-ENT-01 · US-QS-32 shows one card with the name, the picture with its credit and the two facts; the rest is in the sheet of Mehr", async () => {
     fakeServer(async () =>
       response(200, deckOf(suggestion("Aspidistra elatior"), suggestion("Ficus lyrata"))),
     );
@@ -87,18 +87,23 @@ describe("US-ENT-01 suggestions as a card", () => {
     const c = within(await card());
     expect(c.getByRole("heading", { name: "Aspidistra elatior" })).toBeTruthy();
     expect(c.getByText("Schusterpalme")).toBeTruthy();
-    expect(c.getByText("Eine robuste Zimmerpflanze.")).toBeTruthy();
-    expect(c.getByText("Zone 3")).toBeTruthy();
-    expect(c.getByText("Schwierigkeit").nextElementSibling?.textContent).toBe("★★☆2 von 3");
-    for (const name of ["Luftfeuchte", "Mindesttemperatur", "Haustiere", "Wuchsgröße"])
-      expect(c.getByText(name).nextElementSibling?.textContent).toBe("unbekannt");
-    expect(c.getByRole("link", { name: /Wikipedia \(CC BY-SA\)/ }).getAttribute("href")).toBe(
+    expect(c.getByText("Lichtzone 3")).toBeTruthy();
+    expect(c.getByText("Mittel")).toBeTruthy();
+    expect(c.getByRole("link", { name: "Bild: Wikipedia (CC BY-SA)" }).getAttribute("href")).toBe(
       "https://de.wikipedia.org/wiki/Aspidistra",
     );
     expect(c.getAllByRole("listitem")).toHaveLength(2);
     expect(c.getByRole("img").getAttribute("alt")).toBe("Bild von Aspidistra elatior");
+    expect(c.queryByText("Eine robuste Zimmerpflanze.")).toBeNull();
     expect(screen.getByText("Karte 1 von 2")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/%|Match/);
+    // The sheet holds the text, the attributes as "unbekannt" and the reasons (US-QS-15, d-066).
+    await userEvent.click(c.getByRole("button", { name: "Mehr: Aspidistra elatior" }));
+    const sheet = within(await screen.findByRole("dialog", { name: "Aspidistra elatior" }));
+    expect(sheet.getByText("Eine robuste Zimmerpflanze.")).toBeTruthy();
+    for (const name of ["Luftfeuchte", "Mindesttemperatur", "Haustiere", "Wuchsgröße"])
+      expect(sheet.getByText(name).nextElementSibling?.textContent).toBe("unbekannt");
+    expect(sheet.getByText("Diese Art hast du noch nicht gefangen.")).toBeTruthy();
   });
 
   it("US-ENT-01 reads every unknown value as unbekannt, never a number", async () => {
@@ -120,10 +125,12 @@ describe("US-ENT-01 suggestions as a card", () => {
     render(<DiscoverPage api="http://api" token={token} />);
     const c = within(await card());
     expect(c.getByText("Deutscher Name unbekannt")).toBeTruthy();
-    expect(c.getByText("Keine Beschreibung vorhanden.")).toBeTruthy();
-    expect(c.getByText("Lichtzone").nextElementSibling?.textContent).toBe("unbekannt");
-    expect(c.getByText("Schwierigkeit").nextElementSibling?.textContent).toBe("unbekannt");
+    expect(c.getByText("Lichtzone unbekannt")).toBeTruthy();
+    expect(c.getByText("Schwierigkeit unbekannt")).toBeTruthy();
     expect(c.queryByRole("link")).toBeNull();
+    await userEvent.click(c.getByRole("button", { name: "Mehr: Aloe vera" }));
+    const sheet = within(await screen.findByRole("dialog", { name: "Aloe vera" }));
+    expect(sheet.getByText("Keine Beschreibung vorhanden.")).toBeTruthy();
   });
 
   it("US-ENT-01 offers Kein Interesse, Später and Wünschen as buttons and moves to the next card", async () => {
@@ -134,7 +141,7 @@ describe("US-ENT-01 suggestions as a card", () => {
     render(<DiscoverPage api="http://api" token={token} />);
     await card();
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
-      "Mehr erfahren",
+      "Mehr",
       "Kein Interesse",
       "Später",
       "Wünschen",

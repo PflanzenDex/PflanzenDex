@@ -19,12 +19,12 @@ export function Actions(props: { onDecide: (d: Decision) => void }) {
   return (
     <div
       className={cn(
-        // Stays in view with the card (US-QS-14, NFR-13): from 30 rem of window height (the tall window of tokens.css) above
-        // the phone bar (3.5 rem plus safe area, a little under the bar's 59 px so no content shows in between), at the
-        // window bottom from `md`. Below it the row scrolls like the content, a window too low for a sticky row (400 % zoom).
+        // Stays in view with the card (US-QS-14, NFR-13): from 30 rem of window height at the bottom of the frame of the deck,
+        // which is the fit-screen frame and already ends above the phone bar, so its offset is 0 (issue 2421: the offset of
+        // the bar, 3.5 rem, pushed the row up over the lower edge of the card). Below 30 rem the row scrolls like the content,
+        // a window too low for a sticky row (400 % zoom).
         "shrink-0 z-10 border-t border-border bg-background py-2",
-        !large &&
-          "tall-window:sticky tall-window:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] tall-window:md:bottom-0",
+        !large && "tall-window:sticky tall-window:bottom-0",
         // Large text: the row never sticks, because a sticky row would cover the card. Static content ends under the
         // phone bar otherwise, so the reserve stays while that bar is fixed (the tall window), and goes from `md`.
         large && "tall-window:mb-20 tall-window:md:mb-0",
