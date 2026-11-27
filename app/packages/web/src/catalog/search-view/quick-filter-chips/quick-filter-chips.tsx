@@ -75,16 +75,21 @@ function MeasureRow(props: { chips: readonly Chip[]; measure: RefObject<HTMLDivE
  * nicht gefangen" as toggle chips in one chip row under the search field. They are the same filters as the layer "Filter"
  * holds (difficulty 1 and uncaught), so chips and layer are one state. The row wraps while the chips fit and scrolls sideways
  * inside itself when they do not (`ChipRow`, `useChipsFit`, the same logic as the group jump, SG-LIST-06). While the caught
- * species are not known (`caughtKnown` false) "Noch nicht gefangen" is disabled and says why in a visible line under the row
- * (`aria-describedby` points to it; SG-BTN-05, issue 2610), never filtering on a guess (P-08, P-10). The line stands outside the
- * row, so it stays in view when the chips scroll sideways, and the measuring row does not count it.
+ * species are not known (`caughtKnown` false) "Noch nicht gefangen" is disabled, never filtering on a guess (P-08, P-10). When
+ * the load has failed (`caughtLoading` false) it says why in a visible line under the row (`aria-describedby` points to it;
+ * SG-BTN-05, issue 2610). While the species still load (`caughtLoading` true) the chip is disabled and the line stays away,
+ * so it does not flash on every cold start and push the list down (issue 2615). The line stands outside the row, so it stays
+ * in view when the chips scroll sideways, and the measuring row does not count it.
  */
 export function QuickFilterChips(props: {
   filters: Filters;
   caughtKnown: boolean;
+  /** The caught species are on their way: the chip is disabled, but the reason is not shown yet. */
+  caughtLoading?: boolean;
   onChange: (patch: Partial<Filters>) => void;
 }) {
-  const { filters, caughtKnown, onChange } = props;
+  const { filters, caughtKnown, caughtLoading = false, onChange } = props;
+  const showWhy = !caughtKnown && !caughtLoading;
   const { row, measure, fits } = useChipsFit(true);
   const whyId = useId();
   const chips: readonly Chip[] = [
@@ -107,10 +112,14 @@ export function QuickFilterChips(props: {
     <div ref={row} data-quick-row="" className="relative min-w-0">
       <ChipRow label={t("quick.label")} scroll={!fits}>
         {chips.map((chip) => (
-          <ToggleChip key={chip.key} chip={chip} describedBy={chip.disabled ? whyId : undefined} />
+          <ToggleChip
+            key={chip.key}
+            chip={chip}
+            describedBy={chip.disabled && showWhy ? whyId : undefined}
+          />
         ))}
       </ChipRow>
-      {!caughtKnown && (
+      {showWhy && (
         <p id={whyId} className="mt-2 text-sm text-muted-foreground">
           {t("quick.uncaughtUnknown")}
         </p>

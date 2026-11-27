@@ -24,7 +24,7 @@ type Token = () => Promise<string | undefined>;
 /**
  * The mode "Katalog" (US-QS-21): the species page with the chips "Leicht" and "Noch nicht gefangen" (US-QS-15, owner decision
  * d-166, issue 2587). The app wires them: it reads the caught species from `pokedex` and hands the ids to `catalog`, which does
- * not know `pokedex`. They load only while this mode shows, and the chip waits for them (`null`, disabled) instead of guessing.
+ * not know `pokedex`. They load only while this mode shows, and the chip waits for them (`null`, disabled, quiet while `loading`) instead of guessing.
  */
 function CatalogMode(props: {
   api: string;
@@ -33,7 +33,7 @@ function CatalogMode(props: {
   profileSection: (species: Species) => ReactNode;
   searchStart?: string | undefined;
 }) {
-  const caught = useCaughtSpeciesIds(props.api, props.token);
+  const quickFilters = useCaughtSpeciesIds(props.api, props.token);
   return (
     <SpeciesPage
       api={props.api}
@@ -42,7 +42,7 @@ function CatalogMode(props: {
       openId={null}
       profileSection={props.profileSection}
       embedded
-      quickFilters={{ caught }}
+      quickFilters={quickFilters}
       {...(props.searchStart ? { initialSearch: props.searchStart } : {})}
     />
   );

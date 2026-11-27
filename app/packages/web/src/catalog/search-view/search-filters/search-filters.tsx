@@ -20,12 +20,14 @@ const UNCAUGHT_PARAM = "uncaught";
 export type Filters = { difficulty: 1 | 2 | 3 | null; own: boolean; uncaught: boolean };
 
 /**
- * The quick filters of "Entdecken" (US-QS-15, US-QS-21, owner decision d-166, issue 2587): the chips "Leicht" and "Noch nicht
- * gefangen" above the list. `caught` holds the ids of the species the account has caught, which the app reads (`catalog`
- * does not know `pokedex`); `null` while that is not known, and then the filter "Noch nicht gefangen" is off (P-08, P-10).
+ * The quick filters of "Entdecken" (US-QS-15, US-QS-21, owner decision d-166, issues 2587 and 2615): the chips "Leicht" and
+ * "Noch nicht gefangen" above the list. `caught` holds the ids of the species the account has caught, which the app reads
+ * (`catalog` does not know `pokedex`); `null` while that is not known, and then the filter "Noch nicht gefangen" is off
+ * (P-08, P-10). `loading` (default false) says the species are still on their way: the chip waits without a reason, so the
+ * row does not shift when they arrive; `null` with `loading` false means the load failed, and the chip says why.
  * Without this prop (the collection's hand-over) the page has no chips and no such filter.
  */
-export type QuickFilters = { caught: ReadonlySet<string> | null };
+export type QuickFilters = { caught: ReadonlySet<string> | null; loading?: boolean };
 
 function difficultyOf(raw: string | null): Filters["difficulty"] {
   return raw === "1" ? 1 : raw === "2" ? 2 : raw === "3" ? 3 : null;
