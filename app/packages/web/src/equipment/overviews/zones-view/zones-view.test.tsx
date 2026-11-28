@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, render } from "@testing-library/react";
 import type { ZoneEquipmentView } from "@pflanzendex/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ZonesView } from "./zones-view";
 
 afterEach(cleanup);
@@ -35,5 +37,31 @@ describe("US-QS-32 · issue 1960 the lamp rows of a zone", () => {
     const { container } = render(<ZonesView view={view} actions={actions()} />);
     const body = container.querySelector("details > div") as HTMLElement;
     expect(body.className.split(" ")).toContain("pt-2");
+  });
+});
+
+describe("US-QS-15 SG-TYPE-05 the line 'lamps · plants' of a zone breaks only between its parts (issue 2640)", () => {
+  beforeEach(() => setViewportWidth(360));
+
+  it("US-QS-15 at 360 px the lamps and the plants are one part each, and the text of the line is the same", () => {
+    const { container } = render(<ZonesView view={view} actions={actions()} />);
+    const summary = container.querySelector("details > summary") as HTMLElement;
+    const parts = Array.from(summary.querySelectorAll<HTMLElement>("[data-meta-part]"));
+    expect(parts.map((p) => plain(p.textContent))).toEqual(["1 Lampe ·", "3 Pflanzen"]);
+    for (const part of parts)
+      expect(part.className.split(" ")).toEqual(
+        expect.arrayContaining(["inline-block", "max-w-full", "align-top"]),
+      );
+    expect(plain(parts[0]?.parentElement?.textContent)).toBe("1 Lampe · 3 Pflanzen");
+  });
+
+  it("US-QS-15 a zone with an unknown plant count reads it as the second part", () => {
+    const unknown: ZoneEquipmentView = {
+      ...view,
+      zones: [{ ...(view.zones[0] as (typeof view.zones)[number]), specimens: null }],
+    };
+    const { container } = render(<ZonesView view={unknown} actions={actions()} />);
+    const parts = Array.from(container.querySelectorAll<HTMLElement>("summary [data-meta-part]"));
+    expect(parts.map((p) => plain(p.textContent))).toEqual(["1 Lampe ·", "Pflanzenzahl unbekannt"]);
   });
 });

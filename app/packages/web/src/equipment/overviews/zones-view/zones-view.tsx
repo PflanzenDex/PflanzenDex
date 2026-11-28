@@ -1,5 +1,6 @@
 import type { Lamp, ZoneEquipment, ZoneEquipmentView } from "@pflanzendex/core";
 import { EQUIPMENT_STATUSES, zoneLabel } from "@pflanzendex/core";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import { Select } from "@/shared/ui/select";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { STATUS_LABELS } from "../../labels";
@@ -81,7 +82,7 @@ function ZoneGroup(props: {
         <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
           <span className="font-semibold">{zoneLabel(zone.name)}</span>
           <span className="text-sm text-muted-foreground">
-            {lamps(zone.lamps.length)} · {counted}
+            {metaParts(`${lamps(zone.lamps.length)} · ${counted}`)}
           </span>
           {warning ? (
             <span className="rounded bg-warning px-1.5 text-sm font-semibold text-warning-foreground">
