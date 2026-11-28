@@ -42,7 +42,8 @@ const html = (data: LightData) => {
 };
 
 /** The text of the markup: the meta line of a row is split in parts (US-QS-15), so a text check reads it without the tags. */
-const textOf = (markup: string) => plain(markup.replace(/<[^>]+>/g, ""));
+const textOf = (markup: string) =>
+  plain(new DOMParser().parseFromString(markup, "text/html").body.textContent);
 
 describe("US-LIC-05 view locations and light zones", () => {
   it("empty account: says what to do (P-09), and offers the default", () => {

@@ -295,7 +295,9 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
       </MemoryRouter>,
     );
     // The title is split in parts that stay whole (US-QS-15): the text reads the same without the tags.
-    expect(plain(list.replace(/<[^>]+>/g, ""))).toContain("12,5 cm · 03.10.2026");
+    expect(plain(new DOMParser().parseFromString(list, "text/html").body.textContent)).toContain(
+      "12,5 cm · 03.10.2026",
+    );
     expect(list).toContain("Gesund");
     expect(list).toContain("nach dem Umtopfen");
   });
