@@ -85,11 +85,11 @@ export function CandidateCard(props: {
     >
       {stored ? (
         <>
-          <div className="flex min-w-0 items-start gap-3">
+          <div className="flex min-w-0 flex-wrap items-start gap-3">
             <StoredPicture c={c} access={stored} sourceLine={sourceLine} />
-            <CandidateText c={c} rank={rank} className="flex-1" />
+            <CandidateText c={c} rank={rank} className="grow basis-32" />
           </div>
-          <p className="text-sm text-muted-foreground">{sourceLine}</p>
+          <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{sourceLine}</p>
         </>
       ) : (
         <>
