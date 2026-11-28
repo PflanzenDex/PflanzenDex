@@ -4,6 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { filledIn, hasOwnBorder, isFilled, isPlain, isTinted } from "@/shared/ui/button.roles";
+import { plain } from "@/shared/testing/plain-text";
+
+/** The line of an answered offer: split in parts that stay whole (US-QS-15), it reads as one text. */
+const answerLine = (text: string) => (_: string, el: Element | null) =>
+  !!el?.querySelector(":scope > [data-meta-part]") && plain(el.textContent) === text;
 import { MatchPage } from "./match";
 
 const response = (status: number, body: unknown) =>
@@ -303,7 +308,7 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     open();
     await current();
     const section = within(screen.getByRole("region", { name: "Später ansehen (1)" }));
-    expect(section.getByText("Echte Aloe 1 von Ben1 · 12.10.2026")).toBeTruthy();
+    expect(section.getByText(answerLine("Echte Aloe 1 von Ben1 · 12.10.2026"))).toBeTruthy();
     await userEvent.click(section.getByRole("button", { name: "Diese Karten jetzt ansehen" }));
     expect(await screen.findByRole("heading", { name: "Echte Aloe 1" })).toBeTruthy();
   });
@@ -320,10 +325,10 @@ describe("US-TAU-02 answering with buttons and swipe, stored privately", () => {
     open();
     await current();
     const declined = within(screen.getByRole("region", { name: "Abgelehnt (1)" }));
-    expect(declined.getByText("Echte Aloe 1 von Ben1 · 12.10.2026")).toBeTruthy();
+    expect(declined.getByText(answerLine("Echte Aloe 1 von Ben1 · 12.10.2026"))).toBeTruthy();
     expect(
       within(screen.getByRole("region", { name: "Später ansehen (1)" })).getByText(
-        "Echte Aloe 3 von Ben3 · 12.10.2026",
+        answerLine("Echte Aloe 3 von Ben3 · 12.10.2026"),
       ),
     ).toBeTruthy();
     await userEvent.click(declined.getByRole("button", { name: /^Wieder ansehen/ }));

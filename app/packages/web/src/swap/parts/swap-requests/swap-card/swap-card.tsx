@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { SwapSide } from "@pflanzendex/core";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import type { AnswerInput } from "../../../api/swaps-api";
 import { MODE_TEXT, TYPE_TEXT } from "../../offer-form/health-text";
 import { HandoverBox } from "../handover-box/handover-box";
@@ -14,7 +15,7 @@ function Facts({ s }: { s: SwapSide }) {
   return (
     <>
       <span className="text-sm">
-        {who} · {TYPE_TEXT[s.type]} · {MODE_TEXT[s.mode]}
+        {metaParts(`${who} · ${TYPE_TEXT[s.type]} · ${MODE_TEXT[s.mode]}`)}
       </span>
       {s.proposal && s.role === "recipient" && s.counterText && (
         <span className="text-sm">

@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button.roles";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
@@ -147,7 +148,7 @@ describe("US-SOZ-08 US-QS-20 exchange page: my offers and the dialog", () => {
     const list = await screen.findByRole("list", { name: "Meine Angebote" });
     const text = within(list).getByRole("listitem").textContent ?? "";
     expect(text).toContain("Haworthia");
-    expect(text).toContain("Steckling · Tauschen");
+    expect(plain(text)).toContain("Steckling · Tauschen");
     expect(text).toContain("Wunsch: Ableger");
     expect(text).toContain("Zuletzt behandelt: Wollläuse, 10.09.2026");
     expect(text).toContain("Zurzeit in der Ruhephase.");

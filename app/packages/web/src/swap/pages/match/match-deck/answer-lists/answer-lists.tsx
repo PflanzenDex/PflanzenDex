@@ -1,6 +1,7 @@
 import type { MatchEntry } from "@pflanzendex/core";
 import { Link } from "react-router";
 import { Button } from "@/shared/ui/button";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import { EXCHANGE_PATH } from "@/shared/patterns/navigation/navigation/navigation";
 import { texts } from "@/shared/lib/text-rules/texts";
 import table from "../../../../swap.de.json";
@@ -29,7 +30,7 @@ function EntryRow(props: {
   const closed = e.state !== "open";
   return (
     <li className="grid gap-1 border-b border-border py-2 last:border-b-0">
-      <span>{`${entryName(e)} · ${germanDate(e.answeredOn)}`}</span>
+      <span>{metaParts(`${entryName(e)} · ${germanDate(e.answeredOn)}`)}</span>
       {closed && <span className="text-muted-foreground">{STATE_TEXT[e.state]}</span>}
       {e.state === "requested" && (
         <Button asChild variant="plain" size="touch">

@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import type { HistoryEntry } from "@pflanzendex/core";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { currentTimeZone } from "../../../shared/data";
@@ -56,9 +57,7 @@ function Entry({ e }: { e: HistoryEntry }) {
       <span className="text-sm text-muted-foreground">{dayText(e.date)}</span>
       <span className="font-semibold">{e.species ?? t("history.speciesUnknown")}</span>
       <span className="text-sm">{outcomeLine(e, who)}</span>
-      <span className="text-sm">
-        {TYPE_TEXT[e.type]} · {MODE_TEXT[e.mode]}
-      </span>
+      <span className="text-sm">{metaParts(`${TYPE_TEXT[e.type]} · ${MODE_TEXT[e.mode]}`)}</span>
       {e.cause && <span className="text-sm text-muted-foreground">{CAUSE_TEXT[e.cause]}.</span>}
       {e.reason && (
         <span className="text-sm text-muted-foreground">
