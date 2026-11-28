@@ -61,18 +61,20 @@ describe("US-QS-32 · SG-COLOR-06 text selection colour", () => {
   const darkBlock =
     /prefers-color-scheme: dark\) \{\s*:root \{(.*?)\n {2}\}/s.exec(tokensCss)?.[1] ?? "";
 
-  it("US-QS-32 tokens.css sets ::selection from the accent tokens in the base layer, and not in forced colors", () => {
+  it("US-QS-32 tokens.css sets ::selection from the primary tokens in the base layer, and not in forced colors", () => {
     expect(flat).toMatch(
-      /@media not \(forced-colors: active\) \{ ::selection \{ background-color: var\(--accent\); color: var\(--accent-foreground\); \} \}/,
+      /@media not \(forced-colors: active\) \{ ::selection \{ background-color: var\(--primary\); color: var\(--primary-foreground\); \} \}/,
     );
   });
 
   it("US-QS-32 selected text reads at 4.5:1 or more in light and in dark", () => {
     for (const block of [rootBlock, darkBlock]) {
-      const bg = token(block, "--accent");
-      const fg = token(block, "--accent-foreground");
+      const bg = token(block, "--primary");
+      const fg = token(block, "--primary-foreground");
       expect(bg).not.toBe("");
       expect(contrast(bg, fg)).toBeGreaterThanOrEqual(4.5);
+      // The highlight itself stands out from the page and from the accent tint of a row (1.4.11 level, 3:1).
+      expect(contrast(bg, token(block, "--accent"))).toBeGreaterThanOrEqual(3);
     }
   });
 });
