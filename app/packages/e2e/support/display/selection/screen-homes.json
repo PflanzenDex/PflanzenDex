@@ -1,0 +1,12 @@
+{
+  "": ["account", "app/flows"],
+  "unlock": ["app/flows"],
+  "today": ["app/destinations/today-area", "today"],
+  "collection": ["app/destinations/collection-area", "collection"],
+  "label": ["app/destinations/collection-area", "collection"],
+  "discover": ["app/destinations/discover-area", "discover", "pokedex"],
+  "account": ["app/destinations/account-area", "account"],
+  "friends": ["social", "swap"],
+  "operator": ["account", "app/destinations/account-area"],
+  "review": ["catalog", "app/destinations/account-area"]
+}

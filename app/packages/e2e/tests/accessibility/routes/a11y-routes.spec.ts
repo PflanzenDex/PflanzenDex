@@ -8,6 +8,11 @@ import { axeFindings } from "../../../support/display/a11y/axe-findings";
 import { A11Y_SIZES, judgeResult, type Result } from "../../../support/display/a11y/findings";
 import { readBaseline, saveResults } from "../../../support/display/a11y/reporter";
 import { escapeWalk, keyboardWalk, skipLinkWalk } from "../../../support/display/a11y/walk/walk";
+import {
+  a11yMediaOf,
+  comparesWithBaseline,
+  mediaOptions,
+} from "../../../support/display/selection/a11y-media";
 
 // FR-QG-24, QG-U7 (issue 467): axe and the keyboard walk over every screen of the register at phone and desktop size; the
 // screen is opened once and resized, writes are aborted. `make a11y-routes`, or one shard of the CI job of both UI gates
@@ -18,6 +23,11 @@ const API = `http://localhost:${process.env["E2E_API_PORT"] ?? "3000"}`;
 const WRITE = process.env["A11Y_ROUTES_WRITE"] === "1";
 // SHARD of make ui-gates or of make a11y-routes (US-QG-01): the screens of one shard of the plan, all when unset.
 const SHARD = process.env["A11Y_ROUTES_SHARD"] ?? "";
+// MEDIA of the warning run (US-QG-02, issue 2666): forced colors or reduced motion. Such a run records its findings and compares
+// them with no baseline, so it never writes one.
+const MEDIA = a11yMediaOf(process.env["A11Y_ROUTES_MEDIA"]);
+if (MEDIA !== "" && WRITE)
+  throw new Error("a11y-routes: A11Y_ROUTES_MEDIA is a warning run: no baseline write");
 
 test.describe.configure({ mode: "parallel", timeout: 240_000 });
 
@@ -46,6 +56,7 @@ test.describe("FR-QG-24 accessibility per route (QG-U7)", () => {
         locale: "de-DE",
         colorScheme: "light",
         viewport: { width: 390, height: 844 },
+        ...mediaOptions(MEDIA),
         ...(storageState ? { storageState } : {}),
       });
       await context.route(`${API}/**`, (route) =>
@@ -62,7 +73,8 @@ test.describe("FR-QG-24 accessibility per route (QG-U7)", () => {
         const lost = lostScreen(WEB + screen.path, page.url());
         if (lost) throw new Error(`${screen.id}: ${lost}`);
         saveResults(screen.id, results);
-        if (!WRITE) {
+        // A media run is the warning tier: its findings are recorded and never compared (US-QG-02, issue 2666).
+        if (comparesWithBaseline(MEDIA, WRITE)) {
           const baseline = readBaseline();
           const problems = results.flatMap((r) =>
             judgeResult(r, baseline, Boolean(screen.unstable)),

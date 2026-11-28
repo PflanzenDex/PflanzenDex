@@ -102,14 +102,15 @@ function problemTests(): void {
   });
 
   test("US-QS-15 the new states run at three sizes (360x640, 390x844, 360x640 at 200 %); the old screens keep every size", () => {
+    // The size set of the environment is not this test's subject: every size of the register is named here ("all").
     const named = (id: string) =>
-      sizesOf(SCREENS.find((s) => s.id === id) as Screen).map((s) => s.name);
+      sizesOf(SCREENS.find((s) => s.id === id) as Screen, "all").map((s) => s.name);
     expect(named("wishlist-empty")).toEqual(["360x640", "390x844", "360x640@200%"]);
     expect(named("friends-error")).toEqual(["360x640", "390x844", "360x640@200%"]);
     expect(named("collection-plants-empty")).toEqual(["360x640", "390x844", "360x640@200%"]);
     expect(named("collection-species-one")).toEqual(["360x640", "390x844", "360x640@200%"]);
     expect(named("friends-match")).toHaveLength(7);
-    expect(measurementsOf(SCREENS)).toBe(
+    expect(measurementsOf(SCREENS, "all")).toBe(
       SCREENS.reduce((n, s) => n + (s.sizes ? s.sizes.length : 7), 0),
     );
   });

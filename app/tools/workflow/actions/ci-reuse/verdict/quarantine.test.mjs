@@ -270,9 +270,10 @@ test("US-QG-06: make quarantine passes JOB and REASON raw through the environmen
   );
 });
 
-test("US-QG-06: the nightly report names each red job, its CI job and the ready command, and needs lighthouse", () => {
+test("US-QG-06: the nightly report names each red job, its CI job and the ready command, and needs lighthouse and nightly-a11y", () => {
   const nightly = readFileSync(path.join(REPO, ".github/workflows/nightly.yml"), "utf8");
-  assert.match(nightly, /needs: \[suite, e2e, lighthouse-signed, lighthouse\]/);
+  // US-QG-02 (issue 2666): nightly-a11y is a release blocker, so the report names it too; it has no CI job, so no quarantine applies.
+  assert.match(nightly, /needs: \[suite, e2e, lighthouse-signed, lighthouse, nightly-a11y\]/);
   assert.match(nightly, /make quarantine JOB=/);
   assert.doesNotMatch(nightly, /create-pull-request|git push/, "the nightly opens no pull request");
 });

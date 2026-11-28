@@ -507,8 +507,9 @@ describe("US-DEV-07 · PostgreSQL 18 in the stack", () => {
     const majors = texts.flatMap((text) =>
       [...text.matchAll(/postgres:(\d+)[.\d]*-alpine/g)].map((m) => m[1]),
     );
-    // 12 references: the two shard jobs of the UI gates became one job `ui-shard` with one PostgreSQL service (US-QG-01).
-    expect(majors).toHaveLength(12);
+    // 14 references: the two shard jobs of the UI gates became one job `ui-shard` with one PostgreSQL service (US-QG-01); the
+    // nightly jobs `nightly-a11y` and `nightly-a11y-report` each start one (US-QG-02).
+    expect(majors).toHaveLength(14);
     expect(new Set(majors)).toEqual(new Set(["18"]));
   });
 

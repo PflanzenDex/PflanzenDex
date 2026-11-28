@@ -100,25 +100,53 @@ export function parseShard(text: string): { index: number; total: number } {
 }
 
 /**
- * The screens of this run: all of them; the one that `only` names (ONE_SCREEN_ONLY, SCREEN of make one-screen, issue 1608);
- * or the screens of one shard `shard` ("i/n", ONE_SCREEN_SHARD and A11Y_ROUTES_SHARD, SHARD of make ui-gates, US-QG-01).
- * A partial run is no shard: both at once are refused.
+ * The screens that UI_SCREENS selects (US-QG-02, issue 2666): a comma list of screen ids, as the touched-screens mapper writes
+ * it for a pull request. Empty or unset means every screen. An id that the register does not name is refused.
  */
-export function screensOf(only: string, shard = ""): readonly Screen[] {
+export function idsFromEnv(value: string | undefined = process.env["UI_SCREENS"]): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id !== "");
+}
+
+/** The register narrowed to the ids of UI_SCREENS (all of them when none is selected); an unknown id throws. */
+export function selectedScreens(ids: readonly string[] = idsFromEnv()): readonly Screen[] {
+  if (ids.length === 0) return SCREENS;
+  const known = new Set(SCREENS.map((s) => s.id));
+  const unknown = ids.filter((id) => !known.has(id));
+  if (unknown.length > 0)
+    throw new Error(`one-screen: UI_SCREENS names unknown screens: ${unknown.join(", ")}`);
+  const wanted = new Set(ids);
+  return SCREENS.filter((screen) => wanted.has(screen.id));
+}
+
+/**
+ * The screens of this run: the selected ones (UI_SCREENS, all when none is selected); the one that `only` names (ONE_SCREEN_ONLY,
+ * SCREEN of make one-screen, issue 1608); or the screens of one shard `shard` ("i/n", ONE_SCREEN_SHARD and A11Y_ROUTES_SHARD, SHARD
+ * of make ui-gates, US-QG-01). The shards split the selected screens only, so a partial pull request runs its own shards. A
+ * partial run is no shard: both at once are refused. `ids` defaults to UI_SCREENS; the self-tests pass [] for every screen.
+ */
+export function screensOf(
+  only: string,
+  shard = "",
+  ids: readonly string[] = idsFromEnv(),
+): readonly Screen[] {
   if (only !== "" && shard !== "")
     throw new Error(
       "one-screen: SCREEN cannot be combined with SHARD: one screen is a partial run, not a shard of the gate",
     );
+  const base = selectedScreens(ids);
   if (shard !== "") {
     const { index, total } = parseShard(shard);
-    const plan = planShards(SCREENS, total);
-    return SCREENS.filter((screen) => plan.get(screen.id) === index);
+    const plan = planShards(base, total);
+    return base.filter((screen) => plan.get(screen.id) === index);
   }
-  if (only === "") return SCREENS;
-  const found = SCREENS.filter((screen) => screen.id === only);
+  if (only === "") return base;
+  const found = base.filter((screen) => screen.id === only);
   if (found.length === 0)
     throw new Error(
-      `one-screen: unknown screen "${only}", the valid ids are: ${SCREENS.map((s) => s.id).join(", ")}`,
+      `one-screen: unknown screen "${only}", the valid ids are: ${base.map((s) => s.id).join(", ")}`,
     );
   return found;
 }

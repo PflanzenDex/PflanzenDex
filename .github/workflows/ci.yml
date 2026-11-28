@@ -41,6 +41,9 @@ jobs:
       one-screen: ${{ steps.filter.outputs.one-screen }}
       docs: ${{ steps.filter.outputs.docs }}
       ui: ${{ steps.filter.outputs.ui }}
+      # US-QG-02 (issue 2666): the screens that the diff touches (empty: every screen) and the matrix of the job ui-shard.
+      ui-screens: ${{ steps.screens.outputs.ui-screens }}
+      ui-shards: ${{ steps.screens.outputs.ui-shards }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -82,6 +85,26 @@ jobs:
           else
             echo "ui=false" >> "$GITHUB_OUTPUT"
           fi
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      # US-QG-02 (issue 2666): the screens that the diff touches, by the touched-screens mapper (it reads the diff itself, git diff
+      # base HEAD). It prints ui-screens (empty: every screen), ui-shards (the matrix of ui-shard: one shard per 17 screens, at most
+      # five) and ui-count. No web, e2e or gate path: no screen and no shard. A workflow_dispatch run has no base: every screen.
+      - id: screens
+        env:
+          ONE_SCREEN: ${{ steps.filter.outputs.one-screen }}
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          base="$PUSH_BEFORE"
+          if [ "$EVENT" = "pull_request" ]; then base="$PR_BASE"; fi
+          if [ "$ONE_SCREEN" != "true" ]; then
+            { echo "ui-screens="; echo "ui-shards=[]"; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BASE="$base" make touched-screens >> "$GITHUB_OUTPUT"
 
   # US-QG-02 (issue 404): a title/body edit starts a run on an unchanged commit. A green `app-*`, `ds-snapshots`, `one-screen`,
   # `a11y-routes` or `lighthouse` job of that head commit is reused (issue 1184: the two gates were skipped on edits without
@@ -347,9 +370,15 @@ jobs:
   # QG-U8 (US-QS-15, DS-58, issues 1137 and 1854) and QG-U7 (FR-QG-24, issue 467): every view and layer fits the window from
   # 768 px to 1920x1080 and under the 1920 px width cap (one-screen; below 768 px only a list and Heute may scroll, and the
   # first screen shows the title, the first rows and the primary action), and axe and the keyboard walk pass over every view
-  # and layer (a11y-routes). Both are blocking from the first PR; known failures sit in the baselines (FR-QG-17). Read-only runs. They run
+  # and layer (a11y-routes). Both are blocking; known failures sit in the baselines (FR-QG-17). Read-only runs. They run
   # for PRs into `dev` and `main` when the UI, the e2e package or the gate files change (the `one-screen` output of `changes`),
   # and by hand.
+  # US-QG-02 (owner decision d-190, issue 2666): a pull request runs the gates for the screens that its diff touches only
+  # (`ui-screens` of `changes`, the touched-screens mapper; empty: every screen, as a dispatch runs), at the six fit and cap sizes:
+  # no 200 % text size (ONE_SCREEN_SIZES=gate). The blocking nightly run `nightly-a11y` (nightly.yml) measures every screen at the
+  # same sizes and `make conformance`; the warning run `nightly-a11y-report` measures 200 % text, forced colors and reduced motion
+  # and never fails. The shard count follows the touched screens: `ui-shards` is the matrix, one shard per 17 screens, at most five;
+  # a pull request with no touched screen has no shard (`ui-shards` is `[]`, the job is skipped).
   # US-QG-01 (owner decision 2026-11-07): one job per shard runs both gates for the screens of its shard, so the stack (Postgres,
   # Keycloak, migrations, the pinned browser image, demo seed) starts once per shard instead of once per gate. The screens are split by measured
   # weight (app/packages/e2e/support/display/one-screen/register.weights.json, `make ui-gates SHARD=<i>/5`): every screen runs in
@@ -363,7 +392,7 @@ jobs:
   ui-shard:
     needs: [changes, reuse]
     if: >-
-      !cancelled() && needs.changes.result == 'success'
+      !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.ui-shards != '[]'
       && (github.event_name == 'workflow_dispatch'
       || (github.event_name == 'pull_request' && needs.changes.outputs.one-screen == 'true'
       && needs.reuse.outputs.superseded != 'true'
@@ -371,7 +400,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5]
+        shard: ${{ fromJSON(needs.changes.outputs.ui-shards) }}
     name: ui shard ${{ matrix.shard }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -397,7 +426,13 @@ jobs:
       - uses: ./.github/actions/setup-app
       # US-QG-01 (issue 2429): the browser of the UI gates runs in the pinned Playwright container, which `make ui-gates` pulls
       # next to the seed (gate-browser-image). No host Chromium and no apt packages are installed for this job.
-      - run: make ui-gates SHARD=${{ matrix.shard }}/${{ strategy.job-total }} -j3 -Otarget
+      # US-QG-02 (issue 2666): the screens are the touched ones (`ui-screens`, empty: every screen) and the sizes are the gate sizes
+      # (ONE_SCREEN_SIZES=gate: the six fit and cap sizes, no 200 % text size on a pull request). The shards split the same screens.
+      - name: UI gates of the shard
+        env:
+          UI_SCREENS: ${{ needs.changes.outputs.ui-screens }}
+          ONE_SCREEN_SIZES: gate
+        run: make ui-gates SHARD=${{ matrix.shard }}/${{ strategy.job-total }} -j3 -Otarget
       - name: Output of the background auth-up
         if: always()
         run: cat "$RUNNER_TEMP/pflanzendex-auth-up-background.log" || echo "no background auth-up log"
@@ -504,6 +539,10 @@ jobs:
         id: merge-one-screen
         if: always() && needs.ui-shard.result != 'skipped'
         continue-on-error: ${{ steps.quarantine.outputs.ui == 'true' }}
+        # US-QG-02 (issue 2666): the same selection and sizes as the shards, so the proof covers the screens the shards ran.
+        env:
+          UI_SCREENS: ${{ needs.changes.outputs.ui-screens }}
+          ONE_SCREEN_SIZES: gate
         run: make one-screen-merge
       - name: One-screen ratio table per screen and size
         if: always() && needs.ui-shard.result != 'skipped'
@@ -529,6 +568,8 @@ jobs:
         id: merge-a11y-routes
         if: always() && needs.ui-shard.result != 'skipped'
         continue-on-error: ${{ steps.quarantine.outputs.ui == 'true' }}
+        env:
+          UI_SCREENS: ${{ needs.changes.outputs.ui-screens }}
         run: make a11y-routes-merge
       - name: Findings per rule and screen
         if: always() && needs.ui-shard.result != 'skipped'

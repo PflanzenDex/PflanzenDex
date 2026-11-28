@@ -3,7 +3,9 @@ import { WEB, test } from "../../../support/display/one-screen/sign-in";
 import { readBaseline, saveResults } from "../../../support/display/reporter";
 import { openScreen } from "../../../support/display/one-screen/fit";
 import { applyFail, applyReply, checkExpect } from "../../../support/display/one-screen/fit.expect";
-import { SCREENS, screensOf } from "../../../support/display/one-screen/register";
+import { SCREENS, idsFromEnv, screensOf } from "../../../support/display/one-screen/register";
+import { sizesOf } from "../../../support/display/one-screen/register.check";
+import { activeSizeSet } from "../../../support/display/selection/size-set";
 import {
   SIZES,
   evaluate,
@@ -43,12 +45,19 @@ if (ONLY && (WRITE || SHARD))
   throw new Error("one-screen: SCREEN is a partial run: no baseline write, no shard");
 if (SHARD && WRITE) throw new Error("one-screen: SHARD is a partial run: no baseline write");
 const SELECTED = screensOf(ONLY, SHARD);
+// US-QG-02 (issue 2666): a write needs the whole register at every size: a partial size set or selection never writes.
+const SIZE_SET = activeSizeSet();
+if (WRITE && (SIZE_SET !== "all" || idsFromEnv().length > 0))
+  throw new Error(`one-screen: a partial run (ONE_SCREEN_SIZES=${SIZE_SET}): no baseline write`);
 
 test.describe.configure({ mode: "parallel", timeout: 150_000 });
 
 test.describe("US-QS-15 every screen fits the window (QG-U8)", () => {
   for (const screen of SELECTED) {
+    const none = sizesOf(screen).length === 0;
     test(`US-QS-15 one screen: ${screen.id}`, async ({ browser, states }) => {
+      // No size of the set applies to this screen: nothing is measured and no results file is written (US-QG-02).
+      test.skip(none, `${screen.id}: ONE_SCREEN_SIZES=${SIZE_SET} names none of its sizes`);
       const storageState = await states(screen.account);
       const context = await browser.newContext({
         locale: "de-DE",

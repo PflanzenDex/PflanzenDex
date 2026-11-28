@@ -8,6 +8,16 @@ Covers US-DEV-06 (release process), E-13 (branch model) and E-14 (every deploy i
 2. On `main`, after a green CI, semantic-release derives the next SemVer from the Conventional Commits and creates the tag `vX.Y.Z` and the GitHub release. It does not commit back (PR #195), so there is no version commit to merge back.
 3. Nothing deploys automatically. The release only produces the tag.
 
+## Accessibility before a release (US-QG-02, issue 2666)
+
+A release needs a green `nightly-a11y` on the `dev` head that it merges. The blocking nightly runs every screen of the register at the six fit and cap sizes, plus the component conformance run. The release workflow (`release.yml`) and `make release` run `make nightly-a11y-check` first; it reads the last commit status `nightly-a11y` of the dev head (the second parent of the release merge commit) and refuses when that status is red, pending or missing.
+
+1. Dispatch the nightly on `dev` and wait for it: `gh workflow run nightly.yml --ref dev`. The job `nightly-a11y` sets the status on the head it tested, so a run on any other head does not count.
+2. Check the head before the release pull request merges: `node app/tools/workflow/a11y-nightly/release-check.mjs <dev head sha>` (the sha is checked for its form; the output names the state). Red: fix the finding on `dev`, then dispatch again. Missing or pending: dispatch again and wait.
+3. The warning run `nightly-a11y-report` never blocks a release. Its counts (200 % text, forced colors, reduced motion) go to the rolling issue labelled `a11y-nightly`; read them, and record new findings in the baseline work of their own issue.
+
+Hotfix: a hotfix merge into `main` has one parent, so `release-check` prints that it has no release merge to compare and passes without a status. The pull request of the hotfix names this in its description; the owner decides whether the fix needs a nightly run on the `dev` head it came from first.
+
 ## Where the version comes from
 
 There is one source: the git tag. No version is written into versioned files.

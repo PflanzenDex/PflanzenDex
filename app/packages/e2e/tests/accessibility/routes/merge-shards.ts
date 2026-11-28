@@ -9,9 +9,10 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { SCREENS } from "../../../support/display/one-screen/register";
+import { selectedScreens } from "../../../support/display/one-screen/register";
 import { sizesOf } from "../../../support/display/one-screen/register.check";
-import { SIZES, type Result as OneScreenResult } from "../../../support/display/one-screen/judge";
+import { type Result as OneScreenResult } from "../../../support/display/one-screen/judge";
+import { activeSizeSet, sizesIn } from "../../../support/display/selection/size-set";
 import { A11Y_SIZES, type Result as A11yResult } from "../../../support/display/a11y/findings";
 import {
   REPORT_DIR as ONE_SCREEN_DIR,
@@ -111,7 +112,8 @@ const GATES = new Map<string, Gate>([
     {
       dir: ONE_SCREEN_DIR,
       report: "one-screen-report",
-      sizes: SIZES.map((s) => s.name),
+      // The sizes of this run (ONE_SCREEN_SIZES, US-QG-02 issue 2666): every size unless the set names another.
+      sizes: sizesIn(activeSizeSet()).map((s) => s.name),
       markdown: (rows) => oneScreenMarkdown(rows as OneScreenResult[], oneScreenBaseline()),
     },
   ],
@@ -145,17 +147,15 @@ export function mergeGate(gate: string, shardsDir: string): number {
   const measured = shards.flatMap((shard) => shard.rows);
   for (const shard of shards)
     console.log(`${gate}: ${shard.file}: ${shard.rows.length} measurements`);
-  const screens = SCREENS.map((s) => s.id);
+  // The screens of this run: all of them, or the ones that UI_SCREENS selects (a pull request's own set, US-QG-02 issue 2666).
+  const selected = selectedScreens();
+  const screens = selected.map((s) => s.id);
   const own = (id: string) => {
-    const screen = SCREENS.find((s) => s.id === id);
+    const screen = selected.find((s) => s.id === id);
     return screen ? sizesOf(screen).map((z) => z.name) : spec.sizes;
   };
-  const problems = coverageProblems(
-    measured,
-    screens,
-    spec.sizes,
-    gate === "one-screen" ? own : undefined,
-  );
+  const sizesFor = gate === "one-screen" ? own : () => spec.sizes;
+  const problems = coverageProblems(measured, screens, spec.sizes, sizesFor);
   mkdirSync(spec.dir, { recursive: true });
   writeFileSync(new URL("results.json", spec.dir), JSON.stringify(measured));
   const shift = gate === "one-screen" ? shiftShardRows(shardsDir) : [];
@@ -169,7 +169,7 @@ export function mergeGate(gate: string, shardsDir: string): number {
     console.error(
       `${gate}: layout shift: ${shiftExpected - shift.length} loads not measured (reported, not blocking)`,
     );
-  const expected = screens.length * spec.sizes.length;
+  const expected = screens.reduce((n, id) => n + sizesFor(id).length, 0);
   console.log(`${gate}: ${shards.length} shards, ${measured.length} of ${expected} measurements`);
   for (const problem of problems) console.error(`${gate}: ${problem}`);
   if (problems.length > 0) return 1;

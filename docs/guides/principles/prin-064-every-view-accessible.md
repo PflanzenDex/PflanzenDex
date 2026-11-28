@@ -19,7 +19,7 @@ Per registered screen at 390x844 and 1920x1080: axe violations of WCAG 2.2 A and
 
 ## Gate
 
-`make a11y-routes` in the shard jobs `ui-shard` of `.github/workflows/ci.yml` (`make ui-gates`, one job per shard with the one-screen gate), merged by the job `results`, which runs for pull requests into `dev` and `main` when the one-screen paths change; `ci-status` requires the job, and a skipped run counts as green.
+Three tiers (US-QG-02, issue 2666). A pull request runs `make a11y-routes` in the job `ui-shard` of `.github/workflows/ci.yml` for the screens that its diff touches only (`touched-screens.ts`); a change to shared UI, the tokens or the frame touches every screen. The blocking nightly run `nightly-a11y` (`.github/workflows/nightly.yml`) runs every screen and sets the commit status `nightly-a11y` on the `dev` head it tested; `make release` refuses a release unless that status is green (`make nightly-a11y-check`). The warning run `nightly-a11y-report` runs the walk under forced colors and under reduced motion and never fails; its counts go to the rolling issue `a11y-nightly`. The job `results` merges the shards of a pull request run; `ci-status` requires the job, and a skipped run counts as green.
 
 ## Evidence
 

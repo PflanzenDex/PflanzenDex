@@ -23,7 +23,7 @@ The layout shift of a cold load (US-QS-14, DS-52, issue 1697) is measured in the
 
 ## Gate
 
-`make one-screen` in the shard jobs `ui-shard` of `.github/workflows/ci.yml` (`make ui-gates`, one job per shard with the a11y-routes gate), merged by the job `results`, which runs for pull requests into `dev` and `main` when the UI, the e2e package, the demo seed or the gate files change; `ci-status` requires the job, and a skipped run counts as green.
+Three tiers (US-QG-02, issue 2666). A pull request runs `make one-screen` in the job `ui-shard` of `.github/workflows/ci.yml` for the screens that its diff touches only, at the six fit and cap sizes (`ONE_SCREEN_SIZES=gate`; the 200 % text size is not measured there). The blocking nightly run `nightly-a11y` measures every screen at the same six sizes and sets the commit status that `make release` checks. The warning run `nightly-a11y-report` measures 200 % text (`ONE_SCREEN_SIZES=text200`) and never fails; its counts go to the rolling issue `a11y-nightly`. The job `results` merges the shards of a pull request run (every touched screen and size measured once); `ci-status` requires the job, and a skipped run counts as green.
 
 ## Evidence
 

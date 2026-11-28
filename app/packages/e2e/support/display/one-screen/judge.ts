@@ -16,7 +16,11 @@ export type {
   Spot,
 } from "./judge.types";
 
-/** Owner decision 2026-11-02 (issue 1160): phones, tablets, FullHD; 2560 checks the width cap; 200 % text on a phone. */
+/**
+ * Owner decision 2026-11-02 (issue 1160): phones, tablets, FullHD; 2560 checks the width cap; 200 % text on a phone.
+ * US-QG-02 (owner decision d-190, issue 2666): the 200 % text size is measured by the warning run nightly-a11y-report, not on pull
+ * requests and not by the blocking nightly-a11y (ONE_SCREEN_SIZES, selection/size-set.ts).
+ */
 export const SIZES: readonly Size[] = [
   { name: "360x640", width: 360, height: 640, kind: "fit" },
   { name: "390x844", width: 390, height: 844, kind: "fit" },

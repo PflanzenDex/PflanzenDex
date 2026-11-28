@@ -1,4 +1,5 @@
 import { SIZES, type Size } from "./judge";
+import { activeSizeSet, sizesIn, type SizeSet } from "../selection/size-set";
 import type { Kind, Screen, State } from "./register.types";
 
 // The checks of the screen register (US-QS-15, QG-U8; issue 2431): which states a family of a kind needs, what is wrong with the
@@ -85,13 +86,17 @@ export function registerProblems(screens: readonly Screen[]): string[] {
   ];
 }
 
-/** The sizes an entry is measured at: its own `sizes` by name, or every size of SIZES. */
-export function sizesOf(screen: Screen): readonly Size[] {
-  if (screen.sizes === undefined) return SIZES;
-  return SIZES.filter((s) => screen.sizes?.includes(s.name));
+/**
+ * The sizes an entry is measured at: its own `sizes` by name, or every size of SIZES, then the size set of the run
+ * (ONE_SCREEN_SIZES, US-QG-02 issue 2666; `all` unless the environment names another). An entry with no size left is not measured.
+ */
+export function sizesOf(screen: Screen, set: SizeSet = activeSizeSet()): readonly Size[] {
+  const own =
+    screen.sizes === undefined ? SIZES : SIZES.filter((s) => screen.sizes?.includes(s.name));
+  return sizesIn(set, own);
 }
 
 /** How many measurements a full run makes: every screen at each of its sizes (the reporter's check of a complete run). */
-export function measurementsOf(screens: readonly Screen[]): number {
-  return screens.reduce((n, s) => n + sizesOf(s).length, 0);
+export function measurementsOf(screens: readonly Screen[], set: SizeSet = activeSizeSet()): number {
+  return screens.reduce((n, s) => n + sizesOf(s, set).length, 0);
 }

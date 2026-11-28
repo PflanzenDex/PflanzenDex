@@ -35,7 +35,7 @@ AUTH_DIR := $(dir $(abspath $(shell git rev-parse --git-common-dir)))$(APP)/conf
 AUTH_COMPOSE := docker compose -f $(AUTH_DIR)/compose.yaml --env-file $(AUTH_DIR)/.env
 
 .DEFAULT_GOAL := help
-.PHONY: device-check device-check-filters help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-prune db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan docker-check audit release release-dry-run news-release skills-check reference-check components-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers gate-browser-image conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes squawk unused-report storybook build-storybook sb-docs sb-test ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan gate-log gate-allow project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui
+.PHONY: device-check device-check-filters help setup dev lint format typecheck test coverage gates ci ci-gates ci-docs ci-tests ci-tests-base ci-tests-db ci-tests-core ci-tests-tools ci-tests-web ci-tests-web-merge ci-coverage ci-ui worktree claim board issue issue-check issue-sync status-check retro ci-reuse ci-wait merge auto-merge gate-review migration clean clean-ports auth-up-background repo-stats pr db-up ci-db-tune db-down db-prune db-reset db-seed pokedex-build migrate auth-up auth-down start stop deploy backup restore-test hooks commitlint secrets workflows image-scan docker-check audit release release-dry-run news-release skills-check reference-check components-check principles-review spec-check docs-check release-tags-check changelog-check lighthouse lighthouse-signed perf-nightly browsers gate-browser-image conformance e2e e2e-origin one-screen one-screen-report a11y-routes a11y-routes-report crap duplicates dup layout layout-baseline layout-fix db-indexes squawk unused-report storybook build-storybook sb-docs sb-test ds-snapshots ds-snapshots-check bundle-report health-report playwright-version one-screen-merge a11y-routes-merge ui-gates ui-gates-seed ui-weights pr-state issue-read pr-text issue-comment owner-merge-label gate-plan gate-log gate-allow project-status run-jobs conflicts test-files format-check board-item heavy-lock heavy quarantine ci-quarantine ci-quarantine-ui nightly-a11y-check touched-screens a11y-warning-report
 
 # Pull request and issue reads and writes over REST (US-DEV-13): plain targets, so the permission rules can allow them without
 # `gh api`, which stays out of the allow list. Code: app/tools/workflow/actions/issue/rest-cli.mjs.
@@ -76,6 +76,12 @@ export RAW_VERSION := $(value VERSION)
 export RAW_RUN := $(value RUN)
 # SCREEN=<id> of `make one-screen` reaches the e2e spec as ONE_SCREEN_ONLY, raw like the REST_ values (issue 1608).
 export ONE_SCREEN_ONLY := $(value SCREEN)
+# UI_SCREENS, ONE_SCREEN_SIZES and A11Y_ROUTES_MEDIA (US-QG-02, issue 2666) are read by the specs from the environment: CI sets them on
+# the steps, a developer on the command line. Unexported, they reach their recipes raw as RAW_*, so no value is expanded by make.
+unexport UI_SCREENS ONE_SCREEN_SIZES A11Y_ROUTES_MEDIA
+export RAW_UI_SCREENS := $(value UI_SCREENS)
+export RAW_ONE_SCREEN_SIZES := $(value ONE_SCREEN_SIZES)
+export RAW_A11Y_ROUTES_MEDIA := $(value A11Y_ROUTES_MEDIA)
 # FRESH=1 reaches `npm run gates` as an environment variable (issue 1608). Unset, it stays unset: an exported empty FRESH
 # would count as set and never let a green result skip a run. Given (FRESH= too), it reaches the environment as typed, which
 # counts as set and runs every step: the safe side. `override export` exports the raw value (issue 1636): a plain assignment
@@ -310,25 +316,25 @@ endif
 e2e: heavy-lock $(if $(CI),,db-up) auth-up e2e-origin migrate browsers ## End-to-end tests with Playwright, mobile + desktop, axe blocks on serious/critical (QG-T3, QG-U1; needs Docker)
 	cd $(APP) && npm run e2e
 
-one-screen: heavy-lock $(if $(and $(value SCREEN),$(value SHARD),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with SHARD: one screen is a partial run, not a shard of the gate)) $(if $(and $(value SCREEN),$(filter 1,$(value ONE_SCREEN_WRITE)),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with ONE_SCREEN_WRITE=1: a partial run never rewrites the baseline)) $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ## Every view and layer keeps its frame at every size (QG-U8, US-QS-15, DS-58, issue 2417): the page never scrolls and only elements marked `data-scroll-region` scroll; the title and the primary action stay in the window at load and while a region scrolls; sideways scroll only inside an element marked `data-scroll-x` (table, cards, chips, tabs; row at 200 % text); no Pager at any size; 1920 px width cap at 2560; seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164; local runs reset the taxon tree to the fixture CI uses, issue 2488); ONE_SCREEN_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), SCREEN=<id> measures one screen only (issue 1608; refused with SHARD or ONE_SCREEN_WRITE=1, before anything starts), `npm run one-screen:write` rewrites the baseline; the browser runs in the pinned Playwright container (US-QG-01, issue 2429; `UI_GATES_HOST=1` runs the host Chromium: informational, not the gate); needs Docker
+one-screen: heavy-lock $(if $(and $(value SCREEN),$(value SHARD),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with SHARD: one screen is a partial run, not a shard of the gate)) $(if $(and $(value SCREEN),$(filter 1,$(value ONE_SCREEN_WRITE)),$(filter one-screen,$(MAKECMDGOALS))),$(error one-screen: SCREEN cannot be combined with ONE_SCREEN_WRITE=1: a partial run never rewrites the baseline)) $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ## Every view and layer keeps its frame at every size (QG-U8, US-QS-15, DS-58, issue 2417): the page never scrolls and only elements marked `data-scroll-region` scroll; the title and the primary action stay in the window at load and while a region scrolls; sideways scroll only inside an element marked `data-scroll-x` (table, cards, chips, tabs; row at 200 % text); no Pager at any size; 1920 px width cap at 2560; seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out (the states seed brings a Pokédex tree fixture, issue 1164; local runs reset the taxon tree to the fixture CI uses, issue 2488); UI_SCREENS=<ids> measures the selected screens only (US-QG-02, issue 2666; empty: every screen), ONE_SCREEN_SIZES=all|gate|text200 measures the sizes of that set (default all; a write refuses any other set), ONE_SCREEN_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), SCREEN=<id> measures one screen only (issue 1608; refused with SHARD or ONE_SCREEN_WRITE=1, before anything starts), `npm run one-screen:write` rewrites the baseline; the browser runs in the pinned Playwright container (US-QG-01, issue 2429; `UI_GATES_HOST=1` runs the host Chromium: informational, not the gate); needs Docker
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states DEMO_TAXON_FIXTURE=$(if $(CI),,reset) npm run seed:demo -w @pflanzendex/api
-	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" npm run one-screen
+	cd $(APP) && TAXONOMY_BUILD=off UI_SCREENS="$$RAW_UI_SCREENS" ONE_SCREEN_SIZES="$$RAW_ONE_SCREEN_SIZES" ONE_SCREEN_SHARD="$$RAW_SHARD" npm run one-screen
 
 one-screen-report: ## The page/inner table of the last `make one-screen` run as Markdown (job summary); report only, never fails (QG-U8)
 	@cat $(APP)/packages/e2e/one-screen-report/report.md 2>/dev/null || echo "No one-screen report: run make one-screen first."
 
 one-screen-merge: ## CI only: merges the shard reports of one-screen (app/packages/e2e/one-screen-shards) into the report of the whole run; fails unless every screen and size was measured exactly once (US-QG-01)
-	cd $(APP) && npm run --silent merge-shards -w @pflanzendex/e2e -- one-screen one-screen-shards
+	cd $(APP) && UI_SCREENS="$$RAW_UI_SCREENS" ONE_SCREEN_SIZES="$$RAW_ONE_SCREEN_SIZES" npm run --silent merge-shards -w @pflanzendex/e2e -- one-screen one-screen-shards
 
-a11y-routes: heavy-lock $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ## axe and keyboard walk over every view and layer at 390x844 and 1920x1080 (QG-U7, FR-QG-24); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out; local runs reset the taxon tree to the fixture CI uses, issue 2488; A11Y_ROUTES_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), `npm run a11y-routes:write` rewrites the baseline, `npm run a11y-routes:baseline -- <results.json>` builds it from a CI artifact; the browser runs in the pinned Playwright container (US-QG-01, issue 2429; `UI_GATES_HOST=1` runs the host Chromium: informational, not the gate); needs Docker
+a11y-routes: heavy-lock $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ## axe and keyboard walk over every view and layer at 390x844 and 1920x1080 (QG-U7, FR-QG-24); seeds the demo (DEMO_SEED_PROFILE=states); TAXONOMY_BUILD=off keeps foreign servers out; local runs reset the taxon tree to the fixture CI uses, issue 2488; UI_SCREENS=<ids> measures the selected screens only (US-QG-02, issue 2666; empty: every screen), A11Y_ROUTES_MEDIA=forced-colors|reduced-motion runs the warning run (its findings are recorded, never compared with the baseline, never written), A11Y_ROUTES_WORKERS=<n>, SHARD=<i>/<n> runs the screens of shard i of n (the split of the register, US-QG-01), `npm run a11y-routes:write` rewrites the baseline, `npm run a11y-routes:baseline -- <results.json>` builds it from a CI artifact; the browser runs in the pinned Playwright container (US-QG-01, issue 2429; `UI_GATES_HOST=1` runs the host Chromium: informational, not the gate); needs Docker
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states DEMO_TAXON_FIXTURE=$(if $(CI),,reset) npm run seed:demo -w @pflanzendex/api
-	cd $(APP) && TAXONOMY_BUILD=off A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run a11y-routes
+	cd $(APP) && TAXONOMY_BUILD=off UI_SCREENS="$$RAW_UI_SCREENS" A11Y_ROUTES_MEDIA="$$RAW_A11Y_ROUTES_MEDIA" A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run a11y-routes
 
 ui-gates-seed: $(if $(CI),,db-up) auth-up migrate ## CI only (US-QG-02, issue 1698): seeds the demo for make ui-gates (DEMO_SEED_PROFILE=states); a prerequisite of ui-gates, so with -j it runs while the pinned browser image is pulled (the host browsers install with UI_GATES_HOST=1); needs Keycloak and a migrated database
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states npm run seed:demo -w @pflanzendex/api
 
-ui-gates: heavy-lock $(if $(and $(value SCREEN),$(filter ui-gates,$(MAKECMDGOALS))),$(error ui-gates: SCREEN measures one screen, use make one-screen SCREEN=<id>; the gates of CI run the screens of one shard, SHARD=<i>/<n>)) $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ui-gates-seed ## CI only (US-QG-01): both UI gates in one Playwright run over the screens of SHARD=<i>/<n>, the split of the register (one server start, the workers shared by both gates, issue 1698); the demo is seeded once, by its prerequisite ui-gates-seed while the browser image is pulled (issue 2429; the host browsers install with UI_GATES_HOST=1); every test of both gates runs even when one-screen tests fail, so a11y-routes is still judged; UI_GATES_WORKERS=<n> (default 6); exit 1 when a test of either gate failed; needs Docker
-	cd $(APP) && TAXONOMY_BUILD=off ONE_SCREEN_SHARD="$$RAW_SHARD" A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run ui-gates
+ui-gates: heavy-lock $(if $(and $(value SCREEN),$(filter ui-gates,$(MAKECMDGOALS))),$(error ui-gates: SCREEN measures one screen, use make one-screen SCREEN=<id>; the gates of CI run the screens of one shard, SHARD=<i>/<n>)) $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ui-gates-seed ## CI only (US-QG-01): both UI gates in one Playwright run over the screens of SHARD=<i>/<n>, the split of the register (one server start, the workers shared by both gates, issue 1698); the demo is seeded once, by its prerequisite ui-gates-seed while the browser image is pulled (issue 2429; the host browsers install with UI_GATES_HOST=1); every test of both gates runs even when one-screen tests fail, so a11y-routes is still judged; UI_SCREENS=<ids> (the touched screens of a pull request, empty: every screen) and ONE_SCREEN_SIZES=all|gate|text200 (US-QG-02, issue 2666) select what runs; UI_GATES_WORKERS=<n> (default 6); exit 1 when a test of either gate failed; needs Docker
+	cd $(APP) && TAXONOMY_BUILD=off UI_SCREENS="$$RAW_UI_SCREENS" ONE_SCREEN_SIZES="$$RAW_ONE_SCREEN_SIZES" ONE_SCREEN_SHARD="$$RAW_SHARD" A11Y_ROUTES_SHARD="$$RAW_SHARD" npm run ui-gates
 
 # device-check (US-DEV-01, issue 2504): the parametrized device check for people and agents, not a CI gate. SCREEN, FLOW, DEVICE,
 # THEME, TEXT and FORCED reach the tool raw, like ONE_SCREEN_ONLY (issue 1608), so no value passes through make's expansion.
@@ -343,7 +349,7 @@ export DEVICE_CHECK_FORCED := $(value FORCED)
 device-check-filters: ## Refuses an unknown SCREEN, FLOW, DEVICE, THEME, TEXT or FORCED value before anything starts (US-DEV-01, issue 2504)
 	cd $(APP) && npm run --silent device-check:check -w @pflanzendex/e2e
 
-device-check: device-check-filters heavy-lock $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ## Parametrized device check (US-DEV-01, issue 2504): SCREEN=<id>[,…] and/or FLOW=<name>[,…]; DEVICE=iphone16,oneplus15r,large,phone (default the three emulated), THEME=light,dark and TEXT=100,200 (default both), FORCED=1 for forced colors; writes packages/e2e/device-check-report/<timestamp>/ (summary.md, summary.json, screenshots); exit 1 when a check fails; needs Docker
+device-check: device-check-filters heavy-lock $(if $(CI),,db-up) auth-up e2e-origin migrate $(if $(UI_GATES_HOST),browsers,gate-browser-image) ## Parametrized device check (US-DEV-01, issue 2504): SCREEN=<id>[,…] and/or FLOW=<name>[,…]; DEVICE=iphone16,oneplus15r,large,phone (default the three emulated), THEME=light,dark (default both) and TEXT=100,200 (default 100 only since d-190; TEXT=200 stays selectable), FORCED=1 for forced colors; writes packages/e2e/device-check-report/<timestamp>/ (summary.md, summary.json, screenshots); exit 1 when a check fails; needs Docker
 	cd $(APP) && PFLANZENDEX_ENV=local DEMO_SEED_PROFILE=states DEMO_TAXON_FIXTURE=$(if $(CI),,reset) npm run seed:demo -w @pflanzendex/api
 	cd $(APP) && TAXONOMY_BUILD=off npm run device-check -w @pflanzendex/e2e
 
@@ -351,7 +357,7 @@ a11y-routes-report: ## The findings per rule and per screen of the last `make a1
 	@cat $(APP)/packages/e2e/a11y-routes-report/report.md 2>/dev/null || echo "No a11y-routes report: run make a11y-routes first."
 
 a11y-routes-merge: ## CI only: merges the shard reports of a11y-routes (app/packages/e2e/a11y-routes-shards) into the report of the whole run; fails unless every screen and size was measured exactly once (US-QG-01)
-	cd $(APP) && npm run --silent merge-shards -w @pflanzendex/e2e -- a11y-routes a11y-routes-shards
+	cd $(APP) && UI_SCREENS="$$RAW_UI_SCREENS" npm run --silent merge-shards -w @pflanzendex/e2e -- a11y-routes a11y-routes-shards
 
 ui-weights: ## Rewrites the shard weights of the UI gates (register.weights.json) as the median seconds per screen and gate of the CI runs RUNS="<id> <id> <id>" (at least 3), read from the logs of their shard jobs; needs gh (US-QG-01, issue 1667)
 	node tools/measure/ui-weights.mjs $$RAW_RUNS
@@ -545,8 +551,18 @@ ci-coverage: ## Part 2c: coverage ratchet and CRAP check over the coverage of al
 ci-ui: ## Part 3 of `make ci`: build, initial JS budget and the blocking conformance run (needs `make browsers`)
 	cd $(APP) && npm run ci:ui
 
-release: ## Version, tag and GitHub release from the commits (CI on main only, US-DEV-06)
+nightly-a11y-check: ## Release check (US-QG-02, issue 2666): the last commit status nightly-a11y of the dev head (the second parent of HEAD) must be green; red, pending or missing refuses; a hotfix (one parent) passes with a note (needs gh; CI: GH_TOKEN)
+	node $(APP)/tools/workflow/a11y-nightly/release-check.mjs
+
+touched-screens: ## CI only (US-QG-02, issue 2666): the screens that the diff since BASE (a commit id; empty: every screen) touches, as the output lines ui-screens, ui-shards and ui-count of the job changes (BASE from the environment; no make expansion of it)
+	@node $(APP)/packages/e2e/support/display/selection/touched-screens.ts "$$BASE"
+
+a11y-warning-report: ## CI only (US-QG-02, issue 2666): the rolling issue a11y-nightly gets the counts of the warning tier (WARN_DIR: the three results files; RUN_URL: the link of the run; GH_TOKEN and GH_REPO); report only, never fails the job
+	@node $(APP)/tools/workflow/a11y-nightly/report.mjs publish
+
+release: ## Version, tag and GitHub release from the commits (CI on main only, US-DEV-06); first refuses unless the last nightly-a11y of the dev head is green (US-QG-02, issue 2666)
 	@test -n "$(CI)" || { echo "release only runs in CI; locally use: make release-dry-run" >&2; exit 2; }
+	$(MAKE) nightly-a11y-check
 	cd $(APP) && npx --no-install semantic-release
 
 release-dry-run: ## Show the next version and notes without publishing (BRANCH=dev)
