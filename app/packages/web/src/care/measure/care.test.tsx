@@ -7,6 +7,7 @@ import { renderToString as render } from "react-dom/server";
 import { ToastProvider } from "../../shared/patterns/states/toast/toast-provider/toast-provider";
 import { localToday, type MeasurementView, type MeasurementRow } from "@pflanzendex/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
 import { measurementSchema, toMeasurementInput } from "../shared/schemas";
 import { MeasurementFacts, MeasurementHeader } from "./measurement-header/measurement-header";
 import { MeasureForm } from "./measure-form/measure-form";
@@ -293,7 +294,8 @@ describe("US-WAC-01 Ansicht „Messen“", () => {
         />
       </MemoryRouter>,
     );
-    expect(list).toContain("12,5\u00a0cm · 03.10.2026");
+    // The title is split in parts that stay whole (US-QS-15): the text reads the same without the tags.
+    expect(plain(list.replace(/<[^>]+>/g, ""))).toContain("12,5 cm · 03.10.2026");
     expect(list).toContain("Gesund");
     expect(list).toContain("nach dem Umtopfen");
   });

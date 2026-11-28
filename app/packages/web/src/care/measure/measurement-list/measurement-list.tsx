@@ -1,6 +1,7 @@
 import type { MeasurementRow } from "@pflanzendex/core";
 import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { texts } from "@/shared/lib/text-rules/texts";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import { MeasurementPhoto } from "../measurement-header/measurement-photo";
 import { PhotoAction } from "../measurement-header/photo-action";
 import { CARD_CLASSES } from "../../shared/notices/notices";
@@ -39,7 +40,7 @@ export function MeasurementList(props: {
         renderItem={(m, i) => (
           <div className={CARD_CLASSES}>
             <h3 className="font-semibold">
-              {valueText(m.value)} · {dateText(m.date)}
+              {metaParts(`${valueText(m.value)} · ${dateText(m.date)}`)}
             </h3>
             <p className="text-muted-foreground">{QUALITY_NAME[m.quality]}</p>
             {props.records?.has(m.id) && <p className="text-sm">{t("record")}</p>}

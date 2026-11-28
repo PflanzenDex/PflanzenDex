@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import type { MeasurementRow } from "@pflanzendex/core";
 import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { cn } from "@/shared/lib/utils";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadMeasurementView } from "../../shared/api/measurements-api";
 import { MeasurementPhoto } from "../../measure/measurement-header/measurement-photo";
@@ -25,7 +26,7 @@ function Entry(props: {
   return (
     <div className={cn(CARD_CLASSES, "grid gap-1")}>
       <p className="font-semibold">
-        {valueText(row.value)} · {dateText(row.date)}
+        {metaParts(`${valueText(row.value)} · ${dateText(row.date)}`)}
       </p>
       <p className="text-muted-foreground">{QUALITY_NAME[row.quality]}</p>
       {row.note ? <p className="text-muted-foreground">{row.note}</p> : null}

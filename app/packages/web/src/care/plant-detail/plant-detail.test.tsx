@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { GrowthTrend, MeasurementRow, MeasurementView, PhasesRow } from "@pflanzendex/core";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button.roles";
 import { LayerScope } from "@/shared/ui/layer-scope";
@@ -149,7 +150,7 @@ describe("US-QS-23 Verlauf", () => {
       within(list)
         .getAllByText(/\d\d\.10\.2026/)
         .slice(0, 4)
-        .map((e) => e.textContent?.replaceAll("\u00a0", " ")),
+        .map((e) => plain(e.parentElement?.textContent)),
     ).toEqual([
       "17 cm · 07.10.2026",
       "16 cm · 06.10.2026",
@@ -159,6 +160,22 @@ describe("US-QS-23 Verlauf", () => {
     expect(screen.queryByText(/^Seite \d+ von \d+$/)).toBeNull();
     expect(screen.queryByRole("button", { name: /^(Zurück|Weiter)$/ })).toBeNull();
     expect(screen.getByTestId("address").textContent).toBe("");
+  });
+
+  it("US-QS-15 SG-TYPE-05 at 360 px the value and the date of an entry are one part each, so the date never breaks inside (issue 2640)", async () => {
+    setViewportWidth(360);
+    server({ "GET /specimens/e1/measurements": () => json(200, view({ measurements })) });
+    show();
+    const list = await screen.findByRole("list", { name: "Messungen und Fotos" });
+    const first = within(list).getAllByRole("listitem")[0] as HTMLElement;
+    const parts = Array.from(first.querySelectorAll<HTMLElement>("[data-meta-part]"));
+    expect(parts.map((p) => plain(p.textContent))).toEqual(["17 cm ·", "07.10.2026"]);
+    for (const part of parts)
+      expect(part.className.split(" ")).toEqual(
+        expect.arrayContaining(["inline-block", "max-w-full", "align-top"]),
+      );
+    expect(plain(parts[0]?.parentElement?.textContent)).toBe("17 cm · 07.10.2026");
+    expect(parts[0]?.parentElement?.className.split(" ")).toContain("font-semibold");
   });
 
   it("US-QS-23 the photos of the measurements are fetched privately and shown in the page", async () => {

@@ -4,6 +4,7 @@ import { UndoRow } from "@/shared/feedback/undo-row/undo-row";
 import { keepTogether, overdueChip } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { ROW_ACTION, TREATMENT_TEXT } from "@/shared/lists/grouped-list/group-classes";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import { ATTENTION_CLASSES } from "../../../shared/notices";
 import { dateText } from "../../../shared/text";
 
@@ -38,7 +39,7 @@ export function Row(props: {
       <div className={cn("flex min-w-0 flex-col gap-0.5", TREATMENT_TEXT)}>
         <Name className="text-base font-semibold">{row.specimenName}</Name>
         <p className="text-label text-muted-foreground">
-          {row.reason} · {row.agent ?? "kein Mittel"}
+          {metaParts(`${row.reason} · ${row.agent ?? "kein Mittel"}`)}
         </p>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <p
