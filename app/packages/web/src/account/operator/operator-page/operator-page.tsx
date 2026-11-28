@@ -8,12 +8,8 @@ import { loadOverview } from "../../api/access-api";
 import { DeadlineRow, DeletionSection } from "../deletion-section/deletion-section";
 import { IntroductionSection } from "../introduction-section/introduction-section";
 import { CostForm, costPerUserText, moneyText, monthText } from "../operator-cost/operator-cost";
-import {
-  EnterCostButton,
-  InvitationsArea,
-  ModeSection,
-  OperatorRow,
-} from "../operator-parts/operator-parts";
+import { EnterCostButton, InvitationsArea, OperatorRow } from "../operator-parts/operator-parts";
+import { RegistrationSwitch } from "../operator-parts/registration-switch/registration-switch";
 import { OperatorPageSkeleton } from "./operator-page.skeleton";
 import { LayerNotice } from "./layer-notice/layer-notice";
 import { texts } from "@/shared/lib/text-rules/texts";
@@ -70,8 +66,9 @@ function CostLayer(props: { overview: OperatorOverview; actions: Actions }) {
 }
 
 /** The current value of each topic, shown on the overview row (P-09): the next step is in its layer. */
-function Rows(props: { overview: OperatorOverview; api: string; token: Token }) {
+function Rows(props: { overview: OperatorOverview; api: string; token: Token; actions: Actions }) {
   const o = props.overview;
+  const { actions } = props;
   const open = o.invitations.filter((i) => i.status === "open").length;
   return (
     <div className="flex min-w-0 max-w-xl flex-1 flex-col">
@@ -87,10 +84,13 @@ function Rows(props: { overview: OperatorOverview; api: string; token: Token }) 
       />
       <OperatorRow id="kosten" title="Monatliche Kosten" value={costText(o.cost)} />
       <DeadlineRow api={props.api} token={props.token} />
-      <OperatorRow
-        id="registrierung"
-        title="Registrierung"
-        value={o.invitationOnly ? "nur mit Einladungscode" : "offen für alle"}
+      {/* The registration mode applies at once, so it is a switch row, not a topic in a layer (US-QS-32, SG-CTRL-02). */}
+      <RegistrationSwitch
+        invitationOnly={o.invitationOnly}
+        running={actions.running}
+        error={actions.notice?.scope === "mode" ? actions.notice.error : null}
+        message={actions.notice?.scope === "mode" ? actions.notice.message : null}
+        onChange={(on) => void actions.setMode(on)}
       />
       <OperatorRow
         id="einladungscodes"
@@ -105,7 +105,7 @@ function Rows(props: { overview: OperatorOverview; api: string; token: Token }) 
   );
 }
 
-/** Each topic opens as a layer (US-QS-15): the figures, the introduction, the cost, the mode and the codes. */
+/** Each topic opens as a layer (US-QS-15): the figures, the introduction, the cost, the deadlines and the codes. */
 function Layers(props: {
   api: string;
   token: Token;
@@ -132,16 +132,6 @@ function Layers(props: {
             token={token}
             running={actions.running}
             onMark={(entryId) => void actions.markIdentity(entryId)}
-          />
-        </div>
-      </LayerSheet>
-      <LayerSheet id="registrierung" title="Registrierung">
-        <div className="flex flex-col gap-3">
-          <LayerNotice notice={actions.notice} scope="mode" />
-          <ModeSection
-            invitationOnly={overview.invitationOnly}
-            running={actions.running}
-            onChange={(on) => void actions.setMode(on)}
           />
         </div>
       </LayerSheet>
@@ -182,7 +172,7 @@ export function OperatorPage(props: { api: string; token: Token }) {
       >
         {(overview: OperatorOverview) => (
           <LayerHost>
-            <Rows overview={overview} api={api} token={token} />
+            <Rows overview={overview} api={api} token={token} actions={actions} />
             <Layers api={api} token={token} overview={overview} actions={actions} />
           </LayerHost>
         )}

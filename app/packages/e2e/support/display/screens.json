@@ -1355,15 +1355,6 @@
     "title": "Betreiber: Löschfristen"
   },
   {
-    "id": "operator-sheet-registrierung",
-    "account": "test3",
-    "path": "/operator?sheet=registrierung",
-    "kind": "sheet",
-    "state": "many",
-    "layerFile": "account/operator/operator-page/operator-page.tsx",
-    "title": "Betreiber: Registrierung"
-  },
-  {
     "id": "operator-sheet-einladungscodes",
     "account": "test3",
     "path": "/operator?sheet=einladungscodes",

@@ -449,20 +449,26 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   it("US-SOZ-04 everything is private by default; sharing a specimen says what friends see, withdrawing says when it takes effect", async () => {
     const { calls } = fakeServer();
     show("sharing");
-    const box = await screen.findByRole("switch", { name: "Zebra – M1: mit Freunden teilen" });
-    expect((box as HTMLInputElement).checked).toBe(false);
+    const box = await screen.findByRole("switch", { name: "Zebra – M1 mit Freunden teilen" });
+    expect(box.getAttribute("aria-checked")).toBe("false");
     expect(screen.getByText(/Alles ist privat, bis du es freigibst/)).toBeTruthy();
+    // One row per plant with a trailing switch and no heading of the species above it (SG-LIST-03, US-QS-32).
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Zebra" })).toBeNull();
+    expect(box.closest("li")?.querySelector("svg, img")).toBeTruthy();
     await userEvent.click(box);
     expect(
       await screen.findByText(/Freigegeben: Freunde sehen diese Pflanze ab jetzt/),
     ).toBeTruthy();
     expect(calls[0]).toEqual({ path: "/sharing/specimens/s1", body: { share: "friends" } });
-    expect(
-      (await screen.findByRole("switch", {
-        name: "Zebra – M1: mit Freunden teilen",
-      })) as HTMLInputElement,
-    ).toHaveProperty("checked", true);
-    await userEvent.click(screen.getByRole("switch", { name: "Zebra – M1: mit Freunden teilen" }));
+    await vi.waitFor(() =>
+      expect(
+        screen
+          .getByRole("switch", { name: "Zebra – M1 mit Freunden teilen" })
+          .getAttribute("aria-checked"),
+      ).toBe("true"),
+    );
+    await userEvent.click(screen.getByRole("switch", { name: "Zebra – M1 mit Freunden teilen" }));
     expect(await screen.findByText(/ab dem nächsten Abruf nicht mehr/)).toBeTruthy();
     expect(calls[1]).toEqual({ path: "/sharing/specimens/s1", body: { share: "private" } });
   });
@@ -470,7 +476,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
   it("US-SOZ-04 · US-QS-20 archived specimens are not offered; one bulk action asks first and never widens without 'Ja'", async () => {
     const { calls } = fakeServer();
     show("sharing");
-    await screen.findByRole("switch", { name: "Zebra – M2: mit Freunden teilen" });
+    await screen.findByRole("switch", { name: "Zebra – M2 mit Freunden teilen" });
     expect(screen.queryByRole("switch", { name: /M3/ })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Alle teilen" }));
     expect(screen.getByText(/Alle 2 Pflanzen für Freunde freigeben/)).toBeTruthy();
@@ -501,10 +507,10 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     expect(screen.getByRole("alert").textContent).toBe(errorText("internal"));
     expect(calls.map((c) => c.path)).toEqual(["/sharing/species/sp1", "/sharing/species/sp2"]);
     const on = async (name: string) =>
-      ((await screen.findByRole("switch", { name })) as HTMLInputElement).checked;
-    await vi.waitFor(async () => expect(await on("Art0 – M1: mit Freunden teilen")).toBe(true));
-    expect(await on("Art1 – M1: mit Freunden teilen")).toBe(false);
-    expect(await on("Art2 – M1: mit Freunden teilen")).toBe(false);
+      (await screen.findByRole("switch", { name })).getAttribute("aria-checked") === "true";
+    await vi.waitFor(async () => expect(await on("Art0 – M1 mit Freunden teilen")).toBe(true));
+    expect(await on("Art1 – M1 mit Freunden teilen")).toBe(false);
+    expect(await on("Art2 – M1 mit Freunden teilen")).toBe(false);
   });
 
   it("US-SOZ-03 shows the number of shared caught species of a friend, and unknown without sharing (P-08)", async () => {

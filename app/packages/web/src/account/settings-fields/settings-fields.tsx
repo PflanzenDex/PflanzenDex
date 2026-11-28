@@ -10,7 +10,11 @@ import {
 import { MoreHelp } from "@/shared/ui/more-help";
 import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
 import { Input } from "@/shared/ui/input";
-import { POSITION_THRESHOLD_DEFAULTS as DEFAULTS } from "@pflanzendex/core";
+import { Stepper } from "@/shared/ui/stepper";
+import {
+  POSITION_THRESHOLD_DEFAULTS as DEFAULTS,
+  REPLENISH_BUFFER_LIMITS as BUFFER,
+} from "@pflanzendex/core";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { OCCASIONS, type Occasion } from "../api/account-api";
 import { formatLux, parseLux, type ProfileFields as Fields } from "../schemas";
@@ -35,7 +39,11 @@ const zones = (): string[] => {
 
 type FieldProps = { control: Control<Fields> };
 
-/** The buffer of the wishlist warning (US-WUN-02), an account setting next to the time zone. */
+/**
+ * The buffer of the wishlist warning (US-WUN-02), an account setting next to the time zone. A whole number from 0 to 10 is a
+ * stepper (US-QS-32, SG-CTRL-04): no keyboard opens and no wrong number can be typed. The form keeps the number as text, as
+ * the other fields do; the group still saves it with "Sichern".
+ */
 export function BufferField({ control }: FieldProps) {
   return (
     <FormField
@@ -43,11 +51,16 @@ export function BufferField({ control }: FieldProps) {
       name="replenishBuffer"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Mindestzahl offener Wünsche je Zone</FormLabel>
           <FormControl>
-            <Input {...field} inputMode="numeric" autoComplete="off" />
+            <Stepper
+              label={ui("bufferLabel")}
+              min={BUFFER.min}
+              max={BUFFER.max}
+              value={Number(field.value)}
+              onChange={(n) => field.onChange(String(n))}
+            />
           </FormControl>
-          <MoreHelp more={ui("bufferMore")}>Warnt bei zu wenigen offenen Wünschen.</MoreHelp>
+          <MoreHelp more={ui("bufferMore")}>{ui("bufferHelp")}</MoreHelp>
           <FormMessage />
         </FormItem>
       )}

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { refusalText } from "@/shared/lib/error-text";
@@ -29,6 +29,8 @@ const PROFILE: AccountProfile = {
   motion: "system",
 };
 
+const isOn = (toggle: HTMLElement) => toggle.getAttribute("aria-checked") === "true";
+
 /** What the announcer says (its polite live region, `sr-only`). */
 const announced = () =>
   document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]')?.textContent ?? "";
@@ -39,6 +41,8 @@ function saverWith(save: ProfileSaver["save"]): ProfileSaver {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("US-QS-32 · F-0048 a switch is its own result", () => {
@@ -50,14 +54,14 @@ describe("US-QS-32 · F-0048 a switch is its own result", () => {
         <PrivacyGroup saver={saverWith(save)} />
       </AnnouncerProvider>,
     );
-    await user.click(screen.getByRole("checkbox", { name: "Alles privat" }));
+    await user.click(screen.getByRole("switch", { name: "Alles privat" }));
     await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
     await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
     expect(screen.queryByRole("status")).toBeNull();
     expect(save.mock.calls[0]?.[0]).toMatchObject({ everythingPrivate: true });
   });
 
-  it("US-QS-32 · F-0048 a refused switch keeps its error Banner with the German text of its code (P-10)", async () => {
+  it("US-QS-32 · F-0048 a refused switch shows the German text of its code at its row (P-10)", async () => {
     const refusal = { code: "access.not_signed_in", text: "raw server text" };
     const save = vi.fn<ProfileSaver["save"]>(async () => ({ ok: false, error: refusal }));
     const user = userEvent.setup();
@@ -66,8 +70,14 @@ describe("US-QS-32 · F-0048 a switch is its own result", () => {
         <PrivacyGroup saver={saverWith(save)} />
       </AnnouncerProvider>,
     );
-    await user.click(screen.getByRole("checkbox", { name: "Alles privat" }));
-    expect(await screen.findByText(refusalText(refusal))).toBeTruthy();
+    const toggle = screen.getByRole("switch", { name: "Alles privat" });
+    await user.click(toggle);
+    // The error stands at the row of the switch, is linked to it, and the switch keeps its old state (SG-FEED-02, P-10).
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe(refusalText(refusal));
+    expect(toggle.getAttribute("aria-describedby")).toContain(alert.id);
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    expect(toggle.closest("li")?.contains(alert)).toBe(true);
     expect(screen.queryByText("raw server text")).toBeNull();
     expect(screen.queryByRole("status")).toBeNull();
     expect(announced()).toBe("");
@@ -125,7 +135,8 @@ const SWITCHES: readonly {
   value: (p: AccountProfile) => boolean;
 }[] = [
   { group: "privacy", label: "Alles privat", value: (p) => p.everythingPrivate },
-  { group: "privacy", label: "Keine Empfehlungen", value: (p) => p.noRecommendations },
+  // Worded positively (SG-CTRL-05): on shows recommendations, so the stored flag is its opposite.
+  { group: "privacy", label: "Empfehlungen zeigen", value: (p) => !p.noRecommendations },
   {
     group: "privacy",
     label: "Meine Sammlung in die Seltenheit in PflanzenDéx einrechnen",
@@ -145,8 +156,8 @@ describe("US-QS-32 · F-0048 a switch keeps its focus while it saves", () => {
           <LiveGroup group={group} />
         </AnnouncerProvider>,
       );
-      const box = screen.getByRole<HTMLInputElement>("checkbox", { name: label });
-      const before = box.checked;
+      const box = screen.getByRole<HTMLButtonElement>("switch", { name: label });
+      const before = isOn(box);
 
       box.focus();
       await user.keyboard(" ");
@@ -158,14 +169,14 @@ describe("US-QS-32 · F-0048 a switch keeps its focus while it saves", () => {
       await api.answerNext();
       await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
       await renderingUpdate();
-      expect(box.checked).toBe(!before);
+      expect(isOn(box)).toBe(!before);
       expect(document.activeElement).toBe(box);
 
       await user.keyboard(" ");
       await vi.waitFor(() => expect(api.puts).toHaveLength(2));
       expect(api.puts.map(value)).toEqual([!before, before]);
       await api.answerNext();
-      await vi.waitFor(() => expect(box.checked).toBe(before));
+      await vi.waitFor(() => expect(isOn(box)).toBe(before));
       await renderingUpdate();
       expect(document.activeElement).toBe(box);
     },
@@ -179,8 +190,8 @@ describe("US-QS-32 · F-0048 a switch keeps its focus while it saves", () => {
         <LiveGroup group="privacy" />
       </AnnouncerProvider>,
     );
-    const first = screen.getByRole<HTMLInputElement>("checkbox", { name: "Alles privat" });
-    const second = screen.getByRole<HTMLInputElement>("checkbox", { name: "Keine Empfehlungen" });
+    const first = screen.getByRole<HTMLButtonElement>("switch", { name: "Alles privat" });
+    const second = screen.getByRole<HTMLButtonElement>("switch", { name: "Empfehlungen zeigen" });
 
     first.focus();
     await user.keyboard(" ");
@@ -189,11 +200,70 @@ describe("US-QS-32 · F-0048 a switch keeps its focus while it saves", () => {
     second.focus();
     await user.keyboard(" ");
     expect(api.puts).toHaveLength(1);
-    expect(second.checked).toBe(false);
+    expect(isOn(second)).toBe(true);
 
     await api.answerNext();
     await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
-    expect(first.checked).toBe(true);
-    expect(second.checked).toBe(false);
+    expect(isOn(first)).toBe(true);
+    expect(isOn(second)).toBe(true);
+  });
+});
+
+describe("US-QS-32 · SG-CTRL-02 the switches of the groups are switch rows (SG-CTRL-05)", () => {
+  it("US-QS-32 · SG-CTRL-05 the privacy group has three switch rows worded so that on means it happens, each with one line", () => {
+    render(<PrivacyGroup saver={saverWith(vi.fn())} />);
+    const rows = within(screen.getByRole("list")).getAllByRole("listitem");
+    expect(rows).toHaveLength(3);
+    for (const [label, help] of [
+      ["Alles privat", /Freigaben/],
+      ["Empfehlungen zeigen", /Nur du/],
+      ["Meine Sammlung in die Seltenheit in PflanzenDéx einrechnen", /nie wer/],
+    ] as const) {
+      const toggle = screen.getByRole("switch", { name: label });
+      const described = toggle
+        .getAttribute("aria-describedby")
+        ?.split(" ")
+        .map((id) => document.getElementById(id)?.textContent ?? "")
+        .join(" ");
+      expect(described).toMatch(help);
+    }
+    // No switch is worded as a negation, apart from the one exception "Alles privat".
+    expect(screen.queryByRole("switch", { name: /^Keine / })).toBeNull();
+    expect(screen.queryByRole("checkbox")).toBeNull();
+  });
+
+  it("US-QS-32 · SG-CTRL-05 'Empfehlungen zeigen' is on when recommendations are not switched off and saves the opposite", async () => {
+    const save = vi.fn<ProfileSaver["save"]>(async (next) => ({ ok: true, value: next }));
+    const user = userEvent.setup();
+    render(<PrivacyGroup saver={saverWith(save)} />);
+    const toggle = screen.getByRole("switch", { name: "Empfehlungen zeigen" });
+    expect(isOn(toggle)).toBe(true);
+    await user.click(toggle);
+    expect(save.mock.calls[0]?.[0]).toMatchObject({ noRecommendations: true });
+  });
+
+  it("US-QS-32 the notifications group has one switch row per occasion, each with one line, and no checkbox", () => {
+    render(<NotificationsGroup saver={saverWith(vi.fn())} />);
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    for (const name of ["Pflegephasen", "Behandlungen", "Messungen", "Gießen", "Geräte-Prüfung"]) {
+      const toggle = screen.getByRole("switch", { name });
+      expect(isOn(toggle)).toBe(true);
+      expect(toggle.getAttribute("aria-describedby")).toBeTruthy();
+    }
+  });
+
+  it("US-QS-30 · US-QS-32 offline the switches keep their state and the reason stands once below the group", async () => {
+    vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    const save = vi.fn<ProfileSaver["save"]>(async (next) => ({ ok: true, value: next }));
+    const user = userEvent.setup();
+    render(<PrivacyGroup saver={saverWith(save)} />);
+    await user.click(screen.getByRole("switch", { name: "Alles privat" }));
+    expect(save).not.toHaveBeenCalled();
+    expect(
+      screen.getAllByText("Du bist offline. Das geht erst wieder mit Verbindung."),
+    ).toHaveLength(1);
+    expect(screen.getByRole("switch", { name: "Alles privat" }).getAttribute("aria-disabled")).toBe(
+      "true",
+    );
   });
 });

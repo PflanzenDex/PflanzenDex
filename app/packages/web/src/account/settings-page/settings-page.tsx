@@ -1,7 +1,9 @@
 import { Fragment, useCallback, type ReactNode } from "react";
 import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
-import { CalmModeSection, loadAchievementSettings } from "../../achievements";
+import { ScrollRegion } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-region/scroll-region";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { CalmModeSection } from "../../achievements";
 import { useRequest } from "../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadProfile, type AccountProfile } from "../api/account-api";
@@ -32,6 +34,9 @@ import { KeeperStyleSection } from "./keeper-style/keeper-style";
 import { loadKeeperStyle } from "./keeper-style/keeper-style-api";
 import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 import { SettingsPageSkeleton } from "./settings-page.skeleton";
+import table from "./settings-page.de.json";
+
+const t = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
@@ -49,17 +54,11 @@ function useStyleRow(api: string, token: Token): { value: ReactNode; retry?: () 
     token,
     load: useCallback((t: string) => loadKeeperStyle(api, t), [api]),
   });
-  const calm = useRequest({
-    queryKey: ["achievements", "settings"],
-    fresh: true,
-    token,
-    load: useCallback((t: string) => loadAchievementSettings(api, t), [api]),
-  });
   const loading = useHeldLoader(style.status === "pending");
   if (loading) return { value: <DelayedSkeleton>{STYLE_LOADING}</DelayedSkeleton> };
   if (style.status === "error") return { value: NOT_LOADED, retry: style.retry };
   if (style.value === undefined) return { value: UNKNOWN };
-  return { value: styleValue(style.value.style, calm.value?.calmMode) };
+  return { value: styleValue(style.value.style) };
 }
 
 function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
@@ -91,14 +90,7 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
       title: "Wie nutzt du die App?",
       value: style.value,
       ...(style.retry ? { retry: style.retry } : {}),
-      body: (
-        <div className="flex flex-col gap-3">
-          <KeeperStyleSection api={props.api} token={props.token} />
-          <CalmModeSection api={props.api} token={props.token} />
-          <ShortcutsGroup saver={saver} />
-          <MotionGroup saver={saver} />
-        </div>
-      ),
+      body: <KeeperStyleSection api={props.api} token={props.token} />,
     },
     {
       id: ids.wishlist,
@@ -108,7 +100,20 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
     },
     { id: ids.light, title: "Licht", value: lightValue(p), body: <LightGroup saver={saver} /> },
   ];
-  return <SettingsLayers layers={layers} />;
+  // Settings that apply at once are rows of the list, not topics in a layer (US-QS-32, SG-CTRL-02): a switch row for the calm
+  // mode, a choice row each for the shortcuts and the motion.
+  const own = (
+    <>
+      <CalmModeSection api={props.api} token={props.token} />
+      <div className="px-3 py-2">
+        <ShortcutsGroup saver={saver} />
+      </div>
+      <div className="px-3 py-2">
+        <MotionGroup saver={saver} />
+      </div>
+    </>
+  );
+  return <SettingsLayers layers={layers}>{own}</SettingsLayers>;
 }
 
 /** One group of the list: its row, its layer, and the retry of a failed load beside the row (US-QS-32). */
@@ -120,11 +125,14 @@ type SettingsLayer = {
   body: ReactNode;
 };
 
-/** The rows of the groups and, beside them, one layer per group (US-QS-17): the layer opens from its row. */
-function SettingsLayers(props: { layers: readonly SettingsLayer[] }) {
+/**
+ * The rows of the groups and, beside them, one layer per group (US-QS-17): the layer opens from its row. The children are
+ * the rows of the settings that apply at once, below the rows that open a layer.
+ */
+function SettingsLayers(props: { layers: readonly SettingsLayer[]; children?: ReactNode }) {
   return (
     <>
-      <div className="flex min-w-0 max-w-xl flex-1 flex-col">
+      <ScrollRegion label={t("region")} className="max-w-xl">
         {props.layers.map((l) => (
           <Fragment key={l.id}>
             <SettingsRow id={l.id} title={l.title} value={l.value} />
@@ -135,7 +143,8 @@ function SettingsLayers(props: { layers: readonly SettingsLayer[] }) {
             ) : null}
           </Fragment>
         ))}
-      </div>
+        {props.children}
+      </ScrollRegion>
       {props.layers.map((l) => (
         <LayerSheet key={l.id} id={l.id} title={l.title} editsStored>
           {l.body}
@@ -156,11 +165,11 @@ export function SettingsPage(props: { api: string; token: Token; host?: boolean 
   const loading = "Einstellungen werden geladen …";
   return (
     // The layers beside the card, not inside it (US-QS-15): the frame is outside the card.
-    <LayerHost>
+    <LayerHost className={props.host === true ? "min-h-0 flex-1" : undefined}>
       <div
         className={
           props.host === true
-            ? "flex min-w-0 flex-col gap-2 rounded-card bg-card p-2 shadow-elevation-1 lg:flex-row lg:items-start"
+            ? "flex min-h-0 min-w-0 flex-1 flex-col gap-2 rounded-card bg-card p-2 shadow-elevation-1 lg:flex-row lg:items-start"
             : "flex min-w-0 flex-col gap-4"
         }
       >

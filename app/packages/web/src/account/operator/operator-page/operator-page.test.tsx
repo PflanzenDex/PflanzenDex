@@ -281,21 +281,36 @@ describe("US-ACC-05 monthly cost and cost per user", () => {
   });
 });
 
-describe("US-ACC-05 registration mode", () => {
-  it("US-ACC-05 says in words whether registration is open", async () => {
+describe("US-ACC-05 · US-QS-32 registration mode is a switch on the overview", () => {
+  /** The page with the announcer the app shell mounts above it: a saved switch is said through it (SG-FEED-04). */
+  const showAnnounced = () =>
+    render(
+      <MemoryRouter>
+        <AnnouncerProvider>
+          <OperatorPage api="http://api" token={token} />
+        </AnnouncerProvider>
+      </MemoryRouter>,
+    );
+  const announced = () =>
+    document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]')?.textContent ?? "";
+  const mode = () => screen.findByRole("switch", { name: "Nur mit Einladungscode" });
+
+  it("US-ACC-05 · SG-CTRL-02 the row 'Nur mit Einladungscode' is a switch on the page, off while registration is open, and opens no layer", async () => {
     await open();
-    const dialog = await topic(/^Registrierung/);
-    expect(within(dialog).getByText("offen für alle")).toBeTruthy();
+    const toggle = await mode();
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    const line = document.getElementById(toggle.getAttribute("aria-describedby") ?? "");
+    expect(line?.textContent).toContain("Bestehende Konten melden sich");
+    expect(screen.queryByRole("button", { name: /^Registrierung/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Nur mit Einladungscode erlauben" })).toBeNull();
     cleanup();
     current = overview({ invitationOnly: true });
     serve();
     await open();
-    const again = await topic(/^Registrierung/);
-    expect(within(again).getByText("nur mit Einladungscode")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Für alle öffnen" })).toBeTruthy();
+    expect((await mode()).getAttribute("aria-checked")).toBe("true");
   });
 
-  it("US-ACC-05 switching on sends one write with a repeat-guard key and shows the new state", async () => {
+  it("US-ACC-05 switching on sends one write with a repeat-guard key; the switch is the result and the announcer says it once", async () => {
     let answer: () => void = () => undefined;
     serve(
       (path, init) =>
@@ -308,18 +323,41 @@ describe("US-ACC-05 registration mode", () => {
           };
         }),
     );
-    await open();
-    const dialog = await topic(/^Registrierung/);
+    showAnnounced();
+    await screen.findByRole("button", { name: /^Zahlen/ });
+    const toggle = await mode();
     const user = userEvent.setup();
-    const button = screen.getByRole("button", { name: "Nur mit Einladungscode erlauben" });
-    await user.dblClick(button);
+    await user.dblClick(toggle);
     answer();
-    await within(dialog).findByText("nur mit Einladungscode");
+    await waitFor(() =>
+      expect(announced()).toMatch(/Registrierung: ab jetzt nur mit Einladungscode/),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("switch", { name: "Nur mit Einladungscode" }).getAttribute("aria-checked"),
+      ).toBe("true"),
+    );
     const writes = calls.filter((c) => c.method === "PUT");
     expect(writes).toHaveLength(1);
     expect(writes[0]?.body).toEqual({ invitationOnly: true });
     expect(writes[0]?.headers["Idempotency-Key"]).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toMatch(/Registrierung/);
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("US-ACC-05 · P-10 a refused save keeps the switch where it was and shows the German text at its row", async () => {
+    serve((path, init) =>
+      path === "/operator/registration" && init.method === "PUT"
+        ? json(400, { error: { code: "input.invalid", text: "RAW SERVER TEXT" } })
+        : json(404, {}),
+    );
+    await open();
+    const toggle = await mode();
+    await userEvent.click(toggle);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Die Eingabe ist ungültig");
+    expect(document.body.textContent).not.toContain("RAW SERVER TEXT");
+    expect(toggle.getAttribute("aria-describedby")).toContain(alert.id);
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
   });
 });
 
@@ -626,7 +664,6 @@ describe("US-QS-15 operator overview: one row per topic, each a layer", () => {
       [/^Zahlen/, "12 Konten · 5 aktiv"],
       [/^Einstieg/, "Dauer und Schritte beim Einstieg neuer Konten"],
       [/^Monatliche Kosten/, "49,99\u00a0€ (September 2026)"],
-      [/^Registrierung/, "offen für alle"],
       [/^Einladungscodes/, "noch keine"],
     ];
     for (const [name, value] of rows) {
@@ -730,11 +767,6 @@ describe("US-QS-14 operator page keeps the focus while and after a save (SC 2.4.
       button: "Kosten sichern",
       done: "Monatliche Kosten gesichert.",
       prep: true,
-    },
-    {
-      topic: /^Registrierung/,
-      button: "Nur mit Einladungscode erlauben",
-      done: /ab jetzt nur mit Einladungscode/,
     },
     { topic: /^Einladungscodes/, button: "Code erstellen", done: "Einladungscode erstellt." },
   ];
@@ -1029,5 +1061,27 @@ describe("US-ACC-05 US-QS-32 the cost and codes layers ask before they discard t
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog", codesLayer)).toBeNull());
     expect(screen.queryByRole("dialog", question)).toBeNull();
+  });
+});
+
+describe("US-QS-14 · US-QS-32 the registration switch keeps the focus while and after its save (SC 2.4.3)", () => {
+  it("US-QS-14 after the switch is turned the focus stays on the switch, not on the body", async () => {
+    let release: () => void = () => undefined;
+    serve(
+      (_path, init) =>
+        new Promise<Response>((resolve) => {
+          release = () => resolve(new Response(String(init.body ?? "{}"), { status: 200 }));
+        }),
+    );
+    await open();
+    const toggle = await screen.findByRole("switch", { name: "Nur mit Einladungscode" });
+    const user = userEvent.setup();
+    toggle.focus();
+    await user.keyboard(" ");
+    await waitFor(() => expect(toggle.getAttribute("aria-disabled")).toBe("true"));
+    expect(document.activeElement).toBe(toggle);
+    release();
+    await waitFor(() => expect(toggle.getAttribute("aria-disabled")).toBeNull());
+    expect(document.activeElement).toBe(toggle);
   });
 });

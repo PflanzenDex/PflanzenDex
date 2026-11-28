@@ -1,15 +1,15 @@
 import { useState } from "react";
 import type { KeyboardShortcutMode, MotionSetting } from "@pflanzendex/core";
-import { Checkbox } from "@/shared/ui/checkbox";
 import { NetworkSlot } from "@/shared/ui/button.network-gate";
-import { MoreHelp } from "@/shared/ui/more-help";
+import { GroupedList } from "@/shared/lists/grouped-list/grouped-list";
+import { SwitchRow } from "@/shared/lists/switch-row/switch-row";
 import { ChoiceRow, type Choice } from "./choice-row/choice-row";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useShortcuts } from "@/shared/platform/device/keyboard/shortcut-provider/shortcut-provider";
 import { applyMotion } from "@/shared/platform/device/motion/motion-setting";
 import table from "./switch-groups.de.json";
 import { useFeature, type ApiError } from "../../../../shared/data";
-import type { AccountProfile } from "../../../api/account-api";
+import type { AccountProfile, Occasion } from "../../../api/account-api";
 import { refusalText } from "@/shared/lib/error-text";
 import { Banner } from "@/shared/patterns/states/banner/banner";
 import { useAnnounce } from "@/shared/platform/announcer/context";
@@ -18,29 +18,28 @@ import type { ProfileSaver } from "../profile-saver";
 
 const t = texts(table);
 
-type Flag = "everythingPrivate" | "noRecommendations" | "rarityConsent";
-
 /**
  * A switch saves at once (US-QS-17): the whole stored profile with this one change goes out. The switch itself is the
- * result (SG-FEED-01): a refused save leaves it where it was and says why by the error code's text (P-10); a saved one
- * is said to screen readers by the announcer, with no box in the page (SG-FEED-04, US-QS-32). While a save runs the
- * switches are `aria-disabled`, not `disabled`: a focused control that becomes disabled loses the focus, and the second
+ * result (SG-FEED-01): a refused save leaves it where it was and says why at its row by the error code's text (P-10); a
+ * saved one is said to screen readers by the announcer, with no box in the page (SG-FEED-04, US-QS-32). While a save runs
+ * the switches are `aria-disabled`, not `disabled`: a focused control that becomes disabled loses the focus, and the second
  * Space of the keeper would do nothing (US-QS-32, issue 2317). A press meanwhile sends nothing (the saver answers `null`
- * while busy) and React restores the stored state of the box.
+ * while busy) and the controlled switch stays on the stored state.
  */
 function useSwitchSave(saver: ProfileSaver, onSaved?: (profile: AccountProfile) => void) {
-  const [error, setError] = useState<ApiError | null>(null);
+  const [failed, setFailed] = useState<{ row: string; error: ApiError } | null>(null);
   const announce = useAnnounce();
-  const change = async (patch: Partial<AccountProfile>) => {
+  const change = async (row: string, patch: Partial<AccountProfile>) => {
     const r = await saver.save({ ...saver.saved, ...patch });
     if (!r) return;
-    setError(r.ok ? null : r.error);
+    setFailed(r.ok ? null : { row, error: r.error });
     if (r.ok) {
       announce?.announce(t("saved"));
       onSaved?.(r.value);
     }
   };
-  return { error, change };
+  const errorOf = (row: string) => (failed?.row === row ? refusalText(failed.error) : undefined);
+  return { change, errorOf, error: failed?.error ?? null };
 }
 
 function Feedback(props: { error: ApiError | null }) {
@@ -48,79 +47,92 @@ function Feedback(props: { error: ApiError | null }) {
   return null;
 }
 
-/** Group "Benachrichtigungen": a switch per occasion (US-ACC-02). */
+const OCCASION_HELP: Record<Occasion, string> = {
+  phase: t("notifications.help.phase"),
+  treatment: t("notifications.help.treatment"),
+  measurement: t("notifications.help.measurement"),
+  watering: t("notifications.help.watering"),
+  swap: t("notifications.help.swap"),
+  friends: t("notifications.help.friends"),
+  equipment: t("notifications.help.equipment"),
+};
+
+/** Group "Benachrichtigungen": a switch row per occasion (US-ACC-02). The offline reason stands once below the group. */
 export function NotificationsGroup({ saver }: { saver: ProfileSaver }) {
   const social = useFeature("social");
-  const { error, change } = useSwitchSave(saver);
+  const { change, errorOf } = useSwitchSave(saver);
   return (
-    <div className="flex flex-col gap-1">
-      <NetworkSlot>
+    <NetworkSlot>
+      <GroupedList footer={t("notifications.footer")}>
         {visibleOccasions(social).map((o) => (
-          <Checkbox
+          <SwitchRow
             key={o}
             name={`notifications.${o}`}
+            label={OCCASION_TEXT[o]}
+            help={OCCASION_HELP[o]}
             checked={saver.saved.notifications[o]}
-            aria-disabled={saver.saving || undefined}
+            busy={saver.saving}
+            error={errorOf(o)}
             needsNetwork
-            onChange={(e) =>
-              void change({
-                notifications: { ...saver.saved.notifications, [o]: e.target.checked },
-              })
+            onCheckedChange={(on) =>
+              void change(o, { notifications: { ...saver.saved.notifications, [o]: on } })
             }
-          >
-            {OCCASION_TEXT[o]}
-          </Checkbox>
+          />
         ))}
-      </NetworkSlot>
-      <p className="mt-1 text-sm text-muted-foreground">Erinnerungen nur, wenn eingerichtet.</p>
-      <Feedback error={error} />
-    </div>
+      </GroupedList>
+    </NetworkSlot>
   );
 }
 
-const PRIVACY_SWITCHES: readonly { name: Flag; label: string }[] = [
-  { name: "everythingPrivate", label: "Alles privat" },
-  { name: "noRecommendations", label: "Keine Empfehlungen" },
-  { name: "rarityConsent", label: "Meine Sammlung in die Seltenheit in PflanzenDéx einrechnen" },
-];
-
-/** Group "Datenschutz und Empfehlungen": three switches, one line of help and the rest behind "Mehr erfahren". */
+/**
+ * Group "Datenschutz und Empfehlungen": three switch rows, each with one line that says who sees what. Worded so that on
+ * means the thing happens (SG-CTRL-05): "Empfehlungen zeigen" is the opposite of the stored `noRecommendations`; "Alles
+ * privat" is the one allowed exception.
+ */
 export function PrivacyGroup({ saver }: { saver: ProfileSaver }) {
-  const { error, change } = useSwitchSave(saver);
+  const { change, errorOf } = useSwitchSave(saver);
+  const p = saver.saved;
+  const rows = [
+    {
+      row: "everythingPrivate",
+      label: t("privacy.everythingPrivate.label"),
+      help: t("privacy.everythingPrivate.help"),
+      checked: p.everythingPrivate,
+      patch: (on: boolean): Partial<AccountProfile> => ({ everythingPrivate: on }),
+    },
+    {
+      row: "noRecommendations",
+      label: t("privacy.recommendations.label"),
+      help: t("privacy.recommendations.help"),
+      checked: !p.noRecommendations,
+      patch: (on: boolean): Partial<AccountProfile> => ({ noRecommendations: !on }),
+    },
+    {
+      row: "rarityConsent",
+      label: t("privacy.rarity.label"),
+      help: t("privacy.rarity.help"),
+      checked: p.rarityConsent,
+      patch: (on: boolean): Partial<AccountProfile> => ({ rarityConsent: on }),
+    },
+  ];
   return (
-    <div className="flex flex-col gap-1">
-      <NetworkSlot>
-        {PRIVACY_SWITCHES.map((s) => (
-          <Checkbox
-            key={s.name}
-            name={s.name}
-            checked={saver.saved[s.name]}
-            aria-disabled={saver.saving || undefined}
+    <NetworkSlot>
+      <GroupedList footer={t("privacy.footer")}>
+        {rows.map((r) => (
+          <SwitchRow
+            key={r.row}
+            name={r.row}
+            label={r.label}
+            help={r.help}
+            checked={r.checked}
+            busy={saver.saving}
+            error={errorOf(r.row)}
             needsNetwork
-            onChange={(e) => void change({ [s.name]: e.target.checked })}
-          >
-            {s.label}
-          </Checkbox>
+            onCheckedChange={(on) => void change(r.row, r.patch(on))}
+          />
         ))}
-      </NetworkSlot>
-      <MoreHelp
-        more={
-          <>
-            <p>
-              „Alles privat“ setzt alle Freigaben aus, ohne sie zu löschen. Ohne Empfehlungen zeigt
-              die App keine Gerätevorschläge.
-            </p>
-            <p>
-              Die Seltenheit in PflanzenDéx zählt nur Konten, die hier zustimmen (Vorgabe: aus); es
-              fließt nur eine Zahl pro Art ein, nie wer eine Art besitzt.
-            </p>
-          </>
-        }
-      >
-        Du entscheidest, was geteilt und empfohlen wird.
-      </MoreHelp>
-      <Feedback error={error} />
-    </div>
+      </GroupedList>
+    </NetworkSlot>
   );
 }
 
@@ -147,7 +159,7 @@ export function ShortcutsGroup({ saver }: { saver: ProfileSaver }) {
         options={CHOICES}
         needsNetwork
         value={saver.saved.keyboardShortcuts}
-        onPick={(keyboardShortcuts) => void change({ keyboardShortcuts })}
+        onPick={(keyboardShortcuts) => void change("keyboardShortcuts", { keyboardShortcuts })}
       />
       <Feedback error={error} />
     </div>
@@ -174,7 +186,7 @@ export function MotionGroup({ saver }: { saver: ProfileSaver }) {
         options={MOTION_CHOICES}
         needsNetwork
         value={saver.saved.motion}
-        onPick={(motion) => void change({ motion })}
+        onPick={(motion) => void change("motion", { motion })}
       />
       <Feedback error={error} />
     </div>

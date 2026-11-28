@@ -146,18 +146,16 @@ describe("US-QS-32 the settings groups say how to fix a field (F-0085, F-0092)",
     expect(name.getAttribute("aria-invalid")).toBeNull();
   });
 
-  it("US-QS-32 · F-0085 an emptied buffer of the wishlist shows its rule when it is left", async () => {
+  it("US-QS-32 · F-0085 · SG-CTRL-04 the buffer of the wishlist is a stepper: it cannot be emptied, so the rule is kept by the control", async () => {
     fakeServer();
     renderSettings("wishlist");
-    const buffer = await screen.findByLabelText<HTMLInputElement>(
-      "Mindestzahl offener Wünsche je Zone",
-    );
-    await userEvent.clear(buffer);
+    const buffer = await screen.findByRole("group", {
+      name: "Mindestzahl offener Wünsche je Zone",
+    });
+    expect(buffer.querySelector("output")?.textContent).toBe("2");
+    expect(screen.queryByRole("textbox", { name: /Mindestzahl/ })).toBeNull();
     await userEvent.tab();
-    expect((await screen.findByRole("alert")).textContent).toBe(
-      "Gib eine ganze Zahl von 0 bis 10 ein.",
-    );
-    expect(buffer.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("US-QS-32 · F-0085 an emptied light threshold shows its rule at that field when it is left", async () => {
@@ -287,10 +285,8 @@ const GROUP_EDITS: readonly GroupEdit[] = [
     group: "Wunschliste",
     sheet: "wishlist",
     field: "Mindestzahl offener Wünsche je Zone",
-    edit: async (user, field) => {
-      await user.clear(field);
-      await user.type(field, "3");
-    },
+    // One press of "Mehr" takes the stored 2 to 3 (the stepper replaces the typed number, SG-CTRL-04).
+    edit: (user, field) => user.click(within(field).getByRole("button", { name: "Mehr" })),
     sent: (p) => p.replenishBuffer,
     expected: 3,
   },

@@ -112,5 +112,6 @@
   "friendsPage.add": "Freund hinzufügen",
   "friendsPage.exchange": "Tauschbörse",
   "friendsPage.match": "Passende Angebote",
-  "friendsPage.help": "Ohne deine Freigabe sieht niemand etwas."
+  "friendsPage.help": "Ohne deine Freigabe sieht niemand etwas.",
+  "sharing.row": "{name} mit Freunden teilen"
 }

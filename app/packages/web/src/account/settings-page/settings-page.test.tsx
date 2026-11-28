@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -76,6 +76,7 @@ const show = (sheet?: string) =>
 /** What the announcer says (its polite live region, `sr-only`). */
 const announced = () =>
   document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]')?.textContent ?? "";
+const isOn = (toggle: HTMLElement) => toggle.getAttribute("aria-checked") === "true";
 
 beforeAll(() => setViewportWidth(1024));
 
@@ -277,11 +278,11 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show("notifications");
-    await user.click(await screen.findByRole("checkbox", { name: "Behandlungen" }));
+    await user.click(await screen.findByRole("switch", { name: "Behandlungen" }));
     await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
     expect(puts).toHaveLength(1);
     expect(puts[0]?.body["notifications"]).toEqual({ ...PROFILE.notifications, treatment: false });
-    await user.click(screen.getByRole("checkbox", { name: "Tausch" }));
+    await user.click(screen.getByRole("switch", { name: "Tausch" }));
     await waitFor(() => expect(puts).toHaveLength(2));
     expect(puts[1]?.body["notifications"]).toEqual({
       ...PROFILE.notifications,
@@ -302,16 +303,16 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
       "Freunde",
       "Geräte-Prüfung",
     ])
-      expect(await screen.findByRole("checkbox", { name })).toBeTruthy();
+      expect(await screen.findByRole("switch", { name })).toBeTruthy();
   });
 
-  it("US-ACC-02 · US-QS-17 'Alles privat' and 'Keine Empfehlungen' save at once", async () => {
+  it("US-ACC-02 · US-QS-17 · SG-CTRL-05 'Alles privat' and 'Empfehlungen zeigen' save at once; switching the second off stores 'no recommendations'", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show("privacy");
-    await user.click(await screen.findByRole("checkbox", { name: "Alles privat" }));
+    await user.click(await screen.findByRole("switch", { name: "Alles privat" }));
     await waitFor(() => expect(puts).toHaveLength(1));
-    await user.click(screen.getByRole("checkbox", { name: "Keine Empfehlungen" }));
+    await user.click(screen.getByRole("switch", { name: "Empfehlungen zeigen" }));
     await waitFor(() => expect(puts).toHaveLength(2));
     expect(puts[1]?.body).toMatchObject({ everythingPrivate: true, noRecommendations: true });
   });
@@ -320,28 +321,29 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show("privacy");
-    const box = await screen.findByRole("checkbox", {
+    const box = await screen.findByRole("switch", {
       name: "Meine Sammlung in die Seltenheit in PflanzenDéx einrechnen",
     });
-    expect((box as HTMLInputElement).checked).toBe(false);
+    expect(isOn(box)).toBe(false);
     await user.click(box);
     await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
     expect(puts[0]?.body).toMatchObject({ rarityConsent: true });
   });
 
-  it("US-ACC-02 a private default account shows both switches off", async () => {
+  it("US-ACC-02 a default account shows 'Alles privat' off and 'Empfehlungen zeigen' on", async () => {
     fakeServer();
     show("privacy");
-    expect(
-      (await screen.findByRole<HTMLInputElement>("checkbox", { name: "Alles privat" })).checked,
-    ).toBe(false);
+    expect(isOn(await screen.findByRole("switch", { name: "Alles privat" }))).toBe(false);
+    expect(isOn(screen.getByRole("switch", { name: "Empfehlungen zeigen" }))).toBe(true);
   });
 
-  it("US-QS-17 · US-QS-15 the privacy layer shows one line of help and the rest behind 'Mehr erfahren'", async () => {
+  it("US-QS-32 · SG-CTRL-02 the privacy layer is three switch rows with one line each and no checkbox or 'Mehr erfahren'", async () => {
     fakeServer();
     show("privacy");
-    await screen.findByRole("checkbox", { name: "Alles privat" });
-    expect(screen.getByText("Mehr erfahren")).toBeTruthy();
+    await screen.findByRole("switch", { name: "Alles privat" });
+    expect(screen.getAllByRole("switch")).toHaveLength(3);
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    expect(screen.queryByText("Mehr erfahren")).toBeNull();
   });
 
   it("US-QS-17 · P-10 a refused switch keeps its stored state and shows the German text of the error code", async () => {
@@ -352,11 +354,14 @@ describe("US-ACC-02 settings page: notifications and global switches", () => {
     );
     const user = userEvent.setup();
     show("notifications");
-    const box = await screen.findByRole<HTMLInputElement>("checkbox", { name: "Tausch" });
+    const box = await screen.findByRole("switch", { name: "Tausch" });
     await user.click(box);
-    expect((await screen.findByRole("alert")).textContent).toContain("Die Eingabe ist ungültig");
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Die Eingabe ist ungültig");
+    // The error stands at the row of the switch (SG-FEED-02).
+    expect(box.closest("li")?.contains(alert)).toBe(true);
     expect(document.body.textContent).not.toContain("RAW SERVER TEXT");
-    expect(box.checked).toBe(true);
+    expect(isOn(box)).toBe(true);
   });
 });
 
@@ -456,45 +461,50 @@ describe("US-ACC-02 · DS-48 states and primitives", () => {
 });
 
 describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
-  const field = async () => screen.findByLabelText<HTMLInputElement>(/Mindestzahl offener Wünsche/);
+  const group = async () =>
+    screen.findByRole("group", { name: "Mindestzahl offener Wünsche je Zone" });
+  const value = (g: HTMLElement) => g.querySelector("output")?.textContent;
 
-  it("shows the saved buffer and says what it does and that 0 switches the warning off", async () => {
+  it("US-WUN-02 · US-QS-32 shows the saved buffer as a stepper and says what it does and that 0 switches the warning off", async () => {
     fakeServer({ ...PROFILE, replenishBuffer: 4 });
     show("wishlist");
-    expect((await field()).value).toBe("4");
+    expect(value(await group())).toBe("4");
     expect(screen.getByText(/0 schaltet die Warnung aus/)).toBeTruthy();
+    // A whole number from 0 to 10 is no text field: nothing is typed and no phone keyboard opens (SG-CTRL-04).
+    expect(screen.queryByRole("textbox", { name: /Mindestzahl/ })).toBeNull();
   });
 
-  it("saves a whole number from 0 to 10 with the profile", async () => {
+  it("US-WUN-02 · US-QS-32 saves the number chosen with Mehr and Weniger with the profile", async () => {
     const puts = fakeServer();
     const user = userEvent.setup();
     show("wishlist");
-    const input = await field();
-    await user.clear(input);
-    await user.type(input, "5");
+    const g = await group();
+    await user.click(within(g).getByRole("button", { name: "Mehr" }));
+    await user.click(within(g).getByRole("button", { name: "Mehr" }));
+    await user.click(within(g).getByRole("button", { name: "Weniger" }));
+    expect(value(g)).toBe("3");
+    expect(puts).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(announced()).toBe("Einstellungen gesichert."));
-    expect(puts[0]?.body["replenishBuffer"]).toBe(5);
+    expect(puts[0]?.body["replenishBuffer"]).toBe(3);
   });
 
-  it.each(["11", "-1", "2,5", "abc", ""])(
-    "refuses %j before sending and names the fix",
-    async (text) => {
-      const puts = fakeServer();
-      const user = userEvent.setup();
-      show("wishlist");
-      const input = await field();
-      await user.clear(input);
-      if (text) await user.type(input, text);
-      await user.click(screen.getByRole("button", { name: "Sichern" }));
-      expect((await screen.findAllByRole("alert"))[0]?.textContent).toContain(
-        "ganze Zahl von 0 bis 10",
-      );
-      expect(puts).toHaveLength(0);
-    },
-  );
+  it("US-WUN-02 · SG-CTRL-04 the stepper stops at 0 and at 10, so no wrong number can be sent", async () => {
+    const puts = fakeServer({ ...PROFILE, replenishBuffer: 10 });
+    const user = userEvent.setup();
+    show("wishlist");
+    const g = await group();
+    await user.click(within(g).getByRole("button", { name: "Mehr" }));
+    expect(value(g)).toBe("10");
+    for (let i = 0; i < 12; i += 1)
+      await user.click(within(g).getByRole("button", { name: "Weniger" }));
+    expect(value(g)).toBe("0");
+    await user.click(screen.getByRole("button", { name: "Sichern" }));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts[0]?.body["replenishBuffer"]).toBe(0);
+  });
 
-  it("a server refusal of the field marks it (P-10)", async () => {
+  it("US-WUN-02 a server refusal of the field shows the fix at the stepper and links it (P-10)", async () => {
     fakeServer(PROFILE, () =>
       response(400, {
         error: {
@@ -506,12 +516,12 @@ describe("US-WUN-02 settings page: buffer of the wishlist warning", () => {
     );
     const user = userEvent.setup();
     show("wishlist");
-    const input = await field();
-    await user.clear(input);
-    await user.type(input, "3");
+    const g = await group();
+    await user.click(within(g).getByRole("button", { name: "Mehr" }));
     await user.click(screen.getByRole("button", { name: "Sichern" }));
-    await screen.findByRole("alert");
-    expect(input.getAttribute("aria-invalid")).toBe("true");
+    const alerts = await screen.findAllByRole("alert");
+    expect(alerts.some((a) => a.textContent?.includes("ganze Zahl von 0 bis 10"))).toBe(true);
+    expect(g.getAttribute("aria-describedby")).toBeTruthy();
   });
 });
 
@@ -565,7 +575,7 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
     const puts = fakeServer();
     const user = userEvent.setup();
     show("privacy");
-    await user.click(await screen.findByRole("checkbox", { name: "Alles privat" }));
+    await user.click(await screen.findByRole("switch", { name: "Alles privat" }));
     await vi.waitFor(() => expect(announced()).toBe("Gesichert."));
     expect(puts[0]?.body["positionThresholds"]).toBeNull();
   });
@@ -613,12 +623,40 @@ describe("US-LIC-03 settings page: thresholds of the position recommendation", (
   });
 });
 
-describe("US-ACH-08 calm mode on the profile page", () => {
-  it("US-ACH-08 the profile offers the calm mode switch, off by default", async () => {
+describe("US-ACH-08 calm mode on the settings page", () => {
+  it("US-ACH-08 · US-QS-32 the settings list has the calm mode as its own switch row, off by default, outside every layer", async () => {
+    fakeServer();
+    show();
+    const toggle = await screen.findByRole("switch", { name: "Ruhemodus" });
+    expect(isOn(toggle)).toBe(false);
+    expect(screen.queryByRole("heading", { name: "Wie nutzt du die App?" })).toBeNull();
+  });
+
+  it("US-ACH-08 · US-QS-32 the layer 'Wie nutzt du die App?' keeps only the usage style", async () => {
     fakeServer();
     show("style");
-    const box = await screen.findByRole<HTMLInputElement>("checkbox", { name: "Ruhemodus" });
-    expect(box.checked).toBe(false);
+    await screen.findByRole("combobox", { name: "Wie nutzt du die App?" });
+    // The calm mode, the shortcuts and the motion stand on the settings list, not in this layer.
+    const title = screen.getByRole("heading", { name: "Wie nutzt du die App?" });
+    const layer = document.querySelector<HTMLElement>(`[aria-labelledby="${title.id}"]`);
+    if (!layer) throw new Error("the layer of the heading is missing");
+    expect(within(layer).getAllByRole("combobox")).toHaveLength(1);
+    expect(within(layer).queryByRole("switch")).toBeNull();
+    expect(within(layer).queryByText("Tastenkürzel")).toBeNull();
+    expect(within(layer).queryByText("Bewegung")).toBeNull();
+  });
+});
+
+describe("US-QS-15 · US-QS-32 the settings list holds nine rows and scrolls in its own marked region (DS-58, DS-61)", () => {
+  it("US-QS-15 the rows, the calm mode, the shortcuts and the motion stand in one data-scroll-region, so the frame does not scroll", async () => {
+    fakeServer();
+    show();
+    const calm = await screen.findByRole("switch", { name: "Ruhemodus" });
+    const region = calm.closest("[data-scroll-region]");
+    expect(region).not.toBeNull();
+    expect(region?.contains(screen.getByRole("button", { name: /^Profil/ }))).toBe(true);
+    expect(region?.contains(screen.getByRole("combobox", { name: "Tastenkürzel" }))).toBe(true);
+    expect(region?.contains(screen.getByRole("combobox", { name: "Bewegung" }))).toBe(true);
   });
 });
 
@@ -765,7 +803,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     ["profile", "Profil", /Anzeigename/],
     ["notifications", "Benachrichtigungen", /Gießen/],
     ["privacy", "Datenschutz und Empfehlungen", /Alles privat/],
-    ["style", "Wie nutzt du die App?", /Ruhemodus/],
+    ["style", "Wie nutzt du die App?", /Wie nutzt du die App\?/],
     ["wishlist", "Wunschliste", /Mindestzahl offener Wünsche/],
     ["light", "Licht", /Direkt unter der Lampe ab/],
   ])("US-QS-17 the address ?sheet=%s opens the layer %s", async (sheet, title, content) => {
@@ -781,9 +819,9 @@ describe("US-QS-17 settings as a list of groups", () => {
     showWithBack();
     await user.click(await row("Wunschliste"));
     expect(screen.getByTestId("where").textContent).toBe("?sheet=wishlist");
-    expect(await screen.findByLabelText(/Mindestzahl offener Wünsche/)).toBeTruthy();
+    expect(await screen.findByRole("group", { name: /Mindestzahl offener Wünsche/ })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Browser zurück" }));
-    await waitFor(() => expect(screen.queryByLabelText(/Mindestzahl/)).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("group", { name: /Mindestzahl/ })).toBeNull());
     expect(screen.getByTestId("where").textContent).toBe("");
     expect(await row("Wunschliste")).toBeTruthy();
   });
@@ -817,9 +855,9 @@ describe("US-QS-17 settings as a list of groups", () => {
     const puts = fakeServer({ ...PROFILE, displayName: null });
     const user = userEvent.setup();
     show("wishlist");
-    const input = await screen.findByLabelText(/Mindestzahl offener Wünsche/);
-    await user.clear(input);
-    await user.type(input, "4");
+    const stepper = await screen.findByRole("group", { name: /Mindestzahl offener Wünsche/ });
+    await user.click(within(stepper).getByRole("button", { name: "Mehr" }));
+    await user.click(within(stepper).getByRole("button", { name: "Mehr" }));
     await user.click(screen.getByRole("button", { name: "Sichern" }));
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]?.body).toMatchObject({
@@ -860,7 +898,7 @@ describe("US-QS-11 settings: keyboard shortcuts", () => {
   };
   const showWithProvider = () =>
     render(
-      <MemoryRouter initialEntries={["/?sheet=style"]}>
+      <MemoryRouter initialEntries={["/"]}>
         <ShortcutProvider mode="plain" targets={targets}>
           <ModeOut />
           <SettingsPage api="http://api" token={token} />
@@ -928,12 +966,12 @@ describe("US-QS-33 settings: motion", () => {
   });
   const showStyle = () =>
     render(
-      <MemoryRouter initialEntries={["/?sheet=style"]}>
+      <MemoryRouter initialEntries={["/"]}>
         <SettingsPage api="http://api" token={token} />
       </MemoryRouter>,
     );
 
-  it("US-QS-33 the layer 'Wie nutzt du die App?' offers 'Bewegung' with 'Wie auf dem Gerät' (default) and 'Bewegung aus' and one line of help", async () => {
+  it("US-QS-33 · US-QS-32 the settings list has its own row 'Bewegung' with 'Wie auf dem Gerät' (default) and 'Bewegung aus' and one line of help", async () => {
     fakeServer();
     showStyle();
     const field = (await screen.findByRole("combobox", { name: "Bewegung" })) as HTMLSelectElement;
@@ -986,7 +1024,7 @@ describe("US-QS-32 settings: one line of hint, the rest behind Mehr erfahren (SG
   it("US-QS-32 the Wunschliste warning says its one line; the zones and the default sit behind Mehr erfahren", async () => {
     fakeServer();
     show("wishlist");
-    await screen.findByLabelText(/Mindestzahl offener Wünsche/);
+    await screen.findByRole("group", { name: /Mindestzahl offener Wünsche/ });
     const line = screen.getByText("Warnt bei zu wenigen offenen Wünschen.");
     expect(line.closest("details")).toBeNull();
     const more = line.closest("div")?.querySelector("details");
@@ -997,7 +1035,7 @@ describe("US-QS-32 settings: one line of hint, the rest behind Mehr erfahren (SG
   it("US-QS-32 the notification group says in one line that reminders need a setup", async () => {
     fakeServer();
     show("notifications");
-    await screen.findByRole("checkbox", { name: "Tausch" });
+    await screen.findByRole("switch", { name: "Tausch" });
     expect(screen.getByText("Erinnerungen nur, wenn eingerichtet.")).toBeTruthy();
     expect(document.body.textContent).not.toContain("werden erst verschickt");
   });

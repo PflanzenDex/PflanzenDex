@@ -1,0 +1,7 @@
+{
+  "label": "Für Freunde sichtbar",
+  "help": "Bestätigte Freunde sehen bei ihrem Angebot dieser Art „Passt in beide Richtungen“, nie deine Liste. Sonst ist der Wunsch privat.",
+  "notLoaded": "Ob dieser Wunsch für Freunde sichtbar ist, konnte nicht geladen werden. Lade die Seite neu.",
+  "visible": "„{title}“ ist jetzt für bestätigte Freunde als gesucht sichtbar.",
+  "private": "„{title}“ ist wieder privat."
+}

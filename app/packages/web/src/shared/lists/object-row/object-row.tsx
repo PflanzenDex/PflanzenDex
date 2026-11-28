@@ -47,7 +47,7 @@ export type ObjectRowProps = {
 };
 
 /** The thumbnail: the picture, or the drawn placeholder while there is none and when it failed (P-10: no empty box). */
-function Thumbnail({ src, alt }: { src: string | undefined; alt: string }) {
+export function Thumbnail({ src, alt }: { src: string | undefined; alt: string }) {
   // The address that failed: the placeholder stays until another address comes.
   const [failed, setFailed] = useState<string | null>(null);
   return (

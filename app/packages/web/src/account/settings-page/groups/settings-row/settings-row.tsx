@@ -13,7 +13,7 @@ export function SettingsRow(props: { id: string; title: string; value: ReactNode
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
-      className="h-auto min-h-12 w-full justify-start gap-3 whitespace-normal px-3 py-2 text-left text-base font-normal"
+      className="h-auto min-h-12 w-full justify-start gap-3 whitespace-normal px-3 py-2 text-left text-base font-normal focus-visible:ring-inset focus-visible:ring-offset-0"
     >
       <span className="min-w-0 flex-1">
         <span className="block font-semibold hyphens-auto [overflow-wrap:anywhere]">
