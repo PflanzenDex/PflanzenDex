@@ -45,8 +45,9 @@ const OFFLINE_WRITE_ERROR: ApiError<never> = {
 };
 
 /**
- * The refusal of a write of a tab that loaded another account (US-QS-07, P-04). The check is its own chunk, so the entry
- * carries no sign-in reader (DS-08); a chunk that cannot load refuses the write too, nothing is sent unchecked (P-04, P-10).
+ * The refusal of a request of a tab that loaded another account (US-QS-07, P-04, P-05). The check is its own chunk, so the
+ * entry carries no sign-in reader (DS-08); a chunk that cannot load refuses the request too, nothing is sent unchecked
+ * (P-04, P-10).
  */
 const refusalOfTab = () =>
   import("./write-action/tab-account/tab-account").then(
@@ -54,7 +55,7 @@ const refusalOfTab = () =>
     () => ({ code: "system.unexpected", text: texts(refusalTable)("refusal") }),
   );
 
-/** The refusal of a write of this tab, checked in its own chunk (US-QS-07); the notice asks the same question. */
+/** The refusal of a request of this tab, checked in its own chunk (US-QS-07); the notice asks the same question. */
 export const tabRefusal = refusalOfTab;
 
 /** The error of a request that got no answer: offline writes say that the connection is missing (issue 1863). */
@@ -68,12 +69,11 @@ export async function call<T, D = unknown>(
   init: { method?: string; body?: unknown; key?: string } = {},
 ): Promise<Response<T, D>> {
   const method = init.method ?? "GET";
-  // A write of a tab that loaded another account is refused before it is sent: the token may belong to that other account
-  // (US-QS-07, P-04). The check runs here, right before the request, so a token read earlier is checked as well.
-  if (method !== "GET") {
-    const refused = await refusalOfTab();
-    if (refused) return { ok: false, error: refused };
-  }
+  // A request of a tab that loaded another account is refused before it is sent, a read as well as a write: the token may
+  // belong to that other account and would fetch its data (US-QS-07, P-04, P-05). The check runs here, right before the
+  // request, so a token read earlier is checked as well.
+  const refused = await refusalOfTab();
+  if (refused) return { ok: false, error: refused };
   try {
     const res = await fetchFn(url, {
       method,

@@ -1,10 +1,14 @@
 // @vitest-environment jsdom
 // US-QS-07 · the tab tells the keeper when another tab signed in as another account: a persistent banner with a reload
 // button, shown on the storage event of the sign-in (and on focus as a backstop); the writes of the tab are refused.
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createQueryClient } from "@/shared/data";
 import { tabAccount } from "@/shared/data/api";
+import { useStoredPhoto } from "@/shared/platform/browser/use-stored-photo";
 import { OtherTabNotice } from "./other-tab-notice";
 
 const USER_KEY = "oidc.user:http://localhost:18081/realms/pflanzendex:pflanzendex-web";
@@ -97,5 +101,82 @@ describe("US-QS-07 · a tab notices a sign-in of another account in another tab"
     signInAs("B");
     await settle();
     expect(screen.queryByText(TEXT)).toBeNull();
+  });
+});
+
+describe("US-QS-07 · a stale tab drops what it cached of the other account (P-04, P-05)", () => {
+  const access = { api: "http://api", token: async () => "tok" };
+  const PHOTO = "/specimens/s1/measurements/m1/photo";
+  const KEY = ["US-QS-07", "plants"];
+  let revoked: string[];
+
+  beforeEach(() => {
+    revoked = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(
+        async () => ({ ok: true, status: 200, blob: async () => ({ size: 10 }) }) as Response,
+      ),
+    );
+    URL.createObjectURL = vi.fn(() => "blob:photo");
+    URL.revokeObjectURL = vi.fn((url: string) => void revoked.push(url));
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** The notice over a client of its own, with one cached query and one cached photo that nobody shows. */
+  async function mountWithCaches() {
+    const client = createQueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const fill = async () => {
+      client.setQueryData(KEY, "Pflanzen");
+      const photo = renderHook(() => useStoredPhoto(access, PHOTO));
+      await waitFor(() => expect(typeof photo.result.current).toBe("string"));
+      photo.unmount();
+    };
+    await fill();
+    render(<OtherTabNotice reload={vi.fn()} />, { wrapper });
+    await settle();
+    return { client, fill };
+  }
+
+  it("US-QS-07 the account of the tab keeps its caches: nothing is dropped while no other account is signed in", async () => {
+    const { client } = await mountWithCaches();
+    expect(client.getQueryData(KEY)).toBe("Pflanzen");
+    expect(revoked).toEqual([]);
+  });
+
+  it("US-QS-07 another tab signs in as B: the query cache and the photo cache are emptied", async () => {
+    const { client } = await mountWithCaches();
+    signInAs("B");
+    await screen.findByText(TEXT);
+    expect(client.getQueryData(KEY)).toBeUndefined();
+    expect(revoked).toEqual(["blob:photo"]);
+  });
+
+  it("US-QS-07 signed out in another tab: both caches are emptied too, the notice stays away", async () => {
+    const { client } = await mountWithCaches();
+    signInAs(null);
+    await waitFor(() => expect(client.getQueryData(KEY)).toBeUndefined());
+    expect(revoked).toEqual(["blob:photo"]);
+    expect(screen.queryByText(TEXT)).toBeNull();
+  });
+
+  it("US-QS-07 back to the tab's account A: both caches are emptied again, so nothing of B stays", async () => {
+    const { client, fill } = await mountWithCaches();
+    signInAs("B");
+    await screen.findByText(TEXT);
+    // Something got in between (a request that was on its way when the check refused); the return to A drops it as well.
+    tabAccount.sub = undefined;
+    await fill();
+    tabAccount.sub = "A";
+    expect(client.getQueryData(KEY)).toBe("Pflanzen");
+    revoked.length = 0;
+    signInAs("A");
+    await waitFor(() => expect(screen.queryByText(TEXT)).toBeNull());
+    await waitFor(() => expect(client.getQueryData(KEY)).toBeUndefined());
+    expect(revoked).toEqual(["blob:photo"]);
   });
 });

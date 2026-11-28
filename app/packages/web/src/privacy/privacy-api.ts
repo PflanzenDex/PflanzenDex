@@ -1,4 +1,11 @@
-import { call, createWrite, type ApiError, type Response, type WriteOptions } from "../shared/data";
+import {
+  call,
+  createWrite,
+  tabRefusal,
+  type ApiError,
+  type Response,
+  type WriteOptions,
+} from "../shared/data";
 
 type FetchFn = typeof fetch;
 
@@ -41,6 +48,10 @@ export async function fetchExport(
   token: string,
   fetchFn: FetchFn = fetch,
 ): Promise<Response<ExportFile>> {
+  // The archive holds all own data: a tab that loaded another account than the one signed in on the device asks for none
+  // (US-QS-07, P-04, P-05).
+  const refused = await tabRefusal();
+  if (refused) return { ok: false, error: refused };
   try {
     const res = await fetchFn(`${api}/account/export`, {
       headers: { Authorization: `Bearer ${token}` },

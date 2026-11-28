@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ApiError } from "../../data";
+import { tabRefusal, type ApiError } from "../../data/api";
 
 /** Where to and as whom a private photo is fetched (P-05). */
 export interface PhotoAccess {
@@ -71,7 +71,12 @@ async function download(
   token: PhotoAccess["token"],
 ): Promise<{ ok: true; blob: Blob } | { ok: false; error: ApiError }> {
   try {
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${await token()}` } });
+    const t = await token();
+    // A tab that loaded another account than the one signed in on the device fetches no photo with that account's token
+    // (US-QS-07, P-04, P-05). The check follows the token, as for a read of `useRequest`, and comes right before the fetch.
+    const refused = await tabRefusal();
+    if (refused) return { ok: false, error: refused };
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${t}` } });
     if (res.ok) return { ok: true, blob: await res.blob() };
     const body = (await res.json()) as { error?: ApiError };
     return { ok: false, error: body.error ?? FAILED };

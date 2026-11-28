@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { tabAccount } from "../../data/api";
 import {
   clearPhotoCache,
   forgetPhotos,
@@ -218,5 +219,69 @@ describe("NFR-12 the blob cache is bounded and never revokes a picture that is s
     clearPhotoCache();
     expect(revoked).toEqual([hiddenUrl]);
     expect(revoked).not.toContain(shown.result.current);
+  });
+});
+
+describe("US-QS-07 a stale tab downloads no photo under the account of another tab (P-04, P-05)", () => {
+  const USER_KEY = "oidc.user:http://localhost:18081/realms/pflanzendex:pflanzendex-web";
+  const signInAs = (sub: string) =>
+    window.localStorage.setItem(
+      USER_KEY,
+      JSON.stringify({ access_token: `token-of-${sub}`, profile: { sub } }),
+    );
+
+  afterEach(() => {
+    tabAccount.sub = undefined;
+    window.localStorage.clear();
+  });
+
+  it("US-QS-07 the tab loaded A, the device is signed in as B: nothing is fetched and the photo is an error with the code", async () => {
+    tabAccount.sub = "A";
+    signInAs("B");
+    const { result } = renderHook(() => useStoredPhoto(access, path(700)));
+    await waitFor(() =>
+      expect(result.current).toMatchObject({ code: "access.account_in_other_tab" }),
+    );
+    expect(fetched).toEqual([]);
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-07 a refused photo is not kept: once the account is the tab's own again, the next view fetches it", async () => {
+    tabAccount.sub = "A";
+    signInAs("B");
+    const refused = renderHook(() => useStoredPhoto(access, path(701)));
+    await waitFor(() =>
+      expect(refused.result.current).toMatchObject({ code: "access.account_in_other_tab" }),
+    );
+    refused.unmount();
+    signInAs("A");
+    const again = renderHook(() => useStoredPhoto(access, path(701)));
+    await waitFor(() => expect(typeof again.result.current).toBe("string"));
+    expect(fetched).toEqual(["http://api/specimens/s1/measurements/m701/photo"]);
+  });
+
+  it("US-QS-07 the account changes while the token is read (a renewal): the check follows the token, so nothing is fetched", async () => {
+    tabAccount.sub = "A";
+    signInAs("A");
+    const renewing: PhotoAccess = {
+      api: "http://api",
+      token: async () => {
+        signInAs("B");
+        return "token-of-B";
+      },
+    };
+    const { result } = renderHook(() => useStoredPhoto(renewing, path(703)));
+    await waitFor(() =>
+      expect(result.current).toMatchObject({ code: "access.account_in_other_tab" }),
+    );
+    expect(fetched).toEqual([]);
+  });
+
+  it("US-QS-07 the device still signed in as the tab's account A: the photo is fetched", async () => {
+    tabAccount.sub = "A";
+    signInAs("A");
+    const { result } = renderHook(() => useStoredPhoto(access, path(702)));
+    await waitFor(() => expect(typeof result.current).toBe("string"));
+    expect(fetched).toHaveLength(1);
   });
 });
