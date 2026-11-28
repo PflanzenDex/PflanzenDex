@@ -169,7 +169,10 @@ export function SettingsPage(props: { api: string; token: Token; host?: boolean 
   const loading = "Einstellungen werden geladen …";
   return (
     // The layers beside the card, not inside it (US-QS-15): the frame is outside the card.
-    <LayerHost>
+    // A hosted page sits in the frame of "Konto", which has a given height: the host may be lower than its content (`min-h-0`), so
+    // a layer pane takes the height that is left and scrolls inside (US-QS-15, DS-59), and it does not grow (no `flex-1`), so the
+    // link below the card stays under the card. Without it a long layer (seven switch rows with a line each) grows the frame.
+    <LayerHost className={props.host === true ? "min-h-0" : undefined}>
       <div
         className={
           props.host === true

@@ -43,11 +43,15 @@ describe("US-QS-32 Switch: a setting that applies at once is a switch (SG-CTRL-0
     expect(document.activeElement).toBe(toggle);
   });
 
-  it("US-QS-32 · SG-TOUCH-01 the hit area is 44 px: a 32 px track plus 6 px above and below", () => {
+  it("US-QS-32 · SG-TOUCH-01 the button itself is the 44 px target (not a pseudo-element): 52 x 44 px with the 32 px track inside", () => {
     render(<Controlled />);
     const toggle = screen.getByRole("switch");
-    expect(toggle.className).toContain("h-[32px]");
-    expect(toggle.className).toContain("after:-inset-y-1.5");
+    expect(toggle.className).toContain("h-11");
+    expect(toggle.className).toContain("w-[52px]");
+    expect(toggle.className).not.toContain("after:");
+    const track = toggle.querySelector("[data-slot=switch-track]");
+    expect(track?.className).toContain("h-8");
+    expect(track?.querySelector("[data-slot=switch-thumb]")).toBeTruthy();
   });
 
   it("US-QS-32 · DS-38 an invalid switch is exposed with aria-invalid", () => {

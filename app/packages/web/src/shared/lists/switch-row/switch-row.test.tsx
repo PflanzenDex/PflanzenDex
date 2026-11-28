@@ -48,6 +48,8 @@ describe("US-QS-32 SwitchRow: a setting that applies at once is a switch in a fu
     const label = screen.getByText("Empfehlungen zeigen").closest("label");
     expect(label?.className).toContain("after:inset-0");
     expect(label?.parentElement?.className).toContain("min-h-11");
+    // The label is a 44 px box by itself, also without a secondary line (the conformance probe measures it, DS-15).
+    expect(label?.className).toContain("min-h-11");
   });
 
   it("US-QS-32 the label comes first and the switch last (leading label, trailing switch)", () => {

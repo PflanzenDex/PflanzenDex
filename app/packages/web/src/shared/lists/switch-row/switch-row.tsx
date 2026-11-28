@@ -32,9 +32,12 @@ export type SwitchRowProps = {
   className?: string | undefined;
 };
 
-/** The look of the row's own box: 44 px high at least, 16 px at the sides (SG-SHAPE-07, SG-TOUCH-01). */
-const ROW =
-  "relative flex min-h-11 w-full min-w-0 items-center gap-3 px-4 py-3 text-left text-base";
+/**
+ * The look of the row's own box: 44 px high at least, 16 px at the sides (SG-SHAPE-07, SG-TOUCH-01). The 12 px above and below
+ * are the label's own padding, not the row's: the label is the target of the whole row, and the conformance probe measures its box
+ * (DS-15), so it must be 44 px high by itself, also without a secondary line.
+ */
+const ROW = "relative flex min-h-11 w-full min-w-0 items-center gap-3 px-4 text-left text-base";
 /**
  * The label covers the whole row with its `after`, so the whole row is the target and a tap anywhere turns the switch; the
  * switch comes later in the document and is positioned, so it stays on top and takes its own press.
@@ -43,7 +46,7 @@ const ROW =
 const WITH_PICTURE = "gap-2 px-2 py-2.5";
 const COMPACT = "px-3";
 const LABEL =
-  "flex min-w-0 flex-1 cursor-pointer flex-col gap-0.5 after:absolute after:inset-0 after:content-['']";
+  "flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center gap-0.5 py-3 after:absolute after:inset-0 after:content-['']";
 const LINE = "px-4 pb-3 text-sm";
 
 /** The lines under the row: the refusal, linked to the switch, and the reason of the offline state on its own line. */
