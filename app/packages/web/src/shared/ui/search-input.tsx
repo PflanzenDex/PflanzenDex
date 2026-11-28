@@ -58,9 +58,10 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           aria-keyshortcuts={keyHint?.aria}
           // Room for the icon at the start, so the text never runs under it. The end keeps its room for the clear button
           // only while the button shows (text in the field) or the key hint does: an empty field gives the placeholder
-          // that width (SG-SEARCH-01, 200 % text). The native cancel icon is hidden (WebKit, Blink).
+          // that width (SG-SEARCH-01, 200 % text); a placeholder or text that is still wider ends with an ellipsis, never cut
+          // mid-letter (SG-TYPE-04, issue 1903). The native cancel icon is hidden (WebKit, Blink).
           className={cn(
-            "ps-10 [&::-webkit-search-cancel-button]:appearance-none",
+            "ps-10 text-ellipsis [&::-webkit-search-cancel-button]:appearance-none",
             endRoom({ room }),
           )}
         />

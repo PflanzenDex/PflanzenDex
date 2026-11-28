@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { keepTogether } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/utils";
+import { ROW_ACTION, TREATMENT_TEXT } from "@/shared/lists/grouped-list/group-classes";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { UndoRow } from "@/shared/feedback/undo-row/undo-row";
@@ -20,6 +22,7 @@ const sinceText = (d: WateringDueRow) =>
     ? ui("since.never")
     : keepTogether(ui("since.days", { days: d.daysSince }));
 
+/** The row wraps (issue 1903): the text keeps a rem basis, so at 200 % text "Gegossen" moves below it instead of squeezing the name. */
 function Row(props: {
   row: WateringDueRow;
   checked: boolean;
@@ -30,9 +33,13 @@ function Row(props: {
   const r = props.row;
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3">
-      <Checkbox checked={props.checked} onChange={props.onToggle} rowClassName="min-w-0 flex-1">
+      <Checkbox
+        checked={props.checked}
+        onChange={props.onToggle}
+        rowClassName={cn("min-w-0", TREATMENT_TEXT)}
+      >
         <span>
-          <span className="font-medium">{r.name}</span>
+          <span className="break-words font-medium hyphens-auto">{r.name}</span>
           <span className="block text-sm tabular-nums text-muted-foreground">
             {sinceText(r)},{" "}
             {ui("interval", { days: keepTogether(ui("days", { count: r.intervalDays })) })}
@@ -42,6 +49,7 @@ function Row(props: {
       <Button
         variant="tinted"
         size="sm"
+        className={ROW_ACTION}
         disabled={props.busy}
         aria-label={ui("waterOne", { name: r.name })}
         onClick={props.onWater}
