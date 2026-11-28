@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
+import { Context } from "@/shared/platform/announcer/context";
 import { EquipmentPage } from "./equipment-page";
 
 /** Renders in a router, because layers and pages live in the address (US-QS-22); `url` opens a layer. The toast provider is the app shell's (US-QS-07). */
@@ -124,23 +125,47 @@ describe("US-EQU-04 US-EQU-05 US-EQU-06 upkeep writes from the equipment page", 
     fakeServer();
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=sensors");
     const layer = await screen.findByRole("dialog", { name: "Sensoren" });
-    // The list is loaded once its assignment select is there; only then can its headings be counted.
-    await within(layer).findByRole("combobox", { name: "Zugeordnet zu Feuchtesensor" });
+    // The list is loaded once its assignment row is there; only then can its headings be counted.
+    await within(layer).findByRole("button", {
+      name: "Zugeordnet zu Nicht zugeordnet Feuchtesensor",
+    });
     expect(within(layer).getAllByRole("heading", { name: "Sensoren" })).toHaveLength(1);
   });
 
-  it("US-EQU-06 choosing a specimen for a sensor sends the assignment", async () => {
+  it("US-EQU-06 · US-QS-32 choosing a specimen for a sensor in its pick list sends the assignment", async () => {
     const fetchFn = fakeServer();
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=sensors");
-    await userEvent
-      .setup()
-      .selectOptions(
-        await screen.findByRole("combobox", { name: "Zugeordnet zu Feuchtesensor" }),
-        "specimen:p1",
-      );
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Zugeordnet zu Nicht zugeordnet Feuchtesensor" }),
+    );
+    await user.click(await screen.findByRole("button", { name: "Aloe" }));
     expect(await lastPost(fetchFn)).toMatchObject({
       path: "/equipment/s1/sensor-target",
       body: { specimenId: "p1", locationId: null },
     });
+  });
+  it("US-QS-32 · SG-FEED-02 a saved assignment is announced once: the write stays quiet and the row says the result", async () => {
+    const fetchFn = fakeServer();
+    const announce = vi.fn();
+    render(
+      <ToastProvider>
+        <Context.Provider value={{ announce, buffer: vi.fn(), note: null }}>
+          <MemoryRouter initialEntries={["/?sheet=sensors"]}>
+            <EquipmentPage api="http://api" token={token} />
+          </MemoryRouter>
+        </Context.Provider>
+      </ToastProvider>,
+    );
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Zugeordnet zu Nicht zugeordnet Feuchtesensor" }),
+    );
+    await user.click(await screen.findByRole("button", { name: "Aloe" }));
+    expect((await lastPost(fetchFn)).path).toBe("/equipment/s1/sensor-target");
+    await vi.waitFor(() =>
+      expect(announce).toHaveBeenCalledWith("Zuordnung von „Feuchtesensor“ gesichert."),
+    );
+    expect(announce).toHaveBeenCalledTimes(1);
   });
 });

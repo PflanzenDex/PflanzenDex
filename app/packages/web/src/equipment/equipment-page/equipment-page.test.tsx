@@ -751,10 +751,19 @@ describe("US-QS-22 the equipment fits one screen", () => {
     });
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=sensors");
     const layer = await screen.findByRole("dialog", { name: "Sensoren" });
-    await userEvent.selectOptions(await within(layer).findByRole("combobox"), "specimen:p1");
+    await userEvent.click(
+      await within(layer).findByRole("button", {
+        name: "Zugeordnet zu Nicht zugeordnet Bodenfeuchte-Sensor",
+      }),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Gummibaum – Wohnzimmer Fenster" }),
+    );
     expect(
       await within(layer).findByText("Zugeordnet: Gummibaum – Wohnzimmer Fenster"),
     ).toBeTruthy();
+    // The row offers its undo; the live region says the result once (SG-FEED-02, SG-FEED-03).
+    expect(await within(layer).findByRole("button", { name: /^Rückgängig/ })).toBeTruthy();
     await vi.waitFor(() => expect(said()).toBe("Zuordnung von „Bodenfeuchte-Sensor“ gesichert."));
     fireEvent.keyDown(layer, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
@@ -814,7 +823,12 @@ describe("US-QS-22 the equipment fits one screen", () => {
     expect(screen.queryByRole("alert")).toBeNull();
     await userEvent.click(await screen.findByRole("button", { name: /^Sensoren/ }));
     const layer = await screen.findByRole("dialog", { name: "Sensoren" });
-    await userEvent.selectOptions(await within(layer).findByRole("combobox"), "specimen:p1");
+    await userEvent.click(
+      await within(layer).findByRole("button", {
+        name: "Zugeordnet zu Nicht zugeordnet Bodenfeuchte-Sensor",
+      }),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Aloe" }));
     expect(await within(layer).findByRole("alert")).toBeTruthy();
   });
 

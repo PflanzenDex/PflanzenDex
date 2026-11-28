@@ -120,7 +120,7 @@ export function Picture(props: {
           {t("picture.external")}
         </a>
       </span>
-      <figcaption className="text-sm text-muted-foreground">
+      <figcaption className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
         {t("picture.source", { source: image.source })}
       </figcaption>
       {onStoreImage && (

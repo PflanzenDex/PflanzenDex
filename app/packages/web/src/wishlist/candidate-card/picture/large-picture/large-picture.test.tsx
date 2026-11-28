@@ -73,3 +73,31 @@ describe("US-WUN-06 the large view of a stored picture", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("US-QS-15 the large view keeps a long source address inside the sheet (issue 1903)", () => {
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("US-QS-15 the source line breaks anywhere, so an address without a break opportunity wraps at 200 % text", async () => {
+    URL.createObjectURL = vi.fn(() => "blob:full");
+    URL.revokeObjectURL = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => new Response(new Uint8Array([2]))),
+    );
+    render(
+      <LargePicture
+        access={ACCESS}
+        path={PATH}
+        title={TITLE}
+        sourceLine={SOURCE}
+        onClose={vi.fn()}
+      />,
+    );
+    await screen.findByRole("img", { name: `Bild von ${TITLE}` });
+    const line = screen.getByText(SOURCE);
+    expect((line.getAttribute("class") ?? "").split(" ")).toContain("[overflow-wrap:anywhere]");
+  });
+});

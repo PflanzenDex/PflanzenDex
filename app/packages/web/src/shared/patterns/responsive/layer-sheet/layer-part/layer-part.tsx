@@ -1,8 +1,6 @@
 import * as React from "react";
-import { ChevronRight } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
 import { LayerSheet, useLayer } from "../layer-sheet";
+import { OpenRow } from "./layer-part.row";
 
 /**
  * A row of a list that opens its layer (US-QS-15, US-QS-17): the name, one line of value or help and a chevron. The whole
@@ -21,28 +19,14 @@ export function LayerOpenRow({
 }) {
   const { open, openLayer } = useLayer(id);
   return (
-    <Button
-      type="button"
-      variant="ghost"
+    <OpenRow
+      title={title}
+      {...(value === undefined ? {} : { value })}
+      {...(className === undefined ? {} : { className })}
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
-      className={cn(
-        // The ring lies inside the row: a list that scrolls clips a ring outside its rows (DS-37, US-QS-15, issue 2650).
-        "h-auto min-h-12 w-full justify-start gap-3 whitespace-normal rounded-lg border border-border px-3 py-2 text-left text-base font-normal focus-visible:ring-inset focus-visible:ring-offset-0",
-        className,
-      )}
-    >
-      <span className="min-w-0 flex-1">
-        <span className="block font-semibold hyphens-auto [overflow-wrap:anywhere]">{title}</span>
-        {value === undefined ? null : (
-          <span className="block text-sm text-muted-foreground hyphens-auto [overflow-wrap:anywhere]">
-            {value}
-          </span>
-        )}
-      </span>
-      <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
-    </Button>
+    />
   );
 }
 

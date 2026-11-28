@@ -48,7 +48,7 @@ export function LargePicture(props: {
           {errorText(state.code)}
         </p>
       ) : null}
-      <p className="text-sm text-muted-foreground">{sourceLine}</p>
+      <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{sourceLine}</p>
     </ResponsiveModal>
   );
 }

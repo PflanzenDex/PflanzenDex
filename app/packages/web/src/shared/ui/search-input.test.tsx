@@ -104,6 +104,13 @@ describe("US-QS-15 · issue 2633 the end room follows what shows", () => {
   });
 });
 
+describe("US-QS-15 · issue 1903 a placeholder wider than the field", () => {
+  it("US-QS-15 · SG-TYPE-04 a placeholder or text wider than the field ends with an ellipsis, never cut mid-letter at 200 % text", () => {
+    render(<Harness initial="" />);
+    expect(screen.getByRole("searchbox").className.split(" ")).toContain("text-ellipsis");
+  });
+});
+
 describe("US-QS-32 · SG-SEARCH-01 the search field shows the search icon at its left", () => {
   it("US-QS-32 · SG-SEARCH-01 the search icon sits inside the field at its left edge and is hidden from assistive technology", () => {
     render(<Harness initial="" />);
