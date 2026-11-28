@@ -1,7 +1,7 @@
 /* eslint-disable security/detect-non-literal-fs-filename -- every path is a fixed folder or file of this package or comes from the checked-in register */
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import type { FullConfig, FullResult, Reporter, Suite } from "@playwright/test/reporter";
-import { SCREENS } from "../one-screen/register";
+import { SCREENS, selectedScreens } from "../one-screen/register";
 import {
   A11Y_SIZES,
   buildBaseline,
@@ -41,7 +41,8 @@ function readResults(): Result[] {
     .flatMap((f) => JSON.parse(readFileSync(new URL(f, dir), "utf8")) as Result[]);
 }
 
-const EXPECTED = SCREENS.length * A11Y_SIZES.length;
+// The measurements of a full run: every selected screen (UI_SCREENS, US-QG-02 issue 2666) at every size (the baseline needs all).
+const EXPECTED = selectedScreens().length * A11Y_SIZES.length;
 
 const countOf = (findings: readonly Finding[], kind: Finding["kind"]) =>
   findings.filter((f) => f.kind === kind).reduce((sum, f) => sum + f.count, 0);

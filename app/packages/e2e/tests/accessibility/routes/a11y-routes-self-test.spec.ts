@@ -10,6 +10,11 @@ import {
   type Result,
 } from "../../../support/display/a11y/findings";
 import { readBaseline } from "../../../support/display/a11y/reporter";
+import {
+  a11yMediaOf,
+  comparesWithBaseline,
+  mediaOptions,
+} from "../../../support/display/selection/a11y-media";
 
 // FR-QG-24, QG-U7 (issue 467): the comparison with the baseline needs no browser, so this self-test pins its rules (FR-QG-17).
 
@@ -81,5 +86,25 @@ test.describe("QG-U7 self-test: the accessibility judgement", () => {
   test("FR-QG-24 the checked-in baseline is consistent with the register", () => {
     const sizes = new Set(A11Y_SIZES.map((s) => s.name));
     expect(judgeBaseline(readBaseline(), new Set(SCREENS.map((s) => s.id)), sizes)).toEqual([]);
+  });
+});
+
+test.describe("US-QG-02 self-test: the warning run of the accessibility gate", () => {
+  test("US-QG-02 A11Y_ROUTES_MEDIA: forced colors and reduced motion set the browser context, the normal run sets nothing", () => {
+    expect(mediaOptions(a11yMediaOf("forced-colors"))).toEqual({ forcedColors: "active" });
+    expect(mediaOptions(a11yMediaOf("reduced-motion"))).toEqual({ reducedMotion: "reduce" });
+    expect(mediaOptions(a11yMediaOf(""))).toEqual({});
+    expect(mediaOptions(a11yMediaOf(undefined))).toEqual({});
+  });
+
+  test("US-QG-02 A11Y_ROUTES_MEDIA: an unknown value is refused before anything is measured", () => {
+    expect(() => a11yMediaOf("dark")).toThrow('A11Y_ROUTES_MEDIA "dark" is not one of');
+  });
+
+  test("US-QG-02 A11Y_ROUTES_MEDIA: only the normal run is compared with the baseline; a media run and a write are not", () => {
+    expect(comparesWithBaseline(a11yMediaOf(""), false)).toBe(true);
+    expect(comparesWithBaseline(a11yMediaOf("forced-colors"), false)).toBe(false);
+    expect(comparesWithBaseline(a11yMediaOf("reduced-motion"), false)).toBe(false);
+    expect(comparesWithBaseline(a11yMediaOf(""), true)).toBe(false);
   });
 });

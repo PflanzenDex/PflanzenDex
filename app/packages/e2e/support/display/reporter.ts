@@ -3,8 +3,9 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import type { FullConfig, FullResult, Reporter, Suite } from "@playwright/test/reporter";
 import { SIZES, type Baseline, type Result } from "./one-screen/judge";
 import { buildBaseline, entryOf, judgeBaseline } from "./one-screen/baseline";
-import { SCREENS } from "./one-screen/register";
+import { SCREENS, selectedScreens } from "./one-screen/register";
 import { measurementsOf } from "./one-screen/register.check";
+import { activeSizeSet, sizesIn } from "./selection/size-set";
 import {
   SHIFT_SIZES,
   buildShiftBaseline,
@@ -27,7 +28,8 @@ const cell = (r: Result | undefined, baseline: Baseline): string => {
 
 /** The table for the job summary: page/inner per screen and size, failures marked. The merge of the shards uses it too (US-QG-01). */
 export function reportMarkdown(results: readonly Result[], baseline: Baseline): string {
-  const names = SIZES.map((s) => s.name);
+  // The columns are the sizes this run measures (ONE_SCREEN_SIZES, US-QG-02 issue 2666): all of them unless the set says otherwise.
+  const names = sizesIn(activeSizeSet()).map((s) => s.name);
   const lines = [
     "## One screen (US-QS-15, QG-U8)",
     "",
@@ -114,7 +116,7 @@ function readShiftResults(): ShiftResult[] {
 function shiftVerdict(status: FullResult["status"]): { status: FullResult["status"] } | undefined {
   const results = readShiftResults();
   if (results.length === 0) return undefined;
-  const complete = results.length === SCREENS.length * SHIFT_SIZES.length;
+  const complete = results.length === selectedScreens().length * SHIFT_SIZES.length;
   if (process.env["ONE_SCREEN_WRITE"] === "1") {
     if (!complete) {
       console.error(
@@ -165,7 +167,8 @@ export default class OneScreenReporter implements Reporter {
     const shift = shiftVerdict(result.status);
     const results = readResults();
     if (results.length === 0) return shift; // only the self-test ran, or the layout-shift tests alone
-    const complete = results.length === measurementsOf(SCREENS);
+    // A full run measures every selected screen at every size of the run (UI_SCREENS, ONE_SCREEN_SIZES; US-QG-02 issue 2666).
+    const complete = results.length === measurementsOf(selectedScreens());
     if (process.env["ONE_SCREEN_WRITE"] === "1") {
       if (!complete) {
         console.error(

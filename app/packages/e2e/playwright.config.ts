@@ -50,7 +50,7 @@ if (!process.env["DEVICE_CHECK_RUN_DIR"]) {
 const webBuild = process.env["E2E_WEB_BUILD"] === "1";
 /** The specs of the read-only gates and of the device check have their own projects and are not part of `make e2e` (anchored on the file name). */
 const GATE_SPECS =
-  /(one-screen|merge-shards|a11y-routes(-self-test)?|display-checks\.device(\.self|\.self-checks|\.self-summary)?)\.spec\.ts$/;
+  /(one-screen|merge-shards|touched-screens|selection|a11y-routes(-self-test)?|display-checks\.device(\.self|\.self-checks|\.self-summary)?)\.spec\.ts$/;
 // US-QG-01 (issue 2429): the browser of the two UI gates runs in the pinned Playwright container. dev-servers.gate-browser.mjs
 // starts it and sets PW_GATE_WS to its WebSocket address; `exposeNetwork` lets that browser reach the web and API ports of this
 // machine on the loopback (localhost:<port>). Without PW_GATE_WS (UI_GATES_HOST=1, the host Chromium: informational) the
@@ -95,7 +95,7 @@ export default defineConfig({
     // The self-tests of the shards of the UI gates (merge-shards.spec.ts, US-QG-01) run here too.
     {
       name: "one-screen",
-      testMatch: /(one-screen|merge-shards)\.spec\.ts$/,
+      testMatch: /(one-screen|merge-shards|touched-screens|selection)\.spec\.ts$/,
       outputDir: "test-results/one-screen",
       use: { ...devices["Desktop Chrome"], ...GATE_CONNECT },
     },

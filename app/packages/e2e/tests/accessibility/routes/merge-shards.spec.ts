@@ -13,28 +13,22 @@ import {
   weightOf,
   type Screen,
 } from "../../../support/display/one-screen/register";
+import { shardList, MAX_SHARDS } from "../../../support/display/selection/touched-screens";
 import { coverageProblems, shiftShardRows, shiftSummary } from "./merge-shards";
 
 // US-QG-01 (issue 1485, owner decision 2026-11-07): the shards of the UI gates. Each shard runs its screens of both gates. The
 // split is one partition of the register, balanced by the measured weights, and merge-shards proves the partition at the end of
 // the run. Pure self-tests, no browser and no web stack; the project "one-screen" runs this file (playwright.config.ts).
 
-// US-QG-01 (issue 1667): the shards are the matrix of the job `ui-shard` in ci.yml (`shard: [1, 2, ...]`), so the self-tests
-// follow the CI matrix and a change of the matrix needs no change here.
+// US-QG-02 (issue 2666): the matrix of the job `ui-shard` takes its shards from the job `changes` (`fromJSON`), one per 17 touched
+// screens and at most MAX_SHARDS. The full register is the largest set, so its shards are the matrix of a run of every screen.
 const CI_WORKFLOW = new URL("../../../../../../.github/workflows/ci.yml", import.meta.url);
-function matrixShards(): number[] {
-  // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed file of the repository
-  const workflow = readFileSync(CI_WORKFLOW, "utf8");
-  const start = workflow.indexOf("\n  ui-shard:");
-  const match = /^\s+shard: \[([\d, ]+)\]/m.exec(workflow.slice(Math.max(start, 0)));
-  if (start < 0 || !match) throw new Error("the job ui-shard of ci.yml lists no shard matrix");
-  return (match[1] ?? "").split(",").map((shard) => Number(shard.trim()));
-}
-const SHARDS = matrixShards();
+const SHARDS = shardList(SCREENS.length);
 const SPLIT = SHARDS.length;
 const screenIds = SCREENS.map((screen) => screen.id);
+// An explicit empty selection: these self-tests cover the whole register, whatever UI_SCREENS of the run names.
 const shardIds = (index: number): string[] =>
-  screensOf("", `${index}/${SPLIT}`).map((screen) => screen.id);
+  screensOf("", `${index}/${SPLIT}`, []).map((screen) => screen.id);
 /** The measurements of the given shards, one per screen and size, as the reporters write them. */
 const measuredOf = (indexes: number[], sizes: readonly string[]) =>
   indexes.flatMap((index) =>
@@ -60,10 +54,15 @@ test("US-QG-01 self-test: the shards of a gate together measure every screen and
 });
 
 test.describe("US-QG-01 self-test: the shards of the UI gates", () => {
-  test("US-QG-01 self-test: the CI matrix lists the shards 1 to n, and n is at most 6", () => {
-    expect(SHARDS).toEqual(Array.from({ length: SPLIT }, (_, index) => index + 1));
+  test("US-QG-02 self-test: the full register splits into the shards 1 to 5 (MAX_SHARDS), and ci.yml takes its matrix from the changes job", () => {
+    expect(SHARDS).toEqual([1, 2, 3, 4, 5]);
+    expect(MAX_SHARDS).toBe(5);
     // The Free plan runs at most 20 jobs at once; one job per shard keeps the UI gates inside that budget.
     expect(SPLIT).toBeLessThanOrEqual(6);
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed file of the repository
+    expect(readFileSync(CI_WORKFLOW, "utf8")).toContain(
+      "shard: ${{ fromJSON(needs.changes.outputs.ui-shards) }}",
+    );
   });
 
   test("US-QG-01 self-test: the shards of the CI matrix hold every screen of the register once, in both gates", () => {
@@ -109,12 +108,12 @@ test.describe("US-QG-01 self-test: the shards of the UI gates", () => {
   });
 
   test("US-QG-01 self-test: a shard is i/n with 1 <= i <= n, and SCREEN with SHARD is refused", () => {
-    expect(() => screensOf("", "5/4")).toThrow("must be i/n");
-    expect(() => screensOf("", "0/4")).toThrow("must be i/n");
-    expect(() => screensOf("", "two")).toThrow("must be i/n");
-    expect(() => screensOf("today", "1/4")).toThrow("cannot be combined with SHARD");
-    expect(screensOf("", "")).toEqual(SCREENS);
-    expect(screensOf("today")).toHaveLength(1);
+    expect(() => screensOf("", "5/4", [])).toThrow("must be i/n");
+    expect(() => screensOf("", "0/4", [])).toThrow("must be i/n");
+    expect(() => screensOf("", "two", [])).toThrow("must be i/n");
+    expect(() => screensOf("today", "1/4", [])).toThrow("cannot be combined with SHARD");
+    expect(screensOf("", "", [])).toEqual(SCREENS);
+    expect(screensOf("today", "", [])).toHaveLength(1);
   });
 });
 
@@ -165,4 +164,16 @@ test("US-QG-01 self-test: a screen with its own sizes is due only at those (issu
       own,
     )[0],
   ).toContain("not in the register");
+});
+
+test("US-QG-02 self-test: the shards of a partial run cover its own screens exactly once, so the merge proof passes for them", () => {
+  const ids = ["today", "collection", "welcome", "friends"];
+  const sizes = SIZES.map((size) => size.name);
+  const measured = [1, 2].flatMap((index) =>
+    screensOf("", `${index}/2`, ids).flatMap((screen) =>
+      sizes.map((size) => ({ screen: screen.id, size })),
+    ),
+  );
+  expect(coverageProblems(measured, ids, sizes)).toEqual([]);
+  expect(coverageProblems(measured.slice(1), ids, sizes)[0]).toContain("not measured (1)");
 });
