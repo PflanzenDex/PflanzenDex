@@ -28,7 +28,7 @@ A new flow is a file, not a rewrite: `flows/<area>/<name>.flow.ts` default-expor
 
 ## Devices
 
-- **Emulated, always** (the tool's default): iPhone 16 (393 px), OnePlus 15R (424 px) and a large phone (430 px), each in light and dark, each at 100 % and 200 % text. The text size is set before the page loads (PF-038); the tool does it, so a `TEXT=200` cell is the check.
+- **Emulated, always** (the tool's default): iPhone 16 (393 px), OnePlus 15R (424 px) and a large phone (430 px), each in light and dark, at 100 % text (owner decision d-190: 200 % text is no default until the public launch; the warning run `nightly-a11y-report` watches it). `TEXT=200` stays selectable; run it only when the brief asks. The tool sets the text size before the page loads (PF-038).
 - **Real phone, when attached:** `make device-check … DEVICE=phone`. The tool finds the phone with adb, forwards the Chrome DevTools socket, reverses the web, API and Keycloak ports, sets the phone's night mode for the theme and puts it back afterwards. The summary names the model and the window. On the real phone only width-independent failures count as failures (owner rule): a fault that shows only at that phone's width goes in the note, not in a bug. If Chrome on the phone is not reachable, the tool says so in the summary as a skipped cell with the reason; record that and go on with the emulated devices.
 - **No phone attached:** the summary says "no phone attached"; the report says "no real phone attached".
 

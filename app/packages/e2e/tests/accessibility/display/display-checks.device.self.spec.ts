@@ -32,19 +32,19 @@ const refusalOf = (raw: RawFilters, flows: string[] = []): string => {
 };
 
 test.describe("US-DEV-01 self-test: the filters refuse unknown values and default to the matrix", () => {
-  test("US-DEV-01 the defaults are the three emulated devices, both themes and both text sizes", () => {
+  test("US-DEV-01 the defaults are the three emulated devices, both themes and 100 % text (d-190)", () => {
     const f = filtersOf({ DEVICE_CHECK_SCREEN: "today" });
     expect(f.devices).toEqual(DEFAULT_DEVICES);
     expect(DEFAULT_DEVICES).toEqual(["iphone16", "oneplus15r", "large"]);
     expect(f.themes).toEqual(["light", "dark"]);
-    expect(f.texts).toEqual(["100", "200"]);
+    expect(f.texts).toEqual(["100"]);
     expect(f.forced).toBe(false);
   });
 
-  test("US-DEV-01 one screen on the matrix is 3 devices x 2 themes x 2 text sizes = 12 cells", () => {
+  test("US-DEV-01 one screen on the matrix is 3 devices x 2 themes x 1 text size = 6 cells (d-190)", () => {
     const f = filtersOf({ DEVICE_CHECK_SCREEN: "today" });
-    expect(cellCount(f)).toBe(12);
-    expect(cellsOf(f, () => "").length).toBe(12);
+    expect(cellCount(f)).toBe(6);
+    expect(cellsOf(f, () => "").length).toBe(6);
   });
 
   test("US-DEV-01 an unknown screen id is refused by name, with the closest ids", () => {
@@ -89,7 +89,7 @@ test.describe("US-DEV-01 self-test: the filters refuse unknown values and defaul
     });
     expect(f.screens).toEqual(["today"]);
     expect(f.themes).toEqual(["dark"]);
-    expect(f.texts).toEqual(["100", "200"]);
+    expect(f.texts).toEqual(["100"]);
   });
 });
 
@@ -97,7 +97,7 @@ test.describe("US-DEV-01 self-test: the device list and similar ids", () => {
   test("US-DEV-01 DEVICE=phone is a device of the matrix, next to the emulated ones", () => {
     const f = filtersOf({ DEVICE_CHECK_SCREEN: "today", DEVICE_CHECK_DEVICE: "phone,iphone16" });
     expect(f.devices).toEqual(["iphone16", "phone"]);
-    expect(cellCount(f)).toBe(8);
+    expect(cellCount(f)).toBe(4);
   });
 
   test("US-DEV-01 a similar id is found by a shared prefix or a small edit", () => {

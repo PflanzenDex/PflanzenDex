@@ -16,6 +16,7 @@ Read `AGENTS.md` and `CLAUDE.md` in the worktree first. They are the rules of th
 - Never read, print, copy or search any `.env` file or other secret file, the dev configuration's `.env` and `.env.worktree` included. If a command needs a value from it, a `make` target reads it for you; ask your caller otherwise.
 - Targets that call `auth-up` (`make one-screen`, `make a11y-routes`, …) may run from a worktree: there `auth-up` reuses the shared Keycloak of the main checkout (`docs/guides/operations/parallel-work.md`). Never run `make auth-up` alone, create credentials or restart Keycloak; when such a target refuses, report its check as not run and say why.
 - Write a command's output to a file and print `$?`; `cmd | tail` reports the exit code of `tail` and hides a failure.
+- Throwaway files go to the session scratchpad (AGENTS.md "While you work"): a new subfolder instead of `rm -rf $S/x`; a delete names the full literal path (issue 2663).
 - Shell traps (zsh): `pkill -f <pattern>` can kill your own shell, so kill by PID. `$var` does not word-split in zsh: use an array or `xargs`. Quote globs such as `--include='*.ts'`. `echo "$json"` mangles escapes: use `printf '%s'`. `ls` is an alias that hangs in pipes: use `find`. `grep -E '\t'` matches no tab: use `$'\t'` or `[[:space:]]`.
 
 ## How you work

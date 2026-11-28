@@ -106,8 +106,8 @@ function axisOf<T extends string>(
 
 /**
  * Parses and checks the filters (US-DEV-01): SCREEN and FLOW select what runs (at least one of them is needed: a run over the
- * whole register is refused), DEVICE, THEME and TEXT select the matrix (default: the emulated devices, both themes, both text
- * sizes). Throws an Error that names every unknown value and the valid ones; nothing starts before this has passed.
+ * whole register is refused), DEVICE, THEME and TEXT select the matrix (default: the emulated devices, both themes, 100 % text;
+ * TEXT=200 stays selectable, d-190). Throws an Error that names every unknown value and the valid ones; nothing starts before this has passed.
  */
 export function parseFilters(raw: RawFilters, known: Known): Filters {
   const screens = listOf(raw.DEVICE_CHECK_SCREEN);
@@ -138,7 +138,7 @@ export function parseFilters(raw: RawFilters, known: Known): Filters {
     flows,
     devices: axisOf<DeviceId>("device", raw.DEVICE_CHECK_DEVICE, DEVICE_IDS, DEFAULT_DEVICES),
     themes: axisOf<Theme>("theme", raw.DEVICE_CHECK_THEME, THEMES, THEMES),
-    texts: axisOf<TextSize>("text size", raw.DEVICE_CHECK_TEXT, TEXT_SIZES, TEXT_SIZES),
+    texts: axisOf<TextSize>("text size", raw.DEVICE_CHECK_TEXT, TEXT_SIZES, ["100"]),
     forced: forcedRaw === "1",
   };
 }
