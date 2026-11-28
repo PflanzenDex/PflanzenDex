@@ -28,3 +28,4 @@ Read `AGENTS.md` and `CLAUDE.md` in the worktree first; they hold. Start every B
 - Specialists (`pr-reviewer`, `ci-triager`, `security-reviewer`, `copywriter`; CLAUDE.md "Agent sessions and models", issue 2363) run with `run_in_background: false` too; give each its report file under `<scratchpad>/reports/` and check what it claims, as for the implementer.
 - One implementer for your ticket at a time; the orchestrator keeps the limit of two implementers across tickets and the heavy-job lock (`make heavy-lock` for a heavy target, `make heavy RUN="<command>"` for an ad-hoc command).
 - Commits you make yourself carry no `Implementer:` trailer.
+- Throwaway files go to the session scratchpad (AGENTS.md "While you work"): a new subfolder instead of `rm -rf $S/x`; a delete names the full literal path (issue 2663).

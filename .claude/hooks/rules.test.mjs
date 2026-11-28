@@ -2,7 +2,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,11 +25,13 @@ import {
   isGateFile,
   isMigrationFile,
   isSecretEnvPath,
+  isScratchTarget,
   judgeCommand,
   prettierCanFormat,
   ranGates,
   RECURSIVE_SEARCH_REASON,
   recordWriteRefusal,
+  scratchRoots,
   stripText,
 } from "./rules.mjs";
 
@@ -680,6 +690,53 @@ test("US-QG-07: rm -rf outside throwaway directories needs confirmation", () => 
   ]) {
     assert.equal(decision(cmd), "none", cmd);
   }
+});
+
+test("US-QG-07: rm -r passes inside a session scratch folder, nowhere else (issue 2663)", () => {
+  const uid = process.getuid?.();
+  if (uid === undefined) return;
+  const root = `/tmp/claude-${uid}`;
+  const project = join(root, `test-2663-${process.pid}`);
+  const session = join(project, "0000-session");
+  const outside = mkdtempSync(join(tmpdir(), "outside-2663-"));
+  mkdirSync(join(session, "scratchpad", "measure"), { recursive: true });
+  try {
+    symlinkSync(outside, join(session, "scratchpad", "link-out"));
+    for (const cmd of [
+      `rm -rf ${session}/scratchpad/measure`,
+      `rm -r ${session}/scratchpad/not-yet-there`,
+      `rm -rf ${session}`,
+      `rm -rf ${session}/scratchpad/measure node_modules`,
+    ]) {
+      assert.equal(decision(cmd), "none", cmd);
+    }
+    for (const cmd of [
+      `rm -rf ${root}`,
+      `rm -rf ${project}`,
+      `rm -rf ${session}/../../..`,
+      `rm -rf ${session}/scratchpad/*`,
+      `rm -rf $S/measure`,
+      `rm -rf "${session}/scratchpad/measure"`,
+      `rm -rf ${session}/scratchpad/link-out`,
+      `rm -rf ${session}/scratchpad/link-out/x`,
+      `rm -rf ${outside}`,
+      `rm -rf ${session}/scratchpad/measure app`,
+      "rm -rf /tmp/claude-0/p/s/x",
+    ]) {
+      assert.equal(decision(cmd), "ask", cmd);
+    }
+  } finally {
+    rmSync(project, { recursive: true, force: true });
+    rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test("US-QG-07: isScratchTarget needs a project and a session folder below a scratch root (issue 2663)", () => {
+  assert.deepEqual(scratchRoots(501), ["/private/tmp/claude-501", "/tmp/claude-501"]);
+  assert.deepEqual(scratchRoots(null), []);
+  assert.equal(isScratchTarget("/tmp/claude-501/p", ["/nowhere/claude-501"]), false);
+  assert.equal(isScratchTarget("relative/path"), false);
+  assert.equal(isScratchTarget("/tmp/claude-1/p/s/~x"), false);
 });
 
 test("US-QG-07: commands that discard uncommitted work need confirmation", () => {

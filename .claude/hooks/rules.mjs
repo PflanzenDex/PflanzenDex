@@ -1,5 +1,7 @@
-// Rules for the Claude Code hooks (US-QG-07, US-DEV-02). Pure functions, tested in rules.test.mjs.
+// Rules for the Claude Code hooks (US-QG-07, US-DEV-02). Pure functions, tested in rules.test.mjs; the one exception is the
+// scratchpad check of `rm -r`, which resolves links on the disk (isScratchTarget, issue 2663).
 // Hooks support the gates; the gates themselves live in CI and the rulesets (D-02).
+import { realpathSync } from "node:fs";
 import { HOOKS_PATH_REASON, changesHooksPath } from "./hooks-path.mjs";
 import { HARD_RESET_FLAG, mainCheckoutRefusal } from "./main-checkout.mjs";
 import { ParseError, tokenize } from "./shell-words.mjs";
@@ -164,6 +166,60 @@ function isThrowawayTarget(target) {
   return parts.length > 0 && !parts.includes("..") && THROWAWAY_DIRS.has(parts[parts.length - 1]);
 }
 
+// The Claude Code scratch roots of this user: each session's scratchpad and task output sit two folders below one of them
+// (<root>/<project>/<session>/). The devbox prunes idle sessions there (issue 2663), so agents keep throwaway files there.
+export function scratchRoots(uid = process.getuid?.()) {
+  return uid == null ? [] : [`/private/tmp/claude-${uid}`, `/tmp/claude-${uid}`];
+}
+
+function realRoot(root) {
+  try {
+    return realpathSync(root);
+  } catch {
+    return null;
+  }
+}
+
+// The real path of a target that may not exist yet: the real path of its nearest existing folder plus the rest.
+function realTarget(target) {
+  for (let known = target; known; known = known.slice(0, known.lastIndexOf("/"))) {
+    try {
+      return realpathSync(known) + target.slice(known.length);
+    } catch {
+      // Not there (yet): try the parent folder.
+    }
+  }
+  return null;
+}
+
+// `rm -r` may delete inside a session's scratch folder without a question (issue 2663): a literal absolute path (no variable,
+// glob, `~`, quote or `..`) at least a project and a session folder below a scratch root, whose real path (links resolved)
+// stays there too. Every other absolute target still asks.
+export function isScratchTarget(target, roots = scratchRoots()) {
+  if (!/^\/[A-Za-z0-9._@+\/-]+$/.test(target)) return false;
+  const parts = target.split("/").filter((part) => part && part !== ".");
+  if (parts.includes("..")) return false;
+  const below = (path, root) => {
+    const rest = path.startsWith(`${root}/`)
+      ? path
+          .slice(root.length + 1)
+          .split("/")
+          .filter(Boolean)
+      : [];
+    return rest.length >= 2;
+  };
+  const clean = `/${parts.join("/")}`;
+  if (!roots.some((root) => below(clean, root))) return false;
+  const real = realTarget(clean);
+  return (
+    real !== null &&
+    roots.some((root) => {
+      const rootReal = realRoot(root);
+      return rootReal !== null && below(real, rootReal);
+    })
+  );
+}
+
 function commandSegments(command) {
   return command.split(/[;&|\n]+/).map((segment) => segment.trim().split(/\s+/).filter(Boolean));
 }
@@ -173,7 +229,7 @@ function removesOutsideThrowaway(tokens) {
   const recursive = tokens.slice(1).some((t) => t === "--recursive" || /^-[a-zA-Z]*[rR]/.test(t));
   if (!recursive) return false;
   const targets = tokens.slice(1).filter((t) => !t.startsWith("-"));
-  return targets.length === 0 || !targets.every(isThrowawayTarget);
+  return targets.length === 0 || !targets.every((t) => isThrowawayTarget(t) || isScratchTarget(t));
 }
 
 function discardsWork(tokens) {
