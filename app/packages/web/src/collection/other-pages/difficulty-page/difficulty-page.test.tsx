@@ -4,6 +4,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { endSheetExit, holdSheetExit, releaseSheetExits } from "@/shared/testing/sheet-exit";
 import { DifficultyPage } from "./difficulty-page";
@@ -75,7 +76,7 @@ describe("US-BES-05 page of the difficulty overview", () => {
     const entries = within(list).getAllByRole("listitem");
     expect(entries).toHaveLength(2);
     expect(entries[0]?.textContent).toContain("Bogenhanf");
-    expect(entries[0]?.textContent).toContain("Leicht · Zone 2");
+    expect(plain(entries[0]?.textContent)).toContain("Leicht · Zone 2");
     expect(entries[1]?.textContent).toContain("Schwierig");
   });
 
@@ -97,7 +98,10 @@ describe("US-BES-05 page of the difficulty overview", () => {
       name: /^Vergleichswerte: Bogenhanf Dracaena trifasciata/,
     });
     // The whole visible text, title and meta line, is part of the label (axe label-content-name-mismatch).
-    const parts = Array.from(entry.querySelectorAll(":scope > span > span"), (n) => n.textContent);
+    // The no-break space before a dot (US-QS-15) is a space to the label and to a screen reader.
+    const parts = Array.from(entry.querySelectorAll(":scope > span > span"), (n) =>
+      plain(n.textContent),
+    );
     expect(entry.getAttribute("aria-label")).toBe(`Vergleichswerte: ${parts.join(" ")}`);
   });
 
@@ -273,8 +277,8 @@ describe("US-QS-24 the comparison folds unknown values", () => {
     const entries = within(
       await screen.findByRole("list", { name: "Artenvergleich" }),
     ).getAllByRole("listitem");
-    expect(entries[0]?.textContent).toContain("Leicht · 1\u00a0Vergleichswert fehlt");
-    expect(entries[1]?.textContent).toContain("1\u00a0Vergleichswert fehlt");
+    expect(plain(entries[0]?.textContent)).toContain("Leicht · 1 Vergleichswert fehlt");
+    expect(plain(entries[1]?.textContent)).toContain("1 Vergleichswert fehlt");
     expect(screen.queryByText(/unbekannt/)).toBeNull();
   });
 
@@ -415,7 +419,33 @@ describe("US-QS-32 the comparison names a species the SG-TYPE-08 way (F-0121)", 
     expect(german.closest("i")).toBeNull();
     const latin = within(entry).getByText("Dracaena trifasciata");
     expect(latin.tagName).toBe("I");
-    expect(latin.parentElement?.textContent).toBe("Dracaena trifasciata · Leicht · Zone 2");
+    // The meta line is split in parts (US-QS-15): the italic name is the first one.
+    expect(plain(latin.closest("[data-meta-part]")?.parentElement?.textContent)).toBe(
+      "Dracaena trifasciata · Leicht · Zone 2",
+    );
+  });
+
+  it("US-QS-15 SG-TYPE-05 at 360 px the botanical name and each value of an entry are one part, so 'Zone 2' never breaks inside (issue 2640)", async () => {
+    fakeServer(() => response(200, { rows: [row()] }));
+    view(<DifficultyPage api="http://api" token={token} />);
+    const entry = await screen.findByRole("button", {
+      name: /^Vergleichswerte: Bogenhanf Dracaena trifasciata/,
+    });
+    const parts = Array.from(entry.querySelectorAll<HTMLElement>("[data-meta-part]"));
+    expect(parts.map((p) => plain(p.textContent))).toEqual([
+      "Dracaena trifasciata ·",
+      "Leicht ·",
+      "Zone 2",
+    ]);
+    for (const part of parts)
+      expect(part.className.split(" ")).toEqual(
+        expect.arrayContaining(["inline-block", "max-w-full", "align-top"]),
+      );
+    // The botanical name stays an italic element inside its part, and the label of the button is unchanged.
+    expect(parts[0]?.querySelector("i")?.textContent).toBe("Dracaena trifasciata");
+    expect(entry.getAttribute("aria-label")).toBe(
+      "Vergleichswerte: Bogenhanf Dracaena trifasciata · Leicht · Zone 2",
+    );
   });
 
   it("US-QS-32 without a German name the botanical name is the one italic title, not repeated", async () => {
