@@ -56,7 +56,7 @@ export const ROW_GROUP = `${ENTRY_LIST} ${ROWS_OF_GROUP} ${ROW_HAIRLINE}`;
  */
 /** The text part of an object row: the 56 px thumbnail and two lines of name (starting value, tuned by measurement). */
 export const OBJECT_TEXT = "grow basis-[calc(56px_+_8rem)]";
-/** The text part of a treatment row: about two lines of its name (starting value, tuned by measurement). */
+/** The text part of a treatment row and of a due-plant row: about two lines of its name (starting value, tuned by measurement). */
 export const TREATMENT_TEXT = "grow basis-36";
 /** The heading of a group with an action beside it: it keeps at least 8 rem, in rem so it grows with the text size (issue 2524). */
 export const HEADING_TEXT = "grow basis-32";
