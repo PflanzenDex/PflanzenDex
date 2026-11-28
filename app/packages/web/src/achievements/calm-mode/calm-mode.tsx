@@ -4,8 +4,15 @@ import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import { refusalText } from "@/shared/lib/error-text";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { useAnnounce } from "@/shared/platform/announcer/context";
-import { accountKey, SIGN_IN, useInvalidate, type ApiError, useRepeatKey } from "../../shared/data";
-import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
+import {
+  accountKey,
+  SIGN_IN,
+  useInvalidate,
+  useRequest,
+  type ApiError,
+  useRepeatKey,
+} from "../../shared/data";
+import { FailedValue } from "@/shared/patterns/states/request-state/failed-value/failed-value";
 import {
   loadAchievementSettings,
   setCalmMode,
@@ -68,25 +75,28 @@ function CalmModeSwitch(props: { api: string; token: Token; settings: Achievemen
 
 /**
  * Calm mode (US-ACH-08), a switch row on the settings page (US-ACC-02, US-QS-32): hides every game element of epic ACH.
- * Off by default. It saves on its own.
+ * Off by default. It saves on its own. While it loads a row-shaped skeleton stands in its place, and a failed load reads
+ * "Nicht geladen" with its retry in one row, so a failure never grows into a card inside the list (P-10, SG-STATE-03).
  */
 export function CalmModeSection(props: { api: string; token: Token }) {
-  const load = useCallback((tok: string) => loadAchievementSettings(props.api, tok), [props.api]);
-  const loading = t("loading");
-  return (
-    <LoadFrame
-      queryKey={["achievements", "settings"]}
-      fresh
-      token={props.token}
-      load={load}
-      loadingText={loading}
-      loadingFallback={
-        <SkeletonGroup label={loading} className="flex min-w-0 max-w-xl flex-col gap-2 px-4 py-3">
-          <Skeleton className="h-6 w-full" />
-        </SkeletonGroup>
-      }
-    >
-      {(settings) => <CalmModeSwitch api={props.api} token={props.token} settings={settings} />}
-    </LoadFrame>
-  );
+  const settings = useRequest({
+    queryKey: ["achievements", "settings"],
+    fresh: true,
+    token: props.token,
+    load: useCallback((tok: string) => loadAchievementSettings(props.api, tok), [props.api]),
+  });
+  if (settings.status === "error")
+    return (
+      <div className="flex min-h-12 min-w-0 flex-wrap items-center justify-between gap-x-3 px-3 py-1">
+        <span>{t("label")}</span>
+        <FailedValue name={t("label")} onRetry={settings.retry} />
+      </div>
+    );
+  if (settings.value === undefined)
+    return (
+      <SkeletonGroup label={t("loading")} className="flex min-w-0 flex-col px-3 py-2">
+        <Skeleton className="h-8 w-full" />
+      </SkeletonGroup>
+    );
+  return <CalmModeSwitch api={props.api} token={props.token} settings={settings.value} />;
 }

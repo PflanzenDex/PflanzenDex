@@ -1,6 +1,6 @@
 {
   "label": "Ruhemodus",
-  "help": "Blendet Erfolge und Rückblicke aus. Deine Erfolge bleiben erhalten.",
+  "help": "Blendet Erfolge aus.",
   "on": "Ruhemodus ist an.",
   "off": "Ruhemodus ist aus.",
   "loading": "Ruhemodus wird geladen …"

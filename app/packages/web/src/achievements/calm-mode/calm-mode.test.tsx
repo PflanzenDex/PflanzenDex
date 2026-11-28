@@ -54,9 +54,7 @@ describe("US-ACH-08 calm mode switch", () => {
     expect(isOn(toggle)).toBe(false);
     expect(screen.queryByRole("checkbox")).toBeNull();
     const line = document.getElementById(toggle.getAttribute("aria-describedby") ?? "");
-    expect(line?.textContent).toBe(
-      "Blendet Erfolge und Rückblicke aus. Deine Erfolge bleiben erhalten.",
-    );
+    expect(line?.textContent).toBe("Blendet Erfolge aus.");
   });
 
   it("US-ACH-08 · US-QS-32 one tap saves with an Idempotency-Key; the switch is the result and the announcer says it once", async () => {
@@ -107,5 +105,30 @@ describe("US-QS-30 calm mode switch offline", () => {
       .split(" ")
       .map((id) => document.getElementById(id)?.textContent);
     expect(described).toContain("Du bist offline. Das geht erst wieder mit Verbindung.");
+  });
+});
+
+describe("US-QS-32 · P-10 calm mode switch: a failed load is one row, not a card in the list", () => {
+  it("US-QS-32 a failed load reads 'Nicht geladen' with 'Erneut versuchen' in one row, and the retry shows the switch", async () => {
+    let failing = true;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        failing
+          ? response(500, { error: { code: "internal", text: "x" } })
+          : response(200, { calmMode: true }),
+      ),
+    );
+    const user = userEvent.setup();
+    show();
+    const retry = await screen.findByRole("button", { name: "Erneut versuchen: Ruhemodus" });
+    expect(screen.getByText("Nicht geladen")).toBeTruthy();
+    expect(screen.getByText("Ruhemodus")).toBeTruthy();
+    expect(screen.queryByRole("switch")).toBeNull();
+    // One row: no empty-state icon and no alert card (SG-STATE-03).
+    expect(screen.queryByRole("alert")).toBeNull();
+    failing = false;
+    await user.click(retry);
+    expect(isOn(await screen.findByRole("switch", { name: "Ruhemodus" }))).toBe(true);
   });
 });

@@ -1,7 +1,6 @@
 import { Fragment, useCallback, type ReactNode } from "react";
 import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
-import { ScrollRegion } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-region/scroll-region";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { CalmModeSection } from "../../achievements";
 import { useRequest } from "../../shared/data";
@@ -30,6 +29,7 @@ import {
   ShortcutsGroup,
   MotionGroup,
 } from "./groups/switch-groups/switch-groups";
+import { controlValue } from "./groups/switch-groups/control-value";
 import { KeeperStyleSection } from "./keeper-style/keeper-style";
 import { loadKeeperStyle } from "./keeper-style/keeper-style-api";
 import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
@@ -93,6 +93,17 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
       body: <KeeperStyleSection api={props.api} token={props.token} />,
     },
     {
+      id: ids.control,
+      title: t("control.title"),
+      value: controlValue(p),
+      body: (
+        <div className="flex flex-col gap-3">
+          <ShortcutsGroup saver={saver} />
+          <MotionGroup saver={saver} />
+        </div>
+      ),
+    },
+    {
       id: ids.wishlist,
       title: "Wunschliste",
       value: wishlistValue(p),
@@ -100,20 +111,13 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
     },
     { id: ids.light, title: "Licht", value: lightValue(p), body: <LightGroup saver={saver} /> },
   ];
-  // Settings that apply at once are rows of the list, not topics in a layer (US-QS-32, SG-CTRL-02): a switch row for the calm
-  // mode, a choice row each for the shortcuts and the motion.
-  const own = (
-    <>
+  // A setting that applies at once and is one switch is a row of the list, not a topic in a layer (US-QS-32, SG-CTRL-02): the
+  // calm mode. The two choices "Tastenkürzel" and "Bewegung" share the layer "Bedienung" (owner decision 2026-11-28, DS-58).
+  return (
+    <SettingsLayers layers={layers}>
       <CalmModeSection api={props.api} token={props.token} />
-      <div className="px-3 py-2">
-        <ShortcutsGroup saver={saver} />
-      </div>
-      <div className="px-3 py-2">
-        <MotionGroup saver={saver} />
-      </div>
-    </>
+    </SettingsLayers>
   );
-  return <SettingsLayers layers={layers}>{own}</SettingsLayers>;
 }
 
 /** One group of the list: its row, its layer, and the retry of a failed load beside the row (US-QS-32). */
@@ -132,7 +136,7 @@ type SettingsLayer = {
 function SettingsLayers(props: { layers: readonly SettingsLayer[]; children?: ReactNode }) {
   return (
     <>
-      <ScrollRegion label={t("region")} className="max-w-xl">
+      <div className="flex min-w-0 max-w-xl flex-1 flex-col">
         {props.layers.map((l) => (
           <Fragment key={l.id}>
             <SettingsRow id={l.id} title={l.title} value={l.value} />
@@ -144,7 +148,7 @@ function SettingsLayers(props: { layers: readonly SettingsLayer[]; children?: Re
           </Fragment>
         ))}
         {props.children}
-      </ScrollRegion>
+      </div>
       {props.layers.map((l) => (
         <LayerSheet key={l.id} id={l.id} title={l.title} editsStored>
           {l.body}
@@ -155,7 +159,7 @@ function SettingsLayers(props: { layers: readonly SettingsLayer[]; children?: Re
 }
 
 /**
- * Profile and settings (US-ACC-02) as a list of six groups with their current values (US-QS-17): each opens as a
+ * Profile and settings (US-ACC-02) as a list of seven groups with their current values (US-QS-17): each opens as a
  * layer (`?sheet=<group>`). Switches save at once; Profil, Wunschliste and Licht have their own "Sichern". With
  * `host` (a section of "Konto", US-QS-14) the page has no title of its own and sits in a card: the destination names
  * the section.
@@ -165,11 +169,11 @@ export function SettingsPage(props: { api: string; token: Token; host?: boolean 
   const loading = "Einstellungen werden geladen …";
   return (
     // The layers beside the card, not inside it (US-QS-15): the frame is outside the card.
-    <LayerHost className={props.host === true ? "min-h-0 flex-1" : undefined}>
+    <LayerHost>
       <div
         className={
           props.host === true
-            ? "flex min-h-0 min-w-0 flex-1 flex-col gap-2 rounded-card bg-card p-2 shadow-elevation-1 lg:flex-row lg:items-start"
+            ? "flex min-w-0 flex-col gap-2 rounded-card bg-card p-2 shadow-elevation-1 lg:flex-row lg:items-start"
             : "flex min-w-0 flex-col gap-4"
         }
       >

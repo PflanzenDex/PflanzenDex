@@ -23,5 +23,11 @@
   "motion.label": "Bewegung",
   "motion.system": "Wie auf dem Gerät",
   "motion.reduced": "Bewegung aus",
-  "motion.help": "Aus: Ansichten, Karten und Ebenen wechseln ohne Animation. Alles bleibt erreichbar."
+  "motion.help": "Aus: Ansichten, Karten und Ebenen wechseln ohne Animation. Alles bleibt erreichbar.",
+  "control.value": "{shortcuts} · Bewegung {motion}",
+  "control.shortcuts.plain": "Einzeltasten",
+  "control.shortcuts.modifier": "Alt und Umschalt",
+  "control.shortcuts.disabled": "Tastenkürzel aus",
+  "control.motion.system": "wie Gerät",
+  "control.motion.reduced": "aus"
 }

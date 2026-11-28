@@ -40,6 +40,8 @@ const profile = {
   replenishBuffer: 2,
   positionThresholds: null,
   rarityConsent: false,
+  keyboardShortcuts: "plain",
+  motion: "system",
 };
 
 /** A server for the settings section; `status` is the answer to loading the profile, PUT returns what is sent. */

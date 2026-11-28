@@ -25,5 +25,7 @@ export const accountRoutes = {
       friends: true,
       equipment: true,
     },
+    keyboardShortcuts: "plain",
+    motion: "system",
   },
 };

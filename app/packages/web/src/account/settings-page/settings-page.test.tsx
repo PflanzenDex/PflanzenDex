@@ -636,7 +636,7 @@ describe("US-ACH-08 calm mode on the settings page", () => {
     fakeServer();
     show("style");
     await screen.findByRole("combobox", { name: "Wie nutzt du die App?" });
-    // The calm mode, the shortcuts and the motion stand on the settings list, not in this layer.
+    // The calm mode stands on the settings list, the shortcuts and the motion in the layer "Bedienung", not in this one.
     const title = screen.getByRole("heading", { name: "Wie nutzt du die App?" });
     const layer = document.querySelector<HTMLElement>(`[aria-labelledby="${title.id}"]`);
     if (!layer) throw new Error("the layer of the heading is missing");
@@ -647,16 +647,37 @@ describe("US-ACH-08 calm mode on the settings page", () => {
   });
 });
 
-describe("US-QS-15 · US-QS-32 the settings list holds nine rows and scrolls in its own marked region (DS-58, DS-61)", () => {
-  it("US-QS-15 the rows, the calm mode, the shortcuts and the motion stand in one data-scroll-region, so the frame does not scroll", async () => {
+describe("US-QS-15 · US-QS-32 the settings list has eight rows and does not scroll in a region of its own (DS-58)", () => {
+  it("US-QS-15 seven rows open a layer and the calm mode is the one switch row; the list has no scroll region of its own", async () => {
     fakeServer();
     show();
     const calm = await screen.findByRole("switch", { name: "Ruhemodus" });
-    const region = calm.closest("[data-scroll-region]");
-    expect(region).not.toBeNull();
-    expect(region?.contains(screen.getByRole("button", { name: /^Profil/ }))).toBe(true);
-    expect(region?.contains(screen.getByRole("combobox", { name: "Tastenkürzel" }))).toBe(true);
-    expect(region?.contains(screen.getByRole("combobox", { name: "Bewegung" }))).toBe(true);
+    // The switch sits in the row's box, in the row's root, in the list.
+    const list = calm.parentElement?.parentElement?.parentElement;
+    if (!list) throw new Error("the list is missing");
+    expect(list.querySelectorAll("button[aria-haspopup='dialog']")).toHaveLength(7);
+    expect(list.closest("[data-scroll-region]")).toBeNull();
+    // "Tastenkürzel" and "Bewegung" are in the layer "Bedienung", not rows of the list.
+    expect(screen.queryByRole("combobox", { name: "Tastenkürzel" })).toBeNull();
+    expect(screen.queryByRole("combobox", { name: "Bewegung" })).toBeNull();
+  });
+
+  it("US-QS-32 the row 'Bedienung' says both choices in one line and opens the layer with them", async () => {
+    fakeServer();
+    const user = userEvent.setup();
+    show();
+    const row = await screen.findByRole("button", { name: /^Bedienung/ });
+    expect(row.textContent).toContain("Einzeltasten · Bewegung wie Gerät");
+    await user.click(row);
+    expect(await screen.findByRole("combobox", { name: "Tastenkürzel" })).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: "Bewegung" })).toBeTruthy();
+  });
+
+  it("US-QS-32 the row 'Bedienung' shows the stored choices: Alt und Umschalt is 'Alt und Umschalt', Bewegung aus is 'aus'", async () => {
+    fakeServer({ ...PROFILE, keyboardShortcuts: "modifier", motion: "reduced" });
+    show();
+    const row = await screen.findByRole("button", { name: /^Bedienung/ });
+    expect(row.textContent).toContain("Alt und Umschalt · Bewegung aus");
   });
 });
 
@@ -692,13 +713,14 @@ describe("US-QS-17 settings as a list of groups", () => {
   const row = (title: string) =>
     screen.findByRole("button", { name: (name) => name.startsWith(title) });
 
-  it("US-QS-17 lists the six groups, each with its current value", async () => {
+  it("US-QS-17 lists the seven groups, each with its current value", async () => {
     fakeServer();
     show();
     expect((await row("Profil")).textContent).toContain("Anna · Europe/\u200bBerlin");
     expect((await row("Benachrichtigungen")).textContent).toContain("noch nicht eingerichtet");
     expect((await row("Datenschutz und Empfehlungen")).textContent).toContain("Standard");
     expect((await row("Wie nutzt du die App?")).textContent).toContain("ein paar Pflanzen");
+    expect((await row("Bedienung")).textContent).toContain("Einzeltasten · Bewegung wie Gerät");
     expect((await row("Wunschliste")).textContent).toContain("mind. 2 je Zone");
     expect((await row("Licht")).textContent).toContain("Standard-Schwellen");
     expect(screen.queryByLabelText("Anzeigename")).toBeNull();
@@ -804,6 +826,7 @@ describe("US-QS-17 settings as a list of groups", () => {
     ["notifications", "Benachrichtigungen", /Gießen/],
     ["privacy", "Datenschutz und Empfehlungen", /Alles privat/],
     ["style", "Wie nutzt du die App?", /Wie nutzt du die App\?/],
+    ["control", "Bedienung", /Tastenkürzel/],
     ["wishlist", "Wunschliste", /Mindestzahl offener Wünsche/],
     ["light", "Licht", /Direkt unter der Lampe ab/],
   ])("US-QS-17 the address ?sheet=%s opens the layer %s", async (sheet, title, content) => {
@@ -898,7 +921,7 @@ describe("US-QS-11 settings: keyboard shortcuts", () => {
   };
   const showWithProvider = () =>
     render(
-      <MemoryRouter initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/?sheet=control"]}>
         <ShortcutProvider mode="plain" targets={targets}>
           <ModeOut />
           <SettingsPage api="http://api" token={token} />
@@ -966,12 +989,12 @@ describe("US-QS-33 settings: motion", () => {
   });
   const showStyle = () =>
     render(
-      <MemoryRouter initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/?sheet=control"]}>
         <SettingsPage api="http://api" token={token} />
       </MemoryRouter>,
     );
 
-  it("US-QS-33 · US-QS-32 the settings list has its own row 'Bewegung' with 'Wie auf dem Gerät' (default) and 'Bewegung aus' and one line of help", async () => {
+  it("US-QS-33 · US-QS-32 the layer 'Bedienung' offers 'Bewegung' with 'Wie auf dem Gerät' (default) and 'Bewegung aus' and one line of help", async () => {
     fakeServer();
     showStyle();
     const field = (await screen.findByRole("combobox", { name: "Bewegung" })) as HTMLSelectElement;

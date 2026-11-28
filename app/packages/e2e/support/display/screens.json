@@ -1166,6 +1166,15 @@
     "title": "Einstellungen: Wie nutzt du die App?"
   },
   {
+    "id": "account-settings-sheet-control",
+    "account": "test2",
+    "path": "/account/settings?sheet=control",
+    "kind": "sheet",
+    "state": "many",
+    "layerFile": "account/settings-page/settings-page.tsx",
+    "title": "Einstellungen: Bedienung"
+  },
+  {
     "id": "account-settings-sheet-wishlist",
     "account": "test2",
     "path": "/account/settings?sheet=wishlist",
