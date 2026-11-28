@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@0.0.85", "--browser", "chromium", "--headless", "--isolated", "--viewport-size", "360x640"]
+    },
+    "chrome-devtools-phone": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@1.13.0", "--browserUrl", "http://127.0.0.1:9222"]
+    }
+  }
+}
