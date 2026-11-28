@@ -12,10 +12,15 @@ const rect = (b: Box) =>
   ({ ...b, right: b.left + b.width, bottom: b.top + b.height, x: b.left, y: b.top }) as DOMRect;
 
 /** A meta line of parts; `box(i)` gives the box of part i. The line is 100 px wide and its lines are 20 px high. */
-function build(texts: string[], box: (i: number) => Box, scrollWidth = 100): HTMLElement {
+function build(
+  texts: string[],
+  box: (i: number) => Box,
+  scrollWidth = 100,
+  marked = true,
+): HTMLElement {
   const canvas = document.createElement("div");
   const line = document.createElement("p");
-  line.setAttribute("data-row-meta", "");
+  if (marked) line.setAttribute("data-row-meta", "");
   line.style.lineHeight = "20px";
   Object.defineProperty(line, "scrollWidth", { value: scrollWidth });
   Object.defineProperty(line, "clientWidth", { value: 100 });
@@ -57,6 +62,22 @@ describe("US-QS-32 · the meta line play measures", () => {
       height: 20,
     }));
     expect(() => checkMetaLine(canvas, "none")).not.toThrow();
+  });
+
+  it("US-QS-15 the line of a settings row or a card is the box that holds the parts, with no data-row-meta (issue 2640)", () => {
+    const canvas = build(
+      ["Lena", "Europe/Berlin"],
+      (i) => ({ top: i * 20, left: 0, width: 50, height: 20 }),
+      100,
+      false,
+    );
+    expect(canvas.querySelector("[data-row-meta]")).toBeNull();
+    expect(() => checkMetaLine(canvas, "none")).not.toThrow();
+  });
+
+  it("US-QS-15 a canvas with no part has no meta line to measure", () => {
+    const canvas = document.createElement("div");
+    expect(() => checkMetaLine(canvas, "none")).toThrow(/meta line is missing/);
   });
 
   it("US-QS-32 none: one single line fails, the story shows no wrap between parts", () => {

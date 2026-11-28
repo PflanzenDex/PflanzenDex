@@ -5,9 +5,21 @@ import { check, hasLayout, must, waitUntil } from "@/shared/testing/story-frame/
  * jsdom too, where the structure is checked and every measure passes: the conformance run and `make sb-test` judge the boxes.
  */
 
+/**
+ * The meta line of the story's row: an object row marks it (`data-row-meta`); the line of a settings row or of a card is the
+ * box that holds the parts (US-QS-15, issue 2640).
+ */
+function metaLineOf(canvas: HTMLElement): HTMLElement {
+  const marked = canvas.querySelector<HTMLElement>("[data-row-meta]");
+  return must(
+    marked ?? canvas.querySelector<HTMLElement>("[data-meta-part]")?.parentElement,
+    "the meta line",
+  );
+}
+
 /** The meta line of the story's row, and the parts it holds (one span per " · " part). */
 function metaBoxes(canvas: HTMLElement) {
-  const line = must(canvas.querySelector<HTMLElement>("[data-row-meta]"), "the meta line");
+  const line = metaLineOf(canvas);
   const parts = Array.from(line.querySelectorAll<HTMLElement>("[data-meta-part]"));
   check(parts.length > 1, `the meta line has ${parts.length} parts, a story needs several`);
   const style = getComputedStyle(line);
@@ -37,7 +49,7 @@ function lastChars(part: HTMLElement, count: number): { node: Text; index: numbe
 
 /** The text is at 200 % when the root font size is twice 16 px (the one-screen gate sets the same rule). */
 export async function waitForText200(canvas: HTMLElement): Promise<void> {
-  const line = must(canvas.querySelector<HTMLElement>("[data-row-meta]"), "the meta line");
+  const line = metaLineOf(canvas);
   if (!hasLayout(line)) return;
   await waitUntil(
     () => parseFloat(getComputedStyle(document.documentElement).fontSize) >= 31,

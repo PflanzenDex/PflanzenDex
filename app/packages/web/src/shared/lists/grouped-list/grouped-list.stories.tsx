@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { checkFocusRings } from "@/shared/testing/focus-ring/focus-ring.play";
+import { checkMetaLine } from "../object-row/object-row.play";
 import { withRouter } from "@/shared/testing/story-frame/story-frame";
 import { GroupedList, GroupedRow } from "./grouped-list";
 
@@ -104,4 +105,20 @@ export const WithLeadingAndMeta: Story = {
     ),
   },
   play: ({ canvasElement }) => checkFocusRings(canvasElement),
+};
+
+// The meta line of a settings row breaks between its " · " parts and never inside one (SG-TYPE-05, US-QS-15, issue 2640): the
+// play measures the boxes in the browser (`make sb-test`), jsdom checks only the parts.
+export const MetaParts: Story = {
+  args: {
+    label: "Konto",
+    children: (
+      <GroupedRow
+        to="#konto"
+        title="Konto"
+        meta="Lena Mustermann-Schmidt · Europe/Amsterdam · Schwierigkeit: unbekannt"
+      />
+    ),
+  },
+  play: ({ canvasElement }) => checkMetaLine(canvasElement, "none"),
 };
