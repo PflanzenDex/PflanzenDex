@@ -1,6 +1,6 @@
 import { expect, type BrowserContext } from "@playwright/test";
 import { WEB, test } from "../../../support/display/one-screen/sign-in";
-import { applyFail } from "../../../support/display/one-screen/fit.expect";
+import { applyFail, applyReply } from "../../../support/display/one-screen/fit.expect";
 import { SCREENS } from "../../../support/display/one-screen/register";
 import {
   cellsOf,
@@ -75,6 +75,9 @@ test.describe("US-DEV-01 device check: the emulated devices", () => {
         let record: CellRecord;
         try {
           await applyFail(context as BrowserContext, screen, API);
+          // A screen whose state a refused write shows answers that write itself and sends nothing to the API, so parallel
+          // cells and later runs do not consume the shared demo state (issue 2649).
+          await applyReply(context as BrowserContext, screen, API);
           const env: RunEnv = { browser, base: WEB, runDir: runDirOf(), signedIn: states };
           record = await judgeCell({
             page,
