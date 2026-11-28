@@ -1,5 +1,5 @@
 {
-  "maxTotal": 908,
+  "maxTotal": 884,
   "entries": [
     {
       "file": "packages/web/src/account/invitation-page/invitation-page.tsx",
@@ -15,23 +15,19 @@
     },
     {
       "file": "packages/web/src/account/operator/operator-page/operator-page.tsx",
-      "count": 18
+      "count": 16
     },
     {
       "file": "packages/web/src/account/operator/operator-parts/operator-parts.tsx",
-      "count": 10
+      "count": 4
     },
     {
       "file": "packages/web/src/account/settings-fields/settings-fields.tsx",
-      "count": 10
+      "count": 8
     },
     {
       "file": "packages/web/src/account/settings-page/groups/form-groups/form-groups.tsx",
       "count": 5
-    },
-    {
-      "file": "packages/web/src/account/settings-page/groups/switch-groups/switch-groups.tsx",
-      "count": 4
     },
     {
       "file": "packages/web/src/account/settings-page/keeper-style/keeper-style.tsx",
@@ -47,10 +43,6 @@
     },
     {
       "file": "packages/web/src/account/views/account-views/account-views.tsx",
-      "count": 4
-    },
-    {
-      "file": "packages/web/src/achievements/calm-mode/calm-mode.tsx",
       "count": 4
     },
     {
@@ -535,7 +527,7 @@
     },
     {
       "file": "packages/web/src/social/parts/sharing-panel/sharing-panel.tsx",
-      "count": 12
+      "count": 11
     },
     {
       "file": "packages/web/src/swap/pages/match/match-deck/answer-lists/answer-lists.tsx",
@@ -584,10 +576,6 @@
     {
       "file": "packages/web/src/wishlist/candidate-card/discard/discard.tsx",
       "count": 6
-    },
-    {
-      "file": "packages/web/src/wishlist/candidate-card/friends-switch/friends-switch.tsx",
-      "count": 5
     },
     {
       "file": "packages/web/src/wishlist/hints/duplicate-wishes/duplicate-wishes.tsx",
