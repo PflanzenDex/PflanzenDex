@@ -50,8 +50,7 @@ export const wishlistValue = (p: AccountProfile) => `mind. ${p.replenishBuffer} 
 export const lightValue = (p: AccountProfile) =>
   p.positionThresholds === null ? "Standard-Schwellen" : "eigene Schwellen";
 
-/** Row "Wie nutzt du die App?": the chosen style and, while it is on, calm mode. */
-export function styleValue(style: "few" | "many", calm: boolean | undefined): string {
-  const text = style === "many" ? "viel, alles offen" : "ein paar Pflanzen";
-  return calm === true ? `${text} · Ruhemodus an` : text;
+/** Row "Wie nutzt du die App?": the chosen style only; the calm mode has its own switch row on the settings list (US-QS-32). */
+export function styleValue(style: "few" | "many"): string {
+  return style === "many" ? "viel, alles offen" : "ein paar Pflanzen";
 }

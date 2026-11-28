@@ -170,6 +170,8 @@ const FRAME_READS: Record<string, unknown> = {
     replenishBuffer: 2,
     rarityConsent: false,
     positionThresholds: null,
+    keyboardShortcuts: "plain",
+    motion: "system",
   },
   "/watering/due": { due: [] },
   "/treatments": { treatments: [] },

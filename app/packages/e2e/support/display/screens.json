@@ -1166,6 +1166,15 @@
     "title": "Einstellungen: Wie nutzt du die App?"
   },
   {
+    "id": "account-settings-sheet-control",
+    "account": "test2",
+    "path": "/account/settings?sheet=control",
+    "kind": "sheet",
+    "state": "many",
+    "layerFile": "account/settings-page/settings-page.tsx",
+    "title": "Einstellungen: Bedienung"
+  },
+  {
     "id": "account-settings-sheet-wishlist",
     "account": "test2",
     "path": "/account/settings?sheet=wishlist",
@@ -1353,15 +1362,6 @@
     "state": "many",
     "layerFile": "account/operator/operator-page/operator-page.tsx",
     "title": "Betreiber: Löschfristen"
-  },
-  {
-    "id": "operator-sheet-registrierung",
-    "account": "test3",
-    "path": "/operator?sheet=registrierung",
-    "kind": "sheet",
-    "state": "many",
-    "layerFile": "account/operator/operator-page/operator-page.tsx",
-    "title": "Betreiber: Registrierung"
   },
   {
     "id": "operator-sheet-einladungscodes",

@@ -1,106 +1,102 @@
 import { useCallback, useRef, useState } from "react";
-import { MoreHelp } from "@/shared/ui/more-help";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { FieldLegend, FieldSet } from "@/shared/ui/field.set";
+import { SwitchRow } from "@/shared/lists/switch-row/switch-row";
 import { Skeleton, SkeletonGroup } from "@/shared/ui/skeleton";
 import { refusalText } from "@/shared/lib/error-text";
-import { cn } from "@/shared/lib/utils";
-import { accountKey, SIGN_IN, useInvalidate, type ApiError, useRepeatKey } from "../../shared/data";
-import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { useAnnounce } from "@/shared/platform/announcer/context";
+import {
+  accountKey,
+  SIGN_IN,
+  useInvalidate,
+  useRequest,
+  type ApiError,
+  useRepeatKey,
+} from "../../shared/data";
+import { FailedValue } from "@/shared/patterns/states/request-state/failed-value/failed-value";
 import {
   loadAchievementSettings,
   setCalmMode,
   type AchievementSettings,
 } from "../achievements-api";
+import table from "./calm-mode.de.json";
+
+const t = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
-const ALERT =
-  "rounded-lg border border-destructive p-3 text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-/** One tap saves the switch; a refusal stays visible and the switch keeps its stored state (P-10). */
+/**
+ * One tap saves the switch (US-QS-32, SG-CTRL-02). The switch is the result (SG-FEED-01) and the announcer says it once
+ * (SG-FEED-04); a refusal stays at the row and the switch keeps its stored state (P-10).
+ */
 function CalmModeSwitch(props: { api: string; token: Token; settings: AchievementSettings }) {
   const [calm, setCalm] = useState(props.settings.calmMode);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
+  const [saving, setSaving] = useState(false);
   const busy = useRef(false);
   const keys = useRepeatKey();
   const refresh = useInvalidate(["achievements"]);
+  const announce = useAnnounce();
 
   const change = async (next: boolean) => {
     if (busy.current) return;
     busy.current = true;
-    const t = await props.token();
-    const r = t
+    setSaving(true);
+    const tok = await props.token();
+    const r = tok
       ? await keys.run(
-          (key) => setCalmMode(props.api, t, next, { key }),
+          (key) => setCalmMode(props.api, tok, next, { key }),
           accountKey(`calm:${next}`),
         )
       : { ok: false as const, error: SIGN_IN };
     busy.current = false;
+    setSaving(false);
     setError(r.ok ? null : r.error);
-    if (!r.ok) return setMessage(null);
+    if (!r.ok) return;
     setCalm(r.value.calmMode);
     refresh();
-    setMessage(r.value.calmMode ? "Ruhemodus ist an." : "Ruhemodus ist aus.");
+    announce?.announce(t(r.value.calmMode ? "on" : "off"));
   };
 
   return (
-    <FieldSet className="gap-0 rounded-lg border-2 border-border px-3 pb-2 pt-1">
-      <FieldLegend className="mb-0 px-1 font-semibold">Erfolge und Belohnungen</FieldLegend>
-      <Checkbox
-        name="calmMode"
-        checked={calm}
-        needsNetwork
-        onChange={(e) => void change(e.target.checked)}
-      >
-        Ruhemodus
-      </Checkbox>
-      <MoreHelp
-        className="mt-1"
-        more={
-          calm
-            ? "Erfolge, Glückwünsche und Rückblicke sind ausgeblendet. Deine Erfolge bleiben erhalten; schalte den Ruhemodus aus, um sie wieder zu sehen."
-            : "Der Ruhemodus blendet alle Erfolge, Glückwünsche und Rückblicke aus. Rang und Meilensteine im Pokédex bleiben unverändert."
-        }
-      >
-        {calm ? "Erfolge und Rückblicke sind ausgeblendet." : "Blendet Erfolge und Rückblicke aus."}
-      </MoreHelp>
-      {error && (
-        <p role="alert" className={cn(ALERT, "mt-2")}>
-          {refusalText(error)}
-        </p>
-      )}
-      {message && (
-        <p role="status" className="mt-2 rounded-lg border border-border p-3">
-          {message}
-        </p>
-      )}
-    </FieldSet>
+    <SwitchRow
+      bare
+      compact
+      name="calmMode"
+      label={t("label")}
+      help={t("help")}
+      checked={calm}
+      busy={saving}
+      error={error ? refusalText(error) : undefined}
+      needsNetwork
+      onCheckedChange={(on) => void change(on)}
+    />
   );
 }
 
 /**
- * Calm mode (US-ACH-08), reachable from the profile (US-ACC-02): hides every game element of epic ACH. Off by default.
- * The switch saves on its own, the confirmation says what changed (P-09).
+ * Calm mode (US-ACH-08), a switch row on the settings page (US-ACC-02, US-QS-32): hides every game element of epic ACH.
+ * Off by default. It saves on its own. While it loads a row-shaped skeleton stands in its place, and a failed load reads
+ * "Nicht geladen" with its retry in one row, so a failure never grows into a card inside the list (P-10, SG-STATE-03).
  */
 export function CalmModeSection(props: { api: string; token: Token }) {
-  const load = useCallback((t: string) => loadAchievementSettings(props.api, t), [props.api]);
-  const loading = "Ruhemodus wird geladen …";
-  return (
-    <LoadFrame
-      queryKey={["achievements", "settings"]}
-      fresh
-      token={props.token}
-      load={load}
-      loadingText={loading}
-      loadingFallback={
-        <SkeletonGroup label={loading} className="flex min-w-0 max-w-xl flex-col gap-2">
-          <Skeleton className="h-24 w-full" />
-        </SkeletonGroup>
-      }
-    >
-      {(settings) => <CalmModeSwitch api={props.api} token={props.token} settings={settings} />}
-    </LoadFrame>
-  );
+  const settings = useRequest({
+    queryKey: ["achievements", "settings"],
+    fresh: true,
+    token: props.token,
+    load: useCallback((tok: string) => loadAchievementSettings(props.api, tok), [props.api]),
+  });
+  if (settings.status === "error")
+    return (
+      <div className="flex min-h-12 min-w-0 flex-wrap items-center justify-between gap-x-3 px-3 py-1">
+        <span>{t("label")}</span>
+        <FailedValue name={t("label")} onRetry={settings.retry} />
+      </div>
+    );
+  if (settings.value === undefined)
+    return (
+      <SkeletonGroup label={t("loading")} className="flex min-w-0 flex-col px-3 py-2">
+        <Skeleton className="h-8 w-full" />
+      </SkeletonGroup>
+    );
+  return <CalmModeSwitch api={props.api} token={props.token} settings={settings.value} />;
 }

@@ -1,17 +1,38 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { RefusalClose } from "@/shared/patterns/states/banner/banner";
-import { entityKey, useRequest, useInvalidate, useWriteAction } from "../../../shared/data";
-import { Checkbox } from "@/shared/ui/checkbox";
+import {
+  entityKey,
+  useReload,
+  useRequest,
+  useWriteAction,
+  type ApiError,
+} from "../../../shared/data";
+import { SwitchRow } from "@/shared/lists/switch-row/switch-row";
 import { errorText } from "@/shared/lib/error-text";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { useAnnounce } from "@/shared/platform/announcer/context";
 import { loadVisibleToFriends, setWishVisibleToFriends } from "../../wishlist-api";
+import table from "./friends-switch.de.json";
 
+const t = texts(table);
 const KEY = ["wishlist", "visible-to-friends"] as const;
 
+/** The refusal at the row: the German text of its code, and the control that frees a held key (US-QS-03, P-10). */
+function RefusalLine({ error }: { error: ApiError }) {
+  return (
+    <>
+      {errorText(error.code)}
+      <RefusalClose error={error} />
+    </>
+  );
+}
+
 /**
- * The switch "Für Freunde als gesucht zeigen" of one open wish (DM-TAU-02, US-TAU-05). Off by default (P-05): only a
- * deliberate tap turns it on, and a tap takes it back at any time. The text says what it does and what stays private;
- * the answer of the server and every refusal stay visible (P-09, P-10). One shared request tells all cards which wishes
- * are marked.
+ * The switch row "Für Freunde sichtbar" of one open wish (DM-TAU-02, US-TAU-05, US-QS-32). Off by default (P-05): only a
+ * deliberate tap turns it on, and a tap takes it back at any time. The one line says what friends see and that the list stays
+ * private; it does not change with the state. The switch is optimistic: it moves at the tap and stays while the write runs, a
+ * refusal rolls it back and says why at the row (P-10), and a result is said once to assistive technology and shows in no
+ * second place (SG-FEED-02, SG-FEED-04). One shared request tells all cards which wishes are marked.
  */
 export default function FriendsSwitch(props: {
   api: string;
@@ -20,55 +41,53 @@ export default function FriendsSwitch(props: {
   title: string;
 }) {
   const { api, token, wishId, title } = props;
-  const load = useCallback((t: string) => loadVisibleToFriends(api, t), [api]);
+  const load = useCallback((tok: string) => loadVisibleToFriends(api, tok), [api]);
   const marked = useRequest({ queryKey: KEY, token, load });
-  const reload = useInvalidate(KEY);
-  const write = useWriteAction(token, reload);
+  const reload = useReload(KEY);
+  // The state the keeper asked for, until the reload shows the stored one (the tap, then the answer, then the reload).
+  const [wanted, setWanted] = useState<boolean | null>(null);
+  const settle = useCallback(() => void reload().finally(() => setWanted(null)), [reload]);
+  const write = useWriteAction(token, settle);
+  const announce = useAnnounce();
+  // A refusal puts the switch back at once; the reload that follows confirms the stored state.
+  useEffect(() => {
+    if (write.failures > 0) setWanted(null);
+  }, [write.failures]);
+  useEffect(() => {
+    if (write.message) announce?.announce(write.message);
+  }, [write.message, announce]);
+
   if (marked.status === "error")
     return (
       <p role="status" className="text-sm text-muted-foreground">
-        Ob dieser Wunsch für Freunde sichtbar ist, konnte nicht geladen werden. Lade die Seite neu.
+        {t("notLoaded")}
       </p>
     );
   const ids = marked.value?.wishIds;
   if (!Array.isArray(ids)) return null;
-  const on = ids.includes(wishId);
+  const shown = wanted ?? ids.includes(wishId);
   return (
-    <div className="mt-2 grid gap-1 rounded-lg border border-border p-2">
-      <Checkbox
-        checked={on}
-        disabled={write.running}
-        aria-label={`Für Freunde als gesucht zeigen: ${title}`}
-        onChange={(e) => {
-          // Read now: a controlled box is reset to its old value before the write has started.
-          const visible = e.target.checked;
-          void write.run(
-            (t, opts) => setWishVisibleToFriends(api, t, { wishId, visible }, opts),
-            visible
-              ? `„${title}“ ist jetzt für bestätigte Freunde als gesucht sichtbar.`
-              : `„${title}“ ist wieder privat.`,
-            entityKey("wish", wishId, `visible:${visible}`),
-          );
-        }}
-      >
-        Für Freunde als gesucht zeigen
-      </Checkbox>
-      <p className="text-sm text-muted-foreground">
-        {on
-          ? "Bestätigte Freunde sehen bei ihrem Angebot dieser Art „Passt in beide Richtungen“. Ihre Liste sehen sie nie. Haken entfernen macht den Wunsch wieder privat."
-          : "Standardmäßig ist jeder Wunsch privat. Mit Haken sehen bestätigte Freunde bei ihrem Angebot dieser Art „Passt in beide Richtungen“, nie deine Liste."}
-      </p>
-      {write.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {errorText(write.error.code)}
-          <RefusalClose error={write.error} />
-        </p>
-      )}
-      {write.message && !write.error && (
-        <p role="status" className="text-sm">
-          {write.message}
-        </p>
-      )}
-    </div>
+    <SwitchRow
+      bare
+      className="mt-1"
+      label={
+        <>
+          {t("label")}
+          <span className="sr-only">: {title}</span>
+        </>
+      }
+      help={t("help")}
+      checked={shown}
+      busy={write.running}
+      error={write.error ? <RefusalLine error={write.error} /> : undefined}
+      onCheckedChange={(visible) => {
+        setWanted(visible);
+        void write.run(
+          (tok, opts) => setWishVisibleToFriends(api, tok, { wishId, visible }, opts),
+          t(visible ? "visible" : "private", { title }),
+          entityKey("wish", wishId, `visible:${visible}`),
+        );
+      }}
+    />
   );
 }

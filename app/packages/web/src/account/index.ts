@@ -9,6 +9,7 @@ export const SETTINGS_LAYER = {
   notifications: "notifications",
   privacy: "privacy",
   style: "style",
+  control: "control",
   wishlist: "wishlist",
   light: "light",
 } as const;

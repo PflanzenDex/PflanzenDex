@@ -1,7 +1,8 @@
 import { Fragment, useCallback, type ReactNode } from "react";
 import { LayerHost, LayerSheet } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { PageHeader } from "@/shared/patterns/navigation/page-header/page-header";
-import { CalmModeSection, loadAchievementSettings } from "../../achievements";
+import { texts } from "@/shared/lib/text-rules/texts";
+import { CalmModeSection } from "../../achievements";
 import { useRequest } from "../../shared/data";
 import { LoadFrame } from "@/shared/patterns/states/request-state/load-frame/load-frame";
 import { loadProfile, type AccountProfile } from "../api/account-api";
@@ -28,10 +29,14 @@ import {
   ShortcutsGroup,
   MotionGroup,
 } from "./groups/switch-groups/switch-groups";
+import { controlValue } from "./groups/switch-groups/control-value";
 import { KeeperStyleSection } from "./keeper-style/keeper-style";
 import { loadKeeperStyle } from "./keeper-style/keeper-style-api";
 import { DelayedSkeleton, useHeldLoader } from "@/shared/ui/skeleton.delayed";
 import { SettingsPageSkeleton } from "./settings-page.skeleton";
+import table from "./settings-page.de.json";
+
+const t = texts(table);
 
 type Token = () => Promise<string | undefined>;
 
@@ -49,17 +54,11 @@ function useStyleRow(api: string, token: Token): { value: ReactNode; retry?: () 
     token,
     load: useCallback((t: string) => loadKeeperStyle(api, t), [api]),
   });
-  const calm = useRequest({
-    queryKey: ["achievements", "settings"],
-    fresh: true,
-    token,
-    load: useCallback((t: string) => loadAchievementSettings(api, t), [api]),
-  });
   const loading = useHeldLoader(style.status === "pending");
   if (loading) return { value: <DelayedSkeleton>{STYLE_LOADING}</DelayedSkeleton> };
   if (style.status === "error") return { value: NOT_LOADED, retry: style.retry };
   if (style.value === undefined) return { value: UNKNOWN };
-  return { value: styleValue(style.value.style, calm.value?.calmMode) };
+  return { value: styleValue(style.value.style) };
 }
 
 function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
@@ -91,10 +90,14 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
       title: "Wie nutzt du die App?",
       value: style.value,
       ...(style.retry ? { retry: style.retry } : {}),
+      body: <KeeperStyleSection api={props.api} token={props.token} />,
+    },
+    {
+      id: ids.control,
+      title: t("control.title"),
+      value: controlValue(p),
       body: (
         <div className="flex flex-col gap-3">
-          <KeeperStyleSection api={props.api} token={props.token} />
-          <CalmModeSection api={props.api} token={props.token} />
           <ShortcutsGroup saver={saver} />
           <MotionGroup saver={saver} />
         </div>
@@ -108,7 +111,13 @@ function Groups(props: { api: string; token: Token; profile: AccountProfile }) {
     },
     { id: ids.light, title: "Licht", value: lightValue(p), body: <LightGroup saver={saver} /> },
   ];
-  return <SettingsLayers layers={layers} />;
+  // A setting that applies at once and is one switch is a row of the list, not a topic in a layer (US-QS-32, SG-CTRL-02): the
+  // calm mode. The two choices "Tastenkürzel" and "Bewegung" share the layer "Bedienung" (owner decision 2026-11-28, DS-58).
+  return (
+    <SettingsLayers layers={layers}>
+      <CalmModeSection api={props.api} token={props.token} />
+    </SettingsLayers>
+  );
 }
 
 /** One group of the list: its row, its layer, and the retry of a failed load beside the row (US-QS-32). */
@@ -120,8 +129,11 @@ type SettingsLayer = {
   body: ReactNode;
 };
 
-/** The rows of the groups and, beside them, one layer per group (US-QS-17): the layer opens from its row. */
-function SettingsLayers(props: { layers: readonly SettingsLayer[] }) {
+/**
+ * The rows of the groups and, beside them, one layer per group (US-QS-17): the layer opens from its row. The children are
+ * the rows of the settings that apply at once, below the rows that open a layer.
+ */
+function SettingsLayers(props: { layers: readonly SettingsLayer[]; children?: ReactNode }) {
   return (
     <>
       <div className="flex min-w-0 max-w-xl flex-1 flex-col">
@@ -135,6 +147,7 @@ function SettingsLayers(props: { layers: readonly SettingsLayer[] }) {
             ) : null}
           </Fragment>
         ))}
+        {props.children}
       </div>
       {props.layers.map((l) => (
         <LayerSheet key={l.id} id={l.id} title={l.title} editsStored>
@@ -146,7 +159,7 @@ function SettingsLayers(props: { layers: readonly SettingsLayer[] }) {
 }
 
 /**
- * Profile and settings (US-ACC-02) as a list of six groups with their current values (US-QS-17): each opens as a
+ * Profile and settings (US-ACC-02) as a list of seven groups with their current values (US-QS-17): each opens as a
  * layer (`?sheet=<group>`). Switches save at once; Profil, Wunschliste and Licht have their own "Sichern". With
  * `host` (a section of "Konto", US-QS-14) the page has no title of its own and sits in a card: the destination names
  * the section.
@@ -156,7 +169,10 @@ export function SettingsPage(props: { api: string; token: Token; host?: boolean 
   const loading = "Einstellungen werden geladen …";
   return (
     // The layers beside the card, not inside it (US-QS-15): the frame is outside the card.
-    <LayerHost>
+    // A hosted page sits in the frame of "Konto", which has a given height: the host may be lower than its content (`min-h-0`), so
+    // a layer pane takes the height that is left and scrolls inside (US-QS-15, DS-59), and it does not grow (no `flex-1`), so the
+    // link below the card stays under the card. Without it a long layer (seven switch rows with a line each) grows the frame.
+    <LayerHost className={props.host === true ? "min-h-0" : undefined}>
       <div
         className={
           props.host === true

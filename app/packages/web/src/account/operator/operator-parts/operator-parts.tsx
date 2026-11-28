@@ -5,8 +5,6 @@ import { layerOpenerId, useLayer } from "@/shared/patterns/responsive/layer-shee
 import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { Button } from "@/shared/ui/button";
-import { MoreHelp } from "@/shared/ui/more-help";
-import { BUSY_LOOK } from "@/shared/lib/utils";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { instantText } from "../../api/access-api";
 import partsTable from "./operator-parts.de.json";
@@ -68,36 +66,6 @@ export function EnterCostButton() {
     >
       {t("cost.enter")}
     </Button>
-  );
-}
-
-/** The mode in words (not only a switch state) and the one action that changes it. The heading is the layer's. */
-export function ModeSection(props: {
-  invitationOnly: boolean;
-  running: boolean;
-  onChange: (invitationOnly: boolean) => void;
-}) {
-  const { invitationOnly } = props;
-  return (
-    <div className="flex flex-col gap-3">
-      <p>
-        Im Moment: <strong>{invitationOnly ? "nur mit Einladungscode" : "offen für alle"}</strong>
-      </p>
-      <MoreHelp more="Nur neue Personen brauchen bei Einladungspflicht einen Code.">
-        Bestehende Konten melden sich in beiden Fällen wie gewohnt an.
-      </MoreHelp>
-      <Button
-        type="button"
-        variant="tinted"
-        size="touch"
-        aria-disabled={props.running || undefined}
-        aria-busy={props.running || undefined}
-        className={BUSY_LOOK}
-        onClick={() => props.onChange(!invitationOnly)}
-      >
-        {invitationOnly ? "Für alle öffnen" : "Nur mit Einladungscode erlauben"}
-      </Button>
-    </div>
   );
 }
 

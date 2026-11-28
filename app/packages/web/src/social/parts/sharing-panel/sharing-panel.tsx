@@ -3,7 +3,9 @@ import type { SharingRow, SpecimenRow } from "@pflanzendex/core";
 import { useIsShort } from "@/shared/patterns/responsive/entry-list/card-page-size";
 import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { Button } from "@/shared/ui/button";
-import { Checkbox } from "@/shared/ui/checkbox";
+import { OBJECT_GROUP } from "@/shared/lists/grouped-list/group-classes";
+import { Thumbnail } from "@/shared/lists/object-row/object-row";
+import { SwitchRow } from "@/shared/lists/switch-row/switch-row";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { EmptySection } from "@/shared/patterns/elements/empty-state/empty-section/empty-section";
 import { ADD_PLANT_PATH } from "@/shared/patterns/navigation/navigation/navigation";
@@ -33,41 +35,36 @@ export function sharingChoice(
   return `${count} von ${active.length} Pflanzen geteilt`;
 }
 
-/** The species part of a specimen name (`Species – marker`, DM-BES-03): the marker is never needed here. */
-const speciesTitle = (name: string) => name.split(" – ")[0] ?? name;
-
-/** The active specimens grouped by species, in the order of the list. */
-function groups(specimens: readonly Specimen[]) {
-  const out = new Map<string, { title: string; items: Specimen[] }>();
+/** The active specimens grouped by species, in the order of the list (the species stays no heading, SG-LIST-03). */
+function ordered(specimens: readonly Specimen[]): Specimen[] {
+  const out = new Map<string, Specimen[]>();
   for (const s of specimens) {
     if (s.status === "archived") continue;
-    const g = out.get(s.speciesId) ?? { title: speciesTitle(s.name), items: [] };
-    g.items.push(s);
-    out.set(s.speciesId, g);
+    out.set(s.speciesId, [...(out.get(s.speciesId) ?? []), s]);
   }
-  return [...out].map(([speciesId, g]) => ({ speciesId, ...g }));
+  return [...out.values()].flat();
 }
 
-/** One switch per specimen, the species name above the first row of its group (and again at the top of a page). */
+/**
+ * One row per plant (US-QS-32, SG-CTRL-02, SG-LIST-03): the thumbnail, the plant's name with "mit Freunden teilen" and the
+ * switch at the trailing edge; no heading of the species above it. The friends' list data has no picture of the plant, so the
+ * drawn placeholder shows (SG-PHOTO-02).
+ */
 function Row(props: {
   row: Specimen;
-  title: string | null;
   checked: boolean;
   busy: boolean;
   onSet: (specimenId: string, share: boolean) => void;
 }) {
   return (
-    <div className="flex flex-col">
-      {props.title !== null && <h3 className="mt-1 text-sm font-semibold">{props.title}</h3>}
-      <Checkbox
-        role="switch"
-        checked={props.checked}
-        disabled={props.busy}
-        onChange={(e) => props.onSet(props.row.id, e.target.checked)}
-      >
-        {props.row.name}: mit Freunden teilen
-      </Checkbox>
-    </div>
+    <SwitchRow
+      bare
+      leading={<Thumbnail src={undefined} alt="" />}
+      label={tx("sharing.row", { name: props.row.name })}
+      checked={props.checked}
+      busy={props.busy}
+      onCheckedChange={(share) => props.onSet(props.row.id, share)}
+    />
   );
 }
 
@@ -130,7 +127,7 @@ function BulkBar(props: { count: number; busy: boolean; onSetAll: (share: boolea
 
 /**
  * The content of the layer "Was Freunde sehen" (US-SOZ-04, US-QS-20): a switch per specimen (off by default: everything is
- * private, P-05), grouped by species, one bulk action on top that asks first, and pages. The full explanation of what a
+ * private, P-05), one bulk action on top that asks first, and pages. The full explanation of what a
  * friend can see and what never leaves the account (FR-SOZ-01), and that withdrawing works from the next retrieval on
  * (P-10), is the help layer; here one line stays.
  */
@@ -143,7 +140,7 @@ export function SharingPanel(props: {
 }) {
   const size = useIsShort() ? SHORT_PAGE_SIZE : PAGE_SIZE;
   const shared = new Set(props.shared.map((r) => r.specimenId));
-  const rows = groups(props.specimens).flatMap((g) => g.items.map((s) => ({ s, title: g.title })));
+  const rows = ordered(props.specimens);
   return (
     <section aria-label="Was Freunde sehen" className="flex min-w-0 flex-col gap-3">
       <p className="text-muted-foreground">Alles ist privat, bis du es freigibst.</p>
@@ -159,17 +156,10 @@ export function SharingPanel(props: {
             items={rows}
             pageSize={size}
             label="Pflanzen zum Teilen"
-            getKey={(r) => r.s.id}
-            renderItem={(r, i) => (
-              <Row
-                row={r.s}
-                title={
-                  i % size === 0 || rows[i - 1]?.s.speciesId !== r.s.speciesId ? r.title : null
-                }
-                checked={shared.has(r.s.id)}
-                busy={props.busy}
-                onSet={props.onSet}
-              />
+            getKey={(r) => r.id}
+            listClassName={OBJECT_GROUP}
+            renderItem={(r) => (
+              <Row row={r} checked={shared.has(r.id)} busy={props.busy} onSet={props.onSet} />
             )}
           />
         </>

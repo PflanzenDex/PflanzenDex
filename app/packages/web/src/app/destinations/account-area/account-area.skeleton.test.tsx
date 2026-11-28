@@ -14,12 +14,12 @@ describe("AccountSectionSkeleton (US-QS-14, DS-52, DS-57, issue 1697)", () => {
     expect(screen.getByRole("status").textContent).toContain("Erinnerungen werden geladen …");
   });
 
-  it("US-QS-14 issue 1697 · every section keeps a shape of its own: the settings keep their six rows, the others their blocks", async () => {
+  it("US-QS-14 issue 1697 · every section keeps a shape of its own: the settings keep their eight rows, the others their blocks", async () => {
     const { container, rerender } = render(
       <AccountSectionSkeleton section="settings" label="Einstellungen werden geladen …" />,
     );
     expect(await screen.findByRole("status")).toBeTruthy();
-    expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(6);
+    expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(8);
     rerender(<AccountSectionSkeleton section="aiClients" label="KI-Clients werden geladen …" />);
     expect(await screen.findByRole("status")).toBeTruthy();
     expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThanOrEqual(2);

@@ -3,7 +3,10 @@ import { ChevronRight } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 
-/** One group of the settings (US-QS-17): its name, its current value and the layer it opens (`?sheet=<id>`). */
+/**
+ * One group of the settings (US-QS-17): its name, its current value and the layer it opens (`?sheet=<id>`). 4 px above and below
+ * the two lines and at least 48 px high, so the eight rows of the list fit between the bars at 360 x 640 (DS-58, US-QS-15).
+ */
 export function SettingsRow(props: { id: string; title: string; value: ReactNode }) {
   const { open, openLayer } = useLayer(props.id);
   return (
@@ -13,7 +16,7 @@ export function SettingsRow(props: { id: string; title: string; value: ReactNode
       aria-haspopup="dialog"
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
-      className="h-auto min-h-12 w-full justify-start gap-3 whitespace-normal px-3 py-2 text-left text-base font-normal"
+      className="h-auto min-h-12 w-full justify-start gap-3 whitespace-normal px-3 py-1 text-left text-base font-normal"
     >
       <span className="min-w-0 flex-1">
         <span className="block font-semibold hyphens-auto [overflow-wrap:anywhere]">

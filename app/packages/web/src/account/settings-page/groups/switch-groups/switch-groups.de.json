@@ -1,5 +1,20 @@
 {
   "saved": "Gesichert.",
+  "notifications.footer": "Erinnerungen nur, wenn eingerichtet.",
+  "notifications.help.phase": "Erinnerung, wenn eine Pflegephase beginnt.",
+  "notifications.help.treatment": "Erinnerung an fällige Behandlungen.",
+  "notifications.help.measurement": "Erinnerung an fällige Messungen.",
+  "notifications.help.watering": "Erinnerung ans Gießen.",
+  "notifications.help.swap": "Hinweise zu deinem Tausch.",
+  "notifications.help.friends": "Hinweise von deinen Freunden.",
+  "notifications.help.equipment": "Erinnerung an fällige Geräte-Prüfungen.",
+  "privacy.footer": "Du entscheidest, was geteilt und empfohlen wird.",
+  "privacy.everythingPrivate.label": "Alles privat",
+  "privacy.everythingPrivate.help": "Setzt alle Freigaben aus: Freunde sehen nichts, deine Auswahl bleibt gespeichert.",
+  "privacy.recommendations.label": "Empfehlungen zeigen",
+  "privacy.recommendations.help": "Gerätevorschläge zu deinen Pflanzen. Nur du siehst sie.",
+  "privacy.rarity.label": "Meine Sammlung in die Seltenheit in PflanzenDéx einrechnen",
+  "privacy.rarity.help": "Es fließt nur eine Zahl pro Art ein, nie wer eine Art besitzt. Vorgabe: aus.",
   "shortcuts.label": "Tastenkürzel",
   "shortcuts.plain": "Einzeltasten",
   "shortcuts.modifier": "Alt und Umschalt",
@@ -8,5 +23,11 @@
   "motion.label": "Bewegung",
   "motion.system": "Wie auf dem Gerät",
   "motion.reduced": "Bewegung aus",
-  "motion.help": "Aus: Ansichten, Karten und Ebenen wechseln ohne Animation. Alles bleibt erreichbar."
+  "motion.help": "Aus: Ansichten, Karten und Ebenen wechseln ohne Animation. Alles bleibt erreichbar.",
+  "control.value": "{shortcuts} · Bewegung {motion}",
+  "control.shortcuts.plain": "Einzeltasten",
+  "control.shortcuts.modifier": "Alt und Umschalt",
+  "control.shortcuts.disabled": "Tastenkürzel aus",
+  "control.motion.system": "wie Gerät",
+  "control.motion.reduced": "aus"
 }

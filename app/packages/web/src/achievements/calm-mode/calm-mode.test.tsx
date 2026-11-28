@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import { CalmModeSection } from "./calm-mode";
 
 const response = (status: number, body: unknown) =>
@@ -27,7 +28,17 @@ function fakeServer(initial: boolean, put: (body: unknown) => Promise<Response>)
   );
   return puts;
 }
-const show = () => render(<CalmModeSection api="http://api" token={token} />);
+const show = () =>
+  render(
+    <AnnouncerProvider>
+      <CalmModeSection api="http://api" token={token} />
+    </AnnouncerProvider>,
+  );
+
+/** What the announcer says (its polite live region, `sr-only`). */
+const announced = () =>
+  document.querySelector<HTMLElement>('.sr-only[aria-live="polite"]')?.textContent ?? "";
+const isOn = (toggle: HTMLElement) => toggle.getAttribute("aria-checked") === "true";
 
 afterEach(() => {
   cleanup();
@@ -36,39 +47,46 @@ afterEach(() => {
 });
 
 describe("US-ACH-08 calm mode switch", () => {
-  it("US-ACH-08 shows the stored state, off by default, and says what the switch does", async () => {
+  it("US-ACH-08 · US-QS-32 shows the stored state, off by default, as a switch row with one line that says what it does", async () => {
     fakeServer(false, (b) => response(200, b));
     show();
-    const box = await screen.findByRole<HTMLInputElement>("checkbox", { name: "Ruhemodus" });
-    expect(box.checked).toBe(false);
-    expect(screen.getByText(/blendet alle Erfolge/).textContent).toContain("Pokédex bleiben");
+    const toggle = await screen.findByRole("switch", { name: "Ruhemodus" });
+    expect(isOn(toggle)).toBe(false);
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    const line = document.getElementById(toggle.getAttribute("aria-describedby") ?? "");
+    expect(line?.textContent).toBe("Blendet Erfolge aus.");
   });
 
-  it("US-ACH-08 one tap saves with an Idempotency-Key and confirms what changed", async () => {
+  it("US-ACH-08 · US-QS-32 one tap saves with an Idempotency-Key; the switch is the result and the announcer says it once", async () => {
     const puts = fakeServer(false, (b) => response(200, b));
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("checkbox", { name: "Ruhemodus" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Ruhemodus ist an.");
+    await user.click(await screen.findByRole("switch", { name: "Ruhemodus" }));
+    await vi.waitFor(() => expect(announced()).toBe("Ruhemodus ist an."));
     expect(puts).toHaveLength(1);
     expect(puts[0]?.body).toEqual({ calmMode: true });
     expect(puts[0]?.key).toBeTruthy();
-    expect(screen.getByRole<HTMLInputElement>("checkbox").checked).toBe(true);
-    expect(screen.getByText(/bleiben erhalten/)).toBeTruthy();
-    await user.click(screen.getByRole("checkbox", { name: "Ruhemodus" }));
-    expect((await screen.findByText("Ruhemodus ist aus.")).textContent).toBeTruthy();
+    expect(isOn(screen.getByRole("switch"))).toBe(true);
+    // No second result box in the page (SG-FEED-02, SG-FEED-04): the moved switch is the result.
+    expect(screen.queryByRole("status")).toBeNull();
+    await user.click(screen.getByRole("switch", { name: "Ruhemodus" }));
+    await vi.waitFor(() => expect(announced()).toBe("Ruhemodus ist aus."));
   });
 
-  it("US-ACH-08 a refusal stays visible and the switch keeps the stored state", async () => {
+  it("US-ACH-08 · P-10 a refusal stays visible at the row and the switch keeps the stored state", async () => {
     fakeServer(false, () =>
       response(400, { error: { code: "input.invalid", text: "x", details: [] } }),
     );
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByRole("checkbox", { name: "Ruhemodus" }));
-    expect((await screen.findByRole("alert")).textContent).toBeTruthy();
-    expect(screen.getByRole<HTMLInputElement>("checkbox").checked).toBe(false);
+    const toggle = await screen.findByRole("switch", { name: "Ruhemodus" });
+    await user.click(toggle);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBeTruthy();
+    expect(toggle.getAttribute("aria-describedby")).toContain(alert.id);
+    expect(isOn(screen.getByRole("switch"))).toBe(false);
     expect(screen.queryByRole("status")).toBeNull();
+    expect(announced()).toBe("");
   });
 });
 
@@ -78,12 +96,39 @@ describe("US-QS-30 calm mode switch offline", () => {
     vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
     const user = userEvent.setup();
     show();
-    const box = await screen.findByRole<HTMLInputElement>("checkbox", { name: "Ruhemodus" });
+    const box = await screen.findByRole("switch", { name: "Ruhemodus" });
     await user.click(box);
     expect(puts).toHaveLength(0);
-    expect(box.checked).toBe(false);
+    expect(isOn(box)).toBe(false);
     expect(box.getAttribute("aria-disabled")).toBe("true");
-    const reason = document.getElementById(box.getAttribute("aria-describedby") ?? "");
-    expect(reason?.textContent).toBe("Du bist offline. Das geht erst wieder mit Verbindung.");
+    const described = (box.getAttribute("aria-describedby") ?? "")
+      .split(" ")
+      .map((id) => document.getElementById(id)?.textContent);
+    expect(described).toContain("Du bist offline. Das geht erst wieder mit Verbindung.");
+  });
+});
+
+describe("US-QS-32 · P-10 calm mode switch: a failed load is one row, not a card in the list", () => {
+  it("US-QS-32 a failed load reads 'Nicht geladen' with 'Erneut versuchen' in one row, and the retry shows the switch", async () => {
+    let failing = true;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        failing
+          ? response(500, { error: { code: "internal", text: "x" } })
+          : response(200, { calmMode: true }),
+      ),
+    );
+    const user = userEvent.setup();
+    show();
+    const retry = await screen.findByRole("button", { name: "Erneut versuchen: Ruhemodus" });
+    expect(screen.getByText("Nicht geladen")).toBeTruthy();
+    expect(screen.getByText("Ruhemodus")).toBeTruthy();
+    expect(screen.queryByRole("switch")).toBeNull();
+    // One row: no empty-state icon and no alert card (SG-STATE-03).
+    expect(screen.queryByRole("alert")).toBeNull();
+    failing = false;
+    await user.click(retry);
+    expect(isOn(await screen.findByRole("switch", { name: "Ruhemodus" }))).toBe(true);
   });
 });
