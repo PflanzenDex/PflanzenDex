@@ -13,6 +13,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ToastProvider } from "@/shared/patterns/states/toast/toast-provider/toast-provider";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
@@ -39,6 +40,11 @@ function Address() {
   return null;
 }
 const back = () => act(() => route.navigate?.(-1));
+/** The meta line of a row: its text in one piece, though it is split in parts that stay whole (US-QS-15, issue 2640). */
+const metaLine = (text: string) =>
+  screen.getByText(
+    (_, el) => !!el?.querySelector(":scope > [data-meta-part]") && plain(el.textContent) === text,
+  );
 
 /** The page lives inside the app shell, which owns the toast provider (US-QS-14), and inside the frame of its destination (US-QS-15). */
 const render = (ui: React.ReactElement) =>
@@ -363,7 +369,7 @@ describe("US-LIC-05 page locations and light zones", () => {
       "z1",
     );
     await userEvent.click(screen.getByRole("button", { name: "Sichern" }));
-    expect(await screen.findByText("Zone 2 · außen")).toBeTruthy();
+    await waitFor(() => expect(metaLine("Zone 2 · außen")).toBeTruthy());
     expect(calls.find((a) => a.url === "/locations/s1")?.body).toEqual({
       name: "Balkon",
       lightZoneId: "z1",
@@ -673,7 +679,7 @@ describe("US-QS-19 management on one screen", () => {
     const locationRow = screen.getByRole("button", { name: /^Balkon\b/ });
     expect(locationRow.querySelector("svg")).not.toBeNull();
     expect(screen.getByText(/^bis 15\.000/)).toBeTruthy();
-    expect(screen.getByText("Lichtzone fehlt · außen")).toBeTruthy();
+    expect(metaLine("Lichtzone fehlt · außen")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: /^Balkon\b/ }));
     expect(
       screen.getByLabelText("Name", { selector: "form[aria-label='Balkon ändern'] input" }),

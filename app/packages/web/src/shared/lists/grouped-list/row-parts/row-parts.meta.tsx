@@ -47,8 +47,10 @@ function itemsOf(meta: ReactNode): ReactNode[] | null {
 }
 
 /**
- * The meta line of an object row (issue 2606, d-168): the text is split at " · " and each part stays together, so the line breaks
- * between the parts and not inside one ("Zone 3 — 1" / "Pflanzen"). The separator stays at the end of the line before the
+ * The meta line of a row or a card (issues 2606, 2640, d-168): the text is split at " · " and each part stays together, so the
+ * line breaks between the parts and not inside one ("Zone 3 — 1" / "Pflanzen"). Every row of `GroupedRow` and `ObjectRow` runs
+ * it, and so does a card that builds its own meta line (a hit of the catalog, a swap card, a measurement). It needs a container
+ * in inline flow (a `p` or a `span` with text): a flex or grid container would turn each part into an item of its own. The separator stays at the end of the line before the
  * break, in the span of the part before it, and the only plain space is the one between two parts, where a break may fall.
  * The text of the line is the string of the caller, so the accessible name of the row keeps its order (WCAG 2.5.3); the space
  * before a dot is a no-break space, which reads and matches as a space. A fragment of elements and strings is split the same

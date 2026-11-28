@@ -4,6 +4,7 @@ import { cleanup, render as plainRender } from "@testing-library/react";
 import { OctagonAlert } from "lucide-react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
 import { LightView, type LightActions } from "./light-view";
 import { DerivationForm } from "../../zones/derivation-view/derivation-view";
 import { LocationForm } from "../../zones/locations-view/locations-view";
@@ -40,6 +41,9 @@ const html = (data: LightData) => {
   return markup;
 };
 
+/** The text of the markup: the meta line of a row is split in parts (US-QS-15), so a text check reads it without the tags. */
+const textOf = (markup: string) => plain(markup.replace(/<[^>]+>/g, ""));
+
 describe("US-LIC-05 view locations and light zones", () => {
   it("empty account: says what to do (P-09), and offers the default", () => {
     const h = html(empty);
@@ -62,7 +66,7 @@ describe("US-LIC-05 view locations and light zones", () => {
       locations: [{ id: "s1", name: "Balkon", lightZoneId: "z1", kind: "outdoor" }],
     });
     expect(h).toContain("Balkon");
-    expect(h).toContain("Zone 2 · außen");
+    expect(textOf(h)).toContain("Zone 2 · außen");
   });
 
   it("US-QS-32 a location names its cutting light in brackets; a location without zone reads 'Lichtzone fehlt' first in its meta", () => {
@@ -81,10 +85,22 @@ describe("US-LIC-05 view locations and light zones", () => {
         { id: "s2", name: "Regal", lightZoneId: null, kind: "indoor" },
       ],
     });
-    expect(h).toContain("Zone 1 (Stecklingslicht) · innen");
-    expect(h).not.toContain("Zone 1 · Stecklingslicht · innen");
-    expect(h).toContain("Lichtzone fehlt · innen");
-    expect(h).not.toContain("Keine Lichtzone · innen");
+    expect(textOf(h)).toContain("Zone 1 (Stecklingslicht) · innen");
+    expect(textOf(h)).not.toContain("Zone 1 · Stecklingslicht · innen");
+    expect(textOf(h)).toContain("Lichtzone fehlt · innen");
+    expect(textOf(h)).not.toContain("Keine Lichtzone · innen");
+  });
+
+  it("US-QS-15 SG-TYPE-05 the zone and the kind of a location are one part each, so the zone name never breaks inside (issue 2640)", () => {
+    const h = html({
+      ...empty,
+      zones: [zone],
+      locations: [{ id: "s1", name: "Balkon", lightZoneId: "z1", kind: "outdoor" }],
+    });
+    const parts = [
+      ...h.matchAll(/<span data-meta-part="[^"]*" class="[^"]*">([^<]*)<\/span>/g),
+    ].map((m) => plain(m[1]));
+    expect(parts).toEqual(expect.arrayContaining(["Zone 2 ·", "außen"]));
   });
 
   it("US-QS-19 location without zone: the notice counts the hints, the layer says what to do (P-09)", () => {

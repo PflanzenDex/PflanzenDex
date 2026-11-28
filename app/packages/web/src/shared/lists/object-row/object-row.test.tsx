@@ -412,7 +412,7 @@ describe("US-QS-32 ObjectRow: the meta line breaks only between its parts and ne
     expect(plain(metaOf(row()).textContent)).toBe("Behandeln · Efeutute · Lichtzone unbekannt");
   });
 
-  it("US-QS-32 a row that is no object row (a settings row) keeps its meta as one text", () => {
+  it("US-QS-15 SG-TYPE-05 the parts of the meta of a row that is no object row (a settings row) stay whole too (issue 2640)", () => {
     render(
       <MemoryRouter>
         <ul>
@@ -420,8 +420,32 @@ describe("US-QS-32 ObjectRow: the meta line breaks only between its parts and ne
         </ul>
       </MemoryRouter>,
     );
+    const parts = partsOf(document.body);
+    expect(parts.map((p) => plain(p.textContent))).toEqual(["Lena ·", "Europe/Berlin"]);
+    for (const part of parts)
+      expect(part.className.split(" ")).toEqual(
+        expect.arrayContaining(["inline-block", "max-w-full", "align-top"]),
+      );
+    // The line is the same text as before and the link is named by it in order (WCAG 2.5.3); its own classes stay.
+    const line = parts[0]?.parentElement as HTMLElement;
+    expect(plain(line.textContent)).toBe("Lena · Europe/Berlin");
+    expect(line.className.split(" ")).toEqual(
+      expect.arrayContaining(["text-sm", "[overflow-wrap:anywhere]"]),
+    );
+    expect(line.className.split(" ")).not.toContain("[overflow-wrap:break-word]");
+    expect(plain(screen.getByRole("link").textContent)).toBe("Konto Lena · Europe/Berlin");
+  });
+
+  it("US-QS-15 SG-TYPE-05 the meta of a settings row with one part stays one plain text", () => {
+    render(
+      <MemoryRouter>
+        <ul>
+          <GroupedRow to="/konto" title="Konto" meta="Lena" />
+        </ul>
+      </MemoryRouter>,
+    );
     expect(document.querySelectorAll("[data-meta-part]")).toHaveLength(0);
-    expect(screen.getByText("Lena · Europe/Berlin")).toBeTruthy();
+    expect(screen.getByText("Lena")).toBeTruthy();
   });
 
   it("US-QS-32 WCAG 2.5.3 the link is named by its visible text in order, the parts included", () => {

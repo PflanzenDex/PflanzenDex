@@ -2,6 +2,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { LayerScope } from "@/shared/ui/layer-scope";
 import { RulesView } from "./rules-view";
@@ -31,9 +32,29 @@ describe("US-LIC-04 look up the classification rules (view)", () => {
     expect(rows[0]?.textContent).toMatch(/bis 1\.500\s+Lux/);
     expect(rows[0]?.textContent).toContain("PPFD unbekannt");
     expect(rows[1]?.textContent).toMatch(/^Fensterbank/);
-    expect(rows[1]?.textContent).toMatch(/bis 15\.000\s+Lux · PPFD 300\s+µmol\/m²\/s/);
+    expect(plain(rows[1]?.textContent)).toMatch(/bis 15\.000\s+Lux · PPFD 300\s+µmol\/m²\/s/);
     expect(document.body.textContent).not.toContain("Zone Zone");
     expect(screen.queryByRole("row")).toBeNull();
+  });
+
+  it("US-QS-15 SG-TYPE-05 at 360 px the lux and the PPFD of a zone are one part each, so '300 µmol/m²/s' never breaks inside (issue 2640)", () => {
+    setViewportWidth(360);
+    render(
+      <MemoryRouter>
+        <RulesView zones={zones} />
+      </MemoryRouter>,
+    );
+    const rows = within(screen.getByRole("region", { name: "Deine Lichtzonen" })).getAllByRole(
+      "listitem",
+    );
+    const parts = Array.from(rows[1]?.querySelectorAll<HTMLElement>("[data-meta-part]") ?? []);
+    expect(parts.map((p) => plain(p.textContent).replace(/\s+/g, " "))).toEqual([
+      "bis 15.000 Lux ·",
+      "PPFD 300 µmol/m²/s",
+    ]);
+    expect(plain(parts[0]?.parentElement?.textContent)).toMatch(
+      /^bis 15\.000\s+Lux · PPFD 300\s+µmol\/m²\/s$/,
+    );
   });
 
   it("US-QS-15 · SG-LIST-01 on a page the parts stand on one scrolling list, from the zone table to the warning signs, with no pages", () => {
