@@ -1,5 +1,6 @@
 import type { ReviewEntry } from "@pflanzendex/core";
 import { Button } from "@/shared/ui/button";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import { useLayer } from "@/shared/patterns/responsive/layer-sheet/layer-sheet";
 import { ageText, flagsOf, isBatch } from "../review-text";
 
@@ -31,10 +32,10 @@ export function ReviewRow(props: { entry: ReviewEntry; now: number }) {
         <span className="break-words text-base font-semibold">
           <i>{entry.species?.latinName ?? "Unbekannte Art"}</i>
         </span>
-        <span className="break-words text-sm text-muted-foreground">{kind}</span>
+        <span className="break-words text-sm text-muted-foreground">{metaParts(kind)}</span>
         {flags.length > 0 && (
           <span className="break-words text-sm font-semibold text-foreground">
-            {flags.join(" · ")}
+            {metaParts(flags.join(" · "))}
           </span>
         )}
       </Button>

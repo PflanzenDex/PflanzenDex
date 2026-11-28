@@ -2,7 +2,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import type { ReviewEntry } from "@pflanzendex/core";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { ReviewRow } from "./review-entry";
 
 const entry = {
@@ -40,5 +42,60 @@ describe("US-BES-10 · US-QS-15 the focus ring of a review row stays inside its 
     expect(cls).toContain("rounded-xl");
     expect(cls).not.toContain("rounded-pill");
     expect(cls).not.toContain("rounded-none");
+  });
+});
+
+// The kind and the age of a proposal and its flags are meta lines of a compact row: they break between their " · " parts and
+// not inside one, like the lines of the hit list (issue 2640).
+describe("US-QS-15 SG-TYPE-05 the lines of a review row break only between their parts (issue 2640)", () => {
+  beforeEach(() => setViewportWidth(360));
+
+  const lines = (extra: Record<string, unknown> = {}) => {
+    render(
+      <MemoryRouter>
+        <ReviewRow
+          entry={{ ...entry, ...extra } as unknown as ReviewEntry}
+          now={Date.parse("2026-11-28T00:00:00Z")}
+        />
+      </MemoryRouter>,
+    );
+    return Array.from(screen.getByRole("button").querySelectorAll<HTMLElement>("span.text-sm"));
+  };
+  const partsOf = (line: HTMLElement | undefined) =>
+    Array.from(line?.querySelectorAll<HTMLElement>("[data-meta-part]") ?? []);
+
+  it("US-QS-15 the kind and the age of a proposal are one part each, and the text of the line is the same", () => {
+    const [kind] = lines();
+    const parts = partsOf(kind);
+    expect(parts.map((p) => plain(p.textContent))).toEqual(["Nutzervorschlag ·", "vor 1 Tag"]);
+    for (const part of parts)
+      expect(part.className.split(" ")).toEqual(
+        expect.arrayContaining(["inline-block", "max-w-full", "align-top"]),
+      );
+    expect(plain(kind?.textContent)).toBe("Nutzervorschlag · vor 1 Tag");
+  });
+
+  it("US-QS-15 each flag is one part, so 'Angaben fehlen' never breaks inside", () => {
+    const [, flags] = lines({
+      aiCreated: true,
+      issues: [{ field: "light", reason: "missing" }],
+      similar: [{}],
+    });
+    expect(partsOf(flags).map((p) => plain(p.textContent))).toEqual([
+      "KI-erstellt ·",
+      "Angaben fehlen ·",
+      "Mögliche Dublette",
+    ]);
+    expect(plain(flags?.textContent)).toBe("KI-erstellt · Angaben fehlen · Mögliche Dublette");
+  });
+
+  it("US-QS-15 a batch has no age and one flag: no part, one plain text", () => {
+    const [kind, flags] = lines({
+      reviewCase: { id: "c1", status: "curated", createdAt: "2026-11-27T00:00:00Z" },
+      aiCreated: true,
+    });
+    expect(partsOf(kind)).toHaveLength(0);
+    expect(partsOf(flags)).toHaveLength(0);
+    expect(plain(kind?.textContent)).toBe("Betreiber-Charge");
   });
 });
