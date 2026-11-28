@@ -17,11 +17,24 @@ describe("US-QS-15 · NFR-13 focus ring of a navigated heading", () => {
   it("US-QS-15 tokens.css gives every focused control a system-coloured outline in forced colors, outside the layers (issue 2629)", () => {
     // Outside @layer the rule beats the utility `focus-visible:outline-none` of the Button and every other control.
     const rule = flat.match(
-      /@media \(forced-colors: active\) \{ :focus-visible \{ outline: 2px solid Highlight; outline-offset: 2px; \} \}/,
+      /@media \(forced-colors: active\) \{ :focus-visible \{ outline: 2px solid Highlight; outline-offset: (-?\d+)px; \} \}/,
     );
     expect(rule).not.toBeNull();
     // Strip comments, then the braces before the rule balance out: it is not inside an @layer block.
     const before = (rule ? flat.slice(0, rule.index) : "").replace(/\/\*.*?\*\//g, "");
     expect(before.split("{").length).toBe(before.split("}").length);
+  });
+
+  it("US-QS-15 the forced-colors outline lies inside the element's own box, so a clipping list cannot cut it (issue 2647)", () => {
+    // Rows and cards sit in lists with `overflow-hidden` or `overflow-y-auto`; an outline outside the box (a positive offset)
+    // is cut there. A negative offset at least as large as the line width keeps the whole ring inside the box.
+    const rule = flat.match(
+      /@media \(forced-colors: active\) \{ :focus-visible \{ outline: (\d+)px solid Highlight; outline-offset: (-?\d+)px; \} \}/,
+    );
+    expect(rule).not.toBeNull();
+    const width = Number(rule?.[1]);
+    const offset = Number(rule?.[2]);
+    expect(offset).toBeLessThan(0);
+    expect(offset + width).toBeLessThanOrEqual(0);
   });
 });
