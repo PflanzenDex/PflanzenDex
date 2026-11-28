@@ -8,7 +8,8 @@ export const caseSheet = (entry: ReviewEntry) => `case-${entry.reviewCase.id}`;
 
 /**
  * One case of the review list as a compact row (US-QS-15): the name, the kind, the age and the flags. A tap opens the
- * case as a layer, where the facts and the decisions are (US-BES-10).
+ * case as a layer, where the facts and the decisions are (US-BES-10). The list scrolls and clips what lies outside its rows, so the
+ * button takes the radius of the card and its focus ring lies inside it, as in the hit list of the catalog (DS-37, issue 2650).
  */
 export function ReviewRow(props: { entry: ReviewEntry; now: number }) {
   const { entry, now } = props;
@@ -22,8 +23,9 @@ export function ReviewRow(props: { entry: ReviewEntry; now: number }) {
       <Button
         type="button"
         variant="ghost"
+        size="row"
         aria-haspopup="dialog"
-        className="grid h-auto min-h-14 w-full justify-items-start gap-0 px-3.5 py-2 text-left font-normal"
+        className="grid min-h-14 justify-items-start gap-0 rounded-xl px-3.5 py-2 focus-visible:ring-inset focus-visible:ring-offset-0"
         onClick={(event) => openLayer(event.currentTarget)}
       >
         <span className="break-words text-base font-semibold">

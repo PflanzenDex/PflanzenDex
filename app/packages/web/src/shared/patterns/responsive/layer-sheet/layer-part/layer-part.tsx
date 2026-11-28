@@ -28,7 +28,8 @@ export function LayerOpenRow({
       aria-expanded={open}
       onClick={(event) => openLayer(event.currentTarget)}
       className={cn(
-        "h-auto min-h-12 w-full justify-start gap-3 whitespace-normal rounded-lg border border-border px-3 py-2 text-left text-base font-normal",
+        // The ring lies inside the row: a list that scrolls clips a ring outside its rows (DS-37, US-QS-15, issue 2650).
+        "h-auto min-h-12 w-full justify-start gap-3 whitespace-normal rounded-lg border border-border px-3 py-2 text-left text-base font-normal focus-visible:ring-inset focus-visible:ring-offset-0",
         className,
       )}
     >

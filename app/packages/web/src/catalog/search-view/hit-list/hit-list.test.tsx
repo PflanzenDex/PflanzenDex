@@ -87,3 +87,41 @@ describe("US-QS-32 · US-QS-15 the meta line of a catalog hit breaks only betwee
     expect(plain(metaOf().textContent)).toBe("Schwierigkeit: unbekannt");
   });
 });
+
+// The list scrolls and clips what lies outside its rows: a ring with an offset reaches 4 px out and loses its
+// top and its sides (issue 2650, DS-37). jsdom has no layout, so the class check stands for it; the story `catalog/HitList`
+// (`FocusRingInScrollingList`) measures the real boxes in the browser run.
+describe("US-QS-15 the focus ring of a catalog hit stays inside its row (issue 2650, WCAG 2.4.7)", () => {
+  const rowClasses = () => {
+    list([hit()]);
+    return within(screen.getByRole("list", { name: "Treffer" }))
+      .getByRole("button")
+      .className.split(" ");
+  };
+
+  it("US-QS-15 the ring is inset and has no offset: it lies inside the box that the scrolling list clips", () => {
+    const classes = rowClasses();
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "focus-visible:ring-2",
+        "focus-visible:ring-inset",
+        "focus-visible:ring-offset-0",
+      ]),
+    );
+    // The offset of the base button (2 px, 4 px out with the ring) is replaced, not kept beside the new one.
+    expect(classes).not.toContain("focus-visible:ring-offset-2");
+  });
+
+  it("US-QS-15 the button has the radius of the card, so the ring follows the shape of the row", () => {
+    const classes = rowClasses();
+    expect(classes).toContain("rounded-xl");
+    expect(classes).not.toContain("rounded-pill");
+    expect(classes).not.toContain("rounded-none");
+    // The card around it keeps its border and its radius.
+    const card = within(screen.getByRole("list", { name: "Treffer" })).getByRole("button")
+      .parentElement as HTMLElement;
+    expect(card.className.split(" ")).toEqual(
+      expect.arrayContaining(["rounded-xl", "border", "border-border"]),
+    );
+  });
+});
