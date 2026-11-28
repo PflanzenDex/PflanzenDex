@@ -57,6 +57,8 @@ type LayerPaneProps = {
   onClose: () => void;
   /** Whether the pane mounts on Back (a POP); read once, when it mounts. */
   returning: boolean;
+  /** The layer edits stored values: the heading takes the focus, also before a text field (SG-SHEET-07). */
+  editsStored?: boolean;
   children: React.ReactNode;
 };
 
@@ -73,6 +75,7 @@ export function LayerPane({
   closeLabel = "Schließen",
   onClose,
   returning,
+  editsStored = false,
   children,
 }: LayerPaneProps) {
   const heading = React.useRef<HTMLHeadingElement>(null);
@@ -80,11 +83,12 @@ export function LayerPane({
   // The actions of a form in the pane stand in its bar, pinned under the body; "Abbrechen" closes through the guard (US-QS-32, d-115).
   const { host: barHost, setSlot } = usePinnedBarHost(onClose);
   const onBack = React.useRef(returning);
+  const onEdit = React.useRef(editsStored);
   React.useEffect(() => {
     // The pane's own close button comes first, so the text field is looked for in the layer's body.
     const body = pane.current?.querySelector<HTMLElement>("[data-layer-body]") ?? null;
     const back = onBack.current ? keptOpener(pane.current) : null;
-    (back ?? leadingTextField(body) ?? heading.current)?.focus();
+    (back ?? (onEdit.current ? null : leadingTextField(body)) ?? heading.current)?.focus();
   }, []);
   return (
     <aside

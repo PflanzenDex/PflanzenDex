@@ -137,7 +137,7 @@ function SettingsLayers(props: { layers: readonly SettingsLayer[] }) {
         ))}
       </div>
       {props.layers.map((l) => (
-        <LayerSheet key={l.id} id={l.id} title={l.title}>
+        <LayerSheet key={l.id} id={l.id} title={l.title} editsStored>
           {l.body}
         </LayerSheet>
       ))}

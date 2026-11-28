@@ -86,6 +86,15 @@ afterEach(() => {
 });
 
 describe("US-ACC-02 settings page: display name", () => {
+  it("US-QS-32 · SG-SHEET-07 the Profil sheet opens with the focus on its title and no text selected", async () => {
+    fakeServer();
+    show("profile");
+    const name = await screen.findByLabelText<HTMLInputElement>("Anzeigename");
+    await waitFor(() => expect(document.activeElement?.tagName).toMatch(/^H[1-3]$/));
+    expect(document.activeElement).not.toBe(name);
+    expect(name.selectionStart).toBe(name.selectionEnd);
+  });
+
   it("US-ACC-02 shows the saved profile and keeps Save inactive until something changes", async () => {
     fakeServer();
     delayLoads();
