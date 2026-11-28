@@ -43,3 +43,16 @@ export async function restoreAchievementNews(pool: Pool, subjects: Subjects): Pr
     [subjects.test2],
   );
 }
+
+/**
+ * Removes the match answers (decline "no" and "later", US-TAU-01) of the demo accounts, so a deck that a device check
+ * answered shows its cards again; the "Wieder ansehen" button of the answer lists does the same by hand. The rows are
+ * keeper choices, not seed content, so the seed never writes them and a plain delete restores the start (idempotent).
+ * A "request" answer is no row here: it is a swap request and stays (see the swap rows above). Only the three demo
+ * accounts are touched.
+ */
+export async function resetDemoMatchAnswers(pool: Pool, subjects: Subjects): Promise<void> {
+  await pool.query(`delete from swap_match_answer where account_id in (${DEMO_ACCOUNTS})`, [
+    Object.values(subjects),
+  ]);
+}

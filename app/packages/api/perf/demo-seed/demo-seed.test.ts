@@ -9,7 +9,7 @@ import { createSharpProcessor } from "../../src/media/index.ts";
 import { seedCatalog } from "../catalog-seed/seed-catalog.ts";
 import { SEED_SPECIES } from "../catalog-seed/species-list.ts";
 import { Caller } from "./access/caller.ts";
-import { resetDemoFriends } from "./access/reset-demo.ts";
+import { resetDemoFriends, resetDemoMatchAnswers } from "./access/reset-demo.ts";
 import { parseSubjects } from "./access/subjects.ts";
 import { seedAll } from "./accounts/seed-all.ts";
 import { seedEmptyAccount } from "./accounts/common/empty-account.ts";
@@ -250,6 +250,32 @@ describe("US-DEV-01 demo seed fills test, test2 and test3 (#924)", () => {
         [FOREIGN],
       ),
     ).toBe(foreignCodes);
+  }, 300_000);
+
+  it("US-DEV-01 a run after a check that declined and postponed match cards removes those answers of the demo accounts only (issue 2649)", async () => {
+    const FOREIGN = `foreign-answers-${DB}`;
+    const foreignId = randomUUID();
+    await pool.query("insert into account (id, subject) values ($1, $2)", [foreignId, FOREIGN]);
+    const offer = (await pool.query("select id from offer limit 1")).rows[0]?.["id"];
+    const other =
+      (await pool.query("select id from offer offset 1 limit 1")).rows[0]?.["id"] ?? offer;
+    const insert = (subject: string, offerId: string, answer: string) =>
+      pool.query(
+        "insert into swap_match_answer (account_id, offer_id, answer, answered_on) select id, $2, $3, current_date from account where subject = $1 on conflict do nothing",
+        [subject, offerId, answer],
+      );
+    await insert(SUBJECTS.test3, offer, "no");
+    await insert(SUBJECTS.test3, other, "later");
+    await insert(FOREIGN, offer, "no");
+    const mine =
+      "select count(*) n from swap_match_answer where account_id in (select id from account where subject = $1)";
+    expect(await count(mine, [SUBJECTS.test3])).toBeGreaterThan(0);
+
+    await resetDemoMatchAnswers(pool, SUBJECTS);
+    expect(await count(mine, [SUBJECTS.test3])).toBe(0);
+    expect(await count(mine, [FOREIGN])).toBe(1);
+    await resetDemoMatchAnswers(pool, SUBJECTS); // idempotent
+    expect(await count(mine, [SUBJECTS.test3])).toBe(0);
   }, 300_000);
 
   it("US-DEV-01 the tenants stay apart after the seed (P-04)", async () => {
