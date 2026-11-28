@@ -1,6 +1,8 @@
 # Routines (US-DEV-03, FR-DEV-03): nightly full suite on `dev` plus the dependency audit, Lighthouse, the load measurement (NFR-12), the image scan and e2e.
 # Owner: maintainers. On failure: an issue labelled `nightly` (later failures comment on it instead of opening duplicates).
 # Scheduled workflows only run from the default branch, so this starts once it has reached `main`.
+# The accessibility tiers of the register (US-QG-02, issue 2666): `nightly-a11y` tests every screen on `dev` and is a release
+# blocker (its commit status is checked by `make release`); `nightly-a11y-report` is the warning tier and never fails.
 name: Nightly
 
 on:
@@ -198,11 +200,158 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # US-QG-02 (owner decision d-190, issue 2666), the BLOCKING tier: every screen of the register at the six fit and cap sizes
+  # (ONE_SCREEN_SIZES=gate, no 200 % text size), the keyboard walk and axe over every screen, and the component conformance run.
+  # It is a release blocker: `make release` (release.yml) refuses unless the last commit status `nightly-a11y` of the dev head is
+  # green (`make nightly-a11y-check`). The job sets that status on the head it tested. A scheduled run tests `dev`; a dispatch tests
+  # the ref it names (`gh workflow run nightly.yml --ref dev`).
+  nightly-a11y:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      statuses: write
+    services:
+      postgres:
+        image: postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pflanzendex_test
+        ports: ["54329:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'schedule' && 'dev' || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      # The throwaway database without fsync and Keycloak in the background, as the UI shards of ci.yml do (issues 1636, 1667).
+      - run: make ci-db-tune
+      - run: make auth-up-background
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make browsers # the host Chromium of the conformance run
+      - name: Every screen at the gate sizes (blocking)
+        env:
+          ONE_SCREEN_SIZES: gate
+        run: make ui-gates
+      - run: make conformance
+      - name: Output of the background auth-up
+        if: always()
+        run: cat "$RUNNER_TEMP/pflanzendex-auth-up-background.log" || echo "no background auth-up log"
+      - name: Commit status nightly-a11y on the head that this run tested (US-QG-02)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RESULT: ${{ job.status }}
+        run: |
+          sha="$(git rev-parse HEAD)"
+          if [ "$RESULT" = "success" ]; then
+            state=success
+            desc="every screen at the gate sizes and the conformance run passed"
+          else
+            state=failure
+            desc="a finding or a failed run: a release blocker"
+          fi
+          gh api "repos/$REPO/statuses/$sha" -f state="$state" -f context=nightly-a11y -f description="$desc" -f target_url="$RUN_URL"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: nightly-a11y-report
+          path: |
+            app/packages/e2e/one-screen-report
+            app/packages/e2e/a11y-routes-report
+            app/packages/e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # US-QG-02 (issue 2666), the WARNING tier: one-screen at the 200 % text size, the keyboard walk and axe under forced colors and under
+  # reduced motion. It never fails: every measuring step is continue-on-error, and the job blocks no release. Its counts go to ONE
+  # rolling issue with the label a11y-nightly (report.mjs); a run that left no results counts as unknown, never as 0 (P-10).
+  nightly-a11y-report:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      issues: write
+    services:
+      postgres:
+        image: postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pflanzendex_test
+        ports: ["54329:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'schedule' && 'dev' || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - run: make ci-db-tune
+      - run: make auth-up-background
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: make setup
+      - run: make browsers
+        continue-on-error: true
+      - name: One screen at 200 % text (warning)
+        continue-on-error: true
+        env:
+          ONE_SCREEN_SIZES: text200
+        run: make one-screen
+      - name: Keep the 200 % text results
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/warning"
+          cp app/packages/e2e/one-screen-report/results.json "$RUNNER_TEMP/warning/one-screen.json" || echo "no one-screen results: unknown"
+      - name: Forced colors (warning)
+        continue-on-error: true
+        env:
+          A11Y_ROUTES_MEDIA: forced-colors
+        run: make a11y-routes
+      - name: Keep the forced-colors results
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/warning"
+          cp app/packages/e2e/a11y-routes-report/results.json "$RUNNER_TEMP/warning/a11y-forced.json" || echo "no forced-colors results: unknown"
+      - name: Reduced motion (warning)
+        continue-on-error: true
+        env:
+          A11Y_ROUTES_MEDIA: reduced-motion
+        run: make a11y-routes
+      - name: Keep the reduced-motion results
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/warning"
+          cp app/packages/e2e/a11y-routes-report/results.json "$RUNNER_TEMP/warning/a11y-reduced.json" || echo "no reduced-motion results: unknown"
+      - name: Rolling issue with the counts (warning, never fails)
+        if: always()
+        continue-on-error: true
+        # The counts of the three warning runs and the rolling issue are one make target (report.mjs publish, US-QG-02 issue 2666).
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WARN_DIR: ${{ runner.temp }}/warning
+        run: make a11y-warning-report
+
   # US-QG-06 (owner decision 2026-11-09): this job opens no pull request. It names each red job of the run, the CI job that a
   # quarantine would take and the ready command; an agent runs `make quarantine` on a branch, and the owner merges that pull
   # request, because the list grows. The issue is R1 and P1: making the gate deterministic is what ends the quarantine.
   report:
-    needs: [suite, e2e, lighthouse-signed, lighthouse]
+    needs: [suite, e2e, lighthouse-signed, lighthouse, nightly-a11y]
     if: failure()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -217,6 +366,7 @@ jobs:
           NEEDS_E2E: ${{ needs.e2e.result }}
           NEEDS_LIGHTHOUSE: ${{ needs.lighthouse.result }}
           NEEDS_LIGHTHOUSE_SIGNED: ${{ needs.lighthouse-signed.result }}
+          NEEDS_NIGHTLY_A11Y: ${{ needs.nightly-a11y.result }}
         run: |
           RUN_DAY="$(date -u +%F)"
           # The ready command names this issue (NUM): a new issue has its number only once it exists, see below.
@@ -238,6 +388,7 @@ jobs:
             item e2e "$NEEDS_E2E" e2e ""
             item lighthouse "$NEEDS_LIGHTHOUSE" lighthouse ""
             item lighthouse-signed "$NEEDS_LIGHTHOUSE_SIGNED" "" "It is not a CI job, so no quarantine applies: fix the measurement (it turns red only when a run cannot measure)."
+            item nightly-a11y "$NEEDS_NIGHTLY_A11Y" "" "A release blocker (US-QG-02): fix the finding, then run Nightly on dev (gh workflow run nightly.yml --ref dev)."
             echo
             echo "A quarantined CI job still runs and reports, but a red result blocks no pull request (ci-status and make merge)."
             echo "\`make quarantine\` adds the entry on a branch; the owner merges that pull request, because the list grows."

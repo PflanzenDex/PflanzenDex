@@ -24,6 +24,7 @@ jobs:
       contents: write # tag and GitHub release
       issues: write
       pull-requests: write
+      statuses: read # `make release` first reads the commit status nightly-a11y of the dev head (US-QG-02, issue 2666)
     steps:
       - uses: actions/checkout@v7
         with:
@@ -38,6 +39,8 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
       - run: make setup
+      # US-QG-02 (issue 2666): `make release` refuses unless the last nightly-a11y status of the dev head is green; GH_TOKEN reads it.
       - run: make release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
