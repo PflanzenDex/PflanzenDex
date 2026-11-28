@@ -67,4 +67,24 @@ describe("US-QS-32 Switch: a setting that applies at once is a switch (SG-CTRL-0
     expect(toggle.className).toContain("w-[60px]");
     expect(toggle.className).not.toContain("w-[52px]");
   });
+
+  it("US-QS-12 in forced colors the button has a border of its own and the track and thumb keep their system colours (1.4.11)", () => {
+    // jsdom computes no forced colors: the test reads the class set. The e2e spec motion-and-colors measures the computed border.
+    render(<Controlled />);
+    const toggle = screen.getByRole("switch");
+    // A 1 px border that is drawn in Canvas: a boundary without a visible box around the 52 x 44 px target.
+    expect(toggle.className).toContain("forced-colors:border");
+    expect(toggle.className).toContain("forced-colors:border-[Canvas]");
+    expect(toggle.className).not.toContain("forced-colors:border-transparent");
+    // The border takes 1 px of the content box on each side: the track gets it back, so it keeps its 52 px.
+    const track = toggle.querySelector("[data-slot=switch-track]")?.className ?? "";
+    expect(track).toContain("forced-colors:-mx-px");
+    expect(track).toContain("forced-colors:w-[52px]");
+    expect(track).toContain("forced-colors:border-[ButtonText]");
+    expect(track).toContain("forced-colors:group-data-[state=checked]/switch:bg-[Highlight]");
+    // The thumb is visible in both states, also in the dark scheme: a system colour for each state.
+    const thumb = toggle.querySelector("[data-slot=switch-thumb]")?.className ?? "";
+    expect(thumb).toContain("forced-colors:data-[state=unchecked]:bg-[ButtonText]");
+    expect(thumb).toContain("forced-colors:data-[state=checked]:bg-[HighlightText]");
+  });
 });
