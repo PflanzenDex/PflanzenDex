@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { act, render, screen } from "@testing-library/react";
+import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { tabAccount } from "@/shared/data/api";
 import { RequestFailure } from "./query-client";
 import { SIGN_IN } from "./response";
-import { requestQueryFn, useInvalidate, useRequest } from "./use-request";
+import { requestQueryFn, useInvalidate, useRequest, useRequestPages } from "./use-request";
 
 const KEY = ["NFR-12", "US-ONB-01", "1795", "refetch"];
 const token = async () => "tok";
@@ -76,5 +77,75 @@ describe("DS-09 · US-QS-23 the query function of a request is one function, for
     const noToken = requestQueryFn(async () => undefined, load)();
     await expect(noToken).rejects.toMatchObject({ error: SIGN_IN });
     expect(load).not.toHaveBeenCalled();
+  });
+});
+
+const USER_KEY = "oidc.user:http://localhost:18081/realms/pflanzendex:pflanzendex-web";
+
+/** Signs the device in as `sub`, the way the sign-in library keeps its user (shared by every tab of the origin). */
+const signInAs = (sub: string) =>
+  window.localStorage.setItem(
+    USER_KEY,
+    JSON.stringify({ access_token: `token-of-${sub}`, profile: { sub } }),
+  );
+
+describe("US-QS-07 · a stale tab reads nothing under the account of another tab (P-04, P-05)", () => {
+  afterEach(() => {
+    tabAccount.sub = undefined;
+    window.localStorage.clear();
+  });
+
+  it("US-QS-07 the tab loaded A, the device is signed in as B: load is not called and the error is access.account_in_other_tab", async () => {
+    tabAccount.sub = "A";
+    signInAs("B");
+    const load = vi.fn(async () => ({ ok: true as const, value: "Daten von B" }));
+    const refused = requestQueryFn(token, load)();
+    await expect(refused).rejects.toBeInstanceOf(RequestFailure);
+    await expect(refused).rejects.toMatchObject({ error: { code: "access.account_in_other_tab" } });
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-07 the tab loaded A and the device is still signed in as A: load is called with the token", async () => {
+    tabAccount.sub = "A";
+    signInAs("A");
+    const load = vi.fn(async () => ({ ok: true as const, value: "Daten von A" }));
+    expect(await requestQueryFn(token, load)()).toBe("Daten von A");
+    expect(load).toHaveBeenCalledWith("tok");
+  });
+
+  it("US-QS-07 the view of a stale tab ends in the error state with the code, and shows nothing of B", async () => {
+    tabAccount.sub = "A";
+    signInAs("B");
+    const load = vi.fn(async () => ({ ok: true as const, value: "Daten von B" }));
+    const { result } = renderHook(() =>
+      useRequest({ queryKey: ["US-QS-07", "stale-tab"], token, load }),
+    );
+    await waitFor(() => expect(result.current.status).toBe("error"));
+    expect(result.current.error?.code).toBe("access.account_in_other_tab");
+    expect(result.current.value).toBeUndefined();
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-07 a list read in pages is refused the same way: no page of B is loaded", async () => {
+    tabAccount.sub = "A";
+    signInAs("B");
+    const load = vi.fn(async () => ({
+      ok: true as const,
+      value: { next: null, rows: ["B"] },
+    }));
+    const { result } = renderHook(() =>
+      useRequestPages({ queryKey: ["US-QS-07", "stale-tab-pages"], token, load }),
+    );
+    await waitFor(() => expect(result.current.status).toBe("error"));
+    expect(result.current.error?.code).toBe("access.account_in_other_tab");
+    expect(result.current.pages).toEqual([]);
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it("US-QS-07 a tab whose session loaded no account reads as before, whoever is signed in", async () => {
+    tabAccount.sub = undefined;
+    signInAs("B");
+    const load = vi.fn(async () => ({ ok: true as const, value: "Monstera" }));
+    expect(await requestQueryFn(token, load)()).toBe("Monstera");
   });
 });

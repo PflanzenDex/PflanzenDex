@@ -50,6 +50,14 @@ import {
 } from "../../../collection/specimens/tests/cards-fake";
 import { pokedexReadAnswer } from "../../../pokedex/pokedex-page/pokedex-reads-fake";
 
+/**
+ * The keeper the mocked sign-in service returns, with the account (`sub`) a real sign-in carries: a tab checks every read and
+ * write against it and the stored copy of the sign-in library (US-QS-07, P-04). The stored copy has no `expires_at`, so the
+ * start's guess of a signed-in device ignores it.
+ */
+const KEEPER = { access_token: "tok", expired: false, profile: { sub: "keeper" } };
+const KEEPER_KEY = "oidc.user:http://auth/realm:pflanzendex-web";
+
 /** The app runs inside a router; a memory router stands for the address bar. */
 const renderApp = (path = "/") =>
   render(
@@ -259,6 +267,7 @@ beforeEach(() => {
   window.sessionStorage.clear();
   window.sessionStorage.setItem("pflanzendex.silent_tried", "1");
   window.localStorage.removeItem("pflanzendex.collection-view");
+  window.localStorage.setItem(KEEPER_KEY, JSON.stringify(KEEPER));
   window.history.replaceState({}, "", "/");
 });
 afterEach(() => {
@@ -300,7 +309,7 @@ describe("US-ACC-01 App", () => {
 
   it('an error while loading the account offers "Erneut versuchen" and then loads the account', async () => {
     fakeServer(500);
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp();
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Dein Konto konnte gerade nicht geladen werden.",
@@ -312,11 +321,11 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-32 a keeper signed in on this device sees a failed account load inside both bars, and a retry that fails again says so", async () => {
     window.localStorage.setItem(
-      "oidc.user:http://auth/realm:pflanzendex-web",
-      JSON.stringify({ access_token: "tok", expires_at: Math.floor(Date.now() / 1000) + 3600 }),
+      KEEPER_KEY,
+      JSON.stringify({ ...KEEPER, expires_at: Math.floor(Date.now() / 1000) + 3600 }),
     );
     fakeServer(500);
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     const { container } = renderApp();
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Dein Konto konnte gerade nicht geladen werden.",
@@ -391,7 +400,7 @@ describe("US-ACC-01 App", () => {
         return response(404);
       }),
     );
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp();
     await userEvent.click(await findTab("Betreiber"));
     expect(await screen.findByRole("heading", { name: "Betreiber" })).toBeTruthy();
@@ -404,7 +413,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-16 · US-ONB-01 signed in: starts on Heute with the first plant for a new account", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp();
     expect(
       await screen.findByRole("heading", { name: "Schritt 1 von 2: Deine erste Pflanze" }),
@@ -419,7 +428,7 @@ describe("US-ACC-01 App", () => {
 
   it("signed in: the navigation switches between all views", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp();
     await userEvent.click(await findTab("Entdecken"));
     await userEvent.click(await screen.findByRole("button", { name: "Katalog" }));
@@ -447,7 +456,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-14 · US-BES-09 the old address /care-profile opens the species mode, where a species is chosen; there is no tab Pflegeprofil", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/care-profile");
     expect(await screen.findByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Arten" }).getAttribute("aria-pressed")).toBe("true");
@@ -457,7 +466,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-14 · US-BES-09 the profile of a species has the section Mein Pflegeprofil, which says what to do without a specimen", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/species/a1");
     // US-QS-21: the section is one layer away from the profile, so the profile fits one screen.
     await userEvent.click(await screen.findByRole("button", { name: "Mein Pflegeprofil" }));
@@ -469,7 +478,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-21 the profile at its own address is one screen: the frame is marked to fit, and the header holds the primary action", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/discover/species/a1");
     expect(await screen.findByRole("button", { name: "Diese Art wählen" })).toBeTruthy();
     expect(document.querySelector("[data-fit-screen]")).not.toBeNull();
@@ -477,7 +486,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-14 · US-PHA-01 the old address /care-phases opens the plants grouped by care phase", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/care-phases");
     expect(await screen.findByText("Noch keine Pflanze hat eine Phase.")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "Sammlung" })).toBeTruthy();
@@ -494,7 +503,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-14 · US-LIC-01 the old address /light opens the management of the locations in the Sammlung, with a way back", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/light");
     expect(await screen.findByRole("heading", { name: "Standorte" })).toBeTruthy();
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
@@ -506,7 +515,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-14 · US-BES-05 the old address /difficulty opens the comparison in the species mode of the Sammlung and says what to do without a species", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/difficulty");
     expect(await screen.findByRole("heading", { name: "Artenvergleich" })).toBeTruthy();
     expect(screen.getByText(/Noch keine Art/)).toBeTruthy();
@@ -517,7 +526,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-14 · US-WUN-01 the old address /wishlist opens the Wunschliste mode and says what to do without a wish", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/wishlist");
     expect(await screen.findByRole("heading", { name: "Wunschliste" })).toBeTruthy();
     expect(await screen.findByText(/Erfasse einen Wunsch mit Ziel-Lichtzone\./)).toBeTruthy();
@@ -530,7 +539,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-14 · US-QS-18 · US-BES-08 the old address /hints lands on the layer Fehlt noch of Heute; its action leads to the view that fixes it", async () => {
     fakeServer(200, 1);
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/hints");
     expect(await screen.findByText(SPECIMEN_HINTS[0]?.text ?? "")).toBeTruthy();
     expect(screen.getByRole("dialog", { name: "Fehlt noch" })).toBeTruthy();
@@ -542,7 +551,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-LIC-03 · US-QS-32 the empty light overview offers Pflanze anlegen, a link to the add-plant form", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/light");
     // The overview is a layer of the management (US-QS-19): it opens from its button first.
     await userEvent.click(
@@ -586,7 +595,7 @@ describe("US-ACC-01 App", () => {
         );
       }),
     );
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp();
     await userEvent.click(await findTab("Entdecken"));
     await userEvent.click(await screen.findByRole("button", { name: "Katalog" }));
@@ -646,7 +655,7 @@ describe("US-ACC-01 App", () => {
         );
       }),
     );
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp();
     await userEvent.click(await findTab("Sammlung"));
     await userEvent.click(screen.getByRole("button", { name: "Arten" }));
@@ -667,7 +676,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-07 · a deep link opens the page of its address", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/collection");
     expect(await screen.findByText("Du hast noch keine Pflanze", { exact: false })).toBeTruthy();
     expect(tab("Sammlung").getAttribute("aria-current")).toBe("page");
@@ -675,7 +684,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-07 · US-QS-32 an unknown address shows the not-found view inside the frame, with both bars and its way on", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/gibt-es-nicht");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
     expect(
@@ -688,7 +697,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-QS-07 · the address shows the page and a species profile has its own address", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/species/a1");
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
     await waitFor(() => expect(tab("Entdecken").getAttribute("aria-current")).toBe("page"));
@@ -701,7 +710,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-BES-10 · without the reviewer role /review lands on Heute with a German hint", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/review");
     expect((await screen.findByRole("alert")).textContent).toContain("Prüfliste");
     expectHeute();
@@ -709,7 +718,7 @@ describe("US-ACC-01 App", () => {
 
   it("US-ACC-05 · without the operator role /operator lands on Heute with a German hint", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/operator");
     expect((await screen.findByRole("alert")).textContent).toContain("Betreiber");
     expectHeute();
@@ -719,7 +728,7 @@ describe("US-ACC-01 App", () => {
 describe("US-QS-07 browser history", () => {
   it("US-QS-07 · back button returns to the previous page", async () => {
     fakeServer();
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     window.localStorage.clear();
     render(
       <BrowserRouter>
@@ -771,7 +780,7 @@ describe("US-QS-15 a layer opens beside the content from 1024 px", () => {
 
   it("US-QS-15 · US-QS-18 the shell does not cap a destination with layers: its frame takes the main column, so a pane fits beside the content (#1027)", async () => {
     fakeServer(200, 1);
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp("/today?sheet=treatments");
     await waitFor(() => expect(document.querySelector("[data-layer-pane]")).not.toBeNull(), {
       timeout: 15000,
@@ -788,7 +797,7 @@ describe("US-QS-15 a layer opens beside the content from 1024 px", () => {
     "US-QS-15 %s: the pane is the second column of its destination's frame, the content is the first",
     async (_name, address, expected) => {
       fakeServer(200, 1);
-      mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+      mgr.getUser.mockResolvedValue(KEEPER);
       const warn = vi.spyOn(console, "warn");
       try {
         renderApp(address);
@@ -825,7 +834,7 @@ describe("US-QS-33 motion follows the account once it is known, the device befor
 
   it("US-QS-33 signed in, the account's 'Bewegung aus' applies to the whole app and is kept on this device", async () => {
     fakeServer(200, 0, { ...account, motion: "reduced" });
-    mgr.getUser.mockResolvedValue({ access_token: "tok", expired: false });
+    mgr.getUser.mockResolvedValue(KEEPER);
     renderApp();
     await screen.findByRole("navigation", { name: "Hauptnavigation" });
     expect(root.dataset.motion).toBe("reduced");

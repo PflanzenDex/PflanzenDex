@@ -6,6 +6,7 @@ import {
   useQueryClient,
   type QueryKey,
 } from "@tanstack/react-query";
+import { tabRefusal } from "@/shared/data/api";
 import { NETWORK_DOWN, RequestFailure } from "./query-client";
 import { SIGN_IN, type ApiError, type Response } from "./response";
 import type { RequestStatus } from "@/shared/patterns/states/request-state/request-state";
@@ -33,9 +34,20 @@ export type Request<T> = {
 };
 
 /**
+ * A tab that loaded another account than the one signed in on the device reads nothing, as it writes nothing (US-QS-07,
+ * P-04, P-05): the refusal becomes the failure of the request (P-10). It runs after the token is there and before `load`
+ * sends anything, so the token of the other account never fetches its data.
+ */
+async function refuseStaleTab(): Promise<void> {
+  const refused = await tabRefusal();
+  if (refused) throw new RequestFailure(refused);
+}
+
+/**
  * The query function of a request (DS-09): `load` runs with the token, a refusal becomes a `RequestFailure` with the code's
- * error (P-10), and without a token nothing is queried. `useRequest` uses it, and so does a prefetch of the same key
- * (`client.prefetchQuery`), so both fill the cache the same way and a refusal reads the same.
+ * error (P-10), and without a token nothing is queried. A tab that loaded another account reads nothing (US-QS-07).
+ * `useRequest` uses it, and so does a prefetch of the same key (`client.prefetchQuery`), so both fill the cache the same
+ * way and a refusal reads the same.
  */
 export function requestQueryFn<T>(
   token: Token,
@@ -44,6 +56,7 @@ export function requestQueryFn<T>(
   return async () => {
     const t = await token();
     if (!t) throw new RequestFailure(SIGN_IN);
+    await refuseStaleTab();
     const r = await load(t);
     if (!r.ok) throw new RequestFailure(r.error);
     return r.value;
@@ -148,6 +161,7 @@ export function useRequestPages<P extends { next: string | null }>(props: {
     queryFn: async ({ pageParam }) => {
       const t = await token();
       if (!t) throw new RequestFailure(SIGN_IN);
+      await refuseStaleTab();
       const r = await load(t, pageParam ?? undefined);
       if (!r.ok) throw new RequestFailure(r.error);
       return r.value;
