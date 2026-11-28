@@ -260,6 +260,23 @@ describe("US-QS-07 a stale tab downloads no photo under the account of another t
     expect(fetched).toEqual(["http://api/specimens/s1/measurements/m701/photo"]);
   });
 
+  it("US-QS-07 the account changes while the token is read (a renewal): the check follows the token, so nothing is fetched", async () => {
+    tabAccount.sub = "A";
+    signInAs("A");
+    const renewing: PhotoAccess = {
+      api: "http://api",
+      token: async () => {
+        signInAs("B");
+        return "token-of-B";
+      },
+    };
+    const { result } = renderHook(() => useStoredPhoto(renewing, path(703)));
+    await waitFor(() =>
+      expect(result.current).toMatchObject({ code: "access.account_in_other_tab" }),
+    );
+    expect(fetched).toEqual([]);
+  });
+
   it("US-QS-07 the device still signed in as the tab's account A: the photo is fetched", async () => {
     tabAccount.sub = "A";
     signInAs("A");

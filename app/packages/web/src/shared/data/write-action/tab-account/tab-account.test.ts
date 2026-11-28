@@ -149,7 +149,37 @@ describe("US-QS-07 · an online write of a tab that loaded another account is re
     expect(!r.ok && r.error.code).toBe("access.account_in_other_tab");
   });
 
-  it("US-QS-07 a read (GET) through call is not a write and is sent as before", async () => {
+  it("US-QS-07 a read (GET) through call is refused under another account too: nothing is sent, the refusal has the code", async () => {
+    online(true);
+    signInAs("B");
+    const fetchFn = okFetch();
+    const r = await call(fetchFn, "http://api/today", "token-of-B");
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(r).toEqual({
+      ok: false,
+      error: { code: "access.account_in_other_tab", text: OTHER_TAB },
+    });
+  });
+
+  it("US-QS-07 a read (GET) through call after a sign-out in another tab is refused as access.not_signed_in", async () => {
+    online(true);
+    signInAs(null);
+    const fetchFn = okFetch();
+    const r = await call(fetchFn, "http://api/today", "token-of-A");
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(!r.ok && r.error.code).toBe("access.not_signed_in");
+  });
+
+  it("US-QS-07 a read (GET) through call is sent with the token while the device is still signed in as the tab's account A", async () => {
+    online(true);
+    const fetchFn = okFetch();
+    const r = await call(fetchFn, "http://api/today", "token-of-A");
+    expect(r.ok).toBe(true);
+    expect(sentWith(fetchFn)).toEqual(["Bearer token-of-A"]);
+  });
+
+  it("US-QS-07 a read (GET) of a tab that loaded no account is sent as before, whoever is signed in", async () => {
+    recordTabAccount(undefined);
     online(true);
     signInAs("B");
     const fetchFn = okFetch();
