@@ -278,6 +278,16 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  /*
+   * Text selection (US-QS-32, SG-COLOR-06, F-0090): the browser default read at 2.0:1 on the dark card. The theme's accent pair
+   * gives 8:1 or more in light and dark. Forced colors keep the system Highlight, because the rule is switched off there.
+   */
+  @media not (forced-colors: active) {
+    ::selection {
+      background-color: var(--accent);
+      color: var(--accent-foreground);
+    }
+  }
   /* Touch (US-QS-15): no double-tap zoom delay on controls, and a calm tap flash from the primary token. */
   button,
   a,

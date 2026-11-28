@@ -7,9 +7,9 @@ import { LayerHostContext } from "./layer-host/layer-host";
  * Focus on open for a sheet or dialog (US-QS-15, issue 1363): on Back the control the layer was opened from takes the
  * focus when it is in the layer; otherwise the title does (`focusModalTitle`).
  */
-export function focusLayerStart(event: Event, returning: boolean): void {
+export function focusLayerStart(event: Event, returning: boolean, editsStored = false): void {
   const back = returning ? keptOpener(event.currentTarget as HTMLElement | null) : null;
-  if (!back) return focusModalTitle(event);
+  if (!back) return focusModalTitle(event, editsStored);
   event.preventDefault();
   back.focus();
 }

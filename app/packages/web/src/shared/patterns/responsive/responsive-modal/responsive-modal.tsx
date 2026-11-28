@@ -31,9 +31,10 @@ export function leadingTextField(layer: HTMLElement | null): HTMLElement | null 
  * (a stray Enter on "Freundschaft beenden" would end a friendship). A text field that comes first keeps the focus, as the
  * wish form starts in its species search (issue 902). Radix would focus the first focusable element otherwise.
  */
-export function focusModalTitle(event: Event): void {
+export function focusModalTitle(event: Event, editsStored = false): void {
   const modal = event.currentTarget as HTMLElement | null;
-  if (leadingTextField(modal)) return;
+  // A form that edits stored values keeps no field focus: the keyboard must not open and no text is selected (SG-SHEET-07).
+  if (!editsStored && leadingTextField(modal)) return;
   event.preventDefault();
   const titleId = modal?.getAttribute("aria-labelledby");
   if (titleId) document.getElementById(titleId)?.focus();

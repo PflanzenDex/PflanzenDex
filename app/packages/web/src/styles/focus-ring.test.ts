@@ -38,3 +38,41 @@ describe("US-QS-15 · NFR-13 focus ring of a navigated heading", () => {
     expect(offset + width).toBeLessThanOrEqual(0);
   });
 });
+
+// US-QS-32 · SG-COLOR-06 (F-0090): the browser's default selection read at 2.0:1 on the dark card.
+function luminance(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  }) as [number, number, number];
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+const contrast = (a: string, b: string) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+  return (hi + 0.05) / (lo + 0.05);
+};
+const token = (block: string, name: string) => {
+  const at = block.indexOf(`${name}: #`);
+  return at < 0 ? "" : block.slice(at + name.length + 2, at + name.length + 9);
+};
+
+describe("US-QS-32 · SG-COLOR-06 text selection colour", () => {
+  const rootBlock = /:root \{(.*?)color-scheme/s.exec(tokensCss)?.[1] ?? "";
+  const darkBlock =
+    /prefers-color-scheme: dark\) \{\s*:root \{(.*?)\n {2}\}/s.exec(tokensCss)?.[1] ?? "";
+
+  it("US-QS-32 tokens.css sets ::selection from the accent tokens in the base layer, and not in forced colors", () => {
+    expect(flat).toMatch(
+      /@media not \(forced-colors: active\) \{ ::selection \{ background-color: var\(--accent\); color: var\(--accent-foreground\); \} \}/,
+    );
+  });
+
+  it("US-QS-32 selected text reads at 4.5:1 or more in light and in dark", () => {
+    for (const block of [rootBlock, darkBlock]) {
+      const bg = token(block, "--accent");
+      const fg = token(block, "--accent-foreground");
+      expect(bg).not.toBe("");
+      expect(contrast(bg, fg)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});

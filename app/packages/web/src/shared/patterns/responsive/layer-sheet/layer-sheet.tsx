@@ -83,6 +83,11 @@ export type LayerSheetProps = {
    * list loads. A dialog and a pane are not affected.
    */
   halfHeight?: boolean;
+  /**
+   * The layer edits stored values (US-QS-32, SG-SHEET-07): it opens with the focus on its title, also when a text field comes
+   * first, so the keyboard stays shut and no stored text is selected. Leave it off for a form that takes something new.
+   */
+  editsStored?: boolean;
   children: React.ReactNode;
 };
 
@@ -99,6 +104,7 @@ export function LayerSheet({
   topAction,
   closeLabel = "Schließen",
   halfHeight = false,
+  editsStored = false,
   children,
 }: LayerSheetProps) {
   const { open, replaced, closeLayer } = useLayer(id);
@@ -128,6 +134,7 @@ export function LayerSheet({
         closeLabel={closeLabel}
         onClose={guard.requestClose}
         returning={returning}
+        editsStored={editsStored}
       >
         {children}
       </LayerPane>
@@ -145,7 +152,7 @@ export function LayerSheet({
         onOpenChange={(next) => {
           if (!next) guard.requestClose();
         }}
-        onOpenAutoFocus={(event) => focusLayerStart(event, returning)}
+        onOpenAutoFocus={(event) => focusLayerStart(event, returning, editsStored)}
         onExited={onExited}
         closeRefusals={guard.refusals}
         halfHeight={halfHeight}
