@@ -6,7 +6,11 @@ import {
 } from "../../src/media/index.ts";
 import { subjectsFromKeycloak } from "./access/subjects.ts";
 import { assertSeedAllowed, SeedRefused } from "./access/guard.ts";
-import { resetDemoFriends, restoreAchievementNews } from "./access/reset-demo.ts";
+import {
+  resetDemoFriends,
+  resetDemoMatchAnswers,
+  restoreAchievementNews,
+} from "./access/reset-demo.ts";
 import { seedAll } from "./accounts/seed-all.ts";
 import { SEED_SPECIES } from "../catalog-seed/species-list.ts";
 import { seedCatalog } from "../catalog-seed/seed-catalog.ts";
@@ -61,6 +65,10 @@ try {
   await resetDemoFriends(pool, subjects);
   console.log(
     "Demo friend requests reset: Ben's request to Anna and other open, declined or ended requests removed; confirmed friends kept.",
+  );
+  await resetDemoMatchAnswers(pool, subjects);
+  console.log(
+    "Demo match answers reset: declined and later cards of the demo accounts are in the deck again.",
   );
   await seedAll(pool, {
     subjects,
