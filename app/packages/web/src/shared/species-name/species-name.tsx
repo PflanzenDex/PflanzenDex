@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 
 /**
  * The name of a species in every row, sheet and card (US-QS-32, SG-TYPE-06, SG-TYPE-08). With a German name the German
@@ -58,9 +59,14 @@ export function SpeciesName(props: SpeciesNameProps) {
       {german !== null || hasMeta ? " " : null}
       {german !== null || hasMeta ? (
         <span className="break-words text-sm font-normal text-muted-foreground">
-          {german !== null ? <i className={SCIENTIFIC}>{scientific}</i> : null}
-          {german !== null && hasMeta ? " · " : null}
-          {hasMeta ? meta : null}
+          {/* The line breaks between its " · " parts and not inside one (`metaParts`, SG-TYPE-05, issue 2640). */}
+          {metaParts(
+            <>
+              {german !== null ? <i className={SCIENTIFIC}>{scientific}</i> : null}
+              {german !== null && hasMeta ? " · " : null}
+              {hasMeta ? meta : null}
+            </>,
+          )}
         </span>
       ) : null}
     </>

@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { SpeciesName, SpeciesNameInline } from "./species-name";
 
 afterEach(cleanup);
@@ -27,10 +29,13 @@ describe("US-QS-32 SpeciesName: the German name leads, the scientific name is it
     );
     const latin = screen.getByText("Aglaonema commutatum");
     expect(latin.tagName).toBe("I");
-    const meta = latin.parentElement as HTMLElement;
+    // The meta line is split in parts that stay whole (US-QS-15): the name is the first one.
+    const meta = latin.closest("[data-meta-part]")?.parentElement as HTMLElement;
     expect(meta.className).toContain("text-sm");
-    expect(meta.textContent).toBe("Aglaonema commutatum · gefangen 07.09.2026");
-    expect(container.textContent).toBe("Kolbenfaden Aglaonema commutatum · gefangen 07.09.2026");
+    expect(plain(meta.textContent)).toBe("Aglaonema commutatum · gefangen 07.09.2026");
+    expect(plain(container.textContent)).toBe(
+      "Kolbenfaden Aglaonema commutatum · gefangen 07.09.2026",
+    );
   });
 
   it("US-QS-32 with a German name and no further meta the meta line is the scientific name alone", () => {
@@ -183,7 +188,8 @@ describe("US-QS-32 the meta line is regular weight, whatever row it sits in (F-0
     render(
       <SpeciesName scientific="Ficus lyrata" german="Geigenfeige" meta="gefangen 05.03.2026" />,
     );
-    const meta = screen.getByText("Ficus lyrata").parentElement as HTMLElement;
+    const meta = screen.getByText("Ficus lyrata").closest("[data-meta-part]")
+      ?.parentElement as HTMLElement;
     expect(meta.className).toContain("font-normal");
     expect(meta.className).not.toContain("font-semibold");
   });
@@ -192,5 +198,54 @@ describe("US-QS-32 the meta line is regular weight, whatever row it sits in (F-0
     render(<SpeciesName scientific="Aloe vera" german={null} meta="gefangen 01.01.2026" />);
     const meta = screen.getByText("gefangen 01.01.2026").closest("span") as HTMLElement;
     expect(meta.className).toContain("font-normal");
+  });
+});
+
+describe("US-QS-15 SG-TYPE-05 SpeciesName: the meta line breaks only between its parts (issue 2640)", () => {
+  const partsOf = (root: HTMLElement) =>
+    Array.from(root.querySelectorAll<HTMLElement>("[data-meta-part]"));
+
+  it("US-QS-15 at 360 px the italic name and the further meta are parts, and a meta text with ' · ' is cut into its parts too", () => {
+    setViewportWidth(360);
+    const { container } = render(
+      <SpeciesName scientific="Dracaena trifasciata" german="Bogenhanf" meta="Leicht · Zone 2" />,
+    );
+    const parts = partsOf(container);
+    expect(parts.map((p) => plain(p.textContent))).toEqual([
+      "Dracaena trifasciata ·",
+      "Leicht ·",
+      "Zone 2",
+    ]);
+    for (const part of parts)
+      expect(part.className.split(" ")).toEqual(
+        expect.arrayContaining(["inline-block", "max-w-full", "align-top"]),
+      );
+    // The scientific name is still one italic element, and the text is the same as before.
+    expect(parts[0]?.querySelector("i")?.textContent).toBe("Dracaena trifasciata");
+    expect(plain(container.textContent)).toBe("Bogenhanf Dracaena trifasciata · Leicht · Zone 2");
+  });
+
+  it("US-QS-15 without a German name the meta line is the further meta alone, cut at its ' · ' too", () => {
+    const { container } = render(
+      <SpeciesName scientific="Aloe vera" german={null} meta="gefangen 01.01.2026 · Zone 2" />,
+    );
+    expect(partsOf(container).map((p) => plain(p.textContent))).toEqual([
+      "gefangen 01.01.2026 ·",
+      "Zone 2",
+    ]);
+  });
+
+  it("US-QS-15 a meta that is an element stays whole inside its part", () => {
+    const { container } = render(
+      <SpeciesName scientific="Aloe vera" german="Echte Aloe" meta={<b>fällig</b>} />,
+    );
+    const parts = partsOf(container);
+    expect(parts.map((p) => plain(p.textContent))).toEqual(["Aloe vera ·", "fällig"]);
+    expect(parts[1]?.querySelector("b")?.textContent).toBe("fällig");
+  });
+
+  it("US-QS-15 the scientific name alone is no list of parts: no part, one plain text", () => {
+    const { container } = render(<SpeciesName scientific="Ficus lyrata" german="Geigenfeige" />);
+    expect(partsOf(container)).toHaveLength(0);
   });
 });

@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { ERROR_TEXTS } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
 import type { GrowthMoments } from "@/achievements";
@@ -172,7 +173,10 @@ describe("US-WAC-01 Seite Messen", () => {
     expect(await screen.findByText("Gesichert: 12,5 cm am 01.10.2026.")).toBeTruthy();
     await openEntries();
     expect(
-      await screen.findByRole("heading", { level: 3, name: "12,5\u00a0cm · 01.10.2026" }),
+      await screen.findByRole("heading", {
+        level: 3,
+        name: (name) => plain(name) === "12,5 cm · 01.10.2026",
+      }),
     ).toBeTruthy();
     expect(posts[0]?.body).toMatchObject({ value: 12.5, quality: "healthy" });
     expect(posts[0]?.key).toBeTruthy();

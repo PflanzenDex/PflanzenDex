@@ -2,6 +2,8 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { SwapHistory, outcomeLine } from "./swap-history";
 import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import table from "../../swap.de.json";
@@ -80,9 +82,9 @@ describe("US-SOZ-13 swap history", () => {
     expect(items[0]).toContain("10.10.2026");
     expect(items[0]).toContain("Übergeben an Ben");
     expect(items[0]).toContain("Echte Aloe");
-    expect(items[0]).toContain("Steckling · Tauschen");
+    expect(plain(items[0])).toContain("Steckling · Tauschen");
     expect(items[1]).toContain("Erhalten von Cleo");
-    expect(items[1]).toContain("Pflanze · Verschenken");
+    expect(plain(items[1])).toContain("Pflanze · Verschenken");
     // On a phone all four entries are in the one list, in order (US-QS-32); the paged view shows them in pages.
     expect(items).toHaveLength(4);
     expect(items[2]).toContain("Anfrage von Dora abgelehnt");
@@ -137,5 +139,21 @@ describe("US-SOZ-13 · US-QS-32 the history line follows the outcome (F-0366)", 
     for (const status of ["declined", "withdrawn", "canceled"])
       for (const d of ["given", "received"] as const)
         expect(line(status, d)).not.toMatch(/Gegeben an|Erhalten von|Übergeben/);
+  });
+});
+
+describe("US-QS-15 SG-TYPE-05 the line 'type · mode' of a history entry breaks only between its parts (issue 2640)", () => {
+  it("US-QS-15 at 360 px the type and the mode are one part each, and the text of the line is the same", async () => {
+    setViewportWidth(360);
+    server([entry()]);
+    show();
+    const list = await screen.findByRole("list", { name: "Tauschverlauf" });
+    const parts = Array.from(list.querySelectorAll<HTMLElement>("[data-meta-part]"));
+    expect(parts.map((p) => plain(p.textContent))).toEqual(["Steckling ·", "Tauschen"]);
+    for (const part of parts)
+      expect(part.className.split(" ")).toEqual(
+        expect.arrayContaining(["inline-block", "max-w-full", "align-top"]),
+      );
+    expect(plain(parts[0]?.parentElement?.textContent)).toBe("Steckling · Tauschen");
   });
 });

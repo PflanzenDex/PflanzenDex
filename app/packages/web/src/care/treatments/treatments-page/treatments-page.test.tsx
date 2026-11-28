@@ -5,6 +5,7 @@ import { ERROR_TEXTS } from "@pflanzendex/core";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
+import { plain } from "@/shared/testing/plain-text";
 import { drainOutbox } from "@/shared/testing/test-setup/drain-outbox";
 import { TreatmentsPage } from "./treatments-page";
 import { OpenTreatments } from "../open-treatments/open-treatments";
@@ -681,7 +682,13 @@ describe("US-QS-15 the open treatments fit a layer", () => {
         />
       </MemoryRouter>,
     );
-    expect(await screen.findByText("Läuse · Neemöl")).toBeTruthy();
+    // The line is split in parts that stay whole (US-QS-15): it reads the same as one text.
+    expect(
+      await screen.findByText(
+        (_, el) =>
+          !!el?.querySelector("[data-meta-part]") && plain(el.textContent) === "Läuse · Neemöl",
+      ),
+    ).toBeTruthy();
     expect(screen.getByText("2 Tage überfällig")).toBeTruthy();
     // One heading, no sentence above the list (US-QS-15).
     expect(screen.queryByText(/Behandle diese Pflanzen zuerst/)).toBeNull();

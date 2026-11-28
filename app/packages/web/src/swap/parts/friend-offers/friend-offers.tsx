@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ExchangeOffer } from "@pflanzendex/core";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -49,7 +50,9 @@ function Card(props: {
         <span className="text-sm italic">{o.speciesLatin}</span>
       )}
       <span className="text-sm">
-        {o.ownerName ?? t("friends.someone")} · {TYPE_TEXT[o.type]} · {MODE_TEXT[o.mode]}
+        {metaParts(
+          `${o.ownerName ?? t("friends.someone")} · ${TYPE_TEXT[o.type]} · ${MODE_TEXT[o.mode]}`,
+        )}
       </span>
       {o.wish && <span className="text-sm">{t("card.wish", { wish: o.wish })}</span>}
       {o.note && <span className="text-sm">{t("card.note", { note: o.note })}</span>}

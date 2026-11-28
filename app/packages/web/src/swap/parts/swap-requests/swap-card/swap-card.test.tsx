@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { SwapCard } from "./swap-card";
 
 afterEach(cleanup);
@@ -69,5 +71,27 @@ describe("US-QS-32 · SG-LIST-01 a swap card on a phone is dense enough for two 
     expect(screen.getByRole("button", { name: /Anfrage zurückziehen/ }).className).toContain(
       "min-h-[44px]",
     );
+  });
+});
+
+describe("US-QS-15 SG-TYPE-05 the facts line of a swap card breaks only between its parts (issue 2640)", () => {
+  it("US-QS-15 at 360 px the friend, the type and the mode are one part each, and the text of the line is the same", () => {
+    setViewportWidth(360);
+    show();
+    const parts = Array.from(document.querySelectorAll<HTMLElement>("[data-meta-part]"));
+    expect(parts.map((p) => plain(p.textContent))).toEqual(["Ben ·", "Steckling ·", "Tauschen"]);
+    for (const part of parts)
+      expect(part.className.split(" ")).toEqual(
+        expect.arrayContaining(["inline-block", "max-w-full", "align-top"]),
+      );
+    expect(plain(parts[0]?.parentElement?.textContent)).toBe("Ben · Steckling · Tauschen");
+  });
+
+  it("US-QS-15 a line of the card with no ' · ' stays one plain text", () => {
+    setViewportWidth(360);
+    show({ counterName: "Mein Haworthia" });
+    expect(
+      screen.getByText("Gegenangebot: Mein Haworthia").querySelector("[data-meta-part]"),
+    ).toBeNull();
   });
 });

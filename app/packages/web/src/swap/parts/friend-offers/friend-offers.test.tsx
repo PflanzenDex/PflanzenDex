@@ -3,6 +3,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { FriendOffers } from "./friend-offers";
 import { expectOneLoadingStatus } from "@/shared/ui/skeleton.loading-contract";
 import { filledIn, hasOwnBorder, isFilled, isPlain, isTinted } from "@/shared/ui/button.roles";
@@ -87,7 +89,7 @@ describe("US-SOZ-09 offers of friends in the exchange", () => {
     expect(text).toContain("Echte Aloe");
     expect(text).toContain("Aloe vera");
     expect(text).toContain("Ben");
-    expect(text).toContain("Steckling · Tauschen");
+    expect(plain(text)).toContain("Ben · Steckling · Tauschen");
     expect(text).toContain("Zuletzt behandelt: Wollläuse, 10.09.2026");
     expect(text).toContain("Zurzeit in der Ruhephase.");
     expect(text).toContain("Fehlt dir");
@@ -323,4 +325,20 @@ describe("US-QS-14 issue 1697 · the offers of friends show their shaped skeleto
       <FriendOffersSkeleton label={table["friends.loading"]} />,
       table["friends.loading"],
     ));
+});
+
+describe("US-QS-15 SG-TYPE-05 the line 'friend · type · mode' of an offer breaks only between its parts (issue 2640)", () => {
+  it("US-QS-15 at 360 px the friend, the type and the mode are one part each, and the text of the line is the same", async () => {
+    setViewportWidth(360);
+    server();
+    show();
+    const list = await screen.findByRole("list", { name: "Angebote von Freunden" });
+    const parts = Array.from(list.querySelectorAll<HTMLElement>("[data-meta-part]"));
+    expect(parts.map((p) => plain(p.textContent))).toEqual(["Ben ·", "Steckling ·", "Tauschen"]);
+    for (const part of parts)
+      expect(part.className.split(" ")).toEqual(
+        expect.arrayContaining(["inline-block", "max-w-full", "align-top"]),
+      );
+    expect(plain(parts[0]?.parentElement?.textContent)).toBe("Ben · Steckling · Tauschen");
+  });
 });

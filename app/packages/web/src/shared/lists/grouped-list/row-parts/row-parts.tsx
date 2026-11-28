@@ -12,7 +12,8 @@ import { metaParts } from "./row-parts.meta";
  * long (owner decision d-168, issue 2599): nothing is hidden and the row grows only when needed. It breaks between its " · "
  * parts and not inside one, and never before a dot (`metaParts`, issue 2606); a part wider than the column wraps at its own
  * spaces, and `break-word` lets one word wider than the column break as the last resort only. `text-pretty` keeps a single
- * word from standing alone on the last line of such a part.
+ * word from standing alone on the last line of such a part. The meta line of a settings row (the `list` variant) keeps the
+ * same parts whole (`metaParts`, SG-TYPE-05, issue 2640); it keeps its own wrap rule, `anywhere`, and its title no clamp.
  */
 export const OBJECT_TITLE = "line-clamp-2 hyphens-auto";
 export const OBJECT_META = "text-pretty [overflow-wrap:break-word]";
@@ -79,7 +80,7 @@ export function RowContent(props: RowContentProps) {
                 !props.warning && "text-muted-foreground",
               )}
             >
-              {props.object ? metaParts(props.meta) : props.meta}
+              {metaParts(props.meta)}
             </span>
           </>
         )}

@@ -2,6 +2,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import type { TreatmentListRow } from "@pflanzendex/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
+import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { filledIn, hasOwnBorder, isTinted } from "@/shared/ui/button.roles";
 import { Row } from "./treatment-row";
 
@@ -70,5 +72,30 @@ describe("US-QS-32 · SG-BTN-02 a treatment row acts in place with one tinted bu
     expect(isTinted(tick)).toBe(true);
     expect(hasOwnBorder(tick)).toBe(false);
     expect(filledIn(container)).toEqual([]);
+  });
+});
+
+describe("US-QS-15 SG-TYPE-05 the line 'reason · agent' of a treatment row breaks only between its parts (issue 2640)", () => {
+  const metaOf = (r: TreatmentListRow) => {
+    setViewportWidth(360);
+    render(<Row row={r} running={false} onDone={vi.fn()} host={false} />);
+    return screen.getByRole("heading", { name: r.specimenName }).nextElementSibling as HTMLElement;
+  };
+  const partsOf = (line: HTMLElement) =>
+    Array.from(line.querySelectorAll<HTMLElement>("[data-meta-part]"));
+
+  it("US-QS-15 at 360 px the reason and the agent are one part each, and the text of the line is the same", () => {
+    const line = metaOf(row);
+    expect(partsOf(line).map((p) => plain(p.textContent))).toEqual(["Wollläuse ·", "Neemöl"]);
+    expect(plain(line.textContent)).toBe("Wollläuse · Neemöl");
+    expect(classesOf(line)).toEqual(
+      expect.arrayContaining(["text-label", "text-muted-foreground"]),
+    );
+  });
+
+  it("US-QS-15 a treatment without an agent reads 'kein Mittel' as its own part", () => {
+    const line = metaOf({ ...row, agent: null });
+    expect(partsOf(line).map((p) => plain(p.textContent))).toEqual(["Wollläuse ·", "kein Mittel"]);
+    expect(plain(line.textContent)).toBe("Wollläuse · kein Mittel");
   });
 });

@@ -122,7 +122,7 @@ export type GroupedRowProps = {
   /**
    * `object` is a row of an object (a plant, a species, a wish; SG-LIST-03): the name wraps to two lines and clamps, the
    * meta line wraps to further lines and is never cut, and a link or button is named by its visible content in its visible
-   * order (the title, then the meta and the trailing element). `list` (the default) is a settings row.
+   * order (the title, then the meta and the trailing element). `list` (the default) is a settings row; its meta keeps its parts.
    */
   variant?: "list" | "object" | undefined;
   /**
@@ -145,7 +145,7 @@ export type GroupedRowProps = {
   leading?: ReactNode;
   /** The row's name: 16 px, wraps and is never cut (SG-TYPE-05). */
   title: ReactNode;
-  /** One line under the title, 14 px muted (SG-TYPE-02). */
+  /** The line under the title, 14 px muted (SG-TYPE-02); it wraps between its " · " parts and never inside one (SG-TYPE-05). */
   meta?: ReactNode | undefined;
   /** A value (16 px, tabular) or another trailing element; neutral, never green (SG-COLOR-02). */
   trailing?: ReactNode;

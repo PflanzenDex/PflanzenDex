@@ -1,4 +1,5 @@
 import type { OfferView } from "@pflanzendex/core";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import { ScrollEntries } from "@/shared/patterns/responsive/entry-list/paging/scroll-entries/scroll-entries";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -77,9 +78,7 @@ function OfferCard({
           {STATUS_TEXT[o.status]}
         </Badge>
       </span>
-      <span className="text-sm">
-        {TYPE_TEXT[o.type]} · {MODE_TEXT[o.mode]}
-      </span>
+      <span className="text-sm">{metaParts(`${TYPE_TEXT[o.type]} · ${MODE_TEXT[o.mode]}`)}</span>
       {o.wish && <span className="text-sm">{t("card.wish", { wish: o.wish })}</span>}
       {o.note && <span className="text-sm">{t("card.note", { note: o.note })}</span>}
       <span className="text-sm text-muted-foreground">{healthText(o.health)}</span>

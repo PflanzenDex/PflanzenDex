@@ -1,6 +1,7 @@
 import type { EquipmentRow } from "../../../equipment-api";
 import { useFeature } from "../../../../shared/data";
 import { dateText, withUnit } from "@/shared/lib/format";
+import { metaParts } from "@/shared/lists/grouped-list/row-parts/row-parts.meta";
 import { texts } from "@/shared/lib/text-rules/texts";
 import { LAMP_TYPE, POT_TYPE, STATUS_LABELS, TYPE_LABELS } from "../../../labels";
 import table from "../../../equipment.de.json";
@@ -70,8 +71,9 @@ export function ItemCard(props: {
     // of the value (the same rule as FactGrid, F-0228 and F-0105, US-QS-32).
     <div className="@container min-w-0 rounded-lg border border-border p-3">
       <p className="text-sm text-muted-foreground">
-        {TYPE_LABELS[item.type]}
-        {item.status ? ` · ${STATUS_LABELS[item.status]}` : ""}
+        {metaParts(
+          `${TYPE_LABELS[item.type]}${item.status ? ` · ${STATUS_LABELS[item.status]}` : ""}`,
+        )}
       </p>
       <dl className="m-0 mt-2 grid grid-cols-1 gap-x-3 gap-y-1 text-sm @min-[12rem]:grid-cols-[auto_minmax(0,1fr)]">
         {facts.map(([label, value]) => (

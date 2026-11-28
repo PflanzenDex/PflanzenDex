@@ -136,13 +136,27 @@ describe("US-EQU-01 equipment page", () => {
     fakeServer([item()]);
     view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-e1");
     const card = await screen.findByRole("dialog", { name: "Zone 3" });
-    expect(card.textContent).toContain("Lampe · Aktiv");
+    expect(plain(card.textContent)).toContain("Lampe · Aktiv");
     // Unknown values fold into one line; two more in "Betrieb und Wartung" (since when it runs, lifetime; US-EQU-04).
     expect(card.textContent).toContain(
       "Noch unbekannt: Hersteller und Modell, Produkt-ID, Preis, Gekauft am",
     );
     expect(card.textContent?.match(/unbekannt/g)).toHaveLength(3);
     expect(card.textContent).toContain("Lichtzone fehlt");
+  });
+
+  it("US-QS-15 SG-TYPE-05 at 360 px the type and the status of an item card are one part each, so neither breaks inside (issue 2640)", async () => {
+    fakeServer([item()]);
+    view(<EquipmentPage api="http://api" token={token} />, "/?sheet=item-e1");
+    const card = await screen.findByRole("dialog", { name: "Zone 3" });
+    const parts = Array.from(card.querySelectorAll<HTMLElement>("[data-meta-part]"));
+    expect(parts.map((p) => plain(p.textContent))).toEqual(["Lampe ·", "Aktiv"]);
+    for (const part of parts)
+      expect(part.className.split(" ")).toEqual(
+        expect.arrayContaining(["inline-block", "max-w-full", "align-top"]),
+      );
+    expect(plain(parts[0]?.parentElement?.textContent)).toBe("Lampe · Aktiv");
+    expect(parts[0]?.parentElement?.className.split(" ")).toContain("text-muted-foreground");
   });
 
   it("US-QS-32 'Gekauft am' shows the date as TT.MM.JJJJ, never the stored form", async () => {

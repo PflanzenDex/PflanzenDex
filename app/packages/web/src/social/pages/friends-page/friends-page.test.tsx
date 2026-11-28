@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { errorText } from "@/shared/lib/error-text";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { plain } from "@/shared/testing/plain-text";
 import { setViewportWidth } from "@/shared/testing/viewport-mock";
 import { filledIn, hasOwnBorder, isPlain, isTinted } from "@/shared/ui/button.roles";
 import { AnnouncerProvider } from "@/shared/platform/announcer/announcer";
@@ -377,7 +378,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     });
     show("friends");
     const list = await screen.findByRole("list", { name: "Freunde" });
-    expect(list.textContent).toBe(
+    expect(plain(list.textContent)).toBe(
       "BBen befreundet seit 06.10.2026 · Gemeinsame Arten: unbekannt (noch nichts freigegeben)",
     );
   });
@@ -389,7 +390,7 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     show("friends");
     const row = await screen.findByRole("link", { name: /Ben befreundet seit 06\.10\.2026/ });
     expect(row.getAttribute("href")).toBe("/friends/f1");
-    expect(row.textContent).toBe("BBen befreundet seit 06.10.2026 · Gemeinsame Arten: 7");
+    expect(plain(row.textContent)).toBe("BBen befreundet seit 06.10.2026 · Gemeinsame Arten: 7");
     expect(row.querySelector("svg.lucide-chevron-right")).not.toBeNull();
     // The row is the only control: no second link or button stands in it (US-QS-32, SG-TOUCH-02).
     expect(row.querySelectorAll("a, button")).toHaveLength(0);
@@ -534,12 +535,29 @@ describe("US-SOZ-01 US-SOZ-02 page Freunde", () => {
     const item = within(list).getByRole("listitem");
     const link = within(item).getByRole("link", { name: /Ben/ });
     expect(link.className).toContain("min-h-11");
-    expect(link.querySelector("span.text-muted-foreground")?.textContent).toBe(
+    expect(plain(link.querySelector("span.text-muted-foreground")?.textContent)).toBe(
       "befreundet seit 06.10.2026 · Gemeinsame Arten: unbekannt (noch nichts freigegeben)",
     );
     // The group is one flat list: the rows touch and a hairline separates them (no card per row).
     expect(list.className).toContain("[&>li:first-child]:rounded-t-card");
     expect(list.className).toContain("[&>li+li]:before:inset-x-4");
+  });
+
+  it("US-QS-15 SG-TYPE-05 at 360 px the date of the friendship and the shared species are one part each, so neither breaks inside (issue 2640)", async () => {
+    fakeServer({
+      friends: [{ id: "f1", name: "Ben", since: "2026-10-06T12:00:00.000Z", sharedSpecies: 7 }],
+    });
+    show("friends");
+    const link = await screen.findByRole("link", { name: /Ben befreundet seit 06\.10\.2026/ });
+    const parts = Array.from(link.querySelectorAll<HTMLElement>("[data-meta-part]"));
+    expect(parts.map((p) => plain(p.textContent))).toEqual([
+      "befreundet seit 06.10.2026 ·",
+      "Gemeinsame Arten: 7",
+    ]);
+    // The text and the name of the link keep their order (WCAG 2.5.3).
+    expect(plain(parts[0]?.parentElement?.textContent)).toBe(
+      "befreundet seit 06.10.2026 · Gemeinsame Arten: 7",
+    );
   });
 
   it("US-QS-14 the title sits on the page background like the other destinations, not inside a card", async () => {
