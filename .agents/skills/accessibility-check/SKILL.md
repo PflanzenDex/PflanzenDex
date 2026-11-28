@@ -1,9 +1,11 @@
 ---
 name: accessibility-check
-description: Use when you build or change anything a keeper sees or operates in app/packages/web: a view, dialog, list, form, button, toggle, gesture or flow (FR-QG-10 item 11). Load it before you write the UI code, also when add-epic-feature or another skill applies. Walks the keyboard path, a screen reader smoke test, 400 % zoom, 200 % text, reduced motion and forced colors by hand, and names which automated gate already covers what.
+description: Use when you build or change anything a keeper sees or operates in app/packages/web: a view, dialog, list, form, button, toggle, gesture or flow (FR-QG-10 item 11). Load it before you write the UI code, also when add-epic-feature or another skill applies. Walks the keyboard path and the visible focus by hand and names which automated gate already covers what; screen reader, 400 % zoom, 200 % text, reduced motion and forced colors are deferred until the public launch (d-190).
 ---
 
 # Accessibility check
+
+Scope until the public launch (owner decision d-190, 2026-11-28): per change, walk only the keyboard (section 2) and check axe, visible unobscured focus, 44 px targets and reflow at 360 px (section 1). Sections 3 to 5 (screen reader, zoom and text size, reduced motion and forced colors) are deferred: do not run them per change. `nightly-a11y` (blocking for releases) repeats the section 1 checks over every screen; the warning run `nightly-a11y-report` watches 200 % text, forced colors and reduced motion; screen reader narration and 400 % zoom have no run until the launch work. The criteria stay in the spec and the steps stay below for those runs and for the work before the launch.
 
 Automated gates come first (section 1). This playbook covers what they cannot: the real focus order, what a screen reader announces, zoom and text size in the real layout, and the motion and colour settings of the people who use the app. The target is WCAG 2.2 AA (NFR-13, E-23; EN 301 549 V3.2.1 is the legal floor); the axe run applies the WCAG 2.2 rules (FR-QG-24). Visual and interaction rules are in `docs/guides/reference/style-guide.md` (SG-BASE-01, SG-BASE-02). The standing criteria are US-QS-08 to US-QS-12 in `docs/specs/product/14-cross-cutting.md`; the bracketed numbers in the steps name the WCAG success criteria they cover.
 
@@ -35,7 +37,7 @@ Do this with the mouse out of reach and Chromium at 1440 × 900 px.
 6. Submit a form with empty required fields. The focus moves to the first invalid field or to an error summary, and each message names its field (US-QS-10, 3.3.1).
 7. Write the stops into the protocol as a table: number, element, visible focus (yes or no), result.
 
-## 3. Screen reader smoke test
+## 3. Screen reader smoke test (deferred, d-190)
 
 Use one screen reader of the platform (NVDA or Narrator on Windows, VoiceOver on macOS or iOS, Orca on Linux) and write its name and version into the protocol header. If none is available on the machine, mark this section ⏭️. The browser's accessibility tree in DevTools is a proxy only; say so in the protocol and do not write it up as a spoken result.
 
@@ -48,14 +50,14 @@ Use one screen reader of the platform (NVDA or Narrator on Windows, VoiceOver on
 7. An unknown value is read as "unbekannt", never as a number (P-08).
 8. A chart: the same values are available as text or a table (1.1.1, 1.3.1).
 
-## 4. Zoom, text size and viewport
+## 4. Zoom, text size and viewport (deferred, d-190; reflow at 360 px stays)
 
 1. Browser zoom 400 % on a 1280 px window (the same as 320 CSS px): no horizontal scrolling, no content cut off (1.4.10, 1.4.4, US-QS-12).
 2. Text size 200 % (set the root font size, or the operating system text size): no overlapping text, no button or row label that breaks between random letters (a word wider than its row breaks at a syllable with a hyphen); content that no longer fits scrolls inside its own region, not the page (DS-61, DS-63).
 3. User text spacing (line height 1.5, paragraph spacing 2, letter spacing 0.12 and word spacing 0.16 times the font size; a bookmarklet or an injected stylesheet): no text overlaps or is cut off (1.4.12).
 4. Portrait and landscape, at 360 × 640 and 390 × 844 px for phones and 1024 × 768 px for a tablet: every view works in both (1.3.4).
 
-## 5. Reduced motion, forced colors and dark scheme
+## 5. Reduced motion, forced colors and dark scheme (deferred, d-190; the dark scheme stays)
 
 1. DevTools, Rendering, emulate `prefers-reduced-motion: reduce`: layers and pages change without sliding, toggles switch without animation, and nothing is lost (2.3.3, US-QS-12).
 2. DevTools, Rendering, emulate `forced-colors: active`: the focus indicator, the borders of controls and the status texts stay visible (1.4.11, 2.4.7). A box-shadow ring can vanish in forced colors; if it does, report it as ❌. Do not fix it with `outline: none` (DS-37 allows that only for a heading that is focused by script).
@@ -65,7 +67,7 @@ Use one screen reader of the platform (NVDA or Narrator on Windows, VoiceOver on
 
 Write the result into the story's test protocol, following `story-test-protocol` (file and screenshot folder under `docs/records/test-logs/`, legend, header, one section per criterion with "Erwartet" and "Beobachtet").
 
-- One section per standing criterion (US-QS-08 to US-QS-12) that the change touches, plus "Keyboard walk" and "Screen reader" when a view or control changed.
+- One section per standing criterion (US-QS-08 to US-QS-12) that the change touches, plus "Keyboard walk" when a view or control changed. "Screen reader" is deferred (d-190).
 - Quote the result of `make a11y-routes` with its findings; `make a11y-routes-report` prints the table per screen.
 - Put the keyboard table from section 2 in the protocol.
 - Note the browser and version, the screen reader and version, and the zoom and text settings used.
