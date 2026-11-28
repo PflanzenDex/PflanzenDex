@@ -104,21 +104,27 @@ function supplyWrites(api: string, write: Write, toast: ToastApi, toasted: Toast
   };
 }
 
-/** The writes on a sensor (US-EQU-06): where it sits. It says whether the server saved it, for the row's line (F-0160). */
-function sensorWrites(api: string, write: Write): SensorActions {
+/**
+ * The writes on a sensor (US-EQU-06): where it sits. It says whether the server saved it, for the row's line (F-0160). The
+ * write is run `toasted`, that is quiet: the row of the sensor says the result and offers its undo (US-QS-32, SG-FEED-03), and
+ * says it to the live region itself, so it is said once (SG-FEED-02). The undo is the same write with the earlier place.
+ */
+function sensorWrites(api: string, write: Write, toasted: Toasted): SensorActions {
   return {
     busy: write.running,
     onTarget: async (sensor, target) => {
       let saved = false;
-      await write.run(
-        async (t, opts) => {
-          const r = await setSensorTarget(api, t, { id: sensor.id, ...target }, opts);
-          saved = r.ok;
-          return r;
-        },
-        `Zuordnung von „${sensor.name}“ gesichert.`,
-        // Set-state on the sensor's place: the operation only, the target is the body (US-QS-03).
-        entityKey("sensor", sensor.id, "target"),
+      await toasted(() =>
+        write.run(
+          async (t, opts) => {
+            const r = await setSensorTarget(api, t, { id: sensor.id, ...target }, opts);
+            saved = r.ok;
+            return r;
+          },
+          `Zuordnung von „${sensor.name}“ gesichert.`,
+          // Set-state on the sensor's place: the operation only, the target is the body (US-QS-03).
+          entityKey("sensor", sensor.id, "target"),
+        ),
       );
       return saved;
     },
@@ -153,7 +159,8 @@ type Toasted = (run: () => Promise<void>) => Promise<void>;
  * The writes on a lamp and its device, one state for all of them (P-10). The result of a write is said to the live region,
  * never boxed: it shows at its row or control (SG-FEED-01, SG-FEED-04, F-0160). A refusal is not said: the layer shows it
  * as an alert. The state of a lamp and the supply offer "Rückgängig" in a toast that carries the result until the undo
- * moves into the row (US-QS-32); they are run `toasted`.
+ * moves into the row (US-QS-32); they are run `toasted`. The place of a sensor offers its undo in its row at once (`SensorsView`,
+ * SG-FEED-03); it is run `toasted` too, because the view says its result itself.
  */
 export function useLampActions(
   api: string,
@@ -181,7 +188,7 @@ export function useLampActions(
     light: lightWrites(api, write),
     maintenance: maintenanceWrites(api, write),
     supply: supplyWrites(api, write, toast, toasted),
-    sensors: sensorWrites(api, write),
+    sensors: sensorWrites(api, write, toasted),
     sharing: sharingWrites(api, write, new Map(shared.map((r) => [r.equipmentId, r.note]))),
     error: write.error,
     failures: write.failures,
